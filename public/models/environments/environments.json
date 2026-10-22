@@ -561,7 +561,33 @@
         "width": 16,
         "length": 202
       },
-      "ceiling": 80
+      "runways": [
+        {
+          "id": "runway",
+          "name": "International Runway 18 / 36",
+          "x": 40,
+          "z": 0,
+          "width": 16,
+          "length": 202
+        },
+        {
+          "id": "north-runway",
+          "name": "North Ridge Airfield",
+          "x": -280,
+          "z": -250,
+          "width": 20,
+          "length": 240
+        },
+        {
+          "id": "coastal-runway",
+          "name": "Coastal Landing Strip",
+          "x": 280,
+          "z": 210,
+          "width": 20,
+          "length": 240
+        }
+      ],
+      "ceiling": 140
     },
     "permanent": true,
     "publicDestination": true,
@@ -582,7 +608,7 @@
       "z": 74,
       "rotationY": 0
     },
-    "description": "A brick-built public airport with three flyable aircraft, shared runway 18/36, taxiways, terminal, hangar, control tower, radio captions and optional spoken ATC, mobile flight controls and ground services.",
+    "description": "A brick-built public airport with three flyable aircraft, three connected airfields across expanded airspace, automatic destination flights, taxiways, terminal, hangar, control tower, radio captions and optional spoken ATC, mobile flight controls and ground services.",
     "streets": [
       {
         "id": "airport-access",
@@ -601,7 +627,7 @@
     "builderScene": {
       "version": 3,
       "layout": "grand-floor",
-      "mapSize": 256,
+      "mapSize": 1024,
       "objects": [
         {
           "id": "airport-runway-0",
@@ -6886,6 +6912,6148 @@
           }
         },
         {
+          "id": "airport-north-runway-surface-0",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 0",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -365.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-1",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 1",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -355.59999999999997
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-2",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 2",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -346
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-3",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 3",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -336.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-4",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 4",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -326.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-5",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 5",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -317.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-6",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 6",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -307.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-7",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 7",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -298
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-8",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 8",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -288.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-9",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 9",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -278.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-10",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 10",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -269.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-11",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 11",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -259.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-12",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 12",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-13",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 13",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -240.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-14",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 14",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -230.79999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-15",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 15",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -221.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-16",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 16",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -211.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-17",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 17",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -202
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-18",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 18",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -192.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-19",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 19",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -182.79999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-20",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 20",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -173.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-21",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 21",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -163.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-22",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 22",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -154
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-23",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 23",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -144.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-surface-24",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway surface 24",
+          "position": {
+            "x": -280,
+            "y": 0,
+            "z": -134.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--108",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  108",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  108",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  108",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--96",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  96",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -346
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  96",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -346
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  96",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -346
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--84",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  84",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -334
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  84",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -334
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  84",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -334
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--72",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  72",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -322
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  72",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -322
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  72",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -322
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--60",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  60",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -310
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  60",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -310
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  60",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -310
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--48",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  48",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -298
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  48",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -298
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  48",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -298
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--36",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  36",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -286
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  36",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -286
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  36",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -286
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--24",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  24",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -274
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  24",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -274
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  24",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -274
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center--12",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center  12",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -262
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1--12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1  12",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -262
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1--12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1  12",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -262
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-0",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 0",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-0",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 0",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-0",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 0",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-12",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 12",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -238
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 12",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -238
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 12",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -238
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-24",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 24",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -226
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 24",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -226
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 24",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -226
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-36",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 36",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 36",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 36",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-48",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 48",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -202
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 48",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -202
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 48",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -202
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-60",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 60",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -190
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 60",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -190
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 60",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -190
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-72",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 72",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -178
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 72",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -178
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 72",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -178
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-84",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 84",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 84",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 84",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-96",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 96",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -154
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 96",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -154
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 96",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -154
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-center-108",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "north runway center 108",
+          "position": {
+            "x": -280,
+            "y": 0.11,
+            "z": -142
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light--1-108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light  1 108",
+          "position": {
+            "x": -290,
+            "y": 0.05,
+            "z": -142
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-light-1-108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "north runway light 1 108",
+          "position": {
+            "x": -270,
+            "y": 0.05,
+            "z": -142
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 0",
+          "position": {
+            "x": -306,
+            "y": 0,
+            "z": -257.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 1",
+          "position": {
+            "x": -301.2,
+            "y": 0,
+            "z": -257.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 2",
+          "position": {
+            "x": -306,
+            "y": 0,
+            "z": -252.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-3",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 3",
+          "position": {
+            "x": -301.2,
+            "y": 0,
+            "z": -252.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-4",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 4",
+          "position": {
+            "x": -306,
+            "y": 0,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-5",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 5",
+          "position": {
+            "x": -301.2,
+            "y": 0,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-6",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 6",
+          "position": {
+            "x": -306,
+            "y": 0,
+            "z": -242.79999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-apron-7",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway apron 7",
+          "position": {
+            "x": -301.2,
+            "y": 0,
+            "z": -242.79999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-taxi-0",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway taxi 0",
+          "position": {
+            "x": -300,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-taxi-1",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway taxi 1",
+          "position": {
+            "x": -295.2,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-taxi-2",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway taxi 2",
+          "position": {
+            "x": -290.4,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-taxi-3",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway taxi 3",
+          "position": {
+            "x": -285.6,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-taxi-4",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "north runway taxi 4",
+          "position": {
+            "x": -280.8,
+            "y": 0,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 0 0",
+          "position": {
+            "x": -332.8,
+            "y": 0,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 0 0",
+          "position": {
+            "x": -332.8,
+            "y": 3,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 0 1",
+          "position": {
+            "x": -332.8,
+            "y": 0,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 0 1",
+          "position": {
+            "x": -332.8,
+            "y": 3,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 1 0",
+          "position": {
+            "x": -328,
+            "y": 0,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 1 0",
+          "position": {
+            "x": -328,
+            "y": 3,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 1 1",
+          "position": {
+            "x": -328,
+            "y": 0,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 1 1",
+          "position": {
+            "x": -328,
+            "y": 3,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 2 0",
+          "position": {
+            "x": -323.2,
+            "y": 0,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 2 0",
+          "position": {
+            "x": -323.2,
+            "y": 3,
+            "z": -252.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge floor 2 1",
+          "position": {
+            "x": -323.2,
+            "y": 0,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge roof 2 1",
+          "position": {
+            "x": -323.2,
+            "y": 3,
+            "z": -247.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge side  1",
+          "position": {
+            "x": -335.2,
+            "y": 0.2,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge side 1",
+          "position": {
+            "x": -320.8,
+            "y": 0.2,
+            "z": -250
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 0",
+          "position": {
+            "x": -334,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 1",
+          "position": {
+            "x": -331.6,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 2",
+          "position": {
+            "x": -329.2,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 3",
+          "position": {
+            "x": -326.8,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 4",
+          "position": {
+            "x": -324.4,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge back 5",
+          "position": {
+            "x": -322,
+            "y": 0.2,
+            "z": -254.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-front-post--7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge front post  7.2",
+          "position": {
+            "x": -335.2,
+            "y": 0.2,
+            "z": -245.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-lodge-front-post-7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "north runway lodge front post 7.2",
+          "position": {
+            "x": -320.8,
+            "y": 0.2,
+            "z": -245.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-north-runway-guide",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "North Ridge Airfield",
+          "position": {
+            "x": -312,
+            "y": 0,
+            "z": -238
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read North Ridge Airfield"
+          },
+          "dialogueSettings": {
+            "text": "Select this landing strip on the local map while piloting. Auto takes off, flies the route, lands and parks beside this apron. Ground service repairs and refuels the aircraft."
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-0",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 0",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 94.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-1",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 1",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 104.39999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-2",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 2",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 114
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-3",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 3",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 123.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-4",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 4",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 133.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-5",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 5",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 142.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-6",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 6",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 152.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-7",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 7",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 162
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-8",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 8",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 171.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-9",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 9",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 181.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-10",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 10",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 190.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-11",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 11",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 200.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-12",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 12",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-13",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 13",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 219.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-14",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 14",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 229.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-15",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 15",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 238.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-16",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 16",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 248.39999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-17",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 17",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 258
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-18",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 18",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 267.59999999999997
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-19",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 19",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 277.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-20",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 20",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 286.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-21",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 21",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 296.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-22",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 22",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 306
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-23",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 23",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 315.59999999999997
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-surface-24",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway surface 24",
+          "position": {
+            "x": 280,
+            "y": 0,
+            "z": 325.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.7,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--108",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  108",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 102
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  108",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 102
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  108",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 102
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--96",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  96",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 114
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  96",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 114
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  96",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 114
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--84",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  84",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 126
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  84",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 126
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  84",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 126
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--72",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  72",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 138
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  72",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 138
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  72",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 138
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--60",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  60",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 150
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  60",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 150
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  60",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 150
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--48",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  48",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 162
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  48",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 162
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  48",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 162
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--36",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  36",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 174
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  36",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 174
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  36",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 174
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--24",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  24",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 186
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  24",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 186
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  24",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 186
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center--12",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center  12",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 198
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1--12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1  12",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 198
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1--12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1  12",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 198
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-0",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 0",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-0",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 0",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-0",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 0",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-12",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 12",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 12",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-12",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 12",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-24",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 24",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 24",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-24",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 24",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-36",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 36",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 246
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 36",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 246
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-36",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 36",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 246
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-48",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 48",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 258
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 48",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 258
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-48",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 48",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 258
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-60",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 60",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 270
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 60",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 270
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-60",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 60",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 270
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-72",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 72",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 282
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 72",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 282
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-72",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 72",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 282
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-84",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 84",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 294
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 84",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 294
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-84",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 84",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 294
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-96",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 96",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 306
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 96",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 306
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-96",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 96",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 306
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-center-108",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway center 108",
+          "position": {
+            "x": 280,
+            "y": 0.11,
+            "z": 318
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light--1-108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light  1 108",
+          "position": {
+            "x": 270,
+            "y": 0.05,
+            "z": 318
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-light-1-108",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway light 1 108",
+          "position": {
+            "x": 290,
+            "y": 0.05,
+            "z": 318
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 0",
+          "position": {
+            "x": 254,
+            "y": 0,
+            "z": 202.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 1",
+          "position": {
+            "x": 258.8,
+            "y": 0,
+            "z": 202.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 2",
+          "position": {
+            "x": 254,
+            "y": 0,
+            "z": 207.60000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-3",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 3",
+          "position": {
+            "x": 258.8,
+            "y": 0,
+            "z": 207.60000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-4",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 4",
+          "position": {
+            "x": 254,
+            "y": 0,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-5",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 5",
+          "position": {
+            "x": 258.8,
+            "y": 0,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-6",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 6",
+          "position": {
+            "x": 254,
+            "y": 0,
+            "z": 217.20000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-apron-7",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway apron 7",
+          "position": {
+            "x": 258.8,
+            "y": 0,
+            "z": 217.20000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-taxi-0",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway taxi 0",
+          "position": {
+            "x": 260,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-taxi-1",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway taxi 1",
+          "position": {
+            "x": 264.8,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-taxi-2",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway taxi 2",
+          "position": {
+            "x": 269.6,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-taxi-3",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway taxi 3",
+          "position": {
+            "x": 274.4,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-taxi-4",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway taxi 4",
+          "position": {
+            "x": 279.2,
+            "y": 0,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 0 0",
+          "position": {
+            "x": 227.20000000000002,
+            "y": 0,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 0 0",
+          "position": {
+            "x": 227.20000000000002,
+            "y": 3,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 0 1",
+          "position": {
+            "x": 227.20000000000002,
+            "y": 0,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 0 1",
+          "position": {
+            "x": 227.20000000000002,
+            "y": 3,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 1 0",
+          "position": {
+            "x": 232.00000000000003,
+            "y": 0,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 1 0",
+          "position": {
+            "x": 232.00000000000003,
+            "y": 3,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 1 1",
+          "position": {
+            "x": 232.00000000000003,
+            "y": 0,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 1 1",
+          "position": {
+            "x": 232.00000000000003,
+            "y": 3,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 2 0",
+          "position": {
+            "x": 236.8,
+            "y": 0,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 2 0",
+          "position": {
+            "x": 236.8,
+            "y": 3,
+            "z": 207.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge floor 2 1",
+          "position": {
+            "x": 236.8,
+            "y": 0,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge roof 2 1",
+          "position": {
+            "x": 236.8,
+            "y": 3,
+            "z": 212.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge side  1",
+          "position": {
+            "x": 224.8,
+            "y": 0.2,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge side 1",
+          "position": {
+            "x": 239.2,
+            "y": 0.2,
+            "z": 210
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 0",
+          "position": {
+            "x": 226,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 1",
+          "position": {
+            "x": 228.4,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 2",
+          "position": {
+            "x": 230.8,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 3",
+          "position": {
+            "x": 233.2,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 4",
+          "position": {
+            "x": 235.6,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge back 5",
+          "position": {
+            "x": 238,
+            "y": 0.2,
+            "z": 205.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-front-post--7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge front post  7.2",
+          "position": {
+            "x": 224.8,
+            "y": 0.2,
+            "z": 214.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-lodge-front-post-7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "coastal runway lodge front post 7.2",
+          "position": {
+            "x": 239.2,
+            "y": 0.2,
+            "z": 214.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-coastal-runway-guide",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Coastal Landing Strip",
+          "position": {
+            "x": 248,
+            "y": 0,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Coastal Landing Strip"
+          },
+          "dialogueSettings": {
+            "text": "Select this landing strip on the local map while piloting. Auto takes off, flies the route, lands and parks beside this apron. Ground service repairs and refuels the aircraft."
+          }
+        },
+        {
           "id": "airport-welcome",
           "modelId": "street-sign",
           "placementAnchor": "collider-base",
@@ -6940,7 +13108,7 @@
             "prompt": "Read Tower Frequency"
           },
           "dialogueSettings": {
-            "text": "Tower radio is available through the radio SVG. Captions always work; enable voice for spoken controller calls. One pilot at a time receives runway clearance. Airspace ceiling: 80 metres."
+            "text": "Tower radio is available through the radio SVG. Captions always work; enable voice for spoken controller calls. One pilot at a time receives runway clearance. Airspace ceiling: 140 metres."
           }
         },
         {
@@ -7554,6 +13722,42 @@
             "width": 9.6,
             "depth": 9.6,
             "description": "Walk-in Control Tower. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "north-runway-lodge",
+            "name": "North Ridge Airfield Lodge",
+            "x": -328,
+            "z": -250,
+            "width": 14.4,
+            "depth": 9.6,
+            "description": "Walk-in North Ridge Airfield Lodge. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "north-runway",
+            "name": "North Ridge Airfield",
+            "x": -280,
+            "z": -250,
+            "width": 20,
+            "depth": 240,
+            "description": "A full landing strip with approach lights, taxiway, parking apron and lodge. Choose Fly to on the map."
+          },
+          {
+            "id": "coastal-runway-lodge",
+            "name": "Coastal Landing Strip Lodge",
+            "x": 232,
+            "z": 210,
+            "width": 14.4,
+            "depth": 9.6,
+            "description": "Walk-in Coastal Landing Strip Lodge. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "coastal-runway",
+            "name": "Coastal Landing Strip",
+            "x": 280,
+            "z": 210,
+            "width": 20,
+            "depth": 240,
+            "description": "A full landing strip with approach lights, taxiway, parking apron and lodge. Choose Fly to on the map."
           },
           {
             "id": "runway",

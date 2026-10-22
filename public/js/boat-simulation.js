@@ -28,7 +28,8 @@ export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=(
   speed=clamp(speed+(thrust-drag-Math.sign(speed)*braking)*step,-2,maximum);
   if((anchor||brake)&&Math.abs(speed)<.12)speed=0;
   if(anchor&&speed===0)throttle=0;
-  yaw=normalizeAngle(yaw-rudder*(sailing?.64:.8)*clamp(speed/4,-.6,1)*step);
+  const thruster=boat.modelId==='harbor-yacht'&&input.bowThruster===true&&Math.abs(speed)<.2;
+  yaw=normalizeAngle(yaw-rudder*(thruster?.3:(boat.modelId==='harbor-yacht'?.14:sailing?.64:.8)*clamp(speed/4,-.6,1))*step);
   position.x-=Math.sin(yaw)*speed*step;position.z-=Math.cos(yaw)*speed*step;
   const valid=watercraftFootprint(position,yaw,boat).every(point=>harborWaterAt(environment,point,.25));
   if(!valid||blocked(previous,position,yaw)){

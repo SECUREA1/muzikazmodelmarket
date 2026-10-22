@@ -5,7 +5,7 @@ import {stepAircraftFlight} from '../public/js/aircraft-flight.js';
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 import {startAircraftAssist,aircraftAssistedInput,aircraftExitPosition} from '../server-aircraft-access.mjs';
 function fixture(position={x:-18,y:.4,z:62},rotationY=0,flight={}){const aircraft={id:'plane',modelId:'corsair-aircraft',active:true,health:400,holderId:'pilot',position:{...position},rotation:{x:0,y:rotationY,z:0},flight:{...flight}},player={actorId:'pilot',vehicleId:'plane',position:{...position},input:{}},sim={actors:{plane:aircraft},players:{pilot:player},airport:{runwayHolder:null,expires:0}};return {aircraft,player,sim,environment:airportWorld()};}
-function simulate(state,max=120,dt=.05){let time=1000;for(let i=0;i<max/dt&&state.aircraft.flight.assist;i++){time+=dt*1000;const input=aircraftAssistedInput(state.aircraft,{},state.environment,time);Object.assign(state.aircraft,stepAircraftFlight(state.aircraft,input,dt,{ground:.4,cleared:true,half:128}));}return state.aircraft;}
+function simulate(state,max=120,dt=.05){let time=1000;for(let i=0;i<max/dt&&state.aircraft.flight.assist;i++){time+=dt*1000;const input=aircraftAssistedInput(state.aircraft,{},state.environment,time);Object.assign(state.aircraft,stepAircraftFlight(state.aircraft,input,dt,{ground:.4,cleared:true,half:state.environment.builderScene.mapSize/2}));}return state.aircraft;}
 test('assisted takeoff reserves a clear runway, stages only on the ground and releases manual control after climbing',()=>{
  const state=fixture(),collision=new ServerBuilderCollision();assert.match(startAircraftAssist(state.sim,state.player,state.environment,'takeoff',1000,collision),/runway clear/);assert.equal(state.aircraft.position.x,40);assert.equal(state.aircraft.position.z,79);assert.equal(state.sim.airport.runwayHolder,'pilot');assert.equal(state.player.movementRevision,1);simulate(state,10);assert.equal(state.aircraft.flight.assist,null);assert.ok(state.aircraft.flight.altitude>=14);assert.ok(state.aircraft.flight.airspeed>7);assert.equal(state.aircraft.flight.throttleCommand,.7);
 });
@@ -49,10 +49,10 @@ test('cruise holds altitude beyond the ordinary assist timeout and turns clear o
  let minimum=Infinity,maximum=0;
  for(let tick=1;tick<=3000;tick++){
   const input=aircraftAssistedInput(state.aircraft,{},state.environment,1000+tick*50);assert.ok(Object.values(input).every(value=>typeof value!=='number'||Number.isFinite(value)));
-  Object.assign(state.aircraft,stepAircraftFlight(state.aircraft,input,.05,{ground:.4,ceiling:80,half:128,cleared:true}));
+  Object.assign(state.aircraft,stepAircraftFlight(state.aircraft,input,.05,{ground:.4,ceiling:80,half:state.environment.builderScene.mapSize/2,cleared:true}));
   minimum=Math.min(minimum,state.aircraft.flight.altitude);maximum=Math.max(maximum,state.aircraft.flight.altitude);assert.notEqual(state.aircraft.flight.phase,'hold',JSON.stringify(state.aircraft));assert.equal(state.aircraft.flight.airborne,true);
  }
- assert.equal(state.aircraft.flight.assist,'cruise');assert.ok(minimum>28&&maximum<32,{minimum,maximum});assert.ok(Math.abs(state.aircraft.position.x)<120&&Math.abs(state.aircraft.position.z)<120);
+ assert.equal(state.aircraft.flight.assist,'cruise');assert.ok(minimum>28&&maximum<32,{minimum,maximum});assert.ok(Math.abs(state.aircraft.position.x)<state.environment.builderScene.mapSize/2-8&&Math.abs(state.aircraft.position.z)<state.environment.builderScene.mapSize/2-8);
 });
 test('continue preserves an ongoing assist and explicit flight power, brake or stick inputs cancel it',()=>{
  const state=fixture({x:0,y:30.4,z:0},0,{airborne:true,altitude:30,speed:16,airspeed:16});startAircraftAssist(state.sim,state.player,state.environment,'cruise',1000);const before=structuredClone(state);

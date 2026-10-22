@@ -1,3 +1,4 @@
+import {aircraftRunway,runwayClearance} from './airport-navigation.js';
 export const isAircraft=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='corsair-aircraft';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
@@ -54,7 +55,7 @@ export function stepAircraftFlight(aircraft,input={},dt,{ground=.4,ceiling=80,ha
 export function airportRadio(sim,player,actorId,operation,now,environment={}){
  const airport=sim.airport,aircraft=sim.actors[player.vehicleId];if(!airport)throw Object.assign(Error('This room has no airport tower.'),{statusCode:409});
  if(!['takeoff','landing','service','status','traffic','vectors'].includes(operation))throw Object.assign(Error('Choose a tower radio operation.'),{statusCode:422});
- const runway=environment.airport?.runway||{x:40,z:0,width:16,length:202},ceiling=environment.airport?.ceiling||80,occupied=airport.runwayHolder&&airport.runwayHolder!==actorId&&airport.expires>now;
+ const runway=aircraftRunway(environment,aircraft)||{x:40,z:0,width:16,length:202},lease=runwayClearance(airport,runway),ceiling=environment.airport?.ceiling||80,occupied=lease.runwayHolder&&lease.runwayHolder!==actorId&&lease.expires>now;
  const heading=actor=>String(Math.round((((-Number(actor.rotation?.y||0)*180/Math.PI)%360)+360)%360)%360).padStart(3,'0');
  const traffic=Object.values(sim.actors).filter(other=>isAircraft(other)&&other.id!==aircraft?.id&&other.active!==false&&other.health>0&&other.holderId);
  const callsign=String(player.username||'pilot').slice(0,32);
@@ -76,6 +77,6 @@ export function airportRadio(sim,player,actorId,operation,now,environment={}){
   aircraft.health=400;player.fuel=100;player.ammo=120;return 'Ground crew. Aircraft inspected, repaired and refueled. Ready for taxi.';
  }
  if(occupied)return 'Tower. Hold position. Another pilot has runway clearance. Request again when the runway is clear.';
- airport.runwayHolder=actorId;airport.expires=now+120000;aircraft.flight||={};aircraft.flight.clearance=operation;
+ lease.runwayHolder=actorId;lease.expires=now+120000;aircraft.flight||={};aircraft.flight.clearance=operation;
  return operation==='takeoff'?'Tower. Cleared for takeoff, runway one eight. Taxi onto the runway, accelerate, then climb.':'Tower. Cleared to land, runway one eight. Line up with the runway, descend gently, then brake and taxi clear.';
 }

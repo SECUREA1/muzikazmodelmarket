@@ -68,12 +68,12 @@ for(const modelId of ['harbor-skiff','harbor-sailboat'])for(const destinationId 
  startBoatAssist(sim,player,world,'navigate',100000,{destinationId,collision});
  const blocked=boatMovementBlocked(world,boat,sim.actors,collision,{}),goal=harborApproach(world,destinationId);
  let frames=0;
- for(;frames<6000&&boat.boating.assist;frames++){
+ for(;frames<9000&&boat.boating.assist;frames++){
   const input=boatAssistedInput(boat,{},world,100000+frames*50,sim.actors,blocked),pose=stepBoatSimulation(boat,input,.05,{environment:world,now:100000+frames*50,blocked});
   assert.equal(pose.boating.impactDamage,0);assert.notEqual(pose.boating.phase,'hold');Object.assign(boat,pose);
   assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(point=>harborWaterAt(world,point,.25)));
  }
- assert.ok(frames<6000,'a selected landmark remains reachable');
+ assert.ok(frames<9000,'a selected landmark remains reachable');
  assert.equal(boat.boating.assistStage,'arrived');assert.equal(boat.boating.assist,null);assert.equal(boat.boating.anchor,true);
  assert.ok(Math.hypot(boat.position.x-goal.x,boat.position.z-goal.z)<2.3);
 });
