@@ -176,11 +176,11 @@ export function stepConstruction(sim,now,dt,context={}){
  if(!sim.construction)return;
  for(const actor of Object.values(sim.actors).filter(isConstructionMachine)){
   const owner=sim.players[actor.holderId],occupied=owner&&owner.vehicleId===actor.id&&!owner.replacedByRoom&&now-owner.lastSeen<15000&&owner.health>0;
-  if(!occupied){actor.construction.axes={};actor.construction.assist=null;actor.construction.working=false;delete actor.construction.workCycle;refreshTelemetry(sim,actor,now,context);continue;}
+  if(!occupied){actor.construction.axes={};actor.construction.assist=null;actor.construction.working=false;delete actor.construction.workCycle;if(actor.construction.blocked?.part==='operator-link')actor.construction.blocked=null;refreshTelemetry(sim,actor,now,context);continue;}
   // A delayed packet stops motion immediately but does not discard a task
   // already accepted from the seated operator. No cycle time or soil moves
   // while the input link is stale; fresh input can safely resume the task.
-  if(now-owner.lastSeen>=1000){actor.construction.axes={};actor.construction.working=false;if(actor.construction.workCycle)actor.construction.workCycle.paused=true;actor.construction.blocked={part:'operator-link',reason:'Operator input delayed. Hydraulics paused until the link resumes.'};refreshTelemetry(sim,actor,now,context);continue;}
+  if(now-owner.lastSeen>=1000){const pending=!!(actor.construction.workCycle||actor.construction.assist||actor.construction.working);actor.construction.axes={};actor.construction.working=false;if(actor.construction.workCycle)actor.construction.workCycle.paused=true;if(pending)actor.construction.blocked={part:'operator-link',reason:'Operator input delayed. Hydraulics paused until the link resumes.'};else if(actor.construction.blocked?.part==='operator-link')actor.construction.blocked=null;refreshTelemetry(sim,actor,now,context);continue;}
   const state=actor.construction;let candidate;
   if(state.workCycle)candidate=cycleCandidate(actor,dt);
   else if(state.assist){const point=state.assist==='target'?sim.construction.tower.target:availableBeams(sim)[0];const source=point?.position||point;

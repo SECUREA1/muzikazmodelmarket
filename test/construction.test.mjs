@@ -73,6 +73,11 @@ test('delayed input pauses a seated operator cycle without awarding work, resume
  player.lastSeen+=1900;finish();assert.equal(actors.excavator.construction.load,2);assert.equal(sim.construction.excavation.volume,2);
  actors.excavator.construction.load=0;send('work');tick(5);stepConstruction(sim,player.lastSeen+16000,.2);assert.equal(actors.excavator.construction.workCycle,undefined);assert.equal(sim.construction.excavation.volume,2);
 });
+test('idle and vacated machines do not carry a previous operator link warning into the next boarding',()=>{
+ const {sim,actors,player,board,send,tick}=fixture();board('excavator');stepConstruction(sim,player.lastSeen+1800,.1);assert.notEqual(actors.excavator.construction.telemetry.blockedPart,'operator-link','no active work is paused on an idle machine');
+ send('work');tick(3);stepConstruction(sim,player.lastSeen+1800,.1);assert.equal(actors.excavator.construction.telemetry.blockedPart,'operator-link');
+ player.vehicleId=null;actors.excavator.holderId=null;stepConstruction(sim,player.lastSeen+1900,.1);assert.equal(actors.excavator.construction.blocked,null);assert.notEqual(actors.excavator.construction.telemetry.blockedPart,'operator-link');assert.equal(actors.excavator.construction.workCycle,undefined);assert.equal(sim.construction.excavation.volume,0);
+});
 test('shared room exposes machines and steel, enforces exclusive boarding, and preserves construction progress across reconnect',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'construction-room-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,sequence=0;
  const roomPath=join(dir,'rooms.json'),runtime=new AuthoritativeRooms({store:new SharedRoomStore(roomPath),now:()=>now});

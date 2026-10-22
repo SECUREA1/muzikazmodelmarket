@@ -76,6 +76,19 @@ try:
      travel=panel.locator('.construction-travel-stick');travel.scroll_into_view_if_needed();travel.focus();page.keyboard.down('ArrowUp')
      page.wait_for_function('dashboard.inputs()?.forward>0');page.keyboard.down('ArrowRight');page.wait_for_function('dashboard.inputs()?.side>0')
      page.keyboard.up('ArrowRight');page.keyboard.up('ArrowUp');page.wait_for_function('dashboard.inputs()===null')
+     # Input edges publish synchronously, so a short travel gesture never
+     # depends on the slower room heartbeat reaching its next interval.
+     immediate=page.evaluate('''()=>{const stick=document.querySelector('.construction-travel-stick'),key=(type,value)=>stick.dispatchEvent(new KeyboardEvent(type,{key:value,bubbles:true,cancelable:true}));inputCalls.length=0;key('keydown','ArrowUp');key('keydown','ArrowRight');key('keyup','ArrowRight');key('keyup','ArrowUp');return structuredClone(inputCalls);}''')
+     assert len(immediate)==4,(kind,'each press/change/release needs an immediate input',immediate)
+     assert immediate[0]['forward']==1 and immediate[0]['side']==0
+     assert immediate[1]['forward']==1 and immediate[1]['side']==1
+     assert immediate[2]['forward']==1 and immediate[2]['side']==0
+     assert immediate[3]['forward']==0 and immediate[3]['side']==0
+     blurred=page.evaluate('''()=>{const stick=document.querySelector('.construction-travel-stick');inputCalls.length=0;stick.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));window.dispatchEvent(new Event('blur'));return structuredClone(inputCalls);}''')
+     assert blurred[0]['forward']==1 and blurred[-1]['forward']==0 and blurred[-1]['side']==0,(kind,'blur must publish neutral immediately',blurred)
+     collapsed=page.evaluate('''()=>{const stick=document.querySelector('.construction-travel-stick');inputCalls.length=0;stick.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));document.querySelector('[aria-label="Show or hide construction dashboard"]').click();return structuredClone(inputCalls);}''')
+     assert collapsed[0]['forward']==1 and collapsed[-1]['forward']==0 and collapsed[-1]['side']==0,(kind,'collapse must publish neutral immediately',collapsed)
+     page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
      page.evaluate('setTelemetry({travelAllowed:false,travelReason:"Lower the dump body before travelling."})')
      travel.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(40);assert page.evaluate('dashboard.inputs()') is None
      page.keyboard.up('ArrowUp');page.evaluate('setTelemetry({travelAllowed:true,travelReason:""})')

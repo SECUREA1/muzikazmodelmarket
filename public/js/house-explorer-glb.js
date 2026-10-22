@@ -824,7 +824,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let requestedBackpackDeployment=false;
   const residentUI=mountWorldResidentUI(stage,serverCommand);
   const roadVehicleUI=mountRoadVehicleUI(stage,serverCommand);
-  const constructionUI=mountConstructionUI(stage,serverCommand);
+  const constructionUI=mountConstructionUI(stage,serverCommand,{onInput:()=>authoritativeClient?.requestInput()});
   const constructionScene=createConstructionScene(THREE,scene);
   const constructionCamera=createConstructionCamera({camera,playerRig});
   const skiResortControls=mountSkiResortControls(stage,serverCommand);

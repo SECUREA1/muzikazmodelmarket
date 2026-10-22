@@ -35,7 +35,7 @@ const axisNames={slew:'Slew / swing',trolley:'Trolley',loadYaw:'Spreader yaw',ho
 const degrees=value=>Number(value||0)*180/Math.PI;
 const bearing=value=>(degrees(value)%360+360)%360;
 
-export function mountConstructionUI(stage,command){
+export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const stylesheet=document.createElement('link');stylesheet.rel='stylesheet';stylesheet.href=new URL('../assets/construction-ui.css',import.meta.url).href;document.head.append(stylesheet);
  const panel=document.createElement('section');panel.className='construction-controls';panel.hidden=true;panel.setAttribute('aria-label','Construction machine dashboard');
  const manual=document.createElement('div');manual.className='construction-manual';
@@ -65,7 +65,8 @@ export function mountConstructionUI(stage,command){
  }
  function sendAxes(){pending=true;void flushAxes();}
  function changeAxes(values){let changed=false;for(const [axis,value]of Object.entries(values)){let next=Math.max(-1,Math.min(1,Number(value)||0));if(kind==='truck'&&Math.abs(current?.driving?.speed||0)>.5)next=0;if((axes[axis]||0)!==next){axes[axis]=next;changed=true;}}if(changed){updateAxisFeedback();sendAxes();}}
- function reset(){const active=Object.values(axes).some(value=>Math.abs(value)>.001);axes={};travel={forward:0,side:0,held:false};for(const resetKey of keyboardResets)resetKey();for(const stick of sticks)stick.reset();if(active)sendAxes();updateAxisFeedback();}
+ function setTravel(next){const changed=travel.forward!==next.forward||travel.side!==next.side||travel.held!==next.held;travel=next;if(changed)onInput();}
+ function reset(){const active=Object.values(axes).some(value=>Math.abs(value)>.001);axes={};setTravel({forward:0,side:0,held:false});for(const resetKey of keyboardResets)resetKey();for(const stick of sticks)stick.reset();if(active)sendAxes();updateAxisFeedback();}
  function safeReset(){reset();}
  async function request(operation,fields={}){
   if(actionBusy||!actorId||disposed)return;
@@ -102,7 +103,7 @@ export function mountConstructionUI(stage,command){
   for(const button of quick.querySelectorAll('[data-operation]')){applyAvailability(button,button.dataset.operation);if(button.dataset.operation==='precision'){setAttr(button,'aria-pressed',!!state.precision);setText(button,state.precision?'Precision · 30% rate':'Precision · full rate');}}
   const telemetry=state.telemetry||{},notice=telemetry.blockedReason||(!availability(operation).enabled?availability(operation).reason:'');setText(warning,notice);setHidden(warning,!notice);setAttr(panel,'data-interlocked',!!notice);
   const travelAllowed=kind!=='crane'&&telemetry.travelAllowed!==false&&!cycling&&!(kind==='truck'&&(state.bed||0)>.08);for(const node of pads.querySelectorAll('.construction-stick')){const blocked=kind==='truck'&&Math.abs(current?.driving?.speed||0)>.5;setAttr(node,'aria-disabled',blocked);if(blocked)setAttr(node,'title','Stop the truck before operating the body hoist.');}
-  for(const node of travelPanel.querySelectorAll('.construction-travel-stick')){setAttr(node,'aria-disabled',!travelAllowed);setAttr(node,'title',travelAllowed?'Hold the travel stick or use W/S and A/D. Release to coast; Park engages the brake.':telemetry.travelReason||'Lower the implement and finish or cancel the work cycle before travelling.');}if(!travelAllowed&&travel.held){travel={forward:0,side:0,held:false};}
+  for(const node of travelPanel.querySelectorAll('.construction-travel-stick')){setAttr(node,'aria-disabled',!travelAllowed);setAttr(node,'title',travelAllowed?'Hold the travel stick or use W/S and A/D. Release to coast; Park engages the brake.':telemetry.travelReason||'Lower the implement and finish or cancel the work cycle before travelling.');}if(!travelAllowed&&travel.held)setTravel({forward:0,side:0,held:false});
  }
  function addQuick(label,operation){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.operation=operation;button.onclick=()=>request(operation,operation==='precision'?{enabled:!current?.construction?.precision}:{});quick.append(button);return button;}
  function updateAxisFeedback(){
@@ -116,7 +117,7 @@ export function mountConstructionUI(stage,command){
   for(const [position,name]of [['up',config.up],['down',config.down],['left',config.left],['right',config.right]])if(name){const hint=document.createElement('span');hint.className='construction-stick-'+position;hint.textContent=name;surface.append(hint);}
   surface.append(knob);group.append(label,surface);parent.append(group);
   const permitted=()=>canUse()&&!(kind==='truck'&&!travelControl&&Math.abs(current?.driving?.speed||0)>.5)&&(!travelControl||current?.construction?.telemetry?.travelAllowed!==false&&!current?.construction?.workCycle&&!(kind==='truck'&&(current?.construction?.bed||0)>.08));
-  const publish=(x,y,held)=>{if(travelControl)travel={side:x,forward:-y,held};else changeAxes({...config.horizontal?{[config.horizontal]:x}:{},...config.vertical?{[config.vertical]:-y*(config.verticalSign??1)}:{}});};
+  const publish=(x,y,held)=>{if(travelControl)setTravel({side:x,forward:-y,held});else changeAxes({...config.horizontal?{[config.horizontal]:x}:{},...config.vertical?{[config.vertical]:-y*(config.verticalSign??1)}:{}});};
   sticks.push(mountThumbstick({stick:surface,knob,canUse:permitted,onChange:({x,y},released)=>publish(x,y,!released)}));
   const pressed=new Set(),publishKeys=()=>publish((pressed.has('ArrowRight')?1:0)-(pressed.has('ArrowLeft')?1:0),(pressed.has('ArrowDown')?1:0)-(pressed.has('ArrowUp')?1:0),pressed.size>0);
   const clearKeys=()=>{if(pressed.size){pressed.clear();publishKeys();}};keyboardResets.push(clearKeys);

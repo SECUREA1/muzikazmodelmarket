@@ -10,7 +10,7 @@
 import {mountConstructionUI} from '../../public/js/construction-ui.js';
 import {mountGameDisplayFlow} from '../../public/js/game-display-flow.js';
 const stage=document.querySelector('main');
-window.calls=[];
+window.calls=[];window.inputCalls=[];
 window.state={serverTime:1000,players:{me:{id:'me',health:100,vehicleId:null}},actors:{},construction:{tower:{x:15,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16,placed:8,floors:2,target:{x:15,y:12,z:-4}},supply:{x:0,y:.8,z:10},excavation:{x:20,z:20,radius:12,depth:1.2,volume:16},stockpile:{x:25,z:30,volume:8},graded:20}};
 const command=async(action,fields={})=>{
  calls.push({action,...structuredClone(fields)});
@@ -19,7 +19,7 @@ const command=async(action,fields={})=>{
  }
  return {result:{message:'Confirmed'}};
 };
-window.dashboard=mountConstructionUI(stage,command);
+window.dashboard=mountConstructionUI(stage,command,{onInput:()=>inputCalls.push(dashboard.inputs()||{forward:0,side:0,brake:false})});
 window.flow=mountGameDisplayFlow(stage);
 window.refresh=()=>dashboard.update(state,'me');
 window.setMachine=(modelId,kind)=>{
