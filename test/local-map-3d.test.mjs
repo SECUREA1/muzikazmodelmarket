@@ -12,3 +12,7 @@ test('map mirrors actual transformed game meshes without altering or disposing s
 test('instanced map objects retain exact game instance transforms',()=>{
  const root=new THREE.Group(),mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial(),2);mesh.setMatrixAt(1,new THREE.Matrix4().makeTranslation(20,4,-30));root.add(mesh);const map=mirrorMapMeshes([root]),copy=map.group.children[0];assert.equal(copy.instanceMatrix,mesh.instanceMatrix);assert.equal(copy.count,2);map.dispose();
 });
+
+test('connected portal routes and road lines remain visible in the mirrored world',()=>{
+ const root=new THREE.Group(),line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(256,0,0)]),new THREE.LineBasicMaterial());root.add(line);root.position.set(10,0,20);const map=mirrorMapMeshes([root]);assert.equal(map.group.children.length,1);assert.equal(map.group.children[0].isLine,true);assert.deepEqual(map.group.children[0].matrix.elements,line.matrixWorld.elements);map.dispose();
+});
