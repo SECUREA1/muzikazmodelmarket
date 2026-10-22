@@ -14,18 +14,18 @@ test('aircraft targeting covers wings, rotated hulls, misses, and nearest live t
  assert.equal(aircraftAimTarget({plane},'self',{x:0,y:21,z:0},[0,0,-1]).aircraft.id,'target');
  assert.equal(aircraftAimTarget({plane:{...plane,active:false}},'self',{x:0,y:21,z:0},[0,0,-1]),null);
 });
-test('live pilots exchange cannon fire, share damage, respect cover and cooldowns, and recover after a shot-down',async t=>{
+test('live pilots exchange consecutive cannon fire, share damage, respect cover and recover after a shot-down',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'dogfight-'));t.after(()=>rm(dir,{recursive:true,force:true}));const world=airportWorld();world.builderScene.objects.find(object=>object.id==='airport-flight-2').modelId='corsair-aircraft';const store=new SharedRoomStore(join(dir,'rooms.json'));let now=100000,request=0,charges=0;const runtime=new AuthoritativeRooms({store,now:()=>now,charge:async()=>charges++});
  const alice={accountId:'alice',username:'Alice',stats:{health:100}},bob={accountId:'bob',username:'Bob',stats:{health:100}};
  const send=(user,action,fields={})=>runtime.command(world.id,world,user,{action,requestId:'dogfight-'+ ++request,...fields});
  await send(alice,'join');await send(bob,'join');await send(alice,'map-access',{entityId:'airport-flight-1'});await send(bob,'map-access',{entityId:'airport-flight-2'});
  await store.update(world.id,room=>{for(const [id,who,z,yaw]of [['airport-flight-1','alice',50,0],['airport-flight-2','bob',-50,Math.PI]]){const plane=room.simulation.actors[id];plane.position={x:40,y:25,z};plane.rotation.y=yaw;plane.flight={airborne:true,altitude:25,speed:16,airspeed:16,throttle:1,throttleCommand:1,pitch:0,bank:0,phase:'cruise'};room.simulation.players['account:'+who].position={...plane.position};}});
  let state=await send(alice,'fire',{tool:'laser',direction:[0,0,-1]});assert.equal(state.result.hitId,'airport-flight-2');assert.equal(state.result.targetType,'aircraft');assert.equal(state.actors['airport-flight-2'].health,350);assert.equal(state.players['account:bob'].health,100,'hull shields the pilot');assert.equal(state.result.origin.y,26);assert.equal(charges,0,'built-in cannon requires no separately purchased weapon');
- await assert.rejects(send(alice,'fire',{tool:'laser',direction:[0,0,-1]}),/cooling/);
+ state=await send(alice,'fire',{tool:'laser',direction:[0,0,-1]});assert.equal(state.result.hitId,'airport-flight-2');assert.equal(state.actors['airport-flight-2'].health,300,'consecutive cannon input fires without a laser cooldown');assert.equal(charges,0,'consecutive cannon shots remain included with the aircraft');
  state=await send(bob,'fire',{tool:'laser',direction:[0,0,1]});assert.equal(state.actors['airport-flight-1'].health,350);assert.ok(state.events.filter(event=>event.action==='fire').length>=2,'both pilots receive shared tracers');
- await store.update(world.id,room=>{room.simulation.actors['airport-flight-1'].rotation.y=Math.PI/2;});now+=250;state=await send(alice,'fire',{tool:'laser',direction:[1,0,0]});assert.equal(state.result.hitId,null);assert.equal(state.actors['airport-flight-2'].health,350);
+ await store.update(world.id,room=>{room.simulation.actors['airport-flight-1'].rotation.y=Math.PI/2;});now+=250;state=await send(alice,'fire',{tool:'laser',direction:[1,0,0]});assert.equal(state.result.hitId,null);assert.equal(state.actors['airport-flight-2'].health,300);
  await store.update(world.id,room=>{room.simulation.actors['airport-flight-1'].rotation.y=0;room.simulation.actors['airport-flight-1'].position.x=40;});
- for(let i=0;i<7;i++){now+=250;state=await send(alice,'fire',{tool:'laser',direction:[0,0,-1]});}
+ for(let i=0;i<6;i++){now+=250;state=await send(alice,'fire',{tool:'laser',direction:[0,0,-1]});}
  assert.equal(state.actors['airport-flight-2'].active,false);assert.equal(state.actors['airport-flight-2'].health,0);assert.equal(state.players['account:bob'].vehicleId,null);assert.equal(state.players['account:bob'].health,0);assert.ok(state.players['account:bob'].position.y>=0);assert.equal(state.players['account:alice'].combat.playerKills,1);
  await send(bob,'respawn');now+=15001;state=await send(alice,'join');assert.equal(state.actors['airport-flight-2'].active,true);assert.equal(state.actors['airport-flight-2'].health,400);assert.equal(state.actors['airport-flight-2'].position.z,62);
  // A brick wall protects an occupied plane; player-built cover participates too.

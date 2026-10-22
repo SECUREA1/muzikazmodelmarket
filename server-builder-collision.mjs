@@ -9,6 +9,7 @@ import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from 
 import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes,placementMeshMatrices} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
+import {accelerateStaticRaycast} from './server-mesh-raycast.mjs';
 import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/js/building-materials.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {createBuilderLand} from './public/js/environments/builder-land.js';
@@ -42,12 +43,28 @@ function indexWalls(triangles){
  }
  return {cells,large};
 }
+function queryIndex(index,minX,maxX,minZ,maxZ){
+ const nearby=new Set(index.large);
+ for(let x=Math.floor(minX/WALL_GRID_SIZE);x<=Math.floor(maxX/WALL_GRID_SIZE);x++)for(let z=Math.floor(minZ/WALL_GRID_SIZE);z<=Math.floor(maxZ/WALL_GRID_SIZE);z++)for(const triangle of index.cells.get(x+':'+z)||[])nearby.add(triangle);
+ return nearby;
+}
 function nearbyWalls(world,minX,maxX,minZ,maxZ){
  if(!world)return [];
  if(!world.wallIndex)return world.triangles||world.floors.flatMap(wallTriangles);
- const nearby=new Set(world.wallIndex.large);
- for(let x=Math.floor(minX/WALL_GRID_SIZE);x<=Math.floor(maxX/WALL_GRID_SIZE);x++)for(let z=Math.floor(minZ/WALL_GRID_SIZE);z<=Math.floor(maxZ/WALL_GRID_SIZE);z++)for(const triangle of world.wallIndex.cells.get(x+':'+z)||[])nearby.add(triangle);
- return nearby;
+ return queryIndex(world.wallIndex,minX,maxX,minZ,maxZ);
+}
+const meshBoundsCache=new WeakMap();
+function meshBounds(mesh){
+ const elements=mesh.matrixWorld.elements,prior=meshBoundsCache.get(mesh);
+ if(prior&&elements.every((value,index)=>value===prior.matrix[index]))return prior.box;
+ const box=new THREE.Box3().setFromObject(mesh);meshBoundsCache.set(mesh,{box,matrix:[...elements]});return box;
+}
+function overlapsFootprint(box,minX,maxX,minZ,maxZ){return box.max.x>=minX&&box.min.x<=maxX&&box.max.z>=minZ&&box.min.z<=maxZ;}
+function localMeshes(meshes,minX,maxX,minZ,maxZ){return meshes.filter(mesh=>overlapsFootprint(meshBounds(mesh),minX,maxX,minZ,maxZ));}
+function nearbyFloors(world,minX,maxX,minZ,maxZ){
+ if(!world)return [];
+ if(!world.floorIndex)return localMeshes(world.floors,minX,maxX,minZ,maxZ);
+ return [...queryIndex(world.floorIndex,minX,maxX,minZ,maxZ)].filter(entry=>overlapsFootprint(entry.box,minX,maxX,minZ,maxZ)).map(entry=>entry.mesh);
 }
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
@@ -75,8 +92,12 @@ export class ServerBuilderCollision {
   for(const item of environment.builderScene?.objects||[]){if(isBasketball(item)||isWatercraft(item)||isAircraft(item))continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
+  // Procedural terrain has tens of thousands of triangles, just like an
+  // imported map. Reuse the same static ray tree for its frequent floor rays.
+  if(!glb)for(const mesh of floors)if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')&&!mesh.isInstancedMesh&&!Array.isArray(mesh.material))accelerateStaticRaycast(mesh,{respectMaterialSide:true});
   const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
-  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const floorIndex=indexWalls(floors.map(mesh=>{const box=meshBounds(mesh);return {mesh,box,minX:box.min.x,maxX:box.max.x,minZ:box.min.z,maxZ:box.max.z};}));
+  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex,glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
 
  }
  placedWorld(actors={},objects={}){
@@ -124,7 +145,10 @@ export class ServerBuilderCollision {
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects}={}){
   const world=this.world(environment),bounds=world.bounds;
   const dynamic=actors||objects?this.placedWorld(actors,objects).meshes:[];
-  const available=[...world.floors,...dynamic].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
+  // Vertical rays can only hit meshes whose actual footprint contains the
+  // query. AI driving makes many ground queries per tick on large maps.
+  const minX=point.x-.0001,maxX=point.x+.0001,minZ=point.z-.0001,maxZ=point.z+.0001;
+  const available=[...nearbyFloors(world,minX,maxX,minZ,maxZ),...localMeshes(dynamic,minX,maxX,minZ,maxZ)].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
   const meshes=available.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
   const startY=entry?bounds.max.y+2:point.y+maxRise;
   const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>placementHitNormal(THREE,hit)?.y>.55);
@@ -150,7 +174,7 @@ export class ServerBuilderCollision {
   const world=this.world(environment);
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects).triangles);
-  for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
+  for(const triangle of triangles.filter(triangle=>triangle.maxX>=point.x-radius&&triangle.minX<=point.x+radius&&triangle.maxZ>=point.z-radius&&triangle.minZ<=point.z+radius&&!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
   }
@@ -212,9 +236,13 @@ export class ServerBuilderCollision {
  }
  resolve(environment,previous,next,actors={},objects={}){
   const hasWorld=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
-  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployed=this.placedWorld(actors,{}).meshes;
+  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployedWorld=this.placedWorld(actors,{});
   if(!world&&!placed.floors.length)return next;
-  const meshes=[...(world?.floors||[]).filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)])),...placed.floors,...deployed];
+  const padding=PLAYER_RADIUS+.002,minX=Math.min(previous.x,next.x)-padding,maxX=Math.max(previous.x,next.x)+padding,minZ=Math.min(previous.z,next.z)-padding,maxZ=Math.max(previous.z,next.z)+padding;
+  // Sliding along an angled wall may project the endpoint outside the input's
+  // x/z rectangle. Its travel cannot exceed the requested motion's length.
+  const reach=Math.hypot(next.x-previous.x,next.z-previous.z)+padding,meshMinX=previous.x-reach,meshMaxX=previous.x+reach,meshMinZ=previous.z-reach,meshMaxZ=previous.z+reach;
+  const meshes=[...nearbyFloors(world,meshMinX,meshMaxX,meshMinZ,meshMaxZ).filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)])),...localMeshes(placed.floors,meshMinX,meshMaxX,meshMinZ,meshMaxZ),...localMeshes(deployedWorld.meshes,meshMinX,meshMaxX,meshMinZ,meshMaxZ)];
   const supportMeshes=meshes.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING|TARGET/i.test(mesh.name));
   const moving=Math.hypot(next.x-previous.x,next.z-previous.z)>1e-7,descending=next.y<=previous.y+.01;
   const floorAt=(point,maxRise=moving&&descending?MAX_STEP_HEIGHT:.025)=>{
@@ -251,7 +279,6 @@ export class ServerBuilderCollision {
   // Check existing support near the feet before looking for the next step.
   const previousFloor=floorAt(previous,.025),canStep=moving&&descending&&previousFloor&&Math.abs(previous.y-previousFloor.y)<=.04;
   const top=Math.max(previous.y,next.y)+PLAYER_HEIGHT-.025;
-  const padding=PLAYER_RADIUS+.002,minX=Math.min(previous.x,next.x)-padding,maxX=Math.max(previous.x,next.x)+padding,minZ=Math.min(previous.z,next.z)-padding,maxZ=Math.max(previous.z,next.z)+padding;
   const embedded=new Map();
   const startsInside=mesh=>{
    // A piece placed through a player must permit a controlled exit. Checking
@@ -271,7 +298,7 @@ export class ServerBuilderCollision {
    }
    return embedded.get(group);
   };
-  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployed.flatMap(wallTriangles)];
+  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles];
   const sweep=step=>{
    // Gravity is applied before this sweep. While the previous pose has floor
    // support, that provisional downward endpoint must not expose buried floor

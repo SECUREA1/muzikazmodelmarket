@@ -27,7 +27,7 @@ import {localMapLocations} from './public/js/local-map-locations.js';
 import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftInteractionPoint,watercraftInteractionReach} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
-import {RAD_TOX_SHOT_INTERVAL_MS,isCleanCommonsEnvironment} from './public/js/rad-tox-rules.js';
+import {RAD_TOX_SHOT_INTERVAL_MS,isCleanCommonsEnvironment,supportsWorldTools} from './public/js/rad-tox-rules.js';
 import {ensureFiringRange,registerFiringRangeArrival,joinFiringRange,watchFiringRange,configureFiringRange,startFiringRange,startFiringRangePractice,stopFiringRange,stepFiringRange,constrainFiringRangePlayer,rangeHandlesFire,fireFiringRange} from './server-firing-range.mjs';
 import {isDedicatedFiringRange,firingRangeLocationAt} from './public/js/firing-range.js';
 import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball,stepBasketball,basketballLaunchOptions,basketballShotSolution} from './public/js/basketball.js';
@@ -257,8 +257,8 @@ export class AuthoritativeRooms {
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
-   if(environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor||isCleanCommonsEnvironment(environment)){player.radToxEnabled=false;player.radToxReady=true;}
-   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)&&!isCleanCommonsEnvironment(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
+   if(supportsWorldTools(environment)){player.radToxEnabled=false;player.radToxReady=true;}
+   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)&&!supportsWorldTools(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
    room.building ||=buildingPolicy(room,environment);if(!room.building.hostId||!sim.players[room.building.hostId]||now-sim.players[room.building.hostId].lastSeen>=15000)room.building.hostId=actorId;
    result.message='Joined '+player.locationName;result.inputEpoch=player.inputEpoch;

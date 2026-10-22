@@ -22,6 +22,20 @@ for(const world of [airportWorld(),marina])test(world.name+' map travel and boar
  await assert.rejects(send(alice,'map-access',{locationId:world.builderScene.layoutMeta.locations[0].id}),/leave your vehicle/);
  await send(alice,'interact');await assert.rejects(send(alice,'map-access',{entityId:'missing'}),/unavailable/);await assert.rejects(send(alice,'map-access',{locationId:'missing'}),/listed/);
 });
+for(const world of [airportWorld(),marina])test(world.name+' allows tools immediately after a deferred combat join',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'transport-tools-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>100000});let request=0;
+ const user={accountId:'visitor',username:'Visitor',stats:{health:100}},send=(action,fields={})=>runtime.command(world.id,world,user,{action,requestId:'tools-'+ ++request,...fields});
+ // The explorer defers combat assets on every cold join, even in transport maps.
+ // A saved combat preference must not put those maps into a loading state.
+ const joined=await send('join',{deferRadTox:true,radToxEnabled:true});
+ assert.equal(joined.players['account:visitor'].radToxReady,true);
+ assert.equal(joined.players['account:visitor'].radToxEnabled,false);
+ const fired=await send('fire',{tool:'laser',direction:[0,1,0]});
+ assert.equal(fired.players['account:visitor'].ammo,119);
+ assert.equal(fired.events.at(-1).action,'fire');
+ assert.equal(fired.radTox,null);
+});
 test('transport floors preserve their authored materials and clear previous slime when switching maps',async()=>{
  const {EnvironmentLoader}=await import('../public/js/environments/environment-loader.js');const {createBuilderLand}=await import('../public/js/environments/builder-land.js');
  const loader=Object.create(EnvironmentLoader.prototype);
