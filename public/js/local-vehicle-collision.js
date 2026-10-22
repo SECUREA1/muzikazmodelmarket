@@ -2,6 +2,8 @@ import {isRoadVehicle,roadVehicleType} from './road-vehicles.js';
 import {Box3,Ray,Vector3} from '../vendor/three/three.module.min.js';
 import {isAircraft} from './aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftSize} from './harbor-water.js';
+import {isConstructionMachine} from './construction-state.js';
+import {constructionColliders,constructionBoxFromBounds,constructionMotionBlocked} from './construction-collision.js';
 
 const normal=new Vector3(),point=new Vector3(),down=new Vector3(0,-1,0);
 const value=source=>typeof source==='function'?source():source;
@@ -9,9 +11,10 @@ const owns=(group,id)=>id!=null&&(group.objectId===id||group.actorId===id||group
 const overlaps=(a,b)=>!a||a.min.x<=b.max.x&&a.max.x>=b.min.x&&a.min.y<=b.max.y&&a.max.y>=b.min.y&&a.min.z<=b.max.z&&a.max.z>=b.min.z;
 const boundsOf=group=>group.broadphaseBox||group.bounds||group.box;
 const active=group=>group.active!==false&&group.collisionDisabled!==true;
+const constructionBoundsCache=new WeakMap();
 // This only queries cached physical triangles and the map octree. It does not
 // traverse a scene, rebuild model meshes, or decide shared gameplay outcomes.
-export function createVehicleCollision({octree=null,triangleGroups=[],actors={},ignoreId=null,environment=null}={}){
+export function createVehicleCollision({octree=null,triangleGroups=[],actors={},players={},ignoreId=null,environment=null}={}){
  const origin=new Vector3(),direction=new Vector3(),end=new Vector3(),reverseOrigin=new Vector3(),reverseDirection=new Vector3(),ray=new Ray(),reverseRay=new Ray(),broadphase=new Box3();
  function hitMap(start,aim,distance){
   const map=value(octree);if(!map?.rayIntersect)return false;
@@ -32,9 +35,35 @@ export function createVehicleCollision({octree=null,triangleGroups=[],actors={},
   }
   return false;
  }
+ function machineryBlocked(from,to,yaw,actor){
+  const all=value(actors)||{},id=value(ignoreId)??actor.id,obstacles=[];
+  for(const group of value(triangleGroups)||[]){
+   if(!active(group)||owns(group,id))continue;
+   const objectId=group.objectId??group.actorId??group.root?.userData?.builderObjectId,other=all[objectId];
+   if(isConstructionMachine(other)||other?.constructionManaged)continue;
+   const bounds=boundsOf(group);if(!bounds||!['x','y','z'].every(axis=>Number.isFinite(bounds.min[axis])&&Number.isFinite(bounds.max[axis])))continue;
+   let box=constructionBoundsCache.get(group);if(!box){box=constructionBoxFromBounds(bounds,objectId);constructionBoundsCache.set(group,box);}obstacles.push(box);
+  }
+  for(const other of Object.values(all))if(other.id!==id&&other.active!==false)obstacles.push(...constructionColliders(other));
+  for(const [playerId,worker]of Object.entries(value(players)||{}))if(worker.health>0&&!worker.vehicleId&&!worker.replacedByRoom&&worker.position)obstacles.push(constructionBoxFromBounds({min:{x:worker.position.x-.3,y:worker.position.y,z:worker.position.z-.3},max:{x:worker.position.x+.3,y:worker.position.y+1.7,z:worker.position.z+.3}},playerId,'site-worker'));
+  const before={...actor,position:{...from}},after={...actor,position:{...to},rotation:{...actor.rotation,y:yaw}};
+  if(constructionMotionBlocked(before,after,obstacles))return true;
+  // Cached authored GLB terrain lives in the octree. Probe each mechanism's
+  // corners as well as its centre so reverse and turning envelopes are covered.
+  const oldParts=constructionColliders(before),newParts=constructionColliders(after);
+  for(let index=0;index<oldParts.length;index++){
+   const old=oldParts[index],next=newParts[index];if(!next)continue;
+   for(const signs of [[0,0,0],...[-1,1].flatMap(x=>[-1,1].flatMap(y=>[-1,1].map(z=>[x,y,z])))]){
+    const transform=(part,target)=>{const m=part.matrix,x=signs[0]*part.size.x/2,y=signs[1]*part.size.y/2,z=signs[2]*part.size.z/2;return target.set(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]);};
+    transform(old,origin);transform(next,end);direction.copy(end).sub(origin);const distance=direction.length();if(distance<.0001)continue;direction.multiplyScalar(1/distance);if(hitMap(origin,direction,distance+.01))return true;
+   }
+  }
+  return false;
+ }
  return {blocked(from,to,yaw=0,actor=null){
   if(!from||!to)return false;
   const road=isRoadVehicle(actor),config=roadVehicleType(actor),vessel=isWatercraft(actor),plane=isAircraft(actor),id=value(ignoreId)??actor?.id,all=value(actors)||{};
+  if(isConstructionMachine(actor))return machineryBlocked(from,to,yaw,actor);
   if(road&&Object.values(all).some(other=>other.id!==id&&other.active!==false&&isRoadVehicle(other)&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3))return true;
   if(vessel){
    if(Object.values(all).some(other=>other.id!==id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,actor,other)))return true;

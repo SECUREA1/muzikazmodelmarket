@@ -104,3 +104,10 @@ test('faster asymmetric boat replies never retime the established movement clock
  }
  assert.ok(view.actor.position.z<before.z);
 });
+
+test('construction travel prediction obeys raised-body and active-work interlocks before a server reply',()=>{
+ const view=new LocalVehicleView(),actor={id:'truck',modelId:'site-dumptruck',holderId:'me',active:true,position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},construction:{kind:'truck',bed:.6},driving:{speed:0,parked:true}},saved=structuredClone(actor),options={groundAt:point=>({...point,y:0}),blocked:()=>false};
+ view.reconcile(actor,{serverTime:1000,receivedAt:0});view.sample(0,0,{forward:1},options);const held=view.sample(100,.1,{forward:1},options);assert.equal(held.position.z,0);assert.equal(held.driving.speed,0);assert.deepEqual(actor,saved);
+ const working={...actor,construction:{kind:'truck',bed:0,workCycle:{mode:'dump'}}};view.reconcile(working,{serverTime:1100,receivedAt:100});const stopped=view.sample(200,.1,{forward:1},options);assert.equal(stopped.position.z,0);
+ view.reconcile({...actor,construction:{kind:'truck',bed:0}},{serverTime:1200,receivedAt:200});const moving=view.sample(300,.1,{forward:1},options);assert.ok(moving.position.z<0,'lowering the body and ending the cycle restores driving');
+});

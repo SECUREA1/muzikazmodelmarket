@@ -32,3 +32,18 @@ test('ground support uses cached walkable triangles, skips own surfaces and retu
  const collision=createVehicleCollision({triangleGroups:[groupFor(floor,'floor'),groupFor(raised,'own-plane')],ignoreId:'own-plane'});assert.ok(Math.abs(collision.groundAt({x:0,y:5,z:0},plane).y-2.02)<1e-8);assert.equal(collision.groundAt({x:30,y:5,z:0},plane),null);
  const tree=new Octree().fromGraphNode(floor);assert.ok(Math.abs(createVehicleCollision({octree:tree}).groundAt({x:0,y:5,z:0}).y-2.02)<1e-8);
 });
+
+test('construction prediction sweeps reverse and turning mechanical envelopes and ignores its own mesh',()=>{
+ const truck={id:'truck',modelId:'site-dumptruck',position:{x:0,y:0,z:0},rotation:{y:0},construction:{kind:'truck',bed:0},driving:{steering:0}},wall=new Mesh(new BoxGeometry(15,4,.03),new MeshBasicMaterial());wall.position.set(0,2,9);const group=groupFor(wall,'barrier');
+ assert.equal(createVehicleCollision({triangleGroups:[group]}).blocked(truck.position,{x:0,y:0,z:10},0,truck),true,'reverse travel cannot tunnel a raised dump chassis through a barrier');
+ assert.equal(createVehicleCollision({triangleGroups:[{...group,objectId:'truck'}]}).blocked(truck.position,{x:0,y:0,z:10},0,truck),false);
+ const dozer={id:'dozer',modelId:'site-bulldozer',position:{x:0,y:0,z:0},rotation:{y:0},construction:{kind:'bulldozer',blade:1}},post=new Mesh(new BoxGeometry(.08,2,.08),new MeshBasicMaterial());post.position.set(-3.3,1,-2);
+ assert.equal(createVehicleCollision({triangleGroups:[groupFor(post,'post')]}).blocked(dozer.position,dozer.position,Math.PI/4,dozer),true,'pivoting a track machine checks its blade arc even with no chassis translation');
+ wall.geometry.dispose();wall.material.dispose();post.geometry.dispose();post.material.dispose();
+});
+
+test('construction prediction protects other operators with their live standing envelope',()=>{
+ const truck={id:'truck',modelId:'site-dumptruck',position:{x:0,y:0,z:0},rotation:{y:0},construction:{kind:'truck',bed:0}},worker={health:100,vehicleId:null,position:{x:0,y:0,z:8}};
+ assert.equal(createVehicleCollision({players:{worker}}).blocked(truck.position,{x:0,y:0,z:8},0,truck),true);
+ assert.equal(createVehicleCollision({players:{worker:{...worker,vehicleId:'other'}}}).blocked(truck.position,{x:0,y:0,z:8},0,truck),false);
+});

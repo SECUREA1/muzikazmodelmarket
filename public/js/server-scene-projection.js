@@ -5,6 +5,7 @@ import {isAircraft} from './aircraft-flight.js';
 import {placementBounds} from './placed-item-collision.js';
 import {ServerMotion} from './server-motion.js';
 import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
+import {constructionOperatorPose} from './construction-kinematics.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
@@ -35,6 +36,8 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=D
 
 export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
+ if(actor.construction){root.userData.construction=actor.construction;root.traverse(child=>{if(child.userData.constructionModel){child.userData.construction=actor.construction;child.userData.driving=actor.driving||{};}});}
+ if(actor.constructionStructure?.kind==='facade')root.traverse(mesh=>{if(mesh.isMesh){mesh.userData.collider=true;mesh.userData.collisionOnly=true;mesh.castShadow=false;for(const material of [].concat(mesh.material||[]))material.visible=false;}});
  if(actor.questContact){root.userData.questContact=true;root.userData.questSpeaking=!!actor.speaking;}
  if(isRoadVehicle(actor)){root.userData.driving=actor.driving||{};if(!root.userData.roadDriver){const driver=seatedPilot(),seat=roadVehicleType(actor).seat;driver.position.set(seat[0],seat[1]-.89,seat[2]-.63);root.add(driver);root.userData.roadDriver=driver;}root.userData.roadDriver.visible=!!actor.holderId&&actor.holderId!==localId;}
  const state=root.userData,offset=state.serverRenderOffset||{};if(isAircraft(actor)){updateAircraftSeat(root,actor,{selfId:localId});root.rotation.order='YXZ';state.aircraftFlight=actor.flight||{};state.aircraftHealth=actor.health;}
@@ -48,6 +51,10 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
   for(const axis of ['x','y','z'])if(Number.isFinite(actor.scale[axis])&&actor.scale[axis]>0)root.scale[axis]*=actor.scale[axis]/(previous[axis]||1);
   state.serverAppliedScale={...actor.scale};
  }
+ if(actor.construction&&state.roadDriver){
+  const pose=constructionOperatorPose({...actor,position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1}});
+  if(pose){state.roadDriver.rotation.y=pose.yaw;state.roadDriver.position.set(pose.seat.x-Math.sin(pose.yaw)*.63,pose.seat.y-.89,pose.seat.z-Math.cos(pose.yaw)*.63);}
+ }
  // Preserve each material's authored lighting until a server interaction changes it.
  const paintChanged=state.serverPaint!==actor.paint,switchedChanged=state.serverSwitched!==actor.switched;
  const collisionChanged=state.serverCollisionDisabled!==(!root.visible||!!actor.open);
@@ -55,7 +62,7 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
   if(!mesh.isMesh)return;
   mesh.userData.serverBaseCollisionDisabled??=mesh.userData.collisionDisabled===true;mesh.userData.collisionDisabled=mesh.userData.serverBaseCollisionDisabled||!root.visible||!!actor.open;
   for(const material of [].concat(mesh.material||[])){
-   if(paintChanged&&actor.paint!==undefined&&material.color&&!mesh.userData.aircraftPilot)material.color.setHex(actor.paint);
+   if(paintChanged&&actor.paint!==undefined&&material.color&&!mesh.userData.aircraftPilot&&!mesh.userData.collisionOnly)material.color.setHex(actor.paint);
    if(switchedChanged&&actor.switched!==undefined&&material.emissive){material.userData ||= {};material.userData.serverBaseEmissive ??= material.emissiveIntensity;material.emissiveIntensity=actor.switched?Math.max(1.5,material.userData.serverBaseEmissive):material.userData.serverBaseEmissive;}
   }
  });
@@ -108,7 +115,9 @@ export function disposeServerEnemyProjection(root) {
 // Keep authored model size and floor offsets inside a transformable anchor.
 export function anchorServerAsset(THREE,content){
  content.updateMatrixWorld(true);const bounds=placementBounds(THREE,content);const bottom=(bounds.isEmpty()?new THREE.Box3().setFromObject(content):bounds).min.y;
- if(Number.isFinite(bottom))content.position.y-=bottom;
+ // Mechanical frames use a shared chassis datum, including wheel contact.
+ // Moving it to the lowest animated part would desynchronize cabs and colliders.
+ if(Number.isFinite(bottom)&&!content.userData.constructionModel)content.position.y-=bottom;
  const root=new THREE.Group();root.add(content);
  if(content.userData.serverMixer){root.userData.serverMixer=content.userData.serverMixer;root.userData.serverMixerRoot=content;delete content.userData.serverMixer;}
  return root;
