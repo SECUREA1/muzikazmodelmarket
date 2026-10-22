@@ -17,11 +17,18 @@ export function layoutHeight(layout, x, z) {
       return ripple + 1.1 * Math.exp(-(x * x + z * z) / 85);
 }
 
+const planarColliders=new WeakMap();
+// Visual ground keeps its vertex artwork; flat physics needs only two triangles.
+export function layoutCollisionGeometry(geometry){
+ if(!geometry?.userData?.planarCollision)return geometry;
+ let collider=planarColliders.get(geometry);if(!collider){collider=new THREE.PlaneGeometry(geometry.parameters.width,geometry.parameters.height);planarColliders.set(geometry,collider);}return collider;
+}
 export function layoutSize(value) { return Math.max(40,Math.min(512,Number(value)||40)); }
 // World-space sampling is identical in the editor, browser and server.
 export function createLayoutTerrain(layout, size, color=0x315b32) {
  size=layoutSize(size);const segments=Math.min(160,Math.max(80,Math.round(size)));
  const geometry=new THREE.PlaneGeometry(size,size,segments,segments),positions=geometry.attributes.position,colors=[];
+ geometry.userData.planarCollision=['grand-floor','community-park','basketball-stadium','basketball-arena','firing-range'].includes(layout)||layout.startsWith('urban-')||layout.startsWith('camp-');
  const base=new THREE.Color(color),tint=new THREE.Color();
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),z=-positions.getY(i),height=layoutHeight(layout,x,z);
