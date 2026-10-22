@@ -200,7 +200,7 @@
       heartbeat().then(loadChat).catch(error=>{status.textContent=error.message;});
     } else {
       document.documentElement.classList.remove('crib-chat-composing');
-      if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
+      if(!document.querySelector('dialog[open]:not([data-gameplay-blocking="false"])'))document.documentElement.classList.remove('game-menu-open');
       window.dispatchEvent(new CustomEvent('muzikaz:chat-panel',{detail:{open:false}}));
       document.querySelector('.house-explorer-shell')?.style.removeProperty('--crib-locked-game-height');
       document.documentElement.style.removeProperty('--crib-visual-top');

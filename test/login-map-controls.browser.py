@@ -280,8 +280,10 @@ async def exercise_world(browser, base, world, index):
             craft = dialog.locator('[data-craft-choices] button[data-name*="Diamond"]') if world == 'muzikaz-airport' else dialog.locator('[data-craft-choices] button[data-name="Neon Launch"]')
             before = len(responses)
             await craft.first.tap()
-            await dialog.wait_for(state='hidden')
             boarded = await wait_for_ack(responses, before, lambda row: row['request'].get('action') == 'map-access' and row['state'].get('players', {}).get(row['state'].get('selfId'), {}).get('vehicleId'), 'Craft selection did not board a real shared vehicle.')
+            assert await dialog.is_visible(), 'Boarding must keep the map open.'
+            await dialog.get_by_role('button', name='Close', exact=True).tap()
+            await dialog.wait_for(state='hidden')
             report['boardedVehicle'] = boarded['state']['players'][boarded['state']['selfId']]['vehicleId']
             functions = 'Show flight controls' if world == 'muzikaz-airport' else 'Show boat functions'
             await page.get_by_role('button', name=functions, exact=True).tap()

@@ -47,6 +47,7 @@ async def main():
                                     race.armed=false;race.sequence=state.sequence;race.epoch=state.inputEpoch||state.result?.inputEpoch;race.processed=true;
                                     await new Promise(resolve=>{race.release=resolve;});
                                     if(race.drop)throw new TypeError('Simulated lost map response');
+                                    race.delivered=true;
                                 }
                                 if(body.action==='input'&&response.ok){
                                     race.inputs.push(body);const self=state.players?.[state.selfId];if(self)race.positions.push(self.position);
@@ -63,7 +64,7 @@ async def main():
                         print(world + ': live scene ready for reordered map replies.', flush=True)
 
                         for drop in [False, True]:
-                            await page.evaluate('(drop)=>Object.assign(travelRace,{armed:true,drop,processed:false,overtaken:false,released:false,sequence:null,epoch:null})',drop)
+                            await page.evaluate('(drop)=>Object.assign(travelRace,{armed:true,drop,processed:false,overtaken:false,released:false,delivered:false,sequence:null,epoch:null})',drop)
                             await page.locator('.district-map-toggle').click()
                             dialog = page.locator('.district-map-dialog')
                             # Use a real listed map destination. Its asynchronous
@@ -82,7 +83,10 @@ async def main():
                             await page.evaluate('()=>{travelRace.released=true;travelRace.release();}')
                             if drop:
                                 await page.wait_for_function('document.querySelector(".local-map-status")?.textContent.includes("Travel could not complete")')
-                                await dialog.get_by_role('button', name='Close', exact=True).click()
+                            else:
+                                await page.wait_for_function('travelRace.delivered')
+                            assert await dialog.is_visible(), 'Travel results must not automatically close the map.'
+                            await dialog.get_by_role('button', name='Close', exact=True).click()
                             await dialog.wait_for(state='hidden')
                             await page.locator('#house-explorer-canvas').focus()
                             await page.wait_for_timeout(400)

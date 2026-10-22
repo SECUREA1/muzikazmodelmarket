@@ -25,6 +25,8 @@ try:
    page.wait_for_function("[...document.querySelectorAll('[data-craft-choices] img')].every(i=>i.complete&&i.naturalWidth>0)")
    assert page.locator('[data-craft-choices] img').evaluate_all('(images)=>images.every(i=>i.complete&&i.naturalWidth>0)')
    page.get_by_role('button',name='Board '+name,exact=True).click()
+   assert page.locator('.district-map-dialog').is_visible(), 'Boarding must keep the map open'
+   page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
    assert page.get_by_role('region',name='Road vehicle dashboard').is_visible()
    page.get_by_role('button',name='Road quests and live objectives',exact=True).click()
    assert page.get_by_label('Quest activity filter').input_value()=='road'

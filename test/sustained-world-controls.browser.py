@@ -152,8 +152,10 @@ async def board_exit(page, rows, world):
     craft = dialog.locator('[data-craft-choices] button[data-name*="Diamond"]') if world=='muzikaz-airport' else dialog.locator('[data-craft-choices] button[data-name="Neon Launch"]')
     before = len(rows)
     await craft.first.tap()
-    await dialog.wait_for(state='hidden')
     boarded = await wait_reply(rows,before,lambda row:row.get('ok') and row.get('action')=='map-access' and row.get('self',{}).get('vehicleId'),'Vehicle boarding was not confirmed.')
+    assert await dialog.is_visible(), 'Boarding must keep the map open until the player closes it.'
+    await dialog.get_by_role('button',name='Close',exact=True).tap()
+    await dialog.wait_for(state='hidden')
     functions_toggle = page.locator('.aircraft-controls-toggle' if world=='muzikaz-airport' else '.harbor-functions-toggle')
     await functions_toggle.wait_for(state='visible')
     exit_button = page.get_by_role('button',name='Exit parked aircraft' if world=='muzikaz-airport' else 'Leave stopped boat',exact=True)

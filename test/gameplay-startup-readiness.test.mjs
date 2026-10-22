@@ -86,14 +86,16 @@ test('world navigation stays disabled through joining and restores only for a co
  assert.equal(context.gameplayControlsReady(),false,'a room reply alone does not complete gameplay startup');
  context.gameplayStarted=true;context.setGameplayReadiness();assert.equal(readinessChanges.at(-1),true);assert.ok([...controls.values()].every(control=>!control.disabled));
  context.multiplayerWorldLoading=true;context.setGameplayReadiness();assert.equal(readinessChanges.at(-1),false);
- context.multiplayerWorldLoading=false;context.authoritativeClient.ready=false;assert.equal(context.gameplayControlsReady(),false);
+ context.multiplayerWorldLoading=false;context.authoritativeClient.ready=false;assert.equal(context.gameplayControlsReady(),true,'a joined player keeps controls during transport recovery');
+ context.authoritativeClient=null;assert.equal(context.gameplayControlsReady(),false,'a disposed room does not accept gameplay input');
  context.serverHostedRoom=false;assert.equal(context.gameplayControlsReady(),true,'solo startup needs no room connection');
 });
 
-test('an accepted input response restores navigation after transient recovery without another status event',async()=>{
+test('transient connection recovery never locks navigation or changes map visibility',async()=>{
  const {context,controls,readinessChanges}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true}});
  context.setGameplayReadiness();context.authoritativeClient.ready=false;context.setGameplayReadiness();
- assert.equal(controls.get('house-world-button').disabled,true);
+ assert.equal(controls.get('house-world-button').disabled,false);
+ assert.deepEqual(readinessChanges,[true],'transport status does not close the maps');
  // The gameplay renderer runs before connectAuthoritativeRoom confirms ready.
  // Exercise its real entry hook without constructing unrelated scene meshes.
  const renderEntry=section('  function renderServerRoom(snapshot,selfId,timing={}){','skiResortControls.update');
@@ -102,6 +104,20 @@ test('an accepted input response restores navigation after transient recovery wi
  await turns();
  assert.equal(controls.get('house-world-button').disabled,false);assert.equal(readinessChanges.at(-1),true);
  const changes=readinessChanges.length;context.setGameplayReadiness();assert.equal(readinessChanges.length,changes,'unchanged heartbeats do not rebuild map readiness');
+});
+
+test('same-world map travel does not release held game controls',async()=>{
+ const reply=deferred(),{context,effects}=commandFixture(reply);
+ const pending=context.serverCommand('map-access',{locationId:'court'});
+ reply.resolve({result:{message:'Arrived'}});await pending;
+ assert.deepEqual(effects,[['resident',false],['transport']]);
+});
+
+test('a joined room still rejects commands during a real network interruption',async()=>{
+ const reply=deferred(),{context,effects,statuses,client}=commandFixture(reply);
+ client.ready=false;
+ assert.equal(await context.serverCommand('map-access',{locationId:'court'}),false);
+ assert.deepEqual(effects,[]);assert.match(statuses[0],/Waiting for the shared server/);
 });
 
 test('early navigation cannot stop the pending room join or start a second world load',async()=>{

@@ -113,12 +113,17 @@ try:
     first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
     toggle=page.get_by_role('button',name='Show or hide construction dashboard',exact=True);toggle.click();neutral(page);page.keyboard.up(directions[0][1])
     assert not panel.is_visible();assert toggle.is_visible();assert 'controls' in toggle.inner_text().lower();toggle.click();compact_geometry(page,kind,width,height)
-    # Full HUD hiding also stops work, and hidden pads cannot publish new input.
+    # Removed global eye state must not hide or lock the machine dashboard.
     first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
-    page.evaluate('setHudHidden(true)');neutral(page);page.keyboard.up(directions[0][1]);assert not panel.is_visible()
+    page.evaluate('setLegacyHudHidden(true)');page.wait_for_timeout(120);assert panel.is_visible()
+    assert page.evaluate('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
+    page.keyboard.up(directions[0][1]);neutral(page);page.evaluate('setLegacyHudHidden(false)')
+    # Actual modal menus stop work, and obscured pads cannot publish new input.
+    first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
+    page.evaluate('setBlockingMenu(true)');neutral(page);page.keyboard.up(directions[0][1]);assert panel.is_visible()
     page.evaluate('clearCalls();document.querySelector(".construction-work-sticks .construction-stick").dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowUp",bubbles:true,cancelable:true}))')
     assert not page.evaluate('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
-    page.evaluate('setHudHidden(false)');assert panel.is_visible()
+    page.evaluate('setBlockingMenu(false)');assert panel.is_visible()
     if kind!='crane':
      # Switching from a held work pad to Drive stops hydraulics and swaps areas.
      first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)');mode(page,'drive');neutral(page);page.keyboard.up(directions[0][1])
@@ -128,12 +133,12 @@ try:
      page.keyboard.up('ArrowRight');page.keyboard.up('ArrowUp');page.wait_for_function('dashboard.inputs()===null')
      immediate=page.evaluate('''()=>{const stick=document.querySelector('.construction-travel-stick'),key=(type,value)=>stick.dispatchEvent(new KeyboardEvent(type,{key:value,bubbles:true,cancelable:true}));inputCalls.length=0;key('keydown','ArrowUp');key('keydown','ArrowRight');key('keyup','ArrowRight');key('keyup','ArrowUp');return structuredClone(inputCalls);}''')
      assert len(immediate)==4 and immediate[0]['forward']==1 and immediate[1]['side']==1 and immediate[-1]['forward']==0 and immediate[-1]['side']==0,(kind,'travel edge was delayed',immediate)
-     # Work/Drive, blur, machine hide and full HUD hide publish neutral travel now.
+     # Work/Drive, blur, local machine hide and actual modals neutralize travel.
      for stop,restore in [
       (lambda:mode(page,'work'),lambda:mode(page,'drive')),
       (lambda:page.evaluate('window.dispatchEvent(new Event("blur"))'),lambda:None),
       (lambda:toggle.click(),lambda:toggle.click()),
-      (lambda:page.evaluate('setHudHidden(true)'),lambda:page.evaluate('setHudHidden(false)'))
+      (lambda:page.evaluate('setBlockingMenu(true)'),lambda:page.evaluate('setBlockingMenu(false)'))
      ]:
       travel.focus();page.evaluate('inputCalls.length=0');page.keyboard.down('ArrowUp');page.wait_for_function('dashboard.inputs()?.forward>0');stop();assert page.evaluate('dashboard.inputs()') is None
       assert page.evaluate('inputCalls.at(-1).forward===0&&inputCalls.at(-1).side===0');page.keyboard.up('ArrowUp');restore()

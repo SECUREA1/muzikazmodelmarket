@@ -2,6 +2,7 @@ import {isWatercraft} from './harbor-water.js';
 import {sportIcon} from './sports-action-bar.js';
 import {resolveVehicleAction} from './vehicle-actions.js';
 import {harborDestinations} from './harbor-destinations.js';
+import {gameplayOverlayOpen} from './game-menu-controls.js';
 let harborControlCount=0;
 const setText=(node,value)=>{value=String(value);if(node.textContent!==value)node.textContent=value;};
 const setHidden=(node,value)=>{value=!!value;if(node.hidden!==value)node.hidden=value;};
@@ -19,7 +20,7 @@ export function mountHarborOperations({stage,command,onView=()=>{},announce=()=>
  let enabled=false,latest=null,environment=null,actors={},identity=null,power=null,trim=null,anchor=null,ahead=0,view='helm',generation=0,manualRevision=0,collapsed=true,pendingAction=false,cancelPending=null,exitPending=null,disposed=false;
  const status=dialog.querySelector('[data-state]'),powerInput=dialog.querySelector('[data-power]'),trimInput=dialog.querySelector('[data-trim]'),anchorButtons=[],overrideButtons=[];
  const active=()=>enabled&&isWatercraft(latest)&&latest.active!==false;
- const blocked=(allowOwnDialog=false)=>!!document.querySelector('#crib-chat-panel:not([hidden])')||[...document.querySelectorAll('dialog[open]')].some(open=>!allowOwnDialog||open!==dialog);
+ const blocked=(allowOwnDialog=false)=>gameplayOverlayOpen(document,{except:allowOwnDialog?dialog:null});
  let renderedCollapse=null;
  const instrumentRows=new Map();
  const routeDialog=document.createElement('dialog');routeDialog.className='harbor-route-dialog';routeDialog.setAttribute('aria-label','Sailing destinations');routeDialog.innerHTML='<header><h2>Sail the harbor</h2><button type="button" data-route-close>Close</button></header><p>Choose a water-side approach. Everyone stays in this live room.</p><div data-route-map></div><div class="harbor-route-options" data-route-options></div><p class="harbor-route-help">Steer, change power, or choose Manual to take the helm.</p>';document.body.append(routeDialog);

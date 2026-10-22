@@ -1,4 +1,5 @@
 import {shortcutIcon} from './menu-shortcut-icons.js';
+import {gameplayOverlayOpen} from './game-menu-controls.js';
 // Native modal dialogs provide focus containment, Escape handling and inert
 // background content. The existing panel owns its open/closed state.
 export function decorateMenuClose(button,label='Close menu'){
@@ -25,8 +26,8 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
     if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true;
     if(dialog.open)dialog.close();
     if(panel.id)document.querySelectorAll?.('[aria-controls]').forEach(trigger=>{if((trigger.getAttribute('aria-controls')||'').split(/\s+/).includes(panel.id))trigger.setAttribute('aria-expanded','false');});
-    if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
-    if(wasOpen){wasOpen=false;onClose();if(returnFocus?.isConnected&&!document.querySelector('dialog[open]'))returnFocus.focus({preventScroll:true});}
+    if(!gameplayOverlayOpen())document.documentElement.classList.remove('game-menu-open');
+    if(wasOpen){wasOpen=false;onClose();if(returnFocus?.isConnected&&!gameplayOverlayOpen())returnFocus.focus({preventScroll:true});}
   };
   const sync = () => {
     const label=panel.getAttribute('aria-label')||'Game menu';dialog.setAttribute('aria-label',label);title.textContent=panel.id==='rad-tox-tools'?'Tools':label;close.setAttribute('aria-label','Close '+label);close.title='Close '+label;
@@ -34,7 +35,7 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
       const host=document.fullscreenElement || document.body;
       if(dialog.parentElement!==host)host.append(dialog);
       returnFocus=document.activeElement;
-      document.querySelectorAll('dialog[open]').forEach(other=>{if(other!==dialog)other.close();});
+      document.querySelectorAll('dialog[open]').forEach(other=>{if(other!==dialog&&other.dataset.gameplayBlocking!=='false')other.close();});
       onOpen();dialog.showModal();wasOpen=true;
       if(panel.id)document.querySelectorAll?.('[aria-controls]').forEach(trigger=>{if((trigger.getAttribute('aria-controls')||'').split(/\s+/).includes(panel.id))trigger.setAttribute('aria-expanded','true');});document.documentElement.classList.add('game-menu-open');
     } else if(!isVisible() && dialog.open)hide();
@@ -45,7 +46,7 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
   dialog.addEventListener('close',()=>{
     if(dialog.open)return;
     hide();
-    if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
+    if(!gameplayOverlayOpen())document.documentElement.classList.remove('game-menu-open');
   });
   const observer=new MutationObserver(sync);
   observer.observe(panel,{attributes:true,attributeFilter:['hidden','class']});

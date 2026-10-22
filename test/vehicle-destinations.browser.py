@@ -25,11 +25,14 @@ try:
   page.locator('[data-vehicle-destination="north-runway"]').click()
   assert page.evaluate('commands.at(-1).action')=='vehicle-navigate'
   assert page.evaluate('commands.at(-1).destinationId')=='north-runway'
+  assert page.locator('.district-map-dialog').is_visible(), 'Starting a route must keep the map open'
+  page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
   page.evaluate("map.update(harbor);map.updateLive({actors:{boat:{id:'boat',modelId:'harbor-yacht',active:true}},players:{pilot:{id:'pilot',position:{x:141,y:.35,z:99},vehicleId:'boat'}}},'pilot')")
   page.locator('.district-map-toggle').click();page.wait_for_selector('[data-vehicle-destination="beacon-east-dock"]')
   assert page.locator('[data-vehicle-destination]').count()==4
   page.locator('[data-vehicle-destination="palm-south-dock"]').click()
   assert page.evaluate('commands.at(-1).destinationId')=='palm-south-dock'
+  assert page.locator('.district-map-dialog').is_visible()
   assert not errors,errors
   browser.close()
  print('Map buttons select relevant aircraft and yacht automatic routes successfully.')

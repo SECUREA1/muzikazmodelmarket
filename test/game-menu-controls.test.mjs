@@ -12,6 +12,16 @@ test('visible popups block action controls while hidden panels do not',()=>{
  assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[node(false)]}),true);
  assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[{...node(false),checkVisibility:()=>false}]}),false);
 });
+test('companion maps share game input while actual modal dialogs still block it',()=>{
+ const map={localName:'dialog',open:true,hidden:false,dataset:{gameplayBlocking:'false'},matches:()=>false,closest:()=>null,getClientRects:()=>[{}]};
+ const root={querySelectorAll:()=>[map]};
+ assert.equal(gameplayOverlayOpen(root),false,'an open companion map does not pause gameplay');
+ map.matches=selector=>selector===':modal';
+ assert.equal(gameplayOverlayOpen(root),true,'a native modal must retain its input boundary');
+ assert.equal(gameplayOverlayOpen(root,{except:map}),false,'a dialog may use its own controls');
+ map.matches=()=>false;delete map.dataset.gameplayBlocking;
+ assert.equal(gameplayOverlayOpen(root),true,'ordinary tools and purchase dialogs keep their input boundary');
+});
 test('radial menu retains original tool buttons and compact actions share touch and keyboard activation',async()=>{
  const module=await readFile(new URL('../public/js/game-menu-controls.js',import.meta.url),'utf8'),game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  assert.ok(module.includes('wheel.append(button)'));assert.ok(!module.includes('cloneNode'));

@@ -110,8 +110,17 @@ async def main():
                         await page.locator('.district-map-toggle').evaluate('(button) => button.click()')
                         await page.get_by_role('button', name='Vehicles', exact=True).click()
                         craft = page.locator('[data-craft-choices] button[data-name*="Diamond"]') if world == 'muzikaz-airport' else page.locator('[data-craft-choices] button[data-name="Neon Launch"]')
-                        await craft.first.click()
-                        await page.locator('.district-map-dialog').wait_for(state='hidden')
+                        async with page.expect_response(lambda reply: '/gameplay' in reply.url and reply.request.method == 'POST' and (reply.request.post_data_json or {}).get('action') == 'map-access') as boarded:
+                            await craft.first.click()
+                        response = await boarded.value
+                        assert response.ok, (world, 'boarding rejected', response.status)
+                        payload = await response.json()
+                        state = payload.get('data', payload)
+                        assert state.get('players', {}).get(state.get('selfId'), {}).get('vehicleId'), (world, 'boarding was not authoritative')
+                        dialog = page.locator('.district-map-dialog')
+                        assert await dialog.is_visible(), 'Boarding must keep the map open.'
+                        await dialog.get_by_role('button', name='Close', exact=True).click()
+                        await dialog.wait_for(state='hidden')
                         functions_name = 'Show flight controls' if world == 'muzikaz-airport' else 'Show boat functions'
                         await page.get_by_role('button', name=functions_name, exact=True).click()
                         exit_vehicle = page.get_by_role('button', name='Exit parked aircraft', exact=True) if world == 'muzikaz-airport' else page.get_by_role('button', name='Leave stopped boat', exact=True)

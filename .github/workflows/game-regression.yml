@@ -76,10 +76,19 @@ jobs:
           python test/xr-visibility.browser.py
           python test/mobile-map-layout.browser.py
           python test/map-readiness.browser.py
+          python test/vehicle-companion-map.browser.py
+          python test/fullscreen-panels.browser.py
+          python test/game-display-flow.browser.py
           python test/local-map-resource-lifecycle.browser.py
           python test/login-map-controls.browser.py
           python test/sustained-world-controls.browser.py --fault stale-input
           python test/sustained-world-controls.browser.py --world muzikaz-airport --seconds 1 --fault timeout --page-fullscreen
+          python test/nonblocking-map-controls.browser.py --page-fullscreen
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nonblocking-map-controls-results
+          path: /tmp/nonblocking-map-controls-results.json
   world-input:
     runs-on: ubuntu-latest
     timeout-minutes: 40

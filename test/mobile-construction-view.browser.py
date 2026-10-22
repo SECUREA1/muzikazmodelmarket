@@ -111,6 +111,8 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                         page.locator('[data-craft-id="' + machine_id + '"]').click()
                         panel = page.locator('.construction-controls')
                         panel.wait_for(state='visible')
+                        assert page.locator('.district-map-dialog').is_visible(), 'Boarding must keep the map open'
+                        page.locator('.district-map-dialog').get_by_role('button', name='Close', exact=True).click()
                         assert panel.bounding_box()['height'] <= 252
                         viewport_toggle = page.locator('.game-viewport-toggle')
                         viewport_toggle.scroll_into_view_if_needed()
@@ -179,33 +181,26 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                             else:
                                 raise AssertionError('Work lever did not move the server joint')
 
-                            # Global hide must release held controls and retain a usable restore affordance.
+                            # Releasing a lever stops it without a global button
+                            # that can hide or lock maps and the controller dock.
                             start = len(requests)
-                            page.locator('.game-hud-toggle').click()
                             page.keyboard.up(key)
                             wait_request(lambda item: item.get('operation') == 'control' and not any(item.get('axes', {}).values()), start)
-                            assert page.locator('.house-stage').get_attribute('data-hud-hidden') == 'true'
-                            assert not panel.is_visible()
-                            assert not page.locator('.house-control-dock').is_visible()
-                            assert not page.locator('.live-local-map').is_visible()
-                            hidden_canvas = page.locator('#house-explorer-canvas').bounding_box()
-                            assert hidden_canvas['height'] >= geometry['stage']['height'] - 1, 'Hide shrank the game canvas'
-                            assert hit_test(viewport_toggle), 'Global hide also hid fullscreen control'
-                            restore = page.get_by_role('button', name='Show game controls', exact=True)
-                            assert hit_test(restore)
-                            bounds = restore.bounding_box()
-                            assert bounds['height'] >= 44 and bounds['width'] >= 44
-                            # A new incoming vehicle panel cannot escape the global hidden state.
+                            assert page.locator('.game-hud-toggle').count() == 0
+                            assert page.locator('.house-stage').get_attribute('data-hud-hidden') is None
+                            assert panel.is_visible()
+                            assert page.locator('.house-control-dock').is_visible()
+                            assert page.locator('.live-local-map').is_visible()
+                            assert page.locator('.district-map-toggle').is_visible()
+                            assert hit_test(viewport_toggle)
+                            # Incoming controls stay usable instead of inheriting
+                            # a global hidden state from an unrelated button.
                             page.evaluate("""() => {const incoming=document.createElement('section');incoming.className='road-vehicle-controls';incoming.id='test-incoming-controls';incoming.innerHTML='<button>Incoming machine</button>';document.querySelector('.house-stage').append(incoming);} """)
                             page.wait_for_selector('.game-display-flow #test-incoming-controls', state='attached')
-                            assert not page.locator('#test-incoming-controls').is_visible()
+                            assert page.locator('#test-incoming-controls').is_visible()
                             page.locator('#test-incoming-controls').evaluate('element=>element.remove()')
                             page.wait_for_timeout(300)
-                            assert not panel.is_visible(), 'Snapshot resurrected hidden controls'
-                            if (width, height) == (390, 844):
-                                page.screenshot(path='/tmp/mobile-construction-hidden-390x844.png')
-                            restore.click()
-                            assert panel.is_visible()
+                            assert panel.is_visible(), 'Snapshot hid the current machine controls'
                             assert hit_test(panel.locator('[data-operation=park]'))
 
                             # Work/Drive mode changes release the live travel input.

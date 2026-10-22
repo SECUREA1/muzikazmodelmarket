@@ -11,8 +11,14 @@ function overlayNodes(root){
  }
  state.collect(state.observer.takeRecords());return state.nodes;
 }
-export function gameplayOverlayOpen(root=document){
- for(const node of overlayNodes(root))if(!(node.localName==='dialog'&&!node.open)&&!node.hidden&&!node.closest('[hidden]')&&node.getClientRects().length>0&&(!node.checkVisibility||node.checkVisibility({visibilityProperty:true})))return true;
+export function gameplayOverlayOpen(root=document,{except=null}={}){
+ for(const node of overlayNodes(root)){
+  if(node===except)continue;
+  // Companion maps share input with the game. A real modal still owns input,
+  // even if a caller accidentally leaves the companion marker on it.
+  if(node.dataset?.gameplayBlocking==='false'&&!node.matches?.(':modal'))continue;
+  if(!(node.localName==='dialog'&&!node.open)&&!node.hidden&&!node.closest('[hidden]')&&node.getClientRects().length>0&&(!node.checkVisibility||node.checkVisibility({visibilityProperty:true})))return true;
+ }
  return false;
 }
 export function loadGameMenuStyles(){if(document.querySelector('#game-menu-controls-styles'))return;const link=document.createElement('link');link.id='game-menu-controls-styles';link.rel='stylesheet';link.href='/public/css/game-menu-controls.css';document.head.append(link);}

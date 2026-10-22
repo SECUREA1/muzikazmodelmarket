@@ -1,3 +1,4 @@
+import {gameplayOverlayOpen} from './game-menu-controls.js';
 import {sportIcon} from './sports-action-bar.js';
 import {mountThumbstick} from './thumbstick-input.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
@@ -59,9 +60,9 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  instrumentsDialog.append(systems,readout,instruments,cycle,warning,progress,axisFeedback,reference,help,status);
  const functionsDialog=createDialog('construction-functions-dialog','Machine functions','Close functions');functionsDialog.append(quick);
  manual.append(pads,travelPanel);panel.append(heading,compactState,manual);stage.append(panel);
- let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',hudHidden=stage.dataset.hudHidden==='true',inFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
+ let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',inFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
  let axes={},sticks=[],keyboardResets=[],travel={forward:0,side:0,held:false},instrumentNodes=new Map(),axisNodes=new Map();
- const canUse=()=>!disposed&&!!current&&controlsVisible&&!hudHidden&&stage.dataset.hudHidden!=='true'&&!panel.hidden&&!document.hidden&&!document.querySelector('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])');
+ const canUse=()=>!disposed&&!!current&&controlsVisible&&!panel.hidden&&!document.hidden&&!gameplayOverlayOpen();
  function showFeedback(message,failed=false){message=String(message);feedback={message,failed,until:performance.now()+(failed?6500:2500)};setText(status,message);setText(compactState,message);setAttr(compactState,'title',message);setAttr(compactState,'data-feedback',failed?'error':'notice');}
  function report(error){showFeedback(error?.message||String(error),true);}
  async function flushAxes(){
@@ -91,7 +92,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const actions={root:bar,row,primary,utilities,popup:functionsDialog,dispose(){utilities.remove();bar.remove();instrumentsDialog.remove();functionsDialog.remove();}};
  function closeDialogs(){for(const dialog of [instrumentsDialog,functionsDialog])if(dialog.open)dialog.close();}
  function syncVisibility(){
-  const visible=!!current&&controlsVisible&&!hudHidden;setHidden(panel,!visible);setHidden(utilities,!current||hudHidden);setHidden(pads,controlMode!=='work');setHidden(travelPanel,kind==='crane'||controlMode!=='drive');
+  const visible=!!current&&controlsVisible;setHidden(panel,!visible);setHidden(utilities,!current);setHidden(pads,controlMode!=='work');setHidden(travelPanel,kind==='crane'||controlMode!=='drive');
   setHidden(heading.querySelector('[data-construction-mode=drive]'),kind==='crane');for(const button of heading.querySelectorAll('[data-construction-mode]'))setAttr(button,'aria-pressed',button.dataset.constructionMode===controlMode);
   setAttr(toggle,'aria-expanded',controlsVisible);setAttr(toggle,'title',controlsVisible?'Hide machine controls':'Restore machine controls');const title=controlsVisible?'Hide machine':'Machine controls';if(toggle.dataset.label!==title){toggle.innerHTML=sportIcon(controlsVisible?'hide':'tools')+'<span>'+title+'</span>';toggle.dataset.label=title;}
   setAttr(panel,'data-control-mode',controlMode);if(!visible)closeDialogs();
@@ -100,11 +101,8 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  for(const button of heading.querySelectorAll('[data-construction-mode]'))button.onclick=()=>setMode(button.dataset.constructionMode);
  toggle.onclick=()=>{reset();controlsVisible=!controlsVisible;syncVisibility();};
  function openDialog(dialog,opener){reset();closeDialogs();lastDialogOpener=opener;(document.fullscreenElement||document.body).append(dialog);if(!dialog.open)dialog.showModal();}
- for(const dialog of [instrumentsDialog,functionsDialog])dialog.addEventListener('close',()=>{const opener=lastDialogOpener;if(opener?.isConnected&&!panel.hidden&&!hudHidden&&!document.querySelector('dialog[open]')&&(document.activeElement===document.body||dialog.contains(document.activeElement)))opener.focus({preventScroll:true});});
+ for(const dialog of [instrumentsDialog,functionsDialog])dialog.addEventListener('close',()=>{const opener=lastDialogOpener;if(opener?.isConnected&&!panel.hidden&&!gameplayOverlayOpen()&&(document.activeElement===document.body||dialog.contains(document.activeElement)))opener.focus({preventScroll:true});});
  heading.querySelector('[data-construction-view=instruments]').onclick=event=>openDialog(instrumentsDialog,event.currentTarget);more.onclick=event=>openDialog(functionsDialog,event.currentTarget);
- function applyHudVisibility(hidden){hudHidden=!!hidden;if(hudHidden)reset();syncVisibility();}
- const hudVisibility=event=>{if(event.detail?.stage&&event.detail.stage!==stage)return;applyHudVisibility(event.detail?.hidden===true);};document.addEventListener('muzikaz:game-hud-visibility',hudVisibility);
- const hudObserver=new MutationObserver(()=>applyHudVisibility(stage.dataset.hudHidden==='true'));hudObserver.observe(stage,{attributes:true,attributeFilter:['data-hud-hidden']});
  function availability(operation){
   if(!current)return {enabled:false,reason:'Enter an available machine first.'};
   const state=current.construction||{},telemetry=state.telemetry||{},moving=Math.abs(current.driving?.speed||0)>.5;
@@ -184,12 +182,12 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  }
  const timer=setInterval(()=>{if(!canUse()){if(Object.values(axes).some(Boolean)||travel.held)reset();return;}if(Object.values(axes).some(Boolean))sendAxes();},100);
  window.addEventListener('blur',safeReset);document.addEventListener('visibilitychange',safeReset);
- const dialogObserver=new MutationObserver(records=>{if(records.some(({target,attributeName})=>attributeName==='open'?target.localName==='dialog'&&target.open:target.id==='crib-chat-panel'&&!target.hidden))reset();});dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
+ const dialogObserver=new MutationObserver(records=>{if(records.some(({target,attributeName})=>attributeName==='open'?target.localName==='dialog'&&target.open:target.id==='crib-chat-panel'&&!target.hidden)&&gameplayOverlayOpen())reset();});dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
  return {get workView(){return kind==='crane'&&workView;},inputs(){return canUse()&&kind!=='crane'&&travel.held&&current?.construction?.telemetry?.travelAllowed!==false?{forward:travel.forward,side:travel.side,brake:false}:null;},update(nextSnapshot,id){
   snapshot=nextSnapshot;selfId=id;const self=snapshot.players?.[selfId],next=snapshot.actors?.[self?.vehicleId],nextKind=constructionMachineKind(next),active=!!nextKind&&next?.active!==false&&self?.health!==0;
   if(!active){reset();current=null;actorId=null;kind=null;delete stage.dataset.constructionMachine;syncVisibility();return;}
   if(actorId!==next.id||kind!==nextKind){reset();current=next;actorId=next.id;kind=nextKind;controlMode='work';feedback=null;buildControls();setText(status,'');}else current=next;
   setAttr(stage,'data-construction-machine',kind);syncVisibility();refreshAction();
   updateInstruments();
- },dispose(){reset();disposed=true;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();hudObserver.disconnect();document.removeEventListener('muzikaz:game-hud-visibility',hudVisibility);window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
+ },dispose(){reset();disposed=true;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
 }

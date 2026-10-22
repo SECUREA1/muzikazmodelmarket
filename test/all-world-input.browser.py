@@ -158,7 +158,11 @@ async def exercise_world(context, environment, base, hold_ms):
             await dialog.get_by_role('button', name='2D plan', exact=True).tap()
             port = dialog.get_by_role('button', name=re.compile(r'^Port to '), include_hidden=True).first
             await port.evaluate('(button) => {for(let details=button.closest("details");details;details=details.parentElement.closest("details")) details.open=true;}')
-            await port.tap()
+            async with page.expect_response(lambda reply: reply.request.method == 'POST' and '/gameplay' in reply.url and (reply.request.post_data_json or {}).get('action') == 'map-access') as travelled:
+                await port.tap()
+            assert (await travelled.value).ok, 'Map travel was rejected.'
+            assert await dialog.is_visible(), 'Map travel must keep its directory open.'
+            await dialog.get_by_role('button', name='Close', exact=True).tap()
             await dialog.wait_for(state='hidden', timeout=30000)
             await page.wait_for_timeout(250)
             before = len(commands)

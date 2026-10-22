@@ -35,7 +35,9 @@ window.setHydraulics=fields=>{Object.assign(machine().construction,fields);refre
 window.setDriving=fields=>{Object.assign(machine().driving,fields);refresh();};
 window.lastAxes=()=>calls.filter(call=>call.operation==='control').at(-1)?.axes||{};
 window.clearCalls=()=>{calls.length=0;};
-window.setHudHidden=hidden=>{stage.dataset.hudHidden=String(hidden);stage.dispatchEvent(new CustomEvent('muzikaz:game-hud-visibility',{bubbles:true,detail:{hidden,stage}}));};
+window.setLegacyHudHidden=hidden=>{stage.dataset.hudHidden=String(hidden);stage.dispatchEvent(new CustomEvent('muzikaz:game-hud-visibility',{bubbles:true,detail:{hidden,stage}}));};
+const blockingMenu=document.createElement('dialog');blockingMenu.textContent='Verification menu';document.body.append(blockingMenu);
+window.setBlockingMenu=open=>{if(open)blockingMenu.showModal();else blockingMenu.close();};
 setMachine('tower-crane','crane');document.body.dataset.ready='true';
 </script>
 </html>

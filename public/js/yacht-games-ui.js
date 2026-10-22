@@ -1,4 +1,5 @@
 import {fullscreenPanel} from './fullscreen-panels.js';
+import {gameplayOverlayOpen} from './game-menu-controls.js';
 import {createYachtBilliards,YACHT_TABLE} from './yacht-billiards.js';
 import {hasWalkableInterior} from './harbor-water.js';
 export function mountYachtGames({THREE,stage,getRoots,getActors,getPosition,getVehicleId,send,announce=()=>{},onOpen=()=>{}}){
@@ -7,7 +8,7 @@ export function mountYachtGames({THREE,stage,getRoots,getActors,getPosition,getV
  const clear=()=>{if(current)current.root.userData.yachtAim=null;current=null;};
  const screen=fullscreenPanel(panel,{onOpen:()=>{document.exitPointerLock?.();onOpen();},onClose:clear});
  function close(){clear();screen.close();}
- function open(){update();if(!nearby||document.querySelector('dialog[open]'))return false;current=nearby;screen.open();update();return true;}
+ function open(){update();if(!nearby||gameplayOverlayOpen())return false;current=nearby;screen.open();update();return true;}
  panel.querySelector('[data-close]').onclick=close;
  aim.oninput=()=>{panel.querySelector('[data-angle]').textContent=aim.value+'°';update();};power.oninput=()=>{panel.querySelector('[data-power]').textContent=power.value+'%';};
  async function command(operation){if(!current||pending)return;const actor=getActors()[current.id],state=actor?.yachtBilliards||createYachtBilliards();pending=true;update();try{await send('yacht-game',{entityId:current.id,operation,revision:state.revision,angle:Number(aim.value)*Math.PI/180,power:Number(power.value)/100});}catch(error){announce(error.message);}finally{pending=false;update();}}

@@ -216,23 +216,25 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       if not crane_card.count():crane_card=page.locator('[data-craft-choices] article').filter(has_text='crane').first
       crane_card.get_by_role('button',name='Board ',exact=False).click()
       page.locator('.construction-controls').wait_for(state='visible',timeout=20000)
+      assert page.locator('.district-map-dialog').is_visible(), 'Boarding must keep the map open'
+      page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
       assert page.locator('[aria-label="Toggle crane work camera"]').get_attribute('aria-pressed')=='true'
       assert 'Operator input delayed' not in page.locator('.construction-interlock').inner_text()
       Path('/tmp/construction-site-full-mobile.png').write_bytes(page.screenshot(path='/tmp/construction-site-full.png'))
       page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
       page.screenshot(path='/tmp/construction-site-collapsed.png')
       page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
-      page.locator('.game-hud-toggle').click()
-      assert not page.locator('.live-local-map').is_visible()
-      page.screenshot(path='/tmp/construction-site-hidden-mobile.png')
-      page.locator('.game-hud-toggle').click()
+      assert page.locator('.game-hud-toggle').count()==0
+      assert page.locator('.live-local-map').is_visible()
+      assert page.locator('.district-map-toggle').is_visible()
+      assert page.locator('.construction-controls').is_visible()
       page.locator('.construction-controls [data-operation=park]').click()
       page.get_by_role('button',name='Exit parked construction machine',exact=True).click()
       page.locator('.construction-controls').wait_for(state='hidden',timeout=15000)
       page.locator('.game-viewport-toggle').click()
       page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded!=="true"')
      if preview_only:
-      print('Browser: all compact machine fixtures and mobile crane overview/global hide preview passed.',flush=True)
+      print('Browser: all compact machine fixtures and mobile crane overview with persistent map controls passed.',flush=True)
       browser.close();alice.dispose();bob.dispose();raise SystemExit(0)
      page.set_viewport_size({'width':960,'height':720})
      for model,axis,pad_index in [('site-excavator','boom',1),('site-dumptruck','bed',0),('site-bulldozer','blade',0)]:

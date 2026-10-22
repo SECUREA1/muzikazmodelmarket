@@ -22,13 +22,21 @@ try:
    page.locator('#maps-toggle').click();assert page.locator('#maps-toggle').get_attribute('aria-expanded')=='true'
    page.get_by_role('button',name='Switch panel',exact=True).click()
    assert page.get_by_role('dialog',name='settings',exact=True).is_visible()
+   page.wait_for_function('document.querySelector("#maps-toggle").getAttribute("aria-expanded")==="false"')
    assert page.locator('#maps-toggle').get_attribute('aria-expanded')=='false'
    assert page.locator('#settings-toggle').get_attribute('aria-expanded')=='true'
    page.keyboard.press('Escape');assert page.locator('dialog[open]').count()==0
+   page.wait_for_function('document.querySelector("#settings-toggle").getAttribute("aria-expanded")==="false"')
    assert page.locator('#settings-toggle').get_attribute('aria-expanded')=='false'
    assert not page.evaluate('document.documentElement.classList.contains("game-menu-open")')
+   # A companion map stays open behind real modal tools. Closing those tools
+   # restores focus and clears the body lock while retaining the map.
+   page.evaluate('''()=>{const map=document.createElement('dialog');map.id='companion-map';map.dataset.gameplayBlocking='false';map.textContent='Live map';document.body.append(map);map.show();}''')
    page.locator('#maps-toggle').click();page.get_by_role('button',name='Close maps',exact=True).click()
    assert page.locator('#maps-toggle').evaluate('(el)=>el===document.activeElement')
+   assert page.locator('#companion-map').is_visible()
+   assert not page.locator('#companion-map').evaluate('(el)=>el.matches(":modal")')
+   assert not page.evaluate('document.documentElement.classList.contains("game-menu-open")')
    assert page.evaluate('window.panelCloseCount')==3
    assert not errors,errors;page.close()
   browser.close()

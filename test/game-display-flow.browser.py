@@ -41,36 +41,32 @@ try:
    assert page.evaluate('window.viewClicks')==1
    page.evaluate("const xr=document.createElement('button');xr.className='xr-enter-button';xr.hidden=true;xr.disabled=true;xr.textContent='VR headset unavailable';xr.style.cssText='display:block;position:fixed;top:8px;left:0;width:100%;z-index:80';document.querySelector('.house-stage').append(xr);")
    page.wait_for_selector('.game-display-flow-views > .xr-enter-button',state='attached')
-   assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block hide/restore controls'
+   assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block game controls'
+   assert page.locator('.game-hud-toggle').count()==0, 'Maps and controls must not have a global lock/restore button'
    page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
    stage_box=page.locator('.house-stage').bounding_box()
    page.evaluate("window.hudEvents=[];window.blurCount=0;document.addEventListener('muzikaz:game-hud-visibility',event=>hudEvents.push(event.detail.hidden));window.addEventListener('blur',()=>blurCount++);")
-   page.get_by_role('button',name='Hide game controls',exact=True).tap()
-   assert page.evaluate('flow.hudHidden') is True
-   assert not item.is_visible() and not fire.is_visible() and not page.locator('.game-camera-toggle').is_visible()
-   for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert not page.locator('.'+name).is_visible()
-   # A road dashboard mounted and repeatedly updated while hidden must stay hidden.
+   # An old hidden-state attribute cannot hide maps, incoming dashboards or
+   # the touch dock after the global hide behavior has been removed.
+   page.evaluate("document.querySelector('.house-stage').dataset.hudHidden='true';const shell=document.createElement('section');shell.className='house-explorer-shell';shell.dataset.hudHidden='true';shell.innerHTML='<div class=house-control-dock><button aria-label=Controller>Move</button></div>';document.body.append(shell);")
    page.evaluate("""async()=>{const stage=document.querySelector('.house-stage'),{mountRoadVehicleUI}=await import('/public/js/road-vehicle-ui.js'),{ROAD_VEHICLES}=await import('/public/js/road-vehicles.js');const modelId=Object.keys(ROAD_VEHICLES).find(id=>!ROAD_VEHICLES[id].siteOnly);window.roadState={serverTime:1000,players:{me:{vehicleId:'car'}},actors:{car:{id:'car',modelId,active:true,position:{x:0,y:0,z:0},driving:{speed:0}}}};window.road=mountRoadVehicleUI(stage,async()=>({result:{message:'Confirmed'}}));road.update(roadState,'me');road.update(roadState,'me');}""")
    page.wait_for_function("document.querySelector('.game-display-flow > .road-vehicle-controls')!==null")
-   assert not page.locator('.road-vehicle-controls').is_visible()
-   assert not page.locator('.game-display-flow-views .sports-action-utilities').is_visible()
-   restore=page.get_by_role('button',name='Show game controls',exact=True)
-   assert restore.bounding_box()['height']>=44
-   assert restore.evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}')
-   assert page.locator('.house-stage').bounding_box()==stage_box
-   restore.tap()
    assert page.locator('.road-vehicle-controls').is_visible()
+   assert page.locator('.game-display-flow-views .sports-action-utilities').is_visible()
+   assert page.locator('.house-control-dock').is_visible()
    assert page.locator('.game-camera-toggle').is_visible()
    for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert page.locator('.'+name).is_visible()
-   assert page.evaluate('hudEvents')==[True,False]
-   assert page.evaluate('blurCount')>=2
-   # Global visibility does not overwrite a vehicle's local collapsed state.
+   assert page.locator('.house-stage').bounding_box()==stage_box
+   assert page.evaluate('hudEvents')==[]
+   assert page.evaluate('blurCount')==0, 'Layout updates must not reset held movement'
+   # A vehicle retains its own compact dashboard control without affecting maps.
    page.get_by_role('button',name='Show or hide road vehicle dashboard',exact=True).click()
    assert not page.locator('.road-vehicle-details').is_visible()
-   page.get_by_role('button',name='Hide game controls',exact=True).tap()
    page.evaluate("road.update(roadState,'me')")
-   page.get_by_role('button',name='Show game controls',exact=True).tap()
    assert not page.locator('.road-vehicle-details').is_visible()
+   assert page.locator('.live-local-map').is_visible()
+   assert page.locator('.house-control-dock').is_visible()
+   page.evaluate("document.querySelector('.house-stage').removeAttribute('data-hud-hidden')")
    page.evaluate('road.dispose();flow.dispose()')
    assert page.locator('.house-stage').get_attribute('data-hud-hidden') is None
    assert page.locator('.game-hud-toggle').count()==0
@@ -78,5 +74,5 @@ try:
    if width==390:page.screenshot(path='/tmp/separate-nearby-actions.png')
    page.close()
   browser.close()
- print('Sports/nearby actions, labelled hide/restore, incoming road dashboards and local collapse passed at 320, 390, 768 and 1280px.')
+ print('Sports/nearby actions, persistent map/controller visibility, incoming road dashboards and local collapse passed at 320, 390, 768 and 1280px.')
 finally:server.shutdown()
