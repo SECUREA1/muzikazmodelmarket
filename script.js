@@ -175,6 +175,7 @@ function syncCartCount() {
 }
 
 function normalizeDeliverable(deliverable) {
+  if(['alpine-quad','grand-tourer','touring-motorcycle'].includes(deliverable?.buildAssetId))return {id:String(deliverable.id||'builder-'+deliverable.buildAssetId),name:String(deliverable.name||'Road vehicle'),buildAssetId:deliverable.buildAssetId,assetType:'vehicles',format:'procedural-3d',thumbnailUrl:'/public/images/vehicles/'+deliverable.buildAssetId+'.svg',category:'Vehicles'};
   if (!deliverable?.modelUrl || !/\.(?:glb|gltf)(?:[?#]|$)/i.test(deliverable.modelUrl)) return null;
   return {
     id: String(deliverable.id || deliverable.modelUrl),
@@ -2171,7 +2172,7 @@ function renderCheckoutPage() {
   } else {
     checkoutItems.innerHTML = items.map((item) => `
       <article class="checkout-item">
-        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}${item.deliverable?.modelUrl ? ` · Delivers ${item.deliverable.name} (${item.deliverable.format.toUpperCase()})` : ''}</span></div>
+        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}${(item.deliverable?.modelUrl||item.deliverable?.buildAssetId) ? ` · Delivers ${item.deliverable.name} (${item.deliverable.format.toUpperCase()})` : ''}</span></div>
         <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
       </article>`).join('');
   }

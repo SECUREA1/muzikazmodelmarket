@@ -1,3 +1,4 @@
+import {roadFleetAnchors} from './road-network.js';
 import {localMapLocations} from './local-map-locations.js';
 export function questCatalog(environment){
  const offers=[];const add=(id,title,kind,mode,description,reward=650)=>offers.push({id,title,kind,mode,description,reward,winBonus:kind==='race'?200:0,timeLimit:600});
@@ -25,6 +26,7 @@ export function questCatalog(environment){
  if(environment?.game==='ski')add('ski-finish','Pixel Peaks race contract','ski','foot','During a live ski race, finish a run with at least 500 race points.',550);
  if(environment?.game==='basketball'||environment?.id==='basketball-arena'||environment?.basketball===true||environment?.basketballCourt===true||['basketball-arena','basketball-stadium'].includes(environment?.builderScene?.layout))add('court-six','Court scoring contract','basketball','foot','Join a live court game and score six new basketball points.',450);
  if(/firing|range/.test(environment?.game||'')||environment?.firingRange||['firing-range','force-training-range'].includes(environment?.id)||environment?.builderScene?.layout==='firing-range')add('range-marksman','Range marksman contract','marksman','foot','Join a firing lane, then land five new server-confirmed target hits.',450);
+ if(roadFleetAnchors(environment).length){add('road-delivery','Road supply delivery','delivery','road','Collect supplies, follow local roads and stop safely to unload at a map service point.',600);add('road-recovery','Roadside traveler recovery','recovery','road','Find a stranded traveler on the connected road, stop to help, and report back.',650);add('road-escort','Road crew escort','escort','road','Accompany a working AI supply crew for twenty seconds, then return to dispatch.',700);add('road-tour','Local road discovery','explore','road','Drive the marked local road stops and park to check in at each one.',500);add('road-rally','Road time challenge','race','road','Hold for the countdown, follow ordered road gates against a live AI rival, and finish within the posted limit.',800);}
  const locations=localMapLocations(environment).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z));
  if(locations.length>=2){
   add('land-delivery','Local supply run','delivery','foot','Collect supplies at one activity space and deliver them on foot to another.',350);

@@ -20,7 +20,7 @@ export function weaponDirections(THREE, direction, profile) {
 
 export function fireWeapon(THREE, id, {origin,direction,cooldown=0,ammo=Infinity,raycast,damage,feedback}) {
   const profile=RANGED_WEAPONS[id];
-  if(!profile||cooldown>1e-6||ammo<=0||direction.lengthSq()===0)return null;
+  if(!profile||(id!=='laser'&&cooldown>1e-6)||ammo<=0||direction.lengthSq()===0)return null;
   const damaged=new Map();let hitAny=false;
   for(const aim of weaponDirections(THREE,direction,profile)){
     const end=origin.clone().addScaledVector(aim,profile.range),hit=raycast(origin,end);
@@ -32,7 +32,7 @@ export function fireWeapon(THREE, id, {origin,direction,cooldown=0,ammo=Infinity
 }
 
 export const RANGED_WEAPONS = Object.freeze({
-  laser:Object.freeze({label:'Laser',damage:50,pellets:1,range:30,spread:0,interval:.2,color:0xff173d,rays:1,score:1}),
+  laser:Object.freeze({label:'Laser',damage:50,pellets:1,range:30,spread:0,interval:0,color:0xff173d,rays:1,score:1}),
   'pulse-rifle':Object.freeze({label:'Pulse Rifle',damage:28,pellets:2,range:24,spread:.012,interval:.16,color:0x43d8ff,rays:2,score:1}),
   'rail-cannon':Object.freeze({label:'Rail Cannon',damage:90,pellets:1,range:40,spread:0,interval:.9,color:0xc66bff,rays:1,score:1.5}),
   ...EXTRA_WEAPONS,

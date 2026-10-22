@@ -58,14 +58,20 @@ test('excavator loads a nearby truck, truck transports spoil to stockpile and bu
  assert.equal(actors.excavator.construction.load,2);assert.equal(sim.construction.excavation.volume,2);assert.ok(sim.construction.excavation.depth>0);
  send('work');finish();assert.equal(actors.excavator.construction.load,0);assert.equal(actors.truck.construction.load,2);
  board('truck');actors.truck.position={x:30,y:0,z:33};sim.players.alice.position={...actors.truck.position};send('work');assert.ok(finish()>=40);assert.equal(actors.truck.construction.load,0);assert.equal(sim.construction.stockpile.volume,2);assert.equal(actors.truck.construction.bed,0);
- board('dozer');send('work');assert.ok(finish()>=27);assert.equal(sim.construction.graded,10);assert.equal(actors.dozer.construction.blade,1);
+ actors.dozer.position={x:36,y:0,z:39};board('dozer');send('work');assert.ok(finish()>=27);assert.equal(sim.construction.graded,10);assert.equal(actors.dozer.construction.blade,1);
 });
 test('parking, leaving the operator station and manual override cancel a cycle without creating or losing soil',()=>{
  const {sim,actors,player,board,send,tick,finish}=fixture();actors.truck.position={x:30,y:0,z:17};board('excavator');send('work');tick(5);send('park');tick(30);assert.equal(sim.construction.excavation.volume,0);assert.equal(actors.excavator.construction.workCycle,undefined);
  send('work');tick(5);send('control',{axes:{boom:1}});tick(30);assert.equal(sim.construction.excavation.volume,0);
- send('work');tick(5);player.lastSeen+=2000;stepConstruction(sim,player.lastSeen+2000,.1);assert.equal(actors.excavator.construction.workCycle,undefined);tick(30);assert.equal(sim.construction.excavation.volume,0);
+ send('work');tick(5);const elapsed=actors.excavator.construction.workCycle.elapsed;stepConstruction(sim,player.lastSeen+2000,.1);assert.equal(actors.excavator.construction.workCycle.paused,true);assert.equal(actors.excavator.construction.workCycle.elapsed,elapsed);assert.equal(sim.construction.excavation.volume,0);send('park');tick(30);assert.equal(sim.construction.excavation.volume,0);
  send('work');finish();assert.equal(actors.excavator.construction.load,2);send('work');tick(5);send('park');tick(30);assert.equal(actors.excavator.construction.load,2);assert.equal(actors.truck.construction.load,0);
  send('work');actors.truck.position.x+=30;finish();assert.equal(actors.excavator.construction.load,2);assert.equal(actors.truck.construction.load,0);
+});
+test('delayed input pauses a seated operator cycle without awarding work, resumes on fresh input, and expires after room presence ends',()=>{
+ const {sim,actors,player,board,send,tick,finish}=fixture();board('excavator');send('work');tick(5);const elapsed=actors.excavator.construction.workCycle.elapsed;
+ stepConstruction(sim,player.lastSeen+1800,.2);assert.equal(actors.excavator.construction.workCycle.elapsed,elapsed);assert.equal(actors.excavator.construction.workCycle.paused,true);assert.equal(actors.excavator.construction.load,0);assert.equal(sim.construction.excavation.volume,0);assert.equal(actors.excavator.construction.telemetry.blockedPart,'operator-link');
+ player.lastSeen+=1900;finish();assert.equal(actors.excavator.construction.load,2);assert.equal(sim.construction.excavation.volume,2);
+ actors.excavator.construction.load=0;send('work');tick(5);stepConstruction(sim,player.lastSeen+16000,.2);assert.equal(actors.excavator.construction.workCycle,undefined);assert.equal(sim.construction.excavation.volume,2);
 });
 test('shared room exposes machines and steel, enforces exclusive boarding, and preserves construction progress across reconnect',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'construction-room-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,sequence=0;

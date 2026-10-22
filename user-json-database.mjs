@@ -1,3 +1,4 @@
+import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
@@ -348,7 +349,7 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId);
     if(order.purchaseType!=='MARKETPLACE'||!['PAID','FULFILLED'].includes(order.paymentStatus)||!order.memberAccountId)throw Object.assign(new Error('A verified member marketplace payment is required.'),{statusCode:409});
     const lines=order.metadata?.items||[];
-    if(!lines.length||lines.some(item=>!item.deliverable?.modelUrl||!item.deliverable?.id))throw new Error('The verified order has no deliverable models.');
+    if(!lines.length||lines.some(item=>(!item.deliverable?.modelUrl&&!isRoadVehicle({asset:item.deliverable}))||!item.deliverable?.id))throw new Error('The verified order has no deliverable models.');
     const items=lines.map(line=>({...line.deliverable,assetType:line.deliverable.assetType||line.deliverable.type||'prop',type:line.deliverable.assetType||line.deliverable.type||'prop',quantity:line.quantity,priceUsd:line.price}));
     return this.transaction(data=>{
       const prior=data.transactions.find(item=>item.type==='VERIFIED_STORE_PURCHASE'&&item.requestId===order.orderId);if(prior){if(prior.accountId!==order.memberAccountId&&prior.walletId!==wallet)throw Object.assign(new Error('This order belongs to another member.'),{statusCode:403});return prior;}

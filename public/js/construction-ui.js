@@ -56,7 +56,7 @@ export function mountConstructionUI(stage,command){
  const status=document.createElement('p');status.className='construction-status';status.setAttribute('role','status');panel.append(status);stage.append(panel);
  let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,expanded=true,inFlight=false,pending=false,actionBusy=false,lastActionKey='',workView=true;
  let axes={},sticks=[],keyboardResets=[],travel={forward:0,side:0,held:false},instrumentNodes=new Map(),axisNodes=new Map();
- const canUse=()=>!disposed&&!!current&&expanded&&!panel.hidden&&!document.hidden&&!document.querySelector('dialog[open], #crib-chat-panel:not([hidden])');
+ const canUse=()=>!disposed&&!!current&&expanded&&!panel.hidden&&!document.hidden&&!document.querySelector('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])');
  function report(error){setText(status,error?.message||String(error));}
  async function flushAxes(){
   if(inFlight||!pending||!actorId||disposed)return;

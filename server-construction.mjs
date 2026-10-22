@@ -143,7 +143,7 @@ function runConstructionCommand(sim,player,command,now,context={}){
  error('Choose an available operation for this construction machine.',422);
 }
 function cycleCandidate(actor,dt){
- const state={...actor.construction},cycle={...state.workCycle},from=cycle.startPose;
+ const state={...actor.construction},cycle={...state.workCycle,paused:false},from=cycle.startPose;
  cycle.elapsed=Math.min(cycle.duration,(cycle.elapsed||0)+dt*1000);state.workCycle=cycle;const t=cycle.elapsed/cycle.duration;
  const frames=cycle.mode==='dig'?[[0,from],[.28,{boom:.4,stick:-1.5,bucket:1}],[.58,{boom:.4,stick:-1.5,bucket:-.9}],[1,{boom:.9,stick:-.8,bucket:-.9}]]:
   cycle.mode==='load'?[[0,from],[.24,{boom:1.05,stick:-.3,bucket:-.9,swing:from.swing}],[.6,{boom:.8,stick:-.3,bucket:-.9,swing:cycle.targetSwing}],[.76,{boom:.8,stick:-.3,bucket:1,swing:cycle.targetSwing}],[1,{boom:1.05,stick:-.8,bucket:0,swing:from.swing}]]:
@@ -173,8 +173,12 @@ function refreshTelemetry(sim,actor,now,context){actor.construction.telemetry=co
 export function stepConstruction(sim,now,dt,context={}){
  if(!sim.construction)return;
  for(const actor of Object.values(sim.actors).filter(isConstructionMachine)){
-  const owner=sim.players[actor.holderId],occupied=owner&&owner.vehicleId===actor.id&&!owner.replacedByRoom&&now-owner.lastSeen<1000&&owner.health>0;
+  const owner=sim.players[actor.holderId],occupied=owner&&owner.vehicleId===actor.id&&!owner.replacedByRoom&&now-owner.lastSeen<15000&&owner.health>0;
   if(!occupied){actor.construction.axes={};actor.construction.assist=null;actor.construction.working=false;delete actor.construction.workCycle;refreshTelemetry(sim,actor,now,context);continue;}
+  // A delayed packet stops motion immediately but does not discard a task
+  // already accepted from the seated operator. No cycle time or soil moves
+  // while the input link is stale; fresh input can safely resume the task.
+  if(now-owner.lastSeen>=1000){actor.construction.axes={};actor.construction.working=false;if(actor.construction.workCycle)actor.construction.workCycle.paused=true;actor.construction.blocked={part:'operator-link',reason:'Operator input delayed. Hydraulics paused until the link resumes.'};refreshTelemetry(sim,actor,now,context);continue;}
   const state=actor.construction;let candidate;
   if(state.workCycle)candidate=cycleCandidate(actor,dt);
   else if(state.assist){const point=state.assist==='target'?sim.construction.tower.target:availableBeams(sim)[0];const source=point?.position||point;

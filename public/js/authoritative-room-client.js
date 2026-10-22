@@ -72,7 +72,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if(aircraftShot&&aircraftFireRequests>=3)return null;
    if(action==='fire'&&!aircraftShot&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
    const fireTool=String(fields.tool||'laser'),fireKey=aircraftShot?'aircraft-cannon':fireTool;if(action==='fire'&&performance.now()<(nextFireAt.get(fireKey)||0))return null;
-   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:fireTool==='laser'?0:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);if(radToxStarted||aircraftShot)onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
     const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
@@ -84,7 +84,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
-    client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;}
+    client.selfId=selfId;if(action==='join'||state.sequence>sequence&&state.result?.inputEpoch&&state.result.inputEpoch!==inputEpoch){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;pendingInput=null;}
+    if(action==='join'){sequence=-1;pendingRender=null;clearTimeout(renderTimer);renderTimer=null;}
     if(action==='input')lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}

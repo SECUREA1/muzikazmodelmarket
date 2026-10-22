@@ -80,3 +80,8 @@ test('crane slings connect hook to both beam shackles as the payload rotates',()
   root.userData.construction.load=null;updateConstructionModel(root,5);assert.equal(parts.slingFrame.visible,false);
  }
 });
+
+test('a blocked track pivot preserves the physical chassis heading and position',()=>{
+ const actor={id:'blocked-dozer',modelId:'site-bulldozer',position:{x:2,y:0,z:3},rotation:{y:.4},driving:{speed:0}};
+ const next=stepRoadVehicle(actor,{side:1},.1,{groundAt:point=>point,blocked:()=>true});assert.equal(next.rotation.y,.4);assert.deepEqual(next.position,actor.position);assert.equal(next.driving.blocked,true);
+});

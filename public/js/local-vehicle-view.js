@@ -1,3 +1,4 @@
+import {roadSpeedLimit} from './road-network.js';
 import {isRoadVehicle,stepRoadVehicle} from './road-vehicles.js';
 import {isAircraft,stepAircraftFlight} from './aircraft-flight.js';
 import {aircraftAssistedInput} from './aircraft-assist.js';
@@ -75,7 +76,7 @@ export class LocalVehicleView {
    pose.flight.impactDamage=0;Object.assign(state,pose);
   }else if(isWatercraft(state)){
    const controls=boatAssistedInput(state,{...input},environment,serverNow,options.actors||{},blocked);const pose=stepBoatSimulation(state,options.fuel<=0?{...controls,throttle:0}:controls,delta,{environment,now:serverNow,blocked});pose.boating.impactDamage=0;Object.assign(state,pose);
-  }else if(isRoadVehicle(state)){const travel=isConstructionMachine(state)?constructionTravelStatus(state):null,controls=travel&&!travel.allowed?{...input,forward:0,side:0,brake:true}:input;if(travel&&!travel.allowed)state.driving={...state.driving,speed:0};Object.assign(state,stepRoadVehicle(state,controls,delta,{groundAt:point=>{const floor=options.groundAt?.(point,state);return typeof floor==='number'?{...point,y:floor}:floor||(!options.groundAt?point:null);},blocked}));}else if(options.step){state={...state,...options.step({actor:state,input:{...input},dt:delta,options})};}
+  }else if(isRoadVehicle(state)){const travel=isConstructionMachine(state)?constructionTravelStatus(state):null,controls=travel&&!travel.allowed?{...input,forward:0,side:0,brake:true}:input;if(travel&&!travel.allowed)state.driving={...state.driving,speed:0};Object.assign(state,stepRoadVehicle(state,controls,delta,{speedLimit:roadSpeedLimit(environment,state.position)/3.6,groundAt:point=>{const floor=options.groundAt?.(point,state);return typeof floor==='number'?{...point,y:floor}:floor||(!options.groundAt?point:null);},blocked}));}else if(options.step){state={...state,...options.step({actor:state,input:{...input},dt:delta,options})};}
   return state;
  }
  publish(delta,options){
