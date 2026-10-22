@@ -8,6 +8,7 @@ const styles={resident:{icon:'☏',color:'#a6e5b6'},vehicle:{icon:'▣',color:'#
 export function localMapTagKind(place){const text=[place.id,place.name].join(' ').toLowerCase();return /chairlift|summit station/.test(text)?'lift':/château|chateau|warming hut/.test(text)?'lodge':/trail|glacier run|diamond|terrain park|ski rental/.test(text)?'ski':/runway|airfield|landing strip|aircraft/.test(text)?'runway':/dock|marina|berth|quay|harbou?r/.test(text)?'dock':/basketball|court/.test(text)?'basketball':/firing|shooting|range/.test(text)?'range':'landmark';}
 export function localMapTags(environment,live={},selfId=null){
  if(!environment)return [];
+ live ||= {};
  const tags=[],seen=new Set();
  const add=(id,name,kind,position,extra={})=>{if(seen.has(id)||!Number.isFinite(Number(position?.x))||!Number.isFinite(Number(position?.z)))return;seen.add(id);tags.push({id,name,kind,...styles[kind],x:Number(position.x),y:Number(position.y)||0,z:Number(position.z),...extra});};
  for(const place of localMapLocations(environment))if(place.id!=='map-arrival'&&!(environment.landLots||environment.builderScene?.layoutMeta?.landLots||[]).some(lot=>lot.id===place.id))add('location:'+place.id,place.name,localMapTagKind(place),place,{locationId:place.id,description:place.description||'',...(place.color?{color:place.color}:{}),...(place.icon?{icon:place.icon}:{})});

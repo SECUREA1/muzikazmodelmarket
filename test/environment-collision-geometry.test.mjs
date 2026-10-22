@@ -5,7 +5,7 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 
 const three = new URL('../public/vendor/three/three.module.min.js', import.meta.url).href;
 const source = (await readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'))
-  .replace("'../../vendor/three/three.module.min.js'", JSON.stringify(three))
+  .replace("'./layout-terrain.js'",JSON.stringify(new URL('../public/js/environments/layout-terrain.js',import.meta.url).href)).replace("'../../vendor/three/three.module.min.js'", JSON.stringify(three))
   .replace(/import \{ Octree \} from [^;]+;/, 'class Octree { fromGraphNode(root) { root.updateMatrixWorld(true); this.source = root; } }');
 const {buildCollision} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 

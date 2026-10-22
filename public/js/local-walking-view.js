@@ -70,7 +70,7 @@ export class LocalWalkingView {
   const dt=Math.max(0,Math.min(.25,Number(delta)||0)),stale=now-this.motion.receivedAt>1200;
   this.recoverFloor(now,options);
   const jumpPressed=input.jump===true;if(jumpPressed&&!this.jumpDown&&!stale)this.jumpQueued=true;this.jumpDown=jumpPressed;
-  if(this.jumpQueued&&this.grounded&&!stale){this.velocityY=6;this.grounded=false;}this.jumpQueued=false;
+  if(this.jumpQueued&&this.grounded){this.velocityY=6;this.grounded=false;}this.jumpQueued=false;
   const candidate={x:this.position.x,z:this.position.z};this.motion.sample(now,dt,stale?{}:input,Math.max(0,Number(options.speed??4)||0),candidate);
   const previous={...this.position},proposed={x:candidate.x,y:previous.y,z:candidate.z},constrained=options.constrain?.(previous,proposed)||proposed;
   const dx=(Number.isFinite(constrained.x)?constrained.x:previous.x)-previous.x,dz=(Number.isFinite(constrained.z)?constrained.z:previous.z)-previous.z;

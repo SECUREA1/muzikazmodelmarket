@@ -182,3 +182,9 @@ test('large delayed walking acknowledgments never rewind held or released local 
   }
  }
 });
+
+test('an explicit jump stays responsive through a delayed heartbeat without extending stale walking',()=>{
+ const {motion,target}=fixture();motion.sample(2700,.016,{forward:1},options(),target);const before={...target};
+ motion.jump();motion.sample(2716,.016,{forward:1},options(),target);
+ assert.ok(target.y>before.y+.05);near(target.x,before.x);near(target.z,before.z);
+});

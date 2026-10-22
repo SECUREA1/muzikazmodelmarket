@@ -43,7 +43,11 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'){
    const button=document.createElement('button');button.type='button';button.className='ar-button';button.dataset.cameraPreview='';button.textContent='Open camera preview';button.setAttribute('aria-label','Open camera preview: '+(viewer.getAttribute('alt')||'selected model'));viewer.insertAdjacentElement('afterend',button);controls.set(viewer,button);sources.set(button,viewer);
   }
  }
- syncControls();let scheduled=false;new MutationObserver(()=>{if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncControls();});}}).observe(document.body||document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['ar','ios-src','src','hidden','open','class','style','data-camera-preview-enabled']});
+ syncControls();let scheduled=false;
+ const hasViewer=node=>node?.nodeType===1&&(node.localName==='model-viewer'||node.childElementCount&&!!node.querySelector('model-viewer'));
+ const scheduleControls=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;syncControls();});};
+ new MutationObserver(records=>{if(records.some(record=>record.type==='attributes'?hasViewer(record.target):[...record.addedNodes,...record.removedNodes].some(hasViewer)))scheduleControls();}).observe(document.body||document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['ar','ios-src','src','hidden','open','class','style','data-camera-preview-enabled']});
+ window.addEventListener('resize',scheduleControls);
  document.addEventListener('click',event=>{
   const button=event.composedPath().find(node=>node?.matches?.('[slot="ar-button"],[data-ar-launch],[data-camera-preview]'));if(!button)return;
   const viewer=sources.get(button)||button.closest('model-viewer')||button.closest('article')?.querySelector('model-viewer');if(!viewer)return;

@@ -32,7 +32,7 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    import('./house-explorer-glb.js?v=server-loading-20261022').catch(function (error) {
+    import('./house-explorer-glb.js?v=startup-input-20261022').catch(function (error) {
       showError('The game engine could not start: ' + (error && error.message || 'Please reload this page.'));
     });
     loadTimer = window.setTimeout(showStall, 30000);

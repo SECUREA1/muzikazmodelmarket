@@ -1,7 +1,19 @@
 import {portalSector} from './portal-menu-art.js';
 export function wheelPage(total,page,size=6){const pages=Math.max(1,Math.ceil(total/size)),current=Math.max(0,Math.min(pages-1,page));return {page:current,pages,start:current*size,end:Math.min(total,(current+1)*size)};}
+const overlayRoots=new WeakMap(),overlayCandidates='dialog,#crib-chat-panel,.world-resident-panel,[data-game-overlay]';
+function overlayNodes(root){
+ if(!root.nodeType||typeof MutationObserver==='undefined')return root.querySelectorAll('dialog[open],#crib-chat-panel:not([hidden]),.world-resident-panel:not([hidden]),[data-game-overlay]:not([hidden])');
+ let state=overlayRoots.get(root);
+ if(!state){
+  state={nodes:new Set(root.querySelectorAll(overlayCandidates))};
+  state.collect=records=>{for(const record of records)for(const node of record.addedNodes){if(node.nodeType!==1)continue;if(node.matches(overlayCandidates))state.nodes.add(node);if(node.childElementCount)for(const child of node.querySelectorAll(overlayCandidates))state.nodes.add(child);}for(const node of state.nodes)if(!node.isConnected)state.nodes.delete(node);};
+  state.observer=new MutationObserver(state.collect);state.observer.observe(root,{childList:true,subtree:true});overlayRoots.set(root,state);
+ }
+ state.collect(state.observer.takeRecords());return state.nodes;
+}
 export function gameplayOverlayOpen(root=document){
- return [...root.querySelectorAll('dialog[open],#crib-chat-panel:not([hidden]),[data-game-overlay]:not([hidden])')].some(node=>!node.hidden&&!node.closest('[hidden]')&&node.getClientRects().length>0);
+ for(const node of overlayNodes(root))if(!(node.localName==='dialog'&&!node.open)&&!node.hidden&&!node.closest('[hidden]')&&node.getClientRects().length>0&&(!node.checkVisibility||node.checkVisibility({visibilityProperty:true})))return true;
+ return false;
 }
 export function loadGameMenuStyles(){if(document.querySelector('#game-menu-controls-styles'))return;const link=document.createElement('link');link.id='game-menu-controls-styles';link.rel='stylesheet';link.href='/public/css/game-menu-controls.css';document.head.append(link);}
 export function mountToolsWheel(panel){

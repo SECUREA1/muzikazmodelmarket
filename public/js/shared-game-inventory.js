@@ -6,7 +6,11 @@ export class SharedGameInventory {
  async api(path,options={}){
   const controller=new AbortController(),timeout=Math.max(1000,Math.min(30000,Number(options.timeout)||8000)),external=options.signal;
   const cancel=()=>controller.abort();if(external?.aborted)cancel();else external?.addEventListener('abort',cancel,{once:true});
-  const timer=setTimeout(cancel,timeout);
+  const startedAt=performance.now();let grace=false,timer;
+  const deadline=()=>{if(!grace&&performance.now()-startedAt>timeout+250){grace=true;timer=setTimeout(cancel,1000);}else cancel();};
+  // Let queued fetch completions run after a long rendering task before
+  // treating an overdue main-thread timer as a lost server connection.
+  timer=setTimeout(deadline,timeout);
   try{const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{credentials:'include',cache:'no-store',retries:0,...options,signal:controller.signal,timeout,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});const payload=await response.json();if(!response.ok||payload.success===false)throw Object.assign(new Error(payload.message||'Sign in through Members to use your shared Backpack.'),{status:response.status,code:payload.code});return payload.data;}finally{clearTimeout(timer);external?.removeEventListener('abort',cancel);}
  }
 
