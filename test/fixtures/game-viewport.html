@@ -51,7 +51,7 @@
  <aside id="fixture-hidden" aria-hidden="true">Previously hidden background content.</aside>
  <dialog id="fixture-modal" aria-label="Viewport tools dialog"><form method="dialog"><label>Dialog text<input aria-label="Viewport dialog text" autofocus></label><button id="fixture-modal-action" type="button">Confirm modal action</button><button id="fixture-modal-close" value="close">Close viewport dialog</button></form></dialog>
  <script type="module">
-  import {mountGameViewport} from '../../public/js/game-viewport.js';
+  import {mountGameViewport,replaceGameLocation} from '../../public/js/game-viewport.js';
   const stage=document.querySelector('.house-stage'),shell=stage.closest('.house-explorer-shell'),button=document.querySelector('#fixture-fullscreen');
   const request=shell.requestFullscreen?.bind(shell);
   const mode=new URL(location.href).searchParams.get('request')||'native';
@@ -60,6 +60,8 @@
   else Object.defineProperty(shell,'requestFullscreen',{value:()=>{requestCount++;return mode==='rejected'?Promise.reject(Object.assign(Error('Fullscreen deliberately rejected by fixture'),{name:'NotAllowedError'})):request?.();},configurable:true});
   window.neutralizations=0;window.viewportChanges=[];
   window.fixtureHistory={fixtureHistory:{value:'preserve-me'},route:'game'};history.replaceState(fixtureHistory,'',location.href);
+  window.replaceFixtureGameLocation=(...args)=>replaceGameLocation(...args);
+  window.changeFixtureMap=id=>{const url=new URL(location.href);url.searchParams.set('environment',id);fixtureHistory={fixtureHistory:{value:'map-'+id},route:'game',environment:id,navigation:{nested:['preserved',2]}};stage.dataset.fixtureMap=id;replaceGameLocation(url,fixtureHistory);return location.href;};
   window.backgroundState=()=>['fixture-header','fixture-article','game-host','fixture-footer','fixture-hidden'].map(id=>{const node=document.getElementById(id);return {id,inert:node.getAttribute('inert'),ariaHidden:node.getAttribute('aria-hidden')};});
   window.originalBackground=backgroundState();
   window.styleState=()=>({body:Object.fromEntries(['position','top','left','right','width','overflow'].map(key=>[key,document.body.style.getPropertyValue(key)])),html:Object.fromEntries(['overflow','overscroll-behavior'].map(key=>[key,document.documentElement.style.getPropertyValue(key)]))});

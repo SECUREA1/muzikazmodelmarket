@@ -42,13 +42,13 @@ try:
    page.evaluate("const xr=document.createElement('button');xr.className='xr-enter-button';xr.hidden=true;xr.disabled=true;xr.textContent='VR headset unavailable';xr.style.cssText='display:block;position:fixed;top:8px;left:0;width:100%;z-index:80';document.querySelector('.house-stage').append(xr);")
    page.wait_for_selector('.game-display-flow-views > .xr-enter-button',state='attached')
    assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block hide/restore controls'
-   page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
+   page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
    stage_box=page.locator('.house-stage').bounding_box()
    page.evaluate("window.hudEvents=[];window.blurCount=0;document.addEventListener('muzikaz:game-hud-visibility',event=>hudEvents.push(event.detail.hidden));window.addEventListener('blur',()=>blurCount++);")
    page.get_by_role('button',name='Hide game controls',exact=True).tap()
    assert page.evaluate('flow.hudHidden') is True
    assert not item.is_visible() and not fire.is_visible() and not page.locator('.game-camera-toggle').is_visible()
-   for name in ['rad-tox-hud','basketball-controls','range-ops-button']:assert not page.locator('.'+name).is_visible()
+   for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert not page.locator('.'+name).is_visible()
    # A road dashboard mounted and repeatedly updated while hidden must stay hidden.
    page.evaluate("""async()=>{const stage=document.querySelector('.house-stage'),{mountRoadVehicleUI}=await import('/public/js/road-vehicle-ui.js'),{ROAD_VEHICLES}=await import('/public/js/road-vehicles.js');const modelId=Object.keys(ROAD_VEHICLES).find(id=>!ROAD_VEHICLES[id].siteOnly);window.roadState={serverTime:1000,players:{me:{vehicleId:'car'}},actors:{car:{id:'car',modelId,active:true,position:{x:0,y:0,z:0},driving:{speed:0}}}};window.road=mountRoadVehicleUI(stage,async()=>({result:{message:'Confirmed'}}));road.update(roadState,'me');road.update(roadState,'me');}""")
    page.wait_for_function("document.querySelector('.game-display-flow > .road-vehicle-controls')!==null")
@@ -61,7 +61,7 @@ try:
    restore.tap()
    assert page.locator('.road-vehicle-controls').is_visible()
    assert page.locator('.game-camera-toggle').is_visible()
-   for name in ['rad-tox-hud','basketball-controls','range-ops-button']:assert page.locator('.'+name).is_visible()
+   for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert page.locator('.'+name).is_visible()
    assert page.evaluate('hudEvents')==[True,False]
    assert page.evaluate('blurCount')>=2
    # Global visibility does not overwrite a vehicle's local collapsed state.

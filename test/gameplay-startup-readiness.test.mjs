@@ -136,7 +136,7 @@ test('failed destination discovery restores current-world readiness without repl
 
 test('choosing multiplayer from a ready solo map validates the current room before changing transport mode',async()=>{
  let selected=null;
- const {context}=fixture({gameplayStarted:true,guestSolo:true,serverHostedRoom:false,authoritativeClient:null,pickerPanel:{dialog:{close(){}}},library:{classList:{add(){}}},worldButton:{setAttribute(){}},history:{replaceState(){}},loadById:async id=>{assert.equal(context.requireGameplayReady(),true);assert.equal(context.serverHostedRoom,false,'the previous solo room remains current until the load begins');selected=id;}});
+ const {context}=fixture({gameplayStarted:true,guestSolo:true,serverHostedRoom:false,authoritativeClient:null,pickerPanel:{dialog:{close(){}}},library:{classList:{add(){}}},worldButton:{setAttribute(){}},replaceGameLocation(){},loadById:async id=>{assert.equal(context.requireGameplayReady(),true);assert.equal(context.serverHostedRoom,false,'the previous solo room remains current until the load begins');selected=id;}});
  const onJoin=section('onJoin:async env=>{','}});\n  }').slice('onJoin:'.length)+'}';
  vm.runInContext('globalThis.chooseDestination=('+onJoin+');',context);
  await context.chooseDestination({id:'public-commons',name:'Public Commons',multiplayer:true});

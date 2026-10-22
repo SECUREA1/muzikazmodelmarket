@@ -51,6 +51,8 @@
 .house-stage[data-hud-hidden=true]>.basketball-controls,
 .house-stage[data-hud-hidden=true]>.range-ops-button,
 .house-stage[data-hud-hidden=true]>.building-adjust-button,
+.house-stage[data-hud-hidden=true]>.live-local-map,
+.house-stage[data-hud-hidden=true]>.xr-controls-help,
 .house-explorer-shell[data-hud-hidden=true] .house-control-dock{display:none!important}
 /* Machinery owns its work, drive, park and exit controls. */
 .house-stage[data-construction-machine]>.game-display-flow>.game-display-flow-actions,

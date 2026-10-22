@@ -31,7 +31,9 @@ def assert_restored(page,scroll,mode):
  assert page.locator('#fixture-fullscreen').get_attribute('aria-pressed')=='false'
  assert page.evaluate('document.querySelector(".house-explorer-shell").previousElementSibling.id')=='before-shell'
  assert page.evaluate('document.querySelector(".house-explorer-shell").nextElementSibling.id')=='after-shell'
- page.wait_for_function('(scroll)=>Math.abs(scrollY-scroll)<=2',arg=scroll)
+ try:page.wait_for_function('(scroll)=>Math.abs(scrollY-scroll)<=2',arg=scroll)
+ except Exception as error:
+  raise AssertionError({'mode':mode,'expectedScroll':scroll,'actualScroll':page.evaluate('scrollY'),'url':page.url,'expanded':page.locator('.house-stage').get_attribute('data-viewport-expanded'),'state':page.evaluate('history.state')}) from error
  page.wait_for_function('!history.state?.__muzikazGameViewport')
  assert page.evaluate('JSON.stringify(backgroundState())===JSON.stringify(originalBackground)'),'Background inert/aria-hidden state must restore exactly'
  assert page.evaluate('JSON.stringify(styleState())===JSON.stringify(originalStyles)'),'Body/html inline styles must restore exactly'
@@ -61,10 +63,47 @@ def keyboard_and_dialog(page,mode):
  page.keyboard.press('Escape');page.wait_for_function('!document.querySelector("#fixture-modal").open')
  assert page.locator('.house-stage').get_attribute('data-viewport-expanded')=='true',(mode,'Dialog Escape must not close the game viewport')
 
+def history_location_changes(page,mode):
+ page.evaluate('scrollTo(0,400)');page.wait_for_timeout(60)
+ def enter():
+  page.locator('#fixture-fullscreen').scroll_into_view_if_needed();entry_scroll=page.evaluate('scrollY')
+  page.locator('#fixture-fullscreen').click();page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
+  if mode=='native':page.wait_for_function('document.fullscreenElement===document.querySelector(".house-explorer-shell")')
+  return entry_scroll
+ for exit_method in ['button','back']:
+  scroll=enter();map_id='viewport-map-'+exit_method
+  expected=page.evaluate('(id)=>changeFixtureMap(id)',map_id)
+  assert page.locator('.house-stage').get_attribute('data-fixture-map')==map_id
+  assert page.evaluate('history.state.environment')==map_id
+  # A later ordinary URL edit preserves the app state and active viewport lease.
+  expected=page.evaluate('''()=>{const url=new URL(location.href);url.searchParams.set('view','updated');replaceFixtureGameLocation(url);return location.href;}''')
+  if exit_method=='button':page.locator('#fixture-fullscreen').click()
+  else:page.evaluate('history.back()')
+  assert_restored(page,scroll,mode)
+  assert page.url==expected,(mode,exit_method,'Viewport exit restored a stale map URL',page.url,expected)
+  assert page.locator('.house-stage').get_attribute('data-fixture-map')==map_id
+  # Forward may revisit the consumed entry, but must neither revive fullscreen
+  # nor expose the previous temporary marker or stale map state.
+  page.evaluate('history.forward()');page.wait_for_timeout(180)
+  assert page.locator('.house-stage').get_attribute('data-viewport-expanded')=='false'
+  assert page.evaluate('document.fullscreenElement') is None
+  assert page.url==expected,(mode,exit_method,'Forward restored a stale map URL')
+  assert page.evaluate('!history.state?.__muzikazGameViewport')
+  assert page.evaluate('JSON.stringify(history.state)===JSON.stringify(fixtureHistory)')
+ # Two rapid toggles must adopt or await the previous asynchronous Back cleanup.
+ scroll=enter();expected=page.evaluate('changeFixtureMap("viewport-map-rapid")')
+ page.evaluate('''async()=>{viewportController.exit();await viewportController.enter();}''')
+ page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
+ page.wait_for_timeout(200)
+ assert page.locator('.house-stage').get_attribute('data-viewport-expanded')=='true',(mode,'Pending Back cleanup closed the reentered viewport')
+ assert page.url==expected
+ page.locator('#fixture-fullscreen').click();assert_restored(page,scroll,mode)
+ assert page.url==expected
+
 try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
-  for width,height in [(390,844),(320,568),(844,390),(1280,800)]:
+  for width,height in ([] if os.environ.get('VIEWPORT_HISTORY_ONLY') else [(390,844),(320,568),(844,390),(1280,800)]):
    for mode in ['native','unsupported','rejected']:
     page=browser.new_page(viewport={'width':width,'height':height},has_touch=width<1000);page.set_default_timeout(10000)
     errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
@@ -112,6 +151,12 @@ try:
     assert page.evaluate('JSON.stringify(styleState())===JSON.stringify(originalStyles)')
     assert not errors,errors
     page.close()
+  for mode in ['native','unsupported','rejected']:
+   page=browser.new_page(viewport={'width':390,'height':844},has_touch=True);page.set_default_timeout(10000)
+   errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+   page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/game-viewport.html?request={mode}');page.wait_for_selector('body[data-ready=true]')
+   history_location_changes(page,mode);assert not errors,errors;page.close()
   browser.close()
- print('Game viewport: native fullscreen, unsupported/rejected fallback, resize, Escape/Back, page scroll/DOM restoration and visible controls passed at 390/320/844/1280px.')
+ if os.environ.get('VIEWPORT_HISTORY_ONLY'):print('Viewport map/history regressions: native fullscreen and both fallback paths preserve changed URL/state through Exit, Back, Forward and immediate reentry.')
+ else:print('Game viewport: fullscreen/fallback, controls, dialogs, layout, focus/DOM/scroll restoration and map/history updates including immediate reentry passed.')
 finally:server.shutdown()

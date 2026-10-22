@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 ROOM = 'skyscraper-construction'
 VIEWPORTS = [(390, 844), (320, 568), (844, 390)]
+FOCUSED = os.environ.get('CONSTRUCTION_VIEW_FOCUSED') == '1'
 
 
 def hit_test(locator):
@@ -59,7 +60,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                     args=['--no-sandbox', '--enable-unsafe-swiftshader'],
                 )
                 for touch in [True, False]:
-                    sizes = VIEWPORTS if touch else [(1280, 800)]
+                    sizes = (VIEWPORTS[:1] if FOCUSED else VIEWPORTS) if touch else [(640, 480)]
                     context = browser.new_context(
                         viewport={'width': sizes[0][0], 'height': sizes[0][1]},
                         has_touch=touch, is_mobile=touch, device_scale_factor=1,
@@ -186,6 +187,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                             assert page.locator('.house-stage').get_attribute('data-hud-hidden') == 'true'
                             assert not panel.is_visible()
                             assert not page.locator('.house-control-dock').is_visible()
+                            assert not page.locator('.live-local-map').is_visible()
                             hidden_canvas = page.locator('#house-explorer-canvas').bounding_box()
                             assert hidden_canvas['height'] >= geometry['stage']['height'] - 1, 'Hide shrank the game canvas'
                             assert hit_test(viewport_toggle), 'Global hide also hid fullscreen control'

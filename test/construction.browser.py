@@ -2,6 +2,7 @@
 Set CONSTRUCTION_ROUTE_ONLY=1 for native earthworks, or CONSTRUCTION_GUI_ONLY=1
 to run responsive dashboards, the live game and Builder against a fresh site.
 CONSTRUCTION_MACHINE_ONLY=<model-id> isolates one live machine control check.
+CONSTRUCTION_PREVIEW_ONLY=1 verifies compact fixtures and the mobile crane view.
 """
 import json,math,os,socket,subprocess,tempfile,time,uuid
 from pathlib import Path
@@ -11,7 +12,8 @@ ROOT=Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 route_only=os.environ.get('CONSTRUCTION_ROUTE_ONLY')=='1'
 machine_only=os.environ.get('CONSTRUCTION_MACHINE_ONLY','')
-gui_only=os.environ.get('CONSTRUCTION_GUI_ONLY')=='1' or bool(machine_only)
+preview_only=os.environ.get('CONSTRUCTION_PREVIEW_ONLY')=='1'
+gui_only=os.environ.get('CONSTRUCTION_GUI_ONLY')=='1' or bool(machine_only) or preview_only
 with socket.socket() as probe:
  probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
 base=f'http://127.0.0.1:{port}'
@@ -180,7 +182,7 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
      toggle=page.get_by_role('button',name='Show or hide road vehicle dashboard',exact=True);toggle.click();assert not road.locator('.road-vehicle-details').is_visible();assert road.locator('.sports-primary-trigger').is_visible();toggle.click();assert road.locator('.road-vehicle-details').is_visible()
      assert not errors,errors;page.close()
     if not machine_only:print('Browser: all four machine dashboards, joystick neutral, collapse and old car hide at 320/390/844/1280px passed.',flush=True)
-    context=browser.new_context(viewport={'width':1280,'height':900},service_workers='block',reduced_motion='reduce')
+    context=browser.new_context(viewport={'width':390,'height':844},service_workers='block',reduced_motion='reduce')
     # Chromium advertises the host CPU count, above this container's four-core
     # quota. Match the real budget so the app uses its existing quality preset.
     context.add_init_script("Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>4})")
@@ -206,6 +208,8 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
      page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().gameplayStarted&&window.MuzikazHouseExplorer.snapshot().serverReady',timeout=120000)
      assert page.locator('.house-stage').get_attribute('aria-busy')=='false'
      if not machine_only:
+      page.locator('.game-viewport-toggle').click()
+      page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
       page.locator('.district-map-toggle').click();page.get_by_role('button',name='Vehicles',exact=True).click()
       page.wait_for_function('[...document.querySelectorAll("[data-craft-choices] img")].every(image=>image.complete&&image.naturalWidth>0)')
       crane_card=page.locator('[data-craft-choices] article').filter(has=page.get_by_role('heading',name='Tower',exact=False)).first
@@ -214,13 +218,22 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       page.locator('.construction-controls').wait_for(state='visible',timeout=20000)
       assert page.locator('[aria-label="Toggle crane work camera"]').get_attribute('aria-pressed')=='true'
       assert 'Operator input delayed' not in page.locator('.construction-interlock').inner_text()
-      page.screenshot(path='/tmp/construction-site-full.png')
+      Path('/tmp/construction-site-full-mobile.png').write_bytes(page.screenshot(path='/tmp/construction-site-full.png'))
       page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
       page.screenshot(path='/tmp/construction-site-collapsed.png')
       page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
+      page.locator('.game-hud-toggle').click()
+      assert not page.locator('.live-local-map').is_visible()
+      page.screenshot(path='/tmp/construction-site-hidden-mobile.png')
+      page.locator('.game-hud-toggle').click()
       page.locator('.construction-controls [data-operation=park]').click()
       page.get_by_role('button',name='Exit parked construction machine',exact=True).click()
       page.locator('.construction-controls').wait_for(state='hidden',timeout=15000)
+      page.locator('.game-viewport-toggle').click()
+      page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded!=="true"')
+     if preview_only:
+      print('Browser: all compact machine fixtures and mobile crane overview/global hide preview passed.',flush=True)
+      browser.close();alice.dispose();bob.dispose();raise SystemExit(0)
      page.set_viewport_size({'width':960,'height':720})
      for model,axis,pad_index in [('site-excavator','boom',1),('site-dumptruck','bed',0),('site-bulldozer','blade',0)]:
       if machine_only and machine_only!=model:continue
