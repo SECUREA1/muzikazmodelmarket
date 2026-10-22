@@ -13,7 +13,7 @@ server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
 Thread(target=server.serve_forever,daemon=True).start()
 
 MACHINES=[
- ('tower-crane','crane',['slew','trolley','hoist','load'],[(0,'ArrowUp','trolley',1),(0,'ArrowLeft','slew',-1),(1,'ArrowUp','hoist',-1),(1,'ArrowDown','hoist',1)]),
+ ('tower-crane','crane',['slew','trolley','hoist','loadYaw','load'],[(0,'ArrowUp','trolley',1),(0,'ArrowLeft','slew',-1),(1,'ArrowUp','hoist',-1),(1,'ArrowDown','hoist',1),(1,'ArrowRight','loadYaw',1),(1,'ArrowLeft','loadYaw',-1)]),
  ('site-dumptruck','truck',['speed','bed','load'],[(0,'ArrowUp','bed',-1),(0,'ArrowDown','bed',1)]),
  ('site-bulldozer','bulldozer',['speed','blade'],[(0,'ArrowUp','blade',-1),(0,'ArrowDown','blade',1)]),
  ('site-excavator','excavator',['speed','boom','stick','bucket','swing'],[(0,'ArrowUp','stick',1),(0,'ArrowLeft','slew',-1),(1,'ArrowUp','boom',-1),(1,'ArrowDown','boom',1),(1,'ArrowLeft','bucket',-1)])
@@ -101,6 +101,29 @@ try:
      assert not page.evaluate('lastAxes().bed>0'),'Moving truck must not accept body raise demand'
      page.keyboard.up('ArrowDown')
     page.evaluate('setDriving({speed:0,parked:true})')
+   # A real joystick command must move the bucket to the operator's right/left,
+   # including a rotated machine. This tests the physical frame, not state signs.
+   page.evaluate('setMachine("site-excavator","excavator");setHydraulics({swing:0,precision:false})')
+   swing_pad=page.locator('.construction-work-sticks .construction-stick').first
+   for key,direction in [('ArrowRight',1),('ArrowLeft',-1)]:
+    swing_pad.scroll_into_view_if_needed();swing_pad.focus();page.evaluate('clearCalls()');page.keyboard.down(key)
+    page.wait_for_function('direction=>lastAxes().slew*direction>0',arg=direction)
+    for yaw in [0,1.1]:
+     displacement=page.evaluate('''async yaw=>{const {stepConstructionHydraulics}=await import('/public/js/construction-state.js'),{constructionJointPose}=await import('/public/js/construction-kinematics.js');const actor=structuredClone(machine());actor.rotation.y=yaw;actor.construction.swing=0;const before=constructionJointPose(actor).bucketTip;actor.construction=stepConstructionHydraulics(actor,lastAxes(),.1);const after=constructionJointPose(actor).bucketTip;return (after.x-before.x)*Math.cos(yaw)-(after.z-before.z)*Math.sin(yaw);}''',yaw)
+     assert displacement*direction>.1,(width,yaw,key,'bucket moved opposite the operator joystick',displacement)
+    page.keyboard.up(key);neutral(page)
+   # A clockwise carriage heading and a level beam mating reference follow the
+   # same geometric conventions as the visible machine and its rigging.
+   page.evaluate('setHydraulics({swing:-Math.PI/2})')
+   assert '90' in page.locator('[data-instrument=swing] output').inner_text()
+   page.evaluate('setMachine("tower-crane","crane");setHydraulics({load:"steel",loadYaw:Math.PI/2,hook:{x:15,y:15.5,z:-4}});state.construction.tower.target={x:15,y:12,z:-4,yaw:Math.PI/2};refresh()')
+   assert '0.0 m horizontal' in page.locator('.construction-readout').inner_text()
+   assert '0.0 m vertical' in page.locator('.construction-readout').inner_text()
+   assert '0° yaw' in page.locator('.construction-readout').inner_text()
+   assert '90' in page.locator('[data-instrument=loadYaw] output').inner_text()
+   page.evaluate('setMachine("site-dumptruck","truck");setTelemetry({loadCapacity:40});setHydraulics({load:20})')
+   assert page.locator('[data-instrument=load] meter').evaluate('(meter)=>meter.max')==40
+   assert page.locator('[data-instrument=load] meter').evaluate('(meter)=>meter.value')==20
    # Instruments follow confirmed state snapshots, including changed values.
    page.evaluate('setMachine("tower-crane","crane");setHydraulics({hoist:23.5,trolley:31,slew:1})')
    assert '23.5' in page.locator('[data-instrument=hoist] output').inner_text()

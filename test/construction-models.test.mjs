@@ -85,3 +85,28 @@ test('a blocked track pivot preserves the physical chassis heading and position'
  const actor={id:'blocked-dozer',modelId:'site-bulldozer',position:{x:2,y:0,z:3},rotation:{y:.4},driving:{speed:0}};
  const next=stepRoadVehicle(actor,{side:1},.1,{groundAt:point=>point,blocked:()=>true});assert.equal(next.rotation.y,.4);assert.deepEqual(next.position,actor.position);assert.equal(next.driving.blocked,true);
 });
+
+test('side-only steering counter-rotates crawler tracks and blocked pivots stop them',()=>{
+ for(const id of ['site-bulldozer','site-excavator'])for(const cloned of [false,true]){
+  const original=createConstructionModel(id),root=cloned?cloneBuilderRuntime(original):original;
+  root.userData.driving={speed:0,steering:0};updateConstructionModel(root,0);
+  const tracks=root.userData.constructionParts.tracks,positions=()=>tracks.map(({shoes})=>shoes[6].position.z),before=positions();
+  root.userData.driving={speed:0,steering:1,blocked:false};updateConstructionModel(root,.1);const turning=positions();
+  assert.ok(turning[0]>before[0],id+' left track advances when turning right');assert.ok(turning[1]<before[1],id+' right track reverses during pivot');
+  assert.ok(Math.abs((turning[0]-before[0])+(turning[1]-before[1]))<1e-6,id+' equal opposing track travel at rest');
+  root.userData.driving.blocked=true;updateConstructionModel(root,.2);assert.deepEqual(positions(),turning,id+' blocked chassis cannot move its track shoes');
+  root.userData.driving={speed:-1,steering:0,blocked:false};updateConstructionModel(root,.3);const reversed=positions();assert.ok(reversed.every((z,index)=>z<turning[index]),id+' both tracks reverse with reverse travel');
+ }
+});
+
+test('cab levers visibly push to extend and pull to lift, including cloned controls and spreader yaw',()=>{
+ for(const id of ['tower-crane','site-dumptruck','site-bulldozer','site-excavator'])for(const cloned of [false,true]){
+  const original=createConstructionModel(id),root=cloned?cloneBuilderRuntime(original):original,point=mesh=>new THREE.Vector3(0,.28,-.1).applyMatrix4(mesh.matrix);
+  root.userData.construction={axes:{}};updateConstructionModel(root,0);const joysticks=root.userData.constructionParts.joysticks,neutral=joysticks.map(({mesh})=>point(mesh));
+  for(const demand of [-1,1]){
+   root.userData.construction={axes:Object.fromEntries(['slew','trolley','hoist','loadYaw','stick','boom','bucket','bed','blade'].map(axis=>[axis,demand]))};updateConstructionModel(root,1);
+   joysticks.forEach(({mesh,side},index)=>{const moved=point(mesh),pushToExtend=(id==='tower-crane'||id==='site-excavator')&&side<0;assert.ok((moved.z-neutral[index].z)*demand*(pushToExtend?-1:1)>0,id+' visible handle direction matches extension/lift control');if(id==='tower-crane'&&side>0)assert.ok((moved.x-neutral[index].x)*demand>0,'spreader yaw moves the right crane handle horizontally');});
+  }
+  root.userData.construction={axes:{}};updateConstructionModel(root,2);joysticks.forEach(({mesh},index)=>assert.ok(point(mesh).distanceTo(neutral[index])<1e-9,id+' controls return to visible neutral'));
+ }
+});

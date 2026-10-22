@@ -134,9 +134,9 @@ function runConstructionCommand(sim,player,command,now,context={}){
  }else if(operation==='work'){
   const ready=workReadiness(sim,actor);if(!ready.allowed)error(ready.reason);
   const startPose=Object.fromEntries(['boom','stick','bucket','swing','blade','bed'].map(key=>[key,state[key]||0]));
-  const truck=ready.truck,dx=truck?truck.position.x-actor.position.x:0,dz=truck?truck.position.z-actor.position.z:0;
+  const truck=ready.truck,truckYaw=truck?.rotation?.y||0,dx=truck?truck.position.x+Math.sin(truckYaw)*1.4-actor.position.x:0,dz=truck?truck.position.z+Math.cos(truckYaw)*1.4-actor.position.z:0;
   const desired=truck?Math.atan2(-dx,-dz)-(actor.rotation?.y||0):state.swing||0,difference=Math.atan2(Math.sin(desired-(state.swing||0)),Math.cos(desired-(state.swing||0)));
-  state.workCycle={start:now,elapsed:0,duration:ready.mode==='load'?Math.max(3600,Math.abs(difference)/.8*1000+2200):ready.mode==='dump'?4200:ready.mode==='dig'?3600:2800,mode:ready.mode,startPose,truckId:truck?.id,targetSwing:(state.swing||0)+difference,transferred:false};
+  state.workCycle={start:now,elapsed:0,duration:ready.mode==='load'?Math.max(5600,Math.abs(difference)/.8*2000+2600):ready.mode==='dump'?4200:ready.mode==='dig'?3600:2800,mode:ready.mode,startPose,truckId:truck?.id,targetSwing:(state.swing||0)+difference,transferred:false};
   state.axes={};state.assist=null;player.input={};actor.driving={...actor.driving,speed:0,parked:true};
   return ready.mode==='dig'?'Dig cycle: lower, scoop, curl and lift.':ready.mode==='load'?'Load cycle: raise, swing, discharge over the parked truck and return.':ready.mode==='dump'?'Dump cycle: raise body, discharge at the spoil pad and lower.':'Grading cycle: lower the blade into the work area and finish the pass.';
  }
@@ -146,7 +146,9 @@ function cycleCandidate(actor,dt){
  const state={...actor.construction},cycle={...state.workCycle,paused:false},from=cycle.startPose;
  cycle.elapsed=Math.min(cycle.duration,(cycle.elapsed||0)+dt*1000);state.workCycle=cycle;const t=cycle.elapsed/cycle.duration;
  const frames=cycle.mode==='dig'?[[0,from],[.28,{boom:.4,stick:-1.5,bucket:1}],[.58,{boom:.4,stick:-1.5,bucket:-.9}],[1,{boom:.9,stick:-.8,bucket:-.9}]]:
-  cycle.mode==='load'?[[0,from],[.24,{boom:1.05,stick:-.3,bucket:-.9,swing:from.swing}],[.6,{boom:.8,stick:-.3,bucket:-.9,swing:cycle.targetSwing}],[.76,{boom:.8,stick:-.3,bucket:1,swing:cycle.targetSwing}],[1,{boom:1.05,stick:-.8,bucket:0,swing:from.swing}]]:
+  // Keep the high, curled arm fixed through each swing. Lowering/retracting
+  // while simultaneously returning used to clip the receiving truck's cab.
+  cycle.mode==='load'?[[0,from],[.13,{boom:1.3,stick:-.2,bucket:-.9,swing:from.swing}],[.38,{boom:1.3,stick:-.2,bucket:-.9,swing:cycle.targetSwing}],[.48,{boom:.8,stick:-.3,bucket:-.9,swing:cycle.targetSwing}],[.58,{boom:.8,stick:-.3,bucket:1,swing:cycle.targetSwing}],[.7,{boom:1.3,stick:-.2,bucket:0,swing:cycle.targetSwing}],[.95,{boom:1.3,stick:-.2,bucket:0,swing:from.swing}],[1,{boom:1.05,stick:-.8,bucket:0,swing:from.swing}]]:
   cycle.mode==='dump'?[[0,from],[.48,{bed:.95}],[.7,{bed:.95}],[1,{bed:0}]]:[[0,from],[.35,{blade:0}],[.75,{blade:0}],[1,{blade:1}]];
  let low=frames[0],high=frames.at(-1);for(let i=1;i<frames.length;i++)if(t<=frames[i][0]){low=frames[i-1];high=frames[i];break;}
  const amount=clamp((t-low[0])/Math.max(.001,high[0]-low[0]),0,1);
@@ -155,7 +157,7 @@ function cycleCandidate(actor,dt){
 }
 function finishCycleEffects(sim,actor,now){
  const state=actor.construction,cycle=state.workCycle,t=cycle.elapsed/cycle.duration;
- if(cycle.mode==='load'&&t>=.76&&!cycle.transferred){
+ if(cycle.mode==='load'&&t>=.58&&!cycle.transferred){
   const truck=sim.actors[cycle.truckId],tip=constructionJointPose(actor).bucketTip;
   const receiving=truck&&{x:truck.position.x+Math.sin(truck.rotation?.y||0)*1.4,y:truck.position.y+3,z:truck.position.z+Math.cos(truck.rotation?.y||0)*1.4};
   if(!truck||truck.active===false||Math.abs(truck.driving?.speed||0)>.15||(truck.construction.bed||0)>.08||(truck.construction.load||0)+state.load>CONSTRUCTION_CAPACITY.truck||Math.hypot(tip.x-receiving.x,tip.z-receiving.z)>3||tip.y<receiving.y-.2){

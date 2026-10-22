@@ -50,3 +50,13 @@ test('client walking and placement use the same hidden solid boxes as authoritat
   }
  }
 });
+
+test('dumptruck nose, operator cab and physical steering agree with forward turns',async()=>{
+ const {stepRoadVehicle}=await import('../public/js/road-vehicles.js');
+ for(const side of [-1,1]){
+  const entity={id:'steering-truck',modelId:'site-dumptruck',position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},construction:{bed:0},driving:{speed:2,steering:side,parked:false}},pose=constructionKinematics(entity),front=constructionTransformForTest(pose.nodes.front.matrix,[0,1,-3.4]),driven=stepRoadVehicle(entity,{side,forward:1},.1);
+  assert.ok(front.x*side>0,'front nose bends into the commanded turn');assert.ok(driven.position.x*side>0,'forward driving moves toward the bent front');assert.ok(constructionOperatorPose(entity).yaw*side<0,'operator view faces the articulated nose');
+  const root=rendered(entity),visibleNose=root.getObjectByName('TRUCK_ARTICULATED_FRONT').localToWorld(new THREE.Vector3(0,1,-3.4));assert.ok(visibleNose.distanceTo(new THREE.Vector3(front.x,front.y,front.z))<1e-6);
+ }
+});
+function constructionTransformForTest(matrix,point){return new THREE.Vector3(...point).applyMatrix4(new THREE.Matrix4().fromArray(matrix));}

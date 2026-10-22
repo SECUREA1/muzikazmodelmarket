@@ -11,7 +11,7 @@ export function constructionWorld(){
  // Keep the four working machines first, including in lightweight map previews.
  machine('crane','tower-crane','Atlas TC-78 Tower Crane',-18,-4);
  machine('truck','site-dumptruck','HT-40 Articulated Dump Truck',21,30);
- machine('dozer','site-bulldozer','D9 Crawler Bulldozer',32,30);
+ machine('dozer','site-bulldozer','D9 Crawler Bulldozer',32,34);
  machine('excavator','site-excavator','EX-300 Hydraulic Excavator',25,17);
  slab('tower-raft',5,-.24,-10,22,22,'#b7b8b1',.24);
  slab('crane-raft',-18,-.16,-4,7,7,'#aaa69a',.16);

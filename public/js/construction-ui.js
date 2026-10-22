@@ -1,7 +1,7 @@
 import {mountSportsActions,sportIcon} from './sports-action-bar.js';
 import {mountThumbstick} from './thumbstick-input.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
-import {constructionMachineKind,craneHookPosition} from './construction-state.js';
+import {constructionMachineKind,craneHookPosition,CONSTRUCTION_LOAD_OFFSET} from './construction-state.js';
 export {constructionMachineKind} from './construction-state.js';
 
 const names={crane:'Tower crane · lifting station',truck:'Articulated dumptruck',bulldozer:'Crawler bulldozer',excavator:'Hydraulic excavator · ISO controls'};
@@ -12,7 +12,7 @@ const setAttr=(node,name,value)=>{value=String(value);if(node.getAttribute(name)
 export function constructionControlScheme(kind){
  if(kind==='crane')return [
   {label:'Slew / trolley',horizontal:'slew',vertical:'trolley',verticalSign:1,left:'Slew left −',right:'Slew right +',up:'Trolley out +',down:'Trolley in −',description:'Push forward to send the trolley away from the mast; pull back to bring it in. Move left or right to slew the jib.'},
-  {label:'Hoist lever',horizontal:null,vertical:'hoist',verticalSign:-1,up:'Lower hook −',down:'Raise hook +',description:'Push forward to lower the hook. Pull back to raise it. Release the lever to hold hook height.'}
+  {label:'Hoist / spreader',horizontal:'loadYaw',vertical:'hoist',verticalSign:-1,left:'Steel yaw −',right:'Steel yaw +',up:'Lower hook −',down:'Raise hook +',description:'Push forward to lower the hook. Pull back to raise it. Left and right rotate the powered spreader and suspended steel. Release the lever to hold height and yaw.'}
  ];
  if(kind==='excavator')return [
   {label:'Left ISO joystick',horizontal:'slew',vertical:'stick',verticalSign:1,left:'Swing left −',right:'Swing right +',up:'Stick out +',down:'Stick in −',description:'ISO left control: push forward to extend the dipper stick; pull back to retract it. Left and right swing the upper carriage.'},
@@ -26,12 +26,12 @@ const instrumentSpec=(id,label,min,max,unit,digits=1)=>({id,label,min,max,unit,d
 export function constructionInstrumentSpecs(kind){
  const config=Object.entries(ROAD_VEHICLES).find(([id])=>constructionMachineKind({modelId:id})===kind)?.[1];
  const speed=instrumentSpec('speed','Ground speed',0,(config?.speed||1)*3.6,'km/h');
- if(kind==='crane')return [instrumentSpec('slew','Jib bearing',0,360,'°',0),instrumentSpec('trolley','Trolley reach',4,42,'m'),instrumentSpec('hoist','Hook height',.8,74,'m'),instrumentSpec('load','Steel attachment',0,1,'beam',0),instrumentSpec('hookLoad','Suspended load',0,6,'t'),instrumentSpec('loadMoment','Load moment',0,100,'%',0)];
- if(kind==='excavator')return [speed,instrumentSpec('swing','Carriage swing',0,360,'°',0),instrumentSpec('boom','Boom angle',.3*180/Math.PI,1.3*180/Math.PI,'°'),instrumentSpec('stick','Dipper angle',-1.5*180/Math.PI,-.2*180/Math.PI,'°'),instrumentSpec('bucket','Bucket curl',-1.2*180/Math.PI,1.2*180/Math.PI,'°'),instrumentSpec('load','Bucket fill',0,2,'m³')];
+ if(kind==='crane')return [instrumentSpec('slew','Jib bearing',0,360,'°',0),instrumentSpec('trolley','Trolley reach',4,42,'m'),instrumentSpec('hoist','Hook height',.8,74,'m'),instrumentSpec('loadYaw','Steel yaw (world)',0,360,'°',0),instrumentSpec('load','Steel attachment',0,1,'beam',0),instrumentSpec('hookLoad','Suspended load',0,6,'t'),instrumentSpec('loadMoment','Load moment',0,100,'%',0)];
+ if(kind==='excavator')return [speed,instrumentSpec('swing','Swing clockwise',0,360,'°',0),instrumentSpec('boom','Boom angle',.3*180/Math.PI,1.3*180/Math.PI,'°'),instrumentSpec('stick','Dipper angle',-1.5*180/Math.PI,-.2*180/Math.PI,'°'),instrumentSpec('bucket','Bucket curl',-1.2*180/Math.PI,1.2*180/Math.PI,'°'),instrumentSpec('load','Bucket fill',0,2,'m³')];
  if(kind==='bulldozer')return [speed,instrumentSpec('blade','Cutting edge height',0,1.2,'m',2),instrumentSpec('graded','Site grading',0,100,'%',0)];
- return [speed,instrumentSpec('bed','Dump body angle',0,.95*180/Math.PI,'°'),instrumentSpec('load','Body payload',0,16,'m³')];
+ return [speed,instrumentSpec('bed','Dump body angle',0,.95*180/Math.PI,'°'),instrumentSpec('load','Body payload',0,40,'m³')];
 }
-const axisNames={slew:'Slew / swing',trolley:'Trolley',hoist:'Hoist',boom:'Boom',stick:'Dipper stick',bucket:'Bucket',blade:'Blade lift',bed:'Body hoist'};
+const axisNames={slew:'Slew / swing',trolley:'Trolley',loadYaw:'Spreader yaw',hoist:'Hoist',boom:'Boom',stick:'Dipper stick',bucket:'Bucket',blade:'Blade lift',bed:'Body hoist'};
 const degrees=value=>Number(value||0)*180/Math.PI;
 const bearing=value=>(degrees(value)%360+360)%360;
 
@@ -139,16 +139,16 @@ export function mountConstructionUI(stage,command){
  }
  function updateInstruments(){
   const state=current?.construction||{},telemetry=state.telemetry||{},site=snapshot?.construction||{},speed=Number(current?.driving?.speed)||0;
-  const values={...state,hookLoad:telemetry.hookLoadTonnes,loadMoment:telemetry.loadMomentPercent,speed:Math.abs(speed)*3.6,load:kind==='crane'?(state.load?1:0):Number(state.load)||0,graded:site.graded||0,slew:bearing(state.slew),swing:bearing(state.swing),boom:degrees(state.boom),stick:degrees(state.stick),bucket:degrees(state.bucket),bed:degrees(state.bed)};
+  const values={...state,hookLoad:telemetry.hookLoadTonnes,loadMoment:telemetry.loadMomentPercent,speed:Math.abs(speed)*3.6,load:kind==='crane'?(state.load?1:0):Number(state.load)||0,graded:site.graded||0,slew:bearing(state.slew),loadYaw:bearing(state.loadYaw),swing:bearing(-state.swing),boom:degrees(state.boom),stick:degrees(state.stick),bucket:degrees(state.bucket),bed:degrees(state.bed)};
   for(const [id,node]of instrumentNodes){const optional=id==='hookLoad'||id==='loadMoment';if(optional){setHidden(node.root,!Number.isFinite(Number(values[id])));if(!Number.isFinite(Number(values[id])))continue;}const value=Number(values[id])||0,max=id==='hookLoad'?(telemetry.safeWorkingLoadTonnes||node.max):id==='load'&&kind!=='crane'?(telemetry.loadCapacity||node.max):node.max;setText(node.output,value.toFixed(node.digits)+' '+node.unit);if(node.meter.max!==max)node.meter.max=max;const bounded=Math.max(node.min,Math.min(max,value));if(node.meter.value!==bounded)node.meter.value=bounded;setAttr(node.meter,'aria-valuetext',node.output.textContent);setAttr(node.root,'data-over-limit',value>max);}
   const travelReading=travelPanel.querySelector('.construction-travel-readout');if(travelReading)setText(travelReading,'Throttle '+Math.round((current.driving?.throttle||0)*100)+'% · Steering '+Math.round((current.driving?.steering||0)*100)+'% · Parking brake '+(current.driving?.parked?'engaged':'released'));
   const gear=kind==='crane'?'FIXED BASE':current?.driving?.blocked?'BLOCKED':current?.driving?.parked?'P / brake':Math.abs(speed)<.1?'N':speed<0?'R':'D',mode=state.workCycle?'Automatic cycle':state.assist?'Alignment '+state.assist:'Manual',hydraulics=telemetry.hydraulicsActive??state.working;
   setText(systems,'Drive '+gear+' · '+mode+' · Hydraulics '+(hydraulics?'active':'neutral')+' · '+(state.precision?'Precision 30%':'Full rate'));
   const activeCycle=!!state.workCycle;setHidden(cycle,!activeCycle);if(activeCycle){const elapsed=Math.max(0,(Number(snapshot?.serverTime)||state.workCycle.start)-state.workCycle.start),fraction=Math.max(0,Math.min(1,Number(telemetry.cycleProgress??elapsed/state.workCycle.duration)||0));setText(cycle.querySelector('output'),(telemetry.cyclePhase||state.workCycle.mode)+' · '+Math.round(fraction*100)+'%');const bar=cycle.querySelector('progress');if(bar.value!==fraction)bar.value=fraction;}
   setText(heading.querySelector('output'),Math.abs(speed*3.6).toFixed(1)+' km/h');
-  if(kind==='crane'){const target=site.tower?.target,hook=state.hook||current?.position&&craneHookPosition(current);setText(readout,target&&hook?'Target offset '+Math.hypot(target.x-hook.x,target.z-hook.z).toFixed(1)+' m horizontal · '+(target.y-hook.y).toFixed(1)+' m vertical · '+(state.load?'Steel attached':'Hook empty'):state.load?'Steel attached':'Hook empty');}
+  if(kind==='crane'){const target=site.tower?.target,hook=state.hook||current?.position&&craneHookPosition(current),matingY=hook?hook.y-CONSTRUCTION_LOAD_OFFSET:0,yawError=target?degrees(Math.atan2(Math.sin((target.yaw||0)-(state.loadYaw||0)),Math.cos((target.yaw||0)-(state.loadYaw||0)))):0;setText(readout,target&&hook?'Beam placement offset '+Math.hypot(target.x-hook.x,target.z-hook.z).toFixed(1)+' m horizontal · '+(target.y-matingY).toFixed(1)+' m vertical · '+yawError.toFixed(0)+'° yaw · '+(state.load?'Steel attached':'Hook empty'):state.load?'Steel attached':'Hook empty');}
   else if(kind==='excavator')setText(readout,'Bucket '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||2).toFixed(1)+' m³ · '+(telemetry.status||'Manual ISO hydraulics'));
-  else if(kind==='truck')setText(readout,'Payload '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||16).toFixed(1)+' m³ · '+(telemetry.travelAllowed===false?telemetry.travelReason||'Travel interlocked':'Body and drive ready'));
+  else if(kind==='truck')setText(readout,'Payload '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||40).toFixed(1)+' m³ · '+(telemetry.travelAllowed===false?telemetry.travelReason||'Travel interlocked':'Body and drive ready'));
   else setText(readout,'Blade '+Number(state.blade||0).toFixed(2)+' m · '+(telemetry.blockedReason||telemetry.status||'Cutting edge position is live'));
   const tower=site.tower;setHidden(progress,!tower);if(tower)setText(progress,'Tower '+(tower.floors||0)+' / '+(tower.maxFloors||16)+' floors · '+(tower.placed||0)+' steel members · Pit '+Number(site.excavation?.depth||0).toFixed(1)+' m · Spoil '+Number(site.stockpile?.volume||0).toFixed(1)+' m³');
   updateAxisFeedback();

@@ -7,7 +7,8 @@ export function constructionBox(part,center,size,objectId=null,rotation={}){
  return {part,objectId,center:{...center},size:{...size},matrix:constructionMatrix(coordinates.map(axis=>center[axis]||0),coordinates.map(axis=>rotation[axis]||0))};
 }
 export function constructionBoxFromBounds(box,objectId=box.objectId,part='site-solid'){
- return constructionBox(part,Object.fromEntries(coordinates.map(axis=>[axis,(box.min[axis]+box.max[axis])/2])),Object.fromEntries(coordinates.map(axis=>[axis,box.max[axis]-box.min[axis]])),objectId);
+ const collider=constructionBox(part,Object.fromEntries(coordinates.map(axis=>[axis,(box.min[axis]+box.max[axis])/2])),Object.fromEntries(coordinates.map(axis=>[axis,box.max[axis]-box.min[axis]])),objectId);
+ collider.diggable=box.diggable===true||/(?:excavation-work-area|spoil-pad)$/.test(objectId||'');return collider;
 }
 export function constructionColliders(actor){
  if(!actor||actor.active===false)return [];
@@ -37,6 +38,21 @@ function prepare(box){
  const result={center,edges,bounds,faces:[cross(edges[0],edges[1]),cross(edges[1],edges[2]),cross(edges[2],edges[0])]};prepared.set(box,result);return result;
 }
 export const constructionColliderBounds=box=>prepare(box).bounds;
+/** Keep a tracked/wheeled chassis on the highest floor beneath its actual
+ * running gear while crossing a slab seam. A center ray alone sinks the rear
+ * track into the higher slab as soon as the nose leaves it.
+ */
+export function constructionGroundAt(actor,point,groundAt){
+ if(!isConstructionMachine(actor))return groundAt(point,actor);
+ const moved={...actor,position:{...point}},gear=constructionCollisionBoxes(moved).filter(box=>/(?:track|wheel)$/.test(box.part));
+ if(!gear.length)return groundAt(point,actor);
+ let height=-Infinity;
+ for(const box of gear)for(const x of [-.49,.49])for(const z of [-.49,.49]){
+  const contact=constructionTransform(box.matrix,[box.size.x*x,0,box.size.z*z]),floor=groundAt({x:contact.x,y:point.y,z:contact.z},actor);
+  if(!floor||Math.abs(floor.y-point.y)>.55)return null;height=Math.max(height,floor.y);
+ }
+ return Number.isFinite(height)?{...point,y:height}:null;
+}
 const boundsOverlap=(a,b,padding=0)=>coordinates.every(axis=>a.min[axis]<b.max[axis]+padding&&a.max[axis]>b.min[axis]-padding);
 /** Separating axis test for oriented (and non-uniformly scaled) solid boxes. */
 export function constructionBoxContact(first,second,tolerance=.025){
@@ -73,7 +89,7 @@ export function constructionMotionBlocked(from,to,obstacles=[],{spacing=.08,igno
  const perPart=start.map((part,index)=>{
   const end=finish[index];if(!end||part.matrix.every((value,i)=>Math.abs(value-end.matrix[i])<1e-9)&&coordinates.every(axis=>part.size[axis]===end.size[axis]))return [];
   const a=prepare(part).bounds,b=prepare(end).bounds,swept={min:{},max:{}};coordinates.forEach(axis=>{swept.min[axis]=Math.min(a.min[axis],b.min[axis])-span;swept.max[axis]=Math.max(a.max[axis],b.max[axis])+span;});
-  return candidates.filter(obstacle=>boundsOverlap(swept,prepare(obstacle).bounds));
+  return candidates.filter(obstacle=>!(obstacle.diggable&&/^(?:excavator-bucket|dozer-blade)$/.test(part.part))&&boundsOverlap(swept,prepare(obstacle).bounds));
  });
  const baseline=start.map((part,index)=>new Map(perPart[index].map(obstacle=>[obstacle,constructionBoxContact(part,obstacle,tolerance)?.penetration||0])));
  for(let step=1;step<=steps;step++){

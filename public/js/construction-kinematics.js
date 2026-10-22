@@ -30,7 +30,7 @@ export function constructionKinematics(actor={}){
   box('crane-service-cab','slew',[1.8,2,2.2],[1.7,-1.25,1.5]);box('crane-operator-station','cab',[2,2,2.1],[0,.85,0]);box('crane-trolley','trolley',[1.8,.55,1.2]);
   const rope=77.82-clamp(state.hoist,.8,74,.8);box('crane-hoist-rope','trolley',[.5,rope,.08],[0,-rope/2,0]);box('crane-hook','hook',[.9,1,.5],[0,-.1,0]);
  }else if(id==='site-dumptruck'){
-  frame('front','root',CONSTRUCTION_GEOMETRY.truckArticulation,[0,clamp(actor.driving?.steering,-1,1,0)*.35,0]);frame('cab','front',[-.48,1.35,-1.65]);frame('bed','root',CONSTRUCTION_GEOMETRY.truckHinge,[clamp(state.bed,0,.95,0),0,0]);frame('tailgate','bed',[0,1,.2],[-clamp(state.bed,0,.95,0),0,0]);
+  frame('front','root',CONSTRUCTION_GEOMETRY.truckArticulation,[0,-clamp(actor.driving?.steering,-1,1,0)*.35,0]);frame('cab','front',[-.48,1.35,-1.65]);frame('bed','root',CONSTRUCTION_GEOMETRY.truckHinge,[clamp(state.bed,0,.95,0),0,0]);frame('tailgate','bed',[0,1,.2],[-clamp(state.bed,0,.95,0),0,0]);
   box('truck-front-chassis','front',[2.8,1.1,3.4],[0,1.15,-1.7]);box('truck-rear-chassis','root',[2.65,.6,4.7],[0,1.05,1.8]);box('truck-cab','cab',[2,2.15,2.1],[0,.9,0]);box('truck-engine','front',[.8,1.2,2],[1,1.9,-1.65]);
   for(const x of [-1.42,1.42]){box('truck-front-wheel','front',[.6,1.5,1.5],[x,.74,-2.2]);for(const z of [1.5,3])box('truck-rear-wheel','root',[.6,1.5,1.5],[x,.74,z]);}
   box('truck-bed-floor','bed',[3.1,.25,5.2],[0,.1,-2.3]);for(const x of [-1.5,1.5])box('truck-bed-side','bed',[.3,1.2,5.2],[x,.6,-2.3]);box('truck-bed-headboard','bed',[3,.95,.2],[0,.55,-4.9]);box('truck-tailgate','tailgate',[2.9,.9,.13],[0,-.45,0]);

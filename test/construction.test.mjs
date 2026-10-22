@@ -90,3 +90,11 @@ test('shared room exposes machines and steel, enforces exclusive boarding, and p
  const cycleStarted=now;for(let index=0;index<100;index++){now+=100;state=await send(alice,'input',{input:{}});if(!state.actors.excavator.construction.workCycle)break;}assert.ok(now-cycleStarted>=3500&&now-cycleStarted<=10000);
  assert.equal(state.construction.excavation.volume,2);assert.equal(state.actors.excavator.construction.load,2);
 });
+test('fresh input queued behind a slow server tick preserves the operator, while already-expired room input still requires rejoining',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'construction-queued-input-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,request=0;
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now}),world={id:'construction-queued-input',proceduralLand:true,construction:{enabled:true},spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',mapSize:120,objects:[{...machine('truck','site-dumptruck',20,20),behavior:'vehicle',asset:{buildAssetId:'site-dumptruck',type:'vehicles'}}]}},identity={accountId:'operator',username:'Operator'},send=(action,fields={})=>runtime.command(world.id,world,identity,{action,requestId:'queued-'+ ++request,...fields});
+ await send('join');await send('map-access',{entityId:'truck'});let release;const blocker=new Promise(resolve=>{release=resolve;});runtime.store.queue=runtime.store.queue.then(()=>blocker);
+ now+=100;const input=send('input',{input:{}});now+=16000;release();const state=await input;
+ assert.equal(state.players['account:operator'].vehicleId,'truck');assert.equal(state.actors.truck.holderId,'account:operator');
+ now+=16000;await assert.rejects(send('input',{input:{}}),error=>error.code==='ROOM_JOIN_REQUIRED');
+});

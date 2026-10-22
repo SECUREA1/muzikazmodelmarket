@@ -9,7 +9,7 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import * as constructionServer from '../server-construction.mjs';
 import {craneHookPosition,initialConstructionState,CONSTRUCTION_LOAD_OFFSET} from '../public/js/construction-state.js';
-import {constructionColliders,constructionMotionBlocked,constructionBoxContact} from '../public/js/construction-collision.js';
+import {constructionColliders,constructionMotionBlocked,constructionBoxContact,constructionBoxFromBounds} from '../public/js/construction-collision.js';
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 const {ensureConstruction,constructionCommand,stepConstruction,constructionTelemetry}=constructionServer;
 
@@ -98,6 +98,19 @@ test('a suspended crane beam cannot slew across an obstruction missed by endpoin
  const hit=constructionMotionBlocked(from,to,[wall]);assert.ok(hit,'swept payload collision is checked along the slew arc');assert.equal(hit.objectId,'mid-arc-obstacle');assert.equal(hit.part,'crane-payload');
 });
 
+test('earthwork tools can enter designated soil while ordinary walls and the machine running gear remain solid',()=>{
+ const excavator=machine('excavator','site-excavator');excavator.construction=initialConstructionState(excavator);const digging=structuredClone(excavator);Object.assign(digging.construction,{boom:.4,stick:-1.5,bucket:1});
+ const surface={min:{x:-10,y:-.025,z:-10},max:{x:10,y:.005,z:10}};
+ assert.equal(constructionMotionBlocked(excavator,digging,[constructionBoxFromBounds(surface,'construction-excavation-work-area')]),null,'the bucket can scoop through the authored excavation surface');
+ assert.equal(constructionMotionBlocked(excavator,digging,[constructionBoxFromBounds(surface,'ordinary-wall')])?.part,'excavator-bucket','the same bucket path hits an ordinary solid of identical dimensions');
+ const dozer=machine('dozer','site-bulldozer',0,4);dozer.construction={...initialConstructionState(dozer),blade:0};const advanced=structuredClone(dozer);advanced.position.z=-4;
+ const berm={min:{x:-5,y:.2,z:-.2},max:{x:5,y:.8,z:.2}},spoil=constructionBoxFromBounds(berm,'construction-spoil-pad'),wall=constructionBoxFromBounds(berm,'ordinary-wall');
+ assert.equal(constructionMotionBlocked(dozer,advanced,[wall])?.part,'dozer-blade','a lowered blade cannot push through an ordinary wall');
+ assert.notEqual(constructionMotionBlocked(dozer,advanced,[spoil])?.part,'dozer-blade','the blade can engage designated spoil');
+ dozer.construction.blade=advanced.construction.blade=1;
+ assert.equal(constructionMotionBlocked(dozer,advanced,[spoil])?.part,'dozer-track','tagging soil never permits tracks to pass through an above-ground obstacle');
+});
+
 test('raising a truck body interlocks travel and precision mode reduces requested hydraulic speed',()=>{
  const {sim,board,send,tick}=fixture();board('truck');const truck=sim.actors.truck;truck.construction.bed=.6;
  let instruments=constructionTelemetry(sim,truck,sim.players.operator.lastSeen);assert.equal(instruments.travelAllowed,false);assert.ok(instruments.travelReason||instruments.warning||instruments.status);
@@ -127,8 +140,42 @@ test('each native mobile construction machine starts on clear support and can dr
  let state=await send('join');
  for(const modelId of ['site-dumptruck','site-bulldozer','site-excavator']){
   const actor=Object.values(state.actors).find(candidate=>candidate.modelId===modelId);assert.ok(actor,modelId+' is present');state=await send('map-access',{entityId:actor.id});const before={...state.actors[actor.id].position};
+  if(modelId!=='site-dumptruck'){
+   const heading=state.actors[actor.id].rotation.y;
+   for(let index=0;index<5;index++){now+=100;state=await send('input',{input:{forward:0,side:.35,yaw:heading}});}
+   const pivoted=state.actors[actor.id],turn=Math.atan2(Math.sin(pivoted.rotation.y-heading),Math.cos(pivoted.rotation.y-heading));
+   assert.ok(Math.hypot(pivoted.position.x-before.x,pivoted.position.z-before.z)<.05,modelId+' pivots without translating its tracked undercarriage');assert.ok(Math.abs(turn)>.02,modelId+' accepts side-only steering through authoritative collision checks');
+   state=await send('construction-controls',{operation:'park',entityId:actor.id});
+  }
   for(let i=0;i<10;i++){now+=100;state=await send('input',{input:{forward:.35,side:0,yaw:actor.rotation.y}});}
   const after=state.actors[actor.id].position;assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.1,modelId+' moves from its native position: '+JSON.stringify(state.actors[actor.id].driving));
   await send('construction-controls',{operation:'park',entityId:actor.id});state=await send('interact');assert.equal(state.players['account:construction-driver'].vehicleId,null);
  }
+ assert.equal(Object.values(state.actors).some(actor=>actor.resident||actor.roadWorkingAI||actor.id.startsWith('road-working-crew-')),false,'native construction leaves ambient residents and road crews disabled by default');
+});
+
+test('construction ambient activity remains disabled by default and explicitly opts into residents and road crews',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'construction-ambient-policy-'));t.after(()=>rm(directory,{recursive:true,force:true}));let now=100000,request=0;
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,'rooms.json')),now:()=>now}),identity={accountId:'site-observer',username:'Observer'};
+ const base={proceduralLand:true,spawn:{x:15,y:.02,z:0},streets:[{id:'service-road',from:{x:0,y:0,z:-45},to:{x:0,y:0,z:45},width:10}],builderScene:{layout:'grand-floor',mapSize:160,objects:[],layoutMeta:{locations:[{id:'office',name:'Construction office',x:20,z:0},{id:'storage',name:'Equipment store',x:20,z:30}]}}};
+ const send=(environment,action,fields={})=>runtime.command(environment.id,environment,identity,{action,requestId:'ambient-policy-'+ ++request,...fields});
+ for(const enabled of [false,true]){
+  const environment={...structuredClone(base),id:'construction-ambient-'+enabled,construction:{enabled:true,...(enabled?{ambientActivity:true}:{})}};
+  await send(environment,'join');let state;
+  for(let index=0;index<3;index++){now+=200;state=await send(environment,'input',{input:{}});}
+  const residents=Object.values(state.actors).filter(actor=>actor.resident),crews=Object.values(state.actors).filter(actor=>actor.roadWorkingAI||actor.id.startsWith('road-working-crew-'));
+  assert.equal(residents.length>0,enabled,'resident generation follows explicit construction ambient opt-in');assert.equal(crews.length>0,enabled,'working road crews follow the same opt-in');
+ }
+});
+
+test('the native excavator completes its dig cycle against authored soil and synchronizes its real payload',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'construction-native-dig-'));t.after(()=>rm(directory,{recursive:true,force:true}));let now=100000,request=0;
+ const environment=constructionWorld(),runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,'rooms.json')),now:()=>now}),identity={accountId:'native-excavator',username:'Excavator operator'};
+ const send=(action,fields={})=>runtime.command(environment.id,environment,identity,{action,requestId:'native-dig-'+ ++request,...fields});
+ let state=await send('join');const actor=Object.values(state.actors).find(candidate=>candidate.modelId==='site-excavator');assert.ok(actor);await send('map-access',{entityId:actor.id});state=await send('construction-controls',{operation:'work',entityId:actor.id});
+ const duration=state.actors[actor.id].construction.workCycle.duration;assert.ok(duration>=3000,'a real hydraulic cycle has begun');
+ for(let index=0;index<Math.ceil(duration/100)+3;index++){now+=100;state=await send('input',{input:{}});}
+ const machineState=state.actors[actor.id].construction;
+ assert.equal(machineState.workCycle,undefined,'the cycle completes within its accepted simulation duration');assert.equal(machineState.load,2);assert.equal(state.construction.excavation.volume,2);assert.ok(state.construction.excavation.depth>0);assert.equal(!!machineState.blocked,false,'the authored soil pad does not obstruct the bucket');
+ assert.equal(Object.values(state.actors).some(candidate=>candidate.resident||candidate.roadWorkingAI||candidate.id.startsWith('road-working-crew-')),false,'ambient tasks do not enter the working cut during the default cycle');
 });

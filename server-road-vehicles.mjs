@@ -15,7 +15,7 @@ export function ensureRoadFleet(sim,environment,collision,objects){
  }
 }
 export function roadMovementBlocked(collision,environment,actors,objects,actor,from,to,yaw){
- if(isConstructionMachine(actor)){const status=constructionTravelStatus(actor);if(!status.allowed&&Math.hypot(to.x-from.x,to.z-from.z)>1e-6)return true;const hit=constructionMovementBlocked({actors,players:{}},actor,{...actor,position:{...to},rotation:{...actor.rotation,y:yaw}},{collision,environment,objects});actor.construction.blocked=hit;if(hit)return true;}
+ if(isConstructionMachine(actor)){const status=constructionTravelStatus(actor);if(!status.allowed&&Math.hypot(to.x-from.x,to.z-from.z)>1e-6)return true;const hit=constructionMovementBlocked({actors,players:{}},actor,{...actor,position:{...to},rotation:{...actor.rotation,y:yaw}},{collision,environment,objects});actor.construction.blocked=hit;actor.driving||={};actor.driving.blockedReason=hit?.reason||'';actor.driving.blockedPart=hit?.part||null;if(hit)return true;}
  const config=roadVehicleType(actor),travel=Math.hypot(to.x-from.x,to.z-from.z),steps=Math.max(1,Math.ceil(travel/.3));
  // Retain the ID so authored map geometry is excluded as well as spawned meshes.
  const others={...actors,[actor.id]:{...actor,active:false}};

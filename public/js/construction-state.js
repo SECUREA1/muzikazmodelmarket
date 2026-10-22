@@ -38,7 +38,7 @@ export function stepConstructionHydraulics(actor,axes,dt){
   state.hoist=constructionClamp(state.hoist+axis('hoist')*10*dt,.8,74);
   state.loadYaw=(state.loadYaw||0)+axis('loadYaw')*.6*dt;
  }else if(kind==='excavator'){
-  state.swing+=axis('slew')*.8*dt;
+  state.swing-=axis('slew')*.8*dt;
   state.boom=constructionClamp(state.boom+axis('boom')*.55*dt,.3,1.3);
   state.stick=constructionClamp(state.stick+axis('stick')*.7*dt,-1.5,-.2);
   state.bucket=constructionClamp(state.bucket+axis('bucket')*1.1*dt,-1.2,1.2);
