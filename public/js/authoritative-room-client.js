@@ -9,7 +9,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
- let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
+ let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,inputEpochSequence=-1,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
@@ -79,14 +79,23 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.
-    if(revision!==connectionRevision||action==='input'&&issuedEpoch!==inputEpoch)return state;
+    if(revision!==connectionRevision)return state;
     const selfId=state?.selfId||client.selfId;
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
+    const currentInput=action!=='input'||issuedEpoch===inputEpoch,currentEpoch=state.inputEpoch??state.result?.inputEpoch;
+    // An input may overtake the response that boarded, exited or teleported us.
+    // Track the epoch independently of rendered snapshots, and recover from a
+    // lost action response using the server's current epoch on every reply.
+    if(action==='join'||currentEpoch&&state.sequence>inputEpochSequence){
+     inputEpochSequence=state.sequence;
+     if(action==='join'||currentEpoch!==inputEpoch){inputEpoch=currentEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;pendingInput=null;}
+    }
+    if(!currentInput)return state;
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
-    client.selfId=selfId;if(action==='join'||state.sequence>sequence&&state.result?.inputEpoch&&state.result.inputEpoch!==inputEpoch){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;pendingInput=null;}
+    client.selfId=selfId;
     if(action==='join'){sequence=-1;pendingRender=null;clearTimeout(renderTimer);renderTimer=null;}
-    if(action==='input')lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
+    if(action==='input'&&issuedEpoch===inputEpoch)lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
     present(state,selfId,{sentAt,receivedAt:performance.now()},action!=='input');
@@ -113,7 +122,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (stopped) return;
    // Failed joins and expired sessions must leave the loading state. A denied
    // tool action in an already joined room is not a connection failure.
-   if (error.code==='GAME_RENDER_FAILED' || error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
+   // Other panels may rotate the account's CSRF proof while both attempts are
+   // in flight. An established room can refresh and retry after backoff;
+   // missing/revoked authentication and failed initial joins remain terminal.
+   if (error.code==='GAME_RENDER_FAILED' || error.code==='ROOM_SWITCHED' || error.status===401&&(error.code!=='CSRF_INVALID'||!joined) || (!joined && [400,403,404,409,422].includes(error.status))) {
     close(error); onStatus?.(error.message); onError?.(error);
    } else if (joined && error.code==='ROOM_JOIN_REQUIRED') {
     invalidateInputs();

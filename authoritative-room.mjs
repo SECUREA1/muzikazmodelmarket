@@ -238,7 +238,7 @@ export class AuthoritativeRooms {
  command(id,environment,identity,command){const requestedAction=command.action;this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
-  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
+  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:sim.receipts[receiptKey].result};}
   let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   const rangeWasActive=Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000);
   if(command.action==='join'){
@@ -565,7 +565,7 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
   if(requestedAction!=='input'){sim.events.push({id:requestId,actorId,action:requestedAction,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:requestedAction,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
-  return {...this.view(room),selfId:actorId,result};
+  return {...this.view(room),selfId:actorId,inputEpoch:player.inputEpoch,result};
  },{persist:requestedAction!=='input',roomOnly:requestedAction!=='join'});}
 
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){

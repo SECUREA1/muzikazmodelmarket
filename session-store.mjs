@@ -1,8 +1,13 @@
-import { createHash, pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
+
+// Every panel shares the account session. Reading a proof must not invalidate
+// gameplay requests already in flight. Bind a reproducible, separate proof to
+// the opaque session token without persisting either value in plaintext.
+const csrfProof = token => createHmac('sha256', String(token)).update('muzikaz/account/csrf/v1').digest('base64url');
 
 function derive(token, salt) {
   return pbkdf2Sync(String(token), Buffer.from(salt, 'base64url'), 210_000, 32, 'sha256');
@@ -96,7 +101,7 @@ export class DurableSessionStore {
       const nowMs = this.clock(); const now = new Date(nowMs).toISOString();
       for (const record of data.sessions) if (record.status === 'active' && Date.parse(record.expiresAt) <= nowMs) record.status = 'expired';
       const token = randomBytes(32).toString('base64url'); const tokenSecret = secret(token);
-      const csrfToken = this.kind === 'account' ? randomBytes(24).toString('base64url') : '';
+      const csrfToken = this.kind === 'account' ? csrfProof(token) : '';
       const csrfSecret = csrfToken ? secret(csrfToken) : { hash: null, salt: null };
       const record = {
         id: randomUUID(), tokenFingerprint:createHash('sha256').update(token).digest('hex'), tokenHash: tokenSecret.hash, tokenSalt: tokenSecret.salt,
@@ -139,11 +144,16 @@ export class DurableSessionStore {
   }
 
   async issueCsrf(token) {
+    if (this.kind !== 'account') return '';
     return this.serialized(async () => {
       const data = await this.read(); const record = this.findToken(data,token);
       if (!record || this.expired(record)) return '';
-      const csrfToken = randomBytes(24).toString('base64url'); const value = secret(csrfToken);
-      record.previousCsrfSecrets = [{ hash: record.csrfTokenHash, salt: record.csrfTokenSalt }, ...(record.previousCsrfSecrets || [])].filter((item) => item.hash).slice(0, 2);
+      const csrfToken = csrfProof(token);
+      if (this.verifies(csrfToken, record.csrfTokenHash, record.csrfTokenSalt)) return csrfToken;
+      // Migrate legacy random proofs once, preserving all three proofs that
+      // were already valid so existing tabs and delayed requests can finish.
+      const value = secret(csrfToken);
+      record.previousCsrfSecrets = [{ hash: record.csrfTokenHash, salt: record.csrfTokenSalt }, ...(record.previousCsrfSecrets || [])].filter((item) => item.hash).slice(0, 3);
       record.csrfTokenHash = value.hash; record.csrfTokenSalt = value.salt; await this.write(data); return csrfToken;
     });
   }

@@ -78,6 +78,32 @@ test('repeated CSRF rejection exits startup instead of looping forever',async()=
   await pause(180);assert.equal(requests,2);assert.equal(client.ready,false);
  });
 });
+test('an established room recovers when concurrent widgets invalidate both CSRF attempts',async()=>{
+ let sessions=0,joins=0,inputs=0,recovered=false,sequence=0;
+ const failures=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof-'+ ++sessions});
+  const command=JSON.parse(options.body);
+  if(command.action==='join')joins++;
+  if(command.action==='input'){
+   inputs++;
+   if(!recovered)return response({message:'Refresh the game session proof.',code:'CSRF_INVALID'},401);
+  }
+  return response({...confirmed(++sequence),inputEpoch:'same-live-room'});
+ },async client=>{
+  await client.whenReady();
+  await pause(150);
+  assert.equal(inputs,2,'one failed heartbeat gets one immediate proof refresh');
+  assert.equal(failures.length,0,'a proof race must not permanently close an authenticated room');
+  assert.equal(client.ready,false,'pause input until a fresh proof succeeds');
+  recovered=true;
+  await pause(1300);
+  assert.equal(client.ready,true);
+  assert.ok(inputs>2);
+  assert.ok(sessions>=3);
+  assert.equal(joins,1,'proof recovery must preserve the existing room and player position');
+ },{onError:error=>failures.push(error)});
+});
 test('a timed out join cannot become ready when its late response arrives',async()=>{
  let release;
  await withRoom(async path=>path==='/api/game/room-session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
@@ -536,4 +562,53 @@ test('laser presses fire consecutively without a client cooldown',async()=>{
 test('travel adopts the new input epoch and discards a late movement response',async()=>{
  let sequence=0,release;const commands=[],renders=[];
  await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});const body=JSON.parse(options.body);commands.push(body);const state=confirmed(++sequence);if(body.action==='join')state.result={inputEpoch:'before'};if(body.action==='map-access')state.result={inputEpoch:'after'};if(body.action==='input'&&body.inputEpoch==='before')return new Promise(resolve=>{release=()=>resolve(response({...state,sequence:99}));});return response(state);},async client=>{await client.whenReady();const old=client.send('input',{input:{forward:1}});await pause(1);await client.send('map-access',{position:{x:10,z:10}});release();await old;await client.send('input',{input:{forward:1}});const inputs=commands.filter(c=>c.action==='input');assert.equal(inputs.at(-1).inputEpoch,'after');assert.equal(inputs.at(-1).inputSequence,1);assert.ok(!renders.includes(99));},{inputInterval:1000,render:state=>renders.push(state.sequence)});
+});
+
+test('a newer heartbeat cannot hide the epoch in a delayed travel response from an older server',async()=>{
+ let sequence=0,release;const commands=[],renders=[];
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);const state=confirmed(++sequence);
+  if(command.action==='join')state.result={inputEpoch:'before'};
+  if(command.action==='map-access'){state.result={inputEpoch:'after'};return new Promise(resolve=>{release=()=>resolve(response(state));});}
+  return response(state);
+ },async(client,heartbeat)=>{
+  const travel=client.send('map-access',{position:{x:10,z:10}});await flushInputTasks();
+  await heartbeat();await flushInputTasks();assert.equal(renders.at(-1),3);
+  release();await travel;await heartbeat();await flushInputTasks();
+  assert.equal(commands.at(-1).inputEpoch,'after');assert.equal(commands.at(-1).inputSequence,1);assert.deepEqual(renders,[1,3,4]);assert.equal(client.ready,true);
+ },{render:state=>renders.push(state.sequence)});
+});
+
+test('heartbeats recover the current epoch after a successful movement action loses its response',async()=>{
+ let sequence=0,epoch='before',position=0,joins=0;const commands=[];
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='join')joins++;
+  if(command.action==='map-access'){epoch='after';position=10;sequence++;throw Error('Response connection lost after the server applied travel');}
+  if(command.action==='input'&&command.inputEpoch===epoch)position+=command.input.side||0;
+  const state=confirmed(++sequence);state.inputEpoch=epoch;if(command.action==='join')state.result={inputEpoch:epoch};state.players[state.selfId].position.x=position;
+  return response(state);
+ },async(client,heartbeat)=>{
+  await assert.rejects(client.send('map-access',{position:{x:10,z:0}}),/Response connection lost/);
+  await heartbeat();await flushInputTasks();assert.equal(commands.at(-1).inputEpoch,'before');assert.equal(position,10,'the superseded controls stay rejected');
+  await heartbeat();await flushInputTasks();assert.equal(commands.at(-1).inputEpoch,'after');assert.equal(commands.at(-1).inputSequence,1);assert.equal(position,11);
+  await heartbeat();await flushInputTasks();assert.equal(position,12);assert.equal(joins,1);assert.equal(client.ready,true);
+ },{input:()=>({side:1})});
+});
+
+test('current epoch metadata wins over an old receipt and delayed older epoch acknowledgements',async()=>{
+ let sequence=0,epoch='first',release;const commands=[];
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);const state=confirmed(++sequence);
+  if(command.action==='join'){state.inputEpoch=epoch;state.result={inputEpoch:epoch};}
+  if(command.action==='map-access'){epoch='second';state.inputEpoch=epoch;state.result={inputEpoch:epoch};return new Promise(resolve=>{release=()=>resolve(response(state));});}
+  if(command.action==='interact'){epoch='third';state.result={inputEpoch:'second'};}
+  state.inputEpoch=epoch;return response(state);
+ },async(client,heartbeat)=>{
+  const earlier=client.send('map-access',{position:{x:10,z:10}});await flushInputTasks();await client.send('interact');
+  release();await earlier;await heartbeat();await flushInputTasks();assert.equal(commands.at(-1).inputEpoch,'third');assert.equal(commands.at(-1).inputSequence,1);assert.equal(client.ready,true);
+ });
 });

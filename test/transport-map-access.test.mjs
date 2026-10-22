@@ -50,7 +50,18 @@ test('travel rotates input epoch so delayed pre-travel controls cannot move or t
  const dir=await mkdtemp(join(tmpdir(),'travel-input-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,n=0;
  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now}),world={id:'public-commons',proceduralLand:true,spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',mapSize:100,objects:[]}},who={accountId:'traveler'},send=(action,fields={})=>runtime.command(world.id,world,who,{action,requestId:'epoch-'+ ++n,...fields});
  const joined=await send('join'),oldEpoch=joined.result.inputEpoch;const moved=await send('map-access',{position:{x:15,z:15}}),newEpoch=moved.result.inputEpoch;
- assert.ok(newEpoch);assert.notEqual(newEpoch,oldEpoch);const start={...moved.players['account:traveler'].position};
- await send('input',{inputEpoch:oldEpoch,inputSequence:999,input:{forward:1,yaw:2}});now+=100;const stale=await send('input',{inputEpoch:oldEpoch,inputSequence:1000,input:{forward:1,yaw:2}});assert.deepEqual(stale.players['account:traveler'].position,start);assert.notEqual(stale.players['account:traveler'].yaw,2);
+ assert.ok(newEpoch);assert.notEqual(newEpoch,oldEpoch);assert.equal(joined.inputEpoch,oldEpoch);assert.equal(moved.inputEpoch,newEpoch);const start={...moved.players['account:traveler'].position};
+ await send('input',{inputEpoch:oldEpoch,inputSequence:999,input:{forward:1,yaw:2}});now+=100;const stale=await send('input',{inputEpoch:oldEpoch,inputSequence:1000,input:{forward:1,yaw:2}});assert.deepEqual(stale.players['account:traveler'].position,start);assert.notEqual(stale.players['account:traveler'].yaw,2);assert.equal(stale.inputEpoch,newEpoch,'rejected controls still acknowledge the epoch needed to resume');
  await send('input',{inputEpoch:newEpoch,inputSequence:1,input:{forward:1,yaw:0}});now+=100;const fresh=await send('input',{inputEpoch:newEpoch,inputSequence:2,input:{forward:1,yaw:0}});assert.ok(fresh.players['account:traveler'].position.z<start.z);
+});
+
+test('receipt replays return the current control epoch while preserving the original action result',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'receipt-epoch-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>100000}),world={id:'public-commons',proceduralLand:true,spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',mapSize:100,objects:[]}},who={accountId:'traveler'},send=(action,requestId,fields={})=>runtime.command(world.id,world,who,{action,requestId,...fields});
+ const joined=await send('join','receipt-join'),first=await send('map-access','receipt-first',{position:{x:12,z:12}}),second=await send('map-access','receipt-second',{position:{x:20,z:20}});
+ assert.notEqual(first.inputEpoch,second.inputEpoch);
+ const replay=await send('map-access','receipt-first',{position:{x:12,z:12}});
+ assert.deepEqual(replay.result,first.result);assert.equal(replay.inputEpoch,second.inputEpoch);assert.deepEqual(replay.players[replay.selfId].position,second.players[second.selfId].position);
+ const replayedInput=await send('input','receipt-stale-input',{inputEpoch:joined.inputEpoch,inputSequence:999,input:{side:1,yaw:0}});
+ assert.equal(replayedInput.inputEpoch,second.inputEpoch);assert.deepEqual(replayedInput.players[replayedInput.selfId].input,{yaw:0});
 });

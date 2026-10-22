@@ -4,17 +4,18 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {isAircraft} from '../public/js/aircraft-flight.js';
+import {isRoadVehicle} from '../public/js/road-vehicles.js';
 import {flightStickAxes} from '../public/js/aircraft-input.js';
 const {walkingStick,walkingSprint} = await import('data:text/javascript;base64,' + Buffer.from(readFileSync(new URL('../public/js/walking-motion.js', import.meta.url), 'utf8')).toString('base64'));
 const source = readFileSync(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
 function controller(name) {
-  const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
+  const handlers = {}, windowHandlers = {}, resetters = new Set(), knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
   let shots = 0, jumps = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({isAircraft,isWatercraft,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({isAircraft,isWatercraft,isRoadVehicle,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(type,fn){windowHandlers[type]=fn;}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, thumbstickResetters:resetters, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
-  return {input, flushes, send: (type,x,y) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
+  return {input, flushes, reset:()=>{for(const reset of resetters)reset(false);}, windowSend:(type,pointerId=1)=>windowHandlers[type]({type,pointerId}), send: (type,x,y,fields={}) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){},...fields}), shots: () => shots, jumps: () => jumps};
 }
 test('walking keeps an 8px neutral zone while the look stick retains fine linear response', () => {
   const left=controller('left'),right=controller('right');
@@ -100,4 +101,29 @@ test('left-stick presses, steering changes and releases flush immediately', () =
   c.send('pointermove',50,25);assert.equal(c.flushes.at(-1),true);
   c.send('pointerup',50,25);assert.equal(c.flushes.at(-1),true);
   const right=controller('right');right.send('pointerdown',50,50);right.send('pointermove',60,50);right.send('pointerup',60,50);assert.equal(right.flushes.length,0);
+});
+
+test('a fresh primary touch recovers a gesture whose release was discarded',()=>{
+  for(const name of ['left','right']){
+    const c=controller(name);
+    c.send('pointerdown',50,50);c.send('pointermove',70,30);
+    assert.ok(Math.abs(c.input[name+'X'])>0);
+    c.send('pointerdown',50,50,{pointerId:7,isPrimary:true});
+    c.send('pointermove',50,20,{pointerId:7});
+    assert.ok(c.input[name+'Y']<0,'a new finger must steer without reloading');
+    assert.equal(c.shots()+c.jumps(),2,'the fresh touch can use its action again');
+    c.send('pointerup',50,20,{pointerId:7});
+    assert.equal(c.input[name+'Y'],0);
+  }
+});
+
+test('menu/lifecycle reset clears private pointer ownership and global terminal events stop a drag',()=>{
+  const c=controller('left');
+  c.send('pointerdown',50,50);c.send('pointermove',50,20);
+  c.reset();assert.equal(c.input.leftY,0);
+  c.send('pointerdown',50,50,{pointerId:8});c.send('pointermove',50,20,{pointerId:8});
+  assert.ok(c.input.leftY<0,'reset must release ownership even without pointerup');
+  c.windowSend('pointercancel',8);assert.equal(c.input.leftY,0);
+  c.send('pointerdown',50,50,{pointerId:9});c.send('pointermove',50,20,{pointerId:9});
+  c.windowSend('pointerup',9);assert.equal(c.input.leftY,0);
 });
