@@ -13,6 +13,7 @@ export function marketCategory(item={},section='upgrades'){
  if(device&&['video','audio','image','board'].includes(device.kind))return 'media';
  if(ENTERABLE_BUILDINGS[nativeId])return 'buildings';
  const category=String(item.category||item.asset?.builder_category||'').toLowerCase();
+ if(Array.isArray(item.entries)&&category.includes('luxury'))return 'furniture';
  if(category.includes('media & live'))return 'media';if(category.includes('buildings & businesses'))return 'buildings';if(category.includes('nature & outdoors'))return 'outdoors';
  if(category.includes('arcade')||category.includes('card machines'))return 'arcade';
  const type=String(item.assetType||item.itemType||item.type||item.asset?.asset_type||'').toLowerCase();
@@ -20,6 +21,7 @@ export function marketCategory(item={},section='upgrades'){
  const tool=item.toolId||(sku.startsWith('tool:')?sku.slice(5):'');
  if(tool==='jetpack')return 'flight';
  if(item.kind==='material'||item.materialId||sku.startsWith('material:')||category.includes('building materials'))return 'materials';
+ if(/vehicle/.test(type))return 'vehicles';
  if(category.includes('builder furniture')||sku.startsWith('backpack:builder-'))return 'furniture';
  if(category.includes('utility')||Object.hasOwn(UTILITY_TOOLS,tool)||['brick','spray','repair-tool','recycler'].includes(tool))return 'tools';
  if(item.kind==='tool'||sku.startsWith('tool:')||category.includes('weapons')||/weapon|gear/.test(type))return 'weapons';

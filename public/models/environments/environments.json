@@ -7535,7 +7535,7 @@
           "id": "airport-flight-1",
           "modelId": "corsair-aircraft",
           "placementAnchor": "aircraft-origin",
-          "name": "MUZIKAZ Flight 1",
+          "name": "Blackwing Corsair · Flight 1",
           "position": {
             "x": -18,
             "y": 0.4,
@@ -7593,7 +7593,7 @@
           "id": "airport-flight-2",
           "modelId": "diamond-da40",
           "placementAnchor": "aircraft-origin",
-          "name": "MUZIKAZ Flight 2",
+          "name": "Diamond DA40 · Flight 2",
           "position": {
             "x": -4,
             "y": 0.4,
@@ -7651,7 +7651,7 @@
           "id": "airport-flight-3",
           "modelId": "piper-cub",
           "placementAnchor": "aircraft-origin",
-          "name": "MUZIKAZ Flight 3",
+          "name": "Piper Cub · Flight 3",
           "position": {
             "x": 10,
             "y": 0.4,

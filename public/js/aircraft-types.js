@@ -5,3 +5,5 @@ export const AIRCRAFT_TYPES=Object.freeze({
 });
 export const aircraftType=actor=>AIRCRAFT_TYPES[actor?.asset?.buildAssetId]||AIRCRAFT_TYPES[actor?.modelId]||null;
 export const armedAircraft=actor=>aircraftType(actor)?.armed===true;
+
+export function aircraftDisplayName(actor){const spec=aircraftType(actor),name=actor?.name||actor?.asset?.name||'';return spec?(name.includes(spec.name)?name:spec.name+(name?' · '+name:'')):name||actor?.id||'Aircraft';}

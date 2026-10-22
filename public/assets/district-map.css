@@ -11,3 +11,4 @@
 
 /* Compact labels keep dense resort maps selectable; full names remain in tooltips and the selection panel. */
 .district-map-dialog .local-map-3d-tag{width:max-content;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.local-map-craft-card{display:grid;grid-template-columns:88px minmax(0,1fr);gap:6px 12px;align-items:center}.local-map-craft-card img{grid-row:1/3;width:88px;height:66px;object-fit:cover;border-radius:9px}.local-map-craft-card h4{margin:0;font-size:13px}.local-map-craft-card button{grid-column:2;min-height:44px}.local-map-craft-card:not(:has(img)){grid-template-columns:minmax(0,1fr)}.local-map-craft-card:not(:has(img)) button{grid-column:1}[data-live-craft] [role=button]{cursor:pointer;outline:none}[data-live-craft] [role=button]:focus path{stroke:#fff;stroke-width:1.5}
