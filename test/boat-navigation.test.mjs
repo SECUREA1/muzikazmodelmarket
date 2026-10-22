@@ -18,7 +18,7 @@ for(const source of [...authored.slice(0,3),authored.find(boat=>boat.modelId==='
  const {boat,player,sim}=fixture(source),origin={...boat.position};
  startBoatAssist(sim,player,world,'launch',100000,{collision});
  assert.deepEqual(boat.position,origin,'planning never teleports the boat');
- assert.equal(boat.boating.navigationDestinationId,'open-water');assert.ok(boat.boating.assistRoute.length>=3);
+ assert.equal(boat.boating.navigationDestinationId,'open-water');assert.ok(boat.boating.assistRoute.length>=(source.modelId==='harbor-patrol'?1:3),'boats in the slips need departure waypoints; the patrol starts beyond the slips');
  const blocked=boatMovementBlocked(world,boat,sim.actors,collision,{});
  let frames=0;
  for(;frames<4000&&boat.boating.assist;frames++){

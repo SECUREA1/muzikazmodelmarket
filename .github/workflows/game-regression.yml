@@ -38,3 +38,8 @@ jobs:
           python test/harbor-navigation.browser.py
       - name: Verify live walking under delayed network input
         run: python test/live-motion.browser.py
+      - name: Verify controls after transport menus and map travel
+        run: |
+          node --test test/transport-map-access.test.mjs test/server-collision-broadphase.test.mjs
+          python test/overlay-focus-controls.browser.py
+          python test/world-input-recovery.browser.py

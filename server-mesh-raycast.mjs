@@ -1,7 +1,7 @@
 import * as THREE from './public/vendor/three/three.module.min.js';
 // Static collision geometry gets a triangle tree once, rather than scanning the
 // entire house for each player's floor, clearance and wall rays every tick.
-export function accelerateStaticRaycast(mesh) {
+export function accelerateStaticRaycast(mesh,{respectMaterialSide=false}={}) {
  const geometry=mesh.geometry,position=geometry.attributes.position,index=geometry.index;
  const count=Math.floor((index?.count||position.count)/3);
  if(count<128)return;
@@ -26,7 +26,8 @@ export function accelerateStaticRaycast(mesh) {
    if(node.left){visit(node.left);visit(node.right);return;}
    for(const id of node.items){
     vertex(id,0,a);vertex(id,1,b);vertex(id,2,c);
-    if(!localRay.intersectTriangle(a,b,c,false,point))continue;
+    const side=respectMaterialSide?this.material.side:THREE.DoubleSide;
+    if(!(side===THREE.BackSide?localRay.intersectTriangle(c,b,a,true,point):localRay.intersectTriangle(a,b,c,side!==THREE.DoubleSide,point)))continue;
     worldPoint.copy(point).applyMatrix4(this.matrixWorld);
     const distance=worldPoint.distanceTo(raycaster.ray.origin);
     if(distance<raycaster.near||distance>raycaster.far)continue;
