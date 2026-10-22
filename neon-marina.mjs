@@ -17,11 +17,14 @@ export function neonMarina(){
  }
  // Separate superyacht pier leaves a full turning basin south of the island channel.
  for(let i=0;i<10;i++)tile('superyacht-pier-'+i,124+i*2.4,116);
+ tile('patrol-spine',138,51.6);for(let i=1;i<=5;i++)tile('patrol-finger-'+i,138+i*2.4,51.6);
+ add('patrol-boat','harbor-patrol',148,0,57,{placementAnchor:'waterline',name:'Sentinel 07 · Combat Patrol',rotation:{x:0,y:-Math.PI/2,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:6,prompt:'Board combat patrol · E / Use',destructible:true,health:650}});
+ locations.push({id:'patrol-slip',name:'Combat Patrol Slip',x:148,z:57,width:6,depth:10,description:'Board Sentinel 07 from the map. Deck cannon, smuggler interception, convoy defense and team dispatch.'});
  add('superyacht','harbor-yacht',141,0,99,{placementAnchor:'waterline',name:'Tideglass Superyacht',functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:24,prompt:'Take superyacht helm · E / Use',destructible:true,health:2000}});
  locations.push({id:'superyacht-berth',name:'Superyacht Berth',x:141,z:116,width:28,depth:6,description:'Tideglass: bedroom, lounge, aft sitting area, billiards table and live pole performance. Board with E / Use and steer into the enlarged harbour.'});
  guide('superyacht-guide','Tideglass Superyacht',127,113,'The superyacht is berthed alongside this pier. Walk up the stern gangway to explore the bedroom, lounge and billiards room. The port stairs lead to the flybridge helm: E / Use to drive. Stop or anchor, then E / Use returns you to the aft deck. At the billiards table choose Play billiards; aim, set power and shoot.');
  add('mainland-water-steps','material:stage-steps',130.8,-.65,28.2);
- guide('departure-guide','Marina Departures',122,26,'Three boats are docked in the slips. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
+ guide('departure-guide','Marina Departures',122,26,'Launches, a sailboat and Sentinel 07 combat patrol are docked here. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
  for(const island of harbor.islands){
   locations.push({...island,description:'A real land destination with a landing pier, return boat, seating and a local landmark.'});
   const edge=island.x-island.width/2;

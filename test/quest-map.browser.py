@@ -18,7 +18,7 @@ try:
   page.locator('.local-map-quests summary').click()
   page.get_by_label('Quest activity filter').select_option('boat')
   assert page.get_by_role('button',name='Accept Mayday recovery',exact=True).is_enabled()
-  assert page.locator('.local-map-quests article').count()==6
+  assert page.locator('.local-map-quests article').count()==10
   page.get_by_role('button',name='Accept Defend the supply convoy',exact=True).click()
   assert page.evaluate("commands.at(-1).questId==='harbor-defense'")
   assert page.locator('[data-quest-markers] g').count()==3

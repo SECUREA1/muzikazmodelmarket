@@ -14,7 +14,7 @@ function fixture(source=authored[0]){
  const boat=actors[source.id],player={actorId:'pilot',vehicleId:boat.id,input:{}};boat.holderId='pilot';
  return {boat,player,sim:{actors,players:{pilot:player}}};
 }
-for(const source of authored.slice(0,3))test(source.name+' follows the real slip/pier passage to open water without collision damage',()=>{
+for(const source of [...authored.slice(0,3),authored.find(boat=>boat.modelId==='harbor-patrol')])test(source.name+' follows the real slip/pier passage to open water without collision damage',()=>{
  const {boat,player,sim}=fixture(source),origin={...boat.position};
  startBoatAssist(sim,player,world,'launch',100000,{collision});
  assert.deepEqual(boat.position,origin,'planning never teleports the boat');

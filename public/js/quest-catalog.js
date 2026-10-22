@@ -2,6 +2,10 @@ import {localMapLocations} from './local-map-locations.js';
 export function questCatalog(environment){
  const offers=[];const add=(id,title,kind,mode,description,reward=650)=>offers.push({id,title,kind,mode,description,reward,winBonus:kind==='race'?200:0,timeLimit:600});
  if(environment?.builderScene?.layoutMeta?.harbor){
+  add('patrol-raid','Smuggler interdiction','attack','gunboat','Pilot Sentinel 07, disable two armed drug-running launches, secure their cargo and return to dispatch.',1200);
+  add('patrol-defense','Relief convoy defense','defense','gunboat','Protect a relief launch from armed smugglers. Request an AI wingmate or share the operation with players.',1400);
+  add('patrol-recovery','Patrol rescue operation','recovery','gunboat','Recover a stranded crew from the shipping channel and deliver them safely to the marina.',1000);
+  add('patrol-race','Sentinel patrol cup','race','gunboat','Race an AI patrol boat through the ordered channel gates. Shared results record your time.',1100);
   add('dock-delivery','Dock supply delivery','delivery','boat','Stop to pick up cargo, carry it across the channel, then unload at the destination.');
   add('sea-recovery','Mayday recovery','recovery','boat','Find a stranded AI crew, recover their passengers and bring them home.',800);
   add('harbor-escort','Convoy escort','escort','boat','Stay near a moving AI supply launch until its passage is complete.',750);

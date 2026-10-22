@@ -1,4 +1,4 @@
-export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht']);
+export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol']);
 export const hasWalkableInterior=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht';
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
 export function harborWaterAt(environment,point,margin=0){
@@ -7,9 +7,9 @@ export function harborWaterAt(environment,point,margin=0){
  const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
  return !patches.some(p=>Math.abs(x-p.x)<=p.width/2+margin&&Math.abs(z-p.z)<=p.depth/2+margin);
 }
-export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:[1,2.4];
+export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.5,3.9]:[1,2.4];
 export function watercraftFootprint(point,yaw=0,actor=null){
- const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(actor):[.9,2];
+ const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(actor):(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.35,3.7]:[.9,2];
  const points=[[0,0],[-w,-l],[w,-l],[-w,l],[w,l]];if(w>1)points.push([-w,0],[w,0],[0,-l],[0,l]);
  return points.map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
 }

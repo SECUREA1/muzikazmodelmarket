@@ -4397,6 +4397,33 @@
       "function_data": {
         "behavior": "decor"
       }
+    },
+    {
+      "id": "builder-harbor-patrol",
+      "name": "Sentinel Combat Patrol",
+      "description": "Armored coastal patrol boat with a deck cannon, rescue gear, live crew radio and cooperative smuggler missions.",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "harbor-patrol",
+      "format": "procedural-3d",
+      "dimensions": [
+        3,
+        2.9,
+        7.8
+      ],
+      "thumbnailUrl": "/public/images/boats/harbor-patrol.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "health": 650,
+        "destructible": true,
+        "interactionDistance": 6,
+        "prompt": "Board combat patrol"
+      },
+      "vehicleSettings": {
+        "mode": "boat",
+        "speed": 12,
+        "turnSpeed": 0.7
+      }
     }
   ]
 }

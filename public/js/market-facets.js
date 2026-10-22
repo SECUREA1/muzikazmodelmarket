@@ -17,7 +17,7 @@ export function marketFacets(record={}){
   else if(device.kind==='market')assign('shopping','trade','build');else assign(device.kind==='video'?'video':device.kind==='audio'?'audio':'displays','media','build');
  }else if(building)assign(({Hospitality:'hospitality',Commerce:'commerce',Industrial:'industrial',Community:'community',Entertainment:'community',Services:'services'})[building.category]||'structures','build','decorate','quest');
  else if(/teleport|portal|gateway/.test(text))assign('portals','travel','build');
- else if(/quest|dialogue|npc|patrol/.test(text))assign('quests','quest','build');
+ else if(/quest|dialogue|npc|patrol/.test(text)&&!['vehicles','flight'].includes(category))assign('quests','quest','build');
  else if(category==='weapons')assign(/dynamite|grenade|explos|mine|toxin|flame/.test(text)?'explosives':/sword|bat|blade|axe|melee/.test(text)?'melee':/laser|pistol|rifle|shotgun|sniper|blaster|bow|taser|gun/.test(text)?'ranged':'weapons','combat','wear');
  else if(category==='tools')assign(/brick|paint|spray|repair|recycler|build/.test(text)?'construction':'utilities','build',...(/heal|medkit|shield/.test(text)?['restore','combat']:[]));
  else if(category==='materials'&&item.buildingType==='entertainment')assign('event-building','build','decorate','play');

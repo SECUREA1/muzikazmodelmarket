@@ -3,6 +3,7 @@ import {createYachtBilliards} from './yacht-billiards.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 
 export const HARBOR_HELM_POSES=Object.freeze({
+ 'harbor-patrol':Object.freeze({position:Object.freeze([.42,1.43,1.15]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-yacht':Object.freeze({position:Object.freeze([0,5.8,-9]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-skiff':Object.freeze({position:Object.freeze([.30,1.43,1.12]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-sailboat':Object.freeze({position:Object.freeze([.27,1.43,1.98]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74})

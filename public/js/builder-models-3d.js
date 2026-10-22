@@ -1,3 +1,4 @@
+import {createPatrolBoat,updatePatrolBoat} from './patrol-boat.js';
 import {createLandSaleModel} from './land-sale-models.js';
 import {createCivilAircraft} from './civil-aircraft-models.js';
 import {RESORT_PRODUCTS} from './resort-products.js';
@@ -32,6 +33,7 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'diamond-da40':['Diamond DA40','Low-wing touring aircraft with a hinged canopy, four seats and a live glass cockpit.',[11.9,2.7,8.1]],
   'piper-cub':['Piper Cub','Yellow high-wing taildragger with opening side window, tandem seating and analog instruments.',[10.7,2.6,6.8]],
   'harbor-yacht':['Tideglass Superyacht','A massive drivable yacht with bedroom, lounge, billiards and aft terrace.',[12,7,42]],
+  'harbor-patrol':['Sentinel Combat Patrol','Armored patrol launch with a steerable deck cannon, rescue equipment and shared combat missions.',[3,2.9,7.8]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
@@ -281,6 +283,7 @@ export function createBuilderModel(id,options={}) {
   if(RESORT_PRODUCTS[id])return createResortProduct(THREE,id);
   if(id==='lot-owned-sign'||id==='lot-boundary-stake'||id.startsWith('lot-sale-sign-'))return createLandSaleModel(id);
   if(['diamond-da40','piper-cub'].includes(id))return createCivilAircraft(id);
+  if(id==='harbor-patrol')return createPatrolBoat();
   if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 
@@ -332,6 +335,6 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 }

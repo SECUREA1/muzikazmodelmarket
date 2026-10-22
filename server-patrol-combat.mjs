@@ -1,0 +1,13 @@
+import {isCombatBoat,patrolGunPose,patrolRayDistance} from './public/js/patrol-combat.js';
+import {canEngageQuest,canonicalQuest} from './server-quest-teams.mjs';
+import {questRadio} from './server-quest-radio.mjs';
+export function firePatrolCannon(sim,player,command,environment,now,{collision,objects={}}={}){
+ const boat=sim.actors[player.vehicleId];if(!isCombatBoat(boat)||boat.trafficAI||boat.holderId!==player.actorId||boat.health<=0||boat.active===false||player.health<=0)throw Error('Board your active patrol boat to use its cannon.');
+ const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite)||Math.hypot(...direction)<.1)throw Error('Invalid cannon direction.');if(now<(boat.boating?.gunReadyAt||0))throw Error('Patrol cannon is cooling down.');if((player.ammo??120)<=0)throw Error('Refill your cannon ammunition at dispatch.');
+ const ray=direction.map(n=>n/Math.hypot(...direction)),yaw=boat.rotation?.y||0,relative=Math.atan2(Math.sin(Math.atan2(-ray[0],-ray[2])-yaw),Math.cos(Math.atan2(-ray[0],-ray[2])-yaw));if(Math.abs(relative)>1.5||Math.abs(ray[1])>.55)throw Error('Aim within the forward cannon arc.');
+ const gun=patrolGunPose(boat,ray),candidates=Object.values(sim.actors).filter(a=>a.active!==false&&a.health>0&&canEngageQuest(sim,player.actorId,a)).map(a=>({actor:a,distance:patrolRayDistance(a,gun.origin,ray)})).filter(hit=>hit.distance!==null&&hit.distance<=220).sort((a,b)=>a.distance-b.distance);let hit=candidates[0];
+ if(hit&&collision?.blocksShot?.(environment,gun.origin,ray,hit.distance,Object.fromEntries(Object.entries(sim.actors).filter(([id])=>id!==boat.id&&id!==hit.actor.id)),objects))hit=null;
+ player.ammo=(player.ammo??120)-1;boat.boating={...boat.boating,gunReadyAt:now+240,gunShotAt:now,gunYaw:relative,gunPitch:Math.asin(ray[1])};const end={x:gun.origin.x+ray[0]*(hit?.distance||220),y:gun.origin.y+ray[1]*(hit?.distance||220),z:gun.origin.z+ray[2]*(hit?.distance||220)};
+ if(hit){const target=hit.actor;target.health=Math.max(0,target.health-32);target.contributors||={};target.contributors[player.actorId]=true;const q=canonicalQuest(sim,player);if(q?.team?.[player.actorId])q.team[player.actorId].contribution++;if(!target.health){target.questSecured=true;target.boating={speed:0,throttle:0,anchor:true,phase:'secured'};q.cargo++;questRadio(sim,now,target.name,'Heaving to. Engine disabled; cargo surrendered.');}}
+ sim.events||=[];sim.events.push({id:'patrol-shot-'+boat.id+'-'+now,action:'fire',actorId:player.actorId,entityId:boat.id,tool:'laser',origin:gun.origin,direction:ray,end,at:now,requestId:command.requestId});sim.events=sim.events.slice(-100);return hit?'Patrol cannon · target hull '+Math.ceil(hit.actor.health):'Patrol cannon fired.';
+}

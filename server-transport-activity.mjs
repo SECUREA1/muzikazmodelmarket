@@ -1,5 +1,7 @@
+import {questCatalog} from './public/js/quest-catalog.js';
+import {teamCommand} from './server-quest-teams.mjs';
 import {questRadio as radio} from './server-quest-radio.mjs';
-import {startExpandedQuest,cancelExpandedQuest,expandedQuestAction} from './server-expanded-quests.mjs';
+import {startExpandedQuest,cancelExpandedQuest,expandedQuestAction,requestQuestSupport} from './server-expanded-quests.mjs';
 import {boatMovementBlocked} from './server-boat-assist.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftOverlap} from './public/js/harbor-water.js';
@@ -15,17 +17,19 @@ function buildRoutes(environment){
 }
 export function stepTransportTraffic(sim,environment,now,dt,{collision,objects={}}={}){
  const choices=routes(environment);
+ const offered=questCatalog(environment);if(offered.length&&now>=(sim.nextLiveDispatchAt||0)){const index=sim.dispatchOfferIndex||0,offer=offered[index%offered.length];sim.dispatchOfferIndex=index+1;sim.liveDispatch={id:'dispatch-'+now,questId:offer.id,title:offer.title,mode:offer.mode,expires:now+90000};sim.nextLiveDispatchAt=now+120000;radio(sim,now,'Dispatch','Available operation: '+offer.title+'. Volunteer through the local map; no assignment is started automatically.');}
  for(const [index,route]of choices.entries()){
   const id='transport-traffic-'+route.kind+'-'+index;let actor=sim.actors[id];
   if(!actor){const angle=index*Math.PI;const position={x:Math.cos(angle)*route.radius,y:route.y,z:Math.sin(angle)*route.radius};actor=sim.actors[id]={id,modelId:route.modelId,name:route.callsign+' · '+route.crew,active:true,spawned:true,spawnedAt:now,health:400,maxHealth:400,trafficAI:true,trafficAngle:angle,crew:{name:route.crew,callsign:route.callsign},position,rotation:{x:0,y:0,z:0},asset:{buildAssetId:route.modelId},definition:{objectId:id,modelId:route.modelId,name:route.callsign,position:{...position},rotation:{x:0,y:0,z:0},gameplay:{behavior:'vehicle',enabled:true,prompt:'AI crew · radio traffic'},movement:{speed:route.speed}}};}
   if(actor.active===false){actor.trafficDestroyedAt??=now;if(now-actor.trafficDestroyedAt<15000||Object.values(sim.players).some(player=>player.position&&separation(player.position,actor.position)<50))continue;actor.active=true;actor.health=400;actor.spawnedAt=now;delete actor.trafficDestroyedAt;delete actor.destroyedAt;}
-  const angle=actor.trafficAngle+Math.max(0,Math.min(.25,dt))*route.speed*(actor.trafficHolding&&route.kind==='aircraft'?.7:1)/route.radius;
+  actor.trafficJob||={title:route.kind==='boat'?'Channel supply transfer':'Coastal survey flight',sector:0,completed:0,nextAngle:actor.trafficAngle+Math.PI/2};const job=actor.trafficJob;const servicing=route.kind==='boat'&&now<(job.serviceUntil||0);
+  const angle=actor.trafficAngle+Math.max(0,Math.min(.25,dt))*(servicing?0:route.speed)*(actor.trafficHolding&&route.kind==='aircraft'?.7:1)/route.radius;
   const next={x:Math.cos(angle)*route.radius,y:route.y,z:Math.sin(angle)*route.radius};
   const blocked=(route.kind==='boat'&&collision&&boatMovementBlocked(environment,actor,sim.actors,collision,objects)(actor.position,next,Math.PI-angle))||Object.values(sim.actors).some(other=>other.id!==id&&other.active!==false&&other.position&&(route.kind==='boat'&&isWatercraft(other)?watercraftOverlap(next,Math.PI-angle,other.position,other.rotation?.y||0,8,actor,other):isAircraft(other)&&route.kind==='aircraft'&&separation(next,other.position)<35));
   if(!blocked||route.kind==='aircraft'){actor.position=next;actor.trafficAngle=angle;actor.rotation={x:0,y:Math.PI-angle,z:route.kind==='aircraft'?.045:0};}
-  actor.trafficHolding=blocked;
+  actor.trafficHolding=blocked;job.phase=servicing?'transferring supplies':blocked?'yielding to traffic':route.kind==='boat'?'delivery underway':'surveying sector '+(job.sector+1);if(!servicing&&actor.trafficAngle>=job.nextAngle){job.nextAngle+=Math.PI/2;job.sector=(job.sector+1)%4;job.completed++;if(route.kind==='boat')job.serviceUntil=now+12000;radio(sim,now,route.callsign,route.kind==='boat'?'At the channel rendezvous. Holding twelve seconds for supply transfer.':'Survey sector complete. '+job.completed+' sectors logged; continuing to the next beacon.');}
   if(route.kind==='aircraft')actor.flight={airborne:true,altitude:route.y,airspeed:route.speed*(blocked?.7:1),speed:route.speed*(blocked?.7:1),throttle:.65,gear:true,bank:blocked?0:.045,phase:blocked?'traffic separation':'patrol'};
-  else actor.boating={speed:blocked?0:route.speed,throttle:blocked?0:.45,phase:blocked?'yielding':'cruising',sailTrim:.65,anchor:false};
+  else actor.boating={speed:blocked||servicing?0:route.speed,throttle:blocked||servicing?0:.45,phase:job.phase,sailTrim:.65,anchor:false};
  }
  if(choices.length&&now>=(sim.transportNextRadioAt||0)){
   const index=sim.transportCallIndex||0;sim.transportCallIndex=index+1;const route=choices[Math.floor(index/2)%choices.length],actor=sim.actors['transport-traffic-'+route.kind+'-'+(Math.floor(index/2)%choices.length)];
@@ -34,6 +38,9 @@ export function stepTransportTraffic(sim,environment,now,dt,{collision,objects={
  }
 }
 export function vehicleMissionCommand(sim,player,environment,operation,now,options={}){
+ if(['share','join','radio'].includes(operation))return teamCommand(sim,player,operation,now,options);
+ if(operation==='support')return requestQuestSupport(sim,player,environment,now);
+ if(operation==='hail'){if(now<(player.questRadioAt||0)+4000)throw Error('Wait for the current radio call.');player.questRadioAt=now;const crews=Object.values(sim.actors).filter(a=>a.trafficAI&&!a.questOwner&&a.active!==false&&a.trafficJob).sort((a,b)=>separation(a.position,player.position)-separation(b.position,player.position));const crew=crews[0];if(!crew)throw Error('No working crew is in radio range.');radio(sim,now,player.username,'Nearby crew, report your current task.');radio(sim,now,crew.crew?.callsign||crew.name,player.username+', '+crew.trafficJob.title+'. '+crew.trafficJob.phase+'. '+crew.trafficJob.completed+' transfers or sectors completed. Keeping clear of your craft.');return 'Nearby crew answered.';}
  if(operation==='interact')return expandedQuestAction(sim,player,now);
  if(operation==='cancel'){cancelExpandedQuest(sim,player,now);if(player.vehicleMission?.status==='active'){player.vehicleMission.status='cancelled';player.vehicleMission.message='Assignment cancelled.';}return 'Assignment cancelled.';}
  if(operation!=='start')throw new Error('Choose start or cancel.');
