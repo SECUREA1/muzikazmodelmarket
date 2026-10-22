@@ -40,6 +40,7 @@ import {createSolidPaint} from './solid-paint.js';
 import {mountInteractiveDevices} from './interactive-device-ui.js';
 import {sharedNearbyActions} from './gameplay-actions.js';
 import {mountGameDisplayFlow} from './game-display-flow.js';
+import {mountGameViewport} from './game-viewport.js';
 import {mountNearbyActionButtons} from './nearby-action-buttons.js';
 import {mountRoomBuildingToggle} from './room-building-toggle.js';
 import {alignStackableObject} from './stack-placement.js';
@@ -389,7 +390,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let buildAssetBrowser=null;
   function renderBuildMenu(filter=buildMenu.dataset.buildFilter||'all'){const previous=buildAssetBrowser?.state?.()||{};buildAssetBrowser?.dispose();buildMenu.dataset.buildFilter=filter;const tray=readBuildTray();const assets=BUILD_ASSETS.filter(([id,,type])=>filter==='all'||(filter==='seats'?SEAT_ASSET_IDS.has(id):type===filter));buildMenu.innerHTML=`<header><div><small>WORLD BUILDER</small><h2>Build map & game</h2></div><button type="button" data-rad-build-close aria-label="Close map builder">×</button></header><nav aria-label="Builder shopping"><button type="button" data-build-market>Marketplace · Buy any item</button><button type="button" data-build-bundles>Discount bundles · Save 20%</button></nav><nav aria-label="Filter building assets">${['all','seats','map','room','landscape','interior','terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles'].map(type=>`<button type="button" data-build-filter="${type}" aria-pressed="${type===filter}">${type}</button>`).join('')}</nav><section data-build-browser></section><footer><strong>${tray.length} item${tray.length===1?'':'s'} in build inventory</strong><span><a class="rad-build-launch" href="environment-builder.html?from=game">Build selected items →</a> <a href="builder-market.html#backpack">Full Backpack</a></span></footer>`;buildAssetBrowser=mountBuildAssetBrowser(buildMenu.querySelector('[data-build-browser]'),{assets:assets.map(([id,name,type])=>({id,name,category:type,buildAssetId:id,thumbnailUrl:BUILDER_IMAGE_CATEGORIES.has(type)?builderAssetThumbnail(id,type):'',description:BUILDER_MODEL_INFO[id]?.[1]||`${name} ${type} for the playable world.`})),tray,previous});gameEconomy?.decorate();}
   const toggleBuildMenu=(force,filter='all')=>{const open=force??buildMenu.hidden;buildMenu.hidden=!open;if(!open)buildAssetBrowser?.dispose();sprayTools.querySelector('[data-rad-build-toggle]')?.setAttribute('aria-expanded',String(open));sprayTools.querySelector('[data-rad-seats-toggle]')?.setAttribute('aria-expanded',String(open&&filter==='seats'));if(open){inventoryPack.hidden=true;renderBuildMenu(filter);}};
-  const syncToolsPortal = () => { const host=document.fullscreenElement===stage ? stage : document.body;for(const panel of [sprayTools,inventoryPack,buildMenu,questPanel]){const container=panel.closest('dialog')||panel;if(container.parentElement!==host)host.append(container);} }; document.addEventListener('fullscreenchange',syncToolsPortal);
+  const syncToolsPortal = () => { const host=document.fullscreenElement||document.body;for(const panel of [sprayTools,inventoryPack,buildMenu,questPanel]){const container=panel.closest('dialog')||panel;if(container.parentElement!==host)host.append(container);} }; document.addEventListener('fullscreenchange',syncToolsPortal);
   const packIcons = Object.freeze({
     ammo:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#ffdf45" stroke="#221900" stroke-width="2" d="M9 38V17l5-8h8l5 8v21Z"/><path fill="#39e8ff" stroke="#071007" stroke-width="2" d="M27 38V21l4-6h7l4 6v17Z"/><path fill="#fff" d="M12 18h12v5H12zm18 4h10v4H30Z"/></svg>',
     spray:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#ff4fb3" stroke="#071007" stroke-width="2" d="M13 15h22l4 7v21H9V22Z"/><path fill="#eaffcf" stroke="#071007" stroke-width="2" d="M16 8h16v7H16Z"/><path fill="#9cff00" d="M13 25h22v10H13Z"/><circle cx="40" cy="9" r="3" fill="#39e8ff"/><circle cx="44" cy="16" r="2" fill="#ffdf45"/></svg>',
@@ -1567,7 +1568,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
-  window.addEventListener('pagehide', () => { constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
+  window.addEventListener('pagehide', () => { gameViewport.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
   async function checkForHouseUpdates({ startup = false } = {}) {
@@ -2065,7 +2066,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
   function shootAtReticle() { if(isAircraft(serverActors[serverVehicleId]))return fireAircraft();if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active&&toxicBubbleSystem.tool!=='spray'&&!UTILITY_TOOLS[toxicBubbleSystem.tool])return basketballTrigger();if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
 
-  function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.closest('.house-explorer-shell').requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
+  const gameViewport=mountGameViewport({stage,button:fullscreenButton,onChange:scheduleGameResize,onNeutralize:()=>window.dispatchEvent(new Event('blur'))});
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
   function setupThumbstick(name) {
     const stick=document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`),knob=stick?.querySelector('.thumbstick-knob');
@@ -2104,7 +2105,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     window.addEventListener('pointerup',release,true);window.addEventListener('pointercancel',release,true);
   }
   setupThumbstick('left'); setupThumbstick('right');
-  fullscreenButton?.addEventListener('click', setFullscreen);
   beginResetButton?.addEventListener('click', () => {if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
   let xrGameControls=null;
   function xrBasketballInteract(){return basketballTrigger(basketballDirection(),'auto');}

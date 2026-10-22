@@ -1,4 +1,4 @@
-import {mountSportsActions,sportIcon} from './sports-action-bar.js';
+import {sportIcon} from './sports-action-bar.js';
 import {mountThumbstick} from './thumbstick-input.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
 import {constructionMachineKind,craneHookPosition,CONSTRUCTION_LOAD_OFFSET} from './construction-state.js';
@@ -39,7 +39,8 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const stylesheet=document.createElement('link');stylesheet.rel='stylesheet';stylesheet.href=new URL('../assets/construction-ui.css',import.meta.url).href;document.head.append(stylesheet);
  const panel=document.createElement('section');panel.className='construction-controls';panel.hidden=true;panel.setAttribute('aria-label','Construction machine dashboard');
  const manual=document.createElement('div');manual.className='construction-manual';
- const heading=document.createElement('header');heading.innerHTML='<span class="construction-dashboard-symbol" aria-hidden="true">'+sportIcon('tools')+'</span><strong></strong><output aria-label="Construction speed"></output>';
+ const heading=document.createElement('header');heading.className='construction-header';heading.innerHTML='<strong></strong><nav class="construction-mode-switch" aria-label="Machine control mode"><button type="button" data-construction-mode="work" aria-pressed="true">Work</button><button type="button" data-construction-mode="drive" aria-pressed="false">Drive</button></nav><button type="button" data-construction-view="instruments" aria-haspopup="dialog">Instruments</button>';
+ const compactState=document.createElement('output');compactState.className='construction-compact-state';compactState.setAttribute('aria-label','Machine summary');
  const readout=document.createElement('output');readout.className='construction-readout';readout.setAttribute('aria-label','Construction machine instruments');
  const progress=document.createElement('output');progress.className='construction-progress';progress.setAttribute('aria-label','Skyscraper construction progress');
  const systems=document.createElement('output');systems.className='construction-system-status';systems.setAttribute('aria-label','Machine operating state');
@@ -52,12 +53,17 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const axisFeedback=document.createElement('div');axisFeedback.className='construction-axis-feedback';axisFeedback.setAttribute('aria-label','Hydraulic demand feedback');
  const quick=document.createElement('div');quick.className='construction-quick-actions';
  const help=document.createElement('p');help.className='construction-help';
- manual.append(heading,systems,readout,instruments,cycle,warning,progress,pads,axisFeedback,travelPanel,quick,reference,help);panel.append(manual);
- const status=document.createElement('p');status.className='construction-status';status.setAttribute('role','status');panel.append(status);stage.append(panel);
- let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,expanded=true,inFlight=false,pending=false,actionBusy=false,lastActionKey='',workView=true;
+ const status=document.createElement('p');status.className='construction-status';status.setAttribute('role','status');
+ const createDialog=(name,title,closeLabel)=>{const dialog=document.createElement('dialog');dialog.className=name+' construction-dialog';dialog.setAttribute('aria-label',title);const header=document.createElement('header'),h=document.createElement('h2'),close=document.createElement('button');h.textContent=title;close.type='button';close.textContent=closeLabel;close.onclick=()=>dialog.close();header.append(h,close);dialog.append(header);dialog.addEventListener('keydown',event=>{event.stopPropagation();if(event.key==='Escape'){event.preventDefault();dialog.close();}});document.body.append(dialog);return dialog;};
+ const instrumentsDialog=createDialog('construction-instruments-dialog','Machine instruments','Close instruments');
+ instrumentsDialog.append(systems,readout,instruments,cycle,warning,progress,axisFeedback,reference,help,status);
+ const functionsDialog=createDialog('construction-functions-dialog','Machine functions','Close functions');functionsDialog.append(quick);
+ manual.append(pads,travelPanel);panel.append(heading,compactState,manual);stage.append(panel);
+ let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',hudHidden=stage.dataset.hudHidden==='true',inFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
  let axes={},sticks=[],keyboardResets=[],travel={forward:0,side:0,held:false},instrumentNodes=new Map(),axisNodes=new Map();
- const canUse=()=>!disposed&&!!current&&expanded&&!panel.hidden&&!document.hidden&&!document.querySelector('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])');
- function report(error){setText(status,error?.message||String(error));}
+ const canUse=()=>!disposed&&!!current&&controlsVisible&&!hudHidden&&stage.dataset.hudHidden!=='true'&&!panel.hidden&&!document.hidden&&!document.querySelector('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])');
+ function showFeedback(message,failed=false){message=String(message);feedback={message,failed,until:performance.now()+(failed?6500:2500)};setText(status,message);setText(compactState,message);setAttr(compactState,'title',message);setAttr(compactState,'data-feedback',failed?'error':'notice');}
+ function report(error){showFeedback(error?.message||String(error),true);}
  async function flushAxes(){
   if(inFlight||!pending||!actorId||disposed)return;
   const entityId=actorId,sent={...axes};pending=false;inFlight=true;
@@ -71,11 +77,34 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  async function request(operation,fields={}){
   if(actionBusy||!actorId||disposed)return;
   reset();actionBusy=true;refreshAction();
-  try{const result=await command(operation==='exit'?'interact':'construction-controls',operation==='exit'?{}:{operation,entityId:actorId,...fields});if(result?.result?.message)setText(status,result.result.message);}catch(error){report(error);}finally{actionBusy=false;refreshAction();}
+  try{const result=await command(operation==='exit'?'interact':'construction-controls',operation==='exit'?{}:{operation,entityId:actorId,...fields});if(result?.result?.message)showFeedback(result.result.message);else if(!result)showFeedback('Request was not applied. Check the machine or site conditions and try again.',true);}catch(error){report(error);}finally{actionBusy=false;refreshAction();}
  }
- const actions=mountSportsActions({parent:panel,modes:['auto','attach','release','work','park','exit'],label:'Construction machine actions',onMode(){},onTrigger:()=>request(kind==='crane'?(current?.construction?.load?'release':'attach'):'work'),onOverride:operation=>request(operation),onOpen:reset,onCollapse:collapsed=>{expanded=!collapsed;setHidden(manual,collapsed);if(collapsed)reset();}});
- const toggle=actions.utilities.querySelector('.sports-collapse');toggle.title='Show or hide construction dashboard';toggle.setAttribute('aria-label',toggle.title);
- const exit=document.createElement('button');exit.type='button';exit.textContent='Exit';exit.setAttribute('aria-label','Exit parked construction machine');exit.onclick=()=>request('exit');actions.row.append(exit);
+ const utilities=document.createElement('div');utilities.className='sports-action-utilities construction-action-utilities';utilities.hidden=true;stage.append(utilities);
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='sports-icon-button construction-controls-toggle';toggle.setAttribute('aria-label','Show or hide construction dashboard');toggle.setAttribute('aria-expanded','true');utilities.append(toggle);
+ const bar=document.createElement('div');bar.className='sports-action-bar construction-action-bar';bar.setAttribute('aria-label','Construction machine actions');
+ const row=document.createElement('div');row.className='sports-action-tools';bar.append(row);
+ const primary=document.createElement('button');primary.type='button';primary.className='sports-primary-trigger';primary.onclick=()=>request(kind==='crane'?(current?.construction?.load?'release':'attach'):'work');
+ const park=document.createElement('button');park.type='button';park.dataset.operation='park';park.textContent='Park';park.setAttribute('aria-label','Park construction machine');park.onclick=()=>request('park');
+ const exit=document.createElement('button');exit.type='button';exit.dataset.operation='exit';exit.textContent='Exit';exit.setAttribute('aria-label','Exit parked construction machine');exit.onclick=()=>request('exit');
+ const more=document.createElement('button');more.type='button';more.dataset.constructionMore='';more.textContent='More';more.setAttribute('aria-label','More machine functions');more.setAttribute('aria-haspopup','dialog');
+ row.append(primary,park,exit,more);panel.append(bar);
+ const actions={root:bar,row,primary,utilities,popup:functionsDialog,dispose(){utilities.remove();bar.remove();instrumentsDialog.remove();functionsDialog.remove();}};
+ function closeDialogs(){for(const dialog of [instrumentsDialog,functionsDialog])if(dialog.open)dialog.close();}
+ function syncVisibility(){
+  const visible=!!current&&controlsVisible&&!hudHidden;setHidden(panel,!visible);setHidden(utilities,!current||hudHidden);setHidden(pads,controlMode!=='work');setHidden(travelPanel,kind==='crane'||controlMode!=='drive');
+  setHidden(heading.querySelector('[data-construction-mode=drive]'),kind==='crane');for(const button of heading.querySelectorAll('[data-construction-mode]'))setAttr(button,'aria-pressed',button.dataset.constructionMode===controlMode);
+  setAttr(toggle,'aria-expanded',controlsVisible);setAttr(toggle,'title',controlsVisible?'Hide machine controls':'Restore machine controls');const title=controlsVisible?'Hide machine':'Machine controls';if(toggle.dataset.label!==title){toggle.innerHTML=sportIcon(controlsVisible?'hide':'tools')+'<span>'+title+'</span>';toggle.dataset.label=title;}
+  setAttr(panel,'data-control-mode',controlMode);if(!visible)closeDialogs();
+ }
+ function setMode(mode){if(mode===controlMode||mode==='drive'&&kind==='crane')return;reset();controlMode=mode;syncVisibility();refreshAction();updateInstruments();}
+ for(const button of heading.querySelectorAll('[data-construction-mode]'))button.onclick=()=>setMode(button.dataset.constructionMode);
+ toggle.onclick=()=>{reset();controlsVisible=!controlsVisible;syncVisibility();};
+ function openDialog(dialog,opener){reset();closeDialogs();lastDialogOpener=opener;(document.fullscreenElement||document.body).append(dialog);if(!dialog.open)dialog.showModal();}
+ for(const dialog of [instrumentsDialog,functionsDialog])dialog.addEventListener('close',()=>{const opener=lastDialogOpener;if(opener?.isConnected&&!panel.hidden&&!hudHidden&&!document.querySelector('dialog[open]')&&(document.activeElement===document.body||dialog.contains(document.activeElement)))opener.focus({preventScroll:true});});
+ heading.querySelector('[data-construction-view=instruments]').onclick=event=>openDialog(instrumentsDialog,event.currentTarget);more.onclick=event=>openDialog(functionsDialog,event.currentTarget);
+ function applyHudVisibility(hidden){hudHidden=!!hidden;if(hudHidden)reset();syncVisibility();}
+ const hudVisibility=event=>{if(event.detail?.stage&&event.detail.stage!==stage)return;applyHudVisibility(event.detail?.hidden===true);};document.addEventListener('muzikaz:game-hud-visibility',hudVisibility);
+ const hudObserver=new MutationObserver(()=>applyHudVisibility(stage.dataset.hudHidden==='true'));hudObserver.observe(stage,{attributes:true,attributeFilter:['data-hud-hidden']});
  function availability(operation){
   if(!current)return {enabled:false,reason:'Enter an available machine first.'};
   const state=current.construction||{},telemetry=state.telemetry||{},moving=Math.abs(current.driving?.speed||0)>.5;
@@ -96,14 +125,13 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  function applyAvailability(button,operation){const choice=availability(operation);setDisabled(button,!choice.enabled);setAttr(button,'title',choice.reason);return choice;}
  function refreshAction(){
   const state=current?.construction||{},cycling=!!state.workCycle,operation=kind==='crane'?(state.load?'release':'attach'):'work';
-  const label=cycling?'Work cycle running':kind==='crane'?(state.load?'Place / release steel':'Attach nearby steel'):kind==='truck'?'Unload material':kind==='bulldozer'?'Push / grade earth':state.load?'Transfer soil to truck':'Dig / fill bucket';
-  const key=JSON.stringify([label,!!current,actionBusy,kind,cycling]);if(key!==lastActionKey){actions.update(label,'auto',!!current&&!actionBusy);lastActionKey=key;}
-  for(const control of actions.root.querySelectorAll('[data-trigger-mode]')){const mode=control.dataset.triggerMode;setHidden(control,(mode==='attach'||mode==='release')&&kind!=='crane'||mode==='work'&&kind==='crane');if(mode!=='auto')applyAvailability(control,mode);}
-  applyAvailability(actions.primary,operation);applyAvailability(exit,'exit');
+  const label=cycling?'Working…':kind==='crane'?(state.load?'Place steel':'Attach steel'):kind==='truck'?'Unload':kind==='bulldozer'?'Grade':state.load?'Load truck':'Dig';
+  setText(primary,label);setAttr(primary,'data-operation',operation);setAttr(primary,'aria-label',kind==='crane'?state.load?'Place or release steel':'Attach nearby steel':kind==='truck'?'Unload material':kind==='bulldozer'?'Push and grade earth':state.load?'Transfer soil to truck':'Dig and fill bucket');
+  applyAvailability(primary,operation);applyAvailability(park,'park');applyAvailability(exit,'exit');
   for(const button of quick.querySelectorAll('[data-operation]')){applyAvailability(button,button.dataset.operation);if(button.dataset.operation==='precision'){setAttr(button,'aria-pressed',!!state.precision);setText(button,state.precision?'Precision · 30% rate':'Precision · full rate');}}
-  const telemetry=state.telemetry||{},notice=telemetry.blockedReason||(!availability(operation).enabled?availability(operation).reason:'');setText(warning,notice);setHidden(warning,!notice);setAttr(panel,'data-interlocked',!!notice);
+  const telemetry=state.telemetry||{},notice=controlMode==='drive'&&telemetry.travelAllowed===false?telemetry.travelReason:telemetry.blockedReason||(!availability(operation).enabled?availability(operation).reason:'');setText(warning,notice);setHidden(warning,!notice);setAttr(panel,'data-interlocked',!!notice);
   const travelAllowed=kind!=='crane'&&telemetry.travelAllowed!==false&&!cycling&&!(kind==='truck'&&(state.bed||0)>.08);for(const node of pads.querySelectorAll('.construction-stick')){const blocked=kind==='truck'&&Math.abs(current?.driving?.speed||0)>.5;setAttr(node,'aria-disabled',blocked);if(blocked)setAttr(node,'title','Stop the truck before operating the body hoist.');}
-  for(const node of travelPanel.querySelectorAll('.construction-travel-stick')){setAttr(node,'aria-disabled',!travelAllowed);setAttr(node,'title',travelAllowed?'Hold the travel stick or use W/S and A/D. Release to coast; Park engages the brake.':telemetry.travelReason||'Lower the implement and finish or cancel the work cycle before travelling.');}if(!travelAllowed&&travel.held)setTravel({forward:0,side:0,held:false});
+  for(const node of travelPanel.querySelectorAll('.construction-travel-stick')){setAttr(node,'aria-disabled',!travelAllowed);setAttr(node,'title',travelAllowed?'Hold to travel. Release to coast; Park engages the brake.':telemetry.travelReason||'Finish or cancel the work cycle before travelling.');}if(!travelAllowed&&travel.held)setTravel({forward:0,side:0,held:false});
  }
  function addQuick(label,operation){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.operation=operation;button.onclick=()=>request(operation,operation==='precision'?{enabled:!current?.construction?.precision}:{});quick.append(button);return button;}
  function updateAxisFeedback(){
@@ -116,12 +144,12 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   const knob=document.createElement('span');knob.className='construction-stick-knob';knob.setAttribute('aria-hidden','true');
   for(const [position,name]of [['up',config.up],['down',config.down],['left',config.left],['right',config.right]])if(name){const hint=document.createElement('span');hint.className='construction-stick-'+position;hint.textContent=name;surface.append(hint);}
   surface.append(knob);group.append(label,surface);parent.append(group);
-  const permitted=()=>canUse()&&!(kind==='truck'&&!travelControl&&Math.abs(current?.driving?.speed||0)>.5)&&(!travelControl||current?.construction?.telemetry?.travelAllowed!==false&&!current?.construction?.workCycle&&!(kind==='truck'&&(current?.construction?.bed||0)>.08));
+  const permitted=()=>canUse()&&(travelControl?controlMode==='drive':controlMode==='work')&&!(kind==='truck'&&!travelControl&&Math.abs(current?.driving?.speed||0)>.5)&&(!travelControl||current?.construction?.telemetry?.travelAllowed!==false&&!current?.construction?.workCycle&&!(kind==='truck'&&(current?.construction?.bed||0)>.08));
   const publish=(x,y,held)=>{if(travelControl)setTravel({side:x,forward:-y,held});else changeAxes({...config.horizontal?{[config.horizontal]:x}:{},...config.vertical?{[config.vertical]:-y*(config.verticalSign??1)}:{}});};
   sticks.push(mountThumbstick({stick:surface,knob,canUse:permitted,onChange:({x,y},released)=>publish(x,y,!released)}));
   const pressed=new Set(),publishKeys=()=>publish((pressed.has('ArrowRight')?1:0)-(pressed.has('ArrowLeft')?1:0),(pressed.has('ArrowDown')?1:0)-(pressed.has('ArrowUp')?1:0),pressed.size>0);
   const clearKeys=()=>{if(pressed.size){pressed.clear();publishKeys();}};keyboardResets.push(clearKeys);
-  surface.onkeydown=event=>{if(!event.key.startsWith('Arrow')||!permitted())return;event.preventDefault();event.stopPropagation();pressed.add(event.key);publishKeys();};
+  surface.onkeydown=event=>{if(!event.key.startsWith('Arrow'))return;event.preventDefault();event.stopPropagation();if(!permitted())return;pressed.add(event.key);publishKeys();};
   surface.onkeyup=event=>{if(!event.key.startsWith('Arrow'))return;event.preventDefault();event.stopPropagation();pressed.delete(event.key);publishKeys();};surface.onblur=clearKeys;
  }
  function buildControls(){
@@ -132,11 +160,11 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   for(const spec of constructionInstrumentSpecs(kind)){const root=document.createElement('label');root.className='construction-instrument';root.dataset.instrument=spec.id;const label=document.createElement('span');label.textContent=spec.label;const output=document.createElement('output');output.setAttribute('aria-label',spec.label);const meter=document.createElement('meter');meter.min=spec.min;meter.max=spec.max;meter.value=spec.min;meter.setAttribute('aria-label',spec.label+' range');root.append(label,output,meter);instruments.append(root);instrumentNodes.set(spec.id,{...spec,root,output,meter});}
   if(kind!=='crane'){bindJoystick({label:kind==='truck'?'Travel / steering':'Track travel / steering',up:'Forward W',down:'Reverse S',left:'Steer left A',right:'Steer right D',description:'Dashboard: hold this stick or focus it and hold arrow keys. W/S and A/D remain available in the game. Park stops the machine.'},travelPanel,{travelControl:true});const reading=document.createElement('output');reading.className='construction-travel-readout';reading.setAttribute('aria-label','Travel control readings');travelPanel.append(reading);}
   if(kind==='crane'){const view=document.createElement('button');view.type='button';view.textContent='Work camera / operator view';view.setAttribute('aria-label','Toggle crane work camera');view.setAttribute('aria-pressed',String(workView));view.onclick=()=>{workView=!workView;setAttr(view,'aria-pressed',workView);};quick.append(view);addQuick('Align to steel','aim-supply');addQuick('Align to tower','aim-target');help.textContent='Lower the hook beside a loose beam, attach it, lift clear of the site, then align with the highlighted tower target and place it. The alignment buttons automate positioning; moving a joystick returns to manual control.';}
-  else if(kind==='excavator'){addQuick('Dig / transfer soil','work');help.textContent='ISO work joysticks operate independently of track travel. Dig beside the marked pit; transfer a loaded bucket into a dumptruck within reach. The automatic cycle follows the same connected boom, stick and bucket joints.';}
-  else if(kind==='bulldozer'){addQuick('Push / grade','work');help.textContent='Lower the blade for grading beside the pit or spoil area. Raise the blade before travelling away. The work cycle grades a measured area and updates the shared site progress.';}
-  else{addQuick('Unload material','work');help.textContent='Position beside the excavator to receive soil, then drive to the spoil area. Stop before using the body hoist. Travel is locked while the body is raised; lower it before returning for another load.';}
+  else if(kind==='excavator'){help.textContent='ISO work joysticks operate independently of track travel. Dig beside the marked pit; transfer a loaded bucket into a dumptruck within reach. The automatic cycle follows the same connected boom, stick and bucket joints.';}
+  else if(kind==='bulldozer'){help.textContent='Lower the blade for grading beside the pit or spoil area. Raise the blade before travelling away. The work cycle grades a measured area and updates the shared site progress.';}
+  else{help.textContent='Position beside the excavator to receive soil, then drive to the spoil area. Stop before using the body hoist. Travel is locked while the body is raised; lower it before returning for another load.';}
   help.textContent+=' Focus a joystick and hold arrow keys; release to return the valve to neutral. Manual work input cancels an automatic cycle. Precision reduces hydraulic speed to 30%.';
-  addQuick('Precision · full rate','precision');addQuick('Park / stop hydraulics','park');setText(heading.querySelector('strong'),names[kind]||'Construction machine');updateAxisFeedback();
+  addQuick('Precision · full rate','precision');setText(heading.querySelector('strong'),({crane:'Tower crane',truck:'Dumptruck',bulldozer:'Bulldozer',excavator:'Excavator'})[kind]);setAttr(heading.querySelector('strong'),'title',names[kind]||'Construction machine');updateAxisFeedback();
  }
  function updateInstruments(){
   const state=current?.construction||{},telemetry=state.telemetry||{},site=snapshot?.construction||{},speed=Number(current?.driving?.speed)||0;
@@ -146,7 +174,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   const gear=kind==='crane'?'FIXED BASE':current?.driving?.blocked?'BLOCKED':current?.driving?.parked?'P / brake':Math.abs(speed)<.1?'N':speed<0?'R':'D',mode=state.workCycle?'Automatic cycle':state.assist?'Alignment '+state.assist:'Manual',hydraulics=telemetry.hydraulicsActive??state.working;
   setText(systems,'Drive '+gear+' · '+mode+' · Hydraulics '+(hydraulics?'active':'neutral')+' · '+(state.precision?'Precision 30%':'Full rate'));
   const activeCycle=!!state.workCycle;setHidden(cycle,!activeCycle);if(activeCycle){const elapsed=Math.max(0,(Number(snapshot?.serverTime)||state.workCycle.start)-state.workCycle.start),fraction=Math.max(0,Math.min(1,Number(telemetry.cycleProgress??elapsed/state.workCycle.duration)||0));setText(cycle.querySelector('output'),(telemetry.cyclePhase||state.workCycle.mode)+' · '+Math.round(fraction*100)+'%');const bar=cycle.querySelector('progress');if(bar.value!==fraction)bar.value=fraction;}
-  setText(heading.querySelector('output'),Math.abs(speed*3.6).toFixed(1)+' km/h');
+  const issue=controlMode==='drive'&&telemetry.travelAllowed===false?telemetry.travelReason:telemetry.blockedReason;const summary=issue||state.workCycle?(issue||'Cycle '+(telemetry.cyclePhase||state.workCycle.mode)+' · '+Math.round((telemetry.cycleProgress||0)*100)+'% · Park to cancel'):kind==='crane'?'Hook '+Number(state.hoist||0).toFixed(1)+' m · '+(state.load?'Steel attached':'Hook empty'):Math.abs(speed*3.6).toFixed(1)+' km/h · '+(kind==='bulldozer'?'Blade '+Number(state.blade||0).toFixed(2)+' m':'Load '+Number(state.load||0).toFixed(1)+' m³');const message=feedback&&performance.now()<feedback.until?feedback.message:summary;setText(compactState,message);setAttr(compactState,'title',message);setAttr(compactState,'data-feedback',feedback&&performance.now()<feedback.until?(feedback.failed?'error':'notice'):'');
   if(kind==='crane'){const target=site.tower?.target,hook=state.hook||current?.position&&craneHookPosition(current),matingY=hook?hook.y-CONSTRUCTION_LOAD_OFFSET:0,yawError=target?degrees(Math.atan2(Math.sin((target.yaw||0)-(state.loadYaw||0)),Math.cos((target.yaw||0)-(state.loadYaw||0)))):0;setText(readout,target&&hook?'Beam placement offset '+Math.hypot(target.x-hook.x,target.z-hook.z).toFixed(1)+' m horizontal · '+(target.y-matingY).toFixed(1)+' m vertical · '+yawError.toFixed(0)+'° yaw · '+(state.load?'Steel attached':'Hook empty'):state.load?'Steel attached':'Hook empty');}
   else if(kind==='excavator')setText(readout,'Bucket '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||2).toFixed(1)+' m³ · '+(telemetry.status||'Manual ISO hydraulics'));
   else if(kind==='truck')setText(readout,'Payload '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||40).toFixed(1)+' m³ · '+(telemetry.travelAllowed===false?telemetry.travelReason||'Travel interlocked':'Body and drive ready'));
@@ -159,9 +187,9 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const dialogObserver=new MutationObserver(records=>{if(records.some(({target,attributeName})=>attributeName==='open'?target.localName==='dialog'&&target.open:target.id==='crib-chat-panel'&&!target.hidden))reset();});dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
  return {get workView(){return kind==='crane'&&workView;},inputs(){return canUse()&&kind!=='crane'&&travel.held&&current?.construction?.telemetry?.travelAllowed!==false?{forward:travel.forward,side:travel.side,brake:false}:null;},update(nextSnapshot,id){
   snapshot=nextSnapshot;selfId=id;const self=snapshot.players?.[selfId],next=snapshot.actors?.[self?.vehicleId],nextKind=constructionMachineKind(next),active=!!nextKind&&next?.active!==false&&self?.health!==0;
-  if(!active){reset();current=null;actorId=null;kind=null;setHidden(panel,true);setHidden(actions.utilities,true);if(actions.popup.open)actions.popup.close();lastActionKey='';return;}
-  if(actorId!==next.id||kind!==nextKind){reset();current=next;actorId=next.id;kind=nextKind;buildControls();setText(status,'');}else current=next;
-  setHidden(panel,false);setHidden(actions.utilities,false);refreshAction();
+  if(!active){reset();current=null;actorId=null;kind=null;delete stage.dataset.constructionMachine;syncVisibility();return;}
+  if(actorId!==next.id||kind!==nextKind){reset();current=next;actorId=next.id;kind=nextKind;controlMode='work';feedback=null;buildControls();setText(status,'');}else current=next;
+  setAttr(stage,'data-construction-machine',kind);syncVisibility();refreshAction();
   updateInstruments();
- },dispose(){reset();disposed=true;clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
+ },dispose(){reset();disposed=true;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();hudObserver.disconnect();document.removeEventListener('muzikaz:game-hud-visibility',hudVisibility);window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
 }

@@ -16,7 +16,7 @@ try:
    page.on('pageerror',lambda error:errors.append(str(error)))
    page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/nearby-action-buttons.html')
    page.wait_for_selector('body[data-ready=true]')
-   page.evaluate("""async()=>{const {mountGameDisplayFlow}=await import('/public/js/game-display-flow.js');mountGameDisplayFlow(document.querySelector('.house-stage'));const panel=document.createElement('section');panel.className='basketball-hud';panel.style.cssText='position:absolute;bottom:8px;height:100px;left:8px;right:8px;background:#123';panel.textContent='HOME 0 · AWAY 0';document.querySelector('.house-stage').append(panel);}""")
+   page.evaluate("""async()=>{const {mountGameDisplayFlow}=await import('/public/js/game-display-flow.js');window.flow=mountGameDisplayFlow(document.querySelector('.house-stage'));const panel=document.createElement('section');panel.className='basketball-hud';panel.style.cssText='position:absolute;bottom:8px;height:100px;left:8px;right:8px;background:#123';panel.textContent='HOME 0 · AWAY 0';document.querySelector('.house-stage').append(panel);}""")
    page.wait_for_selector('.game-display-flow > .basketball-hud')
    page.wait_for_function("getComputedStyle(document.querySelector('.game-display-flow-actions')).display==='flex'")
    item=page.locator('.builder-nearby-action:not(.builder-portal-action)');portal=page.locator('.builder-portal-action');fire=page.get_by_role('button',name='Fire',exact=True)
@@ -39,9 +39,44 @@ try:
    assert page.locator('.game-display-flow-views').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
    page.locator('.game-camera-toggle').tap()
    assert page.evaluate('window.viewClicks')==1
+   page.evaluate("const xr=document.createElement('button');xr.className='xr-enter-button';xr.hidden=true;xr.disabled=true;xr.textContent='VR headset unavailable';xr.style.cssText='display:block;position:fixed;top:8px;left:0;width:100%;z-index:80';document.querySelector('.house-stage').append(xr);")
+   page.wait_for_selector('.game-display-flow-views > .xr-enter-button',state='attached')
+   assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block hide/restore controls'
+   page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
+   stage_box=page.locator('.house-stage').bounding_box()
+   page.evaluate("window.hudEvents=[];window.blurCount=0;document.addEventListener('muzikaz:game-hud-visibility',event=>hudEvents.push(event.detail.hidden));window.addEventListener('blur',()=>blurCount++);")
+   page.get_by_role('button',name='Hide game controls',exact=True).tap()
+   assert page.evaluate('flow.hudHidden') is True
+   assert not item.is_visible() and not fire.is_visible() and not page.locator('.game-camera-toggle').is_visible()
+   for name in ['rad-tox-hud','basketball-controls','range-ops-button']:assert not page.locator('.'+name).is_visible()
+   # A road dashboard mounted and repeatedly updated while hidden must stay hidden.
+   page.evaluate("""async()=>{const stage=document.querySelector('.house-stage'),{mountRoadVehicleUI}=await import('/public/js/road-vehicle-ui.js'),{ROAD_VEHICLES}=await import('/public/js/road-vehicles.js');const modelId=Object.keys(ROAD_VEHICLES).find(id=>!ROAD_VEHICLES[id].siteOnly);window.roadState={serverTime:1000,players:{me:{vehicleId:'car'}},actors:{car:{id:'car',modelId,active:true,position:{x:0,y:0,z:0},driving:{speed:0}}}};window.road=mountRoadVehicleUI(stage,async()=>({result:{message:'Confirmed'}}));road.update(roadState,'me');road.update(roadState,'me');}""")
+   page.wait_for_function("document.querySelector('.game-display-flow > .road-vehicle-controls')!==null")
+   assert not page.locator('.road-vehicle-controls').is_visible()
+   assert not page.locator('.game-display-flow-views .sports-action-utilities').is_visible()
+   restore=page.get_by_role('button',name='Show game controls',exact=True)
+   assert restore.bounding_box()['height']>=44
+   assert restore.evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}')
+   assert page.locator('.house-stage').bounding_box()==stage_box
+   restore.tap()
+   assert page.locator('.road-vehicle-controls').is_visible()
+   assert page.locator('.game-camera-toggle').is_visible()
+   for name in ['rad-tox-hud','basketball-controls','range-ops-button']:assert page.locator('.'+name).is_visible()
+   assert page.evaluate('hudEvents')==[True,False]
+   assert page.evaluate('blurCount')>=2
+   # Global visibility does not overwrite a vehicle's local collapsed state.
+   page.get_by_role('button',name='Show or hide road vehicle dashboard',exact=True).click()
+   assert not page.locator('.road-vehicle-details').is_visible()
+   page.get_by_role('button',name='Hide game controls',exact=True).tap()
+   page.evaluate("road.update(roadState,'me')")
+   page.get_by_role('button',name='Show game controls',exact=True).tap()
+   assert not page.locator('.road-vehicle-details').is_visible()
+   page.evaluate('road.dispose();flow.dispose()')
+   assert page.locator('.house-stage').get_attribute('data-hud-hidden') is None
+   assert page.locator('.game-hud-toggle').count()==0
    assert not errors,errors
    if width==390:page.screenshot(path='/tmp/separate-nearby-actions.png')
    page.close()
   browser.close()
- print('Flowing sports panel, nearby actions and fire control passed at 320, 390, 768 and 1280px; actions remain independently tappable.')
+ print('Sports/nearby actions, labelled hide/restore, incoming road dashboards and local collapse passed at 320, 390, 768 and 1280px.')
 finally:server.shutdown()

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" style="overflow:visible;overscroll-behavior:contain">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Game viewport sizing and restoration verification</title>
+ <link rel="stylesheet" href="../../public/assets/game-control-dock.css">
+ <style>
+  html,body{margin:0;scroll-behavior:auto;background:#122129;color:#e6f4f0;font:14px system-ui}
+  header{height:180px;padding:20px;box-sizing:border-box;background:#24383a}
+  .before-content{height:260px;padding:20px;box-sizing:border-box}
+  #game-host{width:100%;max-width:1100px;margin:auto}
+  #before-shell,#after-shell{height:24px;background:#304842}
+  .house-explorer-shell{position:relative;display:flex;flex-direction:column;width:calc(100% - 24px);height:min(680px,calc(100dvh - 120px));max-height:none;margin:12px auto;border-radius:12px;overflow:hidden;background:#1b343a}
+  .house-stage{position:relative;flex:1 1 0;min-height:0;width:100%;overflow:hidden}
+  .house-stage canvas{display:block;width:100%;height:100%;background:linear-gradient(150deg,#3b6970,#789577)}
+  .game-viewport-toggle{position:absolute;top:8px;right:8px;z-index:90;min-width:44px;min-height:44px;padding:8px;border:1px solid #a2cbba;border-radius:8px;background:#17342e;color:#effff6}
+  .house-control-dock{flex:0 0 auto}
+  .mobile-move-pad-glb{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:8px;padding:8px;background:#142c24}
+  .thumbstick-control{display:grid;justify-items:center;gap:4px}
+  .thumbstick-base{width:80px;height:80px;border:2px solid #91b99d;border-radius:50%;background:#315a41;color:white;touch-action:none}
+  .house-bottom-controls{height:52px;box-sizing:border-box;padding:4px;background:#10251b}
+  .game-dock-actions{display:flex;justify-content:space-between;height:44px}
+  .house-bottom-control{min-width:44px;min-height:44px;background:#224534;color:white;border:1px solid #42634e}
+  footer{height:1000px;padding:20px;background:#20332b}
+  #fixture-modal{width:min(300px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box;border:1px solid #98b7a0;border-radius:10px;background:#19332b;color:#effff5}
+  #fixture-modal form{display:grid;gap:12px}#fixture-modal input,#fixture-modal button{min-height:44px;box-sizing:border-box}
+ </style>
+</head>
+<body style="position:relative;overflow:visible">
+ <header id="fixture-header">Site header and world navigation</header>
+ <article id="fixture-article" class="before-content" aria-hidden="false">Ordinary page content above the game.</article>
+ <section id="game-host">
+  <div id="before-shell">Original previous sibling</div>
+  <section class="house-explorer-shell">
+   <div class="house-stage">
+    <canvas aria-label="Game view"></canvas>
+    <button id="fixture-fullscreen" class="game-viewport-toggle" type="button">Full screen</button>
+   </div>
+   <div class="house-control-dock">
+    <div class="mobile-move-pad mobile-move-pad-glb" aria-label="Game controllers">
+     <div class="thumbstick-control"><button class="thumbstick-base" aria-label="Move">Move</button></div>
+     <div class="thumbstick-control"><button class="thumbstick-base" aria-label="Look">Look</button></div>
+    </div>
+    <div class="house-bottom-controls"><div class="game-dock-actions"><button class="house-bottom-control" aria-label="Worlds">Worlds</button><button class="house-bottom-control" aria-label="Tools">Tools</button><button class="house-bottom-control" aria-label="Chat">Chat</button><button id="fixture-open-dialog" class="house-bottom-control" aria-label="Open viewport dialog">Dialog</button></div></div>
+   </div>
+  </section>
+  <div id="after-shell">Original next sibling</div>
+ </section>
+ <footer id="fixture-footer" inert="preexisting" aria-hidden="false">More site content below the game.</footer>
+ <aside id="fixture-hidden" aria-hidden="true">Previously hidden background content.</aside>
+ <dialog id="fixture-modal" aria-label="Viewport tools dialog"><form method="dialog"><label>Dialog text<input aria-label="Viewport dialog text" autofocus></label><button id="fixture-modal-action" type="button">Confirm modal action</button><button id="fixture-modal-close" value="close">Close viewport dialog</button></form></dialog>
+ <script type="module">
+  import {mountGameViewport} from '../../public/js/game-viewport.js';
+  const stage=document.querySelector('.house-stage'),shell=stage.closest('.house-explorer-shell'),button=document.querySelector('#fixture-fullscreen');
+  const request=shell.requestFullscreen?.bind(shell);
+  const mode=new URL(location.href).searchParams.get('request')||'native';
+  window.requestCount=0;
+  if(mode==='unsupported')Object.defineProperty(shell,'requestFullscreen',{value:undefined,configurable:true});
+  else Object.defineProperty(shell,'requestFullscreen',{value:()=>{requestCount++;return mode==='rejected'?Promise.reject(Object.assign(Error('Fullscreen deliberately rejected by fixture'),{name:'NotAllowedError'})):request?.();},configurable:true});
+  window.neutralizations=0;window.viewportChanges=[];
+  window.fixtureHistory={fixtureHistory:{value:'preserve-me'},route:'game'};history.replaceState(fixtureHistory,'',location.href);
+  window.backgroundState=()=>['fixture-header','fixture-article','game-host','fixture-footer','fixture-hidden'].map(id=>{const node=document.getElementById(id);return {id,inert:node.getAttribute('inert'),ariaHidden:node.getAttribute('aria-hidden')};});
+  window.originalBackground=backgroundState();
+  window.styleState=()=>({body:Object.fromEntries(['position','top','left','right','width','overflow'].map(key=>[key,document.body.style.getPropertyValue(key)])),html:Object.fromEntries(['overflow','overscroll-behavior'].map(key=>[key,document.documentElement.style.getPropertyValue(key)]))});
+  window.originalStyles=styleState();
+  window.modalActions=0;document.querySelector('#fixture-open-dialog').onclick=()=>document.querySelector('#fixture-modal').showModal();document.querySelector('#fixture-modal-action').onclick=()=>modalActions++;
+  window.viewportController=mountGameViewport({stage,button,onNeutralize:()=>neutralizations++,onChange:(...args)=>viewportChanges.push(args)});
+  document.body.dataset.ready='true';
+ </script>
+</body>
+</html>

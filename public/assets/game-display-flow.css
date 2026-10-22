@@ -1,4 +1,4 @@
-.house-stage .game-display-flow{position:absolute;z-index:24;inset:auto 8px max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;max-width:640px;max-height:calc(100% - 72px);margin-inline:auto;overflow-y:auto;pointer-events:none;box-sizing:border-box}
+.house-stage .game-display-flow{position:absolute;z-index:24;inset:auto 8px max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;max-width:640px;max-height:calc(100% - var(--game-view-controls-height,56px) - 24px);margin-inline:auto;overflow-y:auto;pointer-events:none;box-sizing:border-box}
 .house-stage .game-display-flow>*{flex-shrink:0}
 .house-stage .game-display-flow>.owned-placement-controls,.house-stage .game-display-flow>.basketball-hud,.house-stage .game-display-flow>.firing-range-hud,.house-stage .game-display-flow>.hockey-sports-bar,.house-stage .game-display-flow>.game-live-connection{position:static!important;inset:auto!important;transform:none!important;width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;pointer-events:auto}
 .house-stage .game-display-flow-actions{display:flex;align-items:flex-end;gap:8px;pointer-events:none}
@@ -29,3 +29,33 @@
 .house-stage>.game-display-flow-views>.sports-action-utilities[hidden]{display:none!important;}
 .house-stage>.game-display-flow-views>.broadcast-controls{order:2;}
 .house-stage>.game-display-flow-views>.game-camera-toggle{order:-1;}
+.house-stage>.game-display-flow-views>.xr-enter-button{position:static!important;inset:auto!important;width:auto;margin:0;transform:none}
+.house-stage>.game-display-flow-views>[hidden],.house-stage>.xr-controls-help[hidden]{display:none!important}
+
+/* Display controls stay separate from the panels they hide. */
+.house-stage>.game-display-flow-views>.game-hud-toggle{order:-5;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:auto;min-width:44px;min-height:44px;padding:7px 9px;border:1px solid #92b6a2;border-radius:9px;background:#10272eeb;color:#f2ffe7;font:600 11px/1.2 system-ui;letter-spacing:normal;text-transform:none;white-space:nowrap;touch-action:manipulation;cursor:pointer}
+.game-hud-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.house-stage>.game-display-flow-views>.game-viewport-toggle{order:-4}
+.game-hud-toggle:focus-visible{outline:3px solid #d4ff91;outline-offset:2px}
+.house-stage>.game-display-flow-views>.game-hud-toggle[aria-pressed=true]{background:#c7f36a;color:#13200e;border-color:#e0ffa5}
+.house-stage[data-hud-hidden=true]>.game-display-flow,
+.house-stage[data-hud-hidden=true]>.game-display-flow-views>:not(.game-hud-toggle):not(.game-viewport-toggle),
+.house-stage[data-hud-hidden=true]>.house-hud,
+.house-stage[data-hud-hidden=true]>.house-reticle,
+.house-stage[data-hud-hidden=true]>.house-mobile-controls,
+.house-stage[data-hud-hidden=true]>.mobile-move-pad,
+.house-stage[data-hud-hidden=true]>.rad-tox-hud,
+.house-stage[data-hud-hidden=true]>.rad-tox-demo-balance,
+.house-stage[data-hud-hidden=true]>.rad-quest-toast,
+.house-stage[data-hud-hidden=true]>.house-status,
+.house-stage[data-hud-hidden=true]>.basketball-controls,
+.house-stage[data-hud-hidden=true]>.range-ops-button,
+.house-stage[data-hud-hidden=true]>.building-adjust-button,
+.house-explorer-shell[data-hud-hidden=true] .house-control-dock{display:none!important}
+/* Machinery owns its work, drive, park and exit controls. */
+.house-stage[data-construction-machine]>.game-display-flow>.game-display-flow-actions,
+.house-stage[data-construction-machine]>.game-display-flow>.game-live-connection,
+.house-stage[data-construction-machine]>.house-reticle,
+.house-explorer-shell:has(.house-stage[data-construction-machine]) .house-control-dock>.mobile-move-pad,
+.house-explorer-shell:has(.house-stage[data-construction-machine]) #house-controller-toggle{display:none!important}
+@media(max-height:480px){.house-stage>.game-display-flow-views{gap:3px}.house-stage>.game-display-flow-views>.game-hud-toggle{padding-inline:7px;font-size:10px}}

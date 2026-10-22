@@ -173,9 +173,9 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       assert page.evaluate('Object.values(calls.filter(c=>c.operation==="control").at(-1).axes).every(v=>v===0)')
       toggle=page.get_by_role('button',name='Show or hide construction dashboard',exact=True);toggle.click()
       assert toggle.get_attribute('aria-expanded')=='false'
-      assert not panel.locator('.construction-manual').is_visible()
-      assert panel.locator('.sports-primary-trigger').is_visible()
-      toggle.click();assert panel.locator('.construction-manual').is_visible()
+      assert not panel.is_visible()
+      assert not panel.locator('.sports-primary-trigger').is_visible()
+      toggle.click();assert panel.is_visible()
      page.evaluate('selectCar()');road=page.get_by_role('region',name='Road vehicle dashboard');assert road.is_visible()
      toggle=page.get_by_role('button',name='Show or hide road vehicle dashboard',exact=True);toggle.click();assert not road.locator('.road-vehicle-details').is_visible();assert road.locator('.sports-primary-trigger').is_visible();toggle.click();assert road.locator('.road-vehicle-details').is_visible()
      assert not errors,errors;page.close()
@@ -212,7 +212,7 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       if not crane_card.count():crane_card=page.locator('[data-craft-choices] article').filter(has_text='crane').first
       crane_card.get_by_role('button',name='Board ',exact=False).click()
       page.locator('.construction-controls').wait_for(state='visible',timeout=20000)
-      assert page.get_by_role('button',name='Toggle crane work camera',exact=True).get_attribute('aria-pressed')=='true'
+      assert page.locator('[aria-label="Toggle crane work camera"]').get_attribute('aria-pressed')=='true'
       assert 'Operator input delayed' not in page.locator('.construction-interlock').inner_text()
       page.screenshot(path='/tmp/construction-site-full.png')
       page.get_by_role('button',name='Show or hide construction dashboard',exact=True).click()
@@ -229,7 +229,9 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       page.locator(f'[data-craft-choices] [data-craft-id="{entity_id}"]').click()
       panel=page.locator('.construction-controls');panel.wait_for(state='visible',timeout=15000)
       page.wait_for_function('document.querySelectorAll(".construction-instrument meter").length>=2')
-      meter=panel.locator(f'.construction-instrument[data-instrument="{axis}"] meter');before=float(meter.get_attribute('value') or meter.evaluate('el=>el.value'))
+      panel.locator('[data-construction-view=instruments]').click()
+      meter=page.locator(f'.construction-instruments-dialog .construction-instrument[data-instrument="{axis}"] meter');assert meter.is_visible();before=float(meter.get_attribute('value') or meter.evaluate('el=>el.value'))
+      page.get_by_role('button',name='Close instruments',exact=True).click()
       before_hydraulics=context.request.get(base+'/api/rooms/skyscraper-construction/gameplay').json()['data']['actors'][entity_id]
       direction=-1 if before_hydraulics['construction'][axis]>{'boom':1.3,'bed':.95,'blade':1.2}[axis]-.05 else 1
       lever_key='ArrowDown' if direction>0 else 'ArrowUp'
@@ -246,8 +248,11 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
       if model=='site-dumptruck':
        pad.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(500);page.keyboard.up('ArrowUp')
        page.wait_for_function('document.querySelector(".construction-instrument[data-instrument=bed] meter").value<4.5',timeout=12000)
-      precision=panel.locator('[data-operation=precision]');precision.click();page.wait_for_function('document.querySelector(".construction-system-status").textContent.includes("Precision 30%")',timeout=12000)
+      panel.locator('[data-construction-more]').click()
+      precision=page.locator('.construction-functions-dialog [data-operation=precision]');precision.click();page.wait_for_function('document.querySelector(".construction-system-status").textContent.includes("Precision 30%")',timeout=12000)
+      page.get_by_role('button',name='Close functions',exact=True).click()
       before_actor=context.request.get(base+'/api/rooms/skyscraper-construction/gameplay').json()['data']['actors'][entity_id]
+      panel.locator('[data-construction-mode=drive]').click()
       travel=panel.locator('.construction-travel-stick');travel.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(400);page.keyboard.up('ArrowUp')
       panel.locator('[data-operation=park]').click()
       after_actor=context.request.get(base+'/api/rooms/skyscraper-construction/gameplay').json()['data']['actors'][entity_id]
@@ -256,7 +261,7 @@ with tempfile.TemporaryDirectory(prefix='construction-browser-') as directory:
        diagnostic={'model':model,'before':before_actor,'after':after_actor,'self':failed_state['players'].get(failed_state['selfId']),'commands':room_events[-25:],'responses':room_replies[-25:],'pageErrors':errors}
        Path('/tmp/construction-gui-failure.json').write_text(json.dumps(diagnostic,indent=2));print('GUI travel diagnostic: '+json.dumps(diagnostic),flush=True)
        raise AssertionError('GUI travel stick did not reach server movement; see /tmp/construction-gui-failure.json')
-      panel.locator('.construction-manual').evaluate('el=>el.scrollTop=0')
+      panel.locator('[data-construction-mode=work]').click()
       page.screenshot(path='/tmp/construction-'+model+'-dashboard.png')
       page.get_by_role('button',name='Exit parked construction machine',exact=True).click();panel.wait_for(state='hidden',timeout=15000)
      assert not errors,errors
