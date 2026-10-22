@@ -1,3 +1,4 @@
+import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {questRadio} from './server-quest-radio.mjs';
 import {isWatercraft} from './public/js/harbor-water.js';
 import {isAircraft} from './public/js/aircraft-flight.js';
@@ -15,7 +16,7 @@ export function teamCommand(sim,player,operation,now,{teamId,role}={}){
   if(!q?.shared||q.status!=='active'||now>q.deadline||now-leader.lastSeen>15000)throw Error('This shared assignment is no longer available.');
   if(Object.keys(q.team).length>=4)throw Error('This team is full.');if(!['helper','observer'].includes(role))throw Error('Choose helper or observer.');
   const craft=sim.actors[player.vehicleId],mode=q.requiredMode||q.mode;
-  if(role==='helper'&&(player.health<=0||(mode==='foot'?!!player.vehicleId:!craft||craft.active===false||craft.health<=0||craft.trafficAI||craft.holderId!==player.actorId||(mode==='gunboat'?!isCombatBoat(craft):mode==='boat'?!isWatercraft(craft):mode==='armed'?!armedAircraft(craft):!isAircraft(craft)))))throw Error('Board an appropriate craft to help this team. Observers can watch on foot.');
+  if(role==='helper'&&(player.health<=0||(mode==='foot'?!!player.vehicleId:!craft||craft.active===false||craft.health<=0||craft.trafficAI||craft.holderId!==player.actorId||(mode==='road'?!isRoadVehicle(craft):mode==='gunboat'?!isCombatBoat(craft):mode==='boat'?!isWatercraft(craft):mode==='armed'?!armedAircraft(craft):!isAircraft(craft)))))throw Error('Board an appropriate craft to help this team. Observers can watch on foot.');
   q.team[player.actorId]={role,vehicleId:player.vehicleId||null,revision:player.movementRevision||0,placementRevision:craft?.placementRevision||0,contribution:0};player.vehicleMission={...structuredClone(q),teamLeader:leader.actorId,teamRole:role,vehicleId:player.vehicleId||null};questRadio(sim,now,'Dispatch',player.username+' joined '+leader.username+' as '+role+'.');return 'Joined shared assignment as '+role+'.';
  }
  if(!q||q.status!=='active'||player.vehicleMission?.status!=='active'||!q.team?.[player.actorId])throw Error('Accept an assignment first.');

@@ -1,19 +1,15 @@
 import {ROAD_VEHICLES,isRoadVehicle,roadVehicleType} from './public/js/road-vehicles.js';
-export function roadFleetAnchors(environment){
- const scene=environment.builderScene||{},roads=[...(environment.streets||[]),...(scene.streets||[])];
- for(const item of scene.objects||[])if(item.position&&/road|asphalt|street/.test(item.modelId||'')&&!/sign|light|lamp/.test(item.modelId||''))roads.push({from:item.position,to:{...item.position,z:item.position.z+8}});
- if(!roads.length&&['vendor-street','creator-studios','market-square','cargo-yard','desert-outpost'].includes(scene.layout||environment.layout))roads.push({from:{x:0,y:0,z:-14},to:{x:0,y:0,z:14},width:8});
- return roads.filter(r=>r.from&&r.to&&[r.from.x,r.from.z,r.to.x,r.to.z].every(Number.isFinite));
-}
+import {roadFleetAnchors} from './public/js/road-network.js';
+export {roadFleetAnchors} from './public/js/road-network.js';
 export function ensureRoadFleet(sim,environment,collision,objects){
- const revision=sim.environmentUpdatedAt||environment.id;if(sim.roadFleetRevision===revision)return;sim.roadFleetRevision=revision;const roads=roadFleetAnchors(environment);if(!roads.length)return;
+ const revision='road-v2:'+(sim.environmentUpdatedAt||environment.id);if(sim.roadFleetRevision===revision)return;sim.roadFleetRevision=revision;const roads=roadFleetAnchors(environment);if(!roads.length)return;
  for(const [index,[modelId,config]]of Object.entries(ROAD_VEHICLES).entries()){
-  const id='public-road-'+modelId;if(sim.actors[id])continue;let position=null,yaw=0;
+  const id='public-road-'+modelId;if(sim.actors[id]?.roadFleetVersion===2||sim.actors[id]?.holderId)continue;let position=null,yaw=0;
   for(const road of roads){const dx=road.to.x-road.from.x,dz=road.to.z-road.from.z,length=Math.hypot(dx,dz);if(length<8)continue;
-   for(const t of [.2+index*.2,.1,.9]){const point={x:road.from.x+dx*t,y:road.from.y||0,z:road.from.z+dz*t},floor=collision.groundAt(environment,point,{actors:sim.actors,objects});if(!floor||!collision.hasBodyClearance(environment,floor,config.width/2,{actors:sim.actors,objects})||Object.values(sim.actors).some(a=>a.active!==false&&isRoadVehicle(a)&&Math.hypot(a.position.x-floor.x,a.position.z-floor.z)<5))continue;position=floor;yaw=Math.atan2(-dx,-dz);break;}if(position)break;
+   for(const t of [.2+index*.2,.1,.9]){const point={x:road.from.x+dx*t-dz/length*((road.width||8)/2+config.width/2+.4),y:road.from.y||0,z:road.from.z+dz*t+dx/length*((road.width||8)/2+config.width/2+.4)},floor=collision.groundAt(environment,point,{actors:sim.actors,objects});if(!floor||!collision.hasBodyClearance(environment,floor,config.width/2,{actors:sim.actors,objects})||Object.values(sim.actors).some(a=>a.active!==false&&isRoadVehicle(a)&&Math.hypot(a.position.x-floor.x,a.position.z-floor.z)<5))continue;position=floor;yaw=Math.atan2(-dx,-dz);break;}if(position)break;
   }
   if(!position)continue;const asset={id:'builder-'+modelId,buildAssetId:modelId,name:config.name,type:'vehicles',behavior:'vehicle',format:'procedural-3d',thumbnailUrl:'/public/images/vehicles/'+modelId+'.svg'};
-  sim.actors[id]={id,modelId,name:config.name,asset,position,rotation:{x:0,y:yaw,z:0},scale:{x:1,y:1,z:1},health:300,active:true,spawned:true,roadFleet:true,driving:{speed:0,parked:true},definition:{objectId:id,modelId,name:config.name,asset,transform:{position:{...position},rotation:{x:0,y:yaw,z:0},scale:{x:1,y:1,z:1}},gameplay:{behavior:'vehicle',health:300,interactionKey:'f',interactionDistance:4,cooldown:0},vehicle:{mode:'drive',speed:config.speed,seat:config.seat}}};
+  sim.actors[id]={id,modelId,name:config.name,asset,position,rotation:{x:0,y:yaw,z:0},scale:{x:1,y:1,z:1},health:300,active:true,spawned:true,roadFleet:true,roadFleetVersion:2,driving:{speed:0,parked:true},definition:{objectId:id,modelId,name:config.name,asset,transform:{position:{...position},rotation:{x:0,y:yaw,z:0},scale:{x:1,y:1,z:1}},gameplay:{behavior:'vehicle',health:300,interactionKey:'f',interactionDistance:4,cooldown:0},vehicle:{mode:'drive',speed:config.speed,seat:config.seat}}};
  }
 }
 export function roadMovementBlocked(collision,environment,actors,objects,actor,from,to,yaw){

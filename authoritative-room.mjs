@@ -1,3 +1,5 @@
+import {stepRoadActivity} from './server-road-activity.mjs';
+import {roadSpeedLimit} from './public/js/road-network.js';
 import {ensureRoadFleet,roadMovementBlocked,roadExitPosition} from './server-road-vehicles.mjs';
 import {isRoadVehicle,roadVehicleType,stepRoadVehicle} from './public/js/road-vehicles.js';
 import {questRadio} from './server-quest-radio.mjs';
@@ -134,7 +136,7 @@ export class AuthoritativeRooms {
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
+  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);stepRoadActivity(sim,environment,now,dt,{collision:this.collision,objects:room.objects});stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   if(environment.game==='ski')stepSkiLobby(sim,now);
   for(const player of Object.values(sim.players)){
@@ -167,7 +169,7 @@ export class AuthoritativeRooms {
    }
    const road=sim.actors[player.vehicleId];if(isRoadVehicle(road)&&road.active!==false){
     const others=Object.fromEntries(Object.entries(sim.actors).filter(([id])=>id!==road.id));
-    for(let remaining=dt;remaining>0;remaining-=.05)Object.assign(road,stepRoadVehicle(road,input,Math.min(.05,remaining),{groundAt:point=>this.collision.groundAt(environment,point,{actors:others,objects:room.objects}),blocked:(from,to,yaw)=>harborWaterAt(environment,to)||roadMovementBlocked(this.collision,environment,sim.actors,room.objects,road,from,to,yaw)}));
+    for(let remaining=dt;remaining>0;remaining-=.05)Object.assign(road,stepRoadVehicle(road,input,Math.min(.05,remaining),{groundAt:point=>this.collision.groundAt(environment,point,{actors:others,objects:room.objects}),speedLimit:roadSpeedLimit(environment,road.position)/3.6,blocked:(from,to,yaw)=>harborWaterAt(environment,to)||roadMovementBlocked(this.collision,environment,sim.actors,room.objects,road,from,to,yaw)}));
     player.position={...road.position};player.yaw=road.rotation.y;player.floor=road.position.y;player.grounded=true;player.velocityY=0;player.locationName=roadVehicleType(road).name;continue;
    }
    let speed=player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
@@ -325,7 +327,7 @@ export class AuthoritativeRooms {
 
      const target=manifest.actors.find(a=>a.objectId===command.entityId&&a.gameplay.behavior==='vehicle'),entity=sim.actors[command.entityId];
      if(!target||!entity||entity.active===false||(!isAircraft(entity)&&!isWatercraft(entity)&&!isRoadVehicle(entity)))fail('This craft is unavailable.',409);
-     if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
+     if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)||isRoadVehicle(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this craft.',409);
      if(isAircraft(entity)&&entity.flight?.airborne)fail('Wait until this aircraft has landed.',409);
      entity.holderId=actorId;player.vehicleId=entity.id;player.position={...entity.position,y:isWatercraft(entity) ? .35 : entity.position.y};player.yaw=entity.rotation?.y||0;player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.skiing=false;player.movementRevision=(player.movementRevision||0)+1;
@@ -417,7 +419,7 @@ export class AuthoritativeRooms {
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
      if(isBasketball(entity))requireBasketballPlayer(sim,player);
      if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(player.radToxEnabled!==false&&sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
-     if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
+     if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)||isRoadVehicle(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this item.',409);
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      const skiLift=environment.game==='ski'&&skiLifts.find(lift=>target.objectId==='ski-'+lift.id+'-base');
