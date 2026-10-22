@@ -15,7 +15,7 @@ export function populateMapMachine(sim,manifest,environment,collision,now,object
  if(now<(sim.machineRetryAt||0))return;
  sim.machineRetryAt=now+5000;
  const center=collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2});
- const world=collision.world(environment),floors=[...world.floors,...collision.placedWorld(sim.actors,objects).meshes];
+ const world=collision.world(environment),floors=[...world.floors,...collision.placedWorld(sim.actors,objects,environment).meshes];
  for(const scale of [1,.7,.5])for(const candidate of machineCandidates(center)){
   const floor=collision.groundAt(environment,candidate,{actors:sim.actors,objects});if(!floor||Math.abs(floor.y-center.y)>1.2)continue;
   const radius=.8*scale,points=[[0,0],[-radius,-.4*scale],[-radius,.4*scale],[radius,-.4*scale],[radius,.4*scale]];

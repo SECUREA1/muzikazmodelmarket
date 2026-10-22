@@ -141,21 +141,25 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     onStatus?.('Server connection required: '+error.message);
    }
  }
+ function supersededTransient(error,epoch,confirmedInput){
+  const transient=!error.status||error.status===408||error.status>=500&&error.status<600;
+  return transient&&error.code!=='ROOM_SWITCHED'&&error.code!=='ROOM_JOIN_REQUIRED'&&(epoch!==inputEpoch||confirmedInput<lastConfirmedInputSequence);
+ }
  function maybeFire(state){
   const controls=document.hidden?{}:input();
   if(stopped||!client.ready||!joined||fireBusy||!(state?.players?.[client.selfId]?.health>0)||state?.match?.state==='finished'||!controls.firing)return;
-  const revision=connectionRevision;fireBusy=true;
+  const revision=connectionRevision,epoch=inputEpoch,confirmedInput=lastConfirmedInputSequence;fireBusy=true;
   // Weapon responses never occupy a movement slot.
   void client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color,...(Number.isFinite(controls.eyeHeight)?{eyeHeight:controls.eyeHeight}:{})})
-   .catch(error=>{if(revision===connectionRevision&&error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
+   .catch(error=>{if(revision===connectionRevision&&error.status!==429&&!supersededTransient(error,epoch,confirmedInput))handleError(error);}).finally(()=>{fireBusy=false;});
  }
  function sendAutomaticInput(controls){
   const token={revision:connectionRevision,epoch:inputEpoch,sequence:inputSequence+1};automaticInputs.add(token);
   return client.send('input',{input:controls}).then(state=>{if(token.revision===connectionRevision)maybeFire(state);return state;}).catch(error=>{
     if(token.revision!==connectionRevision)return;
-    // A superseded transient heartbeat failure cannot close a healthy stream.
-    const transient=!error.status||error.status===408||error.status>=500&&error.status<600;
-    if(transient&&error.code!=='ROOM_SWITCHED'&&error.code!=='ROOM_JOIN_REQUIRED'&&token.epoch===inputEpoch&&token.sequence<lastConfirmedInputSequence)return;
+    // Travel starts a new input sequence. A failed request from its previous
+    // epoch is obsolete even if its old sequence exceeds today's confirmed one.
+    if(supersededTransient(error,token.epoch,token.sequence))return;
     handleError(error);
    }).finally(()=>{automaticInputs.delete(token);flushInput();});
  }

@@ -131,16 +131,21 @@ async def verify_inputs(page, cdp, responses, label, *, fire=True):
     await wait_for_ack(responses, before, lambda row: applied_axis(row, 'side'), label+': touch input was not applied.')
     end = (await snapshot(page))['player']['position']
     touch_progress = distance(start, end)
-    # A narrow GLB corridor can legitimately block one direction. The opposite
-    # physical gesture still must produce visible movement and a fresh reply.
-    if touch_progress <= .03:
+    # A GLB corner can block both forward walking and the first sideways drag.
+    # Preserve the same progress goal while trying the other actual directions.
+    touch_attempts = [{'direction':[.85,0],'progress':round(touch_progress,3)}]
+    for dx, dy, axis in [(-.85,0,'side'),(0,-.85,'forward'),(0,.85,'forward')]:
+        if touch_progress > .03 and max(phase['wDisplacement'],touch_progress) > .15:
+            break
         before = len(responses)
-        await touch_move(page, cdp, dx=-.85)
-        await wait_for_ack(responses, before, lambda row: applied_axis(row, 'side'), label+': opposite touch input was not applied.')
+        await touch_move(page, cdp, dx=dx, dy=dy)
+        await wait_for_ack(responses, before, lambda row: applied_axis(row, axis), label+': alternate touch input was not applied.')
         end = (await snapshot(page))['player']['position']
         touch_progress = distance(start, end)
+        touch_attempts.append({'direction':[dx,dy],'progress':round(touch_progress,3)})
     assert touch_progress > .03, (label, 'No rendered touch movement.', start, end)
     phase['touchDisplacement'] = round(touch_progress, 3)
+    phase['touchAttempts'] = touch_attempts
     await mark('after touch, before fire')
     assert max(phase['wDisplacement'], touch_progress) > .15, (label, 'No meaningful rendered walking progress.')
 

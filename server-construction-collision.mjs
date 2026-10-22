@@ -21,7 +21,7 @@ export function constructionObstacles(sim,{collision,environment,objects={}}={})
   if(!cached){cached=world.walls.map(({box,objectId})=>constructionBoxFromBounds(box,objectId));staticCache.set(world,cached);}
   obstacles.push(...cached.filter(box=>{const actor=sim.actors[box.objectId];return !actor||actor.active!==false&&!actor.open&&!isConstructionMachine(actor)&&!actor.constructionManaged;}));
   if(world.glb){for(const mesh of world.floors){const bounds=new THREE.Box3().setFromObject(mesh);obstacles.push(constructionBoxFromBounds(bounds,null,'world-geometry'));}}
-  const placed=collision.placedWorld(sim.actors,objects);for(const box of placed.boxes)if(!isConstructionMachine(sim.actors[box.objectId])&&!sim.actors[box.objectId]?.constructionManaged)obstacles.push(constructionBoxFromBounds(box,box.objectId,'placed-solid'));
+  const placed=collision.placedWorld(sim.actors,objects,environment);for(const box of placed.boxes)if(!isConstructionMachine(sim.actors[box.objectId])&&!sim.actors[box.objectId]?.constructionManaged)obstacles.push(constructionBoxFromBounds(box,box.objectId,'placed-solid'));
  }
  obstacles.push(...Object.values(sim.actors).filter(actor=>actor.active!==false).flatMap(constructionColliders));
  // Other operators are protected by their upright walking capsule envelope.

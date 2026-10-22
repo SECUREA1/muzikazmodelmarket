@@ -78,17 +78,22 @@
     request.credentials = 'include';
     var timeout = Number(options.timeout) || 15000;
     var retries = options.retries == null ? (/^(GET|HEAD)$/i.test(options.method || 'GET') ? 1 : 0) : Number(options.retries);
+    // Gameplay owns an aborting deadline that also covers the response body
+    // and allows queued fetch completions after a long rendering task.
+    var deadlineManaged = options.deadlineManaged === true && request.signal;
     delete request.timeout;
     delete request.retries;
+    delete request.deadlineManaged;
 
     function attempt(remaining, requestPath, aliases) {
       requestPath = requestPath || path;
       aliases = aliases || (compatibleRoutes[path] || []).slice();
       var timer;
-      var expired = new window.Promise(function (_, reject) {
+      var expired = deadlineManaged ? null : new window.Promise(function (_, reject) {
         timer = window.setTimeout(function () { reject(new Error('The MUZIKAZ API connection timed out.')); }, timeout);
       });
-      return window.Promise.race([window.fetch(url(requestPath), request), expired]).then(function (response) {
+      var response = window.fetch(url(requestPath), request);
+      return (deadlineManaged ? response : window.Promise.race([response, expired])).then(function (response) {
         window.clearTimeout(timer);
         var invalidation = window.Promise.resolve();
         if (response.status === 401 && sessionToken) {

@@ -11,7 +11,7 @@ import {slideWalking} from './public/js/walking-collision.js';
 import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
 import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
 import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes,placementMeshMatrices} from './public/js/placed-item-collision.js';
-import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
+import {placedCollisionWorld,updatePlacedCollisionPoses,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
 import {accelerateStaticRaycast} from './server-mesh-raycast.mjs';
 import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/js/building-materials.js';
@@ -28,6 +28,14 @@ function collisionMeshBounds(mesh){
  if(!cached||cached.geometry!==mesh.geometry||cached.version!==version||cached.instances!==instances||matrix.some((n,i)=>n!==cached.matrix[i])){if(cached&&cached.version!==version)mesh.geometry.computeBoundingBox();if(mesh.isInstancedMesh&&(!cached||cached.instances!==instances||cached.version!==version))mesh.computeBoundingBox();cached={geometry:mesh.geometry,version,instances,matrix:[...matrix],box:new THREE.Box3().setFromObject(mesh)};meshBoundsCache.set(mesh,cached);}return cached.box;
 }
 function nearCollisionMeshes(meshes,minX,maxX,minZ,maxZ){return meshes.filter(mesh=>{const {min,max}=collisionMeshBounds(mesh);return max.x>=minX&&min.x<=maxX&&max.z>=minZ&&min.z<=maxZ;});}
+function disposePlacedWorldEntry(entry){
+ const resources=new Set();
+ for(const root of [...entry.variants.values()].map(value=>value.world.root).concat(entry.traffic?.root||[],entry.construction?.root||[])){
+  root.removeFromParent();root.traverse(mesh=>{if(mesh.geometry)resources.add(mesh.geometry);for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material])if(material)resources.add(material);});
+ }
+ if(entry.construction){resources.add(entry.construction.geometry);resources.add(entry.construction.material);}
+ for(const resource of resources)resource.dispose();entry.root.clear();
+}
 function indexCollisionMeshes(meshes){
  const cells=new Map(),large=[];
  for(const mesh of meshes){const box=collisionMeshBounds(mesh),x1=Math.floor(box.min.x/8),x2=Math.floor(box.max.x/8),z1=Math.floor(box.min.z/8),z2=Math.floor(box.max.z/8);if((x2-x1+1)*(z2-z1+1)>1024){large.push(mesh);continue;}for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++){const key=x+':'+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(mesh);}}
@@ -73,7 +81,8 @@ function nearbyWalls(world,minX,maxX,minZ,maxZ){
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
- constructor(){this.cache=new Map();this.objectCache=new Map();}
+ constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));}
+ clearPlacedWorlds(){for(const entry of this.placedWorlds.values())disposePlacedWorldEntry(entry);this.placedWorlds.clear();this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;}
  placedObjects(objects){
   const floors=[],triangles=[];
   for(const object of Object.values(objects)){
@@ -101,20 +110,34 @@ export class ServerBuilderCollision {
   const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex:indexCollisionMeshes(floors),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
 
  }
- placedWorld(actors={},objects={}){
+ placedWorld(actors={},objects={},environment=null){
+  const scope=environment?.id||'__unscoped__',version=JSON.stringify([environment?.contentUpdatedAt||environment?.updatedAt||'',environment?.builderScene?.baseTransform||{}]);let entry=this.placedWorlds.get(scope);
+  if(entry&&entry.version!==version){disposePlacedWorldEntry(entry);entry=null;}
+  if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
+  // Each simulation room keeps its own native craft and moving hulls. The
+  // actors-only query and the query including saved pieces also alternate
+  // during one tick, so retain one current geometry set for each variant.
+  this.placedWorlds.delete(scope);this.placedWorlds.set(scope,entry);
+  if(this.placedWorlds.size>this.maxPlacedWorlds){const [oldScope,old]=this.placedWorlds.entries().next().value;disposePlacedWorldEntry(old);this.placedWorlds.delete(oldScope);}
   const stableActors=Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
-  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
-  if(this.placedCache?.key!==key){this.placedCache?.world?.root.removeFromParent();disposePlacedCollision(this.placedCache?.world);this.placedCache={key,world:placedCollisionWorld(stableActors,objects)};}
-  const world=this.placedCache.world;
-  this.constructionCollision=syncConstructionCollision(this.constructionCollision,actors);
-  this.trafficCollision=syncTrafficCollision(this.trafficCollision,actors);
-  this.placedCombinedRoot||=new THREE.Group();
-  if(world.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(world.root);
-  if(this.trafficCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.trafficCollision.root);
-  if(this.constructionCollision.meshes.length){if(this.constructionCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.constructionCollision.root);}else this.constructionCollision.root.removeFromParent();
-  const traffic=this.trafficCollision,construction=this.constructionCollision;
+  const objectState=Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),actorState=Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[[actor.id,actor.modelId,actor.asset?.id,actor.asset?.buildAssetId,actor.asset?.modelUrl,actor.asset?.renderKind,actor.asset?.configuration,actor.asset?.targetHeight,actor.placementRevision,actor.active,actor.holderId],actor.position,actor.rotation,actor.scale]);
+  const key=JSON.stringify([objectState,actorState]),geometryKey=JSON.stringify([objectState,actorState.map(actor=>actor[0])]);
+  const variant=Object.keys(objects).length>0?'with-objects':'actors';let cached=entry.variants.get(variant);
+  if(cached?.key!==key){
+   if(cached?.geometryKey===geometryKey){updatePlacedCollisionPoses(cached.world,stableActors);cached.key=key;}
+   else{cached?.world.root.removeFromParent();disposePlacedCollision(cached?.world);cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};entry.variants.set(variant,cached);}
+  }
+  const world=cached.world;
+  entry.construction=syncConstructionCollision(entry.construction,actors);entry.traffic=syncTrafficCollision(entry.traffic,actors);
+  for(const child of [...entry.root.children])if(child!==world.root&&child!==entry.traffic.root&&child!==entry.construction.root)entry.root.remove(child);
+  if(world.root.parent!==entry.root)entry.root.add(world.root);
+  if(entry.traffic.root.parent!==entry.root)entry.root.add(entry.traffic.root);
+  if(entry.construction.meshes.length){if(entry.construction.root.parent!==entry.root)entry.root.add(entry.construction.root);}else entry.construction.root.removeFromParent();
+  const traffic=entry.traffic,construction=entry.construction;
+  // Existing diagnostics inspect the most recently queried collision world.
+  this.placedCache=cached;this.trafficCollision=traffic;this.constructionCollision=construction;this.placedCombinedRoot=entry.root;
   return {
-   root:this.placedCombinedRoot,
+   root:entry.root,
    boxes:[...world.boxes,...traffic.boxes,...construction.boxes],
    meshes:[...world.meshes,...traffic.meshes,...construction.meshes],
    nearbyMeshes(minX,maxX,minZ,maxZ){return [
@@ -129,16 +152,16 @@ export class ServerBuilderCollision {
   const preview=placedCollisionWorld({preview:{id:'preview',spawned:true,active:true,asset,position:{x:0,y:0,z:0},rotation,scale}});
   try{
    const root=preview.root.children[0];if(!root)return position;
-   const world=this.world(environment),placed=this.placedWorld(actors,objects);
+   const world=this.world(environment),placed=this.placedWorld(actors,objects,environment);
    const point=placementFloorPoint(THREE,new THREE.Vector3(position.x,position.y+1.6,position.z),[...world.floors,...placed.meshes]);
    if(!point)return position;
    alignStackableObject(THREE,root,point,[...world.root.children,...placed.root.children]);
    return {x:root.position.x,y:root.position.y,z:root.position.z};
   }finally{disposePlacedCollision(preview);}
  }
- resolvePlaced(environment,previous,next,actors={},objects={}){return resolvePlacedSolids(previous,{...next,floorY:next.floorY??(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0)},this.placedWorld(actors,objects).boxes);}
+ resolvePlaced(environment,previous,next,actors={},objects={}){return resolvePlacedSolids(previous,{...next,floorY:next.floorY??(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0)},this.placedWorld(actors,objects,environment).boxes);}
  paintSurface(environment,origin,direction,actors,objects){
-  const meshes=[...this.world(environment).floors,...this.placedWorld(actors,objects).meshes];
+  const meshes=[...this.world(environment).floors,...this.placedWorld(actors,objects,environment).meshes];
   const start=new THREE.Vector3(origin.x,origin.y+1.5,origin.z),ray=new THREE.Raycaster(start,new THREE.Vector3(...direction),.02,8),hit=ray.intersectObjects(meshes,false)[0];
   if(!hit?.face)return null;
   const normal=hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).normalize();
@@ -150,7 +173,7 @@ export class ServerBuilderCollision {
  }
  destructibleHit(environment,origin,direction,range,actors={}){
   const world=this.world(environment),ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),new THREE.Vector3(...direction),.02,range);
-  const hit=ray.intersectObjects([...world.floors,...this.placedWorld(actors,{}).meshes],false).find(hit=>!actorDisablesCollision(actors[builderObjectId(hit.object)]));
+  const hit=ray.intersectObjects([...world.floors,...this.placedWorld(actors,{},environment).meshes],false).find(hit=>!actorDisablesCollision(actors[builderObjectId(hit.object)]));
   const id=hit&&builderObjectId(hit.object),actor=actors[id];
   return actor?.destructible&&actor.active!==false?{entity:actor,along:hit.distance}:null;
  }
@@ -158,12 +181,12 @@ export class ServerBuilderCollision {
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
   const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
   if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
-  if(this.placedWorld(actors,{}).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
+  if(this.placedWorld(actors,{},environment).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
   return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
  }
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects}={}){
   const world=this.world(environment),bounds=world.bounds;
-  const dynamic=actors||objects?this.placedWorld(actors,objects).nearbyMeshes(point.x-.001,point.x+.001,point.z-.001,point.z+.001):[];
+  const dynamic=actors||objects?this.placedWorld(actors,objects,environment).nearbyMeshes(point.x-.001,point.x+.001,point.z-.001,point.z+.001):[];
   const available=[...queryCollisionMeshes(world.floorIndex,point.x-.001,point.x+.001,point.z-.001,point.z+.001),...dynamic].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
   const meshes=available.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
   const startY=entry?bounds.max.y+2:point.y+maxRise;
@@ -182,7 +205,7 @@ export class ServerBuilderCollision {
   const eye={x:origin.x,y:origin.y+1.6,z:origin.z},delta=[floor.x-eye.x,floor.y+.08-eye.y,floor.z-eye.z],length=Math.hypot(...delta);
   if(!localMap&&length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
-  const dynamic=this.placedWorld(actors,objects).boxes.map(box=>({box,objectId:box.objectId}));
+  const dynamic=this.placedWorld(actors,objects,environment).boxes.map(box=>({box,objectId:box.objectId}));
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
   return floor;
  }
@@ -190,7 +213,7 @@ export class ServerBuilderCollision {
   const world=this.world(environment);
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
-  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
+  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
@@ -253,7 +276,7 @@ export class ServerBuilderCollision {
  }
  resolve(environment,previous,next,actors={},objects={}){
   const hasWorld=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
-  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployedWorld=this.placedWorld(actors,{});
+  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployedWorld=this.placedWorld(actors,{},environment);
   if(!world&&!placed.floors.length)return next;
   const padding=PLAYER_RADIUS+.002,minX=Math.min(previous.x,next.x)-padding,maxX=Math.max(previous.x,next.x)+padding,minZ=Math.min(previous.z,next.z)-padding,maxZ=Math.max(previous.z,next.z)+padding;
   // A wall slide can reach outside the original input rectangle.

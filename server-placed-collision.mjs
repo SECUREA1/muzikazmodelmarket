@@ -10,10 +10,10 @@ import {drawingCollisionModel,placementBounds,placementMeshes,placementMeshMatri
 import {environmentGeometry} from './server-glb-geometry.mjs';
 export function placedCollisionWorld(actors={},objects={}){
  const root=new THREE.Group(),boxes=[],meshes=[];
- const add=(model,position,rotation,scale,anchor=false,id)=>{
+ const add=(model,position,rotation,scale,anchor=false,id,actor=false)=>{
   if(!model)return;const wrapper=new THREE.Group();wrapper.userData.builderObjectId=id;
   if(anchor){model.updateMatrixWorld(true);const bounds=placementBounds(THREE,model);if(!bounds.isEmpty())model.position.y-=bounds.min.y;}
-  wrapper.add(model);wrapper.position.set(position.x||0,position.y||0,position.z||0);wrapper.rotation.set(rotation?.x||0,rotation?.y||0,rotation?.z||0);wrapper.scale.set(scale?.x||1,scale?.y||1,scale?.z||1);root.add(wrapper);wrapper.updateMatrixWorld(true);
+  wrapper.userData.placedActor=actor;wrapper.add(model);wrapper.position.set(position.x||0,position.y||0,position.z||0);wrapper.rotation.set(rotation?.x||0,rotation?.y||0,rotation?.z||0);wrapper.scale.set(scale?.x||1,scale?.y||1,scale?.z||1);root.add(wrapper);wrapper.updateMatrixWorld(true);
   for(const mesh of placementMeshes(wrapper)){if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();for(const matrix of placementMeshMatrices(THREE,mesh)){const box=mesh.geometry.boundingBox.clone().applyMatrix4(matrix);box.objectId=id;boxes.push(box);}meshes.push(mesh);}
  };
  for(const object of Object.values(objects)){
@@ -30,8 +30,18 @@ export function placedCollisionWorld(actors={},objects={}){
   else if(asset.buildAssetId)model=createBuilderModel(asset.buildAssetId);
   else if(asset.renderKind==='image'||asset.format==='svg')model=drawingCollisionModel(THREE,settings);
   else if(asset.modelUrl){try{model=environmentGeometry({modelUrl:asset.modelUrl});const size=new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()),target=Number(asset.targetHeight)||size.y;if(size.y>0)model.scale.multiplyScalar(target/size.y);}catch{model=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial());}}
-  if(model){model.scale.multiplyScalar(Number(settings.scale)||1);add(model,actor.position,actor.rotation,actor.scale,!(isWatercraft(actor)||isAircraft(actor)),actor.id);}
+  if(model){model.scale.multiplyScalar(Number(settings.scale)||1);add(model,actor.position,actor.rotation,actor.scale,!(isWatercraft(actor)||isAircraft(actor)),actor.id,true);}
  }
  return {root,boxes,meshes};
+}
+export function updatePlacedCollisionPoses(world,actors){
+ for(const wrapper of world.root.children){if(!wrapper.userData.placedActor)continue;const actor=actors[wrapper.userData.builderObjectId];if(!actor)continue;
+  wrapper.position.set(actor.position.x||0,actor.position.y||0,actor.position.z||0);wrapper.rotation.set(actor.rotation?.x||0,actor.rotation?.y||0,actor.rotation?.z||0);wrapper.scale.set(actor.scale?.x||1,actor.scale?.y||1,actor.scale?.z||1);
+ }
+ world.root.updateMatrixWorld(true);world.boxes=[];
+ for(const mesh of world.meshes){if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();let objectId;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId){objectId=parent.userData.builderObjectId;break;}
+  for(const matrix of placementMeshMatrices(THREE,mesh)){const box=mesh.geometry.boundingBox.clone().applyMatrix4(matrix);box.objectId=objectId;world.boxes.push(box);}
+ }
+ delete world.meshIndex;delete world.wallTriangles;
 }
 export function disposePlacedCollision(world){world?.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});}

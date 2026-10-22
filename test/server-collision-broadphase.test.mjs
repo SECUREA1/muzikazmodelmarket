@@ -6,7 +6,7 @@ import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 test('floor and walking queries skip distant map and deployed meshes while keeping local support',()=>{
  const collision=new ServerBuilderCollision(),environment={id:'nearby-collision',proceduralLand:true,builderScene:{layout:'grand-floor',mapSize:256,objects:[{id:'remote-crate',modelId:'supply-crate',position:{x:70,y:0,z:70}}]}};
  const actors={crate:{id:'crate',spawned:true,active:true,asset:{buildAssetId:'supply-crate'},position:{x:-70,y:0,z:-70},rotation:{y:0}}};
- const world=collision.world(environment),deployed=collision.placedWorld(actors,{});
+ const world=collision.world(environment),deployed=collision.placedWorld(actors,{},environment);
  let distantRays=0;
  for(const mesh of [...world.floors.filter(mesh=>{for(let node=mesh;node;node=node.parent)if(node.userData.builderObjectId==='remote-crate')return true;return false;}),...deployed.meshes]){const original=mesh.raycast;mesh.raycast=function(...args){distantRays++;return original.apply(this,args);};}
  const floor=collision.groundAt(environment,{x:0,y:0,z:0},{actors});assert.ok(floor);

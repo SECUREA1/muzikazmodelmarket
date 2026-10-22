@@ -1,20 +1,121 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import {OrbitControls} from '../vendor/three/addons/controls/OrbitControls.js';
 import {localMapTags} from './local-map-tags.js';
-// Mirror renderable meshes in world coordinates. Shared game resources are read
-// only: closing the map must never dispose a gameplay mesh, material or texture.
-export function mirrorMapMeshes(roots){
- const group=new THREE.Group(),pairs=[];
+// Three.js retains the uniform table used to compile a material. Update those
+// entries in place so live values reach its renderer without recompiling it.
+function syncMapUniformValue(source,target,texture,markChanged){
+ if(source?.isTexture){const next=texture(source);if(next!==target)markChanged();return next;}
+ if(Array.isArray(source)){
+  if(!Array.isArray(target)){target=[];markChanged();}
+  if(target.length!==source.length){target.length=source.length;markChanged();}
+  for(let index=0;index<source.length;index++)target[index]=syncMapUniformValue(source[index],target[index],texture,markChanged);
+  return target;
+ }
+ if(source&&typeof source==='object'){
+  if(ArrayBuffer.isView(source)&&typeof source.slice==='function'){
+   if(target?.constructor!==source.constructor||target.length!==source.length){markChanged();return source.slice();}
+   let changed=false;for(let index=0;index<source.length;index++)if(!Object.is(source[index],target[index])){changed=true;break;}
+   if(changed){target.set(source);markChanged();}return target;
+  }
+  if(typeof source.clone==='function'&&typeof source.copy==='function'){
+   if(target?.constructor!==source.constructor){markChanged();return source.clone();}
+   if(!source.equals?.(target)){target.copy(source);markChanged();}return target;
+  }
+  if(!target||typeof target!=='object'||Array.isArray(target)||![Object.prototype,null].includes(Object.getPrototypeOf(target))){target={};markChanged();}
+  for(const key in target)if(Object.hasOwn(target,key)&&!Object.hasOwn(source,key)){delete target[key];markChanged();}
+  for(const key in source)if(Object.hasOwn(source,key))target[key]=syncMapUniformValue(source[key],target[key],texture,markChanged);
+  return target;
+ }
+ if(!Object.is(source,target))markChanged();return source;
+}
+// Each renderer installs disposal listeners on the resources it draws. Give the
+// map its own resource wrappers so closing it can release those listeners without
+// disposing gameplay resources or copying their large vertex/image buffers.
+function createMapResources(){
+ const geometries=new Map(),materials=new Map(),textures=new Map();
+ const makeGeometry=source=>source.isInstancedBufferGeometry?new THREE.InstancedBufferGeometry():new THREE.BufferGeometry(),makeMaterial=source=>new source.constructor(),makeTexture=source=>source.isVideoTexture?new THREE.Texture():new source.constructor(),textureVectors=['offset','repeat','center','matrix'];
+ return {lease(){
+  const held=new Set();let released=false,changed=false;
+  const acquire=(cache,source,create)=>{let record=cache.get(source);if(!record){record={source,copy:create(source),cache,users:0};cache.set(source,record);}if(!held.has(record)){held.add(record);record.users++;}return record.copy;};
+  function geometry(source){
+   const copy=acquire(geometries,source,makeGeometry),record=geometries.get(source);let shapeChanged=!record.attributeVersions;
+   record.attributeVersions ||= {};
+   const checkVersion=(name,attribute)=>{const version=attribute?.data?.version??attribute?.version;if(record.attributeVersions[name]!==version){record.attributeVersions[name]=version;shapeChanged=true;}};
+   if(copy.index!==source.index){copy.index=source.index;shapeChanged=true;}checkVersion('index',source.index);
+   for(const name in source.attributes){const attribute=source.attributes[name];if(copy.attributes[name]!==attribute){copy.attributes[name]=attribute;shapeChanged=true;}checkVersion(name,attribute);}
+   for(const name in copy.attributes)if(!(name in source.attributes)){delete copy.attributes[name];delete record.attributeVersions[name];shapeChanged=true;}
+   for(const name in source.morphAttributes){const values=source.morphAttributes[name];let current=copy.morphAttributes[name];if(!current||current.length!==values.length){current=copy.morphAttributes[name]=values.slice();shapeChanged=true;}for(let index=0;index<values.length;index++){if(current[index]!==values[index]){current[index]=values[index];shapeChanged=true;}checkVersion('morph:'+name+':'+index,values[index]);}}
+   for(const name in copy.morphAttributes)if(!(name in source.morphAttributes)){delete copy.morphAttributes[name];shapeChanged=true;}
+   if(shapeChanged){changed=true;if(!source.boundingBox)copy.boundingBox=null;if(!source.boundingSphere)copy.boundingSphere=null;}
+   copy.name=source.name;copy.type=source.type;copy.morphTargetsRelative=source.morphTargetsRelative;
+   if(copy.groups.length!==source.groups.length||source.groups.some((group,index)=>{const current=copy.groups[index];return current.start!==group.start||current.count!==group.count||current.materialIndex!==group.materialIndex;})){copy.groups=source.groups.map(group=>({...group}));changed=true;}
+   if(copy.drawRange.start!==source.drawRange.start||copy.drawRange.count!==source.drawRange.count){copy.drawRange={...source.drawRange};changed=true;}
+   if(source.boundingBox)copy.boundingBox?copy.boundingBox.copy(source.boundingBox):copy.boundingBox=source.boundingBox.clone();
+   if(source.boundingSphere)copy.boundingSphere?copy.boundingSphere.copy(source.boundingSphere):copy.boundingSphere=source.boundingSphere.clone();
+   if(source.isInstancedBufferGeometry&&copy.instanceCount!==source.instanceCount){copy.instanceCount=source.instanceCount;changed=true;}
+   return copy;
+  }
+  function texture(source){
+   // VideoTexture's constructor starts a permanent video-frame callback loop.
+   // The original already owns that loop; the map only follows its image/version.
+   const copy=acquire(textures,source,makeTexture),record=textures.get(source),mediaTime=source.isVideoTexture?source.image?.currentTime:null;
+   if(record.version!==source.version||record.imageVersion!==source.source.version||record.image!==source.source.data||record.mediaTime!==mediaTime){
+    if(!record.imageSource)record.imageSource=new THREE.Source(source.source.data);else record.imageSource.data=source.source.data;
+    const input=Object.create(source);input.source=record.imageSource;copy.copy(input);
+    if(source.isVideoTexture){copy.isVideoTexture=true;copy.update=()=>{};}
+    record.version=source.version;record.imageVersion=source.source.version;record.image=source.source.data;record.mediaTime=mediaTime;changed=true;
+   }
+   for(const key of textureVectors)if(!copy[key].equals(source[key])){copy[key].copy(source[key]);changed=true;}
+   if(copy.rotation!==source.rotation){copy.rotation=source.rotation;changed=true;}
+   return copy;
+  }
+  function material(source){
+   if(Array.isArray(source))return source.map(material);if(!source)return source;
+   // Avoid ShaderMaterial.copy cloning the original uniform textures. Owned
+   // uniform wrappers are installed below, sharing the original CPU values.
+   const copy=acquire(materials,source,makeMaterial),record=materials.get(source);
+   if(record.version!==source.version){
+    const input=Object.create(source);if(source.uniforms)input.uniforms={};copy.copy(input);copy.needsUpdate=true;record.version=source.version;
+    record.textureKeys=[];record.scalarKeys=[];record.valueKeys=[];record.arrayKeys=[];
+    for(const key of Object.keys(source)){
+     if(key==='version'||key==='uniformsNeedUpdate'||key==='id'||key==='uuid'||key.startsWith('is'))continue;
+     const value=source[key];
+     if(value?.isTexture||value==null&&(key==='map'||key==='matcap'||key.endsWith('Map')))record.textureKeys.push(key);
+     else if(typeof value==='number'||typeof value==='boolean'||value==null)record.scalarKeys.push(key);
+     else if(typeof value.copy==='function'&&typeof value.equals==='function')record.valueKeys.push(key);
+     else if(Array.isArray(value)&&value.length&&value.every(item=>typeof item==='number'))record.arrayKeys.push(key);
+    }
+    record.scalarValues=record.scalarKeys.map(key=>copy[key]=source[key]);
+    copy.onBeforeCompile=source.onBeforeCompile;copy.customProgramCacheKey=source.customProgramCacheKey;changed=true;
+   }
+   // Colors, surface parameters and render state can change without bumping a
+   // material's shader version. Sync cached properties without copying/recompiling it.
+   for(let index=0;index<record.scalarKeys.length;index++){const key=record.scalarKeys[index],value=source[key];if(!Object.is(record.scalarValues[index],value)){record.scalarValues[index]=value;copy[key]=value;changed=true;}}
+   for(const key of record.valueKeys){const value=source[key],current=copy[key];if(!current||current.constructor!==value.constructor){copy[key]=value.clone();changed=true;}else if(!current.equals(value)){current.copy(value);changed=true;}}
+   for(const key of record.arrayKeys){const values=source[key],current=copy[key];if(!current||current===values){copy[key]=values.slice();changed=true;}else if(current.length!==values.length||values.some((value,index)=>!Object.is(value,current[index]))){current.length=values.length;for(let index=0;index<values.length;index++)current[index]=values[index];changed=true;}}
+   for(const key of record.textureKeys){const original=source[key],value=original?.isTexture?texture(original):original;if(copy[key]!==value){copy[key]=value;changed=true;}}
+   if(source.uniforms)copy.uniforms=syncMapUniformValue(source.uniforms,copy.uniforms,texture,()=>{changed=true;copy.uniformsNeedUpdate=true;});
+   return copy;
+  }
+  return {geometry,material,sync(){changed=false;for(const record of held){if(record.cache===geometries)geometry(record.source);else if(record.cache===materials)material(record.source);else texture(record.source);}return changed;},dispose(){if(released)return;released=true;for(const record of held)if(!--record.users){record.copy.dispose();record.cache.delete(record.source);}held.clear();}};
+ }};
+}
+// Mirror renderable meshes in world coordinates. Gameplay resources stay read
+// only; unchanged wrappers survive a live rebuild until the final map releases.
+export function mirrorMapMeshes(roots,resources=createMapResources()){
+ const group=new THREE.Group(),pairs=[],lease=resources.lease();let disposed=false;
  for(const root of roots.filter(Boolean)){root.updateWorldMatrix(true,true);root.traverseVisible(source=>{
   if((!source.isMesh&&!source.isLine&&!source.isPoints)||!source.geometry)return;
-  const mesh=source.isInstancedMesh?new THREE.InstancedMesh(source.geometry,source.material,source.count):source.isLineSegments?new THREE.LineSegments(source.geometry,source.material):source.isLine?new THREE.Line(source.geometry,source.material):source.isPoints?new THREE.Points(source.geometry,source.material):new THREE.Mesh(source.geometry,source.material);
+  const geometry=lease.geometry(source.geometry),material=lease.material(source.material),mesh=source.isInstancedMesh?new THREE.InstancedMesh(geometry,material,source.count):source.isLineSegments?new THREE.LineSegments(geometry,material):source.isLine?new THREE.Line(geometry,material):source.isPoints?new THREE.Points(geometry,material):new THREE.Mesh(geometry,material);
   if(source.isInstancedMesh){mesh.instanceMatrix=source.instanceMatrix;mesh.instanceColor=source.instanceColor;}
-  mesh.matrixAutoUpdate=false;mesh.matrix.copy(source.matrixWorld);mesh.frustumCulled=source.frustumCulled;group.add(mesh);pairs.push({source,mesh});
+  if(source.morphTargetInfluences)mesh.morphTargetInfluences=source.morphTargetInfluences;
+  mesh.matrixAutoUpdate=false;mesh.matrix.copy(source.matrixWorld);mesh.frustumCulled=source.frustumCulled;group.add(mesh);pairs.push({source,mesh,geometry:source.geometry,material:source.material,instanceVersion:source.instanceMatrix?.version,colorVersion:source.instanceColor?.version});
  });}
- return {group,pairs,update(){let changed=false;for(const {source,mesh}of pairs){source.updateWorldMatrix(true,false);if(!mesh.matrix.equals(source.matrixWorld)){mesh.matrix.copy(source.matrixWorld);changed=true;}let visible=true;for(let node=source;node;node=node.parent)if(!node.visible){visible=false;break;}if(mesh.visible!==visible){mesh.visible=visible;changed=true;}}return changed;},dispose(){group.clear();pairs.length=0;}};
+ return {group,pairs,update(){let changed=lease.sync();for(const pair of pairs){const {source,mesh}=pair;if(pair.geometry!==source.geometry){mesh.geometry=lease.geometry(source.geometry);pair.geometry=source.geometry;changed=true;}if(pair.material!==source.material){mesh.material=lease.material(source.material);pair.material=source.material;changed=true;}if(source.isInstancedMesh){if(mesh.instanceMatrix!==source.instanceMatrix||mesh.instanceColor!==source.instanceColor||mesh.count!==source.count||pair.instanceVersion!==source.instanceMatrix.version||pair.colorVersion!==source.instanceColor?.version)changed=true;mesh.instanceMatrix=source.instanceMatrix;mesh.instanceColor=source.instanceColor;mesh.count=source.count;pair.instanceVersion=source.instanceMatrix.version;pair.colorVersion=source.instanceColor?.version;}if(source.morphTargetInfluences)mesh.morphTargetInfluences=source.morphTargetInfluences;source.updateWorldMatrix(true,false);if(!mesh.matrix.equals(source.matrixWorld)){mesh.matrix.copy(source.matrixWorld);changed=true;}let visible=true;for(let node=source;node;node=node.parent)if(!node.visible){visible=false;break;}if(mesh.visible!==visible){mesh.visible=visible;changed=true;}}return changed;},dispose(){if(disposed)return;disposed=true;for(const {mesh}of pairs)if(mesh.isInstancedMesh)mesh.dispose();group.clear();pairs.length=0;lease.dispose();}};
 }
 export async function mountLocalMap3D(root,{environment,getRoots=null,live=null,selfId=null,onSelect=()=>{},onTravel=()=>{},getTags=null,onViewChange=()=>{},cutawayHeight=null,refreshInterval=2000}){
  let disposed=false,frame=0,mirror=null,ownedLoader=null,ownedDecor=null,liveState=live,viewerId=selfId,lastRebuild=0,needsRender=true,tagSignature='';
+ const resources=createMapResources();
  const scene=new THREE.Scene();scene.background=new THREE.Color('#0c242b');scene.add(new THREE.HemisphereLight(0xe4f7ff,0x4b6149,2.5));const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.set(100,250,80);scene.add(sun);
  const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.domElement.setAttribute('aria-label',environment.name+' accurate 3D local map');renderer.domElement.setAttribute('role','img');
  const viewport=document.createElement('div');viewport.className='local-map-3d-viewport';const labels=document.createElement('div');labels.className='local-map-3d-tags';const compass=document.createElement('span');compass.className='local-map-compass';compass.textContent='↑ N';compass.title='North is negative world Z';viewport.append(renderer.domElement,labels,compass);
@@ -31,7 +132,7 @@ export async function mountLocalMap3D(root,{environment,getRoots=null,live=null,
  let tagEntries=[];
  function updateTags(){const tags=getTags?getTags():localMapTags(environment,liveState,viewerId),signature=JSON.stringify(tags);if(signature===tagSignature)return;tagSignature=signature;needsRender=true;const existing=new Map(tagEntries.map(entry=>[entry.tag.id,entry]));tagEntries=tags.map(tag=>{let entry=existing.get(tag.id);if(entry)existing.delete(tag.id);else{const button=document.createElement('button');button.type='button';button.className='local-map-3d-tag';button.dataset.mapTag=tag.id;const leader=document.createElement('span'),dot=document.createElement('span');leader.className='local-map-pin-leader';dot.className='local-map-pin-dot';leader.setAttribute('aria-hidden','true');dot.setAttribute('aria-hidden','true');labels.append(leader,dot,button);entry={button,leader,dot,tag};button.onclick=event=>{event.stopPropagation();onSelect(entry.tag);};}entry.tag=tag;entry.button.dataset.worldX=tag.x;entry.button.dataset.worldY=tag.y;entry.button.dataset.worldZ=tag.z;entry.button.textContent=tag.icon+' '+tag.name;if(tag.svgPath){const ns='http://www.w3.org/2000/svg',icon=document.createElementNS(ns,'svg'),path=document.createElementNS(ns,'path');icon.setAttribute('viewBox','0 0 120 100');icon.setAttribute('aria-hidden','true');icon.classList.add('atlas-tag-icon');path.setAttribute('d',tag.svgPath);icon.append(path);const label=document.createElement('span');label.textContent=tag.name;entry.button.replaceChildren(icon,label);}entry.button.style.setProperty('--tag-color',tag.color);entry.button.setAttribute('aria-label',tag.name+' · '+tag.kind+(tag.occupied?' · occupied':''));entry.button.title=tag.description||tag.name;return entry;});for(const {button,leader,dot}of existing.values()){button.remove();leader.remove();dot.remove();}}
  const resize=()=>{const width=Math.max(1,viewport.clientWidth),height=Math.max(1,viewport.clientHeight);renderer.setSize(width,height,false);needsRender=true;camera.aspect=width/height;camera.updateProjectionMatrix();};const observer=new ResizeObserver(resize);observer.observe(viewport);let visible=true;const visibilityObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;if(visible)needsRender=true;}):null;visibilityObserver?.observe(viewport);
- const rebuild=()=>{mirror?.dispose();if(mirror)scene.remove(mirror.group);mirror=mirrorMapMeshes(getRoots?getRoots():[ownedLoader?.world,ownedDecor]);scene.add(mirror.group);needsRender=true;};
+ const rebuild=()=>{const next=mirrorMapMeshes(getRoots?getRoots():[ownedLoader?.world,ownedDecor],resources);if(mirror){scene.remove(mirror.group);mirror.dispose();}mirror=next;scene.add(mirror.group);needsRender=true;};
  const stop=()=>{if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();visibilityObserver?.disconnect();controls.dispose();mirror?.dispose();ownedLoader?.unload();ownedDecor?.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material?.dispose();});renderer.dispose();renderer.forceContextLoss();root.replaceChildren();};
  try{
   if(!getRoots){const [{EnvironmentLoader},{createBuilderModel,createGeneratedAsset}]=await Promise.all([import('./environments/environment-loader.js'),import('./builder-models-3d.js')]);ownedLoader=new EnvironmentLoader({scene:new THREE.Scene(),renderer,serverAuthoritative:()=>true});await ownedLoader.load(environment);ownedDecor=new THREE.Group();const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[])].map(model=>[model.id,model]));for(const item of environment.builderScene?.objects||[]){const definition=definitions.get(item.modelId),object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId)||(definition?.generated?createGeneratedAsset(definition):null);if(!object)continue;object.userData.builderObjectId=item.id;object.position.set(item.position?.x||0,item.position?.y||0,item.position?.z||0);object.rotation.set(item.rotation?.x||0,item.rotation?.y||0,item.rotation?.z||0);object.scale.set(item.scale?.x??1,item.scale?.y??1,item.scale?.z??1);ownedDecor.add(object);}}

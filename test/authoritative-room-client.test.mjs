@@ -460,6 +460,124 @@ test('an older transient heartbeat failure cannot disconnect newer acknowledged 
  }
 });
 
+test('a transient failure from before same-room travel cannot disconnect the confirmed new input epoch',async()=>{
+ for(const failure of [Error('pre-travel heartbeat timed out'),Object.assign(Error('pre-travel upstream failure'),{status:503})]){
+  const requests=[],pending=[],statuses=[];let sequence=0,epoch='before',side=0;
+  await withControlledRoom(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const command=JSON.parse(options.body);requests.push(command);
+   if(command.action==='input')return new Promise((resolve,reject)=>pending.push({command,resolve,reject}));
+   if(command.action==='map-access')epoch='after';
+   return response({...confirmed(++sequence),inputEpoch:epoch,result:{inputEpoch:epoch}});
+  },async(client,heartbeat)=>{
+   void heartbeat();await flushInputTasks();assert.equal(pending.length,1);
+   await client.send('map-access',{position:{x:10,z:10}});side=1;client.requestInput();await flushInputTasks();
+   assert.equal(pending.length,2);assert.equal(pending[1].command.inputEpoch,'after');assert.equal(pending[1].command.inputSequence,1);
+   pending[1].resolve(response({...confirmed(++sequence),inputEpoch:'after'}));await flushInputTasks();
+   pending[0].reject(failure);await flushInputTasks();
+   assert.equal(client.ready,true,'an obsolete epoch failure cannot invalidate acknowledged movement in the current epoch');
+   assert.ok(!statuses.some(message=>message.includes('Server connection required')));
+   void heartbeat();await flushInputTasks();assert.equal(pending.length,3,'current heartbeats must continue without waiting for backoff');
+   assert.equal(pending[2].command.inputEpoch,'after');pending[2].resolve(response({...confirmed(++sequence),inputEpoch:'after'}));await flushInputTasks();
+  },{input:()=>({side}),onStatus:message=>statuses.push(message)});
+ }
+});
+
+test('a delayed automatic fire failure does not disconnect newer confirmed movement',async()=>{
+ for(const failure of [Error('old weapon request timed out'),Object.assign(Error('old weapon upstream failure'),{status:503})]){
+  let sequence=0,rejectFire;const statuses=[];
+  await withControlledRoom(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const command=JSON.parse(options.body);
+   if(command.action==='fire')return new Promise((_resolve,reject)=>{rejectFire=reject;});
+   const state={...confirmed(++sequence),inputEpoch:'live'};state.players[state.selfId].health=100;return response(state);
+  },async(client,heartbeat)=>{
+   await heartbeat();await flushInputTasks();assert.ok(rejectFire,'held fire is in flight beside movement');
+   await heartbeat();await flushInputTasks();assert.equal(client.ready,true);
+   rejectFire(failure);await flushInputTasks();
+   assert.equal(client.ready,true,'one obsolete weapon timeout cannot invalidate later confirmed movement');
+   assert.ok(!statuses.some(message=>message.includes('Server connection required')));
+  },{input:()=>({side:1,firing:true,tool:'laser',direction:[0,0,-1]}),onStatus:message=>statuses.push(message)});
+ }
+});
+
+test('current weapon outages and stale weapon authentication failures still stop unconfirmed actions',async()=>{
+ for(const [failure,newerMovement,newEpoch] of [[Error('current weapon connection failed'),false,false],[Object.assign(Error('session expired'),{status:401,code:'SESSION_REQUIRED'}),true,false],[Object.assign(Error('another room joined'),{status:409,code:'ROOM_SWITCHED'}),true,false],[Object.assign(Error('session expired'),{status:401,code:'SESSION_REQUIRED'}),true,true],[Object.assign(Error('another room joined'),{status:409,code:'ROOM_SWITCHED'}),true,true]]){
+  let sequence=0,epoch='live',rejectFire;const errors=[];
+  await withControlledRoom(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const action=JSON.parse(options.body).action;
+   if(action==='fire')return new Promise((_resolve,reject)=>{rejectFire=reject;});
+   if(action==='map-access')epoch='after';
+   const state={...confirmed(++sequence),inputEpoch:epoch};state.players[state.selfId].health=100;return response(state);
+  },async(client,heartbeat)=>{
+   await heartbeat();await flushInputTasks();assert.ok(rejectFire);
+   if(newEpoch)await client.send('map-access',{position:{x:10,z:10}});
+   if(newerMovement){await heartbeat();await flushInputTasks();}
+   rejectFire(failure);await flushInputTasks();assert.equal(client.ready,false);
+   assert.equal(errors.length,newerMovement?1:0,'authentication/room replacement stays terminal; a current network outage remains recoverable');
+  },{input:()=>({side:1,firing:true,tool:'laser',direction:[0,0,-1]}),onError:error=>errors.push(error)});
+ }
+});
+
+test('pre-travel movement authentication and room-switch failures remain terminal after current movement succeeds',async()=>{
+ for(const failure of [Object.assign(Error('session expired'),{status:401,code:'SESSION_REQUIRED'}),Object.assign(Error('another destination joined'),{status:409,code:'ROOM_SWITCHED'})]){
+  const pending=[],errors=[];let sequence=0,epoch='before';
+  await withControlledRoom(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const command=JSON.parse(options.body);
+   if(command.action==='input')return new Promise((resolve,reject)=>pending.push({command,resolve,reject}));
+   if(command.action==='map-access')epoch='after';
+   return response({...confirmed(++sequence),inputEpoch:epoch});
+  },async(client,heartbeat)=>{
+   void heartbeat();await flushInputTasks();await client.send('map-access',{position:{x:10,z:10}});
+   client.requestInput();await flushInputTasks();assert.equal(pending.length,2);
+   pending[1].resolve(response({...confirmed(++sequence),inputEpoch:epoch}));await flushInputTasks();
+   pending[0].reject(failure);await flushInputTasks();assert.equal(client.ready,false);assert.equal(errors.length,1);assert.equal(errors[0],failure);
+  },{input:()=>({side:1}),onError:error=>errors.push(error)});
+ }
+});
+
+test('a current automatic fire outage retries and resumes held movement without rejoining',async()=>{
+ let sequence=0,rejectFire,firing=true,clock=10000;const previousNow=Date.now,commands=[];
+ Date.now=()=>clock;
+ try{
+  await withControlledRoom(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const command=JSON.parse(options.body);commands.push(command);
+   if(command.action==='fire')return new Promise((_resolve,reject)=>{rejectFire=reject;});
+   const state={...confirmed(++sequence),inputEpoch:'live'};state.players[state.selfId].health=100;return response(state);
+  },async(client,heartbeat)=>{
+   await heartbeat();await flushInputTasks();assert.ok(rejectFire);
+   rejectFire(Error('current outage'));await flushInputTasks();assert.equal(client.ready,false);
+   firing=false;clock+=1001;await heartbeat();await flushInputTasks();assert.equal(client.ready,true);
+   await heartbeat();await flushInputTasks();assert.equal(commands.at(-1).action,'input');assert.equal(commands.at(-1).input.side,1);
+   assert.equal(commands.filter(command=>command.action==='join').length,1);
+  },{input:()=>({side:1,firing,tool:'laser',direction:[0,0,-1]})});
+ }finally{Date.now=previousNow;}
+});
+
+test('sustained epoch changes with late network failures preserve confirmed movement across fifty trips',async()=>{
+ let sequence=0,trip=0;const pending=[],statuses=[];
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='input')return new Promise((resolve,reject)=>pending.push({command,resolve,reject}));
+  if(command.action==='map-access')trip++;
+  return response({...confirmed(++sequence),inputEpoch:'trip-'+trip});
+ },async(client,heartbeat)=>{
+  for(let index=0;index<50;index++){
+   void heartbeat();await flushInputTasks();const before=pending.at(-1);
+   await client.send('map-access',{position:{x:index,z:index}});client.requestInput();await flushInputTasks();const current=pending.at(-1);
+   assert.notEqual(current,before);assert.equal(current.command.inputEpoch,'trip-'+trip);assert.equal(current.command.input.side,1);
+   current.resolve(response({...confirmed(++sequence),inputEpoch:'trip-'+trip}));await flushInputTasks();
+   before.reject(Object.assign(Error('late trip request'),index%2?{status:503}:{}));await flushInputTasks();
+   assert.equal(client.ready,true,'trip '+index+' remains usable');
+  }
+  assert.ok(!statuses.some(message=>message.includes('Server connection required')));
+ },{input:()=>({side:1}),onStatus:message=>statuses.push(message)});
+});
+
 test('older authentication and room-switch failures still close the current live connection',async()=>{
  for(const failure of [{status:401,code:'SESSION_REQUIRED'},{status:409,code:'ROOM_SWITCHED'}]){
   const room=controlledInputs(),errors=[];
