@@ -47,8 +47,6 @@ export function createSkiResortLand(){
  box('FIREPLACE_MANTEL',-80,3.3,345.4,6.4,.45,2.5,0x787e81);
  for(let i=0;i<5;i++){const flame=new THREE.Mesh(new THREE.ConeGeometry(.32+(i%2)*.1,.9+(i%3)*.2,7),new THREE.MeshBasicMaterial({color:i%2?0xffdf72:0xff8236}));flame.position.set(-81+i*.5,.95,346.1);flame.name='FIREPLACE_FLAME';flame.userData={collisionDisabled:true,collider:false};root.add(flame);}
  const glow=new THREE.PointLight(0xffae55,5,20,1.5);glow.position.set(-80,2.5,348);root.add(glow);
- for(const x of [-86,-74]){box('LOUNGE_SOFA_SEAT',x,.12,352,4,.55,1.5,0x873f45);box('LOUNGE_SOFA_BACK',x,.6,352.7,4,.9,.25,0x873f45);}
- box('LOUNGE_COFFEE_TABLE',-80,.12,353,3,.65,2,0x654935);
  for(const z of [353,361]){box('DINING_TABLE',-64,.12,z,4,1,2.3,0x795439);for(const side of [-1,1])box('DINING_BENCH',-64,.12,z+side*1.7,4,.5,.6,0x997455);}
  const hx=-245,hz=-40,hy=skiHeight(hx,hz);box('WARMING_HUT_FLOOR',hx,hy,hz,16,.12,12,0x987455);box('WARMING_HUT_BACK',hx,hy,hz-6,16,4,.4,0x745749);for(const side of [-1,1])box('WARMING_HUT_SIDE',hx+side*8,hy,hz,.4,4,12,0x745749);box('WARMING_HUT_ROOF',hx,hy+4,hz,18,.4,14,0xe3f1f8);
  const passengerVisuals=new Map();

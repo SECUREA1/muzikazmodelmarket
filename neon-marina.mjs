@@ -1,3 +1,4 @@
+import {resortProductPlacement} from './public/js/resort-products.js';
 export function neonMarina(){
  const harbor={extent:512,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48}]};
  const objects=[],locations=[];
@@ -95,5 +96,9 @@ export function neonMarina(){
  for(const x of [-1,1])for(const z of [-1,1])part('beacon-lantern-post-'+x+'-'+z,'pillar',197+x*1.5,9.8,34+z*1.5,[.5,.7,.5]);
  part('beacon-lantern','neon',197,10,34,[1.2,2,1.2]);part('beacon-cap','roof',197,11.6,34,[1.6,.8,1.6]);
  locations.push({id:'beacon-light',name:'Beacon Navigation Light',x:197,z:34,width:5,depth:5,arrival:{x:194,y:0,z:34},description:'A modular coastal navigation light marks the eastern approach.'});
+ // Refurnish the club instead of stacking new props over its old seating.
+ for(const [suffix,model]of [['yacht-club-sofa','tideglass-daybed'],['yacht-club-coffee-table','tideglass-marble-table']]){const old=objects.find(o=>o.id==='public-experience-marina-'+suffix);if(old)Object.assign(old,resortProductPlacement(old.id,model,old.position.x,old.position.y,old.position.z));}
+ for(const [id,model,x,z]of [['club-cinema','tideglass-cinema',104,66],['club-dj','tideglass-dj-console',110,62],['concierge','tideglass-concierge',112,68],['palms','tideglass-planter',119,69]])objects.push(resortProductPlacement('public-experience-marina-luxury-'+id,model,x,.2,z));
+ locations.push({id:'tideglass-club',name:'Tideglass Luxury Club',x:115,y:.2,z:65,width:14.4,depth:9.6,description:'Teak and ivory daybeds, a marble lounge table, shared cinema, DJ console and concierge marketplace. The waterfront entrance and pier access stay open.'});
  return {harbor,objects,locations};
 }

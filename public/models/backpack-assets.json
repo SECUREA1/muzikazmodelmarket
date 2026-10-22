@@ -1561,7 +1561,7 @@
     },
     {
       "id": "builder-arcade-part-hockey",
-      "name": "Neon Junction \u00b7 Ice hockey",
+      "name": "Neon Junction · Ice hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1581,7 +1581,7 @@
     },
     {
       "id": "builder-arcade-part-shooting",
-      "name": "Neon Junction \u00b7 Shooting arcade",
+      "name": "Neon Junction · Shooting arcade",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1601,7 +1601,7 @@
     },
     {
       "id": "builder-arcade-part-basketball",
-      "name": "Neon Junction \u00b7 Basketball",
+      "name": "Neon Junction · Basketball",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1621,7 +1621,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey",
-      "name": "Neon Junction \u00b7 Air hockey",
+      "name": "Neon Junction · Air hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1641,7 +1641,7 @@
     },
     {
       "id": "builder-arcade-part-billiards",
-      "name": "Neon Junction \u00b7 Billiards",
+      "name": "Neon Junction · Billiards",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1661,7 +1661,7 @@
     },
     {
       "id": "builder-arcade-part-train",
-      "name": "Neon Junction \u00b7 Park express",
+      "name": "Neon Junction · Park express",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1681,7 +1681,7 @@
     },
     {
       "id": "builder-arcade-part-coaster",
-      "name": "Neon Junction \u00b7 Skyline coaster",
+      "name": "Neon Junction · Skyline coaster",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1701,7 +1701,7 @@
     },
     {
       "id": "builder-arcade-part-ground",
-      "name": "Neon Junction \u00b7 Park foundation",
+      "name": "Neon Junction · Park foundation",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1713,7 +1713,7 @@
     },
     {
       "id": "builder-arcade-part-paths",
-      "name": "Neon Junction \u00b7 Walkway network",
+      "name": "Neon Junction · Walkway network",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1725,7 +1725,7 @@
     },
     {
       "id": "builder-arcade-part-trees",
-      "name": "Neon Junction \u00b7 Tree planting",
+      "name": "Neon Junction · Tree planting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1737,7 +1737,7 @@
     },
     {
       "id": "builder-arcade-part-lamps",
-      "name": "Neon Junction \u00b7 Park lighting",
+      "name": "Neon Junction · Park lighting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1749,7 +1749,7 @@
     },
     {
       "id": "builder-arcade-part-fountain",
-      "name": "Neon Junction \u00b7 Central fountain",
+      "name": "Neon Junction · Central fountain",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1761,7 +1761,7 @@
     },
     {
       "id": "builder-arcade-part-benches",
-      "name": "Neon Junction \u00b7 Park seating",
+      "name": "Neon Junction · Park seating",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1773,7 +1773,7 @@
     },
     {
       "id": "builder-arcade-part-train-station",
-      "name": "Neon Junction \u00b7 Train station",
+      "name": "Neon Junction · Train station",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1785,7 +1785,7 @@
     },
     {
       "id": "builder-arcade-part-signs",
-      "name": "Neon Junction \u00b7 Park entrance sign",
+      "name": "Neon Junction · Park entrance sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1797,7 +1797,7 @@
     },
     {
       "id": "builder-arcade-part-tree",
-      "name": "Neon Junction \u00b7 Individual tree",
+      "name": "Neon Junction · Individual tree",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1809,7 +1809,7 @@
     },
     {
       "id": "builder-arcade-part-lamp",
-      "name": "Neon Junction \u00b7 Individual lamp",
+      "name": "Neon Junction · Individual lamp",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1821,7 +1821,7 @@
     },
     {
       "id": "builder-arcade-part-bench",
-      "name": "Neon Junction \u00b7 Individual bench",
+      "name": "Neon Junction · Individual bench",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1833,7 +1833,7 @@
     },
     {
       "id": "builder-arcade-part-path",
-      "name": "Neon Junction \u00b7 Path tile",
+      "name": "Neon Junction · Path tile",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1845,7 +1845,7 @@
     },
     {
       "id": "builder-arcade-part-sign",
-      "name": "Neon Junction \u00b7 Arcade sign",
+      "name": "Neon Junction · Arcade sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1857,7 +1857,7 @@
     },
     {
       "id": "builder-arcade-part-train-carriage",
-      "name": "Neon Junction \u00b7 Train passenger carriage",
+      "name": "Neon Junction · Train passenger carriage",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1869,7 +1869,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-car",
-      "name": "Neon Junction \u00b7 Coaster car",
+      "name": "Neon Junction · Coaster car",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1881,7 +1881,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-hoop",
-      "name": "Neon Junction \u00b7 Basketball hoop",
+      "name": "Neon Junction · Basketball hoop",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1893,7 +1893,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-ball",
-      "name": "Neon Junction \u00b7 Basketball ball",
+      "name": "Neon Junction · Basketball ball",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1905,7 +1905,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-goal",
-      "name": "Neon Junction \u00b7 Hockey goal",
+      "name": "Neon Junction · Hockey goal",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1917,7 +1917,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-puck",
-      "name": "Neon Junction \u00b7 Hockey puck",
+      "name": "Neon Junction · Hockey puck",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1929,7 +1929,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey-mallet",
-      "name": "Neon Junction \u00b7 Air hockey mallet",
+      "name": "Neon Junction · Air hockey mallet",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1941,7 +1941,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-cue",
-      "name": "Neon Junction \u00b7 Billiard cue",
+      "name": "Neon Junction · Billiard cue",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1953,7 +1953,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-balls",
-      "name": "Neon Junction \u00b7 Billiard ball set",
+      "name": "Neon Junction · Billiard ball set",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1965,7 +1965,7 @@
     },
     {
       "id": "builder-arcade-part-arcade-target",
-      "name": "Neon Junction \u00b7 Arcade target",
+      "name": "Neon Junction · Arcade target",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1977,7 +1977,7 @@
     },
     {
       "id": "builder-arcade-part-train-engine",
-      "name": "Neon Junction \u00b7 Train locomotive",
+      "name": "Neon Junction · Train locomotive",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1989,7 +1989,7 @@
     },
     {
       "id": "builder-arcade-part-rail-segment",
-      "name": "Neon Junction \u00b7 Straight rail segment",
+      "name": "Neon Junction · Straight rail segment",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2001,7 +2001,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-support",
-      "name": "Neon Junction \u00b7 Coaster support",
+      "name": "Neon Junction · Coaster support",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2013,7 +2013,7 @@
     },
     {
       "id": "builder-arcade-part-safety-bar",
-      "name": "Neon Junction \u00b7 Coaster safety restraint",
+      "name": "Neon Junction · Coaster safety restraint",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2443,7 +2443,7 @@
     },
     {
       "id": "backpack-courtyard-cafe",
-      "name": "Courtyard Caf\u00e9",
+      "name": "Courtyard Café",
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "courtyard-cafe",
@@ -2915,6 +2915,443 @@
         "device": "maze-runner-cabinet",
         "behavior": "interact",
         "prompt": "Play Pixel Maze Quest"
+      }
+    },
+    {
+      "id": "backpack-alpine-ski-service",
+      "name": "Alpine Ski Valet",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-ski-service",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/alpine-ski-service.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 240,
+      "description": "A walnut and brass ski rack. At Pixel Peaks, use it to equip or return skis.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Ski Valet",
+        "destructible": false
+      }
+    },
+    {
+      "id": "backpack-alpine-race-board",
+      "name": "Alpine Club Noticeboard",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-race-board",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/alpine-race-board.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 320,
+      "description": "Post shared race meetups and mountain club messages.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Club Noticeboard",
+        "destructible": false,
+        "device": "alpine-race-board"
+      }
+    },
+    {
+      "id": "backpack-alpine-first-aid",
+      "name": "Alpine Recovery Cabinet",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-first-aid",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/alpine-first-aid.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 220,
+      "description": "Use nearby to recover 25 health, with a 30-second cooldown.",
+      "behavior": "heal",
+      "function_data": {
+        "behavior": "heal",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Recovery Cabinet",
+        "destructible": false,
+        "value": 25,
+        "cooldown": 30
+      }
+    },
+    {
+      "id": "backpack-alpine-velvet-chaise",
+      "name": "Alpine Velvet Chaise",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-velvet-chaise",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/alpine-velvet-chaise.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 180,
+      "description": "A usable velvet chaise with walnut framing and brass feet.",
+      "behavior": "seat",
+      "function_data": {
+        "behavior": "seat",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Velvet Chaise",
+        "destructible": false,
+        "seatOffset": [
+          0,
+          0.62,
+          0
+        ],
+        "exitOffset": [
+          0,
+          0,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "backpack-alpine-marble-hearth",
+      "name": "Alpine Marble Hearth",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-marble-hearth",
+      "builderCategory": "props",
+      "thumbnailUrl": "/public/images/resort-products/alpine-marble-hearth.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 360,
+      "description": "A sculpted marble fireplace with glowing flames and brass trim.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Marble Hearth",
+        "destructible": false
+      }
+    },
+    {
+      "id": "backpack-alpine-lounge-jukebox",
+      "name": "Alpine Listening Console",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "alpine-lounge-jukebox",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/alpine-lounge-jukebox.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Alpine Luxury",
+      "productTier": "luxury",
+      "priceMzk": 300,
+      "description": "Queue and control shared lodge music through the room audio system.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Alpine Listening Console",
+        "destructible": false,
+        "device": "alpine-lounge-jukebox"
+      }
+    },
+    {
+      "id": "backpack-tideglass-daybed",
+      "name": "Tideglass Marina Daybed",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-daybed",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-daybed.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 190,
+      "description": "A usable ivory daybed with teak framing and champagne metalwork.",
+      "behavior": "seat",
+      "function_data": {
+        "behavior": "seat",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Marina Daybed",
+        "destructible": false,
+        "seatOffset": [
+          0,
+          0.62,
+          0
+        ],
+        "exitOffset": [
+          0,
+          0,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "backpack-tideglass-cinema",
+      "name": "Tideglass Cinema Cabinet",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-cinema",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-cinema.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 420,
+      "description": "Upload or queue a video for the yacht club shared screen.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Cinema Cabinet",
+        "destructible": false,
+        "device": "tideglass-cinema"
+      }
+    },
+    {
+      "id": "backpack-tideglass-dj-console",
+      "name": "Tideglass Club Mixing Desk",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-dj-console",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-dj-console.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 400,
+      "description": "Queue audio and adjust the club shared playback and volume.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Club Mixing Desk",
+        "destructible": false,
+        "device": "tideglass-dj-console"
+      }
+    },
+    {
+      "id": "backpack-tideglass-concierge",
+      "name": "Tideglass Concierge Market",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-concierge",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-concierge.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 280,
+      "description": "Open the live item marketplace and your own Backpack.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Concierge Market",
+        "destructible": false,
+        "device": "tideglass-concierge"
+      }
+    },
+    {
+      "id": "backpack-tideglass-planter",
+      "name": "Tideglass Palm Planter",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-planter",
+      "builderCategory": "props",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-planter.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 120,
+      "description": "A sculpted brass planter with layered tropical foliage.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Palm Planter",
+        "destructible": false
+      }
+    },
+    {
+      "id": "backpack-tideglass-marble-table",
+      "name": "Tideglass Marble Table",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tideglass-marble-table",
+      "builderCategory": "props",
+      "thumbnailUrl": "/public/images/resort-products/tideglass-marble-table.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Tideglass Luxury",
+      "productTier": "luxury",
+      "priceMzk": 140,
+      "description": "A veined stone lounge table with a recessed brass pedestal.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "interactionDistance": 4,
+        "prompt": "Use Tideglass Marble Table",
+        "destructible": false
+      }
+    },
+    {
+      "id": "backpack-aerie-vip-sofa",
+      "name": "Aerie Executive Sofa",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-vip-sofa",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/aerie-vip-sofa.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 210,
+      "description": "A usable upholstered airport club sofa with champagne trim.",
+      "behavior": "seat",
+      "function_data": {
+        "behavior": "seat",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Executive Sofa",
+        "destructible": false,
+        "seatOffset": [
+          0,
+          0.62,
+          0
+        ],
+        "exitOffset": [
+          0,
+          0,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "backpack-aerie-flight-board",
+      "name": "Aerie Flight Club Board",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-flight-board",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/aerie-flight-board.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 320,
+      "description": "Share flight plans and meetups on the public club noticeboard.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Flight Club Board",
+        "destructible": false,
+        "device": "aerie-flight-board"
+      }
+    },
+    {
+      "id": "backpack-aerie-executive-screen",
+      "name": "Aerie Executive Media Wall",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-executive-screen",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/aerie-executive-screen.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 420,
+      "description": "A shared video screen for the airport executive lounge.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Executive Media Wall",
+        "destructible": false,
+        "device": "aerie-executive-screen"
+      }
+    },
+    {
+      "id": "backpack-aerie-club-radio",
+      "name": "Aerie Club Radio",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-club-radio",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/aerie-club-radio.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 300,
+      "description": "Tune and share a direct audio stream with nearby club visitors.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Club Radio",
+        "destructible": false,
+        "device": "aerie-club-radio"
+      }
+    },
+    {
+      "id": "backpack-aerie-boarding-kiosk",
+      "name": "Aerie Equipment Concierge",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-boarding-kiosk",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/resort-products/aerie-boarding-kiosk.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 280,
+      "description": "Shop equipment and access your own Backpack before departure.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Equipment Concierge",
+        "destructible": false,
+        "device": "aerie-boarding-kiosk"
+      }
+    },
+    {
+      "id": "backpack-aerie-coffee-table",
+      "name": "Aerie Onyx Coffee Table",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "aerie-coffee-table",
+      "builderCategory": "props",
+      "thumbnailUrl": "/public/images/resort-products/aerie-coffee-table.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "collection": "Aerie Luxury",
+      "productTier": "luxury",
+      "priceMzk": 150,
+      "description": "A dark stone table with brass edging for executive seating areas.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "interactionDistance": 4,
+        "prompt": "Use Aerie Onyx Coffee Table",
+        "destructible": false
       }
     }
   ]

@@ -1,6 +1,7 @@
+import {RESORT_PRODUCTS} from './resort-products.js';
 import {MULTI_ARCADE_PROFILE} from './arcade-library.js';
 import {ARCADE_GAMES} from './arcade-games.js';
-export const INTERACTIVE_DEVICES=Object.freeze({
+const BASE_DEVICES={
  ...Object.fromEntries(Object.entries(ARCADE_GAMES).map(([id,item])=>[id,{...item,kind:'arcade'}])),
  'market-atm':{name:'MZK Market ATM',kind:'market',description:'Open the live item marketplace and your Backpack.',color:0x96f04e,shape:'kiosk'},
  'item-vending-machine':{name:'Item Vending Machine',kind:'market',description:'Shop equipment and building supplies using your own account.',color:0x36dccc,shape:'kiosk'},
@@ -17,7 +18,8 @@ export const INTERACTIVE_DEVICES=Object.freeze({
  'trivia-terminal':{name:'Trivia Challenge',kind:'trivia',description:'Answer server-checked questions and compare arcade scores.',color:0xf9d861,shape:'arcade'},
  'arcade-slot-machine':{name:'Arcade Slots',kind:'slots',description:'Spin three reels using separate practice credits.',color:0xff9770,shape:'arcade'},
  'video-poker-table':{name:'Video Poker Table',kind:'poker',description:'Deal, hold and draw a five-card hand using practice credits.',color:0x69df9a,shape:'table'}
-});
+};
+export const INTERACTIVE_DEVICES=Object.freeze({...BASE_DEVICES,...Object.fromEntries(Object.values(RESORT_PRODUCTS).filter(p=>p.device).map(p=>[p.id,{...BASE_DEVICES[p.device],name:p.name,description:p.description}]))});
 export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
 export function sharedMediaUrl(value,kind){
  const text=String(value||'').trim();if(text.length>2048)throw Error('Media link is too long.');

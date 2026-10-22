@@ -1,3 +1,5 @@
+import {RESORT_PRODUCTS} from './resort-products.js';
+import {createResortProduct} from './resort-product-models.js';
 import {createAircraftModel,updateAircraftModel} from './aircraft-model.js';
 import {createHarborBoat,updateHarborBoat} from './harbor-models.js';
 import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
@@ -21,13 +23,14 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...Object.fromEntries(Object.values(RESORT_PRODUCTS).map(p=>[p.id,[p.name,p.description,p.dimensions]])),
   'harbor-yacht':['Tideglass Superyacht','A massive drivable yacht with bedroom, lounge, billiards and aft terrace.',[12,7,42]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
   ...LAYOUT_SCENE_INFO,
   ...Object.fromEntries(Object.entries(ENTERABLE_BUILDINGS).map(([id,item])=>[id,[item.name,item.description,[item.width+.7,item.height+.8,item.depth+3]]])),
-  ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
+  ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).filter(([id])=>!RESORT_PRODUCTS[id]).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
   'estate-house':['Estate House','Enterable four-room home with wide passages and a terrace.',[20,3.6,16]],
   'estate-yard':['Estate Yard','Open lawn with paths, planting and a wide entrance.',[24,1.1,22]],
   'drive-in-garage':['Drive-in Garage','Double garage with a wide open vehicle bay and work area.',[14,4,12]],
@@ -268,6 +271,7 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+  if(RESORT_PRODUCTS[id])return createResortProduct(THREE,id);
   if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 

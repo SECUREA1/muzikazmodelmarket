@@ -439,6 +439,246 @@
           "dialogueSettings": {
             "text": "Welcome to Pixel Peaks. Rent skis, board Summit Express, explore four marked runs and three ramps, or warm up at the château fireplace. Open Map for real 3D resort geometry and travel tags."
           }
+        },
+        {
+          "id": "ski-luxury-valet",
+          "modelId": "alpine-ski-service",
+          "name": "Alpine Ski Valet",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -40,
+            "y": 0,
+            "z": 350
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Ski Valet",
+            "destructible": false
+          }
+        },
+        {
+          "id": "ski-luxury-race-notices",
+          "modelId": "alpine-race-board",
+          "name": "Alpine Club Noticeboard",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -29,
+            "y": 0,
+            "z": 345
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Club Noticeboard",
+            "destructible": false,
+            "device": "alpine-race-board"
+          }
+        },
+        {
+          "id": "ski-luxury-recovery",
+          "modelId": "alpine-first-aid",
+          "name": "Alpine Recovery Cabinet",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -31,
+            "y": 0,
+            "z": 355
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "heal",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Recovery Cabinet",
+            "destructible": false,
+            "value": 25,
+            "cooldown": 30
+          }
+        },
+        {
+          "id": "ski-luxury-lounge-west",
+          "modelId": "alpine-velvet-chaise",
+          "name": "Alpine Velvet Chaise",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -86,
+            "y": 0.12,
+            "z": 352
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Velvet Chaise",
+            "destructible": false,
+            "seatOffset": [
+              0,
+              0.62,
+              0
+            ],
+            "exitOffset": [
+              0,
+              0,
+              1.6
+            ]
+          }
+        },
+        {
+          "id": "ski-luxury-lounge-east",
+          "modelId": "alpine-velvet-chaise",
+          "name": "Alpine Velvet Chaise",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -74,
+            "y": 0.12,
+            "z": 352
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Velvet Chaise",
+            "destructible": false,
+            "seatOffset": [
+              0,
+              0.62,
+              0
+            ],
+            "exitOffset": [
+              0,
+              0,
+              1.6
+            ]
+          }
+        },
+        {
+          "id": "ski-luxury-marble-table",
+          "modelId": "tideglass-marble-table",
+          "name": "Tideglass Marble Table",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -80,
+            "y": 0.12,
+            "z": 353
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "interactionDistance": 4,
+            "prompt": "Use Tideglass Marble Table",
+            "destructible": false
+          }
+        },
+        {
+          "id": "ski-luxury-listening-console",
+          "modelId": "alpine-lounge-jukebox",
+          "name": "Alpine Listening Console",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -72,
+            "y": 0.12,
+            "z": 366
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Listening Console",
+            "destructible": false,
+            "device": "alpine-lounge-jukebox"
+          }
+        },
+        {
+          "id": "ski-luxury-warming-hearth",
+          "modelId": "alpine-marble-hearth",
+          "name": "Alpine Marble Hearth",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -245,
+            "y": 86.26390670553936,
+            "z": -43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "interactionDistance": 4,
+            "prompt": "Use Alpine Marble Hearth",
+            "destructible": false
+          }
         }
       ],
       "layoutMeta": {
@@ -572,6 +812,26 @@
             "width": 14,
             "depth": 12,
             "description": "Welcome to Pixel Peaks. Rent skis, board Summit Express, explore four marked runs and three ramps, or warm up at the château fireplace. Open Map for real 3D resort geometry and travel tags."
+          },
+          {
+            "id": "alpine-valet",
+            "name": "Alpine Valet & Recovery",
+            "x": -37,
+            "y": 0,
+            "z": 356,
+            "width": 14,
+            "depth": 12,
+            "description": "Equip skis at the walnut valet, use the recovery cabinet and share race club notices."
+          },
+          {
+            "id": "chateau-salon",
+            "name": "Château Velvet Salon",
+            "x": -80,
+            "y": 0.12,
+            "z": 363,
+            "width": 24,
+            "depth": 14,
+            "description": "Usable velvet chaises, a marble table and shared lodge music. Keep the central aisle clear to reach the fireplace and stairs."
           }
         ]
       },
@@ -14216,6 +14476,1415 @@
             "destructible": true,
             "health": 160
           }
+        },
+        {
+          "id": "airport-executive-club-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 0 0",
+          "position": {
+            "x": -121.19999999999999,
+            "y": -0.2,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 0 0",
+          "position": {
+            "x": -121.19999999999999,
+            "y": 4,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 0 1",
+          "position": {
+            "x": -121.19999999999999,
+            "y": -0.2,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 0 1",
+          "position": {
+            "x": -121.19999999999999,
+            "y": 4,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-0-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 0 2",
+          "position": {
+            "x": -121.19999999999999,
+            "y": -0.2,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-0-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 0 2",
+          "position": {
+            "x": -121.19999999999999,
+            "y": 4,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 1 0",
+          "position": {
+            "x": -116.39999999999999,
+            "y": -0.2,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 1 0",
+          "position": {
+            "x": -116.39999999999999,
+            "y": 4,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 1 1",
+          "position": {
+            "x": -116.39999999999999,
+            "y": -0.2,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 1 1",
+          "position": {
+            "x": -116.39999999999999,
+            "y": 4,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 1 2",
+          "position": {
+            "x": -116.39999999999999,
+            "y": -0.2,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 1 2",
+          "position": {
+            "x": -116.39999999999999,
+            "y": 4,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 2 0",
+          "position": {
+            "x": -111.6,
+            "y": -0.2,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 2 0",
+          "position": {
+            "x": -111.6,
+            "y": 4,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 2 1",
+          "position": {
+            "x": -111.6,
+            "y": -0.2,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 2 1",
+          "position": {
+            "x": -111.6,
+            "y": 4,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-2-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 2 2",
+          "position": {
+            "x": -111.6,
+            "y": -0.2,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-2-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 2 2",
+          "position": {
+            "x": -111.6,
+            "y": 4,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 3 0",
+          "position": {
+            "x": -106.79999999999998,
+            "y": -0.2,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 3 0",
+          "position": {
+            "x": -106.79999999999998,
+            "y": 4,
+            "z": 57.199999999999996
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 3 1",
+          "position": {
+            "x": -106.79999999999998,
+            "y": -0.2,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 3 1",
+          "position": {
+            "x": -106.79999999999998,
+            "y": 4,
+            "z": 61.99999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-floor-3-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club floor 3 2",
+          "position": {
+            "x": -106.79999999999998,
+            "y": -0.2,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-roof-3-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "executive club roof 3 2",
+          "position": {
+            "x": -106.79999999999998,
+            "y": 4,
+            "z": 66.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club side  1",
+          "position": {
+            "x": -123.6,
+            "y": 0,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club side 1",
+          "position": {
+            "x": -104.4,
+            "y": 0,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 0",
+          "position": {
+            "x": -122.39999999999999,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 1",
+          "position": {
+            "x": -119.99999999999999,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 2",
+          "position": {
+            "x": -117.6,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 3",
+          "position": {
+            "x": -115.19999999999999,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 4",
+          "position": {
+            "x": -112.8,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 5",
+          "position": {
+            "x": -110.39999999999999,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-6",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 6",
+          "position": {
+            "x": -108,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-back-7",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "executive club back 7",
+          "position": {
+            "x": -105.6,
+            "y": 0,
+            "z": 54.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-front-post--9.6",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "executive club front post  9.6",
+          "position": {
+            "x": -123.6,
+            "y": 0,
+            "z": 69.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-executive-club-front-post-9.6",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "executive club front post 9.6",
+          "position": {
+            "x": -104.4,
+            "y": 0,
+            "z": 69.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.6666666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-0",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 0",
+          "position": {
+            "x": -112,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-1",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 1",
+          "position": {
+            "x": -107.2,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-2",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 2",
+          "position": {
+            "x": -102.4,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-3",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 3",
+          "position": {
+            "x": -97.6,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-4",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 4",
+          "position": {
+            "x": -92.8,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-5",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 5",
+          "position": {
+            "x": -88,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-6",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 6",
+          "position": {
+            "x": -83.2,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-7",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 7",
+          "position": {
+            "x": -78.4,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-8",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 8",
+          "position": {
+            "x": -73.6,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-club-walk-9",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "club walk 9",
+          "position": {
+            "x": -68.80000000000001,
+            "y": -0.14,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-luxury-west-sofa",
+          "modelId": "aerie-vip-sofa",
+          "name": "Aerie Executive Sofa",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -119,
+            "y": 0,
+            "z": 64
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Executive Sofa",
+            "destructible": false,
+            "seatOffset": [
+              0,
+              0.62,
+              0
+            ],
+            "exitOffset": [
+              0,
+              0,
+              1.6
+            ]
+          }
+        },
+        {
+          "id": "airport-luxury-east-sofa",
+          "modelId": "aerie-vip-sofa",
+          "name": "Aerie Executive Sofa",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -109,
+            "y": 0,
+            "z": 64
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Executive Sofa",
+            "destructible": false,
+            "seatOffset": [
+              0,
+              0.62,
+              0
+            ],
+            "exitOffset": [
+              0,
+              0,
+              1.6
+            ]
+          }
+        },
+        {
+          "id": "airport-luxury-onyx-table",
+          "modelId": "aerie-coffee-table",
+          "name": "Aerie Onyx Coffee Table",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -114,
+            "y": 0,
+            "z": 63
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Onyx Coffee Table",
+            "destructible": false
+          }
+        },
+        {
+          "id": "airport-luxury-club-screen",
+          "modelId": "aerie-executive-screen",
+          "name": "Aerie Executive Media Wall",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -114,
+            "y": 0,
+            "z": 56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Executive Media Wall",
+            "destructible": false,
+            "device": "aerie-executive-screen"
+          }
+        },
+        {
+          "id": "airport-luxury-flight-notices",
+          "modelId": "aerie-flight-board",
+          "name": "Aerie Flight Club Board",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -109,
+            "y": 0,
+            "z": 56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Flight Club Board",
+            "destructible": false,
+            "device": "aerie-flight-board"
+          }
+        },
+        {
+          "id": "airport-luxury-club-radio",
+          "modelId": "aerie-club-radio",
+          "name": "Aerie Club Radio",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -119,
+            "y": 0,
+            "z": 56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Club Radio",
+            "destructible": false,
+            "device": "aerie-club-radio"
+          }
+        },
+        {
+          "id": "airport-luxury-equipment-concierge",
+          "modelId": "aerie-boarding-kiosk",
+          "name": "Aerie Equipment Concierge",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -120,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 4,
+            "prompt": "Use Aerie Equipment Concierge",
+            "destructible": false,
+            "device": "aerie-boarding-kiosk"
+          }
         }
       ],
       "layoutMeta": {
@@ -14310,6 +15979,25 @@
             "width": 44,
             "depth": 26,
             "description": "Three public aircraft, ready to enter and fly. Ground service repairs and refuels parked aircraft."
+          },
+          {
+            "id": "executive-club",
+            "name": "Aerie Executive Club",
+            "x": -114,
+            "z": 62,
+            "width": 19.2,
+            "depth": 14.4,
+            "description": "Walk-in Aerie Executive Club. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "aerie-club",
+            "name": "Aerie Executive Club",
+            "x": -114,
+            "y": 0,
+            "z": 68,
+            "width": 19.2,
+            "depth": 14.4,
+            "description": "Walk-in public lounge with executive seating, shared video, club radio, flight meetup notices and an equipment marketplace. Connects to the terminal by the paved promenade."
           }
         ]
       },

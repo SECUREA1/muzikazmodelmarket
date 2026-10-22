@@ -12,10 +12,10 @@ import {deviceCommand,pokerPayout,advanceDevicePlayback} from '../server-interac
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 const fixture=(modelId='shared-video-player')=>{const scene={objects:[{id:'device',modelId,position:{x:0,y:0,z:0},functionalSettings:{behavior:'interact'}}]},manifest=compileBuilderScene(scene);return {manifest,sim:{actors:{device:{id:'device',active:true,position:{x:0,y:0,z:0}}}},player:{username:'Alice',position:{x:0,y:0,z:2},score:0,tokens:{MZK:100}}};};
-test('twenty-seven devices have actual meshes, builder/backpack entries and a playable lounge',async()=>{
- assert.equal(Object.keys(INTERACTIVE_DEVICES).length,27);const backpack=JSON.parse(await readFile('public/models/backpack-assets.json','utf8'));
+test('thirty-six devices have actual meshes, builder/backpack entries and a playable lounge',async()=>{
+ assert.equal(Object.keys(INTERACTIVE_DEVICES).length,36);const backpack=JSON.parse(await readFile('public/models/backpack-assets.json','utf8'));
  for(const [id,profile]of Object.entries(INTERACTIVE_DEVICES)){const root=createBuilderModel(id);assert.equal(root.name,profile.name);assert.ok(root.children.length>=5);const asset=backpack.assets.find(asset=>asset.buildAssetId===id);assert.ok(asset);await readFile('.'+asset.thumbnailUrl);}
- const scene=createUrbanScene('urban-media-lounge',80),manifest=compileBuilderScene(scene);assert.equal(scene.objects.filter(item=>INTERACTIVE_DEVICES[item.modelId]).length,27);assert.equal(manifest.actors.filter(actor=>actor.gameplay.behavior==='interact').length,27);
+ const scene=createUrbanScene('urban-media-lounge',80),manifest=compileBuilderScene(scene);assert.equal(scene.objects.filter(item=>INTERACTIVE_DEVICES[item.modelId]).length,36);assert.equal(manifest.actors.filter(actor=>actor.gameplay.behavior==='interact').length,36);
 });
 test('shared queue, revision checks, timestamps and pause/play are authoritative for multiple users',()=>{
  const {manifest,sim,player}=fixture(),run=(operation,fields={},now=1000)=>deviceCommand(sim,manifest,player,'alice',{entityId:'device',operation,revision:sim.devices?.device?.revision||0,requestId:'request-'+now,...fields},now);
