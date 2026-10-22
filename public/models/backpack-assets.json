@@ -3353,6 +3353,860 @@
         "prompt": "Use Aerie Onyx Coffee Table",
         "destructible": false
       }
+    },
+    {
+      "id": "builder-harbor-yacht",
+      "name": "Tideglass Superyacht",
+      "description": "A massive drivable yacht with bedroom, lounge, billiards and aft terrace.",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "harbor-yacht",
+      "format": "procedural-3d",
+      "dimensions": [
+        12,
+        7,
+        42
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "interactionDistance": 24,
+        "prompt": "Board superyacht"
+      },
+      "vehicleSettings": {
+        "mode": "boat",
+        "speed": 9,
+        "turnSpeed": 0.3
+      }
+    },
+    {
+      "id": "builder-harbor-skiff",
+      "name": "Harbor Launch",
+      "description": "Board and steer a launch on harbor water.",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "harbor-skiff",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.1,
+        1.5,
+        4.8
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "interactionDistance": 5,
+        "prompt": "Board boat"
+      },
+      "vehicleSettings": {
+        "mode": "boat",
+        "speed": 11,
+        "turnSpeed": 0.8
+      }
+    },
+    {
+      "id": "builder-harbor-sailboat",
+      "name": "Marina Sailboat",
+      "description": "A steerable marina boat with a mast and sail.",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "harbor-sailboat",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.1,
+        4.8,
+        4.8
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "interactionDistance": 5,
+        "prompt": "Board boat"
+      },
+      "vehicleSettings": {
+        "mode": "boat",
+        "speed": 11,
+        "turnSpeed": 0.8
+      }
+    },
+    {
+      "id": "builder-camp-tent",
+      "name": "Ridge Tent",
+      "description": "An open-ended canvas tent with a walkable floor and timber ridge.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-tent",
+      "format": "procedural-3d",
+      "dimensions": [
+        4,
+        3.3,
+        4.6
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-cabin",
+      "name": "Pine Lodge Cabin",
+      "description": "An enterable timber cabin with a wide doorway, porch and removable roof.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-cabin",
+      "format": "procedural-3d",
+      "dimensions": [
+        6.5,
+        4,
+        7.4
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-picnic-table",
+      "name": "Camp Picnic Table",
+      "description": "A timber picnic table with benches for a camp dining area.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-picnic-table",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.6,
+        1,
+        2.2
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-log-bench",
+      "name": "Camp Log Bench",
+      "description": "A usable camp seat with a clear stand-up space.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-log-bench",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.5,
+        0.55,
+        0.8
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "seat",
+        "prompt": "Sit by the campfire",
+        "seatOffset": [
+          0,
+          0.55,
+          0
+        ],
+        "exitOffset": [
+          0,
+          0,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "builder-camp-lantern",
+      "name": "Trail Lantern",
+      "description": "A warm, emissive lantern on a timber post.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-lantern",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.6,
+        2.3,
+        0.6
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-trail-sign",
+      "name": "Trail Signpost",
+      "description": "A colorful timber trail marker for paths and camp entrances.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-trail-sign",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.1,
+        2.5,
+        0.45
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-canoe-rack",
+      "name": "Canoe & Paddle Rack",
+      "description": "Stored canoes and paddles for scenic waterfront dressing.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-canoe-rack",
+      "format": "procedural-3d",
+      "dimensions": [
+        4.8,
+        2.2,
+        1.7
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-dock",
+      "name": "Lakeside Dock",
+      "description": "A low, walkable timber platform with an open approach.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-dock",
+      "format": "procedural-3d",
+      "dimensions": [
+        3.2,
+        1.2,
+        6
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-target",
+      "name": "Archery Target Prop",
+      "description": "A decorative bullseye target on a timber stand.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-target",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.6,
+        2.3,
+        1
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-activity-board",
+      "name": "Camp Quest Board",
+      "description": "Accept a trail quest, find the supply pack and badge, then return for room score.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-activity-board",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.8,
+        2.6,
+        0.65
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "quest",
+        "prompt": "Camp trail quest",
+        "quest": {
+          "id": "camp-trail",
+          "title": "Camp trail explorer",
+          "requiredItems": [
+            "camp-supply-pack",
+            "camp-trail-badge"
+          ],
+          "rewardScore": 35
+        }
+      }
+    },
+    {
+      "id": "builder-camp-flag",
+      "name": "Camp Pennant",
+      "description": "A bright camp pennant and tall flagpole for gathering spots.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-flag",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.6,
+        3.8,
+        0.5
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-supply-pack",
+      "name": "Camp Supply Pack",
+      "description": "A collectable trail backpack used by the camp quest.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-supply-pack",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.6,
+        0.8,
+        0.45
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "pickup",
+        "prompt": "Collect Camp Supply Pack"
+      }
+    },
+    {
+      "id": "builder-camp-trail-badge",
+      "name": "Trail Explorer Badge",
+      "description": "A collectable compass badge used by the camp quest.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-trail-badge",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.55,
+        0.85,
+        0.3
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "pickup",
+        "prompt": "Collect Trail Explorer Badge"
+      }
+    },
+    {
+      "id": "builder-camp-climbing-steps",
+      "name": "Trail Climbing Steps",
+      "description": "A low timber obstacle with gradual, solid steps on both sides.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-climbing-steps",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.8,
+        1.2,
+        4.8
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-camp-lake",
+      "name": "Scenic Camp Lake",
+      "description": "A shallow scenic water surface; the surrounding ground remains walkable.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "camp-lake",
+      "format": "procedural-3d",
+      "dimensions": [
+        18,
+        0.18,
+        12
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-hedge-maze",
+      "name": "Hedge maze",
+      "description": "Hedge maze activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-hedge-maze",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-neon-maze",
+      "name": "Neon labyrinth",
+      "description": "Neon labyrinth activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-neon-maze",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-dungeon-maze",
+      "name": "Dungeon maze",
+      "description": "Dungeon maze activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-dungeon-maze",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-vendor-street",
+      "name": "Vendor street",
+      "description": "Vendor street activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-vendor-street",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-creator-studios",
+      "name": "Creator studios",
+      "description": "Creator studios activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-creator-studios",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-market-square",
+      "name": "Market square",
+      "description": "Market square activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-market-square",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-blacksite",
+      "name": "Blacksite compound",
+      "description": "Blacksite compound activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-blacksite",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-cargo-yard",
+      "name": "Cargo yard",
+      "description": "Cargo yard activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-cargo-yard",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-neon-arena",
+      "name": "Neon arena",
+      "description": "Neon arena activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-neon-arena",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-desert-outpost",
+      "name": "Desert outpost",
+      "description": "Desert outpost activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-desert-outpost",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-mega-mall",
+      "name": "Mall scene",
+      "description": "Mall scene activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-mega-mall",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-office-tower",
+      "name": "Office scene",
+      "description": "Office scene activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-office-tower",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-firing-range",
+      "name": "Force training range",
+      "description": "Force training range activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-firing-range",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-scene-movie-studio",
+      "name": "Movie studio",
+      "description": "Movie studio activity scene. Place inside a larger map, then move, rotate or scale independently.",
+      "type": "lands",
+      "visibility": "public",
+      "buildAssetId": "scene-movie-studio",
+      "format": "procedural-3d",
+      "dimensions": [
+        40,
+        7,
+        40
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-estate-house",
+      "name": "Estate House",
+      "description": "Enterable four-room home with wide passages and a terrace.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "estate-house",
+      "format": "procedural-3d",
+      "dimensions": [
+        20,
+        3.6,
+        16
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-estate-yard",
+      "name": "Estate Yard",
+      "description": "Open lawn with paths, planting and a wide entrance.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "estate-yard",
+      "format": "procedural-3d",
+      "dimensions": [
+        24,
+        1.1,
+        22
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-drive-in-garage",
+      "name": "Drive-in Garage",
+      "description": "Double garage with a wide open vehicle bay and work area.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "drive-in-garage",
+      "format": "procedural-3d",
+      "dimensions": [
+        14,
+        4,
+        12
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-open-office",
+      "name": "Open Office",
+      "description": "Enterable office with workstations and a meeting room.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "open-office",
+      "format": "procedural-3d",
+      "dimensions": [
+        20,
+        3.6,
+        16
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-studio-desk",
+      "name": "Producer Studio Desk",
+      "description": "Production desk with displays, monitors and mixing surface.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "studio-desk",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.4,
+        1.4,
+        1
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-modular-wall",
+      "name": "Modular Building Wall",
+      "description": "Full-height framed wall bay for realistic room construction.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "modular-wall",
+      "format": "procedural-3d",
+      "dimensions": [
+        3.2,
+        2.8,
+        0.28
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-glass-door",
+      "name": "Glass Entry Door",
+      "description": "Human-scale glazed door with structural frame and handle.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "glass-door",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.25,
+        2.35,
+        0.18
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-loft-bed",
+      "name": "Loft Bed",
+      "description": "Raised bed, mattress, guard rail and ladder.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "loft-bed",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.15,
+        2.05,
+        1.25
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-wardrobe",
+      "name": "Walk-in Wardrobe",
+      "description": "Fitted wardrobe with shelves, rail and drawers.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "wardrobe",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.35,
+        2.35,
+        0.62
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-bathroom-vanity",
+      "name": "Bathroom Vanity",
+      "description": "Vanity cabinet, basin, mirror and fixtures.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "bathroom-vanity",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.55,
+        2.15,
+        0.58
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-dining-set",
+      "name": "Dining Set",
+      "description": "Six-place dining table and correctly scaled chairs.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "dining-set",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.8,
+        1.05,
+        2.25
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-fireplace",
+      "name": "Modern Fireplace",
+      "description": "Stone hearth, mantel and animated flame bed.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fireplace",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.2,
+        2.05,
+        0.48
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-elevator",
+      "name": "Working Elevator",
+      "description": "Framed lift entrance, split doors and call control.",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "elevator",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.5,
+        3,
+        0.55
+      ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
     }
   ]
 }

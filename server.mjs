@@ -141,9 +141,10 @@ function updateCustomMaps(mutator) {
 function customMapRecord(input = {}, ownerId = '') {
   const scene = input.scene && typeof input.scene === 'object' ? input.scene : input;
   const id = cleanText(scene.id, randomUUID()).replace(/[^a-zA-Z0-9._-]/g, '-');
-  const objects = Array.isArray(scene.objects) ? scene.objects.slice(0, 500) : [];
+  const objects = Array.isArray(scene.objects) ? scene.objects : [];
+  if(objects.length>2000)throw Object.assign(new Error('Maps support up to 2,000 editable objects. Split this scene before publishing.'),{statusCode:422});
   const now = new Date().toISOString();
-  return { id, name: cleanText(scene.name, 'Untitled custom map'), label: 'Live custom map', description: `Live creator map with ${objects.length} placed item${objects.length === 1 ? '' : 's'}.`, category: 'Live custom maps', visibility: 'public', playable: true, multiplayer: scene.gameplay?.multiplayer!==false, live: true, source: 'custom-builder', ownerId: cleanText(ownerId || input.ownerId, 'guest-builder'), builderScene: { ...scene, id, name: cleanText(scene.name, 'Untitled custom map'), version: 3, objects, gameplay: { ...(scene.gameplay || {}), multiplayer: scene.gameplay?.multiplayer!==false } }, createdAt: input.createdAt || now, updatedAt: now };
+  return { id, name: cleanText(scene.name, 'Untitled custom map'), label: 'Live custom map', description: `Live creator map with ${objects.length} placed item${objects.length === 1 ? '' : 's'}.`, category: 'Live custom maps',game:scene.sourceGame||undefined,basketball:scene.sourceBasketball||undefined,hockey:scene.sourceHockey||undefined,arcade:scene.sourceArcade||undefined,airport:scene.sourceAirport||undefined,spawn:scene.sourceSpawn||undefined,proceduralLand:!scene.baseEnvironment?.modelUrl&&!scene.baseEnvironment?.modelUrls?.length,visibility: 'public', playable: true, multiplayer: scene.gameplay?.multiplayer!==false, live: true, source: 'custom-builder', ownerId: cleanText(ownerId || input.ownerId, 'guest-builder'), builderScene: { ...scene, id, name: cleanText(scene.name, 'Untitled custom map'), version: 3, objects, gameplay: { ...(scene.gameplay || {}), multiplayer: scene.gameplay?.multiplayer!==false } }, createdAt: input.createdAt || now, updatedAt: now };
 }
 function publicEnvironment(record) { return record.visibility === 'public' || record.source === 'repository'; }
 function sanitizeFilename(value) { return String(value || 'environment.glb').split(/[\\/]/).pop().replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 90); }

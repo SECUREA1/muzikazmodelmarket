@@ -20,6 +20,7 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;return root;
 }
 export function createBuilderLand(environment) {
+    if(environment.builderScene?.sourceLayout&&environment.builderScene.sourceLayout!==environment.builderScene.layout)environment={...environment,builderScene:{...environment.builderScene,layout:environment.builderScene.sourceLayout}};
     if(environment.builderScene?.layout==='ski-resort')return createSkiResortLand();
     if(environment.builderScene?.layoutMeta?.harbor)return createHarborLand(environment);
     if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}
