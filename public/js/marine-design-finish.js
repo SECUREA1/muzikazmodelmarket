@@ -1,0 +1,47 @@
+import * as THREE from '../vendor/three/three.module.min.js';
+// Cosmetic fittings stay outside the walking/collision contract of each hull.
+export function finishMarineDesign(root,id){
+ const yacht=id==='harbor-yacht',sailboat=id==='harbor-sailboat',details=new THREE.Group();details.name='FINISHED_MARINE_DESIGN';
+ const teak=new THREE.MeshStandardMaterial({color:0x9d7148,roughness:.8}),seam=new THREE.MeshStandardMaterial({color:0x443b30,roughness:.9}),silver=new THREE.MeshStandardMaterial({color:0xc6d5db,metalness:.85,roughness:.2}),gold=new THREE.MeshStandardMaterial({color:0xc5aa71,metalness:.6,roughness:.3}),navy=new THREE.MeshStandardMaterial({color:0x143e50,roughness:.4}),ivory=new THREE.MeshStandardMaterial({color:0xe8eadc,roughness:.75}),glass=new THREE.MeshStandardMaterial({color:0x183d50,metalness:.3,roughness:.18});
+ const add=(geometry,material,position,name,parent=details)=>{const m=new THREE.Mesh(geometry,material);m.position.set(...position);m.name=name;m.userData.collider=false;m.userData.collisionDisabled=true;m.castShadow=!/CAULKING|PLANK|SEAM/.test(name);m.receiveShadow=true;parent.add(m);return m;};
+ const box=(size,position,material,name,parent)=>add(new THREE.BoxGeometry(...size),material,position,name,parent);
+ const curve=(points,radius,material,name,parent=details)=>add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),40,radius,6,false),material,[0,0,0],name,parent);
+ const label=(text,position,width,height,rotation=0,parent=details)=>{if(typeof document==='undefined')return;const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=192;const context=canvas.getContext('2d');context.clearRect(0,0,1024,192);context.fillStyle='#e9dfb9';context.textAlign='center';context.textBaseline='middle';context.font='600 88px sans-serif';context.fillText(text,512,96);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const face=add(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:THREE.DoubleSide}),position,'VESSEL_NAMEPLATE',parent);face.rotation.y=rotation;};
+ const buoy=(position,radius=.22,parent=details)=>{const ring=add(new THREE.TorusGeometry(radius,radius*.21,8,28),ivory,position,'LIFEBUOY',parent);for(let i=0;i<4;i++){const a=i*Math.PI/2;const band=add(new THREE.TorusGeometry(radius,radius*.225,6,6,.32),navy,[0,0,.002],'LIFEBUOY_BAND',ring);band.rotation.z=a;}return ring;};
+ if(yacht){
+  // Fine caulking on existing walkable deck surfaces, without extra floor slabs.
+  for(let x=-4.7;x<=4.7;x+=.23)box([.014,.003,30.2],[x,1.952,0],seam,'YACHT_TEAK_CAULKING');
+  for(let z=-14.8;z<=14.8;z+=1.8)for(let x=-4.6;x<4.6;x+=.92)box([.22,.003,.01],[x+(Math.round(z)%2)*.23,1.954,z],seam,'STAGGERED_PLANK_END');
+  for(const side of [-1,1]){
+   curve([[0,1.78,-21.0],[side*3.7,1.78,-16],[side*5.5,1.78,-5],[side*5.45,1.78,7],[side*4.2,1.78,17.4]],.045,silver,'POLISHED_HULL_SHEER');
+   curve([[0,-.12,-21],[side*3.6,-.12,-16],[side*5.4,-.12,-5],[side*5.3,-.12,7],[side*4.15,-.12,17.4]],.06,gold,'YACHT_BOOT_STRIPE');
+   for(const z of [-8,-4,0,4,8]){const porthole=add(new THREE.CylinderGeometry(.27,.27,.05,24),glass,[side*5.6,.55,z],'LOWER_HULL_PORTLIGHT');porthole.rotation.z=Math.PI/2;const rim=add(new THREE.TorusGeometry(.28,.027,6,24),silver,[side*5.64,.55,z],'PORTLIGHT_TRIM');rim.rotation.y=Math.PI/2;}
+   for(const z of [-12,0,12]){box([.25,.1,.65],[side*4.7,2.01,z],silver,'YACHT_MOORING_BITT');curve([[side*4.7,2.1,z-.35],[side*4.7,2.1,z+.35]],.045,silver,'BITT_CROSSBAR');}
+   label('TIDEGLASS',[side*5.17,1.0,-11],2.8,.42,side*Math.PI/2);
+   for(const z of [-9,-3,3])box([.02,.025,1.3],[side*4.81,2.12,z],new THREE.MeshStandardMaterial({color:0xecc78e,emissive:0x98602a,emissiveIntensity:.55}),'WARM_DECK_COURTESY_LIGHT');
+  }
+  label('TIDEGLASS • MUZIKAZ',[0,.8,17.58],5,.7);buoy([-4.78,2.9,12],.38);buoy([4.78,2.9,12],.38);
+  // Soft detailing follows existing seats without entering aisles or stairways.
+  root.traverse(node=>{if(node.name!=='SOFA_SEAT'&&node.name!=='MASTER_BED_DUVET')return;const size=node.geometry.parameters;if(!size?.width)return;const welt=curve([[-size.width/2+.06,size.height/2+.003,-size.depth/2+.06],[size.width/2-.06,size.height/2+.003,-size.depth/2+.06],[size.width/2-.06,size.height/2+.003,size.depth/2-.06],[-size.width/2+.06,size.height/2+.003,size.depth/2-.06],[-size.width/2+.06,size.height/2+.003,-size.depth/2+.06]],.014,gold,'UPHOLSTERY_PIPING');welt.position.copy(node.position);node.parent.add(welt);details.remove(welt);welt.traverse(part=>{part.userData.collider=false;part.userData.collisionDisabled=true;});});
+  // Rounded flybridge sun canopy and glazing frame the helm without blocking its eye line.
+  const canopyShape=new THREE.Shape(),w=2.9,l=3.7,r=.4;canopyShape.moveTo(-w+r,-l);canopyShape.lineTo(w-r,-l);canopyShape.quadraticCurveTo(w,-l,w,-l+r);canopyShape.lineTo(w,l-r);canopyShape.quadraticCurveTo(w,l,w-r,l);canopyShape.lineTo(-w+r,l);canopyShape.quadraticCurveTo(-w,l,-w,l-r);canopyShape.lineTo(-w,-l+r);canopyShape.quadraticCurveTo(-w,-l,-w+r,-l);const canopyGeometry=new THREE.ExtrudeGeometry(canopyShape,{depth:.12,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,steps:1});canopyGeometry.rotateX(-Math.PI/2);add(canopyGeometry,ivory,[0,6.96,-8.7],'ROUNDED_FLYBRIDGE_SUN_CANOPY');
+  for(const side of [-1,1]){curve([[side*2.65,5.06,-11.6],[side*2.65,6.9,-11.6]],.045,silver,'CANOPY_SUPPORT');curve([[side*2.65,5.06,-5.8],[side*2.65,6.9,-5.8]],.045,silver,'CANOPY_SUPPORT');const windscreen=box([2.75,1,.035],[side*1.4,5.67,-12.3],new THREE.MeshStandardMaterial({color:0x7dbbc8,transparent:true,opacity:.22,roughness:.12,side:THREE.DoubleSide,depthWrite:false}),'FLYBRIDGE_WINDSCREEN');curve([[side*.02,6.2,-12.3],[side*2.78,6.2,-12.3]],.028,silver,'WINDSCREEN_CHROME_HEADER');}
+  const helm=root.getObjectByName('FLYBRIDGE_HELM');if(helm){for(const x of [-.5,.5]){box([.7,.28,.014],[x,5.83,-10.06],navy,'YACHT_NAV_DISPLAY');for(let i=0;i<4;i++)box([.4-i*.06,.009,.008],[x,5.76+i*.04,-10.048],gold,'YACHT_CHART_COURSE');}}
+  const wheel=root.userData.boatRig.wheel;for(let i=0;i<5;i++){const a=i*Math.PI*2/5;curve([[0,0,0],[Math.sin(a)*.29,Math.cos(a)*.29,0]],.016,silver,'YACHT_WHEEL_SPOKE',wheel);}
+  const throttle=root.userData.boatRig.throttle;throttle.position.set(.85,5.5,-10);box([.25,.1,.2],[0,0,0],silver,'TWIN_THROTTLE_BASE',throttle);for(const side of [-1,1]){curve([[side*.06,0,0],[side*.06,.18,-.07]],.017,silver,'TWIN_THROTTLE_LEVER',throttle);box([.07,.06,.10],[side*.06,.19,-.07],navy,'THROTTLE_GRIP',throttle);}
+  root.userData.wakeDesign={stern:17.6,length:7,width:3};
+  const rig=root.userData.boatRig;for(let i=0;i<8;i++){const foam=add(new THREE.RingGeometry(.6,.68,20,1,0,Math.PI),new THREE.MeshBasicMaterial({color:0xe2faf6,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}),[0,-.165,18],'YACHT_WAKE_RIPPLE',rig.wake);foam.rotation.x=Math.PI/2;rig.foam.push(foam);}
+ }else{
+  for(const side of [-1,1]){
+   curve([[0,.39,-2.32],[side*.60,.39,-1.77],[side*.91,.39,-.6],[side*.92,.39,.5],[side*.70,.39,1.94]],.022,silver,'POLISHED_GUNWALE_CAP');
+   for(const z of [-1.7,1.65]){const x=side*(z<0?.48:.60);const rope=add(new THREE.TorusGeometry(.09,.018,7,24),teak,[x,.41,z],'COILED_MOORING_LINE');rope.rotation.x=Math.PI/2;add(new THREE.TorusGeometry(.065,.012,6,20),ivory,[x,.414,z],'ROPE_INNER_COIL').rotation.x=Math.PI/2;}
+   label(sailboat?'SEA GLASS':'MARINA LAUNCH',[side*.94,.17,.3],.9,.16,side*Math.PI/2);
+   for(let i=0;i<6;i++)box([.012,.003,.26],[side*.39,.648,(sailboat?1.16:.64)+i*.045],ivory,'SEAT_STITCH_DETAIL');
+  }
+  buoy([-.72,.70,1.2],.16);label(sailboat?'SEA GLASS':'MARINA LAUNCH',[0,.13,1.97],.9,.16);
+  if(sailboat){const boom=root.userData.boatRig.boom;for(let i=1;i<6;i++){const y=i*.42,width=(1-y/3)*1.85;curve([[.035,y,0],[.10,y,width*.5],[.035,y,width]],.004,ivory,'MAINSAIL_PANEL_SEAM',boom);}label('MZ 27',[.12,1.6,.35],.65,.22,Math.PI/2,boom);for(const side of [-1,1]){const winch=add(new THREE.CylinderGeometry(.065,.085,.11,16),silver,[side*.68,.47,.3],'CHROME_SHEET_WINCH');curve([[side*.71,.53,.3],[side*.53,.55,.35]],.01,silver,'WINCH_HANDLE');}curve([[0,1.89,1.2],[.1,.38,1.5]],.006,teak,'MAINSHEET');}
+  else{for(const side of [-1,1])for(let i=0;i<4;i++)box([.008,.025,.07],[side*.236,.43+i*.045,2.11],silver,'OUTBOARD_COWL_VENT');box([.26,.08,.008],[0,.55,2.272],silver,'OUTBOARD_MAKER_BADGE');}
+ }
+ const batches=new Map();for(const mesh of [...details.children]){if(!mesh.isMesh||!['BoxGeometry','CylinderGeometry','TorusGeometry'].includes(mesh.geometry.type))continue;const key=mesh.material.uuid+mesh.geometry.type+JSON.stringify(mesh.geometry.parameters);if(!batches.has(key))batches.set(key,[]);batches.get(key).push(mesh);}for(const meshes of batches.values()){if(meshes.length<4)continue;const first=meshes[0],batch=new THREE.InstancedMesh(first.geometry,first.material,meshes.length);batch.name=first.name+'_DETAIL_BATCH';batch.castShadow=first.castShadow;batch.receiveShadow=true;for(const [index,mesh]of meshes.entries()){mesh.updateMatrix();batch.setMatrixAt(index,mesh.matrix);details.remove(mesh);if(index&&mesh.geometry!==first.geometry)mesh.geometry.dispose();}details.add(batch);}
+ details.traverse(node=>{node.userData.collider=false;node.userData.collisionDisabled=true;});root.add(details);root.userData.designFinish='marine-collection-2';return root;
+}

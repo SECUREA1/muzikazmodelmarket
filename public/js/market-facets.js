@@ -26,7 +26,7 @@ export function marketFacets(record={}){
  else if(category==='avatars')assign('characters','avatar','quest');
  else if(category==='pets')assign('creatures','quest','decorate');
  else if(category==='wearables')assign(/hat|cap|helmet|hood|headphone/.test(text)?'headwear':/ring|necklace|chain|bracelet|jewel/.test(text)?'jewelry':/shirt|pant|trouser|dress|jacket|shoe|outfit/.test(text)?'outfits':'clothing','wear','avatar');
- else if(category==='flight'||category==='vehicles')assign(category==='flight'||!!AIRCRAFT_TYPES[id]||/aircraft|plane|helicopter|jetpack|rocket/.test(text)?'aircraft':/boat|ship|watercraft/.test(text)?'watercraft':'vehicles',category==='flight'||!!AIRCRAFT_TYPES[id]||/aircraft|plane|helicopter|jetpack|rocket/.test(text)?'fly':'drive','travel');
+ else if(category==='flight'||category==='vehicles')assign(category==='flight'||!!AIRCRAFT_TYPES[id]||/aircraft|plane|helicopter|jetpack|rocket/.test(text)?'aircraft':/boat|ship|watercraft|yacht|skiff/.test(text)?'watercraft':'vehicles',category==='flight'||!!AIRCRAFT_TYPES[id]||/aircraft|plane|helicopter|jetpack|rocket/.test(text)?'fly':'drive','travel');
  else if(category==='lands')assign(/deed|plot|entitle/.test(text)?'plots':'maps','travel','build');
  else if(/tree|plant|flower|rock|mushroom|bush|cactus|pond|garden/.test(text))assign('nature','decorate','build');
  else if(/terrain|landscape/.test(text))assign('terrain','build','travel');

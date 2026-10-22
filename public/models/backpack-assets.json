@@ -1565,7 +1565,7 @@
     },
     {
       "id": "builder-arcade-part-hockey",
-      "name": "Neon Junction · Ice hockey",
+      "name": "Neon Junction \u00b7 Ice hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1585,7 +1585,7 @@
     },
     {
       "id": "builder-arcade-part-shooting",
-      "name": "Neon Junction · Shooting arcade",
+      "name": "Neon Junction \u00b7 Shooting arcade",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1605,7 +1605,7 @@
     },
     {
       "id": "builder-arcade-part-basketball",
-      "name": "Neon Junction · Basketball",
+      "name": "Neon Junction \u00b7 Basketball",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1625,7 +1625,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey",
-      "name": "Neon Junction · Air hockey",
+      "name": "Neon Junction \u00b7 Air hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1645,7 +1645,7 @@
     },
     {
       "id": "builder-arcade-part-billiards",
-      "name": "Neon Junction · Billiards",
+      "name": "Neon Junction \u00b7 Billiards",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1665,7 +1665,7 @@
     },
     {
       "id": "builder-arcade-part-train",
-      "name": "Neon Junction · Park express",
+      "name": "Neon Junction \u00b7 Park express",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1685,7 +1685,7 @@
     },
     {
       "id": "builder-arcade-part-coaster",
-      "name": "Neon Junction · Skyline coaster",
+      "name": "Neon Junction \u00b7 Skyline coaster",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1705,7 +1705,7 @@
     },
     {
       "id": "builder-arcade-part-ground",
-      "name": "Neon Junction · Park foundation",
+      "name": "Neon Junction \u00b7 Park foundation",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1717,7 +1717,7 @@
     },
     {
       "id": "builder-arcade-part-paths",
-      "name": "Neon Junction · Walkway network",
+      "name": "Neon Junction \u00b7 Walkway network",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1729,7 +1729,7 @@
     },
     {
       "id": "builder-arcade-part-trees",
-      "name": "Neon Junction · Tree planting",
+      "name": "Neon Junction \u00b7 Tree planting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1741,7 +1741,7 @@
     },
     {
       "id": "builder-arcade-part-lamps",
-      "name": "Neon Junction · Park lighting",
+      "name": "Neon Junction \u00b7 Park lighting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1753,7 +1753,7 @@
     },
     {
       "id": "builder-arcade-part-fountain",
-      "name": "Neon Junction · Central fountain",
+      "name": "Neon Junction \u00b7 Central fountain",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1765,7 +1765,7 @@
     },
     {
       "id": "builder-arcade-part-benches",
-      "name": "Neon Junction · Park seating",
+      "name": "Neon Junction \u00b7 Park seating",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1777,7 +1777,7 @@
     },
     {
       "id": "builder-arcade-part-train-station",
-      "name": "Neon Junction · Train station",
+      "name": "Neon Junction \u00b7 Train station",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1789,7 +1789,7 @@
     },
     {
       "id": "builder-arcade-part-signs",
-      "name": "Neon Junction · Park entrance sign",
+      "name": "Neon Junction \u00b7 Park entrance sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1801,7 +1801,7 @@
     },
     {
       "id": "builder-arcade-part-tree",
-      "name": "Neon Junction · Individual tree",
+      "name": "Neon Junction \u00b7 Individual tree",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1813,7 +1813,7 @@
     },
     {
       "id": "builder-arcade-part-lamp",
-      "name": "Neon Junction · Individual lamp",
+      "name": "Neon Junction \u00b7 Individual lamp",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1825,7 +1825,7 @@
     },
     {
       "id": "builder-arcade-part-bench",
-      "name": "Neon Junction · Individual bench",
+      "name": "Neon Junction \u00b7 Individual bench",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1837,7 +1837,7 @@
     },
     {
       "id": "builder-arcade-part-path",
-      "name": "Neon Junction · Path tile",
+      "name": "Neon Junction \u00b7 Path tile",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1849,7 +1849,7 @@
     },
     {
       "id": "builder-arcade-part-sign",
-      "name": "Neon Junction · Arcade sign",
+      "name": "Neon Junction \u00b7 Arcade sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1861,7 +1861,7 @@
     },
     {
       "id": "builder-arcade-part-train-carriage",
-      "name": "Neon Junction · Train passenger carriage",
+      "name": "Neon Junction \u00b7 Train passenger carriage",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1873,7 +1873,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-car",
-      "name": "Neon Junction · Coaster car",
+      "name": "Neon Junction \u00b7 Coaster car",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1885,7 +1885,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-hoop",
-      "name": "Neon Junction · Basketball hoop",
+      "name": "Neon Junction \u00b7 Basketball hoop",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1897,7 +1897,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-ball",
-      "name": "Neon Junction · Basketball ball",
+      "name": "Neon Junction \u00b7 Basketball ball",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1909,7 +1909,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-goal",
-      "name": "Neon Junction · Hockey goal",
+      "name": "Neon Junction \u00b7 Hockey goal",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1921,7 +1921,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-puck",
-      "name": "Neon Junction · Hockey puck",
+      "name": "Neon Junction \u00b7 Hockey puck",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1933,7 +1933,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey-mallet",
-      "name": "Neon Junction · Air hockey mallet",
+      "name": "Neon Junction \u00b7 Air hockey mallet",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1945,7 +1945,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-cue",
-      "name": "Neon Junction · Billiard cue",
+      "name": "Neon Junction \u00b7 Billiard cue",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1957,7 +1957,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-balls",
-      "name": "Neon Junction · Billiard ball set",
+      "name": "Neon Junction \u00b7 Billiard ball set",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1969,7 +1969,7 @@
     },
     {
       "id": "builder-arcade-part-arcade-target",
-      "name": "Neon Junction · Arcade target",
+      "name": "Neon Junction \u00b7 Arcade target",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1981,7 +1981,7 @@
     },
     {
       "id": "builder-arcade-part-train-engine",
-      "name": "Neon Junction · Train locomotive",
+      "name": "Neon Junction \u00b7 Train locomotive",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1993,7 +1993,7 @@
     },
     {
       "id": "builder-arcade-part-rail-segment",
-      "name": "Neon Junction · Straight rail segment",
+      "name": "Neon Junction \u00b7 Straight rail segment",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2005,7 +2005,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-support",
-      "name": "Neon Junction · Coaster support",
+      "name": "Neon Junction \u00b7 Coaster support",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2017,7 +2017,7 @@
     },
     {
       "id": "builder-arcade-part-safety-bar",
-      "name": "Neon Junction · Coaster safety restraint",
+      "name": "Neon Junction \u00b7 Coaster safety restraint",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2447,7 +2447,7 @@
     },
     {
       "id": "backpack-courtyard-cafe",
-      "name": "Courtyard Café",
+      "name": "Courtyard Caf\u00e9",
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "courtyard-cafe",
@@ -3371,7 +3371,7 @@
         7,
         42
       ],
-      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnailUrl": "/public/images/boats/harbor-yacht.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 24,
@@ -3396,7 +3396,7 @@
         1.5,
         4.8
       ],
-      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnailUrl": "/public/images/boats/harbor-skiff.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 5,
@@ -3421,7 +3421,7 @@
         4.8,
         4.8
       ],
-      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnailUrl": "/public/images/boats/harbor-sailboat.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 5,
@@ -4292,7 +4292,7 @@
     },
     {
       "id": "builder-lot-sale-sign-5000",
-      "name": "Land Sale Sign · 5000 MZK",
+      "name": "Land Sale Sign \u00b7 5000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4310,7 +4310,7 @@
     },
     {
       "id": "builder-lot-sale-sign-7500",
-      "name": "Land Sale Sign · 7500 MZK",
+      "name": "Land Sale Sign \u00b7 7500 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4328,7 +4328,7 @@
     },
     {
       "id": "builder-lot-sale-sign-10000",
-      "name": "Land Sale Sign · 10000 MZK",
+      "name": "Land Sale Sign \u00b7 10000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4346,7 +4346,7 @@
     },
     {
       "id": "builder-lot-sale-sign-15000",
-      "name": "Land Sale Sign · 15000 MZK",
+      "name": "Land Sale Sign \u00b7 15000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4364,7 +4364,7 @@
     },
     {
       "id": "builder-lot-sale-sign-20000",
-      "name": "Land Sale Sign · 20000 MZK",
+      "name": "Land Sale Sign \u00b7 20000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4382,7 +4382,7 @@
     },
     {
       "id": "builder-lot-sale-sign-25000",
-      "name": "Land Sale Sign · 25000 MZK",
+      "name": "Land Sale Sign \u00b7 25000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
