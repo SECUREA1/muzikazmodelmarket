@@ -1,5 +1,5 @@
 import {RESORT_PRODUCTS,resortProductSettings} from './public/js/resort-products.js';
-import {startSkiRace,stepSkiRace,skiCompetitionView} from './server-ski-competition.mjs';
+import {startSkiRace,stepSkiRace,skiCompetitionView,skiLobbyCommand,stepSkiLobby,stepSkiAI} from './server-ski-competition.mjs';
 import {skiLifts,skiRuns,skiCourseStart,nearestSkiLift,startSkiLift,stepSkiLift,skiMotion,skiHeight} from './public/js/ski-resort.js';
 import {aircraftRunway,runwayClearance} from './public/js/airport-navigation.js';
 import {yachtGameCommand,stepYachtGames} from './server-yacht-games.mjs';
@@ -124,8 +124,11 @@ export class AuthoritativeRooms {
  step(room,environment){
   const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
+  if(environment.game==='ski')stepSkiLobby(sim,now);
   for(const player of Object.values(sim.players)){
    if(player.basketballAI)continue;
+   if(environment.game==='ski'&&stepSkiAI(sim,player,now,dt))continue;
+   if(environment.game==='ski'&&player.skiRace?.status==='countdown'){stepSkiRace(sim,player,player.position,now);if(player.skiRace.status==='countdown'){player.input={};player.skiSpeed=0;continue;}}
 
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom)continue;if(environment.game==='ski'&&stepSkiLift(player,dt,now))continue;if(now-player.lastSeen>1000)continue;
    const bench=sim.actors[player.seatedId];if(bench?.basketballSpectatorSeat){player.position={...bench.position};player.floor=bench.position.y;player.velocityY=0;player.grounded=true;player.input={};continue;}
@@ -297,7 +300,7 @@ export class AuthoritativeRooms {
    else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
    else if(command.action==='respawn'){player.skiLift=null;player.skiing=false;player.skiSpeed=0;if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
-   else if(command.action==='map-access'){if(player.skiLift)fail('Wait for the lift to reach the summit before travelling.',409);player.skiSpeed=0;if(player.skiRace?.status==='racing'){player.skiRace.status='cancelled';player.skiRace.message='Map travel resets a competitive run.';}
+   else if(command.action==='map-access'){if(player.skiLift)fail('Wait for the lift to reach the summit before travelling.',409);player.skiSpeed=0;if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Map travel resets a competitive run.';}
     if(player.seatedId||player.vehicleId)fail('Exit your seat or land and leave your vehicle before map travel.',409);
     if(command.entityId){
      if(!environment.airport?.enabled&&!environment.builderScene?.layoutMeta?.harbor)fail('Direct craft boarding is unavailable here.',409);
@@ -323,7 +326,7 @@ export class AuthoritativeRooms {
     }
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
    }
-   else if(command.action==='teleport-floor'){if(player.skiLift)fail('Wait for automatic summit exit before travelling.',409);if(player.skiRace?.status==='racing'){player.skiRace.status='cancelled';player.skiRace.message='Travel resets a competitive run.';}
+   else if(command.action==='teleport-floor'){if(player.skiLift)fail('Wait for automatic summit exit before travelling.',409);if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Travel resets a competitive run.';}
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);
     if(player.basketballRole==='spectator'&&sim.basketball?.state==='live'){if(!command.position||!['x','y','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid spectator floor position.',422);const accepted=constrainBasketballSpectator(player.position,command.position,sim,player);if(basketballSpectatorRestricted(command.position,sim)||distance(accepted,command.position)>.01)fail('Spectators can teleport between the stands and benches outside the active court.',409);}
     player.position=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects);
@@ -357,19 +360,28 @@ export class AuthoritativeRooms {
    else if(command.action==='ski-assist'){
     if(environment.game!=='ski')fail('Ski steering is available at Pixel Peaks.',409);player.skiAssist=command.enabled!==false;result.message=player.skiAssist?'Easy steering on. Follow the gates and use Left / Right to carve.':'Free steering on. Look and carve to steer.';
    }
+   else if(command.action?.startsWith('ski-lobby-')){
+    if(environment.game!=='ski')fail('Race lobbies are available at Pixel Peaks.',409);
+    const place=(racer,run,offset=0)=>{const start=skiCourseStart(run),point={x:start.x+offset,y:skiHeight(start.x+offset,start.z)+.02,z:start.z},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects});if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects}))throw Error('The course start is blocked. Try again shortly.');return floor;};
+    try{result.message=skiLobbyCommand(sim,player,command,now,place);}catch(error){fail(error.message,409);}
+   }
    else if(command.action==='ski-race'){
     if(environment.game!=='ski')fail('Ski races are available at Pixel Peaks.',409);
     if(player.skiLift||player.vehicleId||player.seatedId)fail('Disembark before starting a race.',409);
+    if(sim.skiCompetition?.lobby?.members.some(m=>m.actorId===player.actorId)&&sim.skiCompetition.lobby.status!=='finished')fail('Leave your multiplayer lobby before starting another race.',409);
     const run=skiRuns.find(run=>run.id===command.courseId);if(!run)fail('Choose a marked ski course.',422);
     const start=skiCourseStart(run),point={...start,y:skiHeight(start.x,start.z)+.02},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects});
     if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects}))fail('The start is occupied. Try again in a moment.',409);
-    player.position=floor;player.floor=floor.y;startSkiRace(player,run,now);result.message='Race started · '+run.name+'. Pass every gate, land jumps and cross the finish.';
+    player.position=floor;player.floor=floor.y;startSkiRace(player,run,now,{countdown:3000,mode:command.mode==='ai'?'ai':'solo'});
+    for(const [id,rival]of Object.entries(sim.players))if(rival.skiAIOwner===player.actorId)delete sim.players[id];
+    if(command.mode==='ai'){const id='ski-ai-'+player.actorId,bot=structuredClone(player);Object.assign(bot,{actorId:id,username:'Peak AI',skiAI:true,skiAIOwner:player.actorId,position:{...floor,x:floor.x+2},score:0,skiStats:{totalPoints:0,finishes:0},inventory:[],heldId:null,vehicleId:null,seatedId:null});sim.players[id]=bot;}
+    result.message='Aligned for '+run.name+' · 3, 2, 1… Collect gold clocks for extra time.';
    }
    else if(command.action==='ski-equipment'){
     if(environment.game!=='ski')fail('Ski equipment is available at Pixel Peaks.',409);
     if(player.skiLift||player.vehicleId||player.seatedId)fail('Disembark before changing equipment.',409);
     if(player.position.x>-101&&player.position.x<-59&&player.position.z>343&&player.position.z<377)fail('Walk outside the château to equip skis.',409);
-    player.skiing=!player.skiing;player.skiSpeed=0;player.skiHeading=null;if(player.skiRace?.status==='racing'){player.skiRace.status='cancelled';player.skiRace.message='Equipment change ended this run.';}result.message=player.skiing?'Skis equipped. Forward pushes, Back brakes, look to steer, Space jumps.':'Skis removed. Explore the lodge and trails on foot.';
+    player.skiing=!player.skiing;player.skiSpeed=0;player.skiHeading=null;if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Equipment change ended this run.';}result.message=player.skiing?'Skis equipped. Forward pushes, Back brakes, look to steer, Space jumps.':'Skis removed. Explore the lodge and trails on foot.';
    }
    else if(command.action==='interact'&&player.skiLift){result.message='Enjoy the chairlift ride. You will disembark safely at the summit.';}
    else if(command.action==='interact'){
@@ -385,7 +397,7 @@ export class AuthoritativeRooms {
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      const skiLift=environment.game==='ski'&&skiLifts.find(lift=>target.objectId==='ski-'+lift.id+'-base');
      if(skiLift){startSkiLift(player,skiLift,now);result.message='Boarded '+skiLift.name+'. Automatic summit arrival.';}
-     else if(environment.game==='ski'&&(target.objectId==='ski-rental'||target.modelId==='alpine-ski-service'||target.asset?.buildAssetId==='alpine-ski-service')){player.skiing=!player.skiing;player.skiSpeed=0;player.skiHeading=null;if(player.skiRace?.status==='racing'){player.skiRace.status='cancelled';player.skiRace.message='Equipment change ended this run.';}result.message=player.skiing?'Skis equipped. Forward pushes, Back brakes, look to steer.':'Skis returned. Explore the château on foot.';}
+     else if(environment.game==='ski'&&(target.objectId==='ski-rental'||target.modelId==='alpine-ski-service'||target.asset?.buildAssetId==='alpine-ski-service')){player.skiing=!player.skiing;player.skiSpeed=0;player.skiHeading=null;if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Equipment change ended this run.';}result.message=player.skiing?'Skis equipped. Forward pushes, Back brakes, look to steer.':'Skis returned. Explore the château on foot.';}
      else if(deviceDefinition(target.modelId,config)){Object.assign(result,deviceCommand(sim,manifest,player,actorId,{entityId:entity.id,operation:'open'},now));}
      else if(basketballJerseyTeam(entity)||basketballJerseyTeam(target)){const team=basketballJerseyTeam(entity)||basketballJerseyTeam(target);if(sim.basketball)assignBasketballTeam(sim,player,now,team);player.basketballJersey=team;result.message=(team==='home'?'Home':'Away')+' basketball jersey equipped.';}
 
