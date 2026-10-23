@@ -12,8 +12,8 @@ test('repository choices load editable geometry and persist the authored base',(
  assert.ok(builder.includes('!repositoryIds.has(map.id)'));
  assert.ok(!builder.includes('repository-map-frame'));
 });
-test('visible key prompt is a touch button using the same gameplay action',()=>{
- assert.ok(game.includes("builderPrompt=document.createElement('button')"));
- assert.ok(game.includes("builderPrompt.addEventListener('click',activateNearbyAction)"));
- assert.ok(game.includes("builderActionButton.addEventListener('click',activateNearbyAction)"));
+test('visible nearby action is a touch button using the shared gesture handler',()=>{
+ assert.ok(game.includes("builderActionButton=document.createElement('button')"));
+ assert.ok(game.includes('builderPrompt.hidden=true;builderActionButton.hidden=hidden'));
+ assert.ok(game.includes("bindGameActionButton(builderActionButton,activateNearbyAction)"));
 });

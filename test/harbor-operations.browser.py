@@ -24,6 +24,12 @@ try:
    dialog.get_by_role('button',name='Chase view',exact=True).click();assert page.evaluate('ops.view')=='chase';assert dialog.is_hidden()
    assert page.get_by_role('button',name='Leave stopped boat').is_disabled()
    ahead=page.get_by_role('button',name='Ahead boat');ahead.scroll_into_view_if_needed();box=ahead.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down();assert page.evaluate('ops.ahead')==1;page.mouse.up();assert page.evaluate('ops.ahead')==0
+   # Safari can refuse pointer capture; a release over another panel must stop.
+   ahead.evaluate('(button)=>{button.setPointerCapture=()=>{throw Error("Capture unavailable");};}')
+   ahead.dispatch_event('pointerdown',{'pointerId':91,'button':0,'pointerType':'touch'});assert page.evaluate('ops.ahead')==1
+   page.evaluate('window.dispatchEvent(new PointerEvent("pointerup",{pointerId:91}))');assert page.evaluate('ops.ahead')==0
+   ahead.dispatch_event('pointerdown',{'pointerId':92,'button':0,'pointerType':'touch'});assert page.evaluate('ops.ahead')==1
+   page.evaluate('window.dispatchEvent(new PointerEvent("pointercancel",{pointerId:92}))');assert page.evaluate('ops.ahead')==0
    page.get_by_role('button',name='Open boat instruments',exact=True).click();dialog.get_by_role('button',name='Moor at pier',exact=True).click();assert page.evaluate('commands.at(-1).action')=='harbor-radio';assert page.evaluate('commands.at(-1).operation')=='moor'
    dialog.get_by_role('button',name='Close',exact=True).click();page.evaluate("snapshot.actors.boat.boating.speed=0;snapshot.actors.boat.boating.anchor=true;ops.update(snapshot,'pilot',env)");page.get_by_role('button',name='Leave stopped boat').click();assert page.evaluate('commands.at(-1).action')=='interact'
    assert page.locator('.harbor-helm-controls').evaluate('(el)=>el.scrollWidth<=el.clientWidth')

@@ -63,7 +63,7 @@ async def wait_for_applied_input(responses, start, *, right_only=False):
     # The response listener may still be reading a large scene snapshot after
     # the gesture ends. Await an actual matching acknowledgement, with a bound,
     # instead of mistaking slow SwiftShader/JSON work for rejected controls.
-    deadline = time.monotonic() + 8
+    deadline = time.monotonic() + 12
     while time.monotonic() < deadline:
         for entry in responses[start:]:
             if entry['action'] != 'input' or not entry['ok']:
@@ -115,7 +115,7 @@ async def exercise_world(context, environment, base, hold_ms):
         else:
             await route.continue_()
     await page.route('**/api/rooms/*/gameplay', delayed_map_reply)
-    report = {'id': world_id, 'name': environment.get('name'), 'kind': kind, 'passed': False}
+    report = {'rasterScale': await page.evaluate('devicePixelRatio'), 'id': world_id, 'name': environment.get('name'), 'kind': kind, 'passed': False}
     started = time.monotonic()
     try:
         native_page = 'hockey.html' if kind == 'hockey' else 'arcade.html' if kind == 'arcade' else 'model-explorer.html'
@@ -177,6 +177,9 @@ async def exercise_world(context, environment, base, hold_ms):
             positions.append(await position(page, kind))
             report['mapTravel'] = True
             report['inputRequests'] = len([command for command in commands if command.get('action') == 'input'])
+            # Input requests time out at eight seconds and reconnect after one.
+            # Allow that bounded recovery before calling a busy room disconnected.
+            await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady',timeout=12000)
             state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
             assert state['serverReady'] and state['gameplayStarted'], 'The live room disconnected during sustained controls.'
             report['health'] = state['health']
@@ -206,6 +209,7 @@ async def exercise_world(context, environment, base, hold_ms):
         assert final_progress > .03, 'Rendered movement stopped after the sustained interval.'
         report['finalTouchDisplacement'] = round(final_progress, 3)
         if kind == 'house':
+            await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady',timeout=12000)
             final = await page.evaluate('MuzikazHouseExplorer.snapshot()')
             assert final['serverReady'] and final['gameplayStarted'], 'The live room disconnected after the sustained interval.'
             assert any(command.get('action') == 'input' and any(abs(command.get('input', {}).get(axis, 0)) > .1 for axis in ['side', 'forward']) for command in commands[commands_before:]), 'Fresh touch input stopped after the sustained interval.'
@@ -218,6 +222,7 @@ async def exercise_world(context, environment, base, hold_ms):
     except Exception as error:
         report['error'] = str(error)
         report['pageErrors'] = errors
+        report['recentInputs'] = [{'request':row['request'], 'ok':row['ok'], 'result':row['state'].get('result'), 'inputEpoch':row['state'].get('inputEpoch'), 'applied':row['state'].get('players',{}).get(row['state'].get('selfId'),{}).get('input')} for row in responses[-12:]]
         try:
             await page.screenshot(path='/tmp/world-input-failed-' + re.sub(r'[^a-zA-Z0-9_-]', '_', world_id) + '.png')
         except Exception:
@@ -259,8 +264,18 @@ async def main(args):
                         assert set(args.world) == {world['id'] for world in selected}, 'One or more requested worlds are absent.'
                     print(json.dumps({'availableWorlds': len(available), 'selectedWorlds': len(selected)}), flush=True)
                     results = []
-                    for world in selected:
-                        result = await exercise_world(context, world, base, args.hold_ms)
+                    semaphore = asyncio.Semaphore(args.jobs)
+                    async def check_world(world):
+                        async with semaphore:
+                            isolated = await browser.new_context(viewport={'width':390,'height':700},has_touch=True,is_mobile=True,device_scale_factor=args.device_scale,service_workers='block',reduced_motion='reduce')
+                            try:
+                                assert (await isolated.request.post(base+'/api/access/guest',data={})).status == 201
+                                result = await exercise_world(isolated, world, base, args.hold_ms)
+                            finally:
+                                await isolated.close()
+                        return result
+                    for pending in asyncio.as_completed([check_world(world) for world in selected]):
+                        result = await pending
                         results.append(result)
                         print(json.dumps(result), flush=True)
                         Path(args.report).write_text(json.dumps({'availableWorlds': len(available), 'selectedWorlds': len(selected), 'results': results}, indent=2))
@@ -275,6 +290,8 @@ async def main(args):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--world', action='append', help='Debug only this exact public world ID; repeat for several.')
+parser.add_argument('--jobs', type=int, choices=range(1,5), default=1, help='Concurrent isolated world pages (1–4).')
+parser.add_argument('--device-scale', type=float, default=1, help='Raster scale; CSS touch targets and movement checks are unchanged.')
 parser.add_argument('--hold-ms', type=int, default=1400)
 parser.add_argument('--report', default='/tmp/all-world-input-results.json')
 asyncio.run(main(parser.parse_args()))

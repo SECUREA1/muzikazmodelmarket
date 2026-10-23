@@ -107,6 +107,11 @@ try:
      session.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});neutral(page);session.detach()
     first=pads.first;box=first.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']*.2);page.mouse.down()
     page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)');page.mouse.up();neutral(page)
+    # Failed pointer capture must still receive a release over another panel.
+    first.evaluate('(stick)=>{stick.setPointerCapture=()=>{throw Error("Capture unavailable");};}')
+    first.dispatch_event('pointerdown',{'pointerId':91,'button':0,'pointerType':'touch','clientX':box['x']+box['width']/2,'clientY':box['y']+box['height']*.2})
+    page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
+    page.evaluate('window.dispatchEvent(new PointerEvent("pointerup",{pointerId:91}))');neutral(page)
     # Focus loss and blur immediately return the implement valve to neutral.
     for stop in [lambda:page.locator('canvas').focus(),lambda:page.evaluate('window.dispatchEvent(new Event("blur"))')]:
      first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)');stop();neutral(page);page.keyboard.up(directions[0][1])

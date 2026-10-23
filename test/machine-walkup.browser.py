@@ -63,6 +63,10 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       if index<2:button.tap()
       else:page.keyboard.press('f')
       s=wait(lambda s:s['players'][next(iter(s['players']))].get('vehicleId')==machine_id,'walk-up failed for '+machine)
+      if index<2:
+       page.wait_for_timeout(600);button.dispatch_event('click',{'detail':1})
+       page.wait_for_timeout(300)
+       assert state()['players'][next(iter(s['players']))].get('vehicleId')==machine_id,'Delayed touch click exited '+machine
       panel=page.locator('.construction-controls');panel.wait_for(state='visible')
       before=s['actors'][machine_id]['construction'][field]
       lever=panel.locator('.construction-work-sticks .construction-stick').last

@@ -25,8 +25,7 @@ test('companion maps share game input while actual modal dialogs still block it'
 test('radial menu retains original tool buttons and compact actions share touch and keyboard activation',async()=>{
  const module=await readFile(new URL('../public/js/game-menu-controls.js',import.meta.url),'utf8'),game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  assert.ok(module.includes('wheel.append(button)'));assert.ok(!module.includes('cloneNode'));
- assert.ok(game.includes("builderActionButton.addEventListener('click',activateNearbyAction)"));
- assert.ok(game.includes("builderActionButton.addEventListener('pointerup'"));
+ assert.ok(game.includes("bindGameActionButton(builderActionButton,activateNearbyAction)"));
  assert.ok(game.includes("if(nearbyAction.kind==='yacht-game'){yachtGames.open();return;}"));
  assert.ok(game.includes('gameplayOverlayOpen()||!yachtGames.available()'));
  assert.ok(game.includes('builderPrompt.hidden=true;builderActionButton.hidden=hidden'));

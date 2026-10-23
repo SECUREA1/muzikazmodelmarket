@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {thumbstickAxes,mountThumbstick} from '../public/js/thumbstick-input.js';
 const rect={left:20,top:100,width:200,height:120};
 function target(){const handlers=new Map();return {handlers,addEventListener(type,fn){handlers.set(type,fn);},removeEventListener(type){handlers.delete(type);},emit(type,fields={}){handlers.get(type)?.({type,pointerId:1,button:0,clientX:120,clientY:160,preventDefault(){},...fields});}};}
-function fixture(){const stick=target(),windowTarget=target(),knob={style:{}},values=[];let taps=0,enabled=true,captured=null;stick.classList={add(){},remove(){}};stick.getBoundingClientRect=()=>rect;stick.hasPointerCapture=id=>captured===id;stick.releasePointerCapture=()=>{captured=null;};const controller=mountThumbstick({stick,knob,windowTarget,capture:(_,id)=>{captured=id;},onChange:value=>values.push(value),onTap:()=>taps++,canUse:()=>enabled});return {stick,windowTarget,knob,values,controller,get taps(){return taps;},disable(){enabled=false;}};}
+function fixture({captureFails=false}={}){const stick=target(),windowTarget=target(),documentTarget=target(),knob={style:{}},values=[];let taps=0,enabled=true,captured=null;stick.classList={add(){},remove(){}};stick.getBoundingClientRect=()=>rect;stick.hasPointerCapture=id=>captured===id;stick.releasePointerCapture=()=>{captured=null;};const controller=mountThumbstick({stick,knob,windowTarget,documentTarget,capture:(_,id)=>{if(captureFails)throw Error('Capture unavailable');captured=id;},onChange:value=>values.push(value),onTap:()=>taps++,canUse:()=>enabled});return {stick,windowTarget,documentTarget,knob,values,controller,get taps(){return taps;},disable(){enabled=false;}};}
 test('both sticks respond immediately from the visible center with no added movement dead zone',()=>{
  const left=fixture(),right=fixture();for(const side of [left,right])side.stick.emit('pointerdown',{clientX:125});
  assert.deepEqual(left.values,right.values);assert.ok(left.values[0].x>0);assert.equal(left.values[0].y,0);
@@ -19,4 +19,15 @@ test('release, cancellation, lost capture and blur stop immediately without acci
 });
 test('two sticks track their own fingers and menus cancel held input',()=>{
  const a=fixture(),b=fixture();a.stick.emit('pointerdown',{pointerId:1,clientX:150});b.stick.emit('pointerdown',{pointerId:2,clientX:100});a.stick.emit('pointerup',{pointerId:2});assert.ok(a.values.at(-1).x>0);a.disable();a.stick.emit('pointermove',{pointerId:1});assert.equal(a.values.at(-1).x,0);assert.ok(b.values.at(-1).x<0);a.controller.dispose();assert.equal(a.stick.handlers.size,0);
+});
+test('failed capture and release over another panel stop input and allow the next gesture',()=>{
+ const f=fixture({captureFails:true});f.stick.emit('pointerdown',{clientX:170});assert.ok(f.values.at(-1).x>0);
+ f.windowTarget.emit('pointerup',{clientX:170,target:{}});assert.equal(f.values.at(-1).x,0);assert.equal(f.taps,0,'ending over another panel does not trigger a tap');
+ f.stick.emit('pointerdown',{pointerId:2,clientX:80});assert.ok(f.values.at(-1).x<0);f.windowTarget.emit('pointercancel',{pointerId:2});assert.equal(f.values.at(-1).x,0);
+ f.controller.dispose();assert.equal(f.windowTarget.handlers.size,0);assert.equal(f.documentTarget.handlers.size,0);
+});
+test('new primary touch recovers a missing release without stealing a second finger',()=>{
+ const f=fixture();f.stick.emit('pointerdown',{clientX:170});f.stick.emit('pointerdown',{pointerId:2,isPrimary:false,clientX:70});assert.ok(f.values.at(-1).x>0);
+ f.stick.emit('pointerdown',{pointerId:3,isPrimary:true,clientX:70});assert.ok(f.values.at(-1).x<0);
+ f.documentTarget.hidden=true;f.documentTarget.emit('visibilitychange');assert.equal(f.values.at(-1).x,0);
 });

@@ -1,6 +1,6 @@
 """Live airport/docks controls remain usable after corner panels and boarding."""
 from pathlib import Path
-import asyncio, os, socket, subprocess, tempfile
+import argparse, asyncio, os, socket, subprocess, tempfile
 from playwright.async_api import async_playwright
 
 os.chdir(Path(__file__).resolve().parents[1])
@@ -25,7 +25,7 @@ async def main():
                         except Exception:
                             await asyncio.sleep(.2)
                     assert (await context.request.post(base + '/api/access/guest', data={})).status == 201
-                    for world in ['muzikaz-airport', 'world-district-neon-docks']:
+                    for world in args.world or ['muzikaz-airport', 'world-district-neon-docks']:
                         manifest_response = await context.request.get(base + '/api/environments/' + world)
                         assert manifest_response.ok, (world, manifest_response.status)
                         manifest = await manifest_response.json()
@@ -127,6 +127,25 @@ async def main():
                         await exit_vehicle.wait_for(state='visible')
                         await exit_vehicle.click()
                         await exit_vehicle.wait_for(state='hidden')
+                        if world == 'world-district-neon-docks':
+                            # Walk-up touch boarding must not be undone by a delayed compatibility click.
+                            nearby = page.locator('.builder-nearby-action:not(.builder-portal-action)')
+                            await nearby.wait_for(state='visible')
+                            await page.wait_for_timeout(250)
+                            print('Docks walk-up action: '+str(await nearby.get_attribute('aria-label')),flush=True)
+                            async with page.expect_response(lambda reply: '/gameplay' in reply.url and reply.request.method=='POST' and (reply.request.post_data_json or {}).get('action')=='interact') as tapped:
+                                await nearby.tap()
+                            result=await (await tapped.value).json()
+                            print('Docks tap result: '+str(result.get('data',result).get('result')),flush=True)
+                            assert (await tapped.value).ok
+                            await page.wait_for_function('MuzikazHouseExplorer.snapshot().vehicleActive')
+                            await page.wait_for_timeout(600)
+                            await nearby.dispatch_event('click',{'detail':1})
+                            await page.wait_for_timeout(150)
+                            assert (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['vehicleActive'], 'Delayed touch click undid dock boarding.'
+                            if not await exit_vehicle.is_visible():await page.get_by_role('button',name='Show boat functions',exact=True).click()
+                            await exit_vehicle.click()
+                            await exit_vehicle.wait_for(state='hidden')
                         await page.locator('#house-explorer-canvas').focus()
                         await walk_from_focused_control('vehicle exit')
                         assert not errors, (world, errors)
@@ -138,4 +157,7 @@ async def main():
                 server.wait(timeout=15)
 
 
+parser=argparse.ArgumentParser()
+parser.add_argument('--world',action='append',choices=['muzikaz-airport','world-district-neon-docks'])
+args=parser.parse_args()
 asyncio.run(main())
