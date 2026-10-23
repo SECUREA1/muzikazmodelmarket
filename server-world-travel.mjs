@@ -1,5 +1,64 @@
 import {isBasketballEnvironment} from './public/js/basketball-rules.js';
 import {isDedicatedFiringRange,firingRangeLocations,rangeLocalToWorld,rangeWorldToLocal} from './public/js/firing-range.js';
+import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
+import {createHash} from 'node:crypto';
+const COMMONS_RETURN_LIMIT=128,COMMONS_RETURN_TTL=900000;
+const gap=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const returnNeeded=(sim,entry,now)=>Object.values(sim.players||{}).some(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&(player.lastPortalArrival?.from===entry.source||gap(player.position,entry.definition.transform.position)<8));
+function returnActor(entry){
+ const definition=structuredClone(entry.definition),portal=definition.gameplay.portal;
+ return {id:definition.objectId,modelId:definition.modelId,asset:structuredClone(definition.asset),name:definition.name,worldGateway:{destination:portal.targetMapId,name:definition.gameplay.prompt,ownerName:portal.ownerName,color:portal.color},position:{...definition.transform.position},rotation:{...definition.transform.rotation},scale:{...definition.transform.scale},health:100,active:true,spawned:true,arrivalReturn:true,destructible:false,definition};
+}
+/** The Commons catalogue remains paged through districts. Incoming validated
+ * trips retain a small runtime return gate without adding every saved map to
+ * that catalogue or changing its authored geometry. */
+export function syncCommonsArrivalReturns(sim,environment,manifest,now){
+ if(environment.id!=='public-commons')return [];
+ const staticTargets=new Set(manifest.objects.filter(object=>!object.objectId.startsWith('commons-arrival-return-')).map(object=>object.gameplay.portal?.targetMapId).filter(Boolean));
+ const retained=[];
+ for(const entry of sim.commonsArrivalReturns||[]){
+  if(staticTargets.has(entry.source)||entry.expiresAt<now&&!returnNeeded(sim,entry,now)){if(sim.actors[entry.definition.objectId]?.arrivalReturn)delete sim.actors[entry.definition.objectId];continue;}
+  retained.push(entry);sim.actors[entry.definition.objectId] ||= returnActor(entry);
+ }
+ sim.commonsArrivalReturns=retained;
+ return retained.map(entry=>structuredClone(entry.definition));
+}
+export function ensureCommonsArrivalReturn(sim,environment,manifest,from,sourceName,collision,objects,now){
+ if(environment.id!=='public-commons')return null;
+ const existing=sim.commonsArrivalReturns?.find(entry=>entry.source===from);
+ if(existing){existing.expiresAt=now+COMMONS_RETURN_TTL;return null;}
+ if(manifest.objects.some(object=>object.gameplay.portal?.destinationType==='map'&&object.gameplay.portal.targetMapId===from))return null;
+ const entries=sim.commonsArrivalReturns ||= [];
+ if(entries.length>=COMMONS_RETURN_LIMIT){
+  const removable=entries.filter(entry=>!returnNeeded(sim,entry,now)).sort((a,b)=>a.expiresAt-b.expiresAt)[0];
+  if(!removable)throw Object.assign(new Error('The Commons arrival gates are busy. Try entering again shortly.'),{statusCode:409});
+  entries.splice(entries.indexOf(removable),1);delete sim.actors[removable.definition.objectId];
+  manifest.objects=manifest.objects.filter(definition=>definition.objectId!==removable.definition.objectId);manifest.actors=manifest.actors.filter(definition=>definition.objectId!==removable.definition.objectId);
+ }
+ const center=collision.safeSpawn(environment,environment.spawn||{x:5,y:0,z:5}),occupied=Object.values(sim.actors).filter(actor=>actor.worldGateway&&actor.active!==false).map(actor=>actor.position);
+ let position;
+ for(const radius of [7,14,21,28,35,42,56,70,84,98,112]){
+  const steps=Math.max(8,Math.ceil(Math.PI*2*radius/7));
+  for(let step=0;step<steps;step++){
+   const angle=step/steps*Math.PI*2,candidate={x:center.x+Math.cos(angle)*radius,y:center.y,z:center.z+Math.sin(angle)*radius};
+   let floor;try{floor=collision.meetingPosition(environment,candidate,sim.actors,objects);}catch{continue;}
+   if(gap(floor,candidate)>1.25||occupied.some(other=>gap(floor,other)<6))continue;
+   // Reserve the arch footprint and a walkable arrival approach four metres
+   // in front. Each sample must retain its requested position and floor.
+   const samples=[{x:floor.x-1.1,y:floor.y,z:floor.z},{x:floor.x+1.1,y:floor.y,z:floor.z},{x:floor.x,y:floor.y,z:floor.z-4}];
+   let clear=collision.hasBodyClearance(environment,floor,.5,{actors:sim.actors,objects});
+   for(const sample of samples){let support;try{support=collision.meetingPosition(environment,sample,sim.actors,objects);}catch{clear=false;break;}if(gap(support,sample)>.35||Math.abs(support.y-floor.y)>.3||!collision.hasBodyClearance(environment,support,.5,{actors:sim.actors,objects})){clear=false;break;}}
+   if(!clear||collision.blocksShot(environment,{x:floor.x,y:floor.y+.9,z:floor.z-4},[0,0,1],3.5,sim.actors))continue;
+   position=floor;break;
+  }
+  if(position)break;
+ }
+ if(!position)throw Object.assign(new Error('No clear Commons return-gate approach is available. Please try again.'),{statusCode:409});
+ const id='commons-arrival-return-'+createHash('sha256').update(from).digest('hex').slice(0,20),name=String(sourceName||from).slice(0,100);
+ const definition=compileBuilderScene({objects:[{id,modelId:'archway',name:'Return to '+name,position,rotation:{x:0,y:0,z:0},scale:{x:.8,y:.8,z:.8},functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:5,destructible:false,prompt:'Return to '+name,portal:{enabled:true,destinationType:'map',targetMapId:from,ownerName:'Shared public world',color:'#9cffcf'}}}]}).objects[0];
+ const entry={source:from,definition,expiresAt:now+COMMONS_RETURN_TTL};entries.push(entry);sim.actors[id]=returnActor(entry);
+ return structuredClone(definition);
+}
 // Runtime travel fixtures never modify the member's authored layout.
 export function worldTravelObjects(environment,collision){
  if(!environment.travelPortals?.length)return [];

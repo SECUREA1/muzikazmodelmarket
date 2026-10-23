@@ -34,6 +34,8 @@ import {extname,join,normalize} from 'node:path';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
 import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
+import {CasinoService,CASINO_WORLD_ID} from './server-casino.mjs';
+import {CASINO_STATIONS} from './public/js/casino-config.js';
 import {LoadoutCodeStore} from './loadout-code-store.mjs';
 import {PaymentOrderStore,MUZIKAZ_PAYMENT_NETWORKS} from './payment-order-store.mjs';
 import {verifyPaymentTransaction} from './payment-verifier.mjs';
@@ -56,6 +58,7 @@ const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
 const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
+const casinoService = new CasinoService(userDatabase);
 const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_ACCOUNTS_FILE || join(dataDir, 'accounts.json'), { legacyCodesFile: process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes-rust.json'), legacyUsersFile: userDatabaseFile });
 const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDERS_FILE || join(dataDir, 'payment-orders.json'), { verifyTransaction: verifyPaymentTransaction });
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
@@ -800,6 +803,25 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
     if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
     if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
+
+    if(url.pathname==='/api/casino/state'&&req.method==='GET'){
+      const context=await memberContext(req,res);if(!context)return;
+      return sendJson(res,200,assetResponse(await casinoService.state(context.walletId,context.account.accountId)));
+    }
+    if(['/api/casino/play','/api/casino/vendor'].includes(url.pathname)&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      const input=await bodyJson(req,4096),vendor=url.pathname.endsWith('/vendor'),kind=vendor?'vendor':input.game;
+      const player=await authoritativeRooms.player(CASINO_WORLD_ID,'account:'+context.account.accountId);
+      const nearby=player&&Date.now()-player.lastSeen<15000&&!player.vehicleId&&CASINO_STATIONS.some(station=>station.kind===kind&&Math.hypot(player.position.x-station.position.x,player.position.z-station.position.z)<=7&&Math.abs(player.position.y-station.position.y)<=4);
+      if(!nearby)return authorizationError(res,409,'CASINO_STATION_REQUIRED','Walk to the '+(vendor?'casino vendor':kind+' table or machine')+' inside the casino before using MZK.','casino');
+      const result=vendor?await casinoService.vendor(context.walletId,context.account.accountId,input):await casinoService.play(context.walletId,context.account.accountId,input);
+      if(vendor)await authoritativeRooms.care('account:'+context.account.accountId,result.receipt);
+      else if(result.round?.phase==='complete'){
+        const station=CASINO_STATIONS.filter(item=>item.kind===kind).sort((a,b)=>Math.hypot(a.position.x-player.position.x,a.position.z-player.position.z)-Math.hypot(b.position.x-player.position.x,b.position.z-player.position.z))[0];
+        try{await authoritativeRooms.casinoActivity('account:'+context.account.accountId,{...result.round,stationId:station?.id});}catch(error){console.error('[Casino activity]',error.message);}
+      }
+      return sendJson(res,200,assetResponse(result));
+    }
 
     if (url.pathname === '/api/game/spend' && req.method === 'POST') {
       const active = await accountSession(req, res, true); if (!active) return;

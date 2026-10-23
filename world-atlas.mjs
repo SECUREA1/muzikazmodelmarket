@@ -20,7 +20,7 @@ export function generatedStreet(mapId,index,from,to,width=5){return {id:'street-
 export function defaultStreets(id,size){const edge=size/2-2;return [-size/4,0,size/4].flatMap((offset,index)=>[generatedStreet(id,index*2,{x:-edge,z:offset},{x:edge,z:offset}),generatedStreet(id,index*2+1,{x:offset,z:-edge},{x:offset,z:edge})]);}
 // Activity maps reserve physical working areas. Their roads are authored around
 // those areas, including when the map has been copied into a Builder draft.
-const dedicatedStreetLayout=map=>Boolean(map.airport?.enabled||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
+const dedicatedStreetLayout=map=>Boolean(map.airport?.enabled||map.game==='casino'||map.builderScene?.layout==='casino'||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
 const authoredStreets=map=>map.builderScene?.streets||map.streets||[];
 const activityStreets=(map,existing=[])=>structuredClone([...new Map([...authoredStreets(map),...existing.filter(street=>street.createdBy)].map(street=>[street.id,street])).values()]);
 function publicPlazaObjects(){

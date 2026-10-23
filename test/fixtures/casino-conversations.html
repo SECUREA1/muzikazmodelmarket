@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Casino conversation interface fixture</title><style>body{margin:0;background:#14251d;color:#eff5df;font:14px system-ui}.house-stage{position:relative;height:100dvh;min-height:350px}.world-resident-ui{top:8px!important;left:8px!important}button,input,select{font:inherit}</style></head>
+<body><main class="house-stage"></main>
+<script type="module">
+import {mountWorldResidentUI} from '../../public/js/world-resident-ui.js';
+const choices=[['day','How is your evening?'],['question','Ask about the casino'],['casino-activity','What are you doing now?'],['casino-personality','Tell me about yourself'],['casino-skills','Our skills and progress'],['casino-task','Could I help with something?'],['casino-accept','Accept this casino favor'],['casino-progress','Casino favor progress'],['casino-confirm','Confirm casino checkpoint'],['casino-cancel','Cancel casino favor']].map(([id,label])=>({id,label}));
+const host={id:'host',position:{x:0,y:0,z:0},resident:{casino:true,name:'Amira Lane',role:'Welcome host',personality:'Warm organizer',task:'welcoming new visitors',skills:{hospitality:88,social:76,poker:32},goal:{reason:'guide a guest to the promenade'},memory:[]}},guest={id:'guest',position:{x:3,y:0,z:2},resident:{casino:true,name:'Avery Stone',role:'Casino guest',personality:'Thoughtful learner',task:'watching a poker round',skills:{poker:42,social:34}}};
+window.state={serverTime:100000,actors:{host,guest},players:{me:{username:'Visitor',position:{x:0,y:0,z:1},casinoProgress:{reputation:0,skills:{hospitality:0,social:0,security:0,poker:2},cosmetics:[],completedTasks:0},npcConversation:{type:'resident',entityId:'host',instanceId:'host-conversation',status:'active',contact:{name:'Amira Lane',role:'Welcome host',channel:'Casino floor',color:'#c6ac73'},dialogueChoices:choices,conversation:[{id:'hello',speaker:'Amira Lane',text:'Welcome. What would you like to know?',at:100000}],casino:{personality:'Warm organizer',backstory:'Amira grew up helping in a family guesthouse.',activity:'welcoming new visitors',skills:host.resident.skills,relationship:{visits:1,topic:'greeting'}}}}},casinoLife:{conversations:[{id:'table-chat',participants:['host','guest'],topic:'poker strategy',lines:Array.from({length:12},(_,i)=>({speakerId:i%2?'host':'guest',text:'Table conversation '+i,at:99000+i}))}]}};
+window.commands=[];let next=0;
+window.ui=mountWorldResidentUI(document.querySelector('main'),async(action,fields)=>{
+ commands.push({action,...fields});const player=state.players.me,q=player.npcConversation;state.serverTime+=1500;
+ q.conversation.push({id:'reply-'+ ++next,speaker:'Amira Lane',text:fields.text?'You asked: '+fields.text:'I heard your request.',at:state.serverTime});q.casino.relationship.visits++;
+ if(fields.text?.includes('poker'))q.casino.relationship.rememberedGame='poker';
+ if(fields.choice==='casino-task')q.casino.taskOffer={title:'Welcome floor orientation',description:'Check the public promenade and return. No wager is required.',steps:['Check the promenade','Return to Amira'],reward:{reputation:8,skill:'hospitality',xp:12,cosmetic:'Floor guide badge'}};
+ if(fields.choice==='casino-accept')player.casinoTask={id:'favor',title:'Welcome floor orientation',residentId:'host',status:'active',index:0,deadline:state.serverTime+120000,checkpoints:[{name:'Check the central promenade',x:0,y:0,z:1,radius:3.5},{name:'Return to Amira',actorId:'host',x:0,y:0,z:0,radius:3.5}],reward:{reputation:8,skill:'hospitality',xp:12,cosmetic:'Floor guide badge'}};
+ if(fields.choice==='casino-confirm'){player.casinoTask.index++;if(player.casinoTask.index===2){player.casinoTask.status='completed';player.casinoTask.message='Favor complete.';player.casinoProgress={reputation:8,skills:{hospitality:12,social:0,security:0,poker:2},cosmetics:['Floor guide badge'],completedTasks:1};}}
+ if(fields.choice==='casino-cancel')player.casinoTask.status='cancelled';
+ ui.update(state,'me','muzikaz-casino');return {result:{message:'Amira replied.'}};
+});
+ui.update(state,'me','muzikaz-casino');window.ready=true;
+</script></body></html>

@@ -1,6 +1,8 @@
+import {isCasinoEnvironment} from './casino-config.js';
 import {roadFleetAnchors} from './road-network.js';
 import {localMapLocations} from './local-map-locations.js';
 export function questCatalog(environment){
+ if(isCasinoEnvironment(environment))return [];
  const offers=[];const add=(id,title,kind,mode,description,reward=650)=>offers.push({id,title,kind,mode,description,reward,winBonus:kind==='race'?200:0,timeLimit:600});
  if(environment?.builderScene?.layoutMeta?.harbor){
   add('patrol-raid','Smuggler interdiction','attack','gunboat','Pilot Sentinel 07, disable two armed drug-running launches, secure their cargo and return to dispatch.',1200);
@@ -37,8 +39,10 @@ export function questCatalog(environment){
 }
 export function questPoint(mission,actors={}){const point=mission?.checkpoints?.[mission.index];if(!point)return null;const actor=point.actorId&&actors[point.actorId];return actor?{...point,...actor.position}:point;}
 export function questMapTags(live,selfId){
- const mission=live?.players?.[selfId]?.vehicleMission;if(mission?.status!=='active')return [];
- const tags=[],markedActors=new Set();for(const [index,point]of (mission.checkpoints||[]).entries()){if(index<mission.index)continue;const actor=point.actorId&&live.actors?.[point.actorId],position=actor?.position||point;if(actor)markedActors.add(actor.id);tags.push({id:'mission:'+index,name:(index+1)+'. '+point.name,kind:'mission',icon:'◎',color:actor?.questRole==='hostile'?'#ff7c85':actor?.questRole==='protected'?'#72ecbb':'#ffdc82',...position,description:(index===mission.index?'Current objective':'Upcoming objective')+' · '+(point.action||'Reach beacon')+(point.dwell?' · Hold '+point.dwell+' seconds':'')+(actor?(actor.questRole==='cargo'?' · Supplies ready':' · '+Math.ceil(actor.health)+' hull'):'')});}
+ const self=live?.players?.[selfId],task=self?.casinoTask,tags=[];
+ if(task?.status==='active'){const point=task.checkpoints?.[task.index],position=point?.actorId?live.actors?.[point.actorId]?.position:point;if(position)tags.push({id:'casino-favor:'+task.id,name:(task.index+1)+'. '+point.name,kind:'mission',icon:'◎',color:'#f1ce8a',...position,walkOnly:true,description:'Casino favor · walk to this stop, pause, then confirm in People & favors. Map travel cancels the favor.'});}
+ const mission=self?.vehicleMission;if(mission?.status!=='active')return tags;
+ const markedActors=new Set();for(const [index,point]of (mission.checkpoints||[]).entries()){if(index<mission.index)continue;const actor=point.actorId&&live.actors?.[point.actorId],position=actor?.position||point;if(actor)markedActors.add(actor.id);tags.push({id:'mission:'+index,name:(index+1)+'. '+point.name,kind:'mission',icon:'◎',color:actor?.questRole==='hostile'?'#ff7c85':actor?.questRole==='protected'?'#72ecbb':'#ffdc82',...position,description:(index===mission.index?'Current objective':'Upcoming objective')+' · '+(point.action||'Reach beacon')+(point.dwell?' · Hold '+point.dwell+' seconds':'')+(actor?(actor.questRole==='cargo'?' · Supplies ready':' · '+Math.ceil(actor.health)+' hull'):'')});}
  if(mission.contactId&&live.actors?.[mission.contactId]){const contact=live.actors[mission.contactId];tags.push({id:'quest-contact:'+contact.id,name:contact.name,kind:'mission',icon:'☏',color:'#92e8cd',...contact.position,description:'Quest contact · approach and use Talk, or speak through the quest conversation panel'});}
  for(const id of mission.npcIds||[]){const actor=live.actors?.[id];if(!actor||actor.active===false||markedActors.has(id))continue;tags.push({id:'quest-npc:'+id,name:actor.name+(actor.questSecured?' · secured':''),kind:'mission',icon:actor.questSecured?'✓':actor.questRole==='hostile'?'⊕':'◆',color:actor.questSecured?'#bced8b':actor.questRole==='hostile'?'#ff7c85':'#72ecbb',...actor.position,description:actor.questSecured?'Cargo secured · engines stopped':actor.questRole==='hostile'?'Quest opponent · '+Math.ceil(actor.health)+' hull':actor.questRole==='racer'?'AI competitor · Gate '+((actor.questGate||0)+1):'Quest crew · '+Math.ceil(actor.health)+' hull'});}
  return tags;

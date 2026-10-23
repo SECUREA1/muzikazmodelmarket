@@ -7,6 +7,7 @@ import {WorldAtlas} from '../world-atlas.mjs';
 import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
+import {ensureCommonsArrivalReturn,syncCommonsArrivalReturns} from '../server-world-travel.mjs';
 
 async function setup(t){
  const dir=await mkdtemp(join(tmpdir(),'connected-portals-'));t.after(()=>rm(dir,{recursive:true,force:true}));
@@ -65,4 +66,48 @@ test('finishing a game does not lock its physical exit portals',async t=>{
  await world.store.update(id,room=>{room.simulation.match={id:'finished-game',state:'finished',results:[],participants:{}};});
  const result=await world.command(id,'interact',{entityId:gateway.id});assert.equal(result.result.destination,'public-commons');
  await assert.rejects(world.command(id,'fire',{tool:'laser',direction:[0,0,-1]}),{statusCode:409});
+});
+
+test('large Commons directories create a validated runtime return gate, preserve its retry and reload, and prune expired arrivals',async t=>{
+ const world=await setup(t);
+ await world.publish([world.base,...Array.from({length:20},(_,index)=>({...world.base,id:'additional-world-'+index,name:'Additional world '+index}))]);
+ const commons=world.get('public-commons'),authored=JSON.stringify(commons.builderScene.objects);
+ assert.ok(!commons.portalTargets.includes('builder-game'),'large directories keep the district catalogue instead of adding every map');
+ await world.command('builder-game','join');
+ await assert.rejects(world.command('public-commons','join',{travelFrom:'builder-game',travelToken:'invented'}),{code:'PORTAL_TRIP_EXPIRED'});
+ assert.equal((await world.store.get('public-commons')).simulation?.commonsArrivalReturns?.length||0,0,'forged arrival creates no shared fixture');
+ const gateway=await world.aim('builder-game','public-commons'),trip=await world.command('builder-game','interact',{entityId:gateway.id});
+ const joined=await world.command('public-commons','join',{travelFrom:'builder-game',travelToken:trip.result.travel.token});
+ const entry=Object.values(joined.actors).find(actor=>actor.worldGateway?.destination==='builder-game');
+ assert.ok(entry?.arrivalReturn);assert.match(entry.id,/^commons-arrival-return-/);assert.ok(Math.hypot(joined.players['account:alice'].position.x-entry.position.x,joined.players['account:alice'].position.z-entry.position.z)<=6);
+ assert.equal(JSON.stringify(commons.builderScene.objects),authored,'authored environment is unchanged');
+ assert.ok([...world.runtime.manifestCache.values()].every(manifest=>manifest.objects.every(object=>object.objectId!==entry.id)),'cached manifest is unchanged');
+ const repeated=await world.command('public-commons','join',{travelFrom:'builder-game',travelToken:trip.result.travel.token});
+ assert.equal(Object.values(repeated.actors).filter(actor=>actor.arrivalReturn).length,1);assert.deepEqual(repeated.players['account:alice'].position,joined.players['account:alice'].position);
+ let now=joined.serverTime;
+ const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(world.store.file),now:()=>now}),saved=await reloaded.snapshot('public-commons',commons);
+ assert.deepEqual(saved.actors[entry.id].position,entry.position);assert.equal(saved.actors[entry.id].worldGateway.destination,'builder-game');
+ const identity={accountId:'alice',walletId:'alice',username:'Alice'};
+ const back=await reloaded.command('public-commons',commons,identity,{action:'interact',entityId:entry.id,requestId:'use-saved-return'});
+ assert.equal(back.result.destination,'builder-game','persisted return gate remains usable');
+ await reloaded.command('builder-game',world.get('builder-game'),identity,{action:'join',travelFrom:'public-commons',travelToken:back.result.travel.token,requestId:'return-after-reload'});
+ now+=900001;const cleaned=await reloaded.snapshot('public-commons',commons);
+ assert.equal(cleaned.actors[entry.id],undefined);assert.equal((await reloaded.store.get('public-commons')).simulation.commonsArrivalReturns.length,0);
+});
+
+test('runtime Commons gates reserve clear approaches, retain active origins and remain bounded by room capacity',()=>{
+ const sim={actors:{},players:{}},environment={id:'public-commons',spawn:{x:0,y:0,z:0}},manifest={objects:[],actors:[]},now=100000;
+ const collision={safeSpawn:()=>({x:0,y:0,z:0}),meetingPosition:(_environment,point)=>({...point,y:0}),hasBodyClearance:()=>true,blocksShot:()=>false};
+ for(let index=0;index<128;index++){
+  const source='source-'+index,definition=ensureCommonsArrivalReturn(sim,environment,manifest,source,source,collision,{},now);
+  manifest.objects.push(definition);manifest.actors.push(definition);sim.players['player-'+index]={position:{x:0,y:0,z:0},lastSeen:now,lastPortalArrival:{from:source}};
+ }
+ assert.equal(sim.commonsArrivalReturns.length,128);
+ const positions=Object.values(sim.actors).map(actor=>actor.position);
+ for(let i=0;i<positions.length;i++)for(let j=i+1;j<positions.length;j++)assert.ok(Math.hypot(positions[i].x-positions[j].x,positions[i].z-positions[j].z)>=6,'compact return approaches remain separated');
+ assert.throws(()=>ensureCommonsArrivalReturn(sim,environment,manifest,'overflow','Overflow',collision,{},now),/arrival gates are busy/);assert.equal(sim.commonsArrivalReturns.length,128);
+ const base={objects:[],actors:[]};for(const player of Object.values(sim.players))player.lastSeen=now+900001;
+ assert.equal(syncCommonsArrivalReturns(sim,environment,base,now+900001).length,128,'active origins remain available after their ordinary TTL');
+ sim.players={};assert.equal(syncCommonsArrivalReturns(sim,environment,base,now+900002).length,0);assert.equal(Object.keys(sim.actors).length,0);
+ const blocked={...collision,hasBodyClearance:()=>false};assert.throws(()=>ensureCommonsArrivalReturn(sim,environment,base,'blocked','Blocked',blocked,{},now),/No clear Commons return-gate/);assert.equal(sim.commonsArrivalReturns.length,0);
 });

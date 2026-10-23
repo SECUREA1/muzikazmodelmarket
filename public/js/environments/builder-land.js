@@ -1,3 +1,4 @@
+import {createCasinoLand} from './casino-land.js';
 import {createSkiResortLand} from './ski-resort-land.js';
 import {createHarborLand} from './harbor-land.js';
 import {applyBuilderBaseTransform} from './builder-base.js';
@@ -21,6 +22,7 @@ function sportsLand(root,theme) {
 }
 export function createBuilderLand(environment) {
     if(environment.builderScene?.sourceLayout&&environment.builderScene.sourceLayout!==environment.builderScene.layout)environment={...environment,builderScene:{...environment.builderScene,layout:environment.builderScene.sourceLayout}};
+    if(environment.builderScene?.layout==='casino')return createCasinoLand(environment);
     if(environment.builderScene?.layout==='ski-resort')return createSkiResortLand();
     if(environment.builderScene?.layoutMeta?.harbor)return createHarborLand(environment);
     if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}

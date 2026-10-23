@@ -95,6 +95,14 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 ## In-game camera views
 
+The permanent **Starlight Grand Casino** destination includes animated dealers,
+guests, five MZK casino games, refreshments, cashier, ATM, two guards and a locked
+bank vault. Its characters have individual personalities, skills, remembered
+conversations, service routines and AI-to-AI interactions. Meet staff for walking
+favors that earn reputation and service badges. Enter it from the world directory or open
+`model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer`.
+See [casino controls and settlement](docs/casino.md).
+
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.
 
 ## VR headset play

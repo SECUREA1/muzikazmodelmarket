@@ -42234,5 +42234,2147 @@
       }
     },
     "playUrl": "model-explorer.html?environment=skyscraper-construction&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "muzikaz-casino",
+    "name": "Starlight Grand Casino",
+    "label": "A living casino · tables, slots & lounge",
+    "description": "Explore a complete animated casino with five-card draw poker, blackjack, roulette, hosted dice, twelve slot machines, AI dealers and guests, welcome and floor hosts, a refreshments vendor, cashier, ATM, two security guards and a secured bank vault. Games and refreshments use your MZK wallet.",
+    "category": "Casino & social games",
+    "game": "casino",
+    "indoor": true,
+    "outdoor": false,
+    "worldId": "skyline-deck",
+    "casino": {
+      "enabled": true,
+      "currency": "MZK",
+      "width": 80,
+      "depth": 80,
+      "vault": {
+        "locked": true,
+        "doorId": "casino-vault-door",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": -23
+        }
+      },
+      "stations": [
+        {
+          "id": "casino-poker-1",
+          "kind": "poker",
+          "name": "Emerald Poker",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": -8
+          },
+          "prompt": "Play Emerald Poker · E / Use"
+        },
+        {
+          "id": "casino-poker-2",
+          "kind": "poker",
+          "name": "Sapphire Poker",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": 9
+          },
+          "prompt": "Play Sapphire Poker · E / Use"
+        },
+        {
+          "id": "casino-blackjack-1",
+          "kind": "blackjack",
+          "name": "Blackjack · North",
+          "position": {
+            "x": 19,
+            "y": 0,
+            "z": -8
+          },
+          "prompt": "Play Blackjack · North · E / Use"
+        },
+        {
+          "id": "casino-blackjack-2",
+          "kind": "blackjack",
+          "name": "Blackjack · South",
+          "position": {
+            "x": 19,
+            "y": 0,
+            "z": 9
+          },
+          "prompt": "Play Blackjack · South · E / Use"
+        },
+        {
+          "id": "casino-roulette-1",
+          "kind": "roulette",
+          "name": "Grand Roulette",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": -24
+          },
+          "prompt": "Play Grand Roulette · E / Use"
+        },
+        {
+          "id": "casino-dice-1",
+          "kind": "dice",
+          "name": "Hosted Dice",
+          "position": {
+            "x": 20,
+            "y": 0,
+            "z": -24
+          },
+          "prompt": "Play Hosted Dice · E / Use"
+        },
+        {
+          "id": "casino-slot-1",
+          "kind": "slots",
+          "name": "Starlight Slots 1",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -15
+          },
+          "prompt": "Play Starlight Slots 1 · E / Use"
+        },
+        {
+          "id": "casino-slot-2",
+          "kind": "slots",
+          "name": "Starlight Slots 2",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -8
+          },
+          "prompt": "Play Starlight Slots 2 · E / Use"
+        },
+        {
+          "id": "casino-slot-3",
+          "kind": "slots",
+          "name": "Starlight Slots 3",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -1
+          },
+          "prompt": "Play Starlight Slots 3 · E / Use"
+        },
+        {
+          "id": "casino-slot-4",
+          "kind": "slots",
+          "name": "Starlight Slots 4",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 6
+          },
+          "prompt": "Play Starlight Slots 4 · E / Use"
+        },
+        {
+          "id": "casino-slot-5",
+          "kind": "slots",
+          "name": "Starlight Slots 5",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 13
+          },
+          "prompt": "Play Starlight Slots 5 · E / Use"
+        },
+        {
+          "id": "casino-slot-6",
+          "kind": "slots",
+          "name": "Starlight Slots 6",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 20
+          },
+          "prompt": "Play Starlight Slots 6 · E / Use"
+        },
+        {
+          "id": "casino-slot-7",
+          "kind": "slots",
+          "name": "Starlight Slots 7",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -15
+          },
+          "prompt": "Play Starlight Slots 7 · E / Use"
+        },
+        {
+          "id": "casino-slot-8",
+          "kind": "slots",
+          "name": "Starlight Slots 8",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -8
+          },
+          "prompt": "Play Starlight Slots 8 · E / Use"
+        },
+        {
+          "id": "casino-slot-9",
+          "kind": "slots",
+          "name": "Starlight Slots 9",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -1
+          },
+          "prompt": "Play Starlight Slots 9 · E / Use"
+        },
+        {
+          "id": "casino-slot-10",
+          "kind": "slots",
+          "name": "Starlight Slots 10",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 6
+          },
+          "prompt": "Play Starlight Slots 10 · E / Use"
+        },
+        {
+          "id": "casino-slot-11",
+          "kind": "slots",
+          "name": "Starlight Slots 11",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 13
+          },
+          "prompt": "Play Starlight Slots 11 · E / Use"
+        },
+        {
+          "id": "casino-slot-12",
+          "kind": "slots",
+          "name": "Starlight Slots 12",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 20
+          },
+          "prompt": "Play Starlight Slots 12 · E / Use"
+        },
+        {
+          "id": "casino-vendor",
+          "kind": "vendor",
+          "name": "Velvet Lounge Refreshments",
+          "position": {
+            "x": -22,
+            "y": 0,
+            "z": 29
+          },
+          "prompt": "Visit refreshments vendor · E / Use"
+        },
+        {
+          "id": "casino-cashier",
+          "kind": "cashier",
+          "name": "Casino Cashier",
+          "position": {
+            "x": 22,
+            "y": 0,
+            "z": 29
+          },
+          "prompt": "Use cashier · E / Use"
+        },
+        {
+          "id": "casino-atm",
+          "kind": "atm",
+          "name": "Casino ATM",
+          "position": {
+            "x": 31,
+            "y": 0,
+            "z": 29
+          },
+          "prompt": "Use ATM · E / Use"
+        },
+        {
+          "id": "casino-vault-door",
+          "kind": "vault",
+          "name": "Locked Bank Vault",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -23
+          },
+          "prompt": "Inspect locked vault · E / Use"
+        },
+        {
+          "id": "casino-host",
+          "kind": "host",
+          "name": "Casino Welcome Host",
+          "position": {
+            "x": -5,
+            "y": 0,
+            "z": 30
+          },
+          "prompt": "Casino guide · E / Use"
+        }
+      ]
+    },
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "thumbnailUrl": "/public/images/casino/starlight-casino.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 32,
+      "rotationY": 0
+    },
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "casino",
+      "mapSize": 80,
+      "objects": [
+        {
+          "id": "casino-poker-1",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Emerald Poker",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "poker",
+            "casinoStationId": "casino-poker-1",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Emerald Poker · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to emerald poker."
+          }
+        },
+        {
+          "id": "casino-poker-2",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Sapphire Poker",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": 9
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "poker",
+            "casinoStationId": "casino-poker-2",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Sapphire Poker · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to sapphire poker."
+          }
+        },
+        {
+          "id": "casino-blackjack-1",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Blackjack · North",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 19,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "blackjack",
+            "casinoStationId": "casino-blackjack-1",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Blackjack · North · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to blackjack · north."
+          }
+        },
+        {
+          "id": "casino-blackjack-2",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Blackjack · South",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 19,
+            "y": 0,
+            "z": 9
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "blackjack",
+            "casinoStationId": "casino-blackjack-2",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Blackjack · South · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to blackjack · south."
+          }
+        },
+        {
+          "id": "casino-roulette-1",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Grand Roulette",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": -24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "roulette",
+            "casinoStationId": "casino-roulette-1",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Grand Roulette · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to grand roulette."
+          }
+        },
+        {
+          "id": "casino-dice-1",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Hosted Dice",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 20,
+            "y": 0,
+            "z": -24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "dice",
+            "casinoStationId": "casino-dice-1",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Hosted Dice · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to hosted dice."
+          }
+        },
+        {
+          "id": "casino-slot-1",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-1",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 1 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 1."
+          }
+        },
+        {
+          "id": "casino-slot-2",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 2",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-2",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 2 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 2."
+          }
+        },
+        {
+          "id": "casino-slot-3",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 3",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -1
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-3",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 3 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 3."
+          }
+        },
+        {
+          "id": "casino-slot-4",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 4",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-4",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 4 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 4."
+          }
+        },
+        {
+          "id": "casino-slot-5",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 13
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-5",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 5 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 5."
+          }
+        },
+        {
+          "id": "casino-slot-6",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 6",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-6",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 6 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 6."
+          }
+        },
+        {
+          "id": "casino-slot-7",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 7",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-7",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 7 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 7."
+          }
+        },
+        {
+          "id": "casino-slot-8",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 8",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-8",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 8 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 8."
+          }
+        },
+        {
+          "id": "casino-slot-9",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 9",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": -1
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-9",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 9 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 9."
+          }
+        },
+        {
+          "id": "casino-slot-10",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 10",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-10",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 10 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 10."
+          }
+        },
+        {
+          "id": "casino-slot-11",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 11",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 13
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-11",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 11 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 11."
+          }
+        },
+        {
+          "id": "casino-slot-12",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Starlight Slots 12",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "slots",
+            "casinoStationId": "casino-slot-12",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Starlight Slots 12 · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to starlight slots 12."
+          }
+        },
+        {
+          "id": "casino-vendor",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Velvet Lounge Refreshments",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -22,
+            "y": 0,
+            "z": 29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "vendor",
+            "casinoStationId": "casino-vendor",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Visit refreshments vendor · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to velvet lounge refreshments."
+          }
+        },
+        {
+          "id": "casino-cashier",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Casino Cashier",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 22,
+            "y": 0,
+            "z": 29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "cashier",
+            "casinoStationId": "casino-cashier",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Use cashier · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to casino cashier."
+          }
+        },
+        {
+          "id": "casino-atm",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Casino ATM",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 31,
+            "y": 0,
+            "z": 29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "atm",
+            "casinoStationId": "casino-atm",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Use ATM · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to casino atm."
+          }
+        },
+        {
+          "id": "casino-vault-door",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Locked Bank Vault",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "vault",
+            "casinoStationId": "casino-vault-door",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Inspect locked vault · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "The reinforced bank vault is locked. Authorized casino staff only."
+          }
+        },
+        {
+          "id": "casino-host",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Casino Welcome Host",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -5,
+            "y": 0,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "host",
+            "casinoStationId": "casino-host",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Casino guide · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to casino welcome host."
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 2233126,
+        "casino": {
+          "enabled": true,
+          "currency": "MZK",
+          "width": 80,
+          "depth": 80,
+          "vault": {
+            "locked": true,
+            "doorId": "casino-vault-door",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": -23
+            }
+          },
+          "stations": [
+            {
+              "id": "casino-poker-1",
+              "kind": "poker",
+              "name": "Emerald Poker",
+              "position": {
+                "x": -20,
+                "y": 0,
+                "z": -8
+              },
+              "prompt": "Play Emerald Poker · E / Use"
+            },
+            {
+              "id": "casino-poker-2",
+              "kind": "poker",
+              "name": "Sapphire Poker",
+              "position": {
+                "x": -20,
+                "y": 0,
+                "z": 9
+              },
+              "prompt": "Play Sapphire Poker · E / Use"
+            },
+            {
+              "id": "casino-blackjack-1",
+              "kind": "blackjack",
+              "name": "Blackjack · North",
+              "position": {
+                "x": 19,
+                "y": 0,
+                "z": -8
+              },
+              "prompt": "Play Blackjack · North · E / Use"
+            },
+            {
+              "id": "casino-blackjack-2",
+              "kind": "blackjack",
+              "name": "Blackjack · South",
+              "position": {
+                "x": 19,
+                "y": 0,
+                "z": 9
+              },
+              "prompt": "Play Blackjack · South · E / Use"
+            },
+            {
+              "id": "casino-roulette-1",
+              "kind": "roulette",
+              "name": "Grand Roulette",
+              "position": {
+                "x": -20,
+                "y": 0,
+                "z": -24
+              },
+              "prompt": "Play Grand Roulette · E / Use"
+            },
+            {
+              "id": "casino-dice-1",
+              "kind": "dice",
+              "name": "Hosted Dice",
+              "position": {
+                "x": 20,
+                "y": 0,
+                "z": -24
+              },
+              "prompt": "Play Hosted Dice · E / Use"
+            },
+            {
+              "id": "casino-slot-1",
+              "kind": "slots",
+              "name": "Starlight Slots 1",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": -15
+              },
+              "prompt": "Play Starlight Slots 1 · E / Use"
+            },
+            {
+              "id": "casino-slot-2",
+              "kind": "slots",
+              "name": "Starlight Slots 2",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": -8
+              },
+              "prompt": "Play Starlight Slots 2 · E / Use"
+            },
+            {
+              "id": "casino-slot-3",
+              "kind": "slots",
+              "name": "Starlight Slots 3",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": -1
+              },
+              "prompt": "Play Starlight Slots 3 · E / Use"
+            },
+            {
+              "id": "casino-slot-4",
+              "kind": "slots",
+              "name": "Starlight Slots 4",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": 6
+              },
+              "prompt": "Play Starlight Slots 4 · E / Use"
+            },
+            {
+              "id": "casino-slot-5",
+              "kind": "slots",
+              "name": "Starlight Slots 5",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": 13
+              },
+              "prompt": "Play Starlight Slots 5 · E / Use"
+            },
+            {
+              "id": "casino-slot-6",
+              "kind": "slots",
+              "name": "Starlight Slots 6",
+              "position": {
+                "x": -32,
+                "y": 0,
+                "z": 20
+              },
+              "prompt": "Play Starlight Slots 6 · E / Use"
+            },
+            {
+              "id": "casino-slot-7",
+              "kind": "slots",
+              "name": "Starlight Slots 7",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": -15
+              },
+              "prompt": "Play Starlight Slots 7 · E / Use"
+            },
+            {
+              "id": "casino-slot-8",
+              "kind": "slots",
+              "name": "Starlight Slots 8",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": -8
+              },
+              "prompt": "Play Starlight Slots 8 · E / Use"
+            },
+            {
+              "id": "casino-slot-9",
+              "kind": "slots",
+              "name": "Starlight Slots 9",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": -1
+              },
+              "prompt": "Play Starlight Slots 9 · E / Use"
+            },
+            {
+              "id": "casino-slot-10",
+              "kind": "slots",
+              "name": "Starlight Slots 10",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": 6
+              },
+              "prompt": "Play Starlight Slots 10 · E / Use"
+            },
+            {
+              "id": "casino-slot-11",
+              "kind": "slots",
+              "name": "Starlight Slots 11",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": 13
+              },
+              "prompt": "Play Starlight Slots 11 · E / Use"
+            },
+            {
+              "id": "casino-slot-12",
+              "kind": "slots",
+              "name": "Starlight Slots 12",
+              "position": {
+                "x": 32,
+                "y": 0,
+                "z": 20
+              },
+              "prompt": "Play Starlight Slots 12 · E / Use"
+            },
+            {
+              "id": "casino-vendor",
+              "kind": "vendor",
+              "name": "Velvet Lounge Refreshments",
+              "position": {
+                "x": -22,
+                "y": 0,
+                "z": 29
+              },
+              "prompt": "Visit refreshments vendor · E / Use"
+            },
+            {
+              "id": "casino-cashier",
+              "kind": "cashier",
+              "name": "Casino Cashier",
+              "position": {
+                "x": 22,
+                "y": 0,
+                "z": 29
+              },
+              "prompt": "Use cashier · E / Use"
+            },
+            {
+              "id": "casino-atm",
+              "kind": "atm",
+              "name": "Casino ATM",
+              "position": {
+                "x": 31,
+                "y": 0,
+                "z": 29
+              },
+              "prompt": "Use ATM · E / Use"
+            },
+            {
+              "id": "casino-vault-door",
+              "kind": "vault",
+              "name": "Locked Bank Vault",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": -23
+              },
+              "prompt": "Inspect locked vault · E / Use"
+            },
+            {
+              "id": "casino-host",
+              "kind": "host",
+              "name": "Casino Welcome Host",
+              "position": {
+                "x": -5,
+                "y": 0,
+                "z": 30
+              },
+              "prompt": "Casino guide · E / Use"
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "arrival",
+            "name": "Grand Casino Entrance",
+            "x": 0,
+            "z": 32,
+            "width": 16,
+            "depth": 10,
+            "description": "Welcome host, clear central promenade and return gateways."
+          },
+          {
+            "id": "poker",
+            "name": "Poker Salon",
+            "x": -20,
+            "z": 1,
+            "width": 15,
+            "depth": 28,
+            "description": "Five-card draw poker with animated dealers and guests."
+          },
+          {
+            "id": "blackjack",
+            "name": "Blackjack Salon",
+            "x": 19,
+            "z": 1,
+            "width": 15,
+            "depth": 28,
+            "description": "Two dealer-hosted blackjack tables."
+          },
+          {
+            "id": "roulette",
+            "name": "Grand Roulette",
+            "x": -20,
+            "z": -24,
+            "width": 14,
+            "depth": 12,
+            "description": "Animated roulette wheel and dealer-hosted betting."
+          },
+          {
+            "id": "dice",
+            "name": "Hosted Dice",
+            "x": 20,
+            "z": -24,
+            "width": 14,
+            "depth": 12,
+            "description": "A hosted dice game with animated rolls."
+          },
+          {
+            "id": "west-slots",
+            "name": "West Slot Gallery",
+            "x": -29,
+            "z": 2,
+            "width": 9,
+            "depth": 44,
+            "description": "Six animated slot machines beside a clear gallery aisle."
+          },
+          {
+            "id": "east-slots",
+            "name": "East Slot Gallery",
+            "x": 29,
+            "z": 2,
+            "width": 9,
+            "depth": 44,
+            "description": "Six more animated slot machines."
+          },
+          {
+            "id": "lounge",
+            "name": "Velvet Lounge & Vendor",
+            "x": -22,
+            "z": 25,
+            "width": 14,
+            "depth": 12,
+            "description": "Refreshments vendor, guest lounge and social space."
+          },
+          {
+            "id": "cashier",
+            "name": "Cashier & ATM",
+            "x": 25,
+            "z": 25,
+            "width": 18,
+            "depth": 12,
+            "description": "Cashier and ATM display your authoritative MZK wallet balance and receipts."
+          },
+          {
+            "id": "vault",
+            "name": "Secured Bank Vault",
+            "x": 0,
+            "z": -19,
+            "width": 14,
+            "depth": 8,
+            "description": "View the large locked safe door from the public security corridor. Two guards protect the casino."
+          }
+        ],
+        "residents": [
+          {
+            "id": "casino-resident-guard-entry",
+            "name": "Marcus Vale",
+            "role": "Security guard",
+            "home": {
+              "x": -10,
+              "y": 0,
+              "z": 24
+            },
+            "duty": "guard",
+            "prop": "none",
+            "color": "#263b58",
+            "route": [
+              {
+                "x": -10,
+                "y": 0,
+                "z": 24
+              },
+              {
+                "x": 10,
+                "y": 0,
+                "z": 24
+              },
+              {
+                "x": 10,
+                "y": 0,
+                "z": 34
+              },
+              {
+                "x": -10,
+                "y": 0,
+                "z": 34
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guard-vault",
+            "name": "Imani Reed",
+            "role": "Security guard",
+            "home": {
+              "x": 5.5,
+              "y": 0,
+              "z": -19
+            },
+            "duty": "guard",
+            "prop": "none",
+            "color": "#263b58",
+            "route": [
+              {
+                "x": 5.5,
+                "y": 0,
+                "z": -19
+              },
+              {
+                "x": -5.5,
+                "y": 0,
+                "z": -19
+              },
+              {
+                "x": -5.5,
+                "y": 0,
+                "z": -16
+              },
+              {
+                "x": 5.5,
+                "y": 0,
+                "z": -16
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-welcome",
+            "name": "Amira Lane",
+            "role": "Welcome host",
+            "home": {
+              "x": -5,
+              "y": 0,
+              "z": 31.5
+            },
+            "duty": "host",
+            "prop": "clipboard",
+            "color": "#b79449",
+            "rotationY": 3.141592653589793
+          },
+          {
+            "id": "casino-resident-floor-host",
+            "name": "Jules Brooks",
+            "role": "Floor host",
+            "home": {
+              "x": 6,
+              "y": 0,
+              "z": 18
+            },
+            "duty": "host",
+            "prop": "clipboard",
+            "color": "#b79449",
+            "route": [
+              {
+                "x": 6,
+                "y": 0,
+                "z": 18
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "z": 2
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "z": -15
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "z": 2
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-cashier",
+            "name": "Sofia Chen",
+            "role": "Cashier",
+            "home": {
+              "x": 22,
+              "y": 0,
+              "z": 31
+            },
+            "duty": "cashier",
+            "prop": "chips",
+            "color": "#476c62"
+          },
+          {
+            "id": "casino-resident-vendor",
+            "name": "Theo Park",
+            "role": "Refreshments vendor",
+            "home": {
+              "x": -22,
+              "y": 0,
+              "z": 31
+            },
+            "duty": "vendor",
+            "prop": "tray",
+            "color": "#8e4c63"
+          },
+          {
+            "id": "casino-resident-dealer-poker-1",
+            "name": "Nora Hart",
+            "role": "Poker dealer",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": -11
+            },
+            "duty": "dealer",
+            "stationId": "casino-poker-1",
+            "game": "poker",
+            "prop": "cards",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-dealer-poker-2",
+            "name": "Ellis Hart",
+            "role": "Poker dealer",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": 6
+            },
+            "duty": "dealer",
+            "stationId": "casino-poker-2",
+            "game": "poker",
+            "prop": "cards",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-dealer-blackjack-1",
+            "name": "Maya Hart",
+            "role": "Blackjack dealer",
+            "home": {
+              "x": 19,
+              "y": 0,
+              "z": -11
+            },
+            "duty": "dealer",
+            "stationId": "casino-blackjack-1",
+            "game": "blackjack",
+            "prop": "cards",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-dealer-blackjack-2",
+            "name": "Leo Hart",
+            "role": "Blackjack dealer",
+            "home": {
+              "x": 19,
+              "y": 0,
+              "z": 6
+            },
+            "duty": "dealer",
+            "stationId": "casino-blackjack-2",
+            "game": "blackjack",
+            "prop": "cards",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-dealer-roulette-1",
+            "name": "Robin Hart",
+            "role": "Roulette dealer",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": -27
+            },
+            "duty": "dealer",
+            "stationId": "casino-roulette-1",
+            "game": "roulette",
+            "prop": "cards",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-dealer-dice-1",
+            "name": "Alex Hart",
+            "role": "Dice host",
+            "home": {
+              "x": 20,
+              "y": 0,
+              "z": -27
+            },
+            "duty": "dealer",
+            "stationId": "casino-dice-1",
+            "game": "dice",
+            "prop": "dice",
+            "color": "#384d43"
+          },
+          {
+            "id": "casino-resident-guest-1",
+            "name": "Avery Stone",
+            "role": "Casino guest",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": -4.3
+            },
+            "duty": "guest",
+            "game": "poker",
+            "prop": "chips",
+            "color": "#4a9292",
+            "route": [
+              {
+                "x": -20,
+                "y": 0,
+                "z": -4.3,
+                "activity": "poker",
+                "wait": 12000
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": -4.3,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": -4.3,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-2",
+            "name": "Morgan West",
+            "role": "Casino guest",
+            "home": {
+              "x": -23.8,
+              "y": 0,
+              "z": -8
+            },
+            "duty": "guest",
+            "game": "poker",
+            "prop": "chips",
+            "color": "#bf8166",
+            "route": [
+              {
+                "x": -23.8,
+                "y": 0,
+                "z": -8,
+                "activity": "poker",
+                "wait": 12000
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": -8,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": -8,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-3",
+            "name": "Rowan Fox",
+            "role": "Casino guest",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": 12.7
+            },
+            "duty": "guest",
+            "game": "poker",
+            "prop": "chips",
+            "color": "#577db0",
+            "route": [
+              {
+                "x": -20,
+                "y": 0,
+                "z": 12.7,
+                "activity": "poker",
+                "wait": 12000
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": 12.7,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": 12.7,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-4",
+            "name": "Casey Bell",
+            "role": "Casino guest",
+            "home": {
+              "x": 19,
+              "y": 0,
+              "z": -4.3
+            },
+            "duty": "guest",
+            "game": "blackjack",
+            "prop": "chips",
+            "color": "#9568a6",
+            "route": [
+              {
+                "x": 19,
+                "y": 0,
+                "z": -4.3,
+                "activity": "blackjack",
+                "wait": 12000
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": -4.3,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": -4.3,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-5",
+            "name": "Jamie Cole",
+            "role": "Casino guest",
+            "home": {
+              "x": 19,
+              "y": 0,
+              "z": 12.7
+            },
+            "duty": "guest",
+            "game": "blackjack",
+            "prop": "chips",
+            "color": "#4a9292",
+            "route": [
+              {
+                "x": 19,
+                "y": 0,
+                "z": 12.7,
+                "activity": "blackjack",
+                "wait": 12000
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": 12.7,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": 12.7,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-6",
+            "name": "Harper Gray",
+            "role": "Casino guest",
+            "home": {
+              "x": -20,
+              "y": 0,
+              "z": -20.2
+            },
+            "duty": "guest",
+            "game": "roulette",
+            "prop": "chips",
+            "color": "#bf8166",
+            "route": [
+              {
+                "x": -20,
+                "y": 0,
+                "z": -20.2,
+                "activity": "roulette",
+                "wait": 12000
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": -20.2,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": -7,
+                "y": 0,
+                "z": -20.2,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-7",
+            "name": "Quinn Dale",
+            "role": "Casino guest",
+            "home": {
+              "x": 20,
+              "y": 0,
+              "z": -20.2
+            },
+            "duty": "guest",
+            "game": "dice",
+            "prop": "chips",
+            "color": "#577db0",
+            "route": [
+              {
+                "x": 20,
+                "y": 0,
+                "z": -20.2,
+                "activity": "dice",
+                "wait": 12000
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": -20.2,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": 7,
+                "y": 0,
+                "z": -20.2,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-8",
+            "name": "Reese Kim",
+            "role": "Casino guest",
+            "home": {
+              "x": -29.1,
+              "y": 0,
+              "z": 6
+            },
+            "duty": "guest",
+            "game": "slots",
+            "prop": "chips",
+            "color": "#9568a6",
+            "route": [
+              {
+                "x": -29.1,
+                "y": 0,
+                "z": 6,
+                "activity": "slots",
+                "wait": 12000
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": 6,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": -27,
+                "y": 0,
+                "z": 6,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-9",
+            "name": "Riley Shaw",
+            "role": "Casino guest",
+            "home": {
+              "x": 29.1,
+              "y": 0,
+              "z": -1
+            },
+            "duty": "guest",
+            "game": "slots",
+            "prop": "chips",
+            "color": "#4a9292",
+            "route": [
+              {
+                "x": 29.1,
+                "y": 0,
+                "z": -1,
+                "activity": "slots",
+                "wait": 12000
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": -1,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": -1,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          },
+          {
+            "id": "casino-resident-guest-10",
+            "name": "Sky Monroe",
+            "role": "Casino guest",
+            "home": {
+              "x": 29.1,
+              "y": 0,
+              "z": 20
+            },
+            "duty": "guest",
+            "game": "slots",
+            "prop": "chips",
+            "color": "#bf8166",
+            "route": [
+              {
+                "x": 29.1,
+                "y": 0,
+                "z": 20,
+                "activity": "slots",
+                "wait": 12000
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": 20,
+                "activity": "walking",
+                "wait": 600
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": 23,
+                "activity": "socialising",
+                "wait": 5500
+              },
+              {
+                "x": 27,
+                "y": 0,
+                "z": 20,
+                "activity": "walking",
+                "wait": 600
+              }
+            ]
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "casino": {
+          "enabled": true
+        },
+        "radTox": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer"
   }
 ]
