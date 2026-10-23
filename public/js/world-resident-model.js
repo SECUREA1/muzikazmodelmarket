@@ -1,4 +1,5 @@
 import * as T from '../vendor/three/three.module.min.js';
+import {updateFitnessResident} from './fitness-resident-model.js';
 
 // Speech remains legible nearby without turning a character into a fullscreen
 // billboard. Values are CSS pixels converted to world units for each camera.
@@ -132,4 +133,5 @@ export function updateWorldResident(root,time){
   }
   label.texture.needsUpdate=true;
  }
+ updateFitnessResident(root,time);
 }

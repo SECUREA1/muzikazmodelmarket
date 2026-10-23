@@ -4,6 +4,8 @@ import {harborWaterAt} from './public/js/harbor-water.js';
 import {questRadio} from './server-quest-radio.mjs';
 import {isCasinoEnvironment} from './public/js/casino-config.js';
 import {stepCasinoResidents} from './server-casino-residents.mjs';
+import {isFitnessEnvironment} from './public/js/fitness-config.js';
+import {stepFitnessResidents,fitnessResidentDialogue,FITNESS_DIALOGUE_CHOICES} from './server-fitness-residents.mjs';
 import {casinoDialogue,CASINO_DIALOGUE_CHOICES} from './server-casino-dialogue.mjs';
 import {ensureResidentIntelligence,stepResidentLife,archiveResidentIntelligence,residentActivityRestricted} from './server-resident-life.mjs';
 import {residentDialogue,RESIDENT_DIALOGUE_CHOICES,residentFavorReward,awardResidentFavor} from './server-resident-dialogue.mjs';
@@ -31,7 +33,7 @@ function residentHome(environment,place,index,slot,collision,sim,objects){
 }
 function residents(sim){return Object.values(sim.actors).filter(a=>a.resident&&a.active!==false);}
 function line(sim,player,npc,now,text,human=false){const q=player.npcConversation,call=questRadio(sim,now,human?player.username:npc.resident.name,text,{conversation:true,interaction:true,questInstance:q.instanceId,recipients:[player.actorId],speakerId:human?player.actorId:npc.id,role:human?'player':npc.resident.role,voice:human?'player':npc.resident.name});q.conversation.push(call);q.conversation=q.conversation.slice(-8);if(!human&&npc.crewWorker){npc.crewWorker.speech=text;npc.crewWorker.speechUntil=now+7000;}if(!human){npc.resident.speech=text;npc.resident.speechUntil=now+7000;npc.resident.speaking=true;npc.resident.gesture=/ha!|laugh|fun|smile/i.test(text)?'laugh':'talk';npc.resident.pauseUntil=now+5000;}}
-function openConversation(sim,player,npc,now){const previous=player.npcConversation;player.npcConversation={type:'resident',entityId:npc.id,instanceId:'resident:'+npc.id+':'+day(now),status:'active',contact:{name:npc.resident.name,role:npc.resident.role,channel:'Local conversation',color:npc.resident.color},dialogueChoices:npc.resident.casino?CASINO_DIALOGUE_CHOICES:choices,conversation:previous?.entityId===npc.id?previous.conversation||[]:[]};}
+function openConversation(sim,player,npc,now){const previous=player.npcConversation;player.npcConversation={type:'resident',entityId:npc.id,instanceId:'resident:'+npc.id+':'+day(now),status:'active',contact:{name:npc.resident.name,role:npc.resident.role,channel:'Local conversation',color:npc.resident.color},dialogueChoices:npc.resident.casino?CASINO_DIALOGUE_CHOICES:npc.resident.fitness?FITNESS_DIALOGUE_CHOICES:choices,conversation:previous?.entityId===npc.id?previous.conversation||[]:[]};}
 export function crewResident(sim,id){
  const worker=sim.construction?.crew?.workers?.find(worker=>worker.id===id);if(!worker)return null;
  const job=sim.construction.crew.jobs.find(job=>job.id===worker.jobId),profile={...residentActivity({name:'Construction crew reception'}),name:worker.name,role:worker.role,index:sim.construction.crew.workers.indexOf(worker),home:worker.home||worker.position,placeName:'Construction site',color:'#b6e94d',task:job?(job.label+' · '+worker.message):worker.message||'preparing the next safe handover',ask:'Could you check the site supply board and report back? You can assign my machine jobs in Crew / Jobs.',mood:'thoughtful'};
@@ -40,7 +42,7 @@ export function crewResident(sim,id){
 const residentPosition=(sim,id)=>sim.actors[id]?.position||crewResident(sim,id)?.position;
 export function residentCommand(sim,player,environment,command,now,{collision,objects={}}={}){
  const npcId=command.entityId||player.npcConversation?.entityId,npc=sim.actors[npcId]||crewResident(sim,npcId);if(!npc?.resident||npc.active===false)throw Error('That resident is no longer in this location.');
- const choice=String(command.choice||'day'),text=String(command.text||'').trim().slice(0,180);if(!choices.some(c=>c.id===choice)&&!(npc.resident.casino&&CASINO_DIALOGUE_CHOICES.some(c=>c.id===choice))&&choice!=='talk')throw Error('Choose a listed conversation action.');
+ const choice=String(command.choice||'day'),text=String(command.text||'').trim().slice(0,180),availableChoices=npc.resident.fitness?FITNESS_DIALOGUE_CHOICES:npc.resident.casino?[...choices,...CASINO_DIALOGUE_CHOICES]:choices;if(!availableChoices.some(c=>c.id===choice)&&choice!=='talk')throw Error('Choose a listed conversation action.');
  if(npc.resident.casino&&['accept','progress','confirm','cancel'].includes(choice))throw Error('Casino staff offer game guidance and conversation; daily reward objectives are unavailable here.');
  const task=player.residentTask,remote=task?.residentId===npc.id&&task.status==='active'&&['progress','confirm','cancel'].includes(choice)||npc.resident.casino&&player.casinoTask?.residentId===npc.id&&player.casinoTask.status==='active'&&['casino-progress','casino-confirm','casino-cancel'].includes(choice);
  if(player.health<=0||now-player.lastSeen>15000)throw Error('Join the live world before speaking.');if(!remote&&gap(player.position,npc.position)>10)throw Error('Move closer to speak to this resident.');if(now<(player.residentReplyAt||0)+900)throw Error('Let the resident finish their reply.');player.residentReplyAt=now;
@@ -49,6 +51,7 @@ export function residentCommand(sim,player,environment,command,now,{collision,ob
  player.residentMet||={};const met=!!player.residentMet[npc.id];player.residentMet[npc.id]=now;
  const info=npc.resident;let reply='';let intent=choice;
  if(info.casino){const response=casinoDialogue(sim,player,npc,choice,text,now);player.npcConversation.casino=response.metadata;if(response.closed)player.npcConversation.status='closed';line(sim,player,npc,now,response.text);return info.name+' replied.';}
+ if(info.fitness){const response=fitnessResidentDialogue(sim,player,npc,choice,text,now);player.npcConversation.residentContext=response.metadata;if(response.closed)player.npcConversation.status='closed';line(sim,player,npc,now,response.text);return info.name+' replied.';}
  ensureResidentIntelligence(sim,npc,environment,now);
  if(npc.crewWorker){info.role=npc.crewWorker.role;info.task=crewResident(sim,npc.id).resident.task;info.placeName='Construction site';}
  const response=residentDialogue(sim,player,npc,environment,choice,text,now);intent=response.intent;player.npcConversation.residentContext=response.metadata;
@@ -71,6 +74,7 @@ export function residentCommand(sim,player,environment,command,now,{collision,ob
 export function stepWorldResidents(sim,environment,now,dt,{collision,objects={}}={}){
  if(sim.residentUpdatedAt!=null&&now-sim.residentUpdatedAt<150)return;dt=Math.min(.25,sim.residentUpdatedAt==null?dt:(now-sim.residentUpdatedAt)/1000);sim.residentUpdatedAt=now;
  if(isCasinoEnvironment(environment)){stepCasinoResidents(sim,environment,now,dt,{collision,objects});return;}
+ if(isFitnessEnvironment(environment)){stepFitnessResidents(sim,environment,now,dt,{collision,objects});return;}
  const available=localMapLocations(environment).map((place,index)=>({place,index})).filter(({place:p})=>Number.isFinite(p.x)&&Number.isFinite(p.z)),players=Object.values(sim.players||{}).filter(p=>p.health>0&&now-p.lastSeen<15000),selected=new Map(available.slice(0,players.length?4:8).map(p=>[p.index,p]));for(const player of players)for(const entry of [...available].sort((a,b)=>gap(a.place,player.position)-gap(b.place,player.position)).slice(0,2))selected.set(entry.index,entry);const places=[...selected.values()].slice(0,12);
  for(const npc of residents(sim)){npc.resident.isAI=true;if(!npc.resident.ageGroup){const place=available.find(entry=>entry.index===npc.resident.locationIndex)?.place;npc.resident.ageGroup=!sim.construction&&npc.id.endsWith('-1')&&/court|park|commons|lounge|play|plaza|garden/i.test(place?.name||npc.resident.placeName||'')?'child':'adult';}ensureResidentIntelligence(sim,npc,environment,now);}
  for(const npc of residents(sim))if(players.length&&!selected.has(npc.resident.locationIndex)&&players.every(p=>gap(p.position,npc.position)>60)&&!Object.values(sim.players).some(p=>p.residentTask?.status==='active'&&(p.residentTask.residentId===npc.id||p.residentTask.socialTargetId===npc.id))){archiveResidentIntelligence(sim,npc,environment,now);delete sim.actors[npc.id];if(sim.residentPlacementAttempts)delete sim.residentPlacementAttempts[npc.id];}

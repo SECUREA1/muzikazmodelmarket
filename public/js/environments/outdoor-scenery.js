@@ -1,7 +1,7 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function outdoorProfile(environment){
- const layout=environment?.builderScene?.layout||environment?.layout||'';
- const indoor=environment?.indoor===true||environment?.outdoor===false||['casino','hockey-arena','dungeon-maze','crystal-cavern','mega-mall','office-tower','creator-studios','movie-studio'].includes(layout)||/basketball/i.test(environment?.game||'');
+ const layout=environment?.builderScene?.sourceLayout||environment?.builderScene?.layout||environment?.layout||'';
+ const indoor=environment?.indoor===true||environment?.outdoor===false||['casino','fitness-centre','hockey-arena','dungeon-maze','crystal-cavern','mega-mall','office-tower','creator-studios','movie-studio'].includes(layout)||/basketball/i.test(environment?.game||'');
  if(!environment||indoor)return null;
  const name=[environment.id,environment.name,layout].join(' ').toLowerCase();
  const coast=!!environment.builderScene?.layoutMeta?.harbor||/dock|coast|island|beach/.test(name),desert=/desert|dune/.test(name);

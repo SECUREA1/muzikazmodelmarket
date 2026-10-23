@@ -3,12 +3,13 @@ import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['flight','Flight & mobility'],
- ['arcade','Arcade & card machines'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
+ ['fitness','Fitness & gym upgrades'],['arcade','Arcade & card machines'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
  ['avatars','Characters & avatars'],['vehicles','Vehicles'],['pets','Pets & creatures'],
  ['wearables','Clothing & wearables'],['lands','Land & worlds'],['props','Props & models'],['care','Care supplies'],['other','Other items']
 ].map(([id,label])=>({id,label})));
 export function marketCategory(item={},section='upgrades'){
  const reference=item.function_data?.device||item.asset?.function_data?.device||item.buildAssetId||item.asset?.buildAssetId,skuReference=String(item.sku||item.economySku||item.itemId||item.id||''),nativeId=reference||[...Object.keys(INTERACTIVE_DEVICES),...Object.keys(ENTERABLE_BUILDINGS)].find(id=>skuReference.endsWith(id));
+ if(String(nativeId||'').startsWith('fitness-')||String(item.category||item.collection||'').toLowerCase().includes('fitness'))return 'fitness';
  const device=INTERACTIVE_DEVICES[nativeId];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';
  if(device&&['video','audio','image','board'].includes(device.kind))return 'media';
  if(ENTERABLE_BUILDINGS[nativeId])return 'buildings';

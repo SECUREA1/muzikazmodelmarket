@@ -1,3 +1,4 @@
+import {createFitnessLand} from './fitness-land.js';
 import {createCasinoLand} from './casino-land.js';
 import {createSkiResortLand} from './ski-resort-land.js';
 import {createHarborLand} from './harbor-land.js';
@@ -19,10 +20,11 @@ function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
     // remain playable if SVG rasterization is unavailable.
     void applySportsSurfaces(root,{theme,maxResolution:2048}).catch(error=>console.warn('[builder-land-surfaces]',error.message));
-    root.userData.cleanSportsWorld=true;return root;
+    root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
     if(environment.builderScene?.sourceLayout&&environment.builderScene.sourceLayout!==environment.builderScene.layout)environment={...environment,builderScene:{...environment.builderScene,layout:environment.builderScene.sourceLayout}};
+    if(environment.builderScene?.layout==='fitness-centre'||environment.game==='fitness')return createFitnessLand(environment);
     if(environment.builderScene?.layout==='casino')return createCasinoLand(environment);
     if(environment.builderScene?.layout==='ski-resort')return createSkiResortLand();
     if(environment.builderScene?.layoutMeta?.harbor)return createHarborLand(environment);

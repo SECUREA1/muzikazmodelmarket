@@ -118,6 +118,15 @@ lantern trails. Accept the Alpine Ridge supply flight or camper evacuation in
 **Quests**; the campground and ranger boards offer separate walking collection
 quests. These activities award room score. See [mountain fly-in](docs/mountain-fly-in.md).
 
+## Fitness Centre
+
+The permanent **MUZIKAZ Fitness Centre** includes seven playable skill stations,
+boxing and weight equipment, two trainers, animated gym members, and connected
+local/world maps. Qualifying rounds earn server-validated, idempotent MZK rewards
+in the existing wallet. Enter from the world menu's **Fitness** category or open
+`model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&mode=multiplayer&autoplay=1`.
+See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. Builder includes a **Gold Fitness Centre** template with 58 editable equipment assemblies, and all 26 gym item types are available in **ITEMS → Fitness & gym** and **Marketplace → All game items → Fitness & gym upgrades**.
+
 ## In-game camera views
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.

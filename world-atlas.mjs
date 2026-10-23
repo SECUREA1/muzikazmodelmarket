@@ -20,7 +20,7 @@ export function generatedStreet(mapId,index,from,to,width=5){return {id:'street-
 export function defaultStreets(id,size){const edge=size/2-2;return [-size/4,0,size/4].flatMap((offset,index)=>[generatedStreet(id,index*2,{x:-edge,z:offset},{x:edge,z:offset}),generatedStreet(id,index*2+1,{x:offset,z:-edge},{x:offset,z:edge})]);}
 // Activity maps reserve physical working areas. Their roads are authored around
 // those areas, including when the map has been copied into a Builder draft.
-const dedicatedStreetLayout=map=>Boolean(map.airport?.enabled||map.game==='casino'||map.builderScene?.layout==='casino'||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
+const dedicatedStreetLayout=map=>Boolean(map.airport?.enabled||map.game==='casino'||map.builderScene?.layout==='casino'||map.game==='fitness'||map.builderScene?.layout==='fitness-centre'||map.builderScene?.sourceLayout==='fitness-centre'||map.builderScene?.sourceFitness?.enabled||map.builderScene?.layoutMeta?.fitness?.enabled||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
 const authoredStreets=map=>map.builderScene?.streets||map.streets||[];
 const activityStreets=(map,existing=[])=>structuredClone([...new Map([...authoredStreets(map),...existing.filter(street=>street.createdBy)].map(street=>[street.id,street])).values()]);
 function publicPlazaObjects(){
@@ -50,11 +50,11 @@ export function landscapedEnvironment(id,name,ownerName='MUZIKAZ community'){
 function gatewayObject(target,index,total){
  const models=target.deedId?['timber-cabin','stone-tower']:target.kind==='district'?['sci-fi-bunker','stone-tower']:['stone-tower','timber-cabin','sci-fi-bunker'];
  const columns=total>36?[-108,-90,-72,-54,-36,-18,18,36,54,72,90,108]:[-96,-64,-32,32,64,96],rowCount=Math.ceil(total/columns.length),row=Math.floor(index/columns.length),z=rowCount<=6?[-90,-62,-34,34,62,90][row]:(row-(rowCount-1)/2)*22;
- return {id:'atlas-gateway-'+createHash('sha256').update(target.mapId).digest('hex').slice(0,20),modelId:models[index%models.length],name:target.name,atlasDestination:target.mapId,atlasOwnerName:target.ownerName,atlasDeedId:target.deedId||null,atlasDistrictId:target.districtId||null,position:{x:columns[index%columns.length],y:0,z},scale:{x:1,y:1,z:1},materialSettings:{useAccent:true,accent:target.districtColor||'#caff69'},functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:'Enter '+target.name,portal:{enabled:true,destinationType:'map',targetMapId:target.mapId,ownerName:target.ownerName,deedId:target.deedId||null,color:target.districtColor||'#caff69'}}};
+ return {id:'atlas-gateway-'+createHash('sha256').update(target.mapId).digest('hex').slice(0,20),modelId:models[index%models.length],name:target.name,atlasDestination:target.mapId,atlasOwnerName:target.ownerName,atlasDeedId:target.deedId||null,atlasDistrictId:target.districtId||null,position:{x:columns[index%columns.length],y:0,z},scale:{x:1,y:1,z:1},materialSettings:{useAccent:true,accent:target.mapColor||target.districtColor||'#caff69'},functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:'Enter '+target.name,portal:{enabled:true,destinationType:'map',targetMapId:target.mapId,ownerName:target.ownerName,deedId:target.deedId||null,color:target.mapColor||target.districtColor||'#caff69'}}};
 }
 export function connectAtlasDestinations(data){
  const destinations=Object.values(data.cells).sort((a,b)=>a.mapId.localeCompare(b.mapId));
- const signature=destinations.map(cell=>[cell.mapId,cell.name,cell.ownerId,cell.ownerName,cell.deedId,cell.districtId,cell.portalTargets]).map(JSON.stringify).join('|');
+ const signature=destinations.map(cell=>[cell.mapId,cell.name,cell.ownerId,cell.ownerName,cell.deedId,cell.districtId,cell.mapColor,cell.portalTargets]).map(JSON.stringify).join('|');
  if(data.gatewayDirectorySignature===signature)return;data.gatewayDirectorySignature=signature;data.revision++;
  const byId=new Map(destinations.map(cell=>[cell.mapId,cell]));
  for(const cell of destinations){
@@ -62,7 +62,7 @@ export function connectAtlasDestinations(data){
   const scene=cell.environment.builderScene;
   const targets=(cell.portalTargets||[]).map(id=>byId.get(id)).filter(Boolean);
   const slots=scene.atlasGatewaySlots||{};for(const id of Object.keys(slots))if(!targets.some(target=>target.mapId===id))delete slots[id];const occupied=new Set(Object.values(slots));for(const target of targets)if(slots[target.mapId]===undefined){let slot=0;while(occupied.has(slot))slot++;slots[target.mapId]=slot;occupied.add(slot);}scene.atlasGatewaySlots=slots;
-  const gatewaySignature=JSON.stringify(targets.map(target=>[target.mapId,target.name,target.ownerName,target.deedId,target.districtColor,slots[target.mapId]]));
+  const gatewaySignature=JSON.stringify(targets.map(target=>[target.mapId,target.name,target.ownerName,target.deedId,target.districtColor,target.mapColor,slots[target.mapId]]));
   if(scene.atlasGatewaySignature===gatewaySignature)continue;
   scene.objects=scene.objects.filter(object=>!object.atlasDestination);
   targets.forEach(target=>scene.objects.push(gatewayObject(target,slots[target.mapId],cell.mapId==='public-commons'?Math.max(37,...Object.values(slots).map(slot=>slot+1)):36)));
@@ -103,7 +103,7 @@ export class WorldAtlas {
  constructor(file){this.file=file;this.queue=Promise.resolve();this.data=null;}
  async read(){if(!this.data){try{this.data=JSON.parse(await readFile(this.file,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;this.data={version:1,revision:0,cells:{}};}}return structuredClone(this.data);}
  transaction(change){const operation=this.queue.then(async()=>{const data=await this.read(),before=data.revision,result=await change(data);if(data.revision!==before){await mkdir(dirname(this.file),{recursive:true});const temporary=this.file+'.'+randomUUID()+'.tmp';await writeFile(temporary,JSON.stringify(data));await rename(temporary,this.file);this.data=structuredClone(data);}return result;});this.queue=operation.catch(()=>{});return operation;}
- add(data,column,row,map,generated=false){const now=new Date().toISOString(),size=Math.max(40,Math.min(512,Number(map.builderScene?.mapSize)||40));const cell={column,row,mapId:map.id,name:map.name,ownerId:map.ownerId||'community',ownerName:map.ownerName||'MUZIKAZ community',publicDestination:map.memberPlot?false:!!map.publicDestination,permanent:map.permanent===true,generated,environment:generated?map:undefined,size,streets:dedicatedStreetLayout(map)?activityStreets(map):defaultStreets(map.id,size),meetings:structuredClone(map.landLots?map.meetingPoints||[]:[]),kind:map.memberPlot?'deed':generated?'district':map.source==='custom-builder'?'saved-map':'map',deedId:map.deedId||null,worldId:map.worldId||null,baseEnvironmentId:map.baseEnvironmentId||null,description:map.description||'',createdAt:now,updatedAt:now};data.cells[column+','+row]=cell;data.revision++;return cell;}
+ add(data,column,row,map,generated=false){const now=new Date().toISOString(),size=Math.max(40,Math.min(512,Number(map.builderScene?.mapSize)||40));const cell={column,row,mapId:map.id,name:map.name,ownerId:map.ownerId||'community',ownerName:map.ownerName||'MUZIKAZ community',publicDestination:map.memberPlot?false:!!map.publicDestination,permanent:map.permanent===true,generated,environment:generated?map:undefined,size,streets:dedicatedStreetLayout(map)?activityStreets(map):defaultStreets(map.id,size),meetings:structuredClone(map.landLots?map.meetingPoints||[]:[]),kind:map.memberPlot?'deed':generated?'district':map.source==='custom-builder'?'saved-map':'map',deedId:map.deedId||null,worldId:map.worldId||null,baseEnvironmentId:map.baseEnvironmentId||null,mapColor:map.mapColor||null,mapTheme:map.mapTheme||null,description:map.description||'',createdAt:now,updatedAt:now};data.cells[column+','+row]=cell;data.revision++;return cell;}
  async synchronize(maps=[],{complete=false}={}){return this.transaction(data=>{
   if(!data.cells['0,0'])this.add(data,0,0,landscapedEnvironment('public-commons','Public Commons'),true);
   const listed=maps.filter(map=>map.visibility!=='private'&&map.playable!==false),ids=new Set(listed.map(map=>map.id));
@@ -112,7 +112,7 @@ export class WorldAtlas {
   for(const map of listed){
    let existing=Object.values(data.cells).find(cell=>cell.mapId===map.id);if(!existing){allocateCell(this,data,map);continue;}
    const size=Math.max(40,Math.min(512,Number(map.builderScene?.mapSize)||40));
-   const metadata={name:map.name,ownerId:map.ownerId||existing.ownerId,ownerName:map.ownerName||existing.ownerName,kind:map.memberPlot?'deed':map.source==='custom-builder'?'saved-map':'map',deedId:map.deedId||null,worldId:map.worldId||null,baseEnvironmentId:map.baseEnvironmentId||null,description:map.description||'',permanent:map.permanent===true,publicDestination:map.memberPlot?false:!!map.publicDestination,size};
+   const metadata={name:map.name,ownerId:map.ownerId||existing.ownerId,ownerName:map.ownerName||existing.ownerName,kind:map.memberPlot?'deed':map.source==='custom-builder'?'saved-map':'map',deedId:map.deedId||null,worldId:map.worldId||null,baseEnvironmentId:map.baseEnvironmentId||null,mapColor:map.mapColor||null,mapTheme:map.mapTheme||null,description:map.description||'',permanent:map.permanent===true,publicDestination:map.memberPlot?false:!!map.publicDestination,size};
    if(Object.entries(metadata).some(([key,value])=>existing[key]!==value)){
     if(existing.size!==size){const ratio=size/existing.size;for(const street of existing.streets)for(const point of [street.from,street.to]){point.x*=ratio;point.z*=ratio;}}
     Object.assign(existing,metadata);existing.updatedAt=new Date().toISOString();data.revision++;

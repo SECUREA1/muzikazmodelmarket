@@ -1579,7 +1579,7 @@
     },
     {
       "id": "builder-arcade-part-hockey",
-      "name": "Neon Junction \u00b7 Ice hockey",
+      "name": "Neon Junction · Ice hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1599,7 +1599,7 @@
     },
     {
       "id": "builder-arcade-part-shooting",
-      "name": "Neon Junction \u00b7 Shooting arcade",
+      "name": "Neon Junction · Shooting arcade",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1619,7 +1619,7 @@
     },
     {
       "id": "builder-arcade-part-basketball",
-      "name": "Neon Junction \u00b7 Basketball",
+      "name": "Neon Junction · Basketball",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1639,7 +1639,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey",
-      "name": "Neon Junction \u00b7 Air hockey",
+      "name": "Neon Junction · Air hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1659,7 +1659,7 @@
     },
     {
       "id": "builder-arcade-part-billiards",
-      "name": "Neon Junction \u00b7 Billiards",
+      "name": "Neon Junction · Billiards",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1679,7 +1679,7 @@
     },
     {
       "id": "builder-arcade-part-train",
-      "name": "Neon Junction \u00b7 Park express",
+      "name": "Neon Junction · Park express",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1699,7 +1699,7 @@
     },
     {
       "id": "builder-arcade-part-coaster",
-      "name": "Neon Junction \u00b7 Skyline coaster",
+      "name": "Neon Junction · Skyline coaster",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1719,7 +1719,7 @@
     },
     {
       "id": "builder-arcade-part-ground",
-      "name": "Neon Junction \u00b7 Park foundation",
+      "name": "Neon Junction · Park foundation",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1731,7 +1731,7 @@
     },
     {
       "id": "builder-arcade-part-paths",
-      "name": "Neon Junction \u00b7 Walkway network",
+      "name": "Neon Junction · Walkway network",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1743,7 +1743,7 @@
     },
     {
       "id": "builder-arcade-part-trees",
-      "name": "Neon Junction \u00b7 Tree planting",
+      "name": "Neon Junction · Tree planting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1755,7 +1755,7 @@
     },
     {
       "id": "builder-arcade-part-lamps",
-      "name": "Neon Junction \u00b7 Park lighting",
+      "name": "Neon Junction · Park lighting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1767,7 +1767,7 @@
     },
     {
       "id": "builder-arcade-part-fountain",
-      "name": "Neon Junction \u00b7 Central fountain",
+      "name": "Neon Junction · Central fountain",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1779,7 +1779,7 @@
     },
     {
       "id": "builder-arcade-part-benches",
-      "name": "Neon Junction \u00b7 Park seating",
+      "name": "Neon Junction · Park seating",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1791,7 +1791,7 @@
     },
     {
       "id": "builder-arcade-part-train-station",
-      "name": "Neon Junction \u00b7 Train station",
+      "name": "Neon Junction · Train station",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1803,7 +1803,7 @@
     },
     {
       "id": "builder-arcade-part-signs",
-      "name": "Neon Junction \u00b7 Park entrance sign",
+      "name": "Neon Junction · Park entrance sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1815,7 +1815,7 @@
     },
     {
       "id": "builder-arcade-part-tree",
-      "name": "Neon Junction \u00b7 Individual tree",
+      "name": "Neon Junction · Individual tree",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1827,7 +1827,7 @@
     },
     {
       "id": "builder-arcade-part-lamp",
-      "name": "Neon Junction \u00b7 Individual lamp",
+      "name": "Neon Junction · Individual lamp",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1839,7 +1839,7 @@
     },
     {
       "id": "builder-arcade-part-bench",
-      "name": "Neon Junction \u00b7 Individual bench",
+      "name": "Neon Junction · Individual bench",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1851,7 +1851,7 @@
     },
     {
       "id": "builder-arcade-part-path",
-      "name": "Neon Junction \u00b7 Path tile",
+      "name": "Neon Junction · Path tile",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1863,7 +1863,7 @@
     },
     {
       "id": "builder-arcade-part-sign",
-      "name": "Neon Junction \u00b7 Arcade sign",
+      "name": "Neon Junction · Arcade sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1875,7 +1875,7 @@
     },
     {
       "id": "builder-arcade-part-train-carriage",
-      "name": "Neon Junction \u00b7 Train passenger carriage",
+      "name": "Neon Junction · Train passenger carriage",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1887,7 +1887,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-car",
-      "name": "Neon Junction \u00b7 Coaster car",
+      "name": "Neon Junction · Coaster car",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1899,7 +1899,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-hoop",
-      "name": "Neon Junction \u00b7 Basketball hoop",
+      "name": "Neon Junction · Basketball hoop",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1911,7 +1911,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-ball",
-      "name": "Neon Junction \u00b7 Basketball ball",
+      "name": "Neon Junction · Basketball ball",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1923,7 +1923,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-goal",
-      "name": "Neon Junction \u00b7 Hockey goal",
+      "name": "Neon Junction · Hockey goal",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1935,7 +1935,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-puck",
-      "name": "Neon Junction \u00b7 Hockey puck",
+      "name": "Neon Junction · Hockey puck",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1947,7 +1947,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey-mallet",
-      "name": "Neon Junction \u00b7 Air hockey mallet",
+      "name": "Neon Junction · Air hockey mallet",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1959,7 +1959,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-cue",
-      "name": "Neon Junction \u00b7 Billiard cue",
+      "name": "Neon Junction · Billiard cue",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1971,7 +1971,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-balls",
-      "name": "Neon Junction \u00b7 Billiard ball set",
+      "name": "Neon Junction · Billiard ball set",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1983,7 +1983,7 @@
     },
     {
       "id": "builder-arcade-part-arcade-target",
-      "name": "Neon Junction \u00b7 Arcade target",
+      "name": "Neon Junction · Arcade target",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1995,7 +1995,7 @@
     },
     {
       "id": "builder-arcade-part-train-engine",
-      "name": "Neon Junction \u00b7 Train locomotive",
+      "name": "Neon Junction · Train locomotive",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2007,7 +2007,7 @@
     },
     {
       "id": "builder-arcade-part-rail-segment",
-      "name": "Neon Junction \u00b7 Straight rail segment",
+      "name": "Neon Junction · Straight rail segment",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2019,7 +2019,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-support",
-      "name": "Neon Junction \u00b7 Coaster support",
+      "name": "Neon Junction · Coaster support",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2031,7 +2031,7 @@
     },
     {
       "id": "builder-arcade-part-safety-bar",
-      "name": "Neon Junction \u00b7 Coaster safety restraint",
+      "name": "Neon Junction · Coaster safety restraint",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2461,7 +2461,7 @@
     },
     {
       "id": "backpack-courtyard-cafe",
-      "name": "Courtyard Caf\u00e9",
+      "name": "Courtyard Café",
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "courtyard-cafe",
@@ -4306,7 +4306,7 @@
     },
     {
       "id": "builder-lot-sale-sign-5000",
-      "name": "Land Sale Sign \u00b7 5000 MZK",
+      "name": "Land Sale Sign · 5000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4324,7 +4324,7 @@
     },
     {
       "id": "builder-lot-sale-sign-7500",
-      "name": "Land Sale Sign \u00b7 7500 MZK",
+      "name": "Land Sale Sign · 7500 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4342,7 +4342,7 @@
     },
     {
       "id": "builder-lot-sale-sign-10000",
-      "name": "Land Sale Sign \u00b7 10000 MZK",
+      "name": "Land Sale Sign · 10000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4360,7 +4360,7 @@
     },
     {
       "id": "builder-lot-sale-sign-15000",
-      "name": "Land Sale Sign \u00b7 15000 MZK",
+      "name": "Land Sale Sign · 15000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4378,7 +4378,7 @@
     },
     {
       "id": "builder-lot-sale-sign-20000",
-      "name": "Land Sale Sign \u00b7 20000 MZK",
+      "name": "Land Sale Sign · 20000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4396,7 +4396,7 @@
     },
     {
       "id": "builder-lot-sale-sign-25000",
-      "name": "Land Sale Sign \u00b7 25000 MZK",
+      "name": "Land Sale Sign · 25000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4542,6 +4542,864 @@
       "buildAssetId": "construction-steel-beam",
       "description": "Eighteen metre structural steel beam with lift points for skyscraper construction.",
       "behavior": "decor"
+    },
+    {
+      "id": "builder-fitness-boxing-ring",
+      "name": "Gold Boxing Ring",
+      "description": "Open-entry training ring with padded gold corners, three ropes and a low canvas apron.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-boxing-ring",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        12.4,
+        2.24,
+        12.4
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 850,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "boxing",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0.16,
+          "z": 4
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Boxing Ring",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-heavy-bag",
+      "name": "Gold Heavy Bag",
+      "description": "Freestanding steel suspension frame with a gold striking bag, chains and padded bands.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-heavy-bag",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.8,
+        5,
+        1.8
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 220,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "boxing",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 2.4
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Heavy Bag",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-bench-press",
+      "name": "Gold Bench Press",
+      "description": "Padded strength bench with spotter rails, gold barbell plates and a stable steel rack.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-bench-press",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.6,
+        2,
+        2.6
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 360,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "bench-press",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Bench Press",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-deadlift-platform",
+      "name": "Gold Deadlift Platform",
+      "description": "Timber and rubber lifting platform with a loaded gold-accented Olympic barbell.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-deadlift-platform",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        8,
+        0.62,
+        6
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 350,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "deadlift",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 4
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Deadlift Platform",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-power-rack",
+      "name": "Gold Power Rack",
+      "description": "Open squat and pull-up rack with gold safety catches, floor feet and a loaded bar.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-power-rack",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        4.2,
+        3,
+        2.7
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 400,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "deadlift",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Power Rack",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-dumbbell-rack",
+      "name": "Gold Dumbbell Rack",
+      "description": "Long two-tier steel rack with nine individually modelled pairs of training dumbbells.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-dumbbell-rack",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        14,
+        1.2,
+        1.3
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 300,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-plate-tree",
+      "name": "Gold Plate Tree",
+      "description": "Stable plate-storage tower with three sets of gold Olympic weight plates.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-plate-tree",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.1,
+        2,
+        0.9
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 120,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-barbell",
+      "name": "Gold Olympic Barbell",
+      "description": "Grounded Olympic bar with black and gold removable-style weight plates.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-barbell",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.8,
+        0.6,
+        0.6
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 90,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "deadlift",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 1.3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Olympic Barbell",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-dumbbell",
+      "name": "Gold Dumbbell",
+      "description": "Single hand weight with a knurled steel grip and gold-edged rubber heads.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-dumbbell",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.7,
+        0.28,
+        0.28
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 35,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-treadmill",
+      "name": "Gold Treadmill",
+      "description": "Running deck, safety rails and a live-style gold-framed training console.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-treadmill",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.6,
+        1.75,
+        3.2
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 300,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-rower",
+      "name": "Gold Rowing Machine",
+      "description": "Rail-mounted seat, flywheel, foot plates and a gold training display.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-rower",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.2,
+        1.5,
+        3.4
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 280,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "rowing",
+        "fitnessApproach": {
+          "x": 2.4,
+          "y": 0,
+          "z": 0
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Rowing Machine",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-bike",
+      "name": "Gold Studio Bike",
+      "description": "Indoor cycle with a flywheel, padded saddle, pedals and gold-trimmed handlebars.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-bike",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1,
+        1.5,
+        1.6
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-jump-rope",
+      "name": "Gold Jump Rope",
+      "description": "Full-length gold training rope laid out with two ergonomic handles.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-jump-rope",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.8,
+        0.12,
+        2.8
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 45,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "jump-rope",
+        "fitnessApproach": {
+          "x": 2.3,
+          "y": 0,
+          "z": 0
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Jump Rope",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-agility-ladder",
+      "name": "Gold Agility Ladder",
+      "description": "Nine-rung gold footwork ladder laid flat for a clear fifteen-metre reaction lane.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-agility-ladder",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.6,
+        0.04,
+        15
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 100,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "agility",
+        "fitnessApproach": {
+          "x": -2.6,
+          "y": 0,
+          "z": 0
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Agility Ladder",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-cone",
+      "name": "Gold Training Cone",
+      "description": "Low slalom cone with a broad rubber foot and gold high-visibility marker.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-cone",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.8,
+        0.92,
+        0.8
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 20,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "agility",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 1.3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Training Cone",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-hurdle",
+      "name": "Gold Training Hurdle",
+      "description": "Lightweight hurdle with a gold crossbar, adjustable-style uprights and wide stable feet.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-hurdle",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.7,
+        0.94,
+        0.6
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 55,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "agility",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 1.6
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Training Hurdle",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-balance-beam",
+      "name": "Gold Balance Beam",
+      "description": "Low eight-metre stability beam with gold end caps and wide support feet.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-balance-beam",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        8,
+        0.32,
+        1.4
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 140,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "balance",
+        "fitnessApproach": {
+          "x": -4,
+          "y": 0,
+          "z": -2
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Balance Beam",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-balance-pad",
+      "name": "Gold Balance Pad",
+      "description": "Round textured stability pad with a gold rim for low-impact balance training.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-balance-pad",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.1,
+        0.28,
+        1.1
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 40,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "balance",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 1.3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Balance Pad",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-recovery-mat",
+      "name": "Gold Recovery Mat",
+      "description": "Full-length cushioned exercise mat with stitched gold edges and alignment lines.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-recovery-mat",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.4,
+        0.05,
+        3
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 35,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-foam-roller",
+      "name": "Gold Foam Roller",
+      "description": "Compact ribbed recovery roller with a gold core and dark padded surface.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-foam-roller",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.6,
+        0.34,
+        0.34
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 25,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-locker",
+      "name": "Gold Gym Locker",
+      "description": "Full-height steel locker with gold vents, handle and a numbered-style nameplate.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-locker",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.5,
+        2.6,
+        1.2
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 100,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-locker-bench",
+      "name": "Gold Locker Bench",
+      "description": "Five-metre timber changing bench with gold steel legs and supportive cross rails.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-locker-bench",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        0.63,
+        1
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 80,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-water-station",
+      "name": "Gold Hydration Station",
+      "description": "Floor-standing water dispenser with a clear aqua bottle and gold taps.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-water-station",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        1.4,
+        2.7,
+        1.2
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 90,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-reception-counter",
+      "name": "Gold Gym Reception",
+      "description": "Timber reception desk with a pale worktop, gold trim and recessed front panels.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-reception-counter",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        8.3,
+        1.42,
+        1.8
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 220,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-monitor",
+      "name": "Gold Training Monitor",
+      "description": "Desk-mounted gold-framed display with an illustrated training progress screen.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-monitor",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.9,
+        0.7,
+        0.45
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 70,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-coach-board",
+      "name": "Gold Coach Board",
+      "description": "Freestanding gold-framed training board with a session diagram and stable feet.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-coach-board",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2,
+        2.4,
+        0.7
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 80,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
     }
   ]
 }

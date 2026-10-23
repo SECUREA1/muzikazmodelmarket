@@ -55064,5 +55064,891 @@
       }
     },
     "playUrl": "model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "muzikaz-fitness-centre",
+    "name": "MUZIKAZ Fitness Centre",
+    "label": "Boxing · strength · skill games",
+    "description": "Enter a complete 72 × 72 metre fitness centre with a boxing ring, heavy bags, bench presses, deadlift platforms, power rack, cardio machines, jump-rope studio, agility lanes and a recovery balance course. Play seven skill-based fitness challenges for server-verified MZK rewards. Meet two fitness trainers, Maya Chen and Leon Brooks, and members actively working out. All training zones appear on the local map and the shared world atlas.",
+    "category": "Fitness & sports",
+    "game": "fitness",
+    "mapColor": "#d8ad45",
+    "mapTheme": "gold",
+    "indoor": true,
+    "outdoor": false,
+    "worldId": "skyline-deck",
+    "fitness": {
+      "enabled": true,
+      "currency": "MZK",
+      "width": 72,
+      "depth": 72,
+      "stations": [
+        {
+          "id": "fitness-boxing",
+          "kind": "boxing",
+          "name": "Boxing · Combination Lab",
+          "position": {
+            "x": -22,
+            "y": 0.02,
+            "z": -14
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Boxing · Combination Lab · E / Use",
+          "trainer": "fitness-trainer-maya",
+          "equipmentPosition": {
+            "x": -22,
+            "y": 0.02,
+            "z": -18
+          },
+          "description": "Read the cues, throw the correct punches and build a clean combination."
+        },
+        {
+          "id": "fitness-bench-press",
+          "kind": "bench-press",
+          "name": "Bench Press · Tempo Strength",
+          "position": {
+            "x": 18,
+            "y": 0.02,
+            "z": -18
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Bench Press · Tempo Strength · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 18,
+            "y": 0.02,
+            "z": -22
+          },
+          "description": "Press on the target timing window. Control the bar through each repetition."
+        },
+        {
+          "id": "fitness-deadlift",
+          "kind": "deadlift",
+          "name": "Deadlift · Power Platform",
+          "position": {
+            "x": 29,
+            "y": 0.02,
+            "z": -7
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Deadlift · Power Platform · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 29,
+            "y": 0.02,
+            "z": -11
+          },
+          "description": "Match the lift cues and lock out with controlled timing."
+        },
+        {
+          "id": "fitness-agility",
+          "kind": "agility",
+          "name": "Agility · Reaction Run",
+          "position": {
+            "x": 19,
+            "y": 0.02,
+            "z": 7
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Agility · Reaction Run · E / Use",
+          "trainer": "fitness-trainer-maya",
+          "equipmentPosition": {
+            "x": 21,
+            "y": 0.02,
+            "z": 8
+          },
+          "description": "React to the changing direction cues with fast, accurate footwork."
+        },
+        {
+          "id": "fitness-jump-rope",
+          "kind": "jump-rope",
+          "name": "Jump Rope · Rhythm Studio",
+          "position": {
+            "x": -11,
+            "y": 0.02,
+            "z": 6
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Jump Rope · Rhythm Studio · E / Use",
+          "trainer": "fitness-trainer-maya",
+          "equipmentPosition": {
+            "x": -14,
+            "y": 0.02,
+            "z": 6
+          },
+          "description": "Find the cadence and jump in time to keep your streak."
+        },
+        {
+          "id": "fitness-rowing",
+          "kind": "rowing",
+          "name": "Rowing · Endurance Bay",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 15
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Rowing · Endurance Bay · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": -27,
+            "y": 0.02,
+            "z": 15
+          },
+          "description": "Time your drive and recovery to complete smooth, powerful strokes."
+        },
+        {
+          "id": "fitness-balance",
+          "kind": "balance",
+          "name": "Balance · Stability Course",
+          "position": {
+            "x": 21,
+            "y": 0.02,
+            "z": 23
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Balance · Stability Course · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 25,
+            "y": 0.02,
+            "z": 25
+          },
+          "description": "Keep the marker centred with precise left and right corrections."
+        }
+      ],
+      "trainers": [
+        {
+          "id": "fitness-trainer-maya",
+          "name": "Maya Chen",
+          "role": "Boxing & movement trainer",
+          "home": {
+            "x": -6,
+            "y": 0.02,
+            "z": 24
+          },
+          "position": {
+            "x": -6,
+            "y": 0.02,
+            "z": 24
+          },
+          "color": "#ec7750",
+          "skin": "#d6a17d",
+          "specialties": [
+            "boxing",
+            "agility",
+            "jump-rope"
+          ],
+          "greeting": "Welcome to the Fitness Centre. Pick an activity, follow the cues, and build a clean streak. I coach boxing, agility and rhythm."
+        },
+        {
+          "id": "fitness-trainer-leon",
+          "name": "Leon Brooks",
+          "role": "Strength & conditioning trainer",
+          "home": {
+            "x": 7,
+            "y": 0.02,
+            "z": -5
+          },
+          "position": {
+            "x": 7,
+            "y": 0.02,
+            "z": -5
+          },
+          "color": "#49b6af",
+          "skin": "#865b46",
+          "specialties": [
+            "bench-press",
+            "deadlift",
+            "rowing",
+            "balance"
+          ],
+          "greeting": "Control comes before speed. Try a bench press, deadlift or rowing set, then recover with the balance challenge."
+        }
+      ]
+    },
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-23T12:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 80,
+    "thumbnailUrl": "/public/images/fitness/fitness-centre.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 32,
+      "rotationY": 0
+    },
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "fitness-centre",
+      "mapSize": 80,
+      "objects": [
+        {
+          "id": "fitness-boxing",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Boxing · Combination Lab",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -22,
+            "y": 0.02,
+            "z": -14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "boxing",
+            "fitnessStationId": "fitness-boxing",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Boxing · Combination Lab · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Read the cues, throw the correct punches and build a clean combination."
+          }
+        },
+        {
+          "id": "fitness-bench-press",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Bench Press · Tempo Strength",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 18,
+            "y": 0.02,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "bench-press",
+            "fitnessStationId": "fitness-bench-press",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Bench Press · Tempo Strength · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Press on the target timing window. Control the bar through each repetition."
+          }
+        },
+        {
+          "id": "fitness-deadlift",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Deadlift · Power Platform",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 29,
+            "y": 0.02,
+            "z": -7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "deadlift",
+            "fitnessStationId": "fitness-deadlift",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Deadlift · Power Platform · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Match the lift cues and lock out with controlled timing."
+          }
+        },
+        {
+          "id": "fitness-agility",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Agility · Reaction Run",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 19,
+            "y": 0.02,
+            "z": 7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "agility",
+            "fitnessStationId": "fitness-agility",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Agility · Reaction Run · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "React to the changing direction cues with fast, accurate footwork."
+          }
+        },
+        {
+          "id": "fitness-jump-rope",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Jump Rope · Rhythm Studio",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -11,
+            "y": 0.02,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "jump-rope",
+            "fitnessStationId": "fitness-jump-rope",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Jump Rope · Rhythm Studio · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Find the cadence and jump in time to keep your streak."
+          }
+        },
+        {
+          "id": "fitness-rowing",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Rowing · Endurance Bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "rowing",
+            "fitnessStationId": "fitness-rowing",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Rowing · Endurance Bay · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Time your drive and recovery to complete smooth, powerful strokes."
+          }
+        },
+        {
+          "id": "fitness-balance",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Balance · Stability Course",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 21,
+            "y": 0.02,
+            "z": 23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "balance",
+            "fitnessStationId": "fitness-balance",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Balance · Stability Course · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Keep the marker centred with precise left and right corrections."
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 1713452,
+        "fitness": {
+          "enabled": true,
+          "currency": "MZK",
+          "width": 72,
+          "depth": 72,
+          "stations": [
+            {
+              "id": "fitness-boxing",
+              "kind": "boxing",
+              "name": "Boxing · Combination Lab",
+              "position": {
+                "x": -22,
+                "y": 0.02,
+                "z": -14
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Boxing · Combination Lab · E / Use",
+              "trainer": "fitness-trainer-maya",
+              "equipmentPosition": {
+                "x": -22,
+                "y": 0.02,
+                "z": -18
+              },
+              "description": "Read the cues, throw the correct punches and build a clean combination."
+            },
+            {
+              "id": "fitness-bench-press",
+              "kind": "bench-press",
+              "name": "Bench Press · Tempo Strength",
+              "position": {
+                "x": 18,
+                "y": 0.02,
+                "z": -18
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Bench Press · Tempo Strength · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 18,
+                "y": 0.02,
+                "z": -22
+              },
+              "description": "Press on the target timing window. Control the bar through each repetition."
+            },
+            {
+              "id": "fitness-deadlift",
+              "kind": "deadlift",
+              "name": "Deadlift · Power Platform",
+              "position": {
+                "x": 29,
+                "y": 0.02,
+                "z": -7
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Deadlift · Power Platform · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 29,
+                "y": 0.02,
+                "z": -11
+              },
+              "description": "Match the lift cues and lock out with controlled timing."
+            },
+            {
+              "id": "fitness-agility",
+              "kind": "agility",
+              "name": "Agility · Reaction Run",
+              "position": {
+                "x": 19,
+                "y": 0.02,
+                "z": 7
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Agility · Reaction Run · E / Use",
+              "trainer": "fitness-trainer-maya",
+              "equipmentPosition": {
+                "x": 21,
+                "y": 0.02,
+                "z": 8
+              },
+              "description": "React to the changing direction cues with fast, accurate footwork."
+            },
+            {
+              "id": "fitness-jump-rope",
+              "kind": "jump-rope",
+              "name": "Jump Rope · Rhythm Studio",
+              "position": {
+                "x": -11,
+                "y": 0.02,
+                "z": 6
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Jump Rope · Rhythm Studio · E / Use",
+              "trainer": "fitness-trainer-maya",
+              "equipmentPosition": {
+                "x": -14,
+                "y": 0.02,
+                "z": 6
+              },
+              "description": "Find the cadence and jump in time to keep your streak."
+            },
+            {
+              "id": "fitness-rowing",
+              "kind": "rowing",
+              "name": "Rowing · Endurance Bay",
+              "position": {
+                "x": -24,
+                "y": 0.02,
+                "z": 15
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Rowing · Endurance Bay · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": -27,
+                "y": 0.02,
+                "z": 15
+              },
+              "description": "Time your drive and recovery to complete smooth, powerful strokes."
+            },
+            {
+              "id": "fitness-balance",
+              "kind": "balance",
+              "name": "Balance · Stability Course",
+              "position": {
+                "x": 21,
+                "y": 0.02,
+                "z": 23
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Balance · Stability Course · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 25,
+                "y": 0.02,
+                "z": 25
+              },
+              "description": "Keep the marker centred with precise left and right corrections."
+            }
+          ],
+          "trainers": [
+            {
+              "id": "fitness-trainer-maya",
+              "name": "Maya Chen",
+              "role": "Boxing & movement trainer",
+              "home": {
+                "x": -6,
+                "y": 0.02,
+                "z": 24
+              },
+              "position": {
+                "x": -6,
+                "y": 0.02,
+                "z": 24
+              },
+              "color": "#ec7750",
+              "skin": "#d6a17d",
+              "specialties": [
+                "boxing",
+                "agility",
+                "jump-rope"
+              ],
+              "greeting": "Welcome to the Fitness Centre. Pick an activity, follow the cues, and build a clean streak. I coach boxing, agility and rhythm."
+            },
+            {
+              "id": "fitness-trainer-leon",
+              "name": "Leon Brooks",
+              "role": "Strength & conditioning trainer",
+              "home": {
+                "x": 7,
+                "y": 0.02,
+                "z": -5
+              },
+              "position": {
+                "x": 7,
+                "y": 0.02,
+                "z": -5
+              },
+              "color": "#49b6af",
+              "skin": "#865b46",
+              "specialties": [
+                "bench-press",
+                "deadlift",
+                "rowing",
+                "balance"
+              ],
+              "greeting": "Control comes before speed. Try a bench press, deadlift or rowing set, then recover with the balance challenge."
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "fitness-welcome",
+            "name": "Fitness Centre · Reception",
+            "x": 0,
+            "z": 29,
+            "width": 20,
+            "depth": 10,
+            "description": "Enter the open training floor, meet Coach Maya, and check the fitness activity directory."
+          },
+          {
+            "id": "fitness-boxing",
+            "name": "Boxing · Combination Lab",
+            "x": -22,
+            "z": -18,
+            "width": 18,
+            "depth": 22,
+            "description": "A regulation-style training ring, striking bags and a boxing combination challenge."
+          },
+          {
+            "id": "fitness-strength",
+            "name": "Strength · Bench & Deadlift",
+            "x": 22,
+            "z": -18,
+            "width": 26,
+            "depth": 24,
+            "description": "Padded bench presses, loaded barbells, power racks, plate storage and two skill challenges."
+          },
+          {
+            "id": "fitness-cardio",
+            "name": "Cardio · Rowing & Treadmills",
+            "x": -25,
+            "z": 15,
+            "width": 18,
+            "depth": 22,
+            "description": "Rowing machines, treadmills and bikes beside the west windows."
+          },
+          {
+            "id": "fitness-rhythm",
+            "name": "Rhythm · Jump Rope Studio",
+            "x": -12,
+            "z": 5,
+            "width": 12,
+            "depth": 12,
+            "description": "A marked, open mat for rhythm training and jump-rope practice."
+          },
+          {
+            "id": "fitness-agility",
+            "name": "Agility · Reaction Run",
+            "x": 21,
+            "z": 8,
+            "width": 20,
+            "depth": 18,
+            "description": "Ladders, cones, hurdles and a reaction training challenge."
+          },
+          {
+            "id": "fitness-balance",
+            "name": "Recovery · Balance Course",
+            "x": 23,
+            "z": 25,
+            "width": 22,
+            "depth": 10,
+            "description": "Stability beams, balance pads and space for guided recovery."
+          },
+          {
+            "id": "fitness-lockers",
+            "name": "Lockers & Hydration",
+            "x": -22,
+            "z": 29,
+            "width": 18,
+            "depth": 10,
+            "description": "Locker storage, seating and a water station between sessions."
+          }
+        ],
+        "residents": [
+          {
+            "id": "fitness-trainer-maya",
+            "name": "Maya Chen",
+            "role": "Boxing & movement trainer",
+            "home": {
+              "x": -6,
+              "y": 0.02,
+              "z": 24
+            },
+            "position": {
+              "x": -6,
+              "y": 0.02,
+              "z": 24
+            },
+            "color": "#ec7750",
+            "skin": "#d6a17d",
+            "specialties": [
+              "boxing",
+              "agility",
+              "jump-rope"
+            ],
+            "greeting": "Welcome to the Fitness Centre. Pick an activity, follow the cues, and build a clean streak. I coach boxing, agility and rhythm.",
+            "duty": "trainer",
+            "activity": "coaching",
+            "heading": 3.141592653589793
+          },
+          {
+            "id": "fitness-trainer-leon",
+            "name": "Leon Brooks",
+            "role": "Strength & conditioning trainer",
+            "home": {
+              "x": 7,
+              "y": 0.02,
+              "z": -5
+            },
+            "position": {
+              "x": 7,
+              "y": 0.02,
+              "z": -5
+            },
+            "color": "#49b6af",
+            "skin": "#865b46",
+            "specialties": [
+              "bench-press",
+              "deadlift",
+              "rowing",
+              "balance"
+            ],
+            "greeting": "Control comes before speed. Try a bench press, deadlift or rowing set, then recover with the balance challenge.",
+            "duty": "trainer",
+            "activity": "coaching",
+            "heading": 3.141592653589793
+          },
+          {
+            "id": "fitness-member-ava",
+            "name": "Ava Rivera",
+            "role": "Boxing member",
+            "home": {
+              "x": -30,
+              "y": 0.02,
+              "z": -8
+            },
+            "activity": "boxing",
+            "color": "#e2677c",
+            "skin": "#b88161",
+            "heading": 3.141592653589793
+          },
+          {
+            "id": "fitness-member-noah",
+            "name": "Noah Patel",
+            "role": "Strength member",
+            "home": {
+              "x": 12,
+              "y": 0.02,
+              "z": -27
+            },
+            "activity": "bench-press",
+            "color": "#7797e0",
+            "skin": "#ae7955",
+            "heading": 1.5707963267948966
+          },
+          {
+            "id": "fitness-member-iman",
+            "name": "Iman Reed",
+            "role": "Cardio member",
+            "home": {
+              "x": -31,
+              "y": 0.4,
+              "z": 5
+            },
+            "activity": "running",
+            "color": "#e0bb58",
+            "skin": "#78543e",
+            "heading": 0
+          },
+          {
+            "id": "fitness-member-kai",
+            "name": "Kai Mori",
+            "role": "Rowing member",
+            "home": {
+              "x": -26,
+              "y": 0.02,
+              "z": 20
+            },
+            "activity": "rowing",
+            "color": "#66bea5",
+            "skin": "#d5ad87",
+            "heading": 1.5707963267948966
+          },
+          {
+            "id": "fitness-member-sofia",
+            "name": "Sofia Vega",
+            "role": "Movement member",
+            "home": {
+              "x": 27,
+              "y": 0.02,
+              "z": 5
+            },
+            "activity": "stretching",
+            "color": "#af85ce",
+            "skin": "#c28e6b",
+            "heading": -1.5707963267948966
+          },
+          {
+            "id": "fitness-member-ellis",
+            "name": "Ellis Cole",
+            "role": "Rhythm member",
+            "home": {
+              "x": -15,
+              "y": 0.02,
+              "z": 1
+            },
+            "activity": "jump-rope",
+            "color": "#5fb5c6",
+            "skin": "#d7b094",
+            "heading": 0
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "fitness": {
+          "enabled": true
+        },
+        "radTox": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&autoplay=1&mode=multiplayer"
   }
 ]

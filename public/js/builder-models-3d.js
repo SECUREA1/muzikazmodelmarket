@@ -1,3 +1,4 @@
+import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness-equipment.js';
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
 import {createRoadVehicle,updateRoadVehicle} from './road-vehicle-models.js';
 import {CONSTRUCTION_MODEL_IDS,createConstructionModel,updateConstructionModel} from './construction-models.js';
@@ -31,6 +32,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...FITNESS_MODEL_INFO,
   'lot-owned-sign':['Claimed Deed Sign','Timber sign marking a lot with an existing deed owner.',[1.5,1.95,.14]],
   'lot-boundary-stake':['Deed Boundary Stake','Timber survey stake with a brass cap for marking lot corners.',[.19,1.1,.19]],
   ...Object.fromEntries([5000,7500,10000,15000,20000,25000].map(price=>['lot-sale-sign-'+price,['Land Sale Sign · '+price+' MZK','A timber lot sign with a clearly displayed MZK price.',[1.5,1.95,.14]]])),
@@ -301,7 +303,8 @@ export function createBuilderModel(id,options={}) {
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
 
   let root;
-  if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
+  if(FITNESS_ITEMS[id])root=createFitnessEquipment(id);
+  else if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
   else if(id==='alpine-mountain')root=createAlpineMountain(THREE);
   else if(CAMP_MODEL_INFO[id])root=createCampModel(THREE,id);
   else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
