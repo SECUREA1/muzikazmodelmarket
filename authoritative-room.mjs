@@ -3,6 +3,7 @@ import {casinoLifeView} from './server-casino-residents.mjs';
 import {stepCasinoTasks,casinoTaskView,casinoProgressView,recordCasinoPlayerGame} from './server-casino-tasks.mjs';
 import {constructionGroundAt} from './public/js/construction-collision.js';
 import {ensureConstruction,stepConstruction,constructionCommand,constructionView} from './server-construction.mjs';
+import {ensureConstructionCrew,stepConstructionCrew,constructionCrewAction,releaseConstructionCrewMachine} from './server-construction-crew.mjs';
 import {isConstructionMachine,constructionTravelStatus} from './public/js/construction-state.js';
 import {stepWorldResidents,residentCommand} from './server-world-residents.mjs';
 import {stepRoadActivity} from './server-road-activity.mjs';
@@ -68,6 +69,17 @@ const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
  constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();}
+ constructionContext(sim,environment,objects={}){
+  const context={collision:this.collision,environment,objects,earthworks:sim.construction?.earthworks};
+  context.drive=(machine,worker,input,now,dt)=>{
+   const before={...machine.position},lease=machine.construction?.crewOperator;
+   if(machine.holderId||lease?.workerId!==worker.id||lease.expiresAt<=now)return {blocked:true,moved:0,position:before};
+   const controls=constructionTravelStatus(machine).allowed?input:{forward:0,side:0,brake:true},others={...sim.actors,[machine.id]:{...machine,active:false}},options={earthworks:sim.construction.earthworks,players:sim.players,crew:sim.construction.crew};
+   for(let remaining=dt;remaining>1e-8;remaining-=.05){Object.assign(machine,stepRoadVehicle(machine,controls,Math.min(.05,remaining),{speedLimit:3.5,groundAt:point=>constructionGroundAt(machine,point,p=>this.collision.groundAt(environment,p,{actors:others,objects,earthworks:options.earthworks})),blocked:(from,to,yaw)=>roadMovementBlocked(this.collision,environment,sim.actors,objects,machine,from,to,yaw,options)}));if(machine.driving?.blocked)break;}
+   return {blocked:!!machine.driving?.blocked,moved:Math.hypot(machine.position.x-before.x,machine.position.z-before.z),position:machine.position};
+  };
+  return context;
+ }
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
   try{const ids=[...this.activeWorlds.keys()].filter(id=>this.now()>=(this.tickRetryAt.get(id)||0));if(!ids.length)return;
@@ -120,6 +132,7 @@ export class AuthoritativeRooms {
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
   if(isCasinoEnvironment(environment))for(const [id,actor]of Object.entries(sim.actors))if(actor.loot||actor.runtimeMachine||actor.roadFleet||actor.trafficAI&&!actor.resident?.casino){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}
   ensureConstruction(sim,environment);
+  ensureConstructionCrew(sim,environment,this.now());
   ensureFiringRange(sim,environment,this.now());
   if(isDedicatedFiringRange(environment)){const hostileIds=new Set(manifest.actors.filter(actor=>['hostile','patrol','hazard'].includes(actor.gameplay?.behavior)).map(actor=>actor.objectId));sim.radTox=null;sim.match=null;sim.projectiles={};for(const [id,actor]of Object.entries(sim.actors))if(hostileIds.has(id)||actor.radTox||actor.loot||actor.runtimeMachine||['hostile','patrol','hazard'].includes(actor.definition?.gameplay?.behavior)){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));}
   if(isBasketballEnvironment(environment)){
@@ -164,7 +177,7 @@ export class AuthoritativeRooms {
    const boundControl=(current,target)=>hasGeometry?target:clamp(target,Math.min(current,-half),Math.max(current,half));
    const aircraft=sim.actors[player.vehicleId];
    if(isAircraft(aircraft)&&aircraft.active!==false){
-    const groundPoint=this.collision.groundAt(environment,aircraft.position,{actors:sim.actors,objects:room.objects}),ground=(groundPoint?.y||0)+.4;
+    const groundPoint=this.collision.groundAt(environment,aircraft.position,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks}),ground=(groundPoint?.y||0)+.4;
     const runway=aircraftRunway(environment,aircraft),lease=runwayClearance(sim.airport,runway);const onRunway=!runway||(Math.abs(aircraft.position.x-runway.x)<runway.width/2-1&&Math.abs(aircraft.position.z-runway.z)<runway.length/2);const cleared=!sim.airport||(onRunway&&lease?.runwayHolder===player.actorId&&lease.expires>now);
     const assistedInput=aircraftAssistedInput(aircraft,input,environment,now);const pose=stepAircraftFlight(aircraft,(player.fuel??100)>0?assistedInput:{...assistedInput,throttle:0},dt,{ground,ceiling:environment.airport?.ceiling||80,half,cleared,blocked:(from,to,yaw)=>{const delta=[to.x-from.x,to.y-from.y,to.z-from.z],span=Math.hypot(...delta);if(span<.001)return false;return [-4.8,0,4.8].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2.8,y:from.y+.9,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2.8},delta.map(n=>n/span),span+.1,sim.actors));}});
     Object.assign(aircraft,pose);player.fuel=Math.max(0,(player.fuel??100)-dt*pose.flight.throttle*.035);aircraft.flight.fuel=player.fuel;if(pose.flight.impactDamage>0)aircraft.health=Math.max(0,aircraft.health-pose.flight.impactDamage);if(aircraft.health<=0){aircraft.active=false;aircraft.destroyedAt=now;aircraft.holderId=null;player.vehicleId=null;player.health=0;player.input={};combatStats(player).deaths++;player.position=this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:0});player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;continue;}player.position={...pose.position};player.yaw=pose.rotation.y;player.floor=pose.position.y;player.velocityY=0;player.grounded=!pose.flight.airborne;player.locationName=pose.flight.airborne?'Airport airspace':'Airport apron';
@@ -184,7 +197,7 @@ export class AuthoritativeRooms {
     // the shared construction interlock decides whether travel is available.
     const others={...sim.actors,[road.id]:{...road,active:false}},roadInput=isConstructionMachine(road)&&!constructionTravelStatus(road).allowed?{brake:true}:input;
     if(isConstructionMachine(road)&&Math.abs(road.driving?.speed||0)<.001&&Math.abs(roadInput.forward||0)<.001&&Math.abs(roadInput.side||0)<.001){road.driving={...road.driving,speed:0,throttle:0,steering:0,parked:true};}
-    else for(let remaining=dt;remaining>0;remaining-=.05)Object.assign(road,stepRoadVehicle(road,roadInput,Math.min(.05,remaining),{groundAt:point=>constructionGroundAt(road,point,p=>this.collision.groundAt(environment,p,{actors:others,objects:room.objects})),speedLimit:roadSpeedLimit(environment,road.position)/3.6,blocked:(from,to,yaw)=>harborWaterAt(environment,to)||roadMovementBlocked(this.collision,environment,sim.actors,room.objects,road,from,to,yaw)}));
+    else for(let remaining=dt;remaining>1e-8;remaining-=.05)Object.assign(road,stepRoadVehicle(road,roadInput,Math.min(.05,remaining),{groundAt:point=>constructionGroundAt(road,point,p=>this.collision.groundAt(environment,p,{actors:others,objects:room.objects,earthworks:sim.construction?.earthworks})),speedLimit:roadSpeedLimit(environment,road.position)/3.6,blocked:(from,to,yaw)=>harborWaterAt(environment,to)||roadMovementBlocked(this.collision,environment,sim.actors,room.objects,road,from,to,yaw,{earthworks:sim.construction?.earthworks,players:sim.players,crew:sim.construction?.crew})}));
     player.position={...road.position};player.yaw=road.rotation.y;player.floor=road.position.y;player.grounded=true;player.velocityY=0;player.locationName=roadVehicleType(road).name;continue;
    }
    let speed=player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
@@ -199,7 +212,7 @@ export class AuthoritativeRooms {
    // A wall removes only the blocked control component; it never ejects the
    // player or cancels a valid slide along its surface.
    const previousSkiPosition=environment.game==='ski'?{...player.position}:null;
-   const resolved=this.collision.resolve(environment,player.position,next,sim.actors,room.objects);
+   const resolved=this.collision.resolve(environment,player.position,next,sim.actors,room.objects,{earthworks:sim.construction?.earthworks});
    // Native resolvers explicitly report missing support as null. A custom
    // horizontal-only resolver keeps the legacy flat floor until it supplies
    // its own support data; this must not pin real elevated platforms.
@@ -221,7 +234,9 @@ export class AuthoritativeRooms {
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
   if(isCasinoEnvironment(environment))stepCasinoTasks(sim,now);
-  stepConstruction(sim,now,dt,{collision:this.collision,environment,objects:room.objects});
+  const constructionContext=this.constructionContext(sim,environment,room.objects);
+  stepConstructionCrew(sim,now,dt,constructionContext);
+  stepConstruction(sim,now,dt,constructionContext);
   stepVehicleMissions(sim,now);stepExpandedQuests(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
   const active=Object.values(sim.players).filter(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&now>=(player.spawnProtectedUntil||0)&&!firingRangeLocationAt(sim.firingRange?.locations,player.position));
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.pendingSpawn||actor.health<=0||actor.holderId)continue;
@@ -351,15 +366,16 @@ export class AuthoritativeRooms {
      const target=manifest.actors.find(a=>a.objectId===command.entityId&&a.gameplay.behavior==='vehicle'),entity=sim.actors[command.entityId];
      if(!target||!entity||entity.active===false||(!isAircraft(entity)&&!isWatercraft(entity)&&!isRoadVehicle(entity)))fail('This craft is unavailable.',409);
      if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)||isRoadVehicle(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
+     if(isConstructionMachine(entity))releaseConstructionCrewMachine(sim,entity.id,'Player took over this machine.',now,this.constructionContext(sim,environment,room.objects));
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this craft.',409);
      if(isAircraft(entity)&&entity.flight?.airborne)fail('Wait until this aircraft has landed.',409);
      entity.holderId=actorId;player.vehicleId=entity.id;player.position={...entity.position,y:isWatercraft(entity) ? .35 : entity.position.y};player.yaw=entity.rotation?.y||0;player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.skiing=false;player.movementRevision=(player.movementRevision||0)+1;
      result.message='Boarded '+(target.name||'craft')+'. You are in the shared live room.';
     }else if(command.position){
      if(!['x','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid point on this map.',422);
-     const floor=this.collision.groundAt(environment,{x:command.position.x,y:player.position.y,z:command.position.z},{entry:true,actors:sim.actors,objects:room.objects});
+     const floor=this.collision.groundAt(environment,{x:command.position.x,y:player.position.y,z:command.position.z},{entry:true,actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});
      if(!floor||environment.builderScene?.layoutMeta?.harbor&&floor.y<-.05)fail('Choose clear land or a pier instead of water.',409);
-     const arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true});
+     const arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true,earthworks:sim.construction?.earthworks});
      if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);
      player.position=arrival;result.message='Teleported to the selected floor.';
     }else{
@@ -367,14 +383,14 @@ export class AuthoritativeRooms {
      if(!place)fail('Choose a listed map location.',422);
      const base={x:place.arrival?.x??place.x,y:place.arrival?.y??place.y??0,z:place.arrival?.z??place.z};
      const candidates=[base];for(const radius of [2,4,6,8,10,12])for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
-     let arrival=null;for(const candidate of candidates){try{const floor=this.collision.groundAt(environment,candidate,{entry:true,actors:sim.actors,objects:room.objects});if(floor&&(!environment.builderScene?.layoutMeta?.harbor||floor.y>=-.05)){arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true});break;}const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
+     let arrival=null;for(const candidate of candidates){try{const floor=this.collision.groundAt(environment,candidate,{entry:true,actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});if(floor&&(!environment.builderScene?.layoutMeta?.harbor||floor.y>=-.05)){arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true,earthworks:sim.construction?.earthworks});break;}const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
     }
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
    }
    else if(command.action==='teleport-floor'){if(player.skiLift)fail('Wait for automatic summit exit before travelling.',409);if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Travel resets a competitive run.';}
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);
     if(player.basketballRole==='spectator'&&sim.basketball?.state==='live'){if(!command.position||!['x','y','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid spectator floor position.',422);const accepted=constrainBasketballSpectator(player.position,command.position,sim,player);if(basketballSpectatorRestricted(command.position,sim)||distance(accepted,command.position)>.01)fail('Spectators can teleport between the stands and benches outside the active court.',409);}
-    player.position=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects);
+    player.position=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects,{earthworks:sim.construction?.earthworks});
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
     result.message='Teleported to the selected floor.';
    }
@@ -405,14 +421,15 @@ export class AuthoritativeRooms {
    else if(command.action==='aircraft-window'){
     const craft=sim.actors[player.vehicleId];if(!isAircraft(craft)||aircraftType(craft).armed)fail('Board a DA40 or Piper Cub to use the window controls.',409);if(craft.flight?.airborne||Math.max(craft.flight?.speed||0,craft.flight?.airspeed||0)>.5)fail('Park the aircraft before opening its canopy or window.',409);craft.flight||={};craft.flight.windowOpen=!craft.flight.windowOpen;result.message=craft.flight.windowOpen?'Canopy / window open. Close it before taxiing.':'Canopy / window closed.';
    }
-   else if(command.action==='construction-controls'){result.message=constructionCommand(sim,player,command,now,{collision:this.collision,environment,objects:room.objects});}
+    else if(command.action==='construction-controls'){result.message=constructionCommand(sim,player,command,now,this.constructionContext(sim,environment,room.objects));}
+    else if(command.action==='construction-crew'){result.message=constructionCrewAction(sim,player,command,now,this.constructionContext(sim,environment,room.objects));}
    else if(command.action==='road-controls'){const road=sim.actors[player.vehicleId];if(!isRoadVehicle(road))fail('Enter a road vehicle first.',409);road.driving||={speed:0};if(command.operation==='lights'){road.driving.lights=road.driving.lights===false;result.message=road.driving.lights?'Headlights on.':'Headlights off.';}else if(command.operation==='park'){road.driving.speed=0;road.driving.parked=true;player.input={};result.message='Parked. Safe to exit.';}else fail('Choose lights or park.',422);}
    else if(command.action==='ski-assist'){
     if(environment.game!=='ski')fail('Ski steering is available at Pixel Peaks.',409);player.skiAssist=command.enabled!==false;result.message=player.skiAssist?'Easy steering on. Follow the gates and use Left / Right to carve.':'Free steering on. Look and carve to steer.';
    }
    else if(command.action?.startsWith('ski-lobby-')){
     if(environment.game!=='ski')fail('Race lobbies are available at Pixel Peaks.',409);
-    const place=(racer,run,offset=0)=>{const start=skiCourseStart(run),point={x:start.x+offset,y:skiHeight(start.x+offset,start.z)+.02,z:start.z},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects});if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects}))throw Error('The course start is blocked. Try again shortly.');return floor;};
+    const place=(racer,run,offset=0)=>{const start=skiCourseStart(run),point={x:start.x+offset,y:skiHeight(start.x+offset,start.z)+.02,z:start.z},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks}))throw Error('The course start is blocked. Try again shortly.');return floor;};
     try{result.message=skiLobbyCommand(sim,player,command,now,place);}catch(error){fail(error.message,409);}
    }
    else if(command.action==='ski-race'){
@@ -420,8 +437,8 @@ export class AuthoritativeRooms {
     if(player.skiLift||player.vehicleId||player.seatedId)fail('Disembark before starting a race.',409);
     if(sim.skiCompetition?.lobby?.members.some(m=>m.actorId===player.actorId)&&sim.skiCompetition.lobby.status!=='finished')fail('Leave your multiplayer lobby before starting another race.',409);
     const run=skiRuns.find(run=>run.id===command.courseId);if(!run)fail('Choose a marked ski course.',422);
-    const start=skiCourseStart(run),point={...start,y:skiHeight(start.x,start.z)+.02},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects});
-    if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects}))fail('The start is occupied. Try again in a moment.',409);
+    const start=skiCourseStart(run),point={...start,y:skiHeight(start.x,start.z)+.02},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});
+    if(!floor||!this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks}))fail('The start is occupied. Try again in a moment.',409);
     player.position=floor;player.floor=floor.y;startSkiRace(player,run,now,{countdown:3000,mode:command.mode==='ai'?'ai':'solo'});
     for(const [id,rival]of Object.entries(sim.players))if(rival.skiAIOwner===player.actorId)delete sim.players[id];
     if(command.mode==='ai'){const id='ski-ai-'+player.actorId,bot=structuredClone(player);Object.assign(bot,{actorId:id,username:'Peak AI',skiAI:true,skiAIOwner:player.actorId,position:{...floor,x:floor.x+2},score:0,skiStats:{totalPoints:0,finishes:0},inventory:[],heldId:null,vehicleId:null,seatedId:null});sim.players[id]=bot;}
@@ -436,14 +453,15 @@ export class AuthoritativeRooms {
    else if(command.action==='interact'&&player.skiLift){result.message='Enjoy the chairlift ride. You will disembark safely at the summit.';}
    else if(command.action==='interact'){
     if(command.entityId&&isBasketball(sim.actors[command.entityId]))requireBasketballPlayer(sim,player);
-    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);const vehicle=sim.actors[player.vehicleId];if(isConstructionMachine(vehicle)&&(vehicle.construction?.workCycle||vehicle.construction?.assist||vehicle.construction?.kind==='crane'&&vehicle.construction?.load||vehicle.construction?.kind==='truck'&&vehicle.construction?.bed>.08))fail('Park, cancel active hydraulics, secure any suspended load, and lower the dump body before exiting.',409);if(isAircraft(vehicle)){if(Math.max(vehicle.flight?.speed||0,vehicle.flight?.airspeed||0)>2.5)fail('Brake or use Land assistance before leaving the cockpit.',409);player.position=aircraftExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;vehicle.flight={...vehicle.flight,assist:null,assistStage:null,speed:0,airspeed:0,throttle:0,throttleCommand:0,brake:1};vehicle.rotation.x=vehicle.rotation.z=0;if(sim.airport?.runwayHolder===actorId){sim.airport.runwayHolder=null;sim.airport.expires=0;}}if(isWatercraft(vehicle)){if(Math.abs(vehicle.boating?.speed||0)>1.5)fail('Slow or anchor the boat before leaving.',409);stopBoat(vehicle);player.position=boatExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.grounded=true;player.floor=player.position.y;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(isRoadVehicle(vehicle)){if(Math.abs(vehicle.driving?.speed||0)>1.5)fail('Stop or park before exiting.',409);try{player.position=roadExitPosition(this.collision,environment,vehicle,sim.actors,room.objects);}catch(error){fail(error.message,409);}vehicle.driving={...vehicle.driving,speed:0,throttle:0,parked:true};player.floor=player.position.y;player.grounded=true;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(isConstructionMachine(vehicle)){vehicle.construction.axes={};vehicle.construction.assist=null;vehicle.construction.working=false;delete vehicle.construction.workCycle;}vehicle.holderId=null;player.vehicleId=null;}
-    else if(player.seatedId){const seat=sim.actors[player.seatedId];if((RESORT_PRODUCTS[seat?.modelId]||RESORT_PRODUCTS[seat?.asset?.buildAssetId])?.behavior==='seat'){let exit=null;for(const radius of [1.6,2.2,3])for(const side of [0,1,-1,2]){const yaw=(seat.rotation?.y||0)+side*Math.PI/2,point={x:seat.position.x+Math.sin(yaw)*radius,y:seat.position.y,z:seat.position.z+Math.cos(yaw)*radius},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects});if(floor&&this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects})){try{exit=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects);break;}catch{}}}if(!exit)fail('The seating exit is blocked. Clear some space beside the seat.',409);player.position=exit;player.floor=exit.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(seat)seat.holderId=null;player.seatedId=null;}
+    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);const vehicle=sim.actors[player.vehicleId];if(isConstructionMachine(vehicle)&&(vehicle.construction?.workCycle||vehicle.construction?.assist||vehicle.construction?.kind==='crane'&&vehicle.construction?.load||vehicle.construction?.kind==='truck'&&vehicle.construction?.bed>.08))fail('Park, cancel active hydraulics, secure any suspended load, and lower the dump body before exiting.',409);if(isAircraft(vehicle)){if(Math.max(vehicle.flight?.speed||0,vehicle.flight?.airspeed||0)>2.5)fail('Brake or use Land assistance before leaving the cockpit.',409);player.position=aircraftExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;vehicle.flight={...vehicle.flight,assist:null,assistStage:null,speed:0,airspeed:0,throttle:0,throttleCommand:0,brake:1};vehicle.rotation.x=vehicle.rotation.z=0;if(sim.airport?.runwayHolder===actorId){sim.airport.runwayHolder=null;sim.airport.expires=0;}}if(isWatercraft(vehicle)){if(Math.abs(vehicle.boating?.speed||0)>1.5)fail('Slow or anchor the boat before leaving.',409);stopBoat(vehicle);player.position=boatExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.grounded=true;player.floor=player.position.y;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(isRoadVehicle(vehicle)){if(Math.abs(vehicle.driving?.speed||0)>1.5)fail('Stop or park before exiting.',409);try{player.position=roadExitPosition(this.collision,environment,vehicle,sim.actors,room.objects,{earthworks:sim.construction?.earthworks});}catch(error){fail(error.message,409);}vehicle.driving={...vehicle.driving,speed:0,throttle:0,parked:true};player.floor=player.position.y;player.grounded=true;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(isConstructionMachine(vehicle)){vehicle.construction.axes={};vehicle.construction.assist=null;vehicle.construction.working=false;delete vehicle.construction.workCycle;}vehicle.holderId=null;player.vehicleId=null;}
+    else if(player.seatedId){const seat=sim.actors[player.seatedId];if((RESORT_PRODUCTS[seat?.modelId]||RESORT_PRODUCTS[seat?.asset?.buildAssetId])?.behavior==='seat'){let exit=null;for(const radius of [1.6,2.2,3])for(const side of [0,1,-1,2]){const yaw=(seat.rotation?.y||0)+side*Math.PI/2,point={x:seat.position.x+Math.sin(yaw)*radius,y:seat.position.y,z:seat.position.z+Math.cos(yaw)*radius},floor=this.collision.groundAt(environment,point,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});if(floor&&this.collision.hasBodyClearance(environment,floor,.38,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks})){try{exit=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects);break;}catch{}}}if(!exit)fail('The seating exit is blocked. Clear some space beside the seat.',409);player.position=exit;player.floor=exit.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;}if(seat)seat.holderId=null;player.seatedId=null;}
     else{
      const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(watercraftInteractionPoint(sim.actors[a.objectId],player.position),player.position)<=watercraftInteractionReach(sim.actors[a.objectId],player.position,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
      if(isBasketball(entity))requireBasketballPlayer(sim,player);
      if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(player.radToxEnabled!==false&&sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
      if(entity.trafficAI&&(isWatercraft(entity)||isAircraft(entity)||isRoadVehicle(entity)))fail('This craft is operated by an AI crew. Choose an available player craft.',409);
+     if(isConstructionMachine(entity))releaseConstructionCrewMachine(sim,entity.id,'Player took over this machine.',now,this.constructionContext(sim,environment,room.objects));
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this item.',409);
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      const skiLift=environment.game==='ski'&&skiLifts.find(lift=>target.objectId==='ski-'+lift.id+'-base');

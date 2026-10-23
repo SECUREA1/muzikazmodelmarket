@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
-import {ensureConstruction,constructionCommand,stepConstruction,constructionView} from '../server-construction.mjs';
+import {ensureConstruction,constructionCommand,stepConstruction,constructionView,constructionTelemetry} from '../server-construction.mjs';
 import {craneHookPosition,constructionTarget,isConstructionMachine,CONSTRUCTION_LOAD_OFFSET} from '../public/js/construction-state.js';
 
 const machine=(id,modelId,x,z)=>({id,modelId,position:{x,y:0,z},rotation:{x:0,y:0,z:0},active:true,health:100,driving:{speed:0,parked:true}});
@@ -23,9 +23,10 @@ test('crane attaches, lifts, slews and secures an authoritative tower beam; ever
  const {sim,actors,send,tick}=fixture(),crane=actors.crane;
  const beamCount=constructionView(sim).beams.length;assert.equal(beamCount,6);assert.equal(sim.construction.tower.target.y,4);
  send('attach');const beam=sim.actors[crane.construction.load];assert.equal(beam.constructionBeam.state,'attached');
+ assert.equal(constructionTelemetry(sim,crane,1000).canRelease,true,'rack set-down stays available');assert.equal(constructionTelemetry(sim,crane,1000).canPlaceTower,false,'rack release never counts as structural mating');
  send('aim-target');let maximumHeight=0;for(let index=0;index<200&&crane.construction.assist;index++){tick();maximumHeight=Math.max(maximumHeight,crane.construction.hoist);}
  const target=sim.construction.tower.target,hook=craneHookPosition(crane);assert.ok(maximumHeight>=9);assert.ok(Math.hypot(target.x-hook.x,target.z-hook.z)<.2);assert.ok(Math.abs(hook.y-target.y-CONSTRUCTION_LOAD_OFFSET)<.2);
- send('release');assert.equal(beam.constructionBeam.state,'placed');assert.equal(sim.construction.tower.placed,1);assert.equal(sim.construction.tower.floors,0);assert.equal(crane.construction.load,null);
+ assert.equal(constructionTelemetry(sim,crane,1000).canPlaceTower,true,'actual matched receiver enables guided placement');send('release');assert.equal(beam.constructionBeam.state,'placed');assert.equal(sim.construction.tower.placed,1);assert.equal(sim.construction.tower.floors,0);assert.equal(crane.construction.load,null);
  for(let index=1;index<4;index++){send('aim-supply');for(let step=0;step<300&&crane.construction.assist;step++)tick();send('attach');send('aim-target');for(let step=0;step<300&&crane.construction.assist;step++)tick();send('release');}
  assert.equal(sim.construction.tower.floors,1);assert.equal(sim.construction.tower.target.y,8);assert.equal(Object.values(sim.actors).filter(a=>a.constructionBeam?.state==='placed').length,4);
  assert.equal(constructionTarget(sim.construction.tower,0).yaw,0);assert.equal(constructionTarget(sim.construction.tower,1).yaw,Math.PI/2);
@@ -58,7 +59,7 @@ test('excavator loads a nearby truck, truck transports spoil to stockpile and bu
  assert.equal(actors.excavator.construction.load,2);assert.equal(sim.construction.excavation.volume,2);assert.ok(sim.construction.excavation.depth>0);
  send('work');finish();assert.equal(actors.excavator.construction.load,0);assert.equal(actors.truck.construction.load,2);
  board('truck');actors.truck.position={x:30,y:0,z:33};sim.players.alice.position={...actors.truck.position};send('work');assert.ok(finish()>=40);assert.equal(actors.truck.construction.load,0);assert.equal(sim.construction.stockpile.volume,2);assert.equal(actors.truck.construction.bed,0);
- actors.dozer.position={x:36,y:0,z:39};board('dozer');send('work');assert.ok(finish()>=27);assert.equal(sim.construction.graded,10);assert.equal(actors.dozer.construction.blade,1);
+ actors.truck.position={x:45,y:0,z:33};actors.dozer.position={x:29,y:0,z:43.5};board('dozer');send('work');assert.ok(finish()>=27);assert.ok(sim.construction.earthworks.pushed>0);assert.ok(sim.construction.graded>0);assert.equal(actors.dozer.construction.blade,1);
 });
 test('parking, leaving the operator station and manual override cancel a cycle without creating or losing soil',()=>{
  const {sim,actors,player,board,send,tick,finish}=fixture();actors.truck.position={x:30,y:0,z:17};board('excavator');send('work');tick(5);send('park');tick(30);assert.equal(sim.construction.excavation.volume,0);assert.equal(actors.excavator.construction.workCycle,undefined);

@@ -6,6 +6,34 @@ on:
 permissions:
   contents: read
 jobs:
+  construction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check
+      - name: Verify construction terrain, machinery, crew and saved-site migration
+        run: node --test test/construction*.test.mjs test/vehicle-input-routing.test.mjs test/walking-surface-budget.test.mjs
+      - name: Install browser test tools
+        run: |
+          python -m pip install playwright
+          sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
+      - name: Verify compact controls, full screen and live construction crew
+        run: |
+          python test/construction-dashboard.browser.py
+          python test/construction-earth-crew.browser.py
+          python test/game-display-flow.browser.py
+          python test/game-viewport.browser.py
+          python test/construction-crew.browser.py
   game:
     runs-on: ubuntu-latest
     timeout-minutes: 25

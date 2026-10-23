@@ -13,6 +13,7 @@ import {applySportsSurfaces} from '../sports-surfaces.js';
 import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
 import {createBasketballStadium} from '../basketball-stadium.js';
+import {constructionCutoutPatches,createConstructionBaseGeometry} from '../construction-terrain.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
@@ -33,7 +34,7 @@ export function createBuilderLand(environment) {
     if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
-    const geometry=createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
+    const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,Math.max(40,Math.min(512,Number(built.mapSize)||40)),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
     const terrain=new THREE.Mesh(geometry,layout==='firing-range'?createFiringRangeFloorMaterial(built.mapSize):createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;

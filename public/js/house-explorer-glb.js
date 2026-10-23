@@ -1,5 +1,6 @@
 import {mountCasinoUI} from './casino-ui.js';
 import {createConstructionCamera} from './construction-camera.js';
+import {setConstructionCabView} from './construction-models.js';
 import {isConstructionMachine} from './construction-state.js';
 import {mountConstructionUI} from './construction-ui.js';
 import {createConstructionScene} from './construction-scene.js';
@@ -851,6 +852,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const constructionUI=mountConstructionUI(stage,serverCommand,{onInput:()=>authoritativeClient?.requestInput()});
   const constructionScene=createConstructionScene(THREE,scene);
   const constructionCamera=createConstructionCamera({camera,playerRig});
+  let localConstructionCab=null,localConstructionCabOperator=false;
+  function presentConstructionCab(model,operator){if(model===localConstructionCab&&operator===localConstructionCabOperator)return;if(localConstructionCab)setConstructionCabView(localConstructionCab,false);localConstructionCab=model;localConstructionCabOperator=operator;if(model)setConstructionCabView(model,operator);}
   const skiResortControls=mountSkiResortControls(stage,serverCommand);
   // Room responses confirm readiness after rendering. Recheck on the next
   // microtask so an input-only recovery restores navigation as well.
@@ -1661,6 +1664,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         walkingSurfaceCache.set(piece,{matrix:[...elements],geometry,version:positions.version,indexVersion:index?.version,drawStart:geometry.drawRange.start,drawCount:geometry.drawRange.count,group});groups.push(group);
       });
     }
+    for(const mesh of constructionScene.groundMeshes){
+      mesh.updateWorldMatrix(true,false);const geometry=mesh.geometry,positions=geometry.attributes.position,cached=walkingSurfaceCache.get(mesh);
+      if(cached?.geometry===geometry&&cached.version===positions.version){groups.push(cached.group);continue;}
+      const bounds=geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld),group={constructionEarth:true,name:mesh.name,bounds,triangles:placementTriangles(THREE,[mesh])};
+      walkingSurfaceCache.set(mesh,{geometry,version:positions.version,group});groups.push(group);
+    }
     return groups;
   }
   function updatePlayer(delta) {
@@ -2251,7 +2260,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         player.onGround=localWalkingView.grounded;player.velocity.y=localWalkingView.velocityY;
         playerCollider.start.copy(serverViewTarget).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(serverViewTarget).add(new THREE.Vector3(0,player.height-player.radius,0));
       }else if(localVehicleView.actor){
-        const previous=displayVehicle(),previousYaw=previous?.rotation?.y||0,collision=createVehicleCollision({octree:envLoader.octree,triangleGroups:walkingSurfaces(),actors:serverActors,players:serverViewSnapshot?.players||{},ignoreId:serverVehicleId,environment:activeEnvironment});
+        const previous=displayVehicle(),previousYaw=previous?.rotation?.y||0,collision=createVehicleCollision({octree:envLoader.octree,triangleGroups:walkingSurfaces(),actors:serverActors,players:serverViewSnapshot?.players||{},crew:serverViewSnapshot?.construction?.crew,earthworks:serverViewSnapshot?.construction?.earthworks,ignoreId:serverVehicleId,environment:activeEnvironment});
         localVehicleActor=localVehicleView.sample(performance.now(),frameDelta,serverInput(),{environment:activeEnvironment,fuel:serverViewSnapshot?.players[authoritativeClient?.selfId]?.fuel??100,actors:serverActors,...collision,cleared:aircraft=>{const airport=serverViewSnapshot?.airport,runway=activeEnvironment?.airport?.runway,onRunway=!runway||(Math.abs(aircraft.position.x-runway.x)<runway.width/2-1&&Math.abs(aircraft.position.z-runway.z)<runway.length/2);return !airport||onRunway&&airport.runwayHolder===authoritativeClient?.selfId&&airport.expires>(serverViewSnapshot?.serverTime||0)+performance.now()-localVehicleView.receivedAt;}});
         if(localVehicleActor){serverViewTarget.copy(localVehicleActor.position);if(isWatercraft(localVehicleActor))serverViewTarget.y=.35;player.yaw+=Math.atan2(Math.sin(localVehicleActor.rotation.y-previousYaw),Math.cos(localVehicleActor.rotation.y-previousYaw));}
       }else serverMotion.sample(performance.now(),serverViewTarget);
@@ -2287,7 +2296,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     yachtGames.update();casinoUI.update();
     const pilotedBoat=displayVehicle(),boatModel=isWatercraft(pilotedBoat)?builderDecor.children.find(root=>root.userData.builderObjectId===serverVehicleId):null;
     if(!renderer.xr.isPresenting&&!isTopDownView())harborCamera.update({boat:isWatercraft(pilotedBoat)?pilotedBoat:null,model:boatModel,origin:new THREE.Vector3(playerRig.position.x,playerRig.position.y-.35,playerRig.position.z),lookYaw:pilotedBoat?Math.atan2(Math.sin(player.yaw-pilotedBoat.rotation.y),Math.cos(player.yaw-pilotedBoat.rotation.y)):0,lookPitch:player.pitch,delta,view:harborOps.view,immediate:!!localVehicleActor});
-    const roadView=displayVehicle();if(isRoadVehicle(roadView)&&!renderer.xr.isPresenting&&!isTopDownView()){const config=roadVehicleType(roadView),roadModel=builderDecor.children.find(root=>root.userData.builderObjectId===serverVehicleId);if(roadModel){const offset=roadModel.userData.serverRenderOffset||{};roadModel.position.set(roadView.position.x+(offset.x||0),roadView.position.y+(offset.y||0),roadView.position.z+(offset.z||0));roadModel.rotation.set(0,roadView.rotation.y,0);roadModel.userData.driving=roadView.driving||{};}camera.position.set(config.seat[0],config.eyeHeight||(roadView.modelId==='grand-tourer'?1.35:1.43),config.seat[2]);camera.near=.035;camera.updateProjectionMatrix();if(isConstructionMachine(roadView)){constructionCamera.update({machine:roadView,site:serverViewSnapshot?.construction,workView:constructionUI.workView,lookYaw:Math.atan2(Math.sin(player.yaw-roadView.rotation.y),Math.cos(player.yaw-roadView.rotation.y)),lookPitch:player.pitch});if(roadView.construction?.kind==='crane'&&constructionUI.workView){scene.fog.near=90;scene.fog.far=300;}}}
+    const roadView=displayVehicle();presentConstructionCab(isConstructionMachine(roadView)?builderDecor.children.find(root=>root.userData.builderObjectId===serverVehicleId):null,!constructionUI.workView&&!isTopDownView()&&!renderer.xr.isPresenting);if(!isConstructionMachine(roadView))constructionCamera.reset();if(isRoadVehicle(roadView)&&!renderer.xr.isPresenting&&!isTopDownView()){const config=roadVehicleType(roadView),roadModel=builderDecor.children.find(root=>root.userData.builderObjectId===serverVehicleId);if(roadModel){const offset=roadModel.userData.serverRenderOffset||{};roadModel.position.set(roadView.position.x+(offset.x||0),roadView.position.y+(offset.y||0),roadView.position.z+(offset.z||0));roadModel.rotation.set(0,roadView.rotation.y,0);roadModel.userData.driving=roadView.driving||{};}camera.position.set(config.seat[0],config.eyeHeight||(roadView.modelId==='grand-tourer'?1.35:1.43),config.seat[2]);camera.near=.035;camera.updateProjectionMatrix();if(isConstructionMachine(roadView)){constructionCamera.update({machine:roadView,site:serverViewSnapshot?.construction,workView:constructionUI.workView,lookYaw:Math.atan2(Math.sin(player.yaw-roadView.rotation.y),Math.cos(player.yaw-roadView.rotation.y)),lookPitch:player.pitch});if(roadView.construction?.kind==='crane'&&constructionUI.workView){scene.fog.near=90;scene.fog.far=300;}}}
     if(isAircraft(pilotedAircraft)&&pilotedModel)updateAircraftSeat(pilotedModel,pilotedAircraft,{selfId:authoritativeClient?.selfId,view:isTopDownView()?'chase':airportOps.view});
     airportOps.updateAim();
     aircraftCannonEffects.update(frameDelta);

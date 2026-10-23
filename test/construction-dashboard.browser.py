@@ -74,6 +74,7 @@ try:
     assert not page.locator('.construction-functions-dialog').is_visible()
     assert page.locator('[data-construction-mode=work]').get_attribute('aria-pressed')=='true'
     geometry=compact_geometry(page,kind,width,height)
+    if kind=='excavator':page.screenshot(path=f'/tmp/construction-dashboard-compact-{width}.png')
     # Both Escape and explicit close return keyboard focus to the opener.
     instruments(page);page.keyboard.press('Escape');page.wait_for_function('document.activeElement===document.querySelector("[data-construction-view=instruments]")')
     assert not page.locator('.construction-instruments-dialog').is_visible()
@@ -145,13 +146,20 @@ try:
      page.evaluate('setTelemetry({travelAllowed:false,travelReason:"Lower the dump body before travelling."})')
      travel.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(40);assert page.evaluate('dashboard.inputs()') is None;page.keyboard.up('ArrowUp');page.evaluate('setTelemetry({travelAllowed:true,travelReason:""})');mode(page,'work')
     else:
-     page.evaluate('setTelemetry({canAttach:false,attachReason:"Move the empty hook within reach of a beam."})');assert panel.locator('.sports-primary-trigger').is_disabled()
+     page.evaluate('setTelemetry({canAttach:false,attachReason:"Move the empty hook within reach of a beam."})');assert not panel.locator('.sports-primary-trigger').is_disabled();assert panel.locator('.sports-primary-trigger').inner_text()=='1 Align pickup'
+     page.evaluate('clearCalls()');panel.locator('.sports-primary-trigger').click();page.wait_for_function('calls.some(call=>call.operation==="aim-supply")')
+     page.evaluate('setHydraulics({assist:"supply"})');assert panel.locator('.sports-primary-trigger').is_disabled();assert panel.locator('.sports-primary-trigger').inner_text()=='Aligning…';page.evaluate('setHydraulics({assist:null})')
      page.evaluate('setTelemetry({canAttach:true,attachReason:""});setHydraulics({load:"steel-1"});setTelemetry({canRelease:false,releaseReason:"Lower the load to its placement target."})')
-     assert panel.locator('.sports-primary-trigger').is_disabled();assert panel.locator('[data-operation=exit]').is_disabled();page.evaluate('setHydraulics({load:null});setTelemetry({canRelease:true,releaseReason:""})')
+     assert not panel.locator('.sports-primary-trigger').is_disabled();assert panel.locator('.sports-primary-trigger').inner_text()=='3 Align tower';assert panel.locator('[data-operation=exit]').is_disabled()
+     page.evaluate('clearCalls()');panel.locator('.sports-primary-trigger').click();page.wait_for_function('calls.some(call=>call.operation==="aim-target")')
+     page.evaluate('setTelemetry({canRelease:true,releaseReason:"Steel supported at the delivery rack."})');assert panel.locator('.sports-primary-trigger').inner_text()=='3 Align tower';page.evaluate('setHydraulics({hook:{x:15,y:15.5,z:-4},loadYaw:0});setTelemetry({releaseReason:"Aligned with the structural connection."})');assert panel.locator('.sports-primary-trigger').inner_text()=='4 Place beam';panel.locator('.sports-primary-trigger').click();page.wait_for_function('calls.some(call=>call.operation==="release")')
+     page.evaluate('setHydraulics({load:null});setTelemetry({canRelease:true,releaseReason:""})')
     # More retains precision and the crane camera/alignment functions.
     panel.locator('[data-construction-more]').click();functions=page.locator('.construction-functions-dialog');assert functions.is_visible()
+    for view in ['work','operator']:assert functions.locator('[data-camera-view='+view+']').is_visible()
+    functions.locator('[data-camera-view=operator]').click();assert not page.evaluate('dashboard.workView');functions.locator('[data-camera-view=work]').click();assert page.evaluate('dashboard.workView')
     if kind=='crane':
-     assert functions.get_by_role('button',name='Toggle crane work camera',exact=True).is_visible()
+     assert functions.locator('.construction-steel-steps li').count()==4
      assert functions.locator('[data-operation=aim-supply]').is_visible() and functions.locator('[data-operation=aim-target]').is_visible()
     precision=functions.locator('[data-operation=precision]');precision.click();page.wait_for_function('calls.some(call=>call.operation==="precision"&&call.enabled===true)');assert precision.get_attribute('aria-pressed')=='true'
     if functions.is_visible():page.get_by_role('button',name='Close functions',exact=True).click()
@@ -190,8 +198,25 @@ try:
    page.evaluate('setTelemetry({blocked:true,blockedPart:"hook",blockedReason:"Crane hook would strike a wall.",status:"Movement blocked"})');dialog=instruments(page);assert 'wall' in dialog.locator('.construction-interlock').inner_text().lower();close_instruments(page)
    page.evaluate('setMachine("site-excavator","excavator");state.serverTime=2000;setHydraulics({workCycle:{start:1000,duration:2000,mode:"dig"}});setTelemetry({cycleProgress:.5,cyclePhase:"dig"})');assert page.locator('.construction-controls .sports-primary-trigger').is_disabled();assert page.locator('.construction-controls [data-operation=exit]').is_disabled();assert not page.locator('.construction-controls [data-operation=park]').is_disabled()
    dialog=instruments(page);assert dialog.locator('.construction-cycle progress').evaluate('(progress)=>progress.value')==.5;close_instruments(page);page.evaluate('setHydraulics({workCycle:null});setTelemetry({cycleProgress:0,cyclePhase:"idle"})')
+   # Camera preference survives Work/Drive swaps and boarding another machine.
+   page.evaluate('setMachine("site-excavator","excavator")');page.locator('[data-construction-more]').click();page.locator('[data-camera-view=operator]').click();page.get_by_role('button',name='Close functions',exact=True).click();mode(page,'drive');assert not page.evaluate('dashboard.workView');mode(page,'work');assert not page.evaluate('dashboard.workView')
+   page.evaluate('setMachine("site-bulldozer","bulldozer")');assert not page.evaluate('dashboard.workView');page.locator('[data-construction-more]').click();assert page.locator('[data-camera-view=operator]').get_attribute('aria-pressed')=='true';page.locator('[data-camera-view=work]').click();page.get_by_role('button',name='Close functions',exact=True).click();assert page.evaluate('dashboard.workView')
+   # Materials and job meters come from authoritative snapshots rather than animation time.
+   page.evaluate('setMachine("site-excavator","excavator");setTelemetry({earthMoved:7.25});state.construction.crew.jobs[0].machineId=machine().id;state.construction.crew.jobs[0].progress=.375;state.construction.crew.jobs[0].completed=.75;refresh()')
+   dialog=instruments(page);assert 'soil 1.5 m³' in dialog.locator('.construction-materials').inner_text();assert 'gravel 0.5 m³' in dialog.locator('.construction-materials').inner_text();assert 'excavated 16.0 m³' in dialog.locator('.construction-materials').inner_text();assert '7.3 m³' in dialog.locator('.construction-materials').inner_text();assert '38%' in dialog.locator('.construction-job-readings').inner_text();close_instruments(page)
+   # Crew is accessible while seated, stops held controls, and keeps edits through live refresh.
+   left=page.locator('.construction-work-sticks .construction-stick').first;left.focus();page.keyboard.down('ArrowUp');page.wait_for_function('lastAxes().stick>0');page.get_by_role('button',name='Construction crew and jobs',exact=True).click();neutral(page);page.keyboard.up('ArrowUp')
+   crew=page.locator('.construction-crew-dialog');assert crew.is_visible();assert crew.locator('[data-worker-id]').count()==4 and crew.locator('[data-job-id]').count()==6;page.screenshot(path=f'/tmp/construction-crew-{width}.png')
+   crew.get_by_role('button',name='Start crew',exact=True).click();page.wait_for_function('calls.some(call=>call.action==="construction-crew"&&call.operation==="start"&&!call.workerId)')
+   maya=crew.locator('[data-worker-id=crew-maya]');maya.get_by_label('Job for Maya Chen',exact=True).select_option('dig');maya.get_by_label('Machine for Maya Chen',exact=True).select_option('machine-excavator');maya.get_by_role('button',name='Assign Maya Chen',exact=True).click();page.wait_for_function('calls.some(call=>call.operation==="assign"&&call.workerId==="crew-maya"&&call.jobId==="dig"&&call.machineId==="machine-excavator")')
+   maya.locator('summary').click();maya.get_by_label('Name for Maya Chen',exact=True).fill('Alex Mason');maya.get_by_label('hardHat for Maya Chen',exact=True).select_option('blue');page.evaluate('refresh();refresh()');assert maya.get_by_label('Name for Maya Chen',exact=True).input_value()=='Alex Mason';assert maya.get_by_label('hardHat for Maya Chen',exact=True).input_value()=='blue'
+   maya.get_by_role('button',name='Save Maya Chen appearance',exact=True).click();page.wait_for_function('calls.some(call=>call.operation==="customize"&&call.workerId==="crew-maya"&&call.name==="Alex Mason"&&call.appearance.hardHat==="blue")');assert maya.locator('header strong').inner_text()=='Alex Mason'
+   page.evaluate('state.construction.crew.jobs[0].progress=.5;state.construction.crew.jobs[0].completed=1;refresh()');assert crew.locator('[data-job-id=dig] progress').evaluate('node=>node.value')==.5
+   # Closing restores focus; the same toolbar remains usable after leaving the operator station.
+   page.get_by_role('button',name='Close crew',exact=True).click();page.wait_for_function('document.activeElement===document.querySelector(".construction-crew-toggle")')
+   page.evaluate('state.players.me.vehicleId=null;refresh()');assert not page.locator('.construction-controls').is_visible();assert not page.locator('.construction-controls-toggle').is_visible();assert page.locator('.construction-crew-toggle').is_visible();page.locator('.construction-crew-toggle').click();assert crew.is_visible();crew.get_by_role('button',name='Pause crew',exact=True).click();page.wait_for_function('calls.some(call=>call.action==="construction-crew"&&call.operation==="pause"&&!call.workerId)');page.keyboard.press('Escape');assert not crew.is_visible()
    assert not errors,errors
-   page.screenshot(path=f'/tmp/construction-dashboard-compact-{width}.png');page.evaluate('dashboard.dispose();flow.dispose()');page.close()
+   page.evaluate('dashboard.dispose();flow.dispose()');page.close()
   browser.close()
- print('Compact construction controls passed at 320/390/844/1280px: visible scene and pads, Work/Drive, optional instruments/functions, hide/restore, 44px targets, dialog focus return, inline backend feedback, immediate neutral, multitouch, physical directions and interlocks.')
+ print('Construction dashboard passed at 320/390/844/1280px: compact controls, immediate neutral/travel, multitouch, physical directions, stable all-machine cameras, four-step steel, authoritative materials, on-foot crew assignment and appearance editing, job progress and interlocks.')
 finally:server.shutdown()

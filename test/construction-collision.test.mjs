@@ -68,7 +68,7 @@ test('a full forty cubic metre truck refuses more soil without losing the excava
 });
 
 test('an automated tipping cycle stops at overhead geometry and awards no spoil through a blocked body path',()=>{
- const {sim,environment,player,board,send,tick}=fixture();board('truck');const truck=sim.actors.truck;truck.construction.load=2;
+ const {sim,environment,player,board,send,tick}=fixture();board('truck');const truck=sim.actors.truck;truck.position={x:30,y:0,z:33};sim.players.operator.position={...truck.position};truck.construction.load=2;truck.construction.cargo={soil:2,gravel:0};
  const objects={ceiling:{id:'ceiling',revision:1,materialId:'cube',position:[truck.position.x,4.5,truck.position.z],rotation:[0,0,0],scale:[8/1.2,.2/1.2,12/1.2]}},context={collision:new ServerBuilderCollision(),environment,objects};
  constructionCommand(sim,player,{operation:'work'},player.lastSeen,context);tick(40,context);
  assert.equal(sim.construction.stockpile.volume,0,'blocked motion cannot deliver soil');assert.equal(truck.construction.load,2,'the truck retains its load');

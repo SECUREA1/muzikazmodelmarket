@@ -67,13 +67,14 @@ function createMapContainment(meshes) {
   const root = new THREE.Group();
   root.name = 'MUZIKAZ_MAP_CONTAINMENT';
   const material = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+  const hasEarthCuts=meshes.some(mesh=>mesh.geometry?.userData?.constructionCutouts?.length),sink=hasEarthCuts?16:0;
   const floor = new THREE.Mesh(new THREE.BoxGeometry(size.x, CONTAINMENT_THICKNESS, size.z), material);
   floor.name = 'COLLIDER_MAP_SAFETY_FLOOR';
-  floor.position.set((bounds.min.x + bounds.max.x) / 2, bounds.min.y - CONTAINMENT_THICKNESS / 2, (bounds.min.z + bounds.max.z) / 2);
+  floor.position.set((bounds.min.x + bounds.max.x) / 2, bounds.min.y - sink - CONTAINMENT_THICKNESS / 2, (bounds.min.z + bounds.max.z) / 2);
   floor.userData.collider = true;
   root.add(floor);
-  const wallHeight = Math.max(size.y + 4, 8);
-  const wallY = bounds.min.y + wallHeight / 2;
+  const wallHeight = Math.max(size.y + 4, 8)+sink;
+  const wallY = bounds.min.y-sink + wallHeight / 2;
   const addWall = (width, depth, x, z) => {
     const wall = new THREE.Mesh(new THREE.BoxGeometry(width, wallHeight, depth), material);
     wall.name = 'COLLIDER_MAP_BOUNDARY';

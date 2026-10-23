@@ -6,15 +6,25 @@ import {CONSTRUCTION_LOAD_OFFSET} from './construction-state.js';
 
 export const CONSTRUCTION_MODEL_IDS=Object.freeze(['tower-crane','site-dumptruck','site-bulldozer','site-excavator','construction-steel-beam']);
 const dashboards=new WeakMap(),driveAnimations=new WeakMap();
+const localCabGlass=new WeakSet(),localCargoMaterials=new WeakSet();
 const finiteNumber=value=>Number.isFinite(Number(value))?Number(value):0;
 const clamp=(value,min,max,fallback=min)=>Math.max(min,Math.min(max,Number.isFinite(value)?value:fallback));
+// This affects the occupied player's view only. The dedicated mechanical
+// colliders remain solid, and other copies keep their own glazing materials.
+export function setConstructionCabView(root,operator=false){
+ if(!root)return;
+ root.traverse(mesh=>{
+  if(mesh.userData.constructionCabRoof)mesh.visible=!operator;
+  if(mesh.userData.constructionCabGlass){if(!localCabGlass.has(mesh)){mesh.material=mesh.material.clone();localCabGlass.add(mesh);}mesh.material.opacity=operator?.055:.16;mesh.material.depthWrite=false;}
+ });
+}
 // Each joint is a real transform: server snapshots drive the mechanism, including
 // the wire rope, hydraulic pistons, tracks and load indicators.
 export function createConstructionModel(id){
  if(!CONSTRUCTION_MODEL_IDS.includes(id))return null;
  const config=ROAD_VEHICLES[id],root=new T.Group();root.name=config?.name||'18 m Structural Steel I-Beam';
  root.userData={builderObject:true,modelId:id,constructionModel:true,...(config?{roadVehicle:true,vehicle:{mode:'drive',speed:config.speed,turnSpeed:config.turn,seat:config.seat}}:{})};
- const paint=new T.MeshStandardMaterial({color:config?.color||'#bd633a',roughness:.5,metalness:.55}),steel=new T.MeshStandardMaterial({color:'#64747a',roughness:.4,metalness:.8}),dark=new T.MeshStandardMaterial({color:'#17252c',roughness:.6,metalness:.5}),rubber=new T.MeshStandardMaterial({color:'#18201f',roughness:.95}),chrome=new T.MeshStandardMaterial({color:'#c3d4d7',roughness:.2,metalness:.9}),glass=new T.MeshPhysicalMaterial({color:'#8acdd9',transparent:true,opacity:.23,roughness:.1,depthWrite:false,side:T.DoubleSide}),red=new T.MeshStandardMaterial({color:'#f15b43',emissive:'#f15b43',emissiveIntensity:.35}),soil=new T.MeshStandardMaterial({color:'#795332',roughness:1}),seatMat=new T.MeshStandardMaterial({color:'#26383d',roughness:.9});
+ const paint=new T.MeshStandardMaterial({color:config?.color||'#bd633a',roughness:.5,metalness:.55}),steel=new T.MeshStandardMaterial({color:'#64747a',roughness:.4,metalness:.8}),dark=new T.MeshStandardMaterial({color:'#17252c',roughness:.6,metalness:.5}),rubber=new T.MeshStandardMaterial({color:'#18201f',roughness:.95}),chrome=new T.MeshStandardMaterial({color:'#c3d4d7',roughness:.2,metalness:.9}),glass=new T.MeshPhysicalMaterial({color:'#c3e5ec',transparent:true,opacity:.16,roughness:.08,depthWrite:false,side:T.DoubleSide}),red=new T.MeshStandardMaterial({color:'#f15b43',emissive:'#f15b43',emissiveIntensity:.35}),soil=new T.MeshStandardMaterial({color:'#795332',roughness:1}),seatMat=new T.MeshStandardMaterial({color:'#26383d',roughness:.9});
  const refs={wheels:[],tracks:[],beacons:[],hydraulics:[],links:[],joysticks:[],dashes:[],slings:[],colliders:[]};root.userData.constructionParts=refs;
  const mesh=(geometry,material,position=[0,0,0],parent=root)=>{const part=new T.Mesh(geometry,material);part.position.set(...position);part.castShadow=part.receiveShadow=true;parent.add(part);return part;};
  const box=(size,position,material=paint,parent=root)=>mesh(new T.BoxGeometry(...size),material,position,parent);
@@ -34,10 +44,10 @@ export function createConstructionModel(id){
  };
  const cab=(position,size=[1.8,1.9,1.9],parent=root)=>{
   const cabin=group('OPERATOR_CAB',position,parent),[w,h,d]=size;
-  box([w,.16,d],[0,0,0],dark,cabin);box([w+.12,.14,d+.12],[0,h,0],paint,cabin);
+  box([w,.16,d],[0,0,0],dark,cabin);const roof=box([w+.12,.14,d+.12],[0,h,0],paint,cabin);roof.name='CONSTRUCTION_CAB_ROOF';roof.userData.constructionCabRoof=true;
   for(const x of [-w/2,w/2])for(const z of [-d/2,d/2])tube([x,0,z],[x,h,z],.055,paint,cabin);
-  box([w-.1,h-.15,.025],[0,h/2,-d/2],glass,cabin);box([w-.1,h-.15,.025],[0,h/2,d/2],glass,cabin);
-  for(const x of [-w/2,w/2]){box([.025,h-.15,d-.1],[x,h/2,0],glass,cabin);box([.035,.07,d],[x,h*.55,0],paint,cabin);box([.05,.025,.22],[x,h*.45,.15],chrome,cabin);}
+  for(const z of [-d/2,d/2]){const pane=box([w-.1,h-.15,.025],[0,h/2,z],glass,cabin);pane.name=z<0?'CONSTRUCTION_CAB_WINDSHIELD':'CONSTRUCTION_CAB_REAR_WINDOW';pane.userData.constructionCabGlass=true;}
+  for(const x of [-w/2,w/2]){const pane=box([.025,h-.15,d-.1],[x,h/2,0],glass,cabin);pane.userData.constructionCabGlass=true;box([.035,.07,d],[x,h*.55,0],paint,cabin);box([.05,.025,.22],[x,h*.45,.15],chrome,cabin);}
   box([.65,.18,.65],[0,.45,.25],seatMat,cabin);box([.65,.75,.16],[0,.85,.52],seatMat,cabin);box([.3,.14,.2],[0,1.25,.55],seatMat,cabin);
   box([w-.2,.25,.36],[0,.8,-d*.32],dark,cabin);
   for(const x of [-.43,.43]){box([.22,.18,.65],[x,.62,.12],dark,cabin);const stick=group('OPERATOR_JOYSTICK',[x,.72,-.08],cabin);tube([0,0,0],[0,.28,-.1],.028,chrome,stick);box([.08,.12,.07],[0,.28,-.1],dark,stick);refs.joysticks.push({mesh:stick,side:Math.sign(x)});for(let i=0;i<3;i++)box([.028,.018,.03],[x-.06+i*.06,.72,.22],i===0?red:chrome,cabin);}
@@ -135,7 +145,7 @@ export function updateConstructionModel(root,elapsed=0){
  for(const [name,part]of Object.entries({slew:parts.slew,trolley:parts.trolley,hook:parts.hook,front:parts.front,bed:parts.bed,tailgate:parts.tailgate,blade:parts.blade,swing:parts.swing,boom:parts.boom,stick:parts.stick,bucket:parts.bucket})){const frame=pose.nodes[name];if(part&&frame){part.position.set(...frame.position);part.rotation.set(...frame.rotation);}}
  if(parts.cable)parts.cable.scale.y=77.82-clamp(state.hoist,.8,74,.8);
  if(parts.steeringWheel)parts.steeringWheel.rotation.z=-finiteNumber(driving.steering)*.6;
- if(parts.load){parts.load.visible=finiteNumber(state.load)>.01;if(id==='site-dumptruck')parts.load.scale.y=Math.max(.05,Math.min(1,finiteNumber(state.load)/10));}
+ if(parts.load){const cargo=state.cargo||state.telemetry?.cargo||{},soilVolume=finiteNumber(cargo.soil),gravelVolume=finiteNumber(cargo.gravel),total=soilVolume+gravelVolume,capacity=finiteNumber(state.telemetry?.loadCapacity)||(id==='site-dumptruck'?40:2),fill=Math.max(.04,Math.min(1,finiteNumber(state.load)/capacity));parts.load.visible=finiteNumber(state.load)>.01;if(!localCargoMaterials.has(parts.load)){parts.load.material=parts.load.material.clone();localCargoMaterials.add(parts.load);}parts.load.material.color.set('#795332').lerp(new T.Color('#9a9f98'),total>0?gravelVolume/total:0);parts.load.scale.y=fill;parts.load.position.y=id==='site-dumptruck'?.2+.3*fill:-.095+.175*fill;root.userData.constructionPayload=total>0?(gravelVolume>soilVolume?'gravel':'soil'):null;}
  const axes=state.axes||{};for(const {mesh,side}of parts.joysticks){const x=id==='tower-crane'?(side<0?axes.slew:axes.loadYaw):id==='site-excavator'?(side<0?axes.slew:axes.bucket):side<0?driving.steering:0,y=id==='tower-crane'?(side<0?axes.trolley:axes.hoist):id==='site-excavator'?(side<0?axes.stick:axes.boom):id==='site-dumptruck'?axes.bed:axes.blade;const forwardExtension=(id==='tower-crane'||id==='site-excavator')&&side<0;mesh.rotation.x=(forwardExtension?-1:1)*finiteNumber(y)*.23;mesh.rotation.z=-finiteNumber(x)*.23;}
  root.updateMatrixWorld(true);
  const jointPoint=value=>Array.isArray(value)?new T.Vector3(...value):new T.Vector3(...value.point).applyMatrix4(value.frame.matrix);

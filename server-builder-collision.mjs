@@ -1,5 +1,7 @@
 import {constructionColliders,constructionBox,constructionBoxContact} from './public/js/construction-collision.js';
 import {isConstructionMachine} from './public/js/construction-state.js';
+import {earthworksSurfaceAt} from './public/js/construction-earthworks.js';
+import {constructionGroundWorld} from './server-construction-ground.mjs';
 import {syncConstructionCollision} from './server-construction-collision.mjs';
 import {layoutCollisionGeometry} from './public/js/environments/layout-terrain.js';
 import {syncTrafficCollision} from './server-traffic-collision.mjs';
@@ -179,20 +181,20 @@ export class ServerBuilderCollision {
   const id=hit&&builderObjectId(hit.object),actor=actors[id];
   return actor?.destructible&&actor.active!==false?{entity:actor,along:hit.distance}:null;
  }
- blocksShot(environment,origin,direction,distance,actors={}){
+ blocksShot(environment,origin,direction,distance,actors={},objects={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
   const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
+  if(this.placedWorld(actors,objects,environment).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
   if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
-  if(this.placedWorld(actors,{},environment).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
   return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
  }
- groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects}={}){
-  const world=this.world(environment),bounds=world.bounds;
+ groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects,earthworks}={}){
+  const world=this.world(environment),bounds=world.bounds,earth=constructionGroundWorld(earthworks);
   const dynamic=actors||objects?this.placedWorld(actors,objects,environment).nearbyMeshes(point.x-.001,point.x+.001,point.z-.001,point.z+.001):[];
-  const available=[...queryCollisionMeshes(world.floorIndex,point.x-.001,point.x+.001,point.z-.001,point.z+.001),...dynamic].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
+  const available=[...queryCollisionMeshes(world.floorIndex,point.x-.001,point.x+.001,point.z-.001,point.z+.001),...dynamic,...(earth?.nearbyMeshes(point.x-.001,point.x+.001,point.z-.001,point.z+.001)||[])].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
   const meshes=available.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
   const startY=entry?bounds.max.y+2:point.y+maxRise;
-  const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>placementHitNormal(THREE,hit)?.y>.55);
+  const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-Math.min(bounds.min.y,earth?.bounds.min.y??bounds.min.y)+2)).intersectObjects(meshes,false).filter(hit=>placementHitNormal(THREE,hit)?.y>.55);
   // Prefer a floor with overhead clearance and a ceiling above it. A roof may
   // share a mesh with the floor, so mesh names alone cannot protect the entry.
   const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects(available,false).length);
@@ -200,11 +202,12 @@ export class ServerBuilderCollision {
   if(entry){choices.sort((a,b)=>a.point.y-b.point.y);} // Ground entrance, never highest roof.
   const hit=choices[0];return hit?{x:point.x,y:hit.point.y+PLAYER_FLOOR_CLEARANCE,z:point.z}:null;
  }
- teleportPosition(environment,origin,point,actors={},objects={},{localMap=false}={}){
+ teleportPosition(environment,origin,point,actors={},objects={},{localMap=false,earthworks}={}){
   const reject=()=>{throw Object.assign(Error('Choose a visible, clear floor spot.'),{statusCode:422});};
   if(!point||!['x','y','z'].every(axis=>Number.isFinite(point[axis]))||(!localMap&&Math.hypot(point.x-origin.x,point.y-origin.y,point.z-origin.z)>256))reject();
   if(restrictedCasinoVault(environment,point))throw Object.assign(Error('The bank vault is locked. Choose a public casino floor spot.'),{statusCode:403,code:'CASINO_VAULT_LOCKED'});
-  const floor=this.groundAt(environment,point,{actors,objects});if(!floor||Math.abs(floor.y-point.y)>.45)reject();
+  const floor=this.groundAt(environment,point,{actors,objects,earthworks});if(!floor||Math.abs(floor.y-point.y)>.45)reject();
+  if(earthworks&&!this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,{actors,objects,earthworks}))reject();
   const eye={x:origin.x,y:origin.y+1.6,z:origin.z},delta=[floor.x-eye.x,floor.y+.08-eye.y,floor.z-eye.z],length=Math.hypot(...delta);
   if(!localMap&&length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
@@ -216,6 +219,7 @@ export class ServerBuilderCollision {
   const world=this.world(environment);
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
+  if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
   if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
@@ -278,21 +282,21 @@ export class ServerBuilderCollision {
   }
   throw Object.assign(new Error('This meeting location has no safe arrival point.'),{statusCode:409});
  }
- resolve(environment,previous,next,actors={},objects={}){
+ resolve(environment,previous,next,actors={},objects={},{earthworks}={}){
   const hasWorld=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
-  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployedWorld=this.placedWorld(actors,{},environment);
+  const world=hasWorld?this.world(environment):null,placed=this.placedObjects(objects),deployedWorld=this.placedWorld(actors,{},environment),earth=constructionGroundWorld(earthworks);
   if(!world&&!placed.floors.length)return next;
   const padding=PLAYER_RADIUS+.002,minX=Math.min(previous.x,next.x)-padding,maxX=Math.max(previous.x,next.x)+padding,minZ=Math.min(previous.z,next.z)-padding,maxZ=Math.max(previous.z,next.z)+padding;
   // A wall slide can reach outside the original input rectangle.
   const floorReach=Math.hypot(next.x-previous.x,next.z-previous.z)+PLAYER_RADIUS+.01,area=[previous.x-floorReach,previous.x+floorReach,previous.z-floorReach,previous.z+floorReach];
-  const meshes=[...(world?(world.floorIndex?queryCollisionMeshes(world.floorIndex,...area):nearCollisionMeshes(world.floors,...area)):[]).filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)])),...nearCollisionMeshes(placed.floors,...area),...deployedWorld.nearbyMeshes(...area)];
+  const meshes=[...(world?(world.floorIndex?queryCollisionMeshes(world.floorIndex,...area):nearCollisionMeshes(world.floors,...area)):[]).filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)])),...nearCollisionMeshes(placed.floors,...area),...deployedWorld.nearbyMeshes(...area),...(earth?.nearbyMeshes(...area)||[])];
   const supportMeshes=meshes.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING|TARGET/i.test(mesh.name));
   const moving=Math.hypot(next.x-previous.x,next.z-previous.z)>1e-7,descending=next.y<=previous.y+.01;
   const floorAt=(point,maxRise=moving&&descending?MAX_STEP_HEIGHT:.025)=>{
    const startY=Math.max(previous.y,next.y)+maxRise-FLOOR_GAP;
    let blockedStep=false;
    const sample=(dx=0,dz=0)=>{
-    const hits=new THREE.Raycaster(new THREE.Vector3(point.x+dx,startY,point.z+dz),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-(world?.bounds.min.y??-100)+2)).intersectObjects(supportMeshes,false);
+    const hits=new THREE.Raycaster(new THREE.Vector3(point.x+dx,startY,point.z+dz),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-Math.min(world?.bounds.min.y??-100,earth?.bounds.min.y??Infinity)+2)).intersectObjects(supportMeshes,false);
     const hit=hits.find(hit=>{
      if(!(placementHitNormal(THREE,hit)?.y>.55))return false;
      const blocked=new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,PLAYER_HEIGHT).intersectObjects(meshes,false).length>0;
@@ -313,7 +317,7 @@ export class ServerBuilderCollision {
    }
    // Match browser containment beneath missing triangles without relocating x/z.
    const bounds=world?.bounds;
-   if(!floor&&bounds&&!bounds.isEmpty()&&point.x>=bounds.min.x&&point.x<=bounds.max.x&&point.z>=bounds.min.z&&point.z<=bounds.max.z&&bounds.min.y+FLOOR_GAP<=previous.y+maxRise)floor={x:point.x,y:bounds.min.y+FLOOR_GAP,z:point.z};
+   if(!floor&&!earthworksSurfaceAt(earthworks,point)&&bounds&&!bounds.isEmpty()&&point.x>=bounds.min.x&&point.x<=bounds.max.x&&point.z>=bounds.min.z&&point.z<=bounds.max.z&&bounds.min.y+FLOOR_GAP<=previous.y+maxRise)floor={x:point.x,y:bounds.min.y+FLOOR_GAP,z:point.z};
    return floor?{...floor,blockedStep}:blockedStep?{blockedStep:true}:null;
   };
   // Low risers are traversable only from a grounded, intentional walk. Their
@@ -341,7 +345,7 @@ export class ServerBuilderCollision {
    }
    return embedded.get(group);
   };
-  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles.filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
+  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles.filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
   const sweep=step=>{
    // Gravity is applied before this sweep. While the previous pose has floor
    // support, that provisional downward endpoint must not expose buried floor

@@ -23,6 +23,7 @@ test('slewing a stationary crane refreshes nearby walking surfaces from its real
  const oldArea=new THREE.Vector3(0,78,40),newArea=new THREE.Vector3(40,78,0);
  const playerRig={position:oldArea.clone()};
  const context=vm.createContext({
+  constructionScene:{groundMeshes:[]},
   THREE,placementMeshes,placementBounds,placementTriangles,createTrafficCollisionProxy,isAircraft,isWatercraft,
   buildingSolids:()=>[crane],serverActors:{[actor.id]:actor},serverVehicleId:null,playerRig,
   walkingSurfaceCache:new WeakMap(),walkingRootBounds:new WeakMap(),trafficWalkingProxies:new WeakMap()

@@ -1,3 +1,4 @@
+import {earthworksCollisionBoxes} from './public/js/construction-earthworks.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {constructionColliders,constructionBoxFromBounds,constructionColliderBounds,constructionMotionBlocked} from './public/js/construction-collision.js';
 import {isConstructionMachine} from './public/js/construction-state.js';
@@ -26,6 +27,13 @@ export function constructionObstacles(sim,{collision,environment,objects={}}={})
  obstacles.push(...Object.values(sim.actors).filter(actor=>actor.active!==false).flatMap(constructionColliders));
  // Other operators are protected by their upright walking capsule envelope.
  for(const player of Object.values(sim.players||{}))if(player.health>0&&!player.vehicleId&&!player.replacedByRoom)obstacles.push(constructionBoxFromBounds({min:{x:player.position.x-.3,y:player.position.y,z:player.position.z-.3},max:{x:player.position.x+.3,y:player.position.y+1.7,z:player.position.z+.3}},player.actorId,'site-worker'));
+ for(const worker of sim.construction?.crew?.workers||[]){if(!worker.position||worker.machineId&&worker.state!=='walking'&&sim.actors[worker.machineId]?.construction?.crewOperator?.workerId===worker.id)continue;const p=worker.position;obstacles.push(constructionBoxFromBounds({min:{x:p.x-.3,y:p.y,z:p.z-.3},max:{x:p.x+.3,y:p.y+1.75,z:p.z+.3}},worker.id,'site-crew-worker'));}
  return obstacles;
 }
-export function constructionMovementBlocked(sim,actor,next,context={}){return constructionMotionBlocked(actor,next,constructionObstacles(sim,context));}
+export function constructionMovementBlocked(sim,actor,next,context={}){
+ const boxes=[...constructionColliders(actor),...constructionColliders(next)],bounds={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}};
+ for(const box of boxes){const part=constructionColliderBounds(box);for(const axis of ['x','y','z']){bounds.min[axis]=Math.min(bounds.min[axis],part.min[axis]-.2);bounds.max[axis]=Math.max(bounds.max[axis],part.max[axis]+.2);}}
+ const earthworks=context.earthworks||sim.construction?.earthworks,obstacles=constructionObstacles(sim,context);
+ if(earthworks)obstacles.push(...earthworksCollisionBoxes(earthworks,bounds));
+ return constructionMotionBlocked(actor,next,obstacles);
+}

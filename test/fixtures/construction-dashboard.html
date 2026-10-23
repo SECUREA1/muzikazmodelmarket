@@ -8,15 +8,25 @@
 <main class="house-stage"><canvas tabindex="0" aria-label="Game viewport"></canvas></main>
 <script type="module">
 import {mountConstructionUI} from '../../public/js/construction-ui.js';
+import {CONSTRUCTION_CREW_DEFAULTS,CONSTRUCTION_CREW_JOBS} from '../../public/js/construction-crew.js';
 import {mountGameDisplayFlow} from '../../public/js/game-display-flow.js';
 const stage=document.querySelector('main');
 window.calls=[];window.inputCalls=[];window.rejectNext=null;
 window.state={serverTime:1000,players:{me:{id:'me',health:100,vehicleId:null}},actors:{},construction:{tower:{x:15,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16,placed:8,floors:2,target:{x:15,y:12,z:-4}},supply:{x:0,y:.8,z:10},excavation:{x:20,z:20,radius:12,depth:1.2,volume:16},stockpile:{x:25,z:30,volume:8},graded:20}};
+state.construction.earthworks={excavated:16,deposited:8,pushed:3,totals:{soil:1420,gravel:280,carriedSoil:2,carriedGravel:1}};
+state.construction.crew={enabled:false,message:'Crew paused. Assign a job to get started.',workers:structuredClone(CONSTRUCTION_CREW_DEFAULTS).map(worker=>({...worker,state:'paused',phase:'ready',jobId:worker.jobs[0],machineId:null})),jobs:Object.entries(CONSTRUCTION_CREW_JOBS).map(([id,job])=>({id,type:id,...job,status:'queued',completed:0,progress:0}))};
 const command=async(action,fields={})=>{
  calls.push({action,...structuredClone(fields)});
  if(window.rejectNext&&fields.operation!=='control'){const failure=window.rejectNext;window.rejectNext=null;if(failure.kind==='false')return false;throw new Error(failure.message||'Site interlock rejected the request.');}
  if(action==='construction-controls'&&fields.operation==='precision'){
   const actor=state.actors[state.players.me.vehicleId];actor.construction.precision=fields.enabled;actor.construction.telemetry.precision=fields.enabled;dashboard.update(state,'me');
+ }
+ if(action==='construction-crew'){
+  const crew=state.construction.crew,worker=crew.workers.find(worker=>worker.id===fields.workerId);
+  if(fields.operation==='start'||fields.operation==='pause'){if(!fields.workerId)crew.enabled=fields.operation==='start';for(const person of crew.workers)if(!fields.workerId||person===worker)person.state=fields.operation==='start'?'working':'paused';}
+  if(fields.operation==='customize'&&worker){worker.name=fields.name;worker.appearance={...fields.appearance};}
+  if(fields.operation==='assign'&&worker){worker.jobId=fields.jobId;worker.machineId=fields.machineId||null;}
+  dashboard.update(state,'me');
  }
  return {result:{message:'Confirmed'}};
 };
@@ -26,7 +36,7 @@ window.refresh=()=>dashboard.update(state,'me');
 window.setMachine=(modelId,kind)=>{
  const id='machine-'+kind;
  state.players.me.vehicleId=id;
- state.actors={[id]:{id,modelId,active:true,health:100,holderId:'me',position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},driving:{speed:0,parked:true,steering:0,blocked:false},construction:{kind,slew:.5,trolley:20,hoist:8,hook:{x:0,y:8,z:0},boom:.7,stick:-.8,bucket:.2,swing:.3,blade:.8,bed:0,load:kind==='crane'?null:2,precision:false,working:false,assist:null,axes:{},telemetry:{travelAllowed:kind!=='crane',travelReason:'',canAttach:true,attachReason:'',canRelease:true,releaseReason:'',canWork:true,workReason:'',load:2,loadCapacity:kind==='truck'?40:kind==='crane'?12:2,loadPercent:25,cycleProgress:0,cyclePhase:'idle',hydraulicsActive:false,precision:false,blocked:false,blockedPart:null,blockedReason:'',limits:{},status:'Ready',axes:{}}}}};
+ state.actors={[id]:{id,modelId,active:true,health:100,holderId:'me',position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},driving:{speed:0,parked:true,steering:0,blocked:false},construction:{kind,slew:.5,trolley:20,hoist:8,hook:{x:0,y:8,z:0},boom:.7,stick:-.8,bucket:.2,swing:.3,blade:.8,bed:0,load:kind==='crane'?null:2,cargo:{soil:1.5,gravel:.5},precision:false,working:false,assist:null,axes:{},telemetry:{travelAllowed:kind!=='crane',travelReason:'',canAttach:true,attachReason:'',canRelease:true,releaseReason:'',canWork:true,workReason:'',load:2,loadCapacity:kind==='truck'?40:kind==='crane'?12:2,loadPercent:25,cycleProgress:0,cyclePhase:'idle',hydraulicsActive:false,precision:false,blocked:false,blockedPart:null,blockedReason:'',limits:{},status:'Ready',axes:{}}}}};
  calls.length=0;refresh();
 };
 window.machine=()=>state.actors[state.players.me.vehicleId];

@@ -3,6 +3,7 @@ import {Box3,Ray,Vector3} from '../vendor/three/three.module.min.js';
 import {isAircraft} from './aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftSize} from './harbor-water.js';
 import {isConstructionMachine} from './construction-state.js';
+import {earthworksCollisionBoxes} from './construction-earthworks.js';
 import {constructionColliders,constructionBoxFromBounds,constructionMotionBlocked} from './construction-collision.js';
 
 const normal=new Vector3(),point=new Vector3(),down=new Vector3(0,-1,0);
@@ -14,7 +15,7 @@ const active=group=>group.active!==false&&group.collisionDisabled!==true;
 const constructionBoundsCache=new WeakMap();
 // This only queries cached physical triangles and the map octree. It does not
 // traverse a scene, rebuild model meshes, or decide shared gameplay outcomes.
-export function createVehicleCollision({octree=null,triangleGroups=[],actors={},players={},ignoreId=null,environment=null}={}){
+export function createVehicleCollision({octree=null,triangleGroups=[],actors={},players={},crew=null,earthworks=null,ignoreId=null,environment=null}={}){
  const origin=new Vector3(),direction=new Vector3(),end=new Vector3(),reverseOrigin=new Vector3(),reverseDirection=new Vector3(),ray=new Ray(),reverseRay=new Ray(),broadphase=new Box3();
  function hitMap(start,aim,distance){
   const map=value(octree);if(!map?.rayIntersect)return false;
@@ -38,7 +39,7 @@ export function createVehicleCollision({octree=null,triangleGroups=[],actors={},
  function machineryBlocked(from,to,yaw,actor){
   const all=value(actors)||{},id=value(ignoreId)??actor.id,obstacles=[];
   for(const group of value(triangleGroups)||[]){
-   if(!active(group)||owns(group,id))continue;
+   if(!active(group)||owns(group,id)||group.constructionEarth)continue;
    const objectId=group.objectId??group.actorId??group.root?.userData?.builderObjectId,other=all[objectId];
    if(isConstructionMachine(other)||other?.constructionManaged)continue;
    const bounds=boundsOf(group);if(!bounds||!['x','y','z'].every(axis=>Number.isFinite(bounds.min[axis])&&Number.isFinite(bounds.max[axis])))continue;
@@ -46,6 +47,9 @@ export function createVehicleCollision({octree=null,triangleGroups=[],actors={},
   }
   for(const other of Object.values(all))if(other.id!==id&&other.active!==false)obstacles.push(...constructionColliders(other));
   for(const [playerId,worker]of Object.entries(value(players)||{}))if(worker.health>0&&!worker.vehicleId&&!worker.replacedByRoom&&worker.position)obstacles.push(constructionBoxFromBounds({min:{x:worker.position.x-.3,y:worker.position.y,z:worker.position.z-.3},max:{x:worker.position.x+.3,y:worker.position.y+1.7,z:worker.position.z+.3}},playerId,'site-worker'));
+  for(const worker of value(crew)?.workers||[])if(worker.position&&(!worker.machineId||!all[worker.machineId]?.construction?.crewOperator))obstacles.push(constructionBoxFromBounds({min:{x:worker.position.x-.3,y:worker.position.y,z:worker.position.z-.3},max:{x:worker.position.x+.3,y:worker.position.y+1.7,z:worker.position.z+.3}},worker.id,'crew-worker'));
+  const span=12,bounds={min:{x:Math.min(from.x,to.x)-span,y:Math.min(from.y,to.y)-12,z:Math.min(from.z,to.z)-span},max:{x:Math.max(from.x,to.x)+span,y:Math.max(from.y,to.y)+12,z:Math.max(from.z,to.z)+span}};
+  if(value(earthworks))obstacles.push(...earthworksCollisionBoxes(value(earthworks),bounds));
   const before={...actor,position:{...from}},after={...actor,position:{...to},rotation:{...actor.rotation,y:yaw}};
   if(constructionMotionBlocked(before,after,obstacles))return true;
   // Cached authored GLB terrain lives in the octree. Probe each mechanism's
