@@ -60,7 +60,7 @@ function buildCoaster(root,h,context,config){
  context.cart=coasterCar(root,h);h.label('SKYLINE',20*config.coasterWidth/39,5,0);const pad=h.box(20*config.coasterWidth/39,.15,0,3,.25,3,'accent');pad.name='ARCADE_COASTER_BOARDING';context.clickMeshes.push(pick(pad,6,root));
 }
 function buildScenery(root,id,h,config){
- if(id==='ground'){const width=Math.max(53,config.trainRadiusX*2+5,config.coasterWidth+8),depth=Math.max(37,config.trainRadiusZ*2+5,config.coasterDepth+8);h.box(0,-.8,0,width,1.5,depth,'accent');h.box(0,-1.7,0,width+1,.5,depth+1,'#0c2522');}
+ if(id==='ground'){const width=Math.max(53,config.trainRadiusX*2+5,config.coasterWidth+8),depth=Math.max(37,config.trainRadiusZ*2+5,config.coasterDepth+8);const floor=h.box(0,-.8,0,width,1.5,depth,'accent');floor.userData.walkableFloor=true;h.box(0,-1.7,0,width+1,.5,depth+1,'#0c2522');}
  if(id==='paths'){h.box(0,.02,0,41,.1,3,'accent');h.box(0,.02,0,3,.1,26,'accent');for(const z of [-15,15])h.box(0,.05,z,44,.12,1,'accent');for(const x of [-22,22])h.box(x,.05,0,1,.12,30,'accent');}
  if(id==='trees'){for(let i=0;i<35;i++){const angle=i*2.4,x=Math.sin(angle)*20,z=Math.cos(angle*.7)*13;if(Math.abs(x)<4||Math.abs(z)<3||ARCADE_ATTRACTIONS.slice(0,5).some(a=>{const p=config.placements[a.id];return Math.abs(x-p.x)<(Math.abs(Math.cos(p.rotation*Math.PI/180))*4.5+Math.abs(Math.sin(p.rotation*Math.PI/180))*3.5)*p.scale+1&&Math.abs(z-p.z)<(Math.abs(Math.sin(p.rotation*Math.PI/180))*4.5+Math.abs(Math.cos(p.rotation*Math.PI/180))*3.5)*p.scale+1;}))continue;tree(root,h,i).position.set(x,0,z);}}
  if(id==='lamps'){let i=0;for(const x of [-20,-7,7,20])for(const z of [-3,3])lamp(root,h,i++).position.set(x,0,z);}

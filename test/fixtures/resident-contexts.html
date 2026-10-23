@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contextual world residents fixture</title><style>body{margin:0;background:#122c28;color:#ecf5df;font:14px system-ui}.house-stage{height:100dvh;position:relative}.world-resident-ui{left:8px!important;top:8px!important}button,input,select{font:inherit}</style></head><body><main class="house-stage"></main>
+<script type="module">
+import {mountWorldResidentUI} from '../../public/js/world-resident-ui.js';
+const locations={harbor:{id:'harbor-marina',name:'Harbor Marina',person:'Maya Reed',role:'Dock crew',place:'Crew pier',personality:'Patient navigator',backstory:'Maya restores small boats and welcomes visiting crews.',skill:'navigation',interest:'boats',offer:'Check the boat supply point and return to the crew pier.'},ski:{id:'summit-lodge',name:'Summit Ski Lodge',person:'Ellis Frost',role:'Resort host',place:'Trail lodge',personality:'Cheerful trail guide',backstory:'Ellis grew up exploring the mountain trails.',skill:'skiing',interest:'skiing',offer:'Check the trail board and return to the lodge.'}};
+const choices=[['day','How is your day?'],['help','Could I help here?'],['accept','Accept this local favor'],['progress','Show favor progress'],['confirm','Confirm this stop'],['cancel','Cancel this favor'],['question','Ask a question'],['resident-activity','What are you doing now?'],['resident-personality','Tell me about yourself'],['resident-skills','Our skills and experience'],['resident-memory','What do you remember?']].map(([id,label])=>({id,label}));
+let sequence=0;
+window.commands=[];
+window.profile={residentProgress:{reputation:0,skills:{social:0,hospitality:0},cosmetics:[],completedTasks:0},social:{}};
+window.saveProfile=()=>localStorage.setItem('resident-context-profile',JSON.stringify(profile));
+function progress(){const value=profile.residentProgress;return {...value,badges:[...value.cosmetics],completedFavors:value.completedTasks};}
+function context(q){const previous=profile.social[world.id]||{visits:0,affinity:0,topic:'greeting'};q.residentContext={relationship:{...previous},personality:current.personality,backstory:current.backstory,skills:{social:70,[current.skill]:85},activity:'welcoming visitors at '+current.place};}
+function openConversation(){const self=state.players.me;self.npcConversation={type:'resident',entityId:'host-'+world.id,instanceId:'conversation-'+world.id,status:'active',contact:{name:current.person,role:current.role,channel:current.place,color:'#98caae'},dialogueChoices:choices,conversation:[{id:'intro-'+ ++sequence,speaker:current.person,text:'Welcome to '+world.name+'. I can help with the '+current.place+'.',at:state.serverTime}]};context(self.npcConversation);return self.npcConversation;}
+window.changeWorld=key=>{
+ if(localStorage.getItem('resident-context-profile'))profile=JSON.parse(localStorage.getItem('resident-context-profile'));
+ window.current=locations[key];window.world={id:current.id,name:current.name};const host='host-'+world.id,friend='friend-'+world.id;
+ window.state={serverTime:100000+sequence*2000,players:{me:{username:'Visitor',health:100,position:{x:0,y:0,z:1},residentProgress:progress()}},actors:{[host]:{id:host,position:{x:0,y:0,z:0},resident:{name:current.person,role:current.role,personality:current.personality,backstory:current.backstory,task:'welcoming visitors at '+current.place,placeName:current.place,skills:{social:70,[current.skill]:85},relationships:[{id:friend,affinity:8}]}},[friend]:{id:friend,position:{x:3,y:0,z:2},resident:{name:'Taylor North',role:'Local visitor',task:'practising '+current.skill,skills:{[current.skill]:43}}}},residentLife:{worldId:world.id,worldName:world.name,conversations:[{id:'local-chat',topic:current.skill,participants:[host,friend],lines:Array.from({length:11},(_,i)=>({speakerId:i%2?host:friend,text:current.interest+' conversation '+i,at:99000+i}))}]}};
+ ui.update(state,'me',world);
+};
+window.ui=mountWorldResidentUI(document.querySelector('main'),async(action,fields)=>{
+ commands.push({action,...fields});state.serverTime+=1500;const self=state.players.me,q=self.npcConversation||openConversation();
+ const memory=profile.social[world.id] ||= {visits:0,affinity:0,topic:'greeting'};memory.visits++;memory.affinity++;
+ if(fields.text){memory.topic='interests';if(fields.text.includes(current.interest))memory.rememberedInterest=current.interest;}
+ context(q);q.conversation.push({id:'reply-'+ ++sequence,speaker:current.person,text:fields.text?'You asked about '+current.interest+'. '+current.backstory:current.offer,at:state.serverTime});
+ if(fields.choice==='help')q.residentContext.taskOffer={title:current.place+' check-in',description:current.offer,steps:['Visit the marked point','Return to '+current.person],reward:{score:100,reputation:8,skill:current.skill,xp:12,badge:current.place+' helper'}};
+ if(fields.choice==='accept')self.residentTask={id:'favor-'+sequence,title:current.place+' check-in',residentId:q.entityId,status:'active',index:0,deadline:state.serverTime+120000,reward:100,progressReward:{reputation:8,skill:current.skill,xp:12,badge:current.place+' helper'},checkpoints:[{name:'Check the '+current.place+' supply point',x:0,y:0,z:1,radius:4},{name:'Return to '+current.person,x:0,y:0,z:0,actorId:q.entityId,radius:4}]};
+ if(fields.choice==='confirm'){self.residentTask.index++;if(self.residentTask.index===2){self.residentTask.status='completed';const p=profile.residentProgress;p.reputation+=8;p.skills[current.skill]=(p.skills[current.skill]||0)+12;p.completedTasks++;p.cosmetics.push(current.place+' helper');self.residentProgress=progress();}}
+ if(fields.choice==='cancel')self.residentTask.status='cancelled';
+ saveProfile();ui.update(state,'me',world);return {result:{message:current.person+' replied.'}};
+});
+changeWorld('harbor');window.ready=true;
+</script></body></html>

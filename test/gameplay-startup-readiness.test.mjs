@@ -21,7 +21,7 @@ function fixture(extra={}){
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
-  serverHostedRoom:true,guestSolo:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
+  serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
   districtMap:{setReady:value=>readinessChanges.push(value)},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,

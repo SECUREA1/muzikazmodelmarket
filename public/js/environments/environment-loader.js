@@ -116,7 +116,7 @@ export class EnvironmentLoader {
       if(token!==this.token){this.disposeWorld(nextWorld,nextMixers);return null;}
       const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
-      const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, (builderLand?builderBaseSpawn(environment):environment.spawn));
+      const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, builderLand?(builderBaseSpawn(environment)||environment.spawn||{}):environment.spawn);
       this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);
       return { world: nextWorld, mixers: nextMixers, meshes: collision.visibleMeshes, octree: collision.octree, spawn, quality, collision, scale: this.spaceScale };
     } catch (error) { this.disposeWorld(nextWorld,nextMixers); if(token!==this.token)return null; throw error; }

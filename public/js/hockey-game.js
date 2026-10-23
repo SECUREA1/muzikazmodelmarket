@@ -1,4 +1,5 @@
 import {LocalHockeyMotion,createHockeyInputPump} from './hockey-local-motion.js';
+import {mountResidentWorldLink} from './resident-world-link.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
 import {mountSportsActions,sportIcon} from './sports-action-bar.js';
 import {mountXRGameControls} from './xr-game-controls.js';
@@ -106,6 +107,9 @@ const hockeyViewport=document.createElement('div');hockeyViewport.className='rad
 const hockeyPanels={};for(const [kind,ids]of [['match',['match-controls']],['stats',['controls-help','match-details','bracket']]]){const panel=document.createElement('dialog');panel.className='rad-sports-menu';panel.setAttribute('aria-label',kind==='match'?'Match setup and players':'Scores and rules');const close=document.createElement('button');close.type='button';close.textContent='Close ×';close.onclick=()=>panel.close();panel.append(close);for(const id of ids){const node=$('#'+id);if(node){if(node.tagName==='DETAILS')node.open=true;panel.append(node);}}hockeyShell.append(panel);hockeyPanels[kind]=panel;}
 function openHockeyPanel(kind){if(renderer.xr.isPresenting){xrControls.openMenu();return;}for(const menu of Object.values(hockeyPanels))if(menu.open)menu.close();keys.clear();hockeyTrigger.reset();controllerMove={x:0,y:0};const panel=hockeyPanels[kind];if(!panel.open)panel.showModal();}
 const accessBar=document.createElement('nav');accessBar.className='hockey-access-bar';const openMatch=document.createElement('button');openMatch.type='button';openMatch.textContent='Match menu · players / spectate';openMatch.onclick=()=>openHockeyPanel('match');accessBar.append(openMatch,$('#player-slot').closest('label'));hockeyShell.insertBefore($('#lobby'),hockeyViewport);hockeyShell.insertBefore(accessBar,hockeyViewport);$('#restart').addEventListener('click',()=>{for(const menu of Object.values(hockeyPanels))menu.close();$('#lobby').scrollIntoView({block:'nearest'});});
+mountResidentWorldLink(accessBar,mapId);
+mountResidentWorldLink($('#lobby'),mapId);
+mountResidentWorldLink(hockeyPanels.match,mapId);
 const triggerSelectors=[];
 function setTriggerMode(value){triggerMode=HOCKEY_TRIGGER_MODES.some(option=>option.value===value)?value:'auto';hockeyTrigger.reset();keys.delete(' ');for(const select of triggerSelectors)select.value=triggerMode;hockeyActions.update(selectHockeyTriggerAction(state,state?.players.find(p=>p.human===selfId),{mode:triggerMode,aim}).label,triggerMode,running&&!spectating);canvas.focus();}
 function triggerSelector(parent){const label=document.createElement('label');label.className='sport-trigger-control';label.append('Trigger action ');const select=document.createElement('select');select.setAttribute('aria-label','Hockey trigger action');for(const option of HOCKEY_TRIGGER_MODES){const node=document.createElement('option');node.value=option.value;node.textContent=option.label;select.append(node);}select.value=triggerMode;select.onchange=()=>setTriggerMode(select.value);label.append(select);parent.append(label);triggerSelectors.push(select);}
@@ -123,6 +127,7 @@ const compactStyle=document.createElement('style');compactStyle.textContent='.ho
 
 hockeyController.root.querySelector('.rad-controller-toolbar .rad-toolbar-button').remove();
 for(const [index,name] of ['exit','view','lobby','tools','settings','lobby'].entries())hockeyController.root.querySelectorAll('.rad-controller-toolbar .rad-toolbar-button')[index].innerHTML=sportIcon(name);
+const hockeyPeopleToolbar=hockeyController.root.querySelector('.rad-controller-toolbar');hockeyPeopleToolbar.style.flexWrap='wrap';mountResidentWorldLink(hockeyPeopleToolbar,mapId,{compact:true});
 const primaryControllerButton=hockeyController.root.querySelector('.rad-controller-quick-actions button');primaryControllerButton.setAttribute('aria-label','Auto or selected trigger action');
 for(const button of [...hockeyController.root.querySelector('.rad-controller-quick-actions').children])hockeyController.root.querySelector('.rad-controller-actions').append(button);
 const leftStick=hockeyController.root.querySelector('[data-thumbstick="left"]');leftStick.querySelector('.thumbstick-label').textContent='Move / action';leftStick.querySelector('small').textContent='Drag to move · tap for Auto action';leftStick.setAttribute('aria-label','Left controller: move; tap for Auto or selected trigger action');leftStick.querySelector('button').setAttribute('aria-label','Left thumbstick: drag to move, tap for Auto or selected trigger action');

@@ -265,7 +265,7 @@ export class ServerBuilderCollision {
  }
  meetingPosition(environment,point,actors={},objects={}){
   if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
-  const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));
+  const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')||mesh.userData.walkableFloor===true);
   const bounds=new THREE.Box3();terrain.forEach(mesh=>bounds.expandByObject(mesh));
   const candidates=[],entry={x:Number(point?.x)||0,z:Number(point?.z)||0};
   if(!bounds.isEmpty()){

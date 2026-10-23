@@ -93,7 +93,14 @@ cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
 
-## In-game camera views
+## Residents and local favors
+
+Contextual residents now work throughout the walkable world, including published
+Builder maps and restored saves. They have local roles, appearances, needs,
+practice routines, memories and relationships. Conversations remember interests
+across maps, and local favors earn saved reputation, skills and badges. Arcade,
+hockey and solo play include a **People & favors** link to their shared map
+walkthrough. See [residents and saved progress](docs/world-residents.md).
 
 The permanent **Starlight Grand Casino** destination includes animated dealers,
 guests, five MZK casino games, refreshments, cashier, ATM, two guards and a locked
@@ -102,6 +109,8 @@ conversations, service routines and AI-to-AI interactions. Meet staff for walkin
 favors that earn reputation and service badges. Enter it from the world directory or open
 `model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer`.
 See [casino controls and settlement](docs/casino.md).
+
+## In-game camera views
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.
 

@@ -11,11 +11,17 @@ import * as constructionServer from '../server-construction.mjs';
 import {craneHookPosition,initialConstructionState,CONSTRUCTION_LOAD_OFFSET} from '../public/js/construction-state.js';
 import {constructionColliders,constructionMotionBlocked,constructionBoxContact,constructionBoxFromBounds} from '../public/js/construction-collision.js';
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
+import {residentActivityRestricted} from '../server-resident-life.mjs';
 const {ensureConstruction,constructionCommand,stepConstruction,constructionTelemetry}=constructionServer;
 
 const machine=(id,modelId,x=0,z=0)=>({id,modelId,active:true,health:100,position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},driving:{speed:0,parked:true}});
 const obstacle=(id,size,position)=>({part:'test obstruction',objectId:id,size:{x:size[0],y:size[1],z:size[2]},matrix:new THREE.Matrix4().makeTranslation(...position).toArray()});
 const bounds=parts=>{const result=new THREE.Box3();for(const part of parts){const size=part.size,matrix=new THREE.Matrix4().fromArray(part.matrix),box=new THREE.Box3(new THREE.Vector3(-size.x/2,-size.y/2,-size.z/2),new THREE.Vector3(size.x/2,size.y/2,size.z/2));result.union(box.applyMatrix4(matrix));}return result;};
+function assertPublicResidents(state,environment){
+ const residents=Object.values(state.actors).filter(actor=>actor.resident);
+ assert.ok(residents.length>0,'construction keeps conversational residents available');
+ for(const resident of residents)assert.equal(residentActivityRestricted(environment,resident.position),false,resident.id+' remains outside the working cut, tower, and other restricted activity areas');
+}
 function fixture(){
  const sim={actors:{crane:machine('crane','tower-crane',-18,-4),truck:machine('truck','site-dumptruck',25,24),excavator:machine('excavator','site-excavator',25,17),dozer:machine('dozer','site-bulldozer',29,28)},players:{},events:[],sequence:1};
  const environment={id:'construction-collision-fixture',proceduralLand:true,construction:{enabled:true},builderScene:{layout:'grand-floor',mapSize:200,objects:[]}};
@@ -151,20 +157,21 @@ test('each native mobile construction machine starts on clear support and can dr
   const after=state.actors[actor.id].position;assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.1,modelId+' moves from its native position: '+JSON.stringify(state.actors[actor.id].driving));
   await send('construction-controls',{operation:'park',entityId:actor.id});state=await send('interact');assert.equal(state.players['account:construction-driver'].vehicleId,null);
  }
- assert.equal(Object.values(state.actors).some(actor=>actor.resident||actor.roadWorkingAI||actor.id.startsWith('road-working-crew-')),false,'native construction leaves ambient residents and road crews disabled by default');
+ assertPublicResidents(state,environment);
+ assert.equal(Object.values(state.actors).some(actor=>actor.roadWorkingAI||actor.id.startsWith('road-working-crew-')),false,'native construction leaves working road crews disabled by default');
 });
 
-test('construction ambient activity remains disabled by default and explicitly opts into residents and road crews',async t=>{
+test('construction residents remain available while working road crews require ambient activity opt-in',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'construction-ambient-policy-'));t.after(()=>rm(directory,{recursive:true,force:true}));let now=100000,request=0;
  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,'rooms.json')),now:()=>now}),identity={accountId:'site-observer',username:'Observer'};
  const base={proceduralLand:true,spawn:{x:15,y:.02,z:0},streets:[{id:'service-road',from:{x:0,y:0,z:-45},to:{x:0,y:0,z:45},width:10}],builderScene:{layout:'grand-floor',mapSize:160,objects:[],layoutMeta:{locations:[{id:'office',name:'Construction office',x:20,z:0},{id:'storage',name:'Equipment store',x:20,z:30}]}}};
  const send=(environment,action,fields={})=>runtime.command(environment.id,environment,identity,{action,requestId:'ambient-policy-'+ ++request,...fields});
  for(const enabled of [false,true]){
-  const environment={...structuredClone(base),id:'construction-ambient-'+enabled,construction:{enabled:true,...(enabled?{ambientActivity:true}:{})}};
+  const environment={...structuredClone(base),id:'construction-ambient-'+enabled,construction:{enabled:true,ambientActivity:enabled}};
   await send(environment,'join');let state;
   for(let index=0;index<3;index++){now+=200;state=await send(environment,'input',{input:{}});}
-  const residents=Object.values(state.actors).filter(actor=>actor.resident),crews=Object.values(state.actors).filter(actor=>actor.roadWorkingAI||actor.id.startsWith('road-working-crew-'));
-  assert.equal(residents.length>0,enabled,'resident generation follows explicit construction ambient opt-in');assert.equal(crews.length>0,enabled,'working road crews follow the same opt-in');
+  const crews=Object.values(state.actors).filter(actor=>actor.roadWorkingAI||actor.id.startsWith('road-working-crew-'));
+  assertPublicResidents(state,environment);assert.equal(crews.length>0,enabled,'working road crews follow explicit construction ambient opt-in');
  }
 });
 
@@ -174,8 +181,9 @@ test('the native excavator completes its dig cycle against authored soil and syn
  const send=(action,fields={})=>runtime.command(environment.id,environment,identity,{action,requestId:'native-dig-'+ ++request,...fields});
  let state=await send('join');const actor=Object.values(state.actors).find(candidate=>candidate.modelId==='site-excavator');assert.ok(actor);await send('map-access',{entityId:actor.id});state=await send('construction-controls',{operation:'work',entityId:actor.id});
  const duration=state.actors[actor.id].construction.workCycle.duration;assert.ok(duration>=3000,'a real hydraulic cycle has begun');
- for(let index=0;index<Math.ceil(duration/100)+3;index++){now+=100;state=await send('input',{input:{}});}
+ for(let index=0;index<Math.ceil(duration/100)+3;index++){now+=100;state=await send('input',{input:{}});assertPublicResidents(state,environment);}
  const machineState=state.actors[actor.id].construction;
  assert.equal(machineState.workCycle,undefined,'the cycle completes within its accepted simulation duration');assert.equal(machineState.load,2);assert.equal(state.construction.excavation.volume,2);assert.ok(state.construction.excavation.depth>0);assert.equal(!!machineState.blocked,false,'the authored soil pad does not obstruct the bucket');
- assert.equal(Object.values(state.actors).some(candidate=>candidate.resident||candidate.roadWorkingAI||candidate.id.startsWith('road-working-crew-')),false,'ambient tasks do not enter the working cut during the default cycle');
+ assertPublicResidents(state,environment);
+ assert.equal(Object.values(state.actors).some(candidate=>candidate.roadWorkingAI||candidate.id.startsWith('road-working-crew-')),false,'working road crews remain disabled during the default dig cycle');
 });

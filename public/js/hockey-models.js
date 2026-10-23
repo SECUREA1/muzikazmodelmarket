@@ -38,7 +38,7 @@ export function animateHockeyPlayer(g,p,time){animateHockeyPose(g,p.animation,ti
 export function createHockeyArena(){
  const root=new THREE.Group();root.userData.cleanSportsWorld=true;const hx=RINK.length/2,hz=RINK.width/2,r=RINK.corner;
  const shape=new THREE.Shape();shape.moveTo(-hx+r,-hz);shape.lineTo(hx-r,-hz);shape.absarc(hx-r,-hz+r,r,-Math.PI/2,0,false);shape.lineTo(hx,hz-r);shape.absarc(hx-r,hz-r,r,0,Math.PI/2,false);shape.lineTo(-hx+r,hz);shape.absarc(-hx+r,hz-r,r,Math.PI/2,Math.PI,false);shape.lineTo(-hx,-hz+r);shape.absarc(-hx+r,-hz+r,r,Math.PI,Math.PI*1.5,false);
- const ice=new THREE.Mesh(new THREE.ShapeGeometry(shape,48),mat('#e3f6ff',{roughness:.18,metalness:.1}));ice.name='REGULATION_ICE_SURFACE';ice.userData.sportsSurface='ice';ice.userData.sportsSurfaceRepeat=[1,1];ice.rotation.x=-Math.PI/2;ice.position.y=.005;root.add(ice);
+ const ice=new THREE.Mesh(new THREE.ShapeGeometry(shape,48),mat('#e3f6ff',{roughness:.18,metalness:.1}));ice.name='REGULATION_ICE_SURFACE';ice.userData.walkableFloor=true;ice.userData.sportsSurface='ice';ice.userData.sportsSurfaceRepeat=[1,1];ice.rotation.x=-Math.PI/2;ice.position.y=.005;root.add(ice);
  const points=shape.getPoints(24);for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],len=a.distanceTo(b),x=(a.x+b.x)/2,z=-(a.y+b.y)/2;const board=box(root,[len+.015,1.07,.12],[x,.535,z],'#f2f7fa');board.rotation.y=Math.atan2(a.y-b.y,b.x-a.x);const glass=box(root,[len,1.2,.025],[x,1.67,z],'#92cddd');glass.rotation.y=board.rotation.y;glass.material.transparent=true;glass.material.opacity=.2;}
  for(const x of [-RINK.goalX,-RINK.blue,0,RINK.blue,RINK.goalX])box(root,[Math.abs(x)===RINK.blue?.3:.12,.012,RINK.width-1],[x,.022,0],Math.abs(x)===RINK.blue?'#2477d8':'#e04b63');
  function ring(x,z,r,color){const m=new THREE.Mesh(new THREE.RingGeometry(r-.04,r,64),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.position.set(x,.031,z);root.add(m);}
@@ -60,7 +60,7 @@ export function createHockeyViewRig(color='#237ad4'){
 export function animateHockeyViewRig(root,player,time){const moving=Math.min(1,Math.hypot(player?.vx||0,player?.vz||0)/7);root.position.y=-.08+Math.sin(time*9)*.005*moving;root.rotation.z=['shoot','pass'].includes(player?.animation)?-.2:Math.sin(time*4)*.007*moving;}
 function addHockeyAtmosphere(root){
  const shell=new THREE.Group();shell.name='ENCLOSED_ARENA_ENVIRONMENT';
- const floor=box(shell,[96,.2,77],[0,-.16,0],'#0f2436');floor.userData.sportsSurface='metal';
+ const floor=box(shell,[96,.2,77],[0,-.16,0],'#0f2436');floor.userData.walkableFloor=true;floor.userData.sportsSurface='metal';
  for(const side of [-1,1]){box(shell,[94,19,.6],[0,9,side*38],'#101d2e');box(shell,[.6,19,76],[side*47,9,0],'#101d2e');const ribbon=box(shell,[90,.38,.06],[0,11.9,side*34.8],'#137fa8');ribbon.material.emissive.set('#187f9e');ribbon.material.emissiveIntensity=.65;}
  // Open roof cutaway keeps the broadcast and seating cameras unobstructed.
  for(let x=-40;x<=40;x+=10){pipe(shell,[x,17.4,-34],[x,17.4,34],.09,'#526779');for(const z of [-24,-12,0,12,24]){const bank=box(shell,[3.4,.055,.24],[x,17.1,z],'#edfaff');bank.material.emissive.set('#b9e8ff');bank.material.emissiveIntensity=1.8;}}

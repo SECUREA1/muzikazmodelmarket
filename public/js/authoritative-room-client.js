@@ -3,7 +3,7 @@ import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0}) {
  const api = new SharedGameInventory(),lifecycle=new AbortController();
  let renderTimer=null,pendingRender=null,lastRenderAt=null;
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
@@ -174,7 +174,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   const token={revision:connectionRevision};tickToken=token;busy=true;
   try {
    if (!joined) {
-    const joinedState=await client.send('join',{...(typeof radToxPreference==='boolean'?{radToxEnabled:radToxPreference}:{}),...(deferRadTox&&!radToxStarted?{deferRadTox:true}:{}),...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    const joinedState=await client.send('join',{...(residentWalkthrough?{residentWalkthrough:true}:{}),...(typeof radToxPreference==='boolean'?{radToxEnabled:radToxPreference}:{}),...(deferRadTox&&!radToxStarted?{deferRadTox:true}:{}),...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
     if(token.revision!==connectionRevision)return;
     arrivalPending=null;meetingPending=null;
     if (stopped) return;

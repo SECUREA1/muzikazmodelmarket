@@ -1,4 +1,5 @@
 import {sportIcon} from './sports-action-bar.js';
+import {mountResidentWorldLink} from './resident-world-link.js';
 import {explorerBroadcastPose} from './explorer-camera.js';
 import {mountArcadeDisplayControls} from './arcade-display-controls.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
@@ -284,6 +285,8 @@ const lobby=document.createElement('details');lobby.id='game-lobby';lobby.innerH
   <p class="lobby-controls">Move: WASD / stick · Aim: pointer / right stick<br>Act: trigger / click / Space · View: V · Leave: Esc</p>
  </div>`;
 $('#game').insertBefore(lobby,$('.scorebar'));
+const residentLinkBase=host==='muzikaz'?location.href:(document.documentElement.dataset.apiBase||'https://muzikazmodelmarket.onrender.com/');
+mountResidentWorldLink(lobby.querySelector('.lobby-body'),environmentId,{baseUrl:residentLinkBase});
 const status=message=>{$('#room-status').textContent=message;syncGameLobby();};
 let triggerMode='auto';try{const saved=localStorage.getItem('neon-junction.trigger-mode');if(['auto','shoot','pass','steal'].includes(saved))triggerMode=saved;}catch{}
 $('#trigger-mode').value=triggerMode;
@@ -411,3 +414,6 @@ $('#team-size').onchange=()=>{refreshPlayerSlots();syncGameLobby();};$('#basketb
 for(const button of document.querySelectorAll('[data-attraction-filter]'))button.onclick=()=>{const filter=button.dataset.attractionFilter;for(const choice of document.querySelectorAll('[data-attraction-filter]'))choice.setAttribute('aria-pressed',String(choice===button));for(const [index,card] of [...document.querySelectorAll('#attractions button')].entries())card.hidden=filter==='games'&&index>=5||filter==='rides'&&index<5;};
 
 mountArcadeDisplayControls({lobby});
+const arcadePeopleToolbar=document.querySelector('.arcade-display-toolbar');arcadePeopleToolbar.style.flexWrap='wrap';
+mountResidentWorldLink(arcadePeopleToolbar,environmentId,{compact:true,baseUrl:residentLinkBase});
+mountResidentWorldLink(document.querySelector('.arcade-display-popup[aria-label="Explore the arcade"]'),environmentId,{baseUrl:residentLinkBase});
