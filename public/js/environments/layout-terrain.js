@@ -23,7 +23,7 @@ export function layoutCollisionGeometry(geometry){
  if(!geometry?.userData?.planarCollision)return geometry;
  let collider=planarColliders.get(geometry);if(!collider){collider=new THREE.PlaneGeometry(geometry.parameters.width,geometry.parameters.height);planarColliders.set(geometry,collider);}return collider;
 }
-export function layoutSize(value) { return Math.max(40,Math.min(512,Number(value)||40)); }
+export function layoutSize(value) { return Math.max(40,Math.min(2000,Number(value)||40)); }
 // World-space sampling is identical in the editor, browser and server.
 export function createLayoutTerrain(layout, size, color=0x315b32) {
  size=layoutSize(size);const segments=Math.min(160,Math.max(80,Math.round(size)));

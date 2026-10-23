@@ -1203,6 +1203,20 @@
       "description": "Working Windmill from the Environment Builder, ready to drop into the running game."
     },
     {
+      "id": "builder-alpine-mountain",
+      "name": "Alpine Snow Mountain",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/assets/builder-pack/alpine-mountain.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "terrain",
+      "buildAssetId": "alpine-mountain",
+      "dimensions": [6, 5, 5.5],
+      "function_data": {"behavior": "decor"},
+      "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third."
+    },
+    {
       "id": "builder-terrain-cliff",
       "name": "Weathered Cliff",
       "owner": "MUZIKAZ",

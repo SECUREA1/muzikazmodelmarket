@@ -13,6 +13,7 @@ import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './build
 import {finishGameItem} from './game-item-finish.js';
 import {CAMP_MODEL_INFO} from './summer-camp.js';
 import {createCampModel} from './summer-camp-models.js';
+import {ALPINE_MOUNTAIN_MODEL_INFO,createAlpineMountain} from './alpine-mountain-model.js';
 import {LAYOUT_SCENE_INFO} from './builder-layout-scenes.js';
 import {createLayoutSceneModel} from './layout-scene-models.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
@@ -43,6 +44,7 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
+  ...ALPINE_MOUNTAIN_MODEL_INFO,
   ...LAYOUT_SCENE_INFO,
   ...Object.fromEntries(Object.entries(ENTERABLE_BUILDINGS).map(([id,item])=>[id,[item.name,item.description,[item.width+.7,item.height+.8,item.depth+3]]])),
   ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).filter(([id])=>!RESORT_PRODUCTS[id]).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
@@ -300,6 +302,7 @@ export function createBuilderModel(id,options={}) {
 
   let root;
   if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
+  else if(id==='alpine-mountain')root=createAlpineMountain(THREE);
   else if(CAMP_MODEL_INFO[id])root=createCampModel(THREE,id);
   else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
   else if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);

@@ -11,16 +11,16 @@ import {boatAssistedInput} from '../public/js/boat-assist.js';
 import {stepBoatSimulation} from '../public/js/boat-simulation.js';
 import {harborWaterAt,watercraftFootprint} from '../public/js/harbor-water.js';
 const airport=airportWorld(),marina=neonMarina(),harbor={builderScene:{objects:marina.objects,layoutMeta:{harbor:marina.harbor}}};
-test('expanded worlds expose three landing strips, six harbour docks, and relevant vehicle routes',()=>{
- assert.equal(airportRunways(airport).length,3);assert.ok(airport.builderScene.mapSize>=1024);assert.equal(marina.harbor.docks.length,6);assert.ok(marina.harbor.extent>=512);
- assert.equal(vehicleDestinations(airport,{modelId:'corsair-aircraft'}).length,3);assert.deepEqual(vehicleDestinations(airport,{modelId:'harbor-skiff'}),[]);
+test('expanded worlds expose four landing strips, six harbour docks, and relevant vehicle routes',()=>{
+ assert.equal(airportRunways(airport).length,4);assert.ok(airport.builderScene.mapSize>=2000);assert.equal(marina.harbor.docks.length,6);assert.ok(marina.harbor.extent>=512);
+ assert.equal(vehicleDestinations(airport,{modelId:'corsair-aircraft'}).length,4);assert.deepEqual(vehicleDestinations(airport,{modelId:'harbor-skiff'}),[]);
  assert.ok(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).every(place=>!marina.harbor.islands.some(island=>island.id===place.id)));assert.equal(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).length,8);
 });
 for(const origin of airportRunways(airport))for(const destination of airportRunways(airport))test('automatic flight '+origin.id+' to '+destination.id+' lands and parks without damage',()=>{
  const plane={id:'plane',modelId:'corsair-aircraft',active:true,position:{x:origin.x-21,y:.4,z:origin.z},rotation:{y:0},flight:{}},player={actorId:'pilot',vehicleId:plane.id,input:{}},sim={actors:{plane},players:{pilot:player},airport:{runwayHolder:null,expires:0}};
  startAircraftAssist(sim,player,airport,'navigate',100000,null,{},destination.id);
  let steps=0;for(;steps<4800&&plane.flight.assist;steps++){
-  const input=aircraftAssistedInput(plane,{},airport,100000+steps*50),pose=stepAircraftFlight(plane,input,.05,{ground:.4,half:512,ceiling:140});assert.equal(pose.flight.impactDamage,0);assert.notEqual(pose.flight.phase,'hold');Object.assign(plane,pose);
+  const input=aircraftAssistedInput(plane,{},airport,100000+steps*50),pose=stepAircraftFlight(plane,input,.05,{ground:.4,half:airport.builderScene.mapSize/2,ceiling:140});assert.equal(pose.flight.impactDamage,0);assert.notEqual(pose.flight.phase,'hold');Object.assign(plane,pose);
  }
  assert.ok(steps<4800,'route completes before clearance expiry');assert.equal(plane.flight.airborne,false);assert.ok(plane.flight.speed<.5);assert.equal(plane.flight.arrivalDestinationId,destination.id);assert.ok(Math.hypot(plane.position.x-(destination.x-destination.width/2-11),plane.position.z-destination.z)<2.1);
 });

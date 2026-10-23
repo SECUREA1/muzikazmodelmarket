@@ -110,6 +110,14 @@ favors that earn reputation and service badges. Enter it from the world director
 `model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer`.
 See [casino controls and settlement](docs/casino.md).
 
+The airport includes **Alpine Ridge Mountain Airfield** in an expanded 2 km world.
+Board a public aircraft, open the local map and choose **Fly to** Alpine Ridge to
+take off, land on the paved runway and park at the mountain apron. Exit once
+stopped to explore the lodge, ranger station, supply hut, campground, lake and
+lantern trails. Accept the Alpine Ridge supply flight or camper evacuation in
+**Quests**; the campground and ranger boards offer separate walking collection
+quests. These activities award room score. See [mountain fly-in](docs/mountain-fly-in.md).
+
 ## In-game camera views
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.

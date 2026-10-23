@@ -24,6 +24,10 @@ export function questCatalog(environment){
   add('air-intercept','Interceptor patrol','attack','armed','Intercept two armed AI aircraft using the Corsair cannons, then return safely.',1100);
   add('air-dogfight','AI dogfight competition','dogfight','armed','Fly an airborne Corsair duel against a maneuvering AI pilot that returns fire. Scores are shared.',1400);
   add('air-race','Air gates championship','race','aircraft','Reach the airborne start gate and race an AI aircraft’s rolling lap through the circuit. Shared standings rank finish times.',1000);
+  if(environment.airport.runways?.some(runway=>runway.id==='mountain-runway')){
+   add('air-mountain-supply','Alpine Ridge supply flight','delivery','aircraft','Park at the main airport to load camping supplies, fly the marked route to Alpine Ridge, then land and stop on its apron to unload.',1000);
+   add('air-mountain-rescue','Alpine Ridge camper evacuation','recovery','aircraft','Depart the main airport, land at Alpine Ridge to receive stranded campers, then fly them back and park at the main airport apron.',1250);
+  }
  }
  if(environment?.game==='ski')add('ski-finish','Pixel Peaks race contract','ski','foot','During a live ski race, finish a run with at least 500 race points.',550);
  if(environment?.game==='basketball'||environment?.id==='basketball-arena'||environment?.basketball===true||environment?.basketballCourt===true||['basketball-arena','basketball-stadium'].includes(environment?.builderScene?.layout))add('court-six','Court scoring contract','basketball','foot','Join a live court game and score six new basketball points.',450);

@@ -1,6 +1,7 @@
 import {airportRunways,aircraftRunway,runwayClearance,runwayParking} from './public/js/airport-navigation.js';
 export {aircraftAssistedInput} from './public/js/aircraft-assist.js';
 import {isAircraft} from './public/js/aircraft-flight.js';
+import {canonicalQuest} from './server-quest-teams.mjs';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
 const fail=(message,statusCode=409)=>{throw Object.assign(Error(message),{statusCode});};
@@ -63,6 +64,10 @@ export function startAircraftAssist(sim,player,environment,operation,now,collisi
   if(collision?.hasBodyClearance&&!collision.hasBodyClearance(environment,{...point,y:point.y+.3},.5))fail('The runway staging point is blocked.');
   clearAssist(aircraft);aircraft.position=point;aircraft.rotation={x:0,y:0,z:0};Object.assign(flight,{speed:0,airspeed:0,throttle:0,throttleCommand:1,pitch:0,bank:0,altitude:0,airborne:false,clearance:'takeoff',assist:'takeoff',assistStage:'roll',assistSince:now});
   player.position={...point};player.yaw=0;player.floor=point.y;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
+  // Staging the assigned craft for takeoff is part of its flight mission.
+  // Map relocation still changes the revision without updating this proof.
+  const mission=canonicalQuest(sim,player),member=mission?.team?.[player.actorId];
+  if(mission?.status==='active'&&player.vehicleMission?.status==='active'&&(member?.vehicleId??mission.vehicleId)===aircraft.id){if(member)member.revision=player.movementRevision;if(mission.vehicleId===aircraft.id)mission.revision=player.movementRevision;}
  }else{
   if(!airborne){Object.assign(flight,{throttleCommand:0,throttle:0,speed:0,airspeed:0,brake:1});clearAssist(aircraft);player.input={};return 'Aircraft is already on the ground. You can leave the cockpit.';}
   const parkX=runway.x-runway.width/2-11,parking=[0,-30,30,-60,60].map(offset=>({x:parkX,z:runway.z+offset})).find(point=>!Object.values(sim.actors||{}).some(other=>other.id!==aircraft.id&&isAircraft(other)&&other.active!==false&&Math.hypot(other.position.x-point.x,other.position.z-point.z)<12));if(!parking)fail('Tower: the runway parking apron is full. Wait for a space to clear.');
