@@ -19,8 +19,8 @@ for(const world of [airportWorld(),marina])test(world.name+' map travel and boar
  let state=await send(alice,'map-access',{entityId:craft[0].id});assert.equal(state.players['account:alice'].vehicleId,craft[0].id);assert.equal(state.actors[craft[0].id].holderId,'account:alice');
  await assert.rejects(send(bob,'map-access',{entityId:craft[0].id}),/Another player/);
  state=await send(bob,'map-access',{entityId:craft[1].id});assert.equal(state.players['account:bob'].vehicleId,craft[1].id);assert.equal(state.players['account:alice'].vehicleId,craft[0].id);
- await assert.rejects(send(alice,'map-access',{locationId:world.builderScene.layoutMeta.locations[0].id}),/leave your vehicle/);
- await send(alice,'interact');await assert.rejects(send(alice,'map-access',{entityId:'missing'}),/unavailable/);await assert.rejects(send(alice,'map-access',{locationId:'missing'}),/listed/);
+ state=await send(alice,'map-access',{locationId:world.builderScene.layoutMeta.locations[0].id});assert.equal(state.players['account:alice'].vehicleId,null);assert.equal(state.actors[craft[0].id].holderId,null);assert.equal(state.players['account:bob'].vehicleId,craft[1].id);
+ await assert.rejects(send(alice,'map-access',{entityId:'missing'}),/unavailable/);await assert.rejects(send(alice,'map-access',{locationId:'missing'}),/listed/);
 });
 for(const world of [airportWorld(),marina])test(world.name+' allows tools immediately after a deferred combat join',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'transport-tools-'));t.after(()=>rm(dir,{recursive:true,force:true}));

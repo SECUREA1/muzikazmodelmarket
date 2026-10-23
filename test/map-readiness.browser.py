@@ -44,17 +44,10 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
-async def assert_unavailable(page):
-    assert await page.locator('.district-map-toggle').is_hidden()
-    assert await page.locator('.district-map-toggle').is_disabled()
-    assert await page.locator('.live-local-map').is_hidden()
-    result = await page.evaluate('''() => {
-        const canvas=document.querySelector('.house-stage>canvas');canvas.focus();
-        map.button.focus();map.button.click();
-        const mini=document.querySelector('.live-local-map [data-collapse]');mini.focus();
-        return {focused:document.activeElement===canvas,open:map.dialog.open};
-    }''')
-    assert result == {'focused': True, 'open': False}, result
+async def assert_available(page):
+    assert await page.locator('.district-map-toggle').is_visible()
+    assert await page.locator('.district-map-toggle').is_enabled()
+    assert await page.locator('.live-local-map').is_visible()
 
 
 async def open_map(page):
@@ -136,10 +129,10 @@ async def run(base):
         # its initial inline layout while either request is outstanding.
         await asyncio.wait_for(both_requested.wait(), timeout=10)
         assert len(requested) == 2 and all(parse_qs(urlparse(url).query).get('v') for url in requested), requested
-        await assert_unavailable(page)
+        await assert_available(page)
         gates['district-map.css'].set()
         await page.wait_for_function('!![...document.querySelectorAll("link")].find(link=>link.href.includes("district-map.css")).sheet')
-        await assert_unavailable(page)
+        await assert_available(page)
         gates['local-live-map.css'].set()
         await page.locator('.district-map-toggle').wait_for(state='visible')
         mini = page.locator('.live-local-map')
@@ -233,11 +226,11 @@ async def run(base):
         assert await page.locator('.district-map-toggle').is_enabled()
         assert await mini.is_visible() and 'is-collapsed' not in await mini.get_attribute('class')
         await page.get_by_role('button', name='Go to Basketball Court', exact=True).click()
-        assert await page.evaluate('mapCommands') == []
+        assert await page.evaluate('mapCommands.length') == 1
         await page.evaluate('map.setReady(true)')
         await page.get_by_role('button', name='Go to Basketball Court', exact=True).focus()
         await page.keyboard.press('Enter')
-        await page.wait_for_function('mapCommands.length===1')
+        await page.wait_for_function('mapCommands.length===2')
         assert await page.evaluate('mapKeys.splice(0)') == [], 'Native map Enter activation must not leak to gameplay.'
         assert await page.locator('.district-map-dialog').evaluate('node=>node.open')
         assert await page.locator('.local-map-status').inner_text() == 'Arrived'
@@ -248,10 +241,10 @@ async def run(base):
         await route.wait_for(state='attached')
         await page.evaluate('map.setReady(false)')
         await route.click()
-        assert await page.evaluate('mapCommands.length') == 1
+        assert await page.evaluate('mapCommands.length') == 3
         await page.evaluate('map.setReady(true)')
         await route.click()
-        await page.wait_for_function('mapCommands.length===2')
+        await page.wait_for_function('mapCommands.length===4')
         assert await page.locator('.district-map-dialog').evaluate('node=>node.open')
 
         await page.get_by_role('button', name='3D map', exact=True).click()
@@ -276,7 +269,7 @@ async def run(base):
         await page.wait_for_function('!map.dialog.open&&!previousMapCanvas.isConnected&&previousMapContext.isContextLost()')
         assert await page.evaluate('sourceDisposals') == {'geometry': 0, 'material': 0}
         assert await page.evaluate('sourceMesh.parent===sourceRoot&&sourceMesh.geometry.attributes.position.count>0')
-        await assert_unavailable(page)
+        await assert_available(page)
 
         # A mini pin also selects the 2D location after the previous visit used
         # the 3D view; it must not reopen a quest panel or an unrelated camera.
@@ -324,7 +317,7 @@ async def run(base):
         await resolve_atlas(page, current, 'Current world deed')
         await page.locator('.district-map-dialog').get_by_text('Current world deed', exact=True).wait_for(state='attached')
         assert await page.locator('.local-map-status').inner_text() == '1 recorded deeds · 1 connected destinations'
-        assert await page.evaluate('mapCommands.map(command=>command.action)') == ['map-access', 'vehicle-navigate']
+        assert await page.evaluate('mapCommands.map(command=>command.action)') == ['map-access', 'map-access', 'vehicle-navigate', 'vehicle-navigate']
         assert not errors, errors
         await page.evaluate('map.dispose()')
         assert await page.locator('.live-local-map,.district-map-toggle,.district-map-dialog').count() == 0
@@ -336,7 +329,7 @@ server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
 Thread(target=server.serve_forever, daemon=True).start()
 try:
     asyncio.run(run(f'http://127.0.0.1:{server.server_port}'))
-    print('Companion maps preserve gameplay, touch controls and 2D/3D views through link interruptions; CSS startup gating, travel, world teardown and stale replies pass.')
+    print('Companion maps preserve gameplay, touch controls and 2D/3D views through link interruptions; CSS-independent browsing, travel, world teardown and stale replies pass.')
 finally:
     server.shutdown()
     server.server_close()

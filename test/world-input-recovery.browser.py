@@ -134,9 +134,8 @@ async def main():
                         state = payload.get('data', payload)
                         assert state.get('players', {}).get(state.get('selfId'), {}).get('vehicleId'), (world, 'boarding was not authoritative')
                         dialog = page.locator('.district-map-dialog')
-                        assert await dialog.is_visible(), 'Boarding must keep the map open.'
-                        await dialog.get_by_role('button', name='Close', exact=True).click()
                         await dialog.wait_for(state='hidden')
+                        assert await page.locator('.district-map-toggle').is_enabled(), 'Boarding must expose controls and keep the map available.'
                         functions_name = 'Show flight controls' if world == 'muzikaz-airport' else 'Show boat functions'
                         await page.get_by_role('button', name=functions_name, exact=True).click()
                         exit_vehicle = page.get_by_role('button', name='Exit parked aircraft', exact=True) if world == 'muzikaz-airport' else page.get_by_role('button', name='Leave stopped boat', exact=True)

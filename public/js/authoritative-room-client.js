@@ -8,6 +8,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  const api = new SharedGameInventory(),lifecycle=new AbortController();
  let renderTimer=null,pendingRender=null,lastRenderAt=null,latestSnapshot=null;
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
+ let confirmedOnce=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
  let fireRequest=null,queuedFire=null,aircraftFireRequests=0,constructionSequence=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,inputEpochSequence=-1,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
@@ -20,7 +21,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  function close(error) {
   stopped=true; client.ready=false; failure=error; invalidateInputs();clearInterval(timer);clearTimeout(renderTimer);renderTimer=null;pendingRender=null;lifecycle.abort();settle(error);
  }
- function invalidateInputs(){connectionRevision++;pendingInput=null;busy=false;tickToken=null;clearTimeout(renderTimer);renderTimer=null;pendingRender=null;}
+ function invalidateInputs(){connectionRevision++;automaticInputs.clear();pendingInput=null;busy=false;tickToken=null;clearTimeout(renderTimer);renderTimer=null;pendingRender=null;}
  // Refresh only a rejected CSRF proof, and reuse the command request ID so an
  // ambiguous response cannot apply a gameplay action twice.
  function roomSession(){
@@ -60,7 +61,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    return new Promise((resolve,reject)=>{
     const waiter={resolve,reject,timer:setTimeout(()=>{
      const error=Error('The game server did not accept the room connection. Select Try again.');
-     close(error); onStatus?.(error.message); onError?.(error);
+     if(confirmedOnce){waiters.delete(waiter);reject(error);onStatus?.(error.message);}else{close(error);onStatus?.(error.message);onError?.(error);}
     },timeoutMs)};
     waiters.add(waiter);
    });
@@ -95,7 +96,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
     client.selfId=selfId;
-    if(action==='join'){sequence=-1;pendingRender=null;clearTimeout(renderTimer);renderTimer=null;}
+    if(action==='join'){confirmedOnce=true;sequence=-1;pendingRender=null;clearTimeout(renderTimer);renderTimer=null;}
     if(action==='input'&&issuedEpoch===inputEpoch)lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
