@@ -101,7 +101,7 @@ export function updateWorldResident(root,time){
  const state=root.userData.residentState||{},moving=state.moving,gesture=state.gesture||'work',parts=root.userData.residentParts,head=parts.head;
  const {appearance,uniform}=residentVisualStyle(state),casino=Boolean(state.casino),materials=root.userData.residentMaterials;
  materials.outfit.color.set(appearance.outfit);materials.skin.color.set(appearance.skin);materials.hair.color.set(appearance.hair);materials.accent.color.set(appearance.accent);
- const height=T.MathUtils.clamp(Number(appearance.height)||1,.9,1.12),build=T.MathUtils.clamp(Number(appearance.build)||1,.85,1.15);
+ const height=state.ageGroup==='child'?.74:T.MathUtils.clamp(Number(appearance.height)||1,.9,1.12),build=T.MathUtils.clamp(Number(appearance.build)||1,.85,1.15);
  parts.body.scale.set(build,height,build);if(root.userData.residentLabel)root.userData.residentLabel.label.position.y=height*1.84+.21;
  for(const style of parts.hairstyles.children)style.visible=style.name===(['construction','security'].includes(uniform)?'short':appearance.hairstyle);
  parts.glasses.visible=appearance.accessory==='glasses';parts.earrings.visible=appearance.accessory==='earrings';parts.necklace.visible=appearance.accessory==='necklace';parts.cap.visible=uniform==='security';parts.badge.visible=uniform==='security';parts.radio.visible=uniform==='security';parts.formal.visible=uniform==='formal';parts.nameTag.visible=['formal','hospitality','training','aviation','arcade'].includes(uniform);
@@ -125,9 +125,9 @@ export function updateWorldResident(root,time){
  const label=root.userData.residentLabel,text=state.speaking?state.speech||'':'',key=[casino,state.name,state.role,text,state.color].join('|');
  if(label&&key!==label.key){
   label.key=key;const ctx=label.canvas.getContext('2d');ctx.clearRect(0,0,768,192);ctx.fillStyle=casino?'#122331e8':'#102a31e8';ctx.fillRect(0,0,768,192);ctx.fillStyle=casino?'#efd49c':state.color||'#a6efd1';
-  if(!text){let size=76;ctx.font='600 '+size+'px system-ui';while(ctx.measureText(state.name||'Guest').width>728&&size>40){size-=2;ctx.font='600 '+size+'px system-ui';}ctx.fillText(state.name||'Guest',20,120);}
+  if(!text){let size=76;ctx.font='600 '+size+'px system-ui';while(ctx.measureText((state.name||'Guest')+' · AI').width>728&&size>40){size-=2;ctx.font='600 '+size+'px system-ui';}ctx.fillText((state.name||'Guest')+' · AI',20,120);}
   else {
-   ctx.font='bold 36px system-ui';ctx.fillText((state.name||'Resident')+' · '+(state.role||'Local'),18,40);ctx.fillStyle='#f2fffa';ctx.font='38px system-ui';const words=text.split(' ');let line='',row=0;const step=44;
+   ctx.font='bold 36px system-ui';ctx.fillText((state.name||'Resident')+' · AI · '+(state.role||'Local'),18,40);ctx.fillStyle='#f2fffa';ctx.font='38px system-ui';const words=text.split(' ');let line='',row=0;const step=44;
    for(const word of words){if(ctx.measureText(line+word).width>725){ctx.fillText(line,18,87+row*step);line='';row++;if(row>2)break;}line+=word+' ';}if(row<=2)ctx.fillText(line,18,87+row*step);
   }
   label.texture.needsUpdate=true;

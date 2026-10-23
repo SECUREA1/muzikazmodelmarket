@@ -63,7 +63,7 @@ export function createConstructionScene(THREE,scene){
    rig.data=worker;rig.seated=!!operator;rig.target.set(numeric(operator?.seat?.x,worker.position?.x),operator?operator.seat.y-.9:numeric(worker.position?.y),numeric(operator?.seat?.z,worker.position?.z));rig.heading=operator?.yaw??numeric(worker.heading);if(rig.fresh){rig.root.position.copy(rig.target);rig.root.rotation.y=rig.heading;rig.fresh=false;}
    rig.root.userData.worker={id:worker.id,name:worker.name,role:worker.role,state:worker.state,machineId:worker.machineId,progress:worker.progress};
    const job=jobs.get(worker.jobId),progress=Number.isFinite(worker.progress)?worker.progress:Number.isFinite(job?.progress)?job.progress:null;
-   updateLabel(rig.tag,worker.name||'Site worker',worker.message||worker.phase||worker.role||worker.state||'Ready',progress);rig.tool.visible=!seated&&/steel|fix|inspect|survey|rig/i.test(worker.role+' '+worker.phase);
+   updateLabel(rig.tag,(worker.name||'Site worker')+' · AI',worker.speechUntil>(snapshot.serverTime||0)?worker.speech:worker.message||worker.phase||worker.role||worker.state||'Ready',progress);rig.tool.visible=!seated&&/steel|fix|inspect|survey|rig/i.test(worker.role+' '+worker.phase);
   }
   for(const [id,rig]of workers)if(!seen.has(id)){clear(rig.root);rig.root.removeFromParent();workers.delete(id);}
  }

@@ -1,3 +1,4 @@
+import {hydrateRoomSnapshot} from './room-snapshot.js';
 import {RAD_TOX_SHOT_INTERVAL_MS} from './rad-tox-rules.js';
 import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
@@ -5,11 +6,11 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0}) {
  const api = new SharedGameInventory(),lifecycle=new AbortController();
- let renderTimer=null,pendingRender=null,lastRenderAt=null;
+ let renderTimer=null,pendingRender=null,lastRenderAt=null,latestSnapshot=null;
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
- let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,inputEpochSequence=-1,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
+ let fireRequest=null,queuedFire=null,aircraftFireRequests=0,constructionSequence=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,inputEpochSequence=-1,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
@@ -47,7 +48,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   catch(cause){const error=Object.assign(new Error('Unable to display this world: '+cause.message),{code:'GAME_RENDER_FAILED',cause});close(error);onStatus?.(error.message);onError?.(error);throw error;}
  }
  function present(state,selfId,timing={},immediate=false){
-  if(stopped||state.sequence<=sequence)return;sequence=state.sequence;pendingRender={state,selfId,timing};
+  if(stopped||state.sequence<=sequence)return;state=hydrateRoomSnapshot(state,latestSnapshot);latestSnapshot=state;sequence=state.sequence;pendingRender={state,selfId,timing};
   if(immediate||!renderInterval||lastRenderAt===null){clearTimeout(renderTimer);flushRender();}
   else if(renderTimer===null)renderTimer=setTimeout(()=>{try{flushRender();}catch{}},Math.max(0,renderInterval-(performance.now()-lastRenderAt)));
  }
@@ -75,7 +76,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:fireTool==='laser'?0:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);if(radToxStarted||aircraftShot)onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
-    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
+    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:'compact',sceneVersion:latestSnapshot?.sceneVersion,actorSetRevision:latestSnapshot?.actorSetRevision,earthworksRevision:latestSnapshot?.construction?.earthworks?.revision,...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.

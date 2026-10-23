@@ -22,7 +22,7 @@ jobs:
       - run: npm run build
       - run: npm run check
       - name: Verify construction terrain, machinery, crew and saved-site migration
-        run: node --test test/construction*.test.mjs test/vehicle-input-routing.test.mjs test/walking-surface-budget.test.mjs
+        run: node --test test/construction*.test.mjs test/machine-walkup.test.mjs test/room-snapshot.test.mjs test/community-life.test.mjs test/world-residents.test.mjs test/gameplay-actions.test.mjs test/authoritative-room-client.test.mjs test/vehicle-input-routing.test.mjs test/walking-surface-budget.test.mjs
       - name: Install browser test tools
         run: |
           python -m pip install playwright
@@ -34,6 +34,7 @@ jobs:
           python test/game-display-flow.browser.py
           python test/game-viewport.browser.py
           python test/construction-crew.browser.py
+          python test/machine-walkup.browser.py
   game:
     runs-on: ubuntu-latest
     timeout-minutes: 25

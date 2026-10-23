@@ -1,3 +1,4 @@
+import {constructionInteractionPoint} from './construction-access.js';
 export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol']);
 export const hasWalkableInterior=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht';
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
@@ -21,7 +22,7 @@ export function watercraftOverlap(a,yawA,b,yawB,padding=.12,actorA=null,actorB=n
 }
 // On deck, E belongs at the actual helm. The berth remains boardable from its pier.
 export function watercraftInteractionPoint(actor,feet){
- const position=actor?.position;if(!position||!hasWalkableInterior(actor)||!feet)return position;
+ const position=constructionInteractionPoint(actor,feet);if(position!==actor?.position)return position;if(!position||!hasWalkableInterior(actor)||!feet)return position;
  const yaw=actor.rotation?.y||0,dx=feet.x-position.x,dz=feet.z-position.z,x=dx*Math.cos(yaw)-dz*Math.sin(yaw),z=dx*Math.sin(yaw)+dz*Math.cos(yaw);
  if(feet.y>=position.y+1.8&&Math.abs(x)<=5.2&&z>=-16&&z<=18)return {x:position.x-Math.sin(yaw)*9,y:position.y+5.025,z:position.z-Math.cos(yaw)*9};
  return position;

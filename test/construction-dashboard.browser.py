@@ -215,6 +215,15 @@ try:
    # Closing restores focus; the same toolbar remains usable after leaving the operator station.
    page.get_by_role('button',name='Close crew',exact=True).click();page.wait_for_function('document.activeElement===document.querySelector(".construction-crew-toggle")')
    page.evaluate('state.players.me.vehicleId=null;refresh()');assert not page.locator('.construction-controls').is_visible();assert not page.locator('.construction-controls-toggle').is_visible();assert page.locator('.construction-crew-toggle').is_visible();page.locator('.construction-crew-toggle').click();assert crew.is_visible();crew.get_by_role('button',name='Pause crew',exact=True).click();page.wait_for_function('calls.some(call=>call.action==="construction-crew"&&call.operation==="pause"&&!call.workerId)');page.keyboard.press('Escape');assert not crew.is_visible()
+   # A slow held response cannot delay release or the next deliberate press.
+   page.evaluate('setMachine("site-excavator","excavator");clearCalls();window.deferControls=true;controlWaiters.length=0')
+   page.locator('.construction-work-sticks .construction-stick').last.focus()
+   page.evaluate('document.activeElement.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowDown",bubbles:true}));document.activeElement.dispatchEvent(new KeyboardEvent("keyup",{key:"ArrowDown",bubbles:true}))')
+   page.wait_for_function('calls.length===2&&Object.values(lastAxes()).every(value=>value===0)')
+   page.evaluate('controlWaiters[1]()');page.wait_for_timeout(20)
+   page.evaluate('document.activeElement.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowUp",bubbles:true}));document.activeElement.dispatchEvent(new KeyboardEvent("keyup",{key:"ArrowUp",bubbles:true}))')
+   page.wait_for_function('calls.length===4&&Object.values(lastAxes()).every(value=>value===0)')
+   page.evaluate('window.deferControls=false;for(const finish of controlWaiters.splice(0))finish()')
    assert not errors,errors
    page.evaluate('dashboard.dispose();flow.dispose()');page.close()
   browser.close()

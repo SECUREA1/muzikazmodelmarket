@@ -11,12 +11,13 @@ import {mountConstructionUI} from '../../public/js/construction-ui.js';
 import {CONSTRUCTION_CREW_DEFAULTS,CONSTRUCTION_CREW_JOBS} from '../../public/js/construction-crew.js';
 import {mountGameDisplayFlow} from '../../public/js/game-display-flow.js';
 const stage=document.querySelector('main');
-window.calls=[];window.inputCalls=[];window.rejectNext=null;
+window.controlWaiters=[];window.calls=[];window.inputCalls=[];window.rejectNext=null;
 window.state={serverTime:1000,players:{me:{id:'me',health:100,vehicleId:null}},actors:{},construction:{tower:{x:15,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16,placed:8,floors:2,target:{x:15,y:12,z:-4}},supply:{x:0,y:.8,z:10},excavation:{x:20,z:20,radius:12,depth:1.2,volume:16},stockpile:{x:25,z:30,volume:8},graded:20}};
 state.construction.earthworks={excavated:16,deposited:8,pushed:3,totals:{soil:1420,gravel:280,carriedSoil:2,carriedGravel:1}};
 state.construction.crew={enabled:false,message:'Crew paused. Assign a job to get started.',workers:structuredClone(CONSTRUCTION_CREW_DEFAULTS).map(worker=>({...worker,state:'paused',phase:'ready',jobId:worker.jobs[0],machineId:null})),jobs:Object.entries(CONSTRUCTION_CREW_JOBS).map(([id,job])=>({id,type:id,...job,status:'queued',completed:0,progress:0}))};
 const command=async(action,fields={})=>{
  calls.push({action,...structuredClone(fields)});
+ if(window.deferControls&&action==='construction-controls'&&fields.operation==='control')await new Promise(resolve=>controlWaiters.push(resolve));
  if(window.rejectNext&&fields.operation!=='control'){const failure=window.rejectNext;window.rejectNext=null;if(failure.kind==='false')return false;throw new Error(failure.message||'Site interlock rejected the request.');}
  if(action==='construction-controls'&&fields.operation==='precision'){
   const actor=state.actors[state.players.me.vehicleId];actor.construction.precision=fields.enabled;actor.construction.telemetry.precision=fields.enabled;dashboard.update(state,'me');

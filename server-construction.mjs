@@ -275,6 +275,13 @@ export function constructionCommand(sim,player,command,now,context={}){
  if(!sim.construction||!isConstructionMachine(actor)||actor.active===false||actor.holderId!==player.actorId)error('Enter an available construction machine before operating its controls.');
  if(command.entityId&&command.entityId!==actor.id)error('Those controls belong to another machine.');
  if(player.health<=0||!near(player.position,actor.position,8))error('Return to the machine operator station.');
+ if(command.operation==='control'&&command.controlSequence!==undefined){
+  if(!Number.isSafeInteger(command.controlSequence)||command.controlSequence<1)error('Choose a valid control sequence.',422);
+  if(command.controlEpoch!==player.inputEpoch)return 'Superseded operator controls ignored.';
+  const previous=actor.construction.controlPacket;
+  if(previous?.epoch===player.inputEpoch&&previous.sequence>=command.controlSequence)return 'Superseded operator controls ignored.';
+  actor.construction.controlPacket={epoch:player.inputEpoch,sequence:command.controlSequence};
+ }
  // A seated human always replaces an autonomous lease immediately.
  delete actor.construction.crewOperator;
  const result=executeConstructionCommand(sim,actor,command,now,context,player);refreshEarthworksTotals(sim.construction.earthworks,Object.values(sim.actors).filter(isConstructionMachine).map(a=>a.construction.cargo));refreshTelemetry(sim,actor,now,context);return result;

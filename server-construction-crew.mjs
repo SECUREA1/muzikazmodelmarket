@@ -28,6 +28,7 @@ export function ensureConstructionCrew(sim,environment,now=0){
   const jobs=Object.entries(CONSTRUCTION_CREW_JOBS).map(([id,definition])=>({id,type:id,label:definition.label,status:'queued',workerId:CONSTRUCTION_CREW_DEFAULTS.find(worker=>worker.jobs.includes(id))?.id||null,machineId:null,progress:0,completed:0,goal:definition.goal,unit:definition.unit,message:'Waiting for the crew to start.'}));
   sim.construction.crew={version:1,enabled:config.autoStart===true,workers,jobs,muster,message:'Named crew ready. Start the crew or assign an operator to a job.',updatedAt:now};
  }
+ if(config.autoStart===true&&!sim.construction.crew.dailyLifeReady){if(sim.construction.crew.message.startsWith('Named crew ready'))sim.construction.crew.enabled=true;sim.construction.crew.dailyLifeReady=true;}
  return sim.construction.crew;
 }
 

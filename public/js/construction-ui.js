@@ -82,15 +82,16 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const workerNodes=new Map(),jobNodes=new Map();let crewBusy=false;
 
  manual.append(pads,travelPanel);panel.append(heading,compactState,manual);stage.append(panel);
- let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',inFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
+ let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',inFlight=0,neutralInFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
  let axes={},sticks=[],keyboardResets=[],travel={forward:0,side:0,held:false},instrumentNodes=new Map(),axisNodes=new Map();
  const canUse=()=>!disposed&&!!current&&controlsVisible&&!panel.hidden&&!document.hidden&&!gameplayOverlayOpen();
  function showFeedback(message,failed=false){message=String(message);feedback={message,failed,until:performance.now()+(failed?6500:2500)};setText(status,message);setText(compactState,message);setAttr(compactState,'title',message);setAttr(compactState,'data-feedback',failed?'error':'notice');}
  function report(error){showFeedback(error?.message||String(error),true);}
  async function flushAxes(){
-  if(inFlight||!pending||!actorId||disposed)return;
-  const entityId=actorId,sent={...axes};pending=false;inFlight=true;
-  try{await command('construction-controls',{operation:'control',entityId,axes:sent});}catch(error){if(actorId===entityId&&!panel.hidden)report(error);}finally{inFlight=false;if(pending&&!disposed)void flushAxes();}
+  const neutral=!Object.values(axes).some(value=>Math.abs(value)>.001);
+  if((neutral?neutralInFlight:inFlight>=2)||!pending||!actorId||disposed)return;
+  const entityId=actorId,sent={...axes};pending=false;inFlight++;if(neutral)neutralInFlight=true;
+  try{await command('construction-controls',{operation:'control',entityId,axes:sent});}catch(error){if(actorId===entityId&&!panel.hidden)report(error);}finally{inFlight--;if(neutral)neutralInFlight=false;if(pending&&!disposed)void flushAxes();}
  }
  function sendAxes(){pending=true;void flushAxes();}
  function changeAxes(values){let changed=false;for(const [axis,value]of Object.entries(values)){let next=Math.max(-1,Math.min(1,Number(value)||0));if(kind==='truck'&&Math.abs(current?.driving?.speed||0)>.5)next=0;if((axes[axis]||0)!==next){axes[axis]=next;changed=true;}}if(changed){updateAxisFeedback();sendAxes();}}

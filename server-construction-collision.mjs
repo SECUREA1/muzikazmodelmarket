@@ -25,6 +25,7 @@ export function constructionObstacles(sim,{collision,environment,objects={}}={})
   const placed=collision.placedWorld(sim.actors,objects,environment);for(const box of placed.boxes)if(!isConstructionMachine(sim.actors[box.objectId])&&!sim.actors[box.objectId]?.constructionManaged)obstacles.push(constructionBoxFromBounds(box,box.objectId,'placed-solid'));
  }
  obstacles.push(...Object.values(sim.actors).filter(actor=>actor.active!==false).flatMap(constructionColliders));
+ for(const person of Object.values(sim.actors))if(person.resident&&person.active!==false){const p=person.position;obstacles.push(constructionBoxFromBounds({min:{x:p.x-.3,y:p.y,z:p.z-.3},max:{x:p.x+.3,y:p.y+(person.resident.ageGroup==='child'?1.3:1.75),z:p.z+.3}},person.id,'site-resident'));}
  // Other operators are protected by their upright walking capsule envelope.
  for(const player of Object.values(sim.players||{}))if(player.health>0&&!player.vehicleId&&!player.replacedByRoom)obstacles.push(constructionBoxFromBounds({min:{x:player.position.x-.3,y:player.position.y,z:player.position.z-.3},max:{x:player.position.x+.3,y:player.position.y+1.7,z:player.position.z+.3}},player.actorId,'site-worker'));
  for(const worker of sim.construction?.crew?.workers||[]){if(!worker.position||worker.machineId&&worker.state!=='walking'&&sim.actors[worker.machineId]?.construction?.crewOperator?.workerId===worker.id)continue;const p=worker.position;obstacles.push(constructionBoxFromBounds({min:{x:p.x-.3,y:p.y,z:p.z-.3},max:{x:p.x+.3,y:p.y+1.75,z:p.z+.3}},worker.id,'site-crew-worker'));}

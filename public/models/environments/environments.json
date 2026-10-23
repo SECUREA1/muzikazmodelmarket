@@ -23024,6 +23024,7 @@
         ]
       },
       "crew": {
+        "autoStart": true,
         "muster": {
           "x": -58,
           "y": 0,
@@ -23148,7 +23149,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-23T00:00:00.000Z",
+    "contentUpdatedAt": "2026-10-23T01:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 512,
@@ -41328,6 +41329,7 @@
             ]
           },
           "crew": {
+            "autoStart": true,
             "muster": {
               "x": -58,
               "y": 0,
