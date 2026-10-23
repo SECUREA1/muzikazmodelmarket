@@ -123,7 +123,7 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
-  for (const control of ['house-world-button','house-fullscreen','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library, fullscreen, and begin/reset remain available in the main controls');
+  for (const control of ['house-world-button','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library and begin/reset remain available in the main controls');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
   assert.match(game, /pulse-rifle/);
   assert.match(game, /flamethrower/);

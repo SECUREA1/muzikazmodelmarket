@@ -1,7 +1,7 @@
 """Live mobile construction HUD: usable scene, compact controls and safe hiding.
 
 Uses a temporary real server and native construction site. The separate
-game-viewport browser test exercises native and iOS-style fullscreen fallback.
+The game stays inline with a single top toolbar and no fullscreen control.
 """
 
 import json
@@ -114,13 +114,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                         assert page.locator('.district-map-dialog').is_visible(), 'Boarding must keep the map open'
                         page.locator('.district-map-dialog').get_by_role('button', name='Close', exact=True).click()
                         assert panel.bounding_box()['height'] <= 252
-                        viewport_toggle = page.locator('.game-viewport-toggle')
-                        viewport_toggle.scroll_into_view_if_needed()
-                        assert hit_test(viewport_toggle), 'Normal-page fullscreen control is unreachable'
-                        viewport_toggle.click()
-                        page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
-                        expected_mode = 'page' if touch else 'native'
-                        assert page.locator('.game-viewport-expanded').get_attribute('data-viewport-mode') == expected_mode
+                        assert page.locator('.game-viewport-toggle,#house-fullscreen').count()==0
 
                         for width, height in sizes:
                             page.set_viewport_size({'width': width, 'height': height})
@@ -161,7 +155,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                                     break
                                 page.wait_for_timeout(50)
                             else:
-                                raise AssertionError('Fullscreen function dialog did not reach server precision control')
+                                raise AssertionError('Machine function dialog did not reach server precision control')
                             close_functions = functions.get_by_role('button', name='Close functions', exact=True)
                             assert hit_test(close_functions)
                             close_functions.click()
@@ -192,7 +186,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                             assert page.locator('.house-control-dock').is_visible()
                             assert page.locator('.live-local-map').is_visible()
                             assert page.locator('.district-map-toggle').is_visible()
-                            assert hit_test(viewport_toggle)
+                            assert page.locator('.game-display-flow-views').bounding_box()['height']==44
                             # Incoming controls stay usable instead of inheriting
                             # a global hidden state from an unrelated button.
                             page.evaluate("""() => {const incoming=document.createElement('section');incoming.className='road-vehicle-controls';incoming.id='test-incoming-controls';incoming.innerHTML='<button>Incoming machine</button>';document.querySelector('.house-stage').append(incoming);} """)
@@ -234,8 +228,7 @@ with tempfile.TemporaryDirectory(prefix='mobile-construction-view-') as director
                         page.screenshot(path='/tmp/mobile-construction-view-' + ('phone' if touch else 'desktop') + '.png')
                         panel.locator('[data-operation=exit]').click()
                         panel.wait_for(state='hidden')
-                        viewport_toggle.click()
-                        page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded!=="true"')
+                        assert page.locator('.game-viewport-expanded').count()==0
                         assert not errors, errors
                     except Exception:
                         diagnostic = {'errors': errors, 'requests': requests[-20:], 'replies': replies[-20:], 'state': state()}

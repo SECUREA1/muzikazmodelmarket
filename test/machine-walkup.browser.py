@@ -47,8 +47,7 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
      page.goto(base+'/model-explorer.html?environment=skyscraper-construction&autoplay=1&mode=multiplayer',wait_until='domcontentloaded')
      page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().gameplayStarted&&MuzikazHouseExplorer.snapshot().serverReady',timeout=120000)
      command('construction-crew',operation='pause')
-     page.locator('.game-viewport-toggle').click()
-     page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
+     assert page.locator('.game-viewport-toggle,#house-fullscreen').count()==0
      for index,(machine,field,point) in enumerate([('excavator','boom',{'x':22.1,'z':17}),('crane','hoist',{'x':-12.4,'z':.8}),('truck','bed',{'x':18.2,'z':28}),('dozer','blade',{'x':45.8,'z':61.5})]):
       machine_id='construction-'+machine
       command('map-access',position=point)
@@ -68,6 +67,9 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
        page.wait_for_timeout(300)
        assert state()['players'][next(iter(s['players']))].get('vehicleId')==machine_id,'Delayed touch click exited '+machine
       panel=page.locator('.construction-controls');panel.wait_for(state='visible')
+      if index==0:
+       page.evaluate('window.dispatchEvent(new PageTransitionEvent("pagehide",{persisted:true}));window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));')
+       assert panel.is_visible(),'Cached-page restore disposed the machine dashboard'
       before=s['actors'][machine_id]['construction'][field]
       lever=panel.locator('.construction-work-sticks .construction-stick').last
       lever.focus();page.keyboard.down('ArrowDown');page.wait_for_timeout(450);page.keyboard.up('ArrowDown')

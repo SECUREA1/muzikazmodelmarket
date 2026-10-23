@@ -2360,7 +2360,6 @@ function initHouseExplorer() {
   const gameLoadStatus = document.querySelector('#house-game-load-status');
   const worldButton = document.querySelector('#house-world-button');
   const worldMenu = document.querySelector('#house-world-menu');
-  const fullscreenButton = document.querySelector('#house-fullscreen');
   const resetButton = document.querySelector('#house-reset');
   const placePersonButton = document.querySelector('#house-place-person');
   const avatarButton = document.querySelector('#add-avatar');
@@ -2562,11 +2561,6 @@ function initHouseExplorer() {
   }
   worldButton?.addEventListener('click', () => toggleWorldMenu());
   environmentSelect?.addEventListener('change', () => { toggleWorldMenu(false); loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected world').catch(() => setStatus('Selected world could not be loaded.')); });
-  fullscreenButton?.addEventListener('click', async () => {
-    const stage = canvas.closest('.house-stage');
-    try { if (document.fullscreenElement) await document.exitFullscreen?.(); else await stage?.requestFullscreen?.(); }
-    catch { setStatus('Fullscreen is unavailable in this browser. The game remains ready to play.'); }
-  });
   startGameButton?.addEventListener('click', startHouseGame);
   handButton?.addEventListener('click', async () => { handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control'; if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; } try { handStream = await navigator.mediaDevices.getUserMedia({ video: true }); if (preview) { preview.srcObject = handStream; await preview.play(); } const mediaPipeReady = await startMediaPipeHands(); if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.'; } catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; } });
   window.addEventListener('resize', resizeCanvas); resizeCanvas(); render(); tickMovement(); loadEnvironmentCatalog(); window.setTimeout(initializeSharedHouseAvatars, 0);

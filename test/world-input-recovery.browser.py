@@ -6,6 +6,10 @@ from playwright.async_api import async_playwright
 os.chdir(Path(__file__).resolve().parents[1])
 
 
+async def snapshot_state(page):
+    return await page.evaluate('MuzikazHouseExplorer.snapshot()')
+
+
 async def main():
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
@@ -63,11 +67,23 @@ async def main():
                         # to its toggle. Movement must work without clicking the canvas.
                         residents = page.get_by_role('button', name='Residents, conversations and daily objectives', exact=True)
                         await residents.click()
+                        assert not (await snapshot_state(page))['player']['inputBlocked'], 'Open people panel locked gameplay.'
+                        await walk_from_focused_control('open residents')
+                        inputs.clear()
+                        await page.evaluate('window.openPanelJump=[];window.recordPanelJump=setInterval(()=>openPanelJump.push(MuzikazHouseExplorer.snapshot().player.position[1]),20)')
+                        await page.keyboard.down('Space');await page.wait_for_timeout(220);await page.keyboard.up('Space');await page.wait_for_timeout(1200)
+                        heights=await page.evaluate('()=>{clearInterval(recordPanelJump);return openPanelJump;}')
+                        assert any(value.get('jump') for value in inputs), 'People panel swallowed jump input.'
+                        assert heights and max(heights)-min(heights)>.2, 'People panel stopped the visible jump.'
+                        assert not await page.locator('#house-explorer-canvas').evaluate('canvas=>!!canvas.closest("[inert]")')
+                        await page.locator('.district-map-toggle').click()
+                        await page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
                         await page.get_by_role('button', name='Close resident conversations', exact=True).click()
                         await walk_from_focused_control('residents')
 
                         radio = page.get_by_role('button', name='Crew radio and vehicle quests', exact=True)
                         await radio.click()
+                        await walk_from_focused_control('open crew radio', 's')
                         await page.get_by_role('button', name='Close crew radio', exact=True).click()
                         await walk_from_focused_control('radio', 's')
 

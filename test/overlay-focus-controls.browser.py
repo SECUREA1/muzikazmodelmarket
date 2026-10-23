@@ -57,7 +57,9 @@ try:
             toggle=page.get_by_role('button',name=toggle_label,exact=True)
             toggle.click()
             page.keyboard.press('w')
-            assert page.evaluate('gameKeys.splice(0)') == [], 'Open panels retain keyboard input.'
+            page.keyboard.press('Space')
+            assert page.evaluate('gameKeys.splice(0)') == ['w',' '], 'Companion panels must not trap movement keys.'
+            assert not page.evaluate("document.querySelector('.world-resident-panel:not([hidden])')?.dataset.gameplayBlocking!=='false' && document.querySelector('.world-resident-panel:not([hidden])')!==null")
             page.get_by_role('button',name=close_label,exact=True).click()
             assert toggle.evaluate('(node)=>node===document.activeElement')
             gameplay_keys()
@@ -94,7 +96,7 @@ try:
         assert page.locator('[data-ski-menu-body]').is_hidden()
         assert not errors, errors
         browser.close()
-    print('Closed resident, radio, mini-map and ski controls pass movement, jump and boarding keys; open panels keep keyboard input.')
+    print('Open companion people/radio panels pass movement and jump; typing and real modal panels retain their input boundaries.')
 finally:
     server.shutdown()
     server.server_close()

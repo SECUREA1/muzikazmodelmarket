@@ -45,7 +45,7 @@ import {createSolidPaint} from './solid-paint.js';
 import {mountInteractiveDevices} from './interactive-device-ui.js';
 import {sharedNearbyActions} from './gameplay-actions.js';
 import {mountGameDisplayFlow} from './game-display-flow.js';
-import {mountGameViewport,replaceGameLocation} from './game-viewport.js';
+import {replaceGameLocation} from './game-viewport.js';
 import {mountNearbyActionButtons} from './nearby-action-buttons.js';
 import {mountRoomBuildingToggle} from './room-building-toggle.js';
 import {alignStackableObject} from './stack-placement.js';
@@ -137,7 +137,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true) || document.createElement('button'); resetButton.id='house-reset'; resetButton.type='button'; document.querySelector('#house-reset')?.replaceWith(resetButton);
-  const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
+  document.querySelector('#house-fullscreen')?.remove();
   const beginResetButton = document.querySelector('#house-begin-reset')?.cloneNode(true); document.querySelector('#house-begin-reset')?.replaceWith(beginResetButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
   // This launch control lives in the page markup. script.js intentionally yields to
@@ -424,7 +424,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelector('.camera-preview-panel')?.remove();
   const dockPaths={
     'house-world-button':'<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
-    'house-fullscreen':'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
     'add-avatar':'<path d="M8 7V6a4 4 0 0 1 8 0v1M6 7h12l2 14H4ZM8 12h8v6H8Z"/>',
     'house-tools':'<path d="m14 6 4-4a6 6 0 0 0-7 8L3 18a2 2 0 0 0 3 3l8-8a6 6 0 0 0 8-7l-4 4Z"/>',
     'house-begin-reset':'<path d="m9 5 11 7-11 7Z"/>',
@@ -1596,7 +1595,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
-  window.addEventListener('pagehide', () => { gameViewport.dispose();casinoUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
+  window.addEventListener('pagehide', event => { if(event.persisted)return;casinoUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
   async function checkForHouseUpdates({ startup = false } = {}) {
@@ -1998,6 +1997,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('keydown', (e) => { if(!gameplayControlsReady()||gameplayOverlayOpen()){keys.clear();return;}if (isTypingTarget(e.target)) { keys.clear(); return; } if(isGameCameraToggleKey(e)){e.preventDefault();if(!renderer.xr.isPresenting)setGameCameraMode(nextGameCameraMode(gameCameraMode));return;} const key = e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)&&e.target?.closest?.('[data-gameplay-blocking="false"]'))canvas.focus({preventScroll:true});keys.add(key);if(!e.repeat&&['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','shift'].includes(key))authoritativeClient?.requestInput(); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); safelyInteract('Vehicle interaction',()=>vehicleController.toggle()); } if (key === 'e' && !e.repeat) { e.preventDefault(); safelyInteract('Item interaction',()=>{const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No Builder object is close enough to interact with.');return result;}); } if (key === 'g' && !e.repeat) { e.preventDefault(); safelyInteract('Drop interaction',()=>{if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.');}); } if (key === ' ') { e.preventDefault(); if(!e.repeat&&serverHostedRoom&&toxicBubbleSystem.tool!=='jetpack')safelyInteract('Jump',jump);else if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') safelyInteract('Reset interaction',resetPlayer); if (key === 'i') { e.preventDefault(); safelyInteract('Inventory interaction',()=>toxicBubbleSystem.toggleInventory()); } }); window.addEventListener('keyup',e=>{const key=e.key.toLowerCase();keys.delete(key);if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','shift'].includes(key))authoritativeClient?.requestInput();}); window.addEventListener('blur', lockMenuInput);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)lockMenuInput();});
   window.addEventListener('pagehide',lockMenuInput);
+  window.addEventListener('pageshow',event=>{if(event.persisted){lockMenuInput();setGameplayReadiness();scheduleGameResize();}});
   document.addEventListener('pointerlockchange', () => {
     // Maps and gameplay share the pointer. Never require a release button to
     // reach the map, movement pad, or vehicle controls.
@@ -2115,7 +2115,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
   function shootAtReticle() { if(!gameplayControlsReady())return false;if(isAircraft(serverActors[serverVehicleId]))return fireAircraft();if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active&&toxicBubbleSystem.tool!=='spray'&&!UTILITY_TOOLS[toxicBubbleSystem.tool])return basketballTrigger();if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
 
-  const gameViewport=mountGameViewport({stage,button:fullscreenButton,onChange:scheduleGameResize,onNeutralize:()=>window.dispatchEvent(new Event('blur'))});
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
   function setupThumbstick(name) {
     const stick=document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`),knob=stick?.querySelector('.thumbstick-knob');

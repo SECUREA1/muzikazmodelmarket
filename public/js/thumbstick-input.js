@@ -11,7 +11,7 @@ export function mountThumbstick({stick,knob,onChange,onTap,canUse=()=>true,captu
  const reset=()=>{const id=pointerId;pointerId=null;onChange({x:0,y:0,offsetX:0,offsetY:0},true);knob.style.transform='translate(0, 0)';stick.classList.remove('is-active');try{if(id!==null&&stick.hasPointerCapture?.(id))stick.releasePointerCapture(id);}catch{}};
  const down=event=>{if(pointerId!==null&&event.isPrimary===true&&event.pointerId!==pointerId)reset();if(pointerId!==null||!canUse()||event.button!==undefined&&event.button!==0)return;event.preventDefault();pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;moved=false;rect=stick.getBoundingClientRect();try{capture(stick,pointerId);}catch{}stick.classList.add('is-active');change(event);};
  const move=event=>{if(event.pointerId!==pointerId)return;event.preventDefault();if(!canUse()){reset();return;}change(event);};
- const up=event=>{if(event.pointerId!==pointerId)return;event.preventDefault?.();const tapped=event.type==='pointerup'&&!moved&&canUse()&&(!event.target||stick.contains?.(event.target));reset();if(tapped)onTap?.();};
+ const up=event=>{if(event.pointerId!==pointerId)return;event.preventDefault?.();const tapped=event.type==='pointerup'&&!moved&&canUse()&&(!event.target||typeof event.target.nodeType==='number'&&stick.contains?.(event.target));reset();if(tapped)onTap?.();};
  // The finger may end over a panel that stops bubbling, or after capture fails.
  const release=event=>up(event);
  const visibility=()=>{if(documentTarget.hidden)reset();};

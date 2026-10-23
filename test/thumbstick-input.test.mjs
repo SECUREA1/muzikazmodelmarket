@@ -31,3 +31,7 @@ test('new primary touch recovers a missing release without stealing a second fin
  f.stick.emit('pointerdown',{pointerId:3,isPrimary:true,clientX:70});assert.ok(f.values.at(-1).x<0);
  f.documentTarget.hidden=true;f.documentTarget.emit('visibilitychange');assert.equal(f.values.at(-1).x,0);
 });
+
+test('window-dispatched release cannot throw a Node.contains type error before neutralising',()=>{
+ const f=fixture();f.stick.contains=()=>{throw Error('not a Node');};f.stick.emit('pointerdown',{clientX:170});f.windowTarget.emit('pointerup',{target:f.windowTarget});assert.equal(f.values.at(-1).x,0);assert.equal(f.taps,0);
+});

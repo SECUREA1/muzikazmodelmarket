@@ -19,7 +19,10 @@ MACHINES=[
 ]
 
 def neutral(page):
- page.wait_for_function('Object.values(lastAxes()).every(value=>Math.abs(value)<.0001)')
+ try:page.wait_for_function('Object.values(lastAxes()).every(value=>Math.abs(value)<.0001)')
+ except Exception:
+  print(page.evaluate('({width:innerWidth,kind:machine().construction.kind,axes:lastAxes(),calls:calls.slice(-6),active:[...document.querySelectorAll(".construction-stick")].map(s=>({active:s.className,knob:s.querySelector(".construction-stick-knob").style.transform}))})'),flush=True)
+  raise
 
 def mode(page,name):
  page.locator('[data-construction-mode='+name+']').click()
@@ -118,7 +121,7 @@ try:
     # Hide removes the entire machine panel, leaving a labelled restore affordance.
     first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
     toggle=page.get_by_role('button',name='Show or hide construction dashboard',exact=True);toggle.click();neutral(page);page.keyboard.up(directions[0][1])
-    assert not panel.is_visible();assert toggle.is_visible();assert 'controls' in toggle.inner_text().lower();toggle.click();compact_geometry(page,kind,width,height)
+    assert not panel.is_visible();assert toggle.is_visible();assert 'controls' in toggle.get_attribute('title').lower();toggle.click();compact_geometry(page,kind,width,height)
     # Removed global eye state must not hide or lock the machine dashboard.
     first.focus();page.keyboard.down(directions[0][1]);page.wait_for_function('Object.values(lastAxes()).some(value=>Math.abs(value)>.01)')
     page.evaluate('setLegacyHudHidden(true)');page.wait_for_timeout(120);assert panel.is_visible()

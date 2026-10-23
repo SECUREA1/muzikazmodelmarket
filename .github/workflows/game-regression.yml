@@ -32,7 +32,7 @@ jobs:
           python test/construction-dashboard.browser.py
           python test/construction-earth-crew.browser.py
           python test/game-display-flow.browser.py
-          python test/game-viewport.browser.py
+          python test/one-row-game-controls.browser.py
           python test/construction-crew.browser.py
           python test/machine-walkup.browser.py
   game:
@@ -111,8 +111,8 @@ jobs:
           python test/local-map-resource-lifecycle.browser.py
           python test/login-map-controls.browser.py
           python test/sustained-world-controls.browser.py --fault stale-input
-          python test/sustained-world-controls.browser.py --world muzikaz-airport --seconds 1 --fault timeout --page-fullscreen
-          python test/nonblocking-map-controls.browser.py --page-fullscreen
+          python test/sustained-world-controls.browser.py --world muzikaz-airport --seconds 1 --fault timeout
+          python test/nonblocking-map-controls.browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
