@@ -6,11 +6,12 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 import {TOOL_IDS} from '../public/js/game-tool-rules.js';
 import {isAircraft} from '../public/js/aircraft-flight.js';
 import {UTILITY_TOOLS} from '../public/js/game-utilities.js';
+import {supportsWorldTools} from '../public/js/rad-tox-rules.js';
 const source=readFileSync('public/js/house-explorer-glb.js','utf8');
 function fixture(){
- const sent=[],calls=[],system={tool:'laser',sprayMode:'paintball',sprayColorIndex:0,placeBrick:()=>calls.push('brick')};
+ const sent=[],calls=[],system={tool:'laser',sprayMode:'paintball',sprayColorIndex:0,initAudio:()=>{},placeBrick:()=>calls.push('brick')};
  for(const method of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[method]=()=>calls.push(method);
- const context=vm.createContext({THREE,UTILITY_TOOLS,isAircraft,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
+ const context=vm.createContext({THREE,UTILITY_TOOLS,isAircraft,supportsWorldTools,gameplayControlsReady:()=>true,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
  const start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  return {context,system,sent,calls};
@@ -42,3 +43,55 @@ test('shared paint effects use their chosen color and never render a laser; util
 });
 
 test('aircraft pilots fire their onboard cannons even when ground combat is off',()=>{const {context,system,sent,calls}=fixture();context.serverActors={plane:{modelId:'corsair-aircraft'}};context.serverVehicleId='plane';context.radToxEnabled=false;system.handlePointerInteraction({}, {centre:true});assert.equal(calls.at(-1),'aircraft-cannon');assert.equal(sent.length,0);});
+
+const maps=JSON.parse(readFileSync('public/models/environments/environments.json','utf8'));
+test('every loaded map dispatches the equipped weapon with encounters switched off',()=>{
+ const {context,system,sent}=fixture();context.radToxEnabled=false;
+ for(const map of maps){
+  context.activeEnvironment=map;
+  context.isBasketballEnvironment=environment=>environment.game==='basketball';
+  system.toolSelected=true;
+  for(const tool of ['laser','pulse-rifle','rail-cannon','flamethrower','bat','taser','toxin','dynamite']){
+   system.tool=tool;const before=sent.length;system.handlePointerInteraction({}, {centre:true});
+   assert.equal(sent.length,before+1,map.id+': '+tool+' is usable without an encounter');
+   assert.equal(sent.at(-1).tool,tool);
+  }
+ }
+});
+test('basketball keeps its default sport trigger while explicit weapon selection fires the weapon',()=>{
+ const {context,system,sent,calls}=fixture();context.isBasketballEnvironment=()=>true;
+ context.basketballTrigger=()=>calls.push('basketball');
+ system.handlePointerInteraction({}, {centre:true});assert.equal(calls.at(-1),'basketball');assert.equal(sent.length,0);
+ system.toolSelected=true;system.handlePointerInteraction({}, {centre:true});assert.equal(sent.at(-1).tool,'laser');
+});
+test('equipped weapons cannot fire while the map is loading or a menu is open',()=>{
+ const {context,system,sent}=fixture();system.toolSelected=true;
+ context.gameplayControlsReady=()=>false;assert.equal(system.handlePointerInteraction({}, {centre:true}),false);assert.equal(sent.length,0);
+ context.gameplayControlsReady=()=>true;context.gameplayOverlayOpen=()=>true;
+ assert.equal(system.handleXRInteraction({}),false);assert.equal(sent.length,0);
+});
+
+test('solo weapon effects and cooldowns update while disabled encounters stay paused',()=>{
+ const start=source.indexOf('    update(delta,elapsed){'),end=source.indexOf('    updateVisualEffects(',start);
+ const context=vm.createContext({THREE,rangeActive:false,RAD_TOX_STATES:{ACTIVE:'active'}});
+ const System=vm.runInContext(`(class {${source.slice(start,end)}})`,context),system=new System();
+ let effects=0,flames=0;
+ Object.assign(system,{state:'active',active:false,tool:'laser',utilityEffects:[],weaponCooldown:1,flameModel:{},flameSystem:{update:()=>flames++},
+  endBoss:{update:()=>assert.fail('disabled boss must remain paused')},batModel:{},taserModel:new THREE.Object3D(),toxinModel:new THREE.Object3D(),dynamiteModel:new THREE.Object3D(),brickModel:{},dynamiteCooldown:1,toxinCooldown:1,
+  updateElectricShocks(){},updateVisualEffects:()=>effects++,updateHud:()=>assert.fail('disabled encounter must remain paused')});
+ system.update(.1,1);
+ assert.equal(system.weaponCooldown,.9);assert.equal(system.dynamiteCooldown,.9);assert.equal(effects,1);assert.equal(flames,1);
+});
+
+test('solo dynamite explodes and is removed after its fuse with encounters disabled',()=>{
+ const begin=source.indexOf(' explodeDynamite(stick){'),end=source.indexOf(' createDynamiteGas(position,radius){',begin);
+ let gas=0;
+ const context=vm.createContext({THREE,TOXIC_BUBBLE_CONFIG:{dynamiteRadius:5,dynamiteDamage:100},trackGameQuest:()=>assert.fail('no encounter hits should be counted')});
+ const System=vm.runInContext(`(class {${source.slice(begin,end)}})`,context),system=new System(),scene=new THREE.Scene(),stick=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());scene.add(stick);
+ Object.assign(system,{scene,active:false,resources:{},dynamites:[stick],explosions:[],bubbles:[new THREE.Object3D()],endBoss:{takeDamage:()=>assert.fail('disabled boss is not a blast target')},avatarTargets:()=>[],getPlayerPosition:()=>new THREE.Vector3(20,0,0),createDynamiteGas:()=>gas++,tone(){},setState(){},damageTarget:()=>assert.fail('disabled enemies are not blast targets')});
+ const gateContext=vm.createContext({toxicBubbleSystem:system,radToxEnabled:false,serverHostedRoom:false,activeEnvironment:{},isBasketballEnvironment:()=>false,isCleanCommonsEnvironment:()=>false});
+ const gateStart=source.indexOf('  const legacyGameplayMethods='),gateEnd=source.indexOf('  let radToxEnabled=',gateStart);
+ vm.runInContext(source.slice(gateStart,gateEnd),gateContext);
+ system.explodeDynamite(stick);
+ assert.equal(stick.parent,null);assert.equal(system.dynamites.length,0);assert.equal(system.explosions.length,1);assert.equal(gas,1);
+});

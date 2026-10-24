@@ -3,7 +3,7 @@ import {gameActionLoading} from './game-action-loading.js';
 import {requestGameInputRelease} from './game-input-release.js';
 import {holdLiveMapUpdates} from './live-map-interaction.js';
 import {isRoadVehicle,roadVehicleType,roadVehicleId} from './road-vehicles.js';
-import {localMapFrame,fitLocalMapPoints} from './local-map-frame.js';
+import {localMapFrame} from './local-map-frame.js';
 import {localMapFootprints} from './local-map-footprints.js';
 import {mountLiveLocalMap} from './local-live-map.js';
 import {mountQuestMapPanel} from './quest-map-panel.js';
@@ -14,7 +14,7 @@ import {aircraftDisplayName,aircraftType} from './aircraft-types.js';
 import {vehicleDestinations} from './vehicle-destinations.js';
 import {localMapLocations} from './local-map-locations.js';
 // New map code must not reuse the earlier, full-height mobile stylesheet.
-const mapStylesRevision='live-map-2';
+const mapStylesRevision='map-markers-3';
 function loadMapStylesheet(path){
  const link=document.createElement('link');link.rel='stylesheet';
  const url=new URL(path,import.meta.url);url.searchParams.set('v',mapStylesRevision);link.href=url.href;
@@ -30,7 +30,7 @@ export function mountDistrictMap({stage,command=null,getRoots=null,fetchAtlas=as
  let requestedReady=true,stylesReady=false,disposed=false,browsingReady=false;
  const button=document.createElement('button');button.type='button';button.className='district-map-toggle';button.hidden=true;button.title='Local map and land deeds';button.setAttribute('aria-label',button.title);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></svg>';stage.append(button);
  const localStyles=loadMapStylesheet('../assets/local-live-map.css'),mapStyle=localStyles.link;
- const mini=mountLiveLocalMap({stage,command,open:tag=>{if(!mapReady())return;button.click();if(tag){switchView('plan');chooseTag(tag);focusPlan(tag);}if(tag?.kind==='mission'&&questPanel.toggle.getAttribute('aria-expanded')!=='true')questPanel.toggle.click();}});
+ const mini=mountLiveLocalMap({stage,command,open:tag=>{if(!mapReady())return;button.click();if(tag)chooseTag(tag);if(tag?.kind==='mission'&&questPanel.toggle.getAttribute('aria-expanded')!=='true')questPanel.toggle.click();}});
  mini.setReady(false);button.style.setProperty('display','none','important');
  const dialog=document.createElement('dialog');dialog.className='district-map-dialog';dialog.dataset.gameplayBlocking='false';dialog.setAttribute('aria-label','Local map and land deeds');
  const header=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');close.type='button';close.textContent='Close';close.onclick=()=>dialog.close();header.append(title,close);
@@ -80,16 +80,16 @@ export function mountDistrictMap({stage,command=null,getRoots=null,fetchAtlas=as
  const mapMode=document.createElement('div');mapMode.className='local-map-view-toggle';mapMode.setAttribute('role','group');mapMode.setAttribute('aria-label','Local map view');
  const view3D=document.createElement('button'),viewPlan=document.createElement('button');view3D.type=viewPlan.type='button';view3D.textContent='3D map';viewPlan.textContent='2D plan';mapMode.append(view3D,viewPlan);
  const spatial=document.createElement('div');spatial.setAttribute('data-local-map-3d','');const plan=document.createElement('div');plan.dataset.localMapPlan='';const selectedTag=document.createElement('section');selectedTag.className='local-map-selected';selectedTag.setAttribute('aria-label','Selected map location');
- let planFrame=null,lastQuestMapInstance=null,selectedLocation=null;
+ let planFrame=null,completePlan=true,lastQuestMapInstance=null,selectedLocation=null;
  const planTools=document.createElement('div');planTools.className='local-map-plan-controls';planTools.setAttribute('aria-label','2D map controls');
  const extent=()=>environment?.builderScene?.layoutMeta?.harbor?.extent||(environment?.builderScene?.mapSize||environment?.playableSize||256)/2;
  function setPlanFrame(frame){planFrame=frame;plan.querySelector('svg')?.setAttribute('viewBox',frame.viewBox);refreshQuestPins();}
  function planAspect(){const svg=plan.querySelector('svg');return svg?.clientHeight?svg.clientWidth/svg.clientHeight:1;}
- function fitPlan(){if(!environment||!plan.querySelector('svg'))return;setPlanFrame(fitLocalMapPoints(localMapTags(environment,live,selfId),planAspect(),extent()));}
- function focusPlan(point){setPlanFrame(localMapFrame({x:point.x,z:point.z,half:Math.max(20,point.width||0,point.depth||0),aspect:planAspect(),extent:extent()}));}
+ function fitPlan(){if(!environment||!plan.querySelector('svg'))return;completePlan=true;const aspect=planAspect(),boundary=extent()+Math.max(2,extent()*.02);setPlanFrame(localMapFrame({half:boundary/Math.min(1,aspect),aspect,extent:boundary}));}
+ function focusPlan(point){completePlan=false;setPlanFrame(localMapFrame({x:point.x,z:point.z,half:Math.max(20,point.width||0,point.depth||0),aspect:planAspect(),extent:extent()}));}
  for(const [label,run]of [['Fit map',fitPlan],['Find me',()=>focusPlan(live?.players?.[selfId]?.position||environment?.spawn?.position||environment?.spawn||{x:0,z:0})],['−',()=>zoomPlan(1.5)],['+',()=>zoomPlan(1/1.5)]]){const control=node('button',label,planTools);control.type='button';control.setAttribute('aria-label',label==='−'?'Zoom 2D map out':label==='+'?'Zoom 2D map in':label);control.onclick=run;}
- function zoomPlan(factor){const f=planFrame;if(f)setPlanFrame(localMapFrame({x:f.x,z:f.z,half:Math.min(extent()*2,Math.max(8,f.height/2*factor)),aspect:planAspect(),extent:extent()}));}
- const planResize=new ResizeObserver(()=>{if(planFrame&&!plan.hidden)setPlanFrame(localMapFrame({x:planFrame.x,z:planFrame.z,half:planFrame.height/2,aspect:planAspect(),extent:extent()}));});planResize.observe(plan);
+ function zoomPlan(factor){const f=planFrame;if(f){completePlan=false;setPlanFrame(localMapFrame({x:f.x,z:f.z,half:Math.min(extent()*2,Math.max(8,f.height/2*factor)),aspect:planAspect(),extent:extent()}));}}
+ const planResize=new ResizeObserver(()=>{if(planFrame&&!plan.hidden){if(completePlan)fitPlan();else setPlanFrame(localMapFrame({x:planFrame.x,z:planFrame.z,half:planFrame.height/2,aspect:planAspect(),extent:extent()}));}});planResize.observe(plan);
  function chooseTag(tag){selectedLocation=tag;selectedTag.replaceChildren();node('h3',tag.icon+' '+tag.name,selectedTag);node('p',(tag.description||'')+' · X '+tag.x.toFixed(1)+' / Y '+(Number(tag.y)||0).toFixed(1)+' / Z '+tag.z.toFixed(1),selectedTag);if(tag.residentId&&command){const talk=node('button','Talk to '+tag.name,selectedTag);talk.type='button';talk.onclick=async()=>{const result=await command('npc-social',{entityId:tag.residentId,choice:'question'});if(result)dialog.close();else status.textContent='Move closer to this resident to talk.';};}else if(tag.mapId){const link=node('a','Enter '+tag.name,selectedTag);link.href='model-explorer.html?environment='+encodeURIComponent(tag.mapId)+'&autoplay=1';}else if(command&&(tag.locationId||tag.entityId||tag.arrival)){const go=node('button',(tag.entityId?'Board ':'Go to ')+tag.name,selectedTag);go.type='button';go.disabled=tag.entityId?craftUnavailable(tag.entityId):false;if(tag.entityId)go.dataset.craftId=tag.entityId;bindGameActionButton(go,()=>travel(tag.entityId?{entityId:tag.entityId}:tag.arrival?{position:{x:tag.x,z:tag.z}}:{locationId:tag.locationId}));}}
  async function open3D(){if(map3D||pending3D===generation||!dialog.open||mapView!=='3d')return;const current=generation;pending3D=current;spatial.textContent='Loading the actual 3D map…';spatial.setAttribute('aria-busy','true');try{const {mountLocalMap3D}=await import('./local-map-3d.js');if(current!==generation||!dialog.open||mapView!=='3d')return;const holder=document.createElement('div');spatial.replaceChildren(holder);const view=await mountLocalMap3D(holder,{environment,getRoots,live,selfId,getTags:()=>localMapTags(environment,live,selfId).filter(tag=>tag.kind!=='mission'||questPanel.markers.checked),onSelect:chooseTag,onTravel:command?travel:null});if(current!==generation||!dialog.open){view.dispose();return;}map3D=view;if(selectedLocation)map3D.focus({x:selectedLocation.x,y:Number(selectedLocation.y)||0,z:selectedLocation.z},Math.max(30,selectedLocation.width||0,selectedLocation.depth||0)*1.6);}catch(error){console.warn('Local 3D map unavailable',error);if(current===generation)spatial.textContent='3D map unavailable. Use the 2D plan and destination list to continue.';}finally{if(pending3D===current)pending3D=null;if(current===generation)spatial.setAttribute('aria-busy','false');}}
  function switchView(mode){if(mode!==mapView&&dialog.open)requestGameInputRelease('map-view-change');mapView=mode;spatial.hidden=mode!=='3d';plan.hidden=mode!=='plan';view3D.setAttribute('aria-pressed',String(mode==='3d'));viewPlan.setAttribute('aria-pressed',String(mode==='plan'));if(mode==='3d')void open3D();}
@@ -158,7 +158,7 @@ export function mountDistrictMap({stage,command=null,getRoots=null,fetchAtlas=as
   renderVehicleRoutes();refreshLive();
  }
  button.onclick=async()=>{
-  if(!mapReady())return;if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;title.textContent=environment.name;search.value='';deedsGroup.details.hidden=true;destinationsShortcut.hidden=true;deedsGroup.body.replaceChildren();renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open)dialog.show();fitCompanionMap();void open3D();requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();if(selectedLocation)focusPlan(selectedLocation);else fitPlan();});
+  if(!mapReady())return;mini.close?.();if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;mapView='plan';title.textContent=environment.name;search.value='';deedsGroup.details.hidden=true;destinationsShortcut.hidden=true;deedsGroup.body.replaceChildren();renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open)dialog.show();fitCompanionMap();requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();fitPlan();});
   try{const atlas=await fetchAtlas();if(current!==generation)return;const places=districtDestinations(environment,atlas.locations||[]);status.textContent=places.filter(place=>place.deedId).length+' recorded deeds · '+places.length+' connected destinations';deedsGroup.details.hidden=!places.length;destinationsShortcut.hidden=!places.length;
 
    for(const place of places){const card=node('article',null,deedsGroup.body);card.dataset.mapSearchItem='';node('h4',place.name,card);node('p',(place.deedId?'Deed '+place.deedId:'World destination')+' · '+(place.ownerName||'Community'),card);const link=node('a','Enter '+place.name,card);link.href='model-explorer.html?environment='+encodeURIComponent(place.mapId)+'&autoplay=1';link.addEventListener('click',()=>actionLoading.begin('Loading '+place.name+'…'));}

@@ -26,5 +26,5 @@ test('building paint remains editable before equip and modal menus block backgro
  assert.ok(source.includes("buildingPopup.hidden=true;closeTools()"));
  assert.ok(!source.includes("this.setTool('brick');buildingPopup.hidden=true"));
  assert.ok(source.includes('const menuOpen=Boolean(xrGameControls?.menuOpen||gameplayOverlayOpen())'));
- assert.ok(source.includes('if(radToxEnabled&&!serverHostedRoom&&!menuOpen&&!isCleanSportsEnvironment(activeEnvironment))toxicBubbleSystem.update'));
+ assert.ok(source.includes('if(!serverHostedRoom&&!menuOpen)toxicBubbleSystem.update'));
 });

@@ -22,7 +22,7 @@ test('casino is a permanent native public destination with connected return gate
  const dir=await mkdtemp(join(tmpdir(),'casino-directory-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const directory=await synchronizeWorldDirectory(new WorldAtlas(join(dir,'atlas.json')),[]),listed=directory.environments.find(row=>row.id===CASINO_ID);
  assert.ok(listed?.permanent);assert.equal(listed.roomId,CASINO_ID);assert.ok(listed.travelPortals.length>=2);assert.match(listed.playUrl,/model-explorer\.html\?environment=muzikaz-casino/);assert.deepEqual(listed.streets,[]);
- assert.ok(isCleanCommonsEnvironment(listed));assert.equal(supportsWorldTools(listed),false);
+ assert.ok(isCleanCommonsEnvironment(listed));assert.equal(supportsWorldTools(listed),true);
  assert.equal(world.indoor,true);assert.equal(world.outdoor,false);assert.equal(outdoorProfile(world),null);assert.equal(outdoorProfile({builderScene:{layout:'casino'}}),null);
 });
 

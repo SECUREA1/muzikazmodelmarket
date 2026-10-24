@@ -83,7 +83,7 @@ for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])
 }
 for(const item of BUILDING_MATERIALS){
  const id='material:'+item.id;
- definitions.push({id,buildAssetId:id,name:item.name||item.id,type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',function_data:{behavior:'decor',action:'none'}});
+ definitions.push({id,buildAssetId:id,name:item.name||item.id,description:item.description||'',keywords:item.keywords||[],type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',function_data:{behavior:'decor',action:'none'}});
 }
 export const NATIVE_BUILDER_ITEMS=Object.freeze(Object.fromEntries(definitions.map(item=>[item.id,Object.freeze(item)])));
 export function nativeBuilderItem(id){return NATIVE_BUILDER_ITEMS[id]||null;}

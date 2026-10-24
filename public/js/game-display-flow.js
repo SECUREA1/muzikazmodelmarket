@@ -23,12 +23,15 @@ export function mountGameDisplayFlow(stage){
   frame=null;if(fitting)return;fitting=true;
   // Keep original components and their handlers intact while fitting one row.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
-  const priority=node=>{const i=['game-camera-toggle','map-quest-launcher','district-map-toggle','live-local-map','factory-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?6:i;};groups.sort((a,b)=>priority(a)-priority(b));
-  let anchor=more;for(let i=groups.length-1;i>=0;i--){const node=groups[i];if(node.parentElement!==views||node.nextSibling!==anchor)views.insertBefore(node,anchor);anchor=node;}
-  more.hidden=true;let used=0;const width=views.clientWidth,gap=4;
-  const items=groups.filter(visible).map(node=>({node,width:Math.max(44,[...node.querySelectorAll('button')].filter(button=>visible(button)&&button.getClientRects().length>0&&!button.closest('.world-resident-panel,.transport-radio-panel')).reduce((sum,button)=>sum+Math.max(44,button.getBoundingClientRect().width)+gap,0)-gap)}));
-  const total=items.reduce((sum,item)=>sum+item.width+gap,0)-gap;
-  for(const item of items){if(total>width&&used+item.width+gap+44>width){overflow.append(item.node);}else used+=item.width+gap;}
+  const priority=node=>{const i=['game-camera-toggle','map-quest-launcher','district-map-toggle','factory-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?6:i;};groups.sort((a,b)=>priority(a)-priority(b));
+  // The marker popup keeps a permanent right-hand slot beside overflow controls.
+  const pinned=groups.filter(node=>node.classList.contains('live-local-map')),ordinary=groups.filter(node=>!pinned.includes(node));
+  let anchor=more;for(let i=ordinary.length-1;i>=0;i--){const node=ordinary[i];if(node.parentElement!==views||node.nextSibling!==anchor)views.insertBefore(node,anchor);anchor=node;}
+  for(const node of pinned)if(node.parentElement!==views||node.nextSibling!==overflow)views.insertBefore(node,overflow);
+  more.hidden=true;let used=0;const gap=4,pinnedWidth=pinned.filter(visible).length*(44+gap),width=Math.max(0,views.clientWidth-pinnedWidth);
+  const items=ordinary.filter(visible).map(node=>({node,width:Math.max(44,[...node.querySelectorAll('button')].filter(button=>visible(button)&&button.getClientRects().length>0&&!button.closest('.world-resident-panel,.transport-radio-panel')).reduce((sum,button)=>sum+Math.max(44,button.getBoundingClientRect().width)+gap,0)-gap)}));
+  const total=items.reduce((sum,item)=>sum+item.width+gap,0)-gap,budget=total>width?Math.max(0,width-44-gap):width;
+  for(const item of items){const needed=item.width+(used?gap:0);if(used+needed>budget){overflow.append(item.node);}else used+=needed;}
   more.hidden=!overflow.children.length;if(more.hidden)closeOverflow();
   stage.style.setProperty('--game-view-controls-height','44px');fitting=false;
  }

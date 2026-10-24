@@ -10,7 +10,7 @@ import {marketFacets} from '../public/js/market-facets.js';
 const added=['smooth-plastic','neon','rubber-tile','baseplate','half-brick','long-brick','cube','thin-plate','support-beam','round-column','round-plate','sphere','dome','wedge','corner-wedge','glass-wall','wood-log','paving-tile','metal-truss','stage-platform','stage-steps','crowd-barrier','stage-canopy','dance-floor','neon-wall','display-plinth','tiered-seating','race-curb'];
 const dispose=root=>root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});
 test('all 28 new materials have exact models, stackable bases, SVG artwork and existing-market one-piece pricing',()=>{
- assert.equal(added.length,28);assert.equal(BUILDING_MATERIALS.length,102);
+ assert.equal(added.length,28);assert.equal(BUILDING_MATERIALS.length,130);
  for(const id of added){const profile=buildingMaterial(id),root=createBuildingBlock(THREE,id);assert.equal(profile.id,id);assert.ok(buildingIcon(THREE,id).includes('<path'));assert.ok(matchesBuildingItem(profile,buildingType(profile),profile.name));
   alignStackableObject(THREE,root,new THREE.Vector3(0,2,0));let bounds=placementBounds(THREE,root);assert.ok(Math.abs(bounds.min.y-2)<1e-6,id+' feet align');assert.ok(placementTriangles(THREE,[root]).length>0);
   const top=createBuildingBlock(THREE,'studs');alignStackableObject(THREE,top,new THREE.Vector3(0,bounds.max.y,0),[root]);assert.ok(placementBounds(THREE,top).min.y>=bounds.max.y-1e-6,id+' supports stacked items');

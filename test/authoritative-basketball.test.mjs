@@ -24,7 +24,7 @@ test('every arena player shares free court, teams, jerseys and one server-owned 
  state=await send('bob','basketball-start');assert.equal(state.basketball.state,'live');assert.equal(state.basketball.quarter,1);assert.equal(state.basketball.clockMs,720000);
  await assert.rejects(send('alice','basketball-start'),/already running/);
  await assert.rejects(send('alice','basketball-team',{team:'away'}),/Change teams/);
- await assert.rejects(send('alice','fire',{tool:'laser',direction:[0,0,-1]}),/sports court/);
+ state=await send('alice','fire',{tool:'laser',direction:[0,1,0]});assert.equal(state.result.tool,'laser');assert.equal(state.basketball.state,'live');assert.equal(state.radTox,null);assert.equal(charged.length,1);charged.length=0;
  state=await send('alice','spawn',{sku:'backpack:basketball'});assert.equal(state.result.spawnedId,BASKETBALL_BALL_ID);assert.equal(Object.values(state.actors).filter(actor=>actor.basketballMatchBall).length,1);assert.deepEqual(charged,[]);
  assert.equal((await runtime.snapshot(map.id,map)).players['account:bob'].basketballJersey,'away');
 }));
@@ -41,6 +41,19 @@ test('shared catch and assisted shot are authoritative and a repeated request ca
  for(let i=0;i<20;i++){advance(50);state=await runtime.snapshot(map.id,map);}assert.equal(state.basketball.homeScore,2);
  await assert.rejects(send('alice','basketball-shoot'),/Catch a basketball/);
  await assert.rejects(send('alice','basketball-score',{points:999}),/no server handler/);
+}));
+
+test('equipped weapons fire on the court without destroying its shared game ball',()=>fixture(async({send,store,map})=>{
+ await send('alice','join',{deferRadTox:true,radToxEnabled:false});
+ await store.update(map.id,room=>{
+  room.simulation.players['account:alice'].position={x:0,y:0,z:2};
+  room.simulation.actors[BASKETBALL_BALL_ID].position={x:0,y:0,z:0};
+ });
+ let state;
+ for(let shot=0;shot<3;shot++)state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});
+ assert.equal(state.result.tool,'laser');assert.equal(state.players['account:alice'].ammo,117);
+ assert.equal(state.actors[BASKETBALL_BALL_ID].health,100);assert.equal(state.actors[BASKETBALL_BALL_ID].active,true);
+ assert.equal(state.radTox,null);assert.equal(state.basketball.state,'ready');
 }));
 
 test('a free jersey equips an attachment without spawning a second actor and can be removed',()=>fixture(async({send})=>{

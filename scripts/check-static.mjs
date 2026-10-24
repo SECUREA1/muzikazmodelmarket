@@ -26,6 +26,8 @@ const requiredFiles = [
   'dist/public/assets/tools-pouch-inventory.css',
   'dist/public/js/tools-pouch-inventory.js',
   'dist/public/js/tools-pouch-state.js',
+  'dist/public/js/in-game-building-catalog.js',
+  'dist/public/assets/in-game-building-catalog.css',
   'dist/pwa.js',
   'dist/service-worker.js',
   'dist/reference.png',
