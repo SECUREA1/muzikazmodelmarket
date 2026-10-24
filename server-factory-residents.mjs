@@ -1,6 +1,7 @@
 import {factoryCrew} from './public/js/missile-factory-config.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {ensureResidentIntelligence,stepResidentLife,archiveResidentIntelligence} from './server-resident-life.mjs';
+import {stepFactoryCrewWork} from './server-factory-crew-work.mjs';
 
 /** Factory staff use the same appearance, memory, needs, dialogue and favor
  * systems as every other local resident. Their routines never grant items. */
@@ -32,6 +33,7 @@ export function stepFactoryResidents(sim,environment,now,dt,{collision,objects={
   npc.name=source.name+' · '+source.role;
  }
  stepResidentLife(sim,environment,now,dt,{collision,objects});
+ stepFactoryCrewWork(sim,environment,now,dt,{collision,objects});
  for(const player of Object.values(sim.players)){
   const task=player.residentTask;
   if(task?.status==='active'&&(player.movementRevision||0)!==task.revision){task.status='cancelled';task.message='Travel reset this factory favor.';}

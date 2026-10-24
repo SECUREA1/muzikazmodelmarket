@@ -49,11 +49,72 @@ export function releaseConstructionCrewMachine(sim,machineId,reason='A player ha
  const crew=sim.construction?.crew;if(!crew)return false;let released=false;
  for(const worker of crew.workers)if(worker.machineId===machineId){
   const job=crew.jobs.find(job=>job.id===worker.jobId);retireMachine(sim,worker,now,context,reason);
+  if(worker.demonstration?.status==='active'){worker.demonstration.status='cancelled';worker.demonstration.finishedAt=now;worker.enabled=false;}
   if(job&&job.status!=='completed'){job.status='waiting';job.message=reason;}released=true;
  }
  const machine=sim.actors[machineId];
  if(machine?.construction?.crewOperator){try{operator(context)(sim,machineId,null,now,context);}catch{}released=true;}
  return released;
+}
+
+function demoChoices(sim,crew,worker,now,machineId){
+ const permitted=worker?CONSTRUCTION_CREW_DEFAULTS.find(member=>member.id===worker.id)?.jobs||Object.keys(CONSTRUCTION_CREW_JOBS):Object.keys(CONSTRUCTION_CREW_JOBS);
+ return permitted.map(jobId=>{
+  const definition=CONSTRUCTION_CREW_JOBS[jobId],job=crew.jobs.find(item=>item.id===jobId),assigned=worker||crew.workers.find(member=>member.id===job?.workerId)||crew.workers.find(member=>CONSTRUCTION_CREW_DEFAULTS.find(value=>value.id===member.id)?.jobs.includes(jobId));
+  const candidates=Object.values(sim.actors).filter(actor=>(!machineId||actor.id===machineId)&&actor.active!==false&&actor.health!==0&&constructionMachineKind(actor)===definition.machine),machine=candidates.find(actor=>!actor.holderId&&(!actor.construction?.crewOperator||actor.construction.crewOperator.workerId===assigned?.id||actor.construction.crewOperator.expiresAt<=now));
+  let reason=!candidates.length?'No '+definition.machine+' is available on this site.':!machine?'A player or another operator is using the '+definition.machine+'.':'';
+  const current=crew.workers.find(member=>member.jobId===jobId&&member.demonstration?.status==='active');
+  if(!reason&&current&&current!==assigned)reason=current.name+' is already demonstrating this job for a visitor.';
+  if(!reason&&assigned?.demonstration?.status==='active')reason=assigned.name+' is already demonstrating '+CONSTRUCTION_CREW_JOBS[assigned.demonstration.jobId].label.toLowerCase()+'.';
+  if(!reason&&jobId==='dig'&&load(machine)>.001)reason='The excavator bucket contains material. Ask for loading first.';
+  if(!reason&&jobId==='load'&&load(machine)<=.001)reason='Excavate a real bucket of material before loading.';
+  if(!reason&&['haul','dump'].includes(jobId)&&load(machine)<=.001)reason='Load real material into the truck before this job.';
+  if(!reason&&jobId==='grade'&&!looseMaterial(sim,sim.construction.stockpile))reason='Deposit real loose material before grading.';
+  if(!reason&&jobId==='steel'&&!sim.construction.tower?.target)reason='All available structural steel has already been placed.';
+  return {jobId,label:definition.label,machine:definition.machine,workerId:assigned?.id||null,machineId:machine?.id||null,available:!reason,reason};
+ });
+}
+
+/** Conversation requests enter the same machine scheduler and hydraulic commands
+ * as the site's crew controls. They never manufacture cargo or skip work time. */
+export function constructionCrewInteraction(sim,player,command,now,context={}){
+ const crew=requireManager(sim,player,now),operation=command.operation||'status',worker=command.workerId?crew.workers.find(member=>member.id===command.workerId):null;
+ if(command.workerId&&!worker)fail('Choose an existing site worker.',422);
+ if(!['status','demonstrate','resume','stop'].includes(operation))fail('Ask for status, a demonstration, resume or stop.',422);
+ const choices=demoChoices(sim,crew,worker,now,command.machineId),snapshot=member=>({workerId:member.id,name:member.name,state:member.state,jobId:member.jobId,machineId:member.machineId,progress:member.progress||0,message:member.message,demonstration:member.demonstration?{...member.demonstration}:null});
+ if(operation==='status'){
+  const workers=(worker?[worker]:crew.workers).map(snapshot);
+  return {message:workers.map(member=>member.name+': '+member.message).join(' '),workers,choices};
+ }
+ if(operation==='resume'&&worker?.demonstration?.status==='active'){
+  if(worker.demonstration.requestedBy!==player.actorId)fail('That worker is helping another visitor.');
+  constructionCrewAction(sim,player,{operation:'start',workerId:worker.id},now,context);
+  return {message:worker.name+' is continuing the live '+CONSTRUCTION_CREW_JOBS[worker.demonstration.jobId].label.toLowerCase()+' demonstration.',workers:[snapshot(worker)],choices};
+ }
+ if(operation==='stop'){
+  const selected=worker?[worker]:crew.workers.filter(member=>member.demonstration?.status==='active'&&member.demonstration.requestedBy===player.actorId);
+  if(!selected.length)fail('There is no demonstration to stop. Choose a worker to pause.');
+  for(const member of selected){
+   if(member.demonstration?.status==='active'&&member.demonstration.requestedBy!==player.actorId)fail('That worker is helping another visitor. Choose an available worker.');
+  }
+  for(const member of selected){constructionCrewAction(sim,player,{operation:'pause',workerId:member.id},now,context);if(member.demonstration?.status==='active'){member.demonstration.status='cancelled';member.demonstration.finishedAt=now;}member.message='Stopped safely at your request. Hydraulics and travel are neutral.';}
+  return {message:selected.map(member=>member.name).join(', ')+' stopped safely.',workers:selected.map(snapshot),choices:demoChoices(sim,crew,worker,now)};
+ }
+ if(command.jobId&&!choices.some(choice=>choice.jobId===command.jobId))fail('That worker does not perform this job. Choose a listed demonstration.',422);
+ let choice=command.jobId?choices.find(value=>value.jobId===command.jobId):null;
+ if(!choice){const ready=choices.filter(value=>value.available),index=Math.max(0,player.constructionCrewTurn||0);choice=ready.length?ready[index%ready.length]:choices.find(value=>value.reason)||null;}
+ if(!choice||!choice.available)fail(choice?.reason||'The site has no available work demonstration right now.');
+ const member=crew.workers.find(value=>value.id===choice.workerId);
+ if(member.demonstration?.status==='active'&&member.demonstration.requestedBy!==player.actorId)fail('That worker is helping another visitor.');
+ const machine=command.machineId?sim.actors[command.machineId]:sim.actors[choice.machineId];
+ if(!machine||machine.active===false||machine.health===0||constructionMachineKind(machine)!==choice.machine)fail('Choose an available '+choice.machine+' for this demonstration.',422);
+ if(machine.holderId)fail('A player is using that machine. Players always have priority.');
+ constructionCrewAction(sim,player,{operation:'assign',workerId:member.id,jobId:choice.jobId,machineId:machine.id},now,context);
+ member.demonstration={status:'active',requestedBy:player.actorId,jobId:choice.jobId,startedAt:now};
+ const job=crew.jobs.find(value=>value.id===choice.jobId);job.requestedBy=player.actorId;job.requestedAt=now;
+ constructionCrewAction(sim,player,{operation:'start',workerId:member.id},now,context);player.constructionCrewTurn=(player.constructionCrewTurn||0)+1;
+ member.message=member.name+' will '+choice.label.toLowerCase()+' using the live '+choice.machine+'. Follow the worker to the marked machine and keep the work area clear.';crew.message=member.message;
+ return {message:member.message,workers:[snapshot(member)],choices:demoChoices(sim,crew,worker,now)};
 }
 
 function requireManager(sim,player,now){
@@ -64,6 +125,7 @@ function requireManager(sim,player,now){
 }
 export function constructionCrewAction(sim,player,command,now,context={}){
  const crew=requireManager(sim,player,now),operation=command.operation,worker=command.workerId?crew.workers.find(worker=>worker.id===command.workerId):null;
+ if(['status','demonstrate','resume','stop'].includes(operation))return constructionCrewInteraction(sim,player,command,now,context).message;
  if(command.workerId&&!worker)fail('Choose an existing site worker.',422);
  if(operation==='start'||operation==='pause'){
   if(worker){worker.enabled=operation==='start';if(operation==='start')crew.enabled=true;}else crew.enabled=operation==='start';
@@ -90,7 +152,8 @@ export function constructionCrewAction(sim,player,command,now,context={}){
   if(command.machineId&&(!machine||machine.active===false||constructionMachineKind(machine)!==definition.machine))fail('That machine cannot perform this job.',422);
   if(machine?.holderId)fail('A player is using that machine. Choose another machine or wait.');
   if(machine?.construction?.crewOperator&&machine.construction.crewOperator.workerId!==worker.id)fail('Another crew worker is operating that machine. Pause or reassign that worker first.');
-  const previous=crew.workers.find(member=>member.jobId===job.id);if(previous){retireMachine(sim,previous,now,context,'Job reassigned.');previous.jobId=null;}
+  const previous=crew.workers.find(member=>member.jobId===job.id);if(previous){retireMachine(sim,previous,now,context,'Job reassigned.');previous.jobId=null;if(previous.demonstration?.status==='active'){previous.demonstration.status='cancelled';previous.demonstration.finishedAt=now;}}
+  if(worker.demonstration?.status==='active'){worker.demonstration.status='cancelled';worker.demonstration.finishedAt=now;}
   const interrupted=crew.jobs.find(current=>current.id===worker.jobId&&current.id!==job.id);if(interrupted)interrupted.status='queued';
   retireMachine(sim,worker,now,context,'New job assigned.');worker.jobId=job.id;worker.enabled=true;worker.retryAt=0;
   Object.assign(job,{workerId:worker.id,machineId:machine?.id||null,status:'queued',completed:0,progress:0,message:'Assigned to '+worker.name+'.'});
@@ -169,6 +232,7 @@ function routeTo(sim,worker,job,target,points,now,dt,context){
 }
 function complete(sim,worker,job,now,context){
  job.completed=Math.min(job.goal,job.completed);job.progress=job.goal>0?clamp(job.completed/job.goal,0,1):1;job.status='completed';job.finishedAt=now;worker.progress=job.progress;message(worker,job,job.label+' complete through machine work.');retireMachine(sim,worker,now,context);worker.jobId=null;worker.phase='standby';worker.blockedAt=0;
+ if(worker.demonstration?.status==='active'&&worker.demonstration.jobId===job.id){worker.demonstration.status='completed';worker.demonstration.finishedAt=now;worker.enabled=false;worker.message=worker.name+': '+job.label+' finished through real machine work. Ask me for another site task.';}
 }
 function cycle(sim,worker,job,now,context,metric){
  const actor=sim.actors[worker.machineId];
@@ -239,8 +303,12 @@ function executeJob(sim,worker,job,now,dt,context,config){
 export function stepConstructionCrew(sim,now,dt,context={}){
  const crew=sim.construction?.crew;if(!crew)return;dt=clamp(dt,0,.25);const config=configFor(context.environment);crew.updatedAt=now;
  for(const worker of crew.workers){
+  if(worker.demonstration?.status==='active'){
+   const requester=sim.players[worker.demonstration.requestedBy];
+   if(!requester||requester.health<=0||requester.replacedByRoom||now-(requester.lastSeen??0)>15000){retireMachine(sim,worker,now,context,'Demonstration stopped after its visitor left the live site.');worker.enabled=false;worker.demonstration.status='cancelled';worker.demonstration.finishedAt=now;}
+  }
   const owned=sim.actors[worker.machineId],lease=owned?.construction?.crewOperator;
-  if(owned?.holderId||owned?.active===false||lease&&lease.workerId!==worker.id){retireMachine(sim,worker,now,context,'A human operator or another worker has priority.');}
+  if(owned?.holderId||owned?.active===false||lease&&lease.workerId!==worker.id){retireMachine(sim,worker,now,context,'A human operator or another worker has priority.');if(worker.demonstration?.status==='active'){worker.enabled=false;worker.demonstration.status='cancelled';worker.demonstration.finishedAt=now;}}
   if(owned?.construction?.blocked&&working(owned))worker.blockedAt||=now;
   if(!crew.enabled||!worker.enabled){if(worker.machineId)retireMachine(sim,worker,now,context);worker.state='paused';continue;}
   if(worker.blockedAt&&now-worker.blockedAt>12000){retireMachine(sim,worker,now,context,'Work stalled. Machine released safely; clear the obstruction and restart this worker.');worker.enabled=false;continue;}

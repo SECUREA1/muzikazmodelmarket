@@ -20,6 +20,8 @@ import {ensureConstruction,stepConstruction,constructionCommand,constructionView
 import {ensureConstructionCrew,stepConstructionCrew,constructionCrewAction,releaseConstructionCrewMachine} from './server-construction-crew.mjs';
 import {isConstructionMachine,constructionTravelStatus} from './public/js/construction-state.js';
 import {stepWorldResidents,residentCommand} from './server-world-residents.mjs';
+import {stepAIWorldActions,notePlayerAIWorldInteraction,registerAIWorldDefinitions} from './server-ai-world-actions.mjs';
+import {refreshAIConversationWork} from './server-ai-interactions.mjs';
 import {stepRoadActivity} from './server-road-activity.mjs';
 import {roadSpeedLimit} from './public/js/road-network.js';
 import {ensureRoadFleet,roadMovementBlocked,roadExitPosition} from './server-road-vehicles.mjs';
@@ -84,7 +86,7 @@ const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 const usesNativeSportsMatch=environment=>isHockeyMap(environment)||isArcadeMap(environment);
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,fitnessReward,fitnessState,factoryAction,factoryState,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,fitnessReward,fitnessState,factoryAction,factoryState,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.aiDefinitionVersions=new WeakMap();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();}
  constructionContext(sim,environment,objects={}){
   const context={collision:this.collision,environment,objects,earthworks:sim.construction?.earthworks};
   context.drive=(machine,worker,input,now,dt)=>{
@@ -171,6 +173,7 @@ export class AuthoritativeRooms {
 
   if(sim.construction){sim.radTox=null;sim.match=null;sim.projectiles={};for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox||actor.loot||actor.runtimeMachine){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));}
   ensureResidentFurnishings(sim,environment,this.collision,room.objects,this.now());
+  if(this.aiDefinitionVersions.get(sim)!==contentUpdatedAt){registerAIWorldDefinitions(sim,manifest);this.aiDefinitionVersions.set(sim,contentUpdatedAt);}
   if(!Object.values(sim.actors).some(actor=>actor.resident))this.collision.withActorCandidates(sim.actors,()=>stepWorldResidents(sim,environment,this.now(),0,{collision:this.collision,objects:room.objects}));
   if(!isCasinoEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!usesNativeSportsMatch(environment))ensureRoadFleet(sim,environment,this.collision,room.objects);
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition&&(!sim.basketball||!['hostile','patrol','hazard'].includes(actor.definition.gameplay?.behavior))).map(actor=>actor.definition));
@@ -178,7 +181,7 @@ export class AuthoritativeRooms {
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);stepFitness(sim,environment,now);stepFactory(sim,environment,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);this.collision.withActorCandidates(sim.actors,()=>stepWorldResidents(sim,environment,now,dt,{collision:this.collision,objects:room.objects}));if((!sim.construction||(environment.construction||environment.builderScene?.layoutMeta?.construction)?.ambientActivity===true)&&!isCasinoEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!usesNativeSportsMatch(environment))stepRoadActivity(sim,environment,now,dt,{collision:this.collision,objects:room.objects});if(!isCasinoEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!usesNativeSportsMatch(environment))stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
+  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);stepFitness(sim,environment,now);stepFactory(sim,environment,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);this.collision.withActorCandidates(sim.actors,()=>{stepWorldResidents(sim,environment,now,dt,{collision:this.collision,objects:room.objects});stepAIWorldActions(sim,environment,now,dt,{collision:this.collision,objects:room.objects});});if((!sim.construction||(environment.construction||environment.builderScene?.layoutMeta?.construction)?.ambientActivity===true)&&!isCasinoEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!usesNativeSportsMatch(environment))stepRoadActivity(sim,environment,now,dt,{collision:this.collision,objects:room.objects});if(!isCasinoEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!usesNativeSportsMatch(environment))stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   if(environment.game==='ski')stepSkiLobby(sim,now);
   for(const player of Object.values(sim.players)){
@@ -254,7 +257,7 @@ export class AuthoritativeRooms {
   const constructionContext=this.constructionContext(sim,environment,room.objects);
   stepConstructionCrew(sim,now,dt,constructionContext);
   stepConstruction(sim,now,dt,constructionContext);
-  stepVehicleMissions(sim,now);stepExpandedQuests(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
+  stepVehicleMissions(sim,now);stepExpandedQuests(sim,environment,now,dt,{collision:this.collision,objects:room.objects});refreshAIConversationWork(sim);
   const active=Object.values(sim.players).filter(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&now>=(player.spawnProtectedUntil||0)&&!firingRangeLocationAt(sim.firingRange?.locations,player.position));
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.pendingSpawn||actor.health<=0||actor.holderId)continue;
    if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors),(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors),false);continue;}
@@ -376,8 +379,8 @@ export class AuthoritativeRooms {
     result.message=isAircraft(vehicle)?startAircraftAssist(sim,player,environment,next.action,now,this.collision,room.objects):startBoatAssist(sim,player,environment,next.action,now,{destinationId:command.destinationId,collision:this.collision,objects:room.objects});
    }
    else if(command.action==='aircraft-assist'){result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects,command.destinationId);}
-   else if(command.action==='npc-social'){try{result.message=residentCommand(sim,player,environment,command,now,{collision:this.collision,objects:room.objects});result.residentId=command.entityId||player.npcConversation?.entityId;}catch(error){fail(error.message,409);}}
-   else if(command.action==='vehicle-mission'){try{result.message=vehicleMissionCommand(sim,player,environment,command.operation,now,{questId:command.questId,teamId:command.teamId,role:command.role,choice:command.choice,collision:this.collision,objects:room.objects});}catch(error){fail(error.message,409);}}
+   else if(command.action==='npc-social'){try{result.message=residentCommand(sim,player,environment,command,now,{collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});result.residentId=command.entityId||player.npcConversation?.entityId;}catch(error){fail(error.message,409);}}
+   else if(command.action==='vehicle-mission'){try{result.message=vehicleMissionCommand(sim,player,environment,command.operation,now,{questId:command.questId,teamId:command.teamId,role:command.role,choice:command.choice,text:command.text,entityId:command.entityId,collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});}catch(error){fail(error.message,409);}}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now,environment);}
    else if(command.action==='rad-tox-toggle'){player.radToxEnabled=!isCleanCommonsEnvironment(environment)&&command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
@@ -506,8 +509,8 @@ export class AuthoritativeRooms {
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
      else if(config.behavior==='hazard')entity.active=false;
      else if(config.urbanMission)result.message=startUrbanMission(player,{...config.urbanMission,checkpoints:(config.urbanMission.checkpoints||[]).map(point=>point.objectId?{...point,x:sim.actors[point.objectId]?.position.x,z:sim.actors[point.objectId]?.position.z}:point)},now);
-     else if(entity.resident){try{result.message=residentCommand(sim,player,environment,{entityId:entity.id,choice:'day'},now,{collision:this.collision,objects:room.objects});result.residentId=entity.id;}catch(error){fail(error.message,409);}}
-     else if(entity.questRole==='contact'){try{result.message=converseQuest(sim,player,now,{entityId:entity.id});}catch(error){fail(error.message,409);}}
+     else if(entity.resident){try{result.message=residentCommand(sim,player,environment,{entityId:entity.id,choice:'day'},now,{collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});result.residentId=entity.id;}catch(error){fail(error.message,409);}}
+     else if(entity.questRole==='contact'){try{result.message=converseQuest(sim,player,now,{entityId:entity.id,environment,collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});}catch(error){fail(error.message,409);}}
      else if(entity.questRole==='cargo'){if(entity.questOwner!==actorId&&!player.vehicleMission?.teamLeader)fail('This cargo belongs to another assignment.',409);try{result.message=expandedQuestAction(sim,player,now);}catch(error){fail(error.message,409);}}
      else if(config.behavior==='quest')result.message=questInteraction(player,config.quest||target.quest,entity.id);
      result.message=result.message||target.dialogue?.text||config.prompt||'Item activated';if(!entity.resident&&!entity.questRole&&(['talk','quest'].includes(config.behavior)||config.urbanMission)){const name=entity.name||target.name||'Quest contact',instanceId='interaction:'+entity.id,call=questRadio(sim,now,name,result.message,{conversation:true,interaction:true,questInstance:instanceId,recipients:[actorId],speakerId:entity.id,role:'Quest contact',voice:name});player.npcConversation={instanceId,status:'completed',contact:{name,role:'Local contact',channel:'Local conversation',color:'#a5dfbd'},conversation:[call]};}
@@ -515,7 +518,7 @@ export class AuthoritativeRooms {
      if(config.action==='damage'&&config.value>0)damagePlayer(player,now);
      if(config.action==='score')player.score+=clamp(config.value,0,100);
      if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map'){if(this.resolveDestination&&!await this.resolveDestination(portal.targetMapId))fail('This destination is no longer listed in the shared world.',404,'DESTINATION_UNAVAILABLE');result.destination=portal.targetMapId;const travel=player.pendingTravel?.to===portal.targetMapId&&player.pendingTravel.expiresAt>=now?player.pendingTravel:{from:id,to:portal.targetMapId,token:randomUUID(),expiresAt:now+120000};player.pendingTravel=travel;result.travel=travel;}else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
-     recordSiteQuestInteraction(sim,player,entity,now,environment.id);
+     notePlayerAIWorldInteraction(entity,player,now);recordSiteQuestInteraction(sim,player,entity,now,environment.id);
     }
    }
    else if(command.action==='yacht-game'){result=yachtGameCommand(sim,player,command);}

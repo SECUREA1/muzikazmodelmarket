@@ -45,14 +45,14 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
  const document=stage.ownerDocument,id='map-quests-'+ ++nextId;
  const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('../assets/map-quest-prompts.css',import.meta.url).href;document.head.append(style);
  const root=document.createElement('section');root.className='map-quest-prompts';root.dataset.gameplayBlocking='false';root.setAttribute('aria-label','Map quests and challenges');
- const launcher=document.createElement('button');launcher.type='button';launcher.className='map-quest-launcher';launcher.textContent='◎ Quests';launcher.setAttribute('aria-controls',id);launcher.setAttribute('aria-expanded','false');
+ const launcher=document.createElement('button');launcher.type='button';launcher.className='map-quest-launcher';launcher.title='Quests and challenges';launcher.setAttribute('aria-label','Quests and challenges');launcher.setAttribute('aria-controls',id);launcher.setAttribute('aria-expanded','false');launcher.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3h11a2 2 0 0 1 2 2v16H7a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Zm0 0v15a3 3 0 0 0-3 0m7-10 1.5 1.5L15 7m-4 7h5m-5 3h5"/></svg><span class="map-quest-count" aria-hidden="true" hidden></span>';const questCount=launcher.querySelector('.map-quest-count');
  const panel=document.createElement('section');panel.id=id;panel.className='map-quest-card';panel.hidden=true;panel.dataset.gameplayBlocking='false';panel.setAttribute('role','region');panel.setAttribute('aria-label','Local quests and challenges');
  const header=document.createElement('header'),heading=document.createElement('h2'),close=document.createElement('button');heading.textContent='Local quests';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close local quests');header.append(heading,close);
  const worldLabel=document.createElement('p');worldLabel.className='map-quest-world';
  const content=document.createElement('div');content.className='map-quest-content';
  const feedback=document.createElement('p');feedback.className='map-quest-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
  panel.append(header,worldLabel,content,feedback);
- const hud=document.createElement('button');hud.type='button';hud.className='map-quest-objective';hud.hidden=true;hud.setAttribute('aria-label','Open active quest');root.append(launcher,panel,hud);stage.append(root);
+ const hud=document.createElement('button');hud.type='button';hud.className='map-quest-objective';hud.hidden=true;hud.setAttribute('aria-label','Open active quest');root.append(panel,hud);stage.append(launcher,root);
  let world=null,snapshot=null,self=null,environment=null,offers=[],selection='',busy=false,mode='offers',result=null,lastMissionKey='',seenResults=new Set(),arrivalShown=false,disposed=false,renderKey='',requestVersion=0;
  const button=(label,run)=>{const node=document.createElement('button');node.type='button';node.textContent=label;node.addEventListener('click',run);return node;};
  const paragraph=(value,className)=>{const node=document.createElement('p');node.textContent=value;if(className)node.className=className;return node;};
@@ -75,11 +75,11 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
  // Companion controls retain movement keys. Enter activates a focused button;
  // text/select editing remains local and Escape closes without trapping focus.
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();hide();}else if(event.target.closest('select,input,textarea,[contenteditable=true]')||event.key==='Enter')event.stopPropagation();else if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)&&event.target.closest('button'))event.preventDefault();});
- for(const type of ['pointerdown','click','wheel'])root.addEventListener(type,event=>event.stopPropagation());
+ for(const type of ['pointerdown','click','wheel']){root.addEventListener(type,event=>event.stopPropagation());launcher.addEventListener(type,event=>event.stopPropagation());}
  function render(){
   if(disposed)return;worldLabel.textContent=(environment?.name||'This world')+(self?.localQuests?' · Solo practice':'');
   const mission=self?.vehicleMission,active=mission?.status==='active',reading=active?questObjectiveReading(mission,self,snapshot):null;
-  launcher.textContent=active?'◎ Quest '+((mission.index||0)+1)+'/'+mission.checkpoints.length:'◎ Quests';
+  questCount.hidden=!active;questCount.textContent=active?String((mission.index||0)+1):'';launcher.setAttribute('aria-label',active?'Quests and challenges · objective '+((mission.index||0)+1)+' of '+mission.checkpoints.length:'Quests and challenges');launcher.title=active?mission.title+' · objective '+((mission.index||0)+1)+' of '+mission.checkpoints.length:'Quests and challenges';
   hud.hidden=!reading;hud.textContent=reading?(reading.progress+' · '+reading.point.name+(reading.distance===null?'':' · '+reading.distance+' m')):'';
   if(panel.hidden)return;
   if(!offers.some(offer=>offer.id===selection))selection=offers.find(offer=>!questOfferRequirement(offer,self,snapshot))?.id||offers[0]?.id||'';
@@ -130,6 +130,6 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
   if(!arrivalShown&&self){arrivalShown=true;if(mission?.status!=='active'&&offers.length)open({automatic:true,view:'offers'});}
   render();
  }
- return {update,open:()=>open({view:self?.vehicleMission?.status==='active'?'active':'offers'}),close:hide,dispose(){disposed=true;requestVersion++;root.remove();style.remove();}};
+ return {update,open:()=>open({view:self?.vehicleMission?.status==='active'?'active':'offers'}),close:hide,dispose(){disposed=true;requestVersion++;launcher.remove();root.remove();style.remove();}};
 }
 function missionKey(mission){return mission.instanceId||mission.questId||mission.startedAt;}

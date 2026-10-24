@@ -1,5 +1,15 @@
 // A single bottom anchor owns gameplay overlays. Panels and nearby actions
 // participate in normal layout instead of competing for the same pixels.
+// Programmatic panel openings must also reveal their toolbar overflow group.
+// Fixed-position descendants still inherit a hidden ancestor's visibility.
+export function revealGameViewControl(control){
+ const overflow=control?.closest?.('.game-view-overflow');
+ if(!overflow?.hidden)return false;
+ overflow.hidden=false;
+ const more=[...(overflow.parentElement?.children||[])].find(node=>node.classList.contains('game-view-more'));
+ more?.setAttribute('aria-expanded','true');
+ return true;
+}
 export function mountGameDisplayFlow(stage){
  const stylesheet=document.createElement('link');stylesheet.rel='stylesheet';stylesheet.href=new URL('../assets/game-display-flow.css',import.meta.url).href;document.head.append(stylesheet);
  const root=document.createElement('div');root.className='game-display-flow';
@@ -13,7 +23,7 @@ export function mountGameDisplayFlow(stage){
   frame=null;if(fitting)return;fitting=true;
   // Keep original components and their handlers intact while fitting one row.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
-  const priority=node=>{const i=['game-camera-toggle','district-map-toggle','live-local-map','factory-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?6:i;};groups.sort((a,b)=>priority(a)-priority(b));
+  const priority=node=>{const i=['game-camera-toggle','map-quest-launcher','district-map-toggle','live-local-map','factory-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?6:i;};groups.sort((a,b)=>priority(a)-priority(b));
   let anchor=more;for(let i=groups.length-1;i>=0;i--){const node=groups[i];if(node.parentElement!==views||node.nextSibling!==anchor)views.insertBefore(node,anchor);anchor=node;}
   more.hidden=true;let used=0;const width=views.clientWidth,gap=4;
   const items=groups.filter(visible).map(node=>({node,width:Math.max(44,[...node.querySelectorAll('button')].filter(button=>visible(button)&&button.getClientRects().length>0&&!button.closest('.world-resident-panel,.transport-radio-panel')).reduce((sum,button)=>sum+Math.max(44,button.getBoundingClientRect().width)+gap,0)-gap)}));
@@ -28,8 +38,8 @@ export function mountGameDisplayFlow(stage){
  views.addEventListener('keydown',event=>{if(event.key==='Escape'&&!overflow.hidden){event.preventDefault();event.stopPropagation();closeOverflow();more.focus();}});
  overflow.addEventListener('click',()=>{if(document.querySelector('dialog:modal'))closeOverflow();});
  const actions=document.createElement('div');actions.className='game-display-flow-actions';root.append(actions);stage.append(root);
- const selectors='.live-local-map,.game-viewport-toggle,.xr-enter-button,.construction-controls,.world-resident-ui,.road-vehicle-controls,.harbor-helm-controls,.harbor-ops-toggle,.airport-flight-controls,.owned-placement-controls,.basketball-hud,.firing-range-hud,.hockey-sports-bar,.nearby-gameplay-actions,.rad-tox-fire-trigger,.game-live-connection,.game-camera-toggle,.broadcast-controls,.sports-action-utilities,.district-map-toggle,.airport-ops-toggle,.ski-resort-toggle,.fitness-toggle,.factory-toggle,.transport-activity';
- const collect=()=>{for(const child of [...stage.children,...views.children,...overflow.children]){if(child===root||child===views||!child.matches(selectors))continue;if(child.matches('.live-local-map,.game-viewport-toggle,.xr-enter-button,.world-resident-ui,.harbor-ops-toggle,.game-camera-toggle,.broadcast-controls,.sports-action-utilities,.district-map-toggle,.airport-ops-toggle,.ski-resort-toggle,.fitness-toggle,.factory-toggle,.transport-activity')){if(!groups.includes(child)){groups.push(child);views.insertBefore(child,more);}}else if(child.matches('.nearby-gameplay-actions,.rad-tox-fire-trigger'))actions.append(child);else root.insertBefore(child,actions);}schedule();};
+ const selectors='.live-local-map,.game-viewport-toggle,.xr-enter-button,.construction-controls,.world-resident-ui,.road-vehicle-controls,.harbor-helm-controls,.harbor-ops-toggle,.airport-flight-controls,.owned-placement-controls,.basketball-hud,.firing-range-hud,.hockey-sports-bar,.nearby-gameplay-actions,.rad-tox-fire-trigger,.game-live-connection,.game-camera-toggle,.broadcast-controls,.sports-action-utilities,.district-map-toggle,.airport-ops-toggle,.ski-resort-toggle,.fitness-toggle,.factory-toggle,.transport-activity,.map-quest-launcher';
+ const collect=()=>{for(const child of [...stage.children,...views.children,...overflow.children]){if(child===root||child===views||!child.matches(selectors))continue;if(child.matches('.live-local-map,.game-viewport-toggle,.xr-enter-button,.world-resident-ui,.harbor-ops-toggle,.game-camera-toggle,.broadcast-controls,.sports-action-utilities,.district-map-toggle,.airport-ops-toggle,.ski-resort-toggle,.fitness-toggle,.factory-toggle,.transport-activity,.map-quest-launcher')){if(!groups.includes(child)){groups.push(child);views.insertBefore(child,more);}}else if(child.matches('.nearby-gameplay-actions,.rad-tox-fire-trigger'))actions.append(child);else root.insertBefore(child,actions);}schedule();};
  // Only new direct children need collecting. Changes inside an existing panel
  // already participate in its layout and must not rescan the whole stage.
  collect();const observer=new MutationObserver(collect);observer.observe(stage,{childList:true});

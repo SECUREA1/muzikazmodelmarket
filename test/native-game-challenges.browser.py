@@ -22,6 +22,10 @@ try:
    window.widget=mountNativeGameChallenges({name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:()=>releases++,onReturnFocus:()=>returned++});
    window.state={sessionId:'rink:1',playing:false,spectating:false,metrics:{matchSeconds:100,teamGoals:5}};widget.update(state);
   }''')
+  toggle=page.locator('.native-challenge-toggle')
+  assert toggle.locator('svg').count()==1
+  assert toggle.bounding_box()['y']<=12 and toggle.bounding_box()['width']==44
+  assert toggle.get_attribute('aria-controls')==page.get_by_label('Ice hockey challenges',exact=True).get_attribute('id')
   accept=page.get_by_role('button',name='Accept Help your team score',exact=True)
   assert accept.is_disabled()
   page.evaluate('state.playing=true;widget.update(state)')
@@ -41,6 +45,8 @@ try:
   page.get_by_role('button',name='Accept Find your skating rhythm',exact=True).click()
   page.evaluate('state.metrics.matchSeconds=110;widget.update(state)')
   assert page.get_by_role('button',name='Challenge · 10 / 30',exact=True).is_visible()
+  assert toggle.locator('svg').count()==1
+  assert toggle.locator('.native-challenge-count').inner_text()=='10/30'
   page.evaluate("state.sessionId='rink:2';widget.update(state)")
   assert 'cleared' in page.get_by_role('status').inner_text()
   page.evaluate('state.spectating=true;widget.update(state)')

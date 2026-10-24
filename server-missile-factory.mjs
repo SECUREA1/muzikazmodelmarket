@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {cleanWallet} from './user-json-database.mjs';
 import {FACTORY_ID,FACTORY_STATIONS,FACTORY_RECIPES,isFactoryEnvironment,factoryStations,factoryCrew,factoryRecipeSteps,canonicalFactoryStation} from './public/js/missile-factory-config.js';
+import {preemptFactoryCrewStation,factoryCrewWorkView} from './server-factory-crew-work.mjs';
 
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
 const stationFor=(id,stations=FACTORY_STATIONS)=>stations.find(station=>station.id===id);
@@ -120,6 +121,7 @@ export async function factoryCommand(sim,player,environment,command,now,{databas
   stamp(user,now);ledger(data,wallet,user,'FACTORY_COMMAND',0,requestId,job,now,{signature,message:job.message});
   return {message:job.message,factory:snapshot(state,user),...(item?{item}:{})};
  });
+ if(response.factory.job?.status==='processing')preemptFactoryCrewStation(sim,response.factory.job.steps[response.factory.job.stepIndex]?.stationId,now,player.actorId);
  player.factory=response.factory;sim.factoryEnabled=true;
  if(response.factory.job?.status==='loaded'){const vehicle=sim.actors?.[response.factory.job.vehicleId];if(vehicle)vehicle.factoryCargo={jobId:response.factory.job.id,name:response.factory.job.name,buildAssetId:response.factory.job.buildAssetId};}
  else for(const actor of Object.values(sim.actors||{}))if(actor.factoryCargo?.jobId===response.factory.job?.id)delete actor.factoryCargo;
@@ -142,5 +144,6 @@ export function stepFactory(sim,environment,now){sim.factoryStations=factoryStat
 export function factoryView(sim,now){
  if(!sim.factoryEnabled)return null;
  const jobs=Object.values(sim.players||{}).filter(player=>player.factory?.job&&now-player.lastSeen<15000).map(player=>({playerId:player.actorId,name:player.username||'Factory worker',job:clone(player.factory.job)}));
- return {id:FACTORY_ID,stations:(sim.factoryStations||[]).map(station=>({...station,occupiedBy:jobs.find(row=>row.job.status==='processing'&&row.job.readyAt>now&&row.job.steps[row.job.stepIndex]?.stationId===station.id)?.playerId||null})),recipes:FACTORY_RECIPES,crew:sim.factoryCrew||[],jobs};
+ const crewWork=factoryCrewWorkView(sim,now);if(crewWork?.job)jobs.push({playerId:null,name:'Factory crew · shared demonstration',ai:true,demonstration:true,job:crewWork.job});
+ return {id:FACTORY_ID,stations:(sim.factoryStations||[]).map(station=>({...station,occupiedBy:jobs.find(row=>row.job.status==='processing'&&row.job.readyAt>now&&row.job.steps[row.job.stepIndex]?.stationId===station.id)?.playerId||crewWork?.reservations.find(lock=>lock.stationId===station.id)?.workerId||null})),recipes:FACTORY_RECIPES,crew:sim.factoryCrew||[],jobs,crewWork};
 }

@@ -127,6 +127,14 @@ challenges based on live match progress, completed rounds and full ride laps.
 Quest cards leave movement available; explicit opening or closing clears held
 controls. Map travel ends an active walking route.
 
+The top toolbar’s SVG **Quests** button opens local objectives and AI contacts.
+Ask a contact a question or request a live demonstration: construction operators
+use the real hydraulics and finite site materials, and factory specialists run
+timed fabrication, assembly and inspection cycles. Local helpers can walk to and
+use nearby doors, switches, signs and recovery points. Their status is shared by
+the server; players keep priority over equipment and can stop their own requests.
+Demonstrations do not spend MZK or grant player items or quest completion.
+
 ## Fitness Centre
 
 The permanent **MUZIKAZ Fitness Centre** includes seven playable skill stations,

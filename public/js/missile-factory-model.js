@@ -1,5 +1,5 @@
 import * as T from '../vendor/three/three.module.min.js';
-import {FACTORY_STATIONS} from './missile-factory-config.js';
+import {FACTORY_STATIONS,FACTORY_STATION_MODELS} from './missile-factory-config.js';
 import {constructionCutoutPatches,createConstructionBaseGeometry} from './construction-terrain.js';
 
 export const FACTORY_MODEL_INFO=Object.freeze({
@@ -31,7 +31,7 @@ function workshop(){
 
 /** Reusable, game-scale models also used for the actual crafted Backpack items. */
 export function createFactoryModel(id){
- if(!FACTORY_MODEL_INFO[id])return null;const root=new T.Group(),{mat,mesh,box,cylinder,consoleAt}=workshop();root.name=id;root.userData.factoryModel=true;
+ if(!FACTORY_MODEL_INFO[id])return null;const root=new T.Group(),{mat,mesh,box,cylinder,consoleAt}=workshop();root.name=id;root.userData.factoryModel=true;root.userData.factoryStationKind=FACTORY_STATION_MODELS[id]||null;
  if(id==='factory-training-missile'||id==='factory-cargo-rocket'){
   const cargo=id==='factory-cargo-rocket',length=cargo?10:6.6,radius=cargo?1:.58,y=cargo?2.05:1.35;
   const body=cylinder(root,'SEGMENTED_SHELL',0,y,0,radius,length,'white');body.rotation.x=Math.PI/2;
@@ -77,8 +77,25 @@ export function createFactoryModel(id){
 }
 
 export function updateFactoryModel(root,elapsed=0,reducedMotion=false){
- const t=reducedMotion?0:Number(elapsed)||0;
- root.traverse(node=>{if(node.userData.factoryTool)node.position.y=3.1+Math.sin(t*.9)*.25;if(node.userData.factoryScanner)node.position.y=2.4+Math.sin(t*1.1)*1.3;if(node.userData.factoryArm)node.rotation.y=Math.sin(t*.65+node.userData.factoryArm)*.13;if(node.userData.factoryRoller)node.rotation.y=t*.7;});
+ const machine=root.userData.factoryMachineState,running=!reducedMotion&&(!machine||machine.processing),age=machine?Math.min(.75,Math.max(0,((globalThis.performance?.now?.()||0)-machine.receivedAt)/1000)):0;
+ const t=running?(machine?Math.min((machine.readyAt-machine.startedAt)/1000,Math.max(0,(machine.serverTime-machine.startedAt)/1000+age)):Number(elapsed)||0):0;
+ root.traverse(node=>{if(node.userData.factoryTool)node.position.y=3.1+Math.sin(t*.9)*.25;if(node.userData.factoryScanner)node.position.y=2.4+Math.sin(t*1.1)*1.3;if(node.userData.factoryArm)node.rotation.y=running?Math.sin(t*.65+node.userData.factoryArm)*.13:0;if(node.userData.factoryRoller)node.rotation.y=t*.7;});
+}
+
+/** Bind placed machines to shared server cycles. Unbound catalog previews
+ * retain their demonstration animation; world machines rest while idle. */
+export function applyFactoryMachineActivity(root,state){
+ if(!root?.traverse)return;const stations=state?.stations||[],jobs=(state?.jobs||[]).map(row=>row.job||row),serverTime=Number(state?.serverTime)||0,receivedAt=globalThis.performance?.now?.()||0;
+ root.updateWorldMatrix(true,true);
+ root.traverse(model=>{
+  const kind=model.userData.factoryStationKind;if(!kind)return;
+  let owner=model;while(owner&&!owner.userData.builderObjectId)owner=owner.parent;
+  const objectId=owner?.userData.builderObjectId,position=model.getWorldPosition(new T.Vector3());
+  const station=stations.find(value=>value.objectId===objectId&&objectId)||stations.find(value=>{const equipment=value.equipmentPosition||value.position;return !value.objectId&&value.kind===kind&&equipment&&Math.hypot(position.x-equipment.x,position.z-equipment.z)<2;});
+  if(!station){if(objectId)model.userData.factoryMachineState={processing:false,serverTime,startedAt:0,readyAt:0,receivedAt};return;}
+  const job=jobs.find(value=>value.status==='processing'&&value.readyAt>serverTime&&value.steps?.[value.stepIndex]?.stationId===station.id);
+  model.userData.factoryMachineState={stationId:station.id,processing:!!job,serverTime,startedAt:job?.cycleStartedAt||0,readyAt:job?.readyAt||0,receivedAt};
+ });
 }
 
 export function createMissileFactoryLand(environment={}){
@@ -116,7 +133,7 @@ export function createMissileFactoryLand(environment={}){
  for(const [id,model]of [['training-missile',createFactoryModel('factory-training-missile')],['cargo-rocket',createFactoryModel('factory-cargo-rocket')]]){model.visible=false;previews.set(id,model);production.add(model);}
  sign(root,'LIVE WORK ORDER',-10,4.8,-27,14,1.5,'#53d4d0','SHARED PRODUCTION PROGRESS');}
  let liveJobs=[];
- root.userData.setFactoryState=(state)=>{const incoming=state?.jobs||state?.orders||[];liveJobs=(Array.isArray(incoming)?incoming:Object.values(incoming)).map(row=>row.job||row);const active=liveJobs.find(job=>!['collected','cancelled'].includes(job.status));for(const [id,model]of previews){model.visible=active?.recipeId===id;if(!model.visible)continue;const assembled=Number(active.stepIndex)>=1,finished=Number(active.stepIndex)>=2||['haul','loaded','ready'].includes(active.status);model.traverse(node=>{if(/STABILIZER|DORSAL_FIN|PAYLOAD_FAIRING|CARGO_BOOSTER|BOOSTER_CAP/.test(node.name))node.visible=assembled;if(/IDENTIFICATION_STRIPE|SHELL_COLLAR/.test(node.name))node.visible=finished;});}};
+ root.userData.setFactoryState=(state,serverTime)=>{applyFactoryMachineActivity(root,{...state,serverTime});const incoming=state?.jobs||state?.orders||[];liveJobs=(Array.isArray(incoming)?incoming:Object.values(incoming)).map(row=>row.job||row);const active=liveJobs.find(job=>!['collected','cancelled'].includes(job.status));for(const [id,model]of previews){model.visible=active?.recipeId===id;if(!model.visible)continue;const assembled=Number(active.stepIndex)>=1,finished=Number(active.stepIndex)>=2||['haul','loaded','ready','completed'].includes(active.status);model.traverse(node=>{if(/STABILIZER|DORSAL_FIN|PAYLOAD_FAIRING|CARGO_BOOSTER|BOOSTER_CAP/.test(node.name))node.visible=assembled;if(/IDENTIFICATION_STRIPE|SHELL_COLLAR/.test(node.name))node.visible=finished;});}};
  root.userData.updateFactoryEffects=(elapsed,reducedMotion=false)=>{
   const t=reducedMotion?0:Number(elapsed)||0;updateFactoryModel(root,t,reducedMotion);for(const animate of animations)animate(t);
   root.userData.activeProductionCount=liveJobs.filter(job=>!['collected','cancelled'].includes(job.status)).length;
