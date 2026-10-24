@@ -22,13 +22,13 @@ async function fixture(t){
  return {runtime,world,database,identity,wallet,send,makeRuntime,setNow:value=>now=value,get now(){return now;}};
 }
 
-test('authoritative gym joins with two trainers and workout members, suppresses combat, and holds a training stance',async t=>{
+test('authoritative gym joins with two trainers and workout members, keeps encounters off, and holds a training stance',async t=>{
  const f=await fixture(t),joined=await f.send('join'),selfId=joined.selfId;
  assert.equal(joined.radTox,null);assert.equal(joined.match,null);assert.equal(joined.players[selfId].radToxEnabled,false);
  const cast=Object.values(joined.actors).filter(actor=>actor.resident?.fitness);
  assert.equal(cast.length,FITNESS_RESIDENTS.length);assert.equal(cast.filter(actor=>actor.resident.duty==='trainer').length,FITNESS_TRAINERS.length);
  assert.ok(!Object.values(joined.actors).some(actor=>actor.radTox||actor.loot||actor.runtimeMachine||actor.roadFleet));
- await assert.rejects(f.send('fire',{tool:'laser',direction:[0,0,-1]}),/fitness station/);
+ const fired=await f.send('fire',{tool:'laser',direction:[0,1,0]});assert.equal(fired.result.tool,'laser');assert.equal(fired.radTox,null);assert.equal(fired.match,null);
  const station=FITNESS_STATIONS.find(place=>place.kind==='bench-press');
  const arrived=await f.send('map-access',{position:station.position});assert.ok(Math.hypot(arrived.players[selfId].position.x-station.position.x,arrived.players[selfId].position.z-station.position.z)<.1);
  let state=await f.send('fitness-start',{stationId:station.id}),position={...state.players[selfId].position};

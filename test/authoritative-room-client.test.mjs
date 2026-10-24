@@ -749,3 +749,23 @@ test('hydraulic acknowledgements free the control request without replacing or a
  const client=connectAuthoritativeRoom({roomId:'site',input:()=>({}),render:state=>rendered.push(state),inputInterval:1000});
  try{await client.whenReady();const reply=await client.send('construction-controls',{operation:'control',entityId:'crane',axes:{hoist:1}});assert.equal(reply.constructionControlAck,true);assert.equal(client.ready,true);assert.ok(requests.some(r=>r.controlResponse==='ack'&&r.controlEpoch==='epoch'));assert.ok(rendered.every(r=>!r.constructionControlAck&&r.actors.crane));await client.send('interact');assert.ok(rendered.at(-1).actors.crane);}finally{client.stop();globalThis.window=oldWindow;globalThis.document=oldDocument;}
 });
+
+
+test('weapons give immediate feedback without RAD-TOX and coalesced requests do not replay it',async()=>{
+ let sequence=0,release;const previews=[],renders=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire')return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();const before=renders.length;
+  const first=client.send('fire',{tool:'laser',direction:[0,0,-1]},'world-shot');
+  const second=client.send('fire',{tool:'laser',direction:[1,0,0]},'coalesced');
+  assert.equal(previews.length,1,'effects start before the HTTP response without starting an encounter');
+  assert.equal(previews[0].requestId,'world-shot');assert.deepEqual(previews[0].direction,[0,0,-1]);
+  assert.equal(renders.length,before,'predicted effects do not fabricate damage or room state');
+  while(!release)await pause(1);release();await Promise.all([first,second]);
+  assert.equal(previews.length,1,'confirmation must not replay the predicted shot');
+ },{deferRadTox:true,radToxEnabled:false,inputInterval:1000,onShot:shot=>previews.push(shot),render:state=>renders.push(state)});
+});
