@@ -16,7 +16,8 @@ export function followRoadRoute(sim,npc,environment,now,dt,collision,objects={})
  // At a serviced dead end, take a slow stationary turnaround before pulling out.
  if(Math.abs(error)>1.1&&Math.abs(npc.driving?.speed||0)<.5){npc.rotation.y+=Math.max(-.7*dt,Math.min(.7*dt,error));npc.driving={...npc.driving,speed:0,phase:'turning at stop'};return false;}
  const actors=Object.fromEntries(Object.entries(sim.actors).filter(([id])=>id!==npc.id)),limit=Math.min(roadSpeedLimit(environment,npc.position)/3.6,npc.questRole==='racer'?9:5),power=Math.abs(error)>.5?.4:1;
- for(let remaining=Math.min(.25,dt);remaining>0;remaining-=.05)Object.assign(npc,stepRoadVehicle(npc,{forward:power,side:Math.max(-1,Math.min(1,-error/.55))},Math.min(.05,remaining),{groundAt:p=>collision?collision.groundAt(environment,p,{actors,objects}):p,blocked:(from,to,yaw)=>collision?roadMovementBlocked(collision,environment,sim.actors,objects,npc,from,to,yaw):false,speedLimit:limit}));
+ const advance=()=>{for(let remaining=Math.min(.25,dt);remaining>0;remaining-=.05)Object.assign(npc,stepRoadVehicle(npc,{forward:power,side:Math.max(-1,Math.min(1,-error/.55))},Math.min(.05,remaining),{groundAt:p=>collision?collision.groundAt(environment,p,{actors,objects}):p,blocked:(from,to,yaw)=>collision?roadMovementBlocked(collision,environment,sim.actors,objects,npc,from,to,yaw):false,speedLimit:limit}));};
+ if(collision?.withActorCandidates)collision.withActorCandidates(actors,advance);else advance();
  return false;
 }
 export function stepRoadActivity(sim,environment,now,dt,{collision,objects={}}={}){

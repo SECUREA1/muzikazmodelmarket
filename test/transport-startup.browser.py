@@ -25,10 +25,27 @@ with tempfile.TemporaryDirectory(prefix='transport-startup-') as directory:
       page.route('https://**/*',lambda r:r.abort())
       try:
        page.goto(base+'/model-explorer.html?environment='+world+'&autoplay=1',wait_until='domcontentloaded',timeout=90000)
-       page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().gameplayStarted',timeout=180000)
+       page.wait_for_function('''()=>{const state=window.MuzikazHouseExplorer?.snapshot();return state?.gameplayStarted&&state.controlsReady&&state.serverReady&&state.serverPlayerInitialized;}''',timeout=180000)
        print(world,'game ready',flush=True)
        if os.environ.get('MUZIKAZ_PROFILE_TRANSPORT'):
         profiler=context.new_cdp_session(page);profiler.send('Profiler.enable');profiler.send('Profiler.start')
+       # Exercise the first real touch before focusing the canvas or opening any
+       # panel. An initialized room alone would miss a loading layer swallowing
+       # the gesture or a control that only wakes after a separate canvas click.
+       assert not page.evaluate('MuzikazHouseExplorer.snapshot().player.inputBlocked')
+       stick=page.locator('[data-thumbstick="left"] .thumbstick-base')
+       stick.wait_for(state='visible')
+       page.wait_for_function('''()=>{const stick=document.querySelector('[data-thumbstick="left"] .thumbstick-base'),r=stick.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===stick||stick.contains(hit);}''',timeout=15000)
+       box=stick.bounding_box();center={'id':1,'x':box['x']+box['width']/2,'y':box['y']+box['height']/2}
+       touch=context.new_cdp_session(page);before=page.evaluate('MuzikazHouseExplorer.snapshot().player.position');touch_inputs=len(inputs)
+       touch.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[center]})
+       try:
+        touch.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{**center,'y':center['y']-box['height']*.35}]})
+        page.wait_for_function('(a)=>{const b=MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(a[0]-b[0],a[2]-b[2])>.15}',arg=before,timeout=20000)
+       finally:
+        touch.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});touch.detach()
+       assert any(value.get('input',{}).get('forward',0)>.5 for value in inputs[touch_inputs:]),'Initial touch did not reach authoritative movement input.'
+       print(world,'initial touch walking passed without canvas focus',flush=True)
        page.locator('#house-explorer-canvas').focus();before=page.evaluate('window.MuzikazHouseExplorer.snapshot().player.position')
        page.keyboard.down('w')
        try:page.wait_for_function('(a)=>{const b=MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(a[0]-b[0],a[2]-b[2])>.15}',arg=before,timeout=20000)

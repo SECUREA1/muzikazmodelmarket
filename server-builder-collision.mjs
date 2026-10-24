@@ -86,6 +86,20 @@ function nearbyWalls(world,minX,maxX,minZ,maxZ){
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
  constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));}
+ withActorCandidates(actors,callback){
+  const previous=this.actorCandidateScope,scope={actors,stable:Object.create(null),traffic:Object.create(null),construction:Object.create(null)};
+  // Resident movement issues many floor/clearance queries against the same
+  // scene. Classify its physical candidates once for this synchronous phase;
+  // live poses, activity and holders are still checked by every query below.
+  for(const [id,actor]of Object.entries(actors)){
+   const construction=isConstructionMachine(actor)||actor.constructionManaged,craft=isWatercraft(actor)||isAircraft(actor);
+   if(construction)scope.construction[id]=actor;
+   if(actor.trafficAI){if(craft)scope.traffic[id]=actor;}
+   else if(!construction&&(actor.spawned||craft))scope.stable[id]=actor;
+  }
+  this.actorCandidateScope=scope;
+  try{return callback();}finally{this.actorCandidateScope=previous;}
+ }
  clearPlacedWorlds(){for(const entry of this.placedWorlds.values())disposePlacedWorldEntry(entry);this.placedWorlds.clear();this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;}
  placedObjects(objects){
   const floors=[],triangles=[];
@@ -123,7 +137,8 @@ export class ServerBuilderCollision {
   // during one tick, so retain one current geometry set for each variant.
   this.placedWorlds.delete(scope);this.placedWorlds.set(scope,entry);
   if(this.placedWorlds.size>this.maxPlacedWorlds){const [oldScope,old]=this.placedWorlds.entries().next().value;disposePlacedWorldEntry(old);this.placedWorlds.delete(oldScope);}
-  const stableActors=Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
+  const candidates=this.actorCandidateScope?.actors===actors?this.actorCandidateScope:null;
+  const stableActors=candidates?.stable||Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
   const objectState=Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),actorState=Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[[actor.id,actor.modelId,actor.asset?.id,actor.asset?.buildAssetId,actor.asset?.modelUrl,actor.asset?.renderKind,actor.asset?.configuration,actor.asset?.targetHeight,actor.placementRevision,actor.active,actor.holderId],actor.position,actor.rotation,actor.scale]);
   const key=JSON.stringify([objectState,actorState]),geometryKey=JSON.stringify([objectState,actorState.map(actor=>actor[0])]);
   const variant=Object.keys(objects).length>0?'with-objects':'actors';let cached=entry.variants.get(variant);
@@ -132,7 +147,7 @@ export class ServerBuilderCollision {
    else{cached?.world.root.removeFromParent();disposePlacedCollision(cached?.world);cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};entry.variants.set(variant,cached);}
   }
   const world=cached.world;
-  entry.construction=syncConstructionCollision(entry.construction,actors);entry.traffic=syncTrafficCollision(entry.traffic,actors);
+  entry.construction=syncConstructionCollision(entry.construction,candidates?.construction||actors);entry.traffic=syncTrafficCollision(entry.traffic,candidates?.traffic||actors);
   for(const child of [...entry.root.children])if(child!==world.root&&child!==entry.traffic.root&&child!==entry.construction.root)entry.root.remove(child);
   if(world.root.parent!==entry.root)entry.root.add(world.root);
   if(entry.traffic.root.parent!==entry.root)entry.root.add(entry.traffic.root);

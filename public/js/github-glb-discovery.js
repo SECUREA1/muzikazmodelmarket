@@ -55,7 +55,8 @@ export async function fetchGitHubGlbFiles({ fetchImpl = fetch } = {}) {
 
 function urlPath(value = '') {
   try {
-    const path = new URL(value, typeof location !== 'undefined' ? location.origin : 'https://muzikaz.invalid').pathname.replace(/^\//, '');
+    let path = new URL(value, typeof location !== 'undefined' ? location.origin : 'https://muzikaz.invalid').pathname.replace(/^\//, '');
+    try { path = decodeURIComponent(path); } catch {}
     const modelPathIndex = path.indexOf(DEFAULT_MODEL_DIRECTORY);
     return modelPathIndex >= 0 ? path.slice(modelPathIndex) : path;
   } catch { return String(value).replace(/^\//, ''); }

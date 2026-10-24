@@ -37,13 +37,23 @@ function consistentPose(context,expected){
 
 test('explicit teleport resets both capsule feet and eased view height atomically',()=>{
   const context=fixture();
-  evaluateSection(context,'  function movePlayerTo(point)','  function teleportFromController');
+  evaluateSection(context,'  function movePlayerTo(point','  let groundTravelPending');
   const requested=new THREE.Vector3(8,1.1,6),original=requested.clone();
   context.movePlayerTo(requested);
   consistentPose(context,new THREE.Vector3(8,1.23,6));
   closeVector(requested,original);
   closeVector(context.player.velocity,new THREE.Vector3());
   assert.equal(context.player.onGround,false);
+});
+
+test('verified ground travel preserves the selected surface height beneath another floor',()=>{
+  const context=fixture();
+  evaluateSection(context,'  function movePlayerTo(point','  let groundTravelPending');
+  const requested=new THREE.Vector3(8,.42,6),original=requested.clone();
+  context.movePlayerTo(requested,{align:false});
+  consistentPose(context,requested);
+  closeVector(requested,original);
+  closeVector(context.player.velocity,new THREE.Vector3());
 });
 
 test('space scaling transforms accepted feet independently of stair camera easing',()=>{

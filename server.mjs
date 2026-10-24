@@ -93,7 +93,7 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
@@ -1141,7 +1141,7 @@ const server = createServer(async (req, res) => {
       if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
       res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
     }
-    res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
+    res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });

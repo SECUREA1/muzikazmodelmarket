@@ -19,7 +19,12 @@ export function roadMovementBlocked(collision,environment,actors,objects,actor,f
  const config=roadVehicleType(actor),travel=Math.hypot(to.x-from.x,to.z-from.z),steps=Math.max(1,Math.ceil(travel/.3));
  // Retain the ID so authored map geometry is excluded as well as spawned meshes.
  const others={...actors,[actor.id]:{...actor,active:false}};
- for(let i=1;i<=steps;i++)for(const side of [-1,0,1])for(const end of [-1,1]){const point={x:from.x+(to.x-from.x)*i/steps+Math.cos(yaw)*side*config.width*.45-Math.sin(yaw)*end*config.length*.4,y:to.y,z:from.z+(to.z-from.z)*i/steps-Math.sin(yaw)*side*config.width*.45-Math.cos(yaw)*end*config.length*.4};const floor=collision.groundAt(environment,point,{actors:others,objects,earthworks});if(!floor||Math.abs(floor.y-to.y)>.65||!collision.hasBodyClearance(environment,floor,.25,{actors:others,objects,earthworks}))return true;}
- return Object.values(others).some(other=>isRoadVehicle(other)&&other.active!==false&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3);
+ const probe=()=>{
+  // All footprint samples describe this one proposed pose. Reuse their
+  // candidate classification while keeping the vehicle itself excluded.
+  for(let i=1;i<=steps;i++)for(const side of [-1,0,1])for(const end of [-1,1]){const point={x:from.x+(to.x-from.x)*i/steps+Math.cos(yaw)*side*config.width*.45-Math.sin(yaw)*end*config.length*.4,y:to.y,z:from.z+(to.z-from.z)*i/steps-Math.sin(yaw)*side*config.width*.45-Math.cos(yaw)*end*config.length*.4};const floor=collision.groundAt(environment,point,{actors:others,objects,earthworks});if(!floor||Math.abs(floor.y-to.y)>.65||!collision.hasBodyClearance(environment,floor,.25,{actors:others,objects,earthworks}))return true;}
+  return Object.values(others).some(other=>isRoadVehicle(other)&&other.active!==false&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3);
+ };
+ return collision.withActorCandidates?collision.withActorCandidates(others,probe):probe();
 }
 export function roadExitPosition(collision,environment,actor,actors,objects,{earthworks}={}){const config=roadVehicleType(actor),yaw=actor.rotation?.y||0,others=Object.fromEntries(Object.entries(actors).filter(([id])=>id!==actor.id));for(const side of [1,-1])for(const gap of [config.width/2+1,config.width/2+2]){const point={x:actor.position.x+Math.cos(yaw)*side*gap,y:actor.position.y,z:actor.position.z-Math.sin(yaw)*side*gap},floor=collision.groundAt(environment,point,{actors:others,objects,earthworks});if(floor&&collision.hasBodyClearance(environment,floor,.38,{actors:others,objects,earthworks}))return floor;}throw Error('Clear space beside the vehicle before exiting.');}

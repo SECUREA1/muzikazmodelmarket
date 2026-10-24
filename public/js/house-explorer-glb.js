@@ -1,4 +1,5 @@
 import {bindGameActionButton} from './game-action-button.js';
+import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js';
 import {worldPopulation} from './world-population.js';
 import {mountFitnessUI} from './fitness-ui.js';
 import {mountCasinoUI} from './casino-ui.js';
@@ -136,7 +137,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localSandbox = false;
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
-  const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
+  const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.setAttribute('aria-description','Double-tap or double-click a clear ground spot to move there. Drag to look; use the movement controls to walk.'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true) || document.createElement('button'); resetButton.id='house-reset'; resetButton.type='button'; document.querySelector('#house-reset')?.replaceWith(resetButton);
   document.querySelector('#house-fullscreen')?.remove();
   const beginResetButton = document.querySelector('#house-begin-reset')?.cloneNode(true); document.querySelector('#house-begin-reset')?.replaceWith(beginResetButton);
@@ -1084,7 +1085,38 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const XR_TOOL_ORDER = Object.freeze(['laser', 'pulse-rifle', 'flamethrower', 'rail-cannon', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick', ...Object.keys(EXTRA_WEAPONS),...Object.keys(UTILITY_TOOLS)]);
   function pulseXRController(controller, strength = .35, duration = 40) { controller.userData.inputSource?.gamepad?.hapticActuators?.[0]?.pulse?.(strength, duration).catch?.(() => {}); }
   function createXRAimRay() { const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -7)]); const material = new THREE.LineBasicMaterial({ color: 0xcaff49, transparent: true, opacity: .82, depthTest: false }); const ray = new THREE.Line(geometry, material); ray.name = 'MUZIKAZ_XR_AIM_RAY'; ray.renderOrder = 50; return ray; }
-  function movePlayerTo(point) { const aligned = alignSpawnToCurrentFloor(point.clone()); player.velocity.set(0, 0, 0); player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(aligned.x, aligned.y + player.radius, aligned.z), new THREE.Vector3(aligned.x, aligned.y + player.height-player.radius, aligned.z), player.radius); playerRig.position.copy(aligned); localGroundViewY=aligned.y; updateLandingFrame(aligned); }
+  function movePlayerTo(point,{align=true}={}) { const aligned = align?alignSpawnToCurrentFloor(point.clone()):point.clone(); player.velocity.set(0, 0, 0); player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(aligned.x, aligned.y + player.radius, aligned.z), new THREE.Vector3(aligned.x, aligned.y + player.height-player.radius, aligned.z), player.radius); playerRig.position.copy(aligned); localGroundViewY=aligned.y; updateLandingFrame(aligned,{align:false}); }
+  let groundTravelPending=false;
+  function groundTravelEnabled(event){
+    const self=serverViewSnapshot?.players?.[authoritativeClient?.selfId];
+    return gameplayControlsReady()&&!gameplayOverlayOpen()&&!groundTravelPending&&!renderer.xr.isPresenting&&document.pointerLockElement!==canvas&&!serverVehicleId&&!vehicleController.active&&!seatedBuilderObject&&!builderGameplay.player.seatedObjectId&&!self?.seatedId&&!self?.skiLift&&(self?.health??100)>0&&!ownedPlacement.active&&!findPlacedAvatarFromEvent(event);
+  }
+  async function travelToGround(event){
+    updateGameCamera();scene.updateMatrixWorld(true);
+    const meshes=[...new Set([...envLoader.collisionMeshes,...envLoader.floorMeshes,...buildingSolids().flatMap(placementMeshes),...constructionScene.groundMeshes])];
+    const point=groundPointFromPointer({ray:teleportRay,camera:displayCamera(),rect:canvas.getBoundingClientRect(),event,meshes,acceptHit:hit=>!hit.object.userData.collisionDisabled&&hit.object.userData.brickPaintPart!=='stud'&&!hit.object.userData.avatarCollider&&(!isTopDownView()||hit.point.y<=overviewCutaway.constant+.03)});
+    if(!point){setStatus('Double-tap a visible, clear ground spot to move there.');return false;}
+    toxicTap=null;topDownAimTarget=null;groundTravelPending=true;
+    try{
+      if(serverHostedRoom){
+        const state=await serverCommand('teleport-floor',{position:{x:point.x,y:point.y,z:point.z}}),arrival=state?.players?.[state.selfId||authoritativeClient?.selfId]?.position;
+        if(arrival)updateLandingFrame(new THREE.Vector3(arrival.x,arrival.y,arrival.z),{align:false});
+        return state;
+      }
+      const feet=point.clone().add(new THREE.Vector3(0,FLOOR_ENTRY_OFFSET,0)),capsule=new Capsule(feet.clone().add(new THREE.Vector3(0,player.radius,0)),feet.clone().add(new THREE.Vector3(0,player.height-player.radius,0)),player.radius);
+      const contact=envLoader.octree.capsuleIntersect(capsule);
+      if(contact&&contact.depth>.01){setStatus('Choose a clear ground spot with room to stand.');return false;}
+      const bodyBounds=new THREE.Box3().setFromPoints([capsule.start,capsule.end]).expandByScalar(player.radius);
+      for(const root of buildingSolids()){
+        if(!placementBounds(THREE,root).intersectsBox(bodyBounds))continue;
+        for(const triangle of placementTriangles(THREE,[root])){
+          const hit=envLoader.octree.triangleCapsuleIntersect(capsule,triangle);
+          if(hit&&hit.depth>.01){setStatus('Choose a clear ground spot with room to stand.');return false;}
+        }
+      }
+      movePlayerTo(feet,{align:false});setStatus('Moved to the selected ground spot.');return true;
+    }finally{groundTravelPending=false;}
+  }
   function teleportFromController(controller) {if(serverHostedRoom){setStatus('Use movement controls; unrestricted local teleport is disabled in shared rooms.');return false;} if (!envLoader.world || !envLoader.floorMeshes.length) return false; const origin = controller.getWorldPosition(new THREE.Vector3()); const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion())).normalize(); teleportRay.set(origin, direction); const hit = teleportRay.intersectObjects(envLoader.floorMeshes, true).find(item => { const normal = item.face?.normal.clone().transformDirection(item.object.matrixWorld); return normal?.y > .5; }); if (!hit) { setStatus('Teleport aim needs a verified collision floor. Point the right controller at the ground and squeeze.'); pulseXRController(controller, .15, 25); return false; } movePlayerTo(hit.point.add(XR_TELEPORT_OFFSET)); pulseXRController(controller, .55, 55); setStatus('Teleported. Aim with either controller trigger to use the selected RAD-TOX tool.'); return true; }
   function cycleXRTool(controller) { const next = XR_TOOL_ORDER[(XR_TOOL_ORDER.indexOf(toxicBubbleSystem.tool) + 1) % XR_TOOL_ORDER.length]; toxicBubbleSystem.setTool(next); pulseXRController(controller, .25, 25); setStatus(`${next === 'spray' ? 'Paint gun' : next === 'bat' ? 'Baseball bat' : next === 'taser' ? 'Taser' : next === 'toxin' ? 'Toxins Thrower' : next === 'dynamite' ? 'Dynamite' : next === 'brick' ? 'Brick Layer' : 'Laser'} selected. Use either controller trigger to aim and use it.`); }
 
@@ -1112,7 +1144,18 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.handleSpaceScaleChanged();
   }
   function alignSpawnToCurrentFloor(spawn) { return envLoader.floorMeshes.length ? alignPointAboveFloor(spawn.clone(), envLoader.floorMeshes, envLoader.bounds, player.height, FLOOR_ENTRY_OFFSET) : spawn.clone(); }
-  function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
+  function updateLandingFrame(spawn,{align=true}={}) {
+    const alignedSpawn=align?alignSpawnToCurrentFloor(spawn):spawn;
+    let [ring,grid]=landingFrame.children;
+    if(!ring){
+      ring=new THREE.Mesh(new THREE.RingGeometry(.52,.72,48),new THREE.MeshBasicMaterial({color:0x9cff00,side:THREE.DoubleSide,transparent:true,opacity:.88}));
+      ring.rotation.x=-Math.PI/2;
+      grid=new THREE.GridHelper(1.55,4,0x9cff00,0x477400);grid.material.transparent=true;grid.material.opacity=.62;
+      landingFrame.add(ring,grid);
+    }
+    ring.position.set(alignedSpawn.x,alignedSpawn.y+.018,alignedSpawn.z);
+    grid.position.set(alignedSpawn.x,alignedSpawn.y+.022,alignedSpawn.z);
+  }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { topDownAimTarget=null; const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); localGroundViewY=alignedSpawn.y; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height-player.radius, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { if(activeEnvironment?.memberPlot||activeEnvironment?.builderScene)return loadById(activeEnvironment.id);const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
 
@@ -2015,15 +2058,17 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   environmentList?.addEventListener('click',(event)=>{const button=event.target instanceof Element?event.target.closest('[data-environment-id]'):null;if(!button||!requireGameplayReady())return;environmentSelect.value=button.dataset.environmentId;environmentList.hidden=true;environmentListToggle?.setAttribute('aria-expanded','false');if(environmentListToggle)environmentListToggle.textContent='Browse maps';safelyInteract('World interaction',()=>loadById(button.dataset.environmentId));});
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
+  bindGroundDoubleTap(canvas,{enabled:groundTravelEnabled,onDoubleTap:event=>{void safelyInteract('Ground travel',()=>travelToGround(event));}});
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
   toolsButton?.addEventListener('click', (event) => { event.preventDefault(); toggleTools(); setStatus(`RAD-TOX tools ${sprayTools.hidden ? 'closed' : 'open'}. Choose Laser, Paint Gun, Bat, Taser, Dynamite, Brick Layer, Jetpack, Seats, Build Map, Pack, or a paint color.`); });
-  canvas.addEventListener('pointerdown', (event) => { if (event.pointerType==='mouse'&&event.button!==0)return; if (document.pointerLockElement === canvas && event.button === 0) { if(!isBasketballEnvironment(activeEnvironment)&&toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas){toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))};if(event.pointerType==='mouse'&&((toxicBubbleSystem.active&&!isCleanSportsEnvironment(activeEnvironment))||supportsWorldTools(activeEnvironment)||toxicBubbleSystem.tool==='brick'||toxicBubbleSystem.tool==='spray'||UTILITY_TOOLS[toxicBubbleSystem.tool])&&!toxicTap.avatar){toxicTap.fired=true;toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event)||toxicConsumedClick;}} });
+  canvas.addEventListener('pointerdown', (event) => { if (event.pointerType==='mouse'&&event.button!==0)return; if (document.pointerLockElement === canvas && event.button === 0) { if(!isBasketballEnvironment(activeEnvironment)&&toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas){toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))};} });
 
   window.addEventListener('pointerup',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('pointercancel',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('blur',()=>{toxicBubbleSystem.flameTrigger=null;});
   document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==canvas)toxicBubbleSystem.flameTrigger=null;});
-  canvas.addEventListener('pointerup', (event) => { if(event.pointerType==='mouse'&&event.button!==0)return; if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.fired && !toxicTap.avatar && moved<=8){const rangeHit=handleRangeShot({event});toxicConsumedClick=(rangeHit===null?toxicBubbleSystem.handlePointerInteraction(event):true)||toxicConsumedClick;} toxicTap=null; });
+  canvas.addEventListener('pointermove',event=>{if(toxicTap?.id===event.pointerId&&Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y)>8)toxicTap.moved=true;});
+  canvas.addEventListener('pointerup', (event) => { if(event.pointerType==='mouse'&&event.button!==0)return; if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.moved && !toxicTap.avatar && moved<=8){const rangeHit=handleRangeShot({event});toxicConsumedClick=(rangeHit===null?toxicBubbleSystem.handlePointerInteraction(event):true)||toxicConsumedClick;} toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
   canvas.addEventListener('pointerdown', (e) => {
     if (document.pointerLockElement === canvas) return;

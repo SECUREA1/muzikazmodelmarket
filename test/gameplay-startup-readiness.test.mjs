@@ -24,7 +24,7 @@ function fixture(extra={}){
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
   districtMap:{setReady:value=>readinessChanges.push(value)},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
-  serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
+  serverInput:()=>({}),renderServerRoom:reset,fitnessUI:{visible:()=>false},radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
   stage:{scrollIntoView:reset},gameStartButton:{disabled:false},gameStartScreen:{classList:{add:reset,remove:reset}},gameLoadStatus:{textContent:''},graphicsContextLost:false,
   activeWorldSpawn:{position:{x:1,y:.02,z:2},rotationY:0},resetPlayer:reset,hideLevelLoader:reset,scheduleGameResize:reset,
