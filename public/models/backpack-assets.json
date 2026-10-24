@@ -1212,8 +1212,14 @@
       "visibility": "public",
       "builderCategory": "terrain",
       "buildAssetId": "alpine-mountain",
-      "dimensions": [6, 5, 5.5],
-      "function_data": {"behavior": "decor"},
+      "dimensions": [
+        6,
+        5,
+        5.5
+      ],
+      "function_data": {
+        "behavior": "decor"
+      },
       "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third."
     },
     {
@@ -5398,6 +5404,339 @@
       },
       "metadata": {
         "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-training-missile",
+      "name": "Atlas Training Missile",
+      "description": "Factory-crafted inert training collectible with segmented shell, stabilizer fins and a display cradle.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-training-missile",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.4,
+        2.3,
+        8.7
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "factoryStation": false,
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-cargo-rocket",
+      "name": "Atlas Cargo Rocket",
+      "description": "Factory-crafted cargo rocket collectible with booster pods, payload fairing and a service cradle.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-cargo-rocket",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        4.2,
+        3.7,
+        12.8
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 320,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "factoryStation": false,
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-fabricator",
+      "name": "CNC Shell Fabricator",
+      "description": "Operate this component-fabrication station in a custom factory, with a sliding tool head, stock rollers and an operator console.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-fabricator",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        7,
+        4.8,
+        4
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 650,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "fabrication",
+        "factoryStationId": "factory-fabrication",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open CNC Shell Fabricator · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-assembly-jig",
+      "name": "Rocket Assembly Jig",
+      "description": "A production assembly station with twin robotic arms, a segmented workpiece and an overhead service gantry.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-assembly-jig",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        11,
+        6.5,
+        5
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 900,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "assembly",
+        "factoryStationId": "factory-assembly",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Rocket Assembly Jig · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-calibration-rig",
+      "name": "Systems Calibration Rig",
+      "description": "A quality-control station with a circular inspection arch, animated scan bar and twin systems consoles.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-calibration-rig",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        4.8,
+        4.8,
+        4
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 450,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "calibration",
+        "factoryStationId": "factory-calibration",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Systems Calibration Rig · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-procurement-terminal",
+      "name": "Procurement Terminal",
+      "description": "Buy game production kits and open factory jobs at this MZK order desk with a stock manifest screen and material bins.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-procurement-terminal",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        6,
+        2.4,
+        3
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 160,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "procurement",
+        "factoryStationId": "factory-procurement",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Procurement Terminal · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-dispatch-terminal",
+      "name": "Factory Dispatch Terminal",
+      "description": "Deliver completed orders and collect crafted items to Backpack from this shipment console.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-dispatch-terminal",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        6,
+        2.4,
+        3
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 160,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "dispatch",
+        "factoryStationId": "factory-dispatch",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Dispatch Terminal · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-conveyor",
+      "name": "Industrial Roller Conveyor",
+      "description": "A movable steel material conveyor with individual animated rollers and safety rails.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-conveyor",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        3.5,
+        1.1,
+        8
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 120,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "factoryStation": false,
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-loading-bay",
+      "name": "Factory Freight Loading Bay",
+      "description": "A marked freight-loading station for the factory truck. Move or rotate it to define your custom production route.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-loading-bay",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        9,
+        0.12,
+        14
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory & engineering",
+      "productTier": "factory",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "factoryStation": "loading",
+        "factoryStationId": "factory-loading",
+        "factoryApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Freight Loading Bay · E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryEquipment": true,
         "upgradeable": true
       }
     }

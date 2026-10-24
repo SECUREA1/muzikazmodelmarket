@@ -129,6 +129,16 @@ See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. B
 
 ## Map travel and vehicle loading
 
+The permanent **MUZIKAZ Missile & Rocket Factory** shares the existing server,
+MZK wallet, Backpack, resident AI and construction vehicles. Buy a parts kit,
+operate fabrication/assembly/test cells, haul the finished model by dump truck,
+and collect a detailed training missile or cargo rocket. Production and factory
+skills survive travel and restarts. Enter from the **Factory** world category.
+All nine factory item types are available in Marketplace and Builder's
+**Factory & engineering** category. The editable factory template keeps station
+roles, crew, vehicle jobs and local maps connected after moving or removing items.
+See [factory controls and production](docs/missile-factory.md).
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases

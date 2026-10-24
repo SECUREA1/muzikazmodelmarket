@@ -5,10 +5,17 @@ import {readFile} from 'node:fs/promises';
 import {BUILDING_MATERIALS,buildingType} from './public/js/building-materials.js';
 import {EXTRA_WEAPONS,RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
+import {FACTORY_ITEMS,factoryItemSettings} from './public/js/missile-factory-items.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const backpack=(await json('./public/models/backpack-assets.json')).assets;
 const document=await json('./public/models/glb-models.json');
 const models=Array.isArray(document)?document:document.models;
+const assetRegistry=await json('./public/models/game-asset-registry.json');
+const normalizedAssetPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
+const existingModelPaths=new Set([...backpack,...models].map(item=>normalizedAssetPath(item.modelUrl)).filter(Boolean));
+// The discovery registry verifies these authored files exist. SVG artwork and
+// generated replacement recipes are not offered as downloadable 3D models.
+const discoveredModels=assetRegistry.assets.filter(item=>!item.generated&&/^\/?public\/.*\.(?:glb|gltf)$/i.test(item.modelPath||'')&&!existingModelPaths.has(normalizedAssetPath(item.modelPath)));
 const basicTools=new Set(['laser','bat','spray','brick','repair-tool','recycler']);
 const basicMaterials=new Set(['studs','wood','cement']);
 const tools={laser:'Starter laser',bat:'Basic bat',spray:'Paint gun',brick:'Building kit',flamethrower:'Flash Igniter',taser:'Taser',toxin:'Toxins Thrower',dynamite:'Dynamite',jetpack:'Jetpack',...Object.fromEntries(Object.entries(RANGED_WEAPONS).map(([id,item])=>[id,item.label])),...Object.fromEntries(Object.entries(UTILITY_TOOLS).map(([id,item])=>[id,item.label]))};
@@ -20,9 +27,10 @@ const raw=[
  ...BUILDING_MATERIALS.map(item=>({sku:'material:'+item.id,id:item.id,name:item.name,category:'Building materials',kind:'material',buildingType:buildingType(item),shape:item.shape||'block',description:item.type==='entertainment'?'Stage and event construction piece. Stackable, paintable, and walkable.':'',basic:basicMaterials.has(item.id),priceMzk:item.shape?120:60,useCostMzk:1,materialId:item.id})),
  ...backpack.filter(item=>item.visibility!=='private'&&!extraBuildItems.some(([id])=>id===item.buildAssetId)).map(item=>({...item,sku:'backpack:'+item.id,category:item.collection||(['arcade','poker','slots','trivia'].includes(INTERACTIVE_DEVICES[item.buildAssetId]?.kind)?'Arcade & card machines':'Backpack · '+item.type),kind:'asset',assetType:item.type,basic:item.basic===true||item.id==='backpack-dax',priceMzk:item.priceMzk??(item.type==='vehicles'?500:item.type==='avatars'?300:item.type==='lands'?400:100),useCostMzk:item.type==='avatars'?0:item.type==='vehicles'?5:1})),
 
- ...models.filter(item=>item.visibility!=='private'&&item.modelUrl).map(item=>({...item,sku:'repository:'+item.id,category:'Models',kind:'asset',assetType:item.assetType||'props',priceMzk:Math.round(Number(item.price||25)*100),useCostMzk:item.assetType==='avatar'?0:2}))
+ ...models.filter(item=>item.visibility!=='private'&&item.modelUrl).map(item=>({...item,sku:'repository:'+item.id,category:'Models',kind:'asset',assetType:item.assetType||'props',priceMzk:Math.round(Number(item.price||25)*100),useCostMzk:item.assetType==='avatar'?0:2})),
+ ...discoveredModels.map(item=>({id:'discovered-'+item.assetId,sku:'discovered:'+item.assetId,name:item.name,description:'Authored MUZIKAZ '+(item.assetType==='environment'?'environment model':'3D model')+' for editable maps and shared worlds.',category:item.assetType==='environment'||item.assetType==='terrain'?'Map models & environments':'Models',kind:'asset',assetType:item.assetType==='environment'||item.assetType==='terrain'?'lands':item.assetType==='avatar'?'avatars':item.assetType==='vehicle'?'vehicles':'props',format:item.modelPath.split('.').pop().toLowerCase(),modelUrl:item.modelPath,thumbnailUrl:item.thumbnail,priceMzk:500,useCostMzk:2,source:'repository-discovery'}))
 ];
-export const GAME_ECONOMY=raw.map(item=>{const priceMzk=catalogItemPrice(item);return {...item,priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};});
+export const GAME_ECONOMY=raw.map(record=>{const native=FACTORY_ITEMS[record.buildAssetId],item=native?{...record,...native,kind:record.kind,category:'Factory & engineering',builderCategory:'factory',function_data:factoryItemSettings(record.buildAssetId)}:record;const priceMzk=catalogItemPrice(item);return {...item,priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};});
 export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);}
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
 export function ownsEconomyItem(state,item){return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}
