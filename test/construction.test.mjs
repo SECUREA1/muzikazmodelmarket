@@ -35,7 +35,7 @@ test('crane validates reach, prevents duplicate loads, rejects another operator 
  const {sim,actors,player,send,tick}=fixture(),crane=actors.crane;
  assert.throws(()=>send('control',{entityId:'truck',axes:{hoist:1}}),/another machine/);
  assert.throws(()=>send('control',{axes:[]}),/valid hydraulic/);
- send('control',{axes:{hoist:999,trolley:999,slew:Infinity}});assert.equal(crane.construction.axes.hoist,1);assert.equal(crane.construction.axes.slew,0);tick(2);const raised=crane.construction.hoist;tick(8);assert.ok(crane.construction.hoist-raised<=2);const stopped=crane.construction.hoist;tick(10);assert.equal(crane.construction.hoist,stopped);
+ send('control',{axes:{hoist:999,trolley:999,slew:Infinity}});assert.equal(crane.construction.axes.hoist,1);assert.equal(crane.construction.axes.slew,0);tick(2);const raised=crane.construction.hoist;tick(8);assert.ok(crane.construction.hoist-raised<=4);const stopped=crane.construction.hoist;tick(10);assert.equal(crane.construction.hoist,stopped);
  assert.throws(()=>send('attach'),/Lower.*hook/);send('aim-supply');for(let index=0;index<200&&crane.construction.assist;index++)tick();send('attach');assert.throws(()=>send('attach'),/Release the attached/);
  const before=crane.construction.hoist;send('control',{axes:{hoist:1}});crane.holderId='bob';tick(2);assert.equal(crane.construction.hoist,before);assert.throws(()=>send('park'),/Enter an available/);crane.holderId=player.actorId;
  player.position.x+=20;assert.throws(()=>send('park'),/operator station/);
@@ -103,4 +103,8 @@ test('fresh input queued behind a slow server tick preserves the operator, while
  now+=100;const input=send('input',{input:{}});now+=16000;release();const state=await input;
  assert.equal(state.players['account:operator'].vehicleId,'truck');assert.equal(state.actors.truck.holderId,'account:operator');
  now+=16000;await assert.rejects(send('input',{input:{}}),error=>error.code==='ROOM_JOIN_REQUIRED');
+});
+
+test('manual hydraulics tolerate mobile heartbeat jitter but expire and obey an immediate neutral release',()=>{
+ const f=fixture(),actor=f.actors.crane;f.send('control',{axes:{hoist:1}});f.tick(4);const before=actor.construction.hoist;f.tick();assert.ok(actor.construction.hoist>before,'held controls survive a 500 ms heartbeat gap');f.tick(2);const stopped=actor.construction.hoist;f.tick(4);assert.equal(actor.construction.hoist,stopped,'lost input expires within the bounded control lease');f.send('control',{axes:{hoist:1}});f.tick();f.send('control',{axes:{}});const released=actor.construction.hoist;f.tick();assert.equal(actor.construction.hoist,released,'explicit release stops immediately');
 });

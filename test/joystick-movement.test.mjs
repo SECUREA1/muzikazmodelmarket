@@ -40,15 +40,16 @@ test('touches before world readiness neither capture nor own a drag, and the nex
     assert.equal(c.input[name+'Y'],0);
   }
 });
-test('walking keeps an 8px neutral zone while the look stick retains fine linear response', () => {
+test('walking uses a small center dead zone while the look stick retains fine linear response', () => {
   const left=controller('left'),right=controller('right');
   left.send('pointerdown',50,50);right.send('pointerdown',50,50);
-  for(const offset of [1,7,8]){
+  for(const offset of [0,1,2]){
     left.send('pointermove',50,50-offset);right.send('pointermove',50,50-offset);
     assert.equal(left.input.leftX,0);assert.equal(left.input.leftY,0);
     assert.ok(Math.abs(right.input.rightY+offset/29)<1e-10);
   }
-  left.send('pointermove',50,31.5);right.send('pointermove',50,35.5);
+  left.send('pointermove',50,46);assert.ok(left.input.leftY<-.05,'a small thumb adjustment must produce walking input');
+  left.send('pointermove',50,34.34);right.send('pointermove',50,35.5);
   assert.ok(Math.abs(left.input.leftY+.5)<1e-10);
   assert.ok(Math.abs(right.input.rightY+.5)<1e-10);
   left.send('pointermove',50,0);right.send('pointermove',50,0);
@@ -57,12 +58,13 @@ test('walking keeps an 8px neutral zone while the look stick retains fine linear
   assert.equal(left.input.leftY,0);assert.equal(right.input.rightY,0);
   assert.equal(left.shots(),1);assert.equal(right.jumps(),1);
 });
-test('walking anchors at the touch origin and shoot and jump happen immediately on press', () => {
+test('pressing an off-center left-stick direction walks immediately without requiring an extra drag', () => {
   const left = controller('left');
   left.send('pointerdown', 30, 20);
-  assert.equal(left.input.leftX,0);assert.equal(left.input.leftY,0);
+  assert.ok(left.input.leftX<-.5);assert.ok(left.input.leftY<-.5);
+  assert.ok(Math.hypot(left.input.leftX,left.input.leftY)<=1);
   assert.equal(left.shots(),1);
-  left.send('pointermove',30,1.5);
+  left.send('pointermove',50,34.34);
   assert.ok(Math.abs(left.input.leftY+.5)<1e-10);
   left.send('pointerup', 30, 1.5);
   assert.equal(left.shots(), 1);

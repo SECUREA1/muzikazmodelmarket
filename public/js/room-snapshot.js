@@ -3,6 +3,12 @@ const actorSets=new Map(),boot=globalThis.crypto?.randomUUID?.()||String(Date.no
 // Full action replies remain the recovery baseline; scenery and unchanged
 // earth are hydrated locally before any gameplay renderer sees a snapshot.
 export function compactRoomSnapshot(state,request={},environment={}){
+ // Manual hydraulic heartbeats acknowledge the command without retransmitting
+ // the city, crew and terrain. Regular input snapshots keep the scene current.
+ if(request.action==='construction-controls'&&request.operation==='control'&&request.controlResponse==='ack'){
+  const self=state.players?.[state.selfId],actor=state.actors?.[self?.vehicleId];
+  return {constructionControlAck:true,authoritative:true,selfId:state.selfId,sequence:state.sequence,serverTime:state.serverTime,inputEpoch:state.inputEpoch??state.result?.inputEpoch,entityId:actor?.id,axes:actor?.construction?.axes||{},result:state.result};
+ }
  if(request.snapshotMode!=='compact'||!['input','construction-controls'].includes(request.action))return state;
  if(state.sceneVersion&&request.sceneVersion!==state.sceneVersion)return state;
  const authored=new Map((environment.builderScene?.objects||environment.placementScene?.objects||[]).map(object=>[object.id,object.functionalSettings||object.gameplay||{behavior:object.behavior||'decor'}]));

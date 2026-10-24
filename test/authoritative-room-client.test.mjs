@@ -742,3 +742,10 @@ test('current epoch metadata wins over an old receipt and delayed older epoch ac
   release();await earlier;await heartbeat();await flushInputTasks();assert.equal(commands.at(-1).inputEpoch,'third');assert.equal(commands.at(-1).inputSequence,1);assert.equal(client.ready,true);
  });
 });
+
+test('hydraulic acknowledgements free the control request without replacing or advancing the rendered scene',async()=>{
+ const oldWindow=globalThis.window,oldDocument=globalThis.document,rendered=[],requests=[];let sequence=0;
+ globalThis.document={hidden:false};globalThis.window={fetch:async(path,options)=>{if(path==='/api/game/room-session')return {ok:true,json:async()=>({data:{csrfToken:'proof'}})};const body=JSON.parse(options.body);requests.push(body);const base={selfId:'me',sequence:++sequence,inputEpoch:'epoch',serverTime:sequence*100};return {ok:true,json:async()=>({data:body.controlResponse==='ack'?{...base,constructionControlAck:true,entityId:'crane',axes:body.axes,result:{message:'Hydraulic controls updated.'}}:{...base,players:{me:{position:{x:0,y:0,z:0}}},actors:{crane:{id:'crane'}},objects:{}}})};}};
+ const client=connectAuthoritativeRoom({roomId:'site',input:()=>({}),render:state=>rendered.push(state),inputInterval:1000});
+ try{await client.whenReady();const reply=await client.send('construction-controls',{operation:'control',entityId:'crane',axes:{hoist:1}});assert.equal(reply.constructionControlAck,true);assert.equal(client.ready,true);assert.ok(requests.some(r=>r.controlResponse==='ack'&&r.controlEpoch==='epoch'));assert.ok(rendered.every(r=>!r.constructionControlAck&&r.actors.crane));await client.send('interact');assert.ok(rendered.at(-1).actors.crane);}finally{client.stop();globalThis.window=oldWindow;globalThis.document=oldDocument;}
+});

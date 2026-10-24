@@ -5,6 +5,8 @@ import {constructionColliders,constructionBox,constructionBoxContact,constructio
 import {constructionObstacles,constructionMovementBlocked} from './server-construction-collision.mjs';
 
 const error=(message,statusCode=409)=>{throw Object.assign(Error(message),{statusCode});};
+// Allow normal mobile heartbeat jitter; explicit neutral still stops immediately.
+const MANUAL_CONTROL_LEASE_MS=600;
 const near=(a,b,reach)=>Math.hypot(a.x-b.x,a.z-b.z)<=reach;
 const point=(source,fallback)=>Object.fromEntries(Object.entries(fallback).map(([key,value])=>[key,Number.isFinite(Number(source?.[key]))?Number(source[key]):value]));
 const event=(sim,now,message)=>{sim.events.push({id:'construction-'+now+'-'+sim.sequence,type:'construction',message,at:now});sim.construction.message=message;};
@@ -110,7 +112,7 @@ function workReadiness(sim,actor){
 }
 export function constructionTelemetry(sim,actor,now,context={}){
  const state=actor.construction,kind=constructionMachineKind(actor),travel=constructionTravelStatus(actor),attach=kind==='crane'?attachReadiness(sim,actor,context):{allowed:false,reason:'This machine has no lifting hook.'},release=kind==='crane'?releaseReadiness(sim,actor,context):{allowed:false,reason:'This machine has no lifting hook.'},work=workReadiness(sim,actor),hookLoadTonnes=kind==='crane'&&state.load?3.2:0,safeWorkingLoadTonnes=kind==='crane'?Math.min(12,168/Math.max(4,state.trolley||4)):null;
- const axes=now-state.controlAt<350?{...state.axes}:{},cycle=state.workCycle,limits={};for(const [axis,min,max]of [['trolley',4,42],['hoist',.8,74],['boom',.3,1.3],['stick',-1.5,-.2],['bucket',-1.2,1.2],['blade',0,1.2],['bed',0,.95]])limits[axis]={min:state[axis]<=min+.001,max:state[axis]>=max-.001};
+ const axes=now-state.controlAt<MANUAL_CONTROL_LEASE_MS?{...state.axes}:{},cycle=state.workCycle,limits={};for(const [axis,min,max]of [['trolley',4,42],['hoist',.8,74],['boom',.3,1.3],['stick',-1.5,-.2],['bucket',-1.2,1.2],['blade',0,1.2],['bed',0,.95]])limits[axis]={min:state[axis]<=min+.001,max:state[axis]>=max-.001};
  return {cargo:earthCargo(state.cargo),material:state.cargo?.gravel>0?'gravel':state.load>0?'soil':null,earthMoved:state.earthMoved||0,terrainRevision:sim.construction.earthworks?.revision||0,travelAllowed:travel.allowed,travelReason:travel.reason,canAttach:attach.allowed,attachReason:attach.reason,canRelease:release.allowed,canPlaceTower:!!(release.allowed&&release.target),releaseReason:release.reason,canWork:work.allowed,workReason:work.reason,load:kind==='crane'?hookLoadTonnes:state.load||0,loadCapacity:CONSTRUCTION_CAPACITY[kind],loadPercent:kind==='crane'?hookLoadTonnes/(safeWorkingLoadTonnes||1)*100:(state.load||0)/Math.max(1,CONSTRUCTION_CAPACITY[kind])*100,hookLoadTonnes,safeWorkingLoadTonnes,loadMomentPercent:hookLoadTonnes*(state.trolley||0)/168*100,cycleProgress:cycle?clamp((cycle.elapsed||0)/cycle.duration,0,1):0,cyclePhase:cycle?.mode||state.assist||'idle',hydraulicsActive:!!state.working,precision:!!state.precision,blocked:!!state.blocked,blockedPart:state.blocked?.part||null,blockedReason:state.blocked?.reason||'',limits,status:state.blocked?.reason||(cycle?'Hydraulic cycle active':state.assist?'Alignment assistance active':'Hydraulics neutral'),axes};
 }
 function addBeam(sim,index){
@@ -227,7 +229,7 @@ function finishCycleEffects(sim,actor,now,context={}){
  delete state.workCycle;state.working=false;
 }
 function manualEarthworks(sim,actor,before,dt,now,context={}){
- const state=actor.construction,kind=constructionMachineKind(actor),axes=now-state.controlAt<350?state.axes:{};
+ const state=actor.construction,kind=constructionMachineKind(actor),axes=now-state.controlAt<MANUAL_CONTROL_LEASE_MS?state.axes:{};
  if(kind==='excavator'){
   const tip=constructionJointPose(actor).bucketTip,oldTip=constructionJointPose({...actor,construction:before}).bucketTip,surface=earthworksSurfaceAt(sim.construction.earthworks,tip);
   if((axes.bucket||0)<-.02&&surface&&Math.min(tip.y,oldTip.y)<=surface.y+.2&&state.load<CONSTRUCTION_CAPACITY.excavator){const cut={...tip,y:Math.min(tip.y,oldTip.y)},cargo=earthworksTake(sim.construction.earthworks,cut,Math.min(CONSTRUCTION_CAPACITY.excavator-state.load,4*dt),{radius:1.2,cutY:cut.y-.25});updateCargo(state,addCargo(state.cargo,cargo));recordEarthMove(sim,actor,earthCargoVolume(cargo),'dig',now);}
@@ -251,7 +253,7 @@ export function stepConstruction(sim,now,dt,context={}){
   else if(state.assist){const point=state.assist==='target'?sim.construction.tower.target:availableBeams(sim)[0];const source=point?.position||point;
    if(source)candidate=stepCraneAlignment(actor,{...source,y:source.y+CONSTRUCTION_LOAD_OFFSET,yaw:point?.rotation?.y??point?.yaw??0},dt);else candidate={...state,assist:null};
   }else{
-   const axes=now-state.controlAt<350?state.axes:{};
+   const axes=now-state.controlAt<MANUAL_CONTROL_LEASE_MS?state.axes:{};
    const moving=Math.abs(actor.driving?.speed||0)>.15&&constructionMachineKind(actor)!=='bulldozer';
    candidate=stepConstructionHydraulics(actor,moving?{}:axes,dt);if(moving&&Object.values(axes||{}).some(Boolean))candidate.blocked={part:'hydraulics',reason:'Park before operating this machine hydraulic attachment.'};
   }

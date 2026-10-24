@@ -12,6 +12,12 @@ Neon Junction supports both views while exploring and playing the five arcade ga
 
 The shared preference and shortcut guard live in `public/js/game-camera.js`. Runtime-specific cameras keep their own world-space picking and game simulation.
 
+## Double-tap movement
+
+Double-tap a clear ground spot in the game view to move directly there. Mouse users can double-click; touch and pen use two quick taps in the same spot. This works in first person and top down across ordinary worlds, builder test maps, hockey and the Neon Junction park. Hockey moves your controlled skater on the ice; shared worlds and matches confirm the arrival with the server.
+
+Relocation clears held movement so you stop at the selected spot. A single tap keeps its normal action, and dragging to look, pinching, or tapping control buttons does not relocate you. Walls, blocked landings and points outside the playable ground are rejected. Leave a vehicle, seat, ski lift or park ride before relocating. Arcade minigames keep their aiming controls, and VR keeps its headset controls.
+
 ## Headset controls
 
 Native basketball, hockey, the firing range and Neon Junction share `xr-game-controls.js`. Compatible secure-context WebXR browsers expose Enter VR when an immersive headset is available. All runtimes use the XR animation loop; desktop throttling is bypassed in the headset. Head pose remains tracked in first person. Hockey follows the active skater; park games keep the station camera; rides keep their moving seat position while allowing head tracking.

@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {AuthoritativeRooms} from '../authoritative-room.mjs';
+import {SharedRoomStore} from '../shared-room-store.mjs';
+import {UserJsonDatabase} from '../user-json-database.mjs';
+import {factoryCommand,factoryAccountState} from '../server-missile-factory.mjs';
+import {FACTORY_ID,FACTORY_STATIONS,FACTORY_LOCATIONS,FACTORY_CREW} from '../public/js/missile-factory-config.js';
+import {stepWorldResidents,residentCommand} from '../server-world-residents.mjs';
+
+const environment={id:FACTORY_ID,name:'Missile & Rocket Factory',game:'missile-factory',proceduralLand:true,publicDestination:true,spawn:{x:-32,y:.02,z:28},factory:{enabled:true},builderScene:{version:3,mapSize:120,layout:'missile-factory',objects:[],layoutMeta:{locations:FACTORY_LOCATIONS},gameplay:{multiplayer:true,friendlyFire:false,radTox:false}}};
+
+test('factory room uses named resident crew, keeps jobs durable, and omits account balances from public snapshots',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'factory-room-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const database=new UserJsonDatabase(join(directory,'users.json')),wallet='account:factory-member',identity={accountId:'factory-member',username:'Maker',walletId:wallet};
+ await database.transaction(data=>{data.users[wallet]={walletId:wallet,tokens:{MZK:1000},items:[],memory:{},revision:0};return {};});
+ let now=1000000,sequence=0;
+ const runtimeFor=file=>new AuthoritativeRooms({store:new SharedRoomStore(join(directory,file)),now:()=>now,factoryState:(actor,time)=>factoryAccountState(database,actor.walletId,{now:time}),factoryAction:(actor,sim,player,map,command,time)=>factoryCommand(sim,player,map,command,time,{database,walletId:actor.walletId})});
+ const runtime=runtimeFor('rooms.json'),send=(action,fields={})=>{now+=1100;return runtime.command(FACTORY_ID,environment,identity,{action,requestId:'factory-room-'+ ++sequence,...fields});};
+ const joined=await send('join'),self=joined.selfId;
+ assert.equal(joined.radTox,null);assert.equal(joined.players[self].radToxEnabled,false);
+ assert.equal(Object.values(joined.actors).filter(actor=>actor.resident?.factory).length,FACTORY_CREW.length);
+ assert.ok(!Object.values(joined.actors).some(actor=>actor.loot||actor.runtimeMachine||actor.roadFleet));
+ assert.equal(joined.players[self].factory.balance,undefined);
+ assert.deepEqual(joined.factory.stations.map(station=>station.id),FACTORY_STATIONS.map(station=>station.id));
+ await assert.rejects(send('start-rad-tox'),/factory runs production/i);
+ let state=await send('factory-start',{recipeId:'training-missile'});
+ const job=state.players[self].factory.job;
+ assert.equal(job.status,'awaiting');assert.equal(state.result.factory.balance,820);
+ assert.equal(state.players[self].factory.balance,undefined);
+ const observerWallet='account:factory-observer';await database.transaction(data=>{data.users[observerWallet]={walletId:observerWallet,tokens:{MZK:0},items:[],memory:{},revision:0};return {};});
+ const observed=await runtime.command(FACTORY_ID,environment,{accountId:'factory-observer',username:'Observer',walletId:observerWallet},{action:'join',requestId:'factory-observer-join'});
+ assert.ok(observed.events.some(event=>event.action==='factory-start'));
+ assert.ok(observed.events.every(event=>event.factory?.balance===undefined),'shared event history omits the production owner’s wallet balance');
+ await send('map-access',{position:FACTORY_STATIONS.find(station=>station.kind==='fabrication').position});
+ state=await send('factory-work',{jobId:job.id,stationId:'factory-fabrication'});
+ assert.equal(state.players[self].factory.job.status,'processing');
+ const fresh=runtimeFor('fresh-rooms.json');now+=1000;
+ state=await fresh.command(FACTORY_ID,environment,identity,{action:'join',requestId:'factory-room-restored'});
+ assert.equal(state.players[self].factory.job.id,job.id);assert.equal(state.players[self].factory.job.status,'processing');
+ assert.equal((await database.get(wallet)).tokens.MZK,820);
+});
+
+test('factory technicians remember players, offer local shift favors and retain manufacturing routines',()=>{
+ const sim={actors:{},players:{},events:[]},collision={groundAt:(_map,point)=>({...point,y:0}),hasBodyClearance:()=>true,resolve:(_map,_from,to)=>to};
+ stepWorldResidents(sim,environment,100000,.2,{collision});
+ const npc=sim.actors[FACTORY_CREW[0].id],player=sim.players.maker={actorId:'maker',username:'Maker',health:100,lastSeen:100000,position:{...npc.position},movementRevision:0,score:0};
+ let now=100000;const talk=choice=>{now+=2200;player.lastSeen=now;return residentCommand(sim,player,environment,{entityId:npc.id,choice},now,{collision});};
+ assert.equal(npc.resident.context.primarySkill,'manufacturing');
+ talk('question');assert.match(player.npcConversation.conversation.at(-1).text,/Procurement|Dispatch|production/i);
+ talk('resident-memory');assert.ok(npc.resident.memory.some(memory=>memory.subjectId==='maker'));
+ talk('accept');assert.match(player.residentTask.title,/Factory/);
+ const task=player.residentTask;
+ player.position={...task.checkpoints[0]};talk('confirm');
+ player.position={...npc.position};talk('confirm');
+ assert.equal(task.status,'completed');assert.equal(player.score,task.reward);
+ assert.ok(player.residentProgress.reputation>0);
+ assert.equal(sim.actors[FACTORY_CREW[0].id],npc);
+});

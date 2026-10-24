@@ -52,8 +52,9 @@ async def touch_move(page, cdp, dx=0, dy=-.85, duration=1400):
     hit = await stick.evaluate('(stick, point) => {const target=document.elementFromPoint(point.x,point.y);return {hit:!!target&&stick.contains(target),target:target?.outerHTML.slice(0,180),width:innerWidth,height:innerHeight,viewport:{scale:visualViewport?.scale,top:visualViewport?.offsetTop,left:visualViewport?.offsetLeft}};}', {'x': x, 'y': y})
     assert hit['hit'], ('Touch target is covered or outside the viewport.', box, hit)
     target = {'x': x + dx * box['width'] * .4, 'y': y + dy * box['height'] * .4, 'id': 1}
-    await cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x, 'y': y, 'id': 1}]})
-    await cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [target]})
+    # Hold the visible direction without an initial center-to-edge drag.
+    # A floating touch origin used to keep this entire gesture neutral.
+    await cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [target]})
     await page.wait_for_timeout(duration)
     await cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     await page.wait_for_timeout(150)

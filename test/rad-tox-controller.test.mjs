@@ -52,3 +52,13 @@ test('sports controller terminal capture and suspension reset without accidental
  f.send(f.left,'pointerdown');f.send(f.left,'pointermove',{clientX:150});f.frame();f.documentTarget.hidden=true;f.documentTarget.emit('visibilitychange',{type:'visibilitychange'});assert.deepEqual(f.movement,{x:0,y:0});
  f.documentTarget.hidden=false;f.send(f.left,'pointerdown');f.send(f.left,'pointermove',{clientX:150});f.frame();assert.ok(f.movement.x>.5);f.disable();f.frame();assert.deepEqual(f.movement,{x:0,y:0});
 });
+
+test('an off-center sports walking press moves immediately, including a second finger while looking',t=>{
+ const f=controllerFixture(t);f.send(f.left,'pointerdown',{clientX:100,clientY:60});f.frame();assert.ok(f.movement.y<-.5);f.send(f.left,'pointerup');
+ f.send(f.right,'pointerdown',{pointerId:3,clientX:130});f.send(f.left,'pointerdown',{pointerId:4,isPrimary:false,clientX:60,clientY:100});f.frame();assert.ok(f.movement.x<-.5);assert.ok(f.look.x>.1);
+ f.send(null,'pointercancel',{pointerId:4,isPrimary:false});f.frame();assert.deepEqual(f.movement,{x:0,y:0});assert.ok(f.look.x>.1);
+});
+
+test('small sports walking adjustments use a proportional dead zone rather than eight fixed pixels',t=>{
+ const f=controllerFixture(t);f.send(f.left,'pointerdown',{clientX:106,clientY:100});f.frame();assert.ok(f.movement.x>.05);f.send(f.left,'pointerup');assert.deepEqual(f.movement,{x:0,y:0});
+});

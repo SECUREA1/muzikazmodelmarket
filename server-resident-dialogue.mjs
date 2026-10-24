@@ -15,6 +15,7 @@ const statedInterest=text=>{
 };
 const describe=value=>String(value||'').replace(/([a-z])([A-Z])/g,'$1 $2').replaceAll('-',' ').toLowerCase();
 const activityGuidance={
+ manufacturing:'Open Factory to choose a fictional missile or cargo rocket project. Walk to Procurement to spend MZK, then visit the marked production stations in order. Dispatch adds the completed item to your existing Backpack. Park vehicles before operating consoles; daily factory favors earn reputation and room score.',
  basketball:'Join a team or watch from the public sideline. Players aim for the opposite hoop and use the court’s shot, pass and steal controls. The court panel shows the current match and available actions.',
  hockey:'Join a team or watch from the stands. Players skate, pass the puck and shoot at the opposite goal using the hockey controls. Keep the rink and its entrances clear when you are observing.',
  iceHockey:'Join a team or watch from the stands. Players skate, pass the puck and shoot at the opposite goal using the hockey controls. Keep the rink and its entrances clear when you are observing.',

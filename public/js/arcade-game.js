@@ -7,6 +7,7 @@ import {mountSportsRoomBuilding} from './sports-room-building.js';
 import {mountXRGameControls} from './xr-game-controls.js';
 import {legacyArcadeDestination} from './sports-worlds.js';
 import {mountRadToxController} from './rad-tox-controller.js';
+import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js';
 import {createArcadeMatch} from './arcade-match.js';
 import {LocalArcadeMotion,createArcadeInputStream} from './arcade-local-motion.js';
 import {resolveArcadeBasketballAction} from './arcade-basketball-actions.js';
@@ -15,7 +16,7 @@ import {ensurePlayAccess} from './play-access.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey,gameCameraPresentation,normalizeGameCameraMode} from './game-camera.js';
 import {createArcadePark,animateArcadePark} from './arcade-park.js';
-import {createArcadeWalker,lookArcadeWalker,stepArcadeWalker,nearestArcadeInteraction} from './arcade-navigation.js';
+import {createArcadeWalker,lookArcadeWalker,stepArcadeWalker,relocateArcadeWalker,nearestArcadeInteraction} from './arcade-navigation.js';
 import {createArcadeGamePresentation} from './arcade-3d-games.js';
 import {applySportsSurfaces} from './sports-surfaces.js';
 import {createArcadeClock,advanceArcadeClock,arcadePhysicsSteps,arcadePointer,basketballPosition,basketballRelease,arcadeAnimationSpeed} from './arcade-runtime.js';
@@ -101,17 +102,18 @@ collectFurniture(park.root);if(builderObjects)collectFurniture(builderObjects.ro
 const ground=park.parts.ground;if(ground?.visible){const box=new T.Box3().setFromObject(ground);bounds.minX=box.min.x+.4;bounds.maxX=box.max.x-.4;bounds.minZ=box.min.z+.4;bounds.maxZ=box.max.z-.4;}
 const visitorMarker=new T.Mesh(new T.RingGeometry(.27,.37,24),new T.MeshBasicMaterial({color:'#dcfa70',side:T.DoubleSide}));visitorMarker.name='ARCADE_VISITOR_MARKER';visitorMarker.rotation.x=-Math.PI/2;visitorMarker.visible=false;scene.add(visitorMarker);
 const groundProbe=new T.Vector3();
-function updateWalkerGround(){
+function walkerGroundAt(x,z){
  let height=.08;
- for(const surface of walkSurfaces){groundProbe.set(walker.x,surface.height,walker.z).applyMatrix4(surface.inverse);if(groundProbe.x>=surface.bounds.min.x&&groundProbe.x<=surface.bounds.max.x&&groundProbe.z>=surface.bounds.min.z&&groundProbe.z<=surface.bounds.max.z)height=Math.max(height,surface.height+.02);}
- walker.ground=height;
+ for(const surface of walkSurfaces){groundProbe.set(x,surface.height,z).applyMatrix4(surface.inverse);if(groundProbe.x>=surface.bounds.min.x&&groundProbe.x<=surface.bounds.max.x&&groundProbe.z>=surface.bounds.min.z&&groundProbe.z<=surface.bounds.max.z)height=Math.max(height,surface.height+.02);}
+ return height;
 }
+function updateWalkerGround(){walker.ground=walkerGroundAt(walker.x,walker.z);}
 function syncCameraControls(){
  const view=gameCameraPresentation(cameraMode),button=$('#camera-toggle');
  button.innerHTML=sportIcon(view.icon);button.title=view.title;button.setAttribute('aria-label',view.title);button.dataset.gameCameraMode=view.mode;
  button.disabled=ride!==null;if(ride!==null){button.title='Camera locked during ride';button.setAttribute('aria-label',button.title);}
  $('#explore').setAttribute('aria-pressed',String(cameraMode==='first-person'));$('#overview').setAttribute('aria-pressed',String(cameraMode==='top-down'));
- $('#walk-help').textContent=cameraMode!=='first-person'?'WASD / arrows to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Shift to run · V to change view';
+ $('#walk-help').textContent=cameraMode!=='first-person'?'WASD / arrows to move · Double tap ground to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Double tap ground to move · Shift to run · V to change view';
 }
 function setExploration(mode){
  explorationMode=mode;drag=false;walkKeys.clear();touchKeys.clear();
@@ -164,7 +166,7 @@ addEventListener('keydown',e=>{
  if(e.key==='Escape'&&game!==null){e.preventDefault();closeGame();return;}
  if(game!==null||ride!==null)return;
  if(e.code==='KeyE'||e.code==='Enter'&&!e.target.matches('button,a')){e.preventDefault();if(!e.repeat)interactNearby();return;}
- if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();if(!e.repeat||walkKeys.has(e.code))walkKeys.add(e.code);}
+ if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();if(e.repeat&&!walkKeys.has(e.code))return;walkKeys.add(e.code);}
 });
 addEventListener('keyup',e=>walkKeys.delete(e.code));
 for(const button of document.querySelectorAll('[data-walk]')){
@@ -184,6 +186,27 @@ renderer.domElement.onpointerup=e=>{
  }
 };
 renderer.domElement.onpointercancel=()=>{drag=false;};
+let groundDoubleTapAt=-Infinity;
+const groundTravelRay=new T.Raycaster();
+bindGroundDoubleTap(renderer.domElement,{captureTarget:document,allowNonPrimary:true,
+ enabled:()=>ride===null&&game===null&&!renderer.xr.isPresenting&&!roomBuilding.active&&!document.querySelector('dialog[open]'),
+ onDoubleTap:event=>{
+  event.stopImmediatePropagation();groundDoubleTapAt=event.timeStamp;
+  drag=false;walkKeys.clear();touchKeys.clear();controllerWalkKeys.clear();arcadeController.reset();
+  scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+  const meshes=[];for(const root of [park.root,builderObjects?.root,scene.getObjectByName('ROOM_BUILDING_PIECES')])root?.traverse(node=>{if(node.isMesh&&visibleObject(node))meshes.push(node);});
+  const point=groundPointFromPointer({ray:groundTravelRay,camera,rect:renderer.domElement.getBoundingClientRect(),event,meshes});
+  if(!point||Math.abs(point.y-walkerGroundAt(point.x,point.z))>.15){toast('Choose a clear ground spot to move.');return;}
+  const previous={x:walker.x,y:walker.ground,z:walker.z};
+  point.y=walkerGroundAt(point.x,point.z);
+  const placedColliders=roomBuilding.boxes.filter(box=>box.max.y>point.y+.02&&box.min.y<point.y+walker.eyeHeight).map(box=>({minX:box.min.x,maxX:box.max.x,minZ:box.min.z,maxZ:box.max.z}));
+  if(!relocateArcadeWalker(walker,point,{bounds,colliders:[...collisionBoxes,...placedColliders]})){toast('Choose a clear ground spot with room to stand.');return;}
+  camera.position.add(new T.Vector3(walker.x-previous.x,walker.ground-previous.y,walker.z-previous.z));camera.updateMatrixWorld(true);
+  visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
+  toast('Moved to the selected ground spot.');
+ }
+});
+for(const type of ['click','dblclick'])renderer.domElement.addEventListener(type,event=>{if(event.timeStamp-groundDoubleTapAt<400){event.preventDefault();event.stopImmediatePropagation();}},true);
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null&&game===null&&explorationMode==='overview')distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
 function resizeArcadeViewport(){const width=Math.max(1,$('#world').clientWidth),height=Math.max(1,$('#world').clientHeight);camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height);}
 addEventListener('resize',resizeArcadeViewport);new ResizeObserver(resizeArcadeViewport).observe($('#world'));

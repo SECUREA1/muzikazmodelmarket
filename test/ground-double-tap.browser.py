@@ -29,7 +29,7 @@ async def check_world(context, base, world):
             await page.keyboard.press('v')
             await page.wait_for_timeout(100)
         assert await page.evaluate('MuzikazHouseExplorer.snapshot().cameraMode') == 'top-down'
-        for kind in ['mouse', 'touch']:
+        for kind in ['mouse', 'touch', 'held-touch']:
             choices = await canvas.evaluate('''canvas => {
                 const r=canvas.getBoundingClientRect();
                 return [[.54,.55],[.46,.55],[.54,.45],[.46,.45]].map(([a,b])=>({x:r.left+r.width*a,y:r.top+r.height*b})).filter(p=>document.elementFromPoint(p.x,p.y)===canvas);
@@ -54,11 +54,27 @@ async def check_world(context, base, world):
                 before_double_shots = len(shots)
                 if kind == 'mouse':
                     await page.mouse.dblclick(point['x'], point['y'], delay=60)
+                elif kind == 'touch':
+                    await tap(point['x'], point['y'])
+                    await tap(point['x'], point['y'])
                 else:
-                    await tap(point['x'], point['y'])
-                    await tap(point['x'], point['y'])
+                    cdp = await context.new_cdp_session(page)
+                    box = await page.locator('[data-thumbstick="left"] .thumbstick-base').bounding_box()
+                    finger = {'id': 31, 'x': box['x'] + box['width'] / 2, 'y': box['y'] + box['height'] / 2}
+                    try:
+                        await cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [finger]})
+                        finger['y'] -= box['height'] * .3
+                        await cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [finger]})
+                        second = {'id': 32, 'x': point['x'], 'y': point['y']}
+                        for _ in range(2):
+                            await cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [finger, second]})
+                            await cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': [second]})
+                    finally:
+                        await cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                        await cdp.detach()
                 await page.wait_for_timeout(500)
-                assert len(shots) - before_double_shots <= 1, 'The second tap leaked into tool firing.'
+                # Pressing the left stick has its own normal tool action.
+                assert len(shots) - before_double_shots <= (2 if kind == 'held-touch' else 1), 'The second tap leaked into tool firing.'
                 if len(commands) == before:
                     diagnostic = await page.evaluate('({events:groundEvents.slice(-12),status:document.querySelector("#house-status")?.textContent,state:MuzikazHouseExplorer.snapshot()})')
                     print(world, kind, 'ground candidate not accepted', diagnostic, errors, flush=True)

@@ -1,5 +1,6 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
+import {normalizeCatalogModel} from '../public/js/builder-catalog.js';
 
 const root = resolve(import.meta.dirname, '..');
 const publicRoot = resolve(root, 'public');
@@ -68,7 +69,28 @@ const warnings = [];
 for (const manifest of manifests) {
   const json = JSON.parse(await readFile(resolve(root, manifest), 'utf8'));
   for (const raw of (Array.isArray(json) ? json : json.assets || json.models || [])) {
-    if (raw.buildAssetId) continue; // Already registered by the native procedural Builder Pack.
+    if (raw.visibility === 'private' || raw.status === 'inactive') continue;
+    if (raw.buildAssetId) {
+      // Native models are real reusable assets too. Preserve their supported
+      // builder identity and functional defaults instead of inventing a GLB.
+      const thumb = raw.thumbnailUrl || raw.thumbnail || '';
+      const normalized = normalizeCatalogModel(raw, 0);
+      const settings = normalized?.function_data || raw.function_data || raw.functionalSettings || {};
+      const item = {
+        ...metadata(raw, manifest, '', thumb, false), buildAssetId: raw.buildAssetId,
+        builderCategory: normalized?.category || raw.builderCategory || 'props', category: normalized?.category || raw.builderCategory || 'props',
+        assetType: normalized?.type || 'prop', basketballTeam: normalized?.basketballTeam || null,
+        format: 'procedural-3d', native: true, dimensions: raw.dimensions || null,
+        priceMzk: raw.priceMzk, description: raw.description || '',
+        behavior: normalized?.behavior || settings.behavior || raw.behavior || 'decor', function_data: settings,
+        collision: {enabled: true, shape: normalized?.type === 'terrain' ? 'mesh' : 'bounds'},
+        ...compatibility(normalized?.type || 'prop'),
+        animations: raw.animation_data || [],
+        interactions: settings.factoryStation ? ['place', 'interact', 'craft', 'configure'] : ['place', 'interact', 'configure']
+      };
+      records.set(item.assetId, item);
+      continue;
+    }
     if (manifest.endsWith('toolkit-assets.json') && /\/builder-pack\/|\/backpack\//i.test(raw.thumbnailUrl || '')) continue; // Artwork for an asset already represented by its native manifest.
     const path = raw.modelUrl || raw.modelPath || '';
     const thumb = raw.thumbnailUrl || raw.thumbnail || '';

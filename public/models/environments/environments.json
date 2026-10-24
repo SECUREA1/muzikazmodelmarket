@@ -55950,5 +55950,1308 @@
       }
     },
     "playUrl": "model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "muzikaz-missile-factory",
+    "name": "Atlas Missile & Rocket Factory",
+    "label": "MZK crafting · machines · crew · freight jobs",
+    "description": "Build detailed missile and cargo rocket game items in a working industrial factory. Spend MZK on an order, operate component fabrication, robotic assembly and quality systems, ask the four AI crew members for assistance, then use the existing freight truck to haul your creation from loading to dispatch. Completed models are saved in your Backpack. Explore the warehouse, production hall and vehicle yard with shared server progress, local maps, quests, jobs and existing machine controls.",
+    "category": "Factory & engineering",
+    "game": "missile-factory",
+    "mapColor": "#ef8b45",
+    "mapTheme": "industrial",
+    "indoor": false,
+    "outdoor": true,
+    "worldId": "skyline-deck",
+    "factory": {
+      "enabled": true,
+      "currency": "MZK",
+      "width": 110,
+      "depth": 110,
+      "stations": [
+        {
+          "id": "factory-procurement",
+          "name": "Procurement & jobs",
+          "kind": "procurement",
+          "position": {
+            "x": -32,
+            "y": 0.02,
+            "z": 28
+          },
+          "equipmentPosition": {
+            "x": -32,
+            "y": 0.02,
+            "z": 24.5
+          },
+          "interactionDistance": 6,
+          "description": "Spend MZK on a production order. Meet the crew and choose a factory job.",
+          "prompt": "Open Procurement & jobs · E / Use"
+        },
+        {
+          "id": "factory-fabrication",
+          "name": "Component fabrication",
+          "kind": "fabrication",
+          "position": {
+            "x": -30,
+            "y": 0.02,
+            "z": 0
+          },
+          "equipmentPosition": {
+            "x": -30,
+            "y": 0.02,
+            "z": -3.5
+          },
+          "interactionDistance": 6,
+          "description": "Operate the press and machining cell to create your game components.",
+          "prompt": "Open Component fabrication · E / Use"
+        },
+        {
+          "id": "factory-assembly",
+          "name": "Rocket assembly",
+          "kind": "assembly",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 0
+          },
+          "equipmentPosition": {
+            "x": 0,
+            "y": 0.02,
+            "z": -3.5
+          },
+          "interactionDistance": 6,
+          "description": "Join the crafted components in the interactive assembly cradle.",
+          "prompt": "Open Rocket assembly · E / Use"
+        },
+        {
+          "id": "factory-calibration",
+          "name": "Quality & systems test",
+          "kind": "calibration",
+          "position": {
+            "x": 27,
+            "y": 0.02,
+            "z": 0
+          },
+          "equipmentPosition": {
+            "x": 27,
+            "y": 0.02,
+            "z": -3.5
+          },
+          "interactionDistance": 6,
+          "description": "Run the fictional systems check before releasing the finished model.",
+          "prompt": "Open Quality & systems test · E / Use"
+        },
+        {
+          "id": "factory-loading",
+          "name": "Freight loading bay",
+          "kind": "loading",
+          "position": {
+            "x": 40,
+            "y": 0.02,
+            "z": -20
+          },
+          "equipmentPosition": {
+            "x": 40,
+            "y": 0.02,
+            "z": -23.5
+          },
+          "interactionDistance": 6,
+          "description": "Drive the factory dump truck here to load your finished model.",
+          "prompt": "Open Freight loading bay · E / Use"
+        },
+        {
+          "id": "factory-dispatch",
+          "name": "Dispatch & collection",
+          "kind": "dispatch",
+          "position": {
+            "x": 30,
+            "y": 0.02,
+            "z": 28
+          },
+          "equipmentPosition": {
+            "x": 30,
+            "y": 0.02,
+            "z": 24.5
+          },
+          "interactionDistance": 6,
+          "description": "Deliver the loaded truck, then exit and collect your model in Backpack.",
+          "prompt": "Open Dispatch & collection · E / Use"
+        }
+      ],
+      "recipes": [
+        {
+          "id": "training-missile",
+          "name": "Aster Training Missile",
+          "costMzk": 180,
+          "buildAssetId": "factory-training-missile",
+          "description": "Create a reusable inert training model with an articulated display stand.",
+          "steps": [
+            {
+              "stationId": "factory-fabrication",
+              "name": "Fabricate model components",
+              "durationMs": 7000
+            },
+            {
+              "stationId": "factory-assembly",
+              "name": "Assemble training model",
+              "durationMs": 9000
+            },
+            {
+              "stationId": "factory-calibration",
+              "name": "Run training systems check",
+              "durationMs": 6000
+            }
+          ]
+        },
+        {
+          "id": "cargo-rocket",
+          "name": "Orbit Cargo Rocket",
+          "costMzk": 320,
+          "buildAssetId": "factory-cargo-rocket",
+          "description": "Build a detailed cargo rocket collectible with a service cradle and animated display.",
+          "steps": [
+            {
+              "stationId": "factory-fabrication",
+              "name": "Fabricate cargo modules",
+              "durationMs": 9000
+            },
+            {
+              "stationId": "factory-assembly",
+              "name": "Assemble cargo rocket",
+              "durationMs": 12000
+            },
+            {
+              "stationId": "factory-calibration",
+              "name": "Run cargo systems check",
+              "durationMs": 8000
+            }
+          ]
+        }
+      ],
+      "crew": [
+        {
+          "id": "factory-foreman-mara",
+          "name": "Mara Voss",
+          "role": "Production foreman",
+          "home": {
+            "x": -26,
+            "y": 0.02,
+            "z": 29
+          },
+          "position": {
+            "x": -26,
+            "y": 0.02,
+            "z": 29
+          },
+          "color": "#e9b04b",
+          "skin": "#ad7659",
+          "activity": "working",
+          "greeting": "Take a production order, operate the three cells, then drive the truck from loading to dispatch. Your finished model goes to Backpack."
+        },
+        {
+          "id": "factory-machinist-dex",
+          "name": "Dex Okafor",
+          "role": "Fabrication machinist",
+          "home": {
+            "x": -25,
+            "y": 0.02,
+            "z": -5
+          },
+          "position": {
+            "x": -25,
+            "y": 0.02,
+            "z": -5
+          },
+          "color": "#5ca9b3",
+          "skin": "#805238",
+          "activity": "working",
+          "greeting": "I can assist your next cycle. You still choose each station and supervise the work."
+        },
+        {
+          "id": "factory-tech-iona",
+          "name": "Iona Park",
+          "role": "Systems test technician",
+          "home": {
+            "x": 24,
+            "y": 0.02,
+            "z": -5
+          },
+          "position": {
+            "x": 24,
+            "y": 0.02,
+            "z": -5
+          },
+          "color": "#a98bd3",
+          "skin": "#d8aa85",
+          "activity": "working",
+          "greeting": "Every model passes our game systems check before freight loading."
+        },
+        {
+          "id": "factory-logistics-sol",
+          "name": "Sol Reyes",
+          "role": "Freight dispatcher",
+          "home": {
+            "x": 22,
+            "y": 0.02,
+            "z": 34
+          },
+          "position": {
+            "x": 22,
+            "y": 0.02,
+            "z": 34
+          },
+          "color": "#85b26b",
+          "skin": "#bc8c68",
+          "activity": "walking",
+          "greeting": "Load at the north freight bay, follow the marked haul lane, and deliver here in the same truck."
+        }
+      ]
+    },
+    "construction": {
+      "enabled": true,
+      "tower": {
+        "x": -65,
+        "z": -38,
+        "width": 6,
+        "depth": 6,
+        "baseY": 0,
+        "floorHeight": 4,
+        "maxFloors": 3
+      },
+      "supply": {
+        "x": -65,
+        "y": 0.8,
+        "z": 10
+      },
+      "excavation": {
+        "x": 65,
+        "z": 10,
+        "width": 16,
+        "depth": 16,
+        "radius": 8,
+        "maxDepth": 4
+      },
+      "stockpile": {
+        "x": 65,
+        "z": 58,
+        "width": 16,
+        "depth": 16
+      },
+      "yard": {
+        "minX": -76,
+        "maxX": 76,
+        "minZ": -70,
+        "maxZ": 70
+      },
+      "earthworks": {
+        "cellSize": 2,
+        "patches": []
+      },
+      "crew": {
+        "autoStart": false,
+        "muster": {
+          "x": -64,
+          "y": 0,
+          "z": 45
+        },
+        "jobBoard": {
+          "x": -64,
+          "y": 0,
+          "z": 40
+        },
+        "staging": {
+          "x": -62,
+          "y": 0,
+          "z": 52
+        },
+        "loading": {
+          "x": 65,
+          "y": 0,
+          "z": 20
+        },
+        "dump": {
+          "x": 65,
+          "y": 0,
+          "z": 58
+        },
+        "grade": {
+          "x": 65,
+          "y": 0,
+          "z": 58
+        }
+      }
+    },
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-24T01:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 56,
+      "rotationY": 0
+    },
+    "streets": [
+      {
+        "id": "factory-south-road",
+        "name": "Atlas Freight Boulevard",
+        "from": {
+          "x": -80,
+          "z": 78
+        },
+        "to": {
+          "x": 80,
+          "z": 78
+        },
+        "width": 10
+      },
+      {
+        "id": "factory-west-road",
+        "name": "Foundry Service Road",
+        "from": {
+          "x": -82,
+          "z": -80
+        },
+        "to": {
+          "x": -82,
+          "z": 80
+        },
+        "width": 8
+      },
+      {
+        "id": "factory-east-road",
+        "name": "Orbital Service Road",
+        "from": {
+          "x": 82,
+          "z": -80
+        },
+        "to": {
+          "x": 82,
+          "z": 80
+        },
+        "width": 8
+      }
+    ],
+    "builderScene": {
+      "version": 3,
+      "layout": "missile-factory",
+      "mapSize": 160,
+      "objects": [
+        {
+          "id": "factory-procurement",
+          "name": "Procurement & jobs",
+          "modelId": "factory-procurement-terminal",
+          "asset": {
+            "buildAssetId": "factory-procurement-terminal"
+          },
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 24.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": true,
+            "factoryStationId": "factory-procurement",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Procurement & jobs · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Spend MZK on a production order. Meet the crew and choose a factory job."
+          }
+        },
+        {
+          "id": "factory-fabrication",
+          "name": "Component fabrication",
+          "modelId": "factory-fabricator",
+          "asset": {
+            "buildAssetId": "factory-fabricator"
+          },
+          "position": {
+            "x": -30,
+            "y": 0,
+            "z": -3.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": true,
+            "factoryStationId": "factory-fabrication",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Component fabrication · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Operate the press and machining cell to create your game components."
+          }
+        },
+        {
+          "id": "factory-assembly",
+          "name": "Rocket assembly",
+          "modelId": "factory-assembly-jig",
+          "asset": {
+            "buildAssetId": "factory-assembly-jig"
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -3.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": true,
+            "factoryStationId": "factory-assembly",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Rocket assembly · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Join the crafted components in the interactive assembly cradle."
+          }
+        },
+        {
+          "id": "factory-calibration",
+          "name": "Quality & systems test",
+          "modelId": "factory-calibration-rig",
+          "asset": {
+            "buildAssetId": "factory-calibration-rig"
+          },
+          "position": {
+            "x": 27,
+            "y": 0,
+            "z": -3.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": true,
+            "factoryStationId": "factory-calibration",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Quality & systems test · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Run the fictional systems check before releasing the finished model."
+          }
+        },
+        {
+          "id": "factory-dispatch",
+          "name": "Dispatch & collection",
+          "modelId": "factory-dispatch-terminal",
+          "asset": {
+            "buildAssetId": "factory-dispatch-terminal"
+          },
+          "position": {
+            "x": 30,
+            "y": 0,
+            "z": 24.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": true,
+            "factoryStationId": "factory-dispatch",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Dispatch & collection · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Deliver the loaded truck, then exit and collect your model in Backpack."
+          }
+        },
+        {
+          "id": "factory-freight-truck",
+          "modelId": "site-dumptruck",
+          "asset": {
+            "buildAssetId": "site-dumptruck"
+          },
+          "name": "HT-40 Factory Freight Truck",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Operate HT-40 Factory Freight Truck · E / Use",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "factory-yard-crane",
+          "modelId": "tower-crane",
+          "asset": {
+            "buildAssetId": "tower-crane"
+          },
+          "name": "Atlas Factory Tower Crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -64,
+            "y": 0,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Operate Atlas Factory Tower Crane · E / Use",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "factory-yard-excavator",
+          "modelId": "site-excavator",
+          "asset": {
+            "buildAssetId": "site-excavator"
+          },
+          "name": "EX-300 Materials Excavator",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 63,
+            "y": 0,
+            "z": 25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Operate EX-300 Materials Excavator · E / Use",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "factory-yard-dozer",
+          "modelId": "site-bulldozer",
+          "asset": {
+            "buildAssetId": "site-bulldozer"
+          },
+          "name": "D9 Yard Bulldozer",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 63,
+            "y": 0,
+            "z": 47
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Operate D9 Yard Bulldozer · E / Use",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "factory-conveyor--16",
+          "modelId": "factory-conveyor",
+          "asset": {
+            "buildAssetId": "factory-conveyor"
+          },
+          "name": "Component roller conveyor",
+          "position": {
+            "x": -16,
+            "y": 0,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-conveyor-16",
+          "modelId": "factory-conveyor",
+          "asset": {
+            "buildAssetId": "factory-conveyor"
+          },
+          "name": "Component roller conveyor",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        }
+      ],
+      "streets": [
+        {
+          "id": "factory-south-road",
+          "name": "Atlas Freight Boulevard",
+          "from": {
+            "x": -80,
+            "z": 78
+          },
+          "to": {
+            "x": 80,
+            "z": 78
+          },
+          "width": 10
+        },
+        {
+          "id": "factory-west-road",
+          "name": "Foundry Service Road",
+          "from": {
+            "x": -82,
+            "z": -80
+          },
+          "to": {
+            "x": -82,
+            "z": 80
+          },
+          "width": 8
+        },
+        {
+          "id": "factory-east-road",
+          "name": "Orbital Service Road",
+          "from": {
+            "x": 82,
+            "z": -80
+          },
+          "to": {
+            "x": 82,
+            "z": 80
+          },
+          "width": 8
+        }
+      ],
+      "layoutMeta": {
+        "color": 2702404,
+        "factory": {
+          "enabled": true,
+          "currency": "MZK",
+          "width": 110,
+          "depth": 110,
+          "stations": [
+            {
+              "id": "factory-procurement",
+              "name": "Procurement & jobs",
+              "kind": "procurement",
+              "position": {
+                "x": -32,
+                "y": 0.02,
+                "z": 28
+              },
+              "equipmentPosition": {
+                "x": -32,
+                "y": 0.02,
+                "z": 24.5
+              },
+              "interactionDistance": 6,
+              "description": "Spend MZK on a production order. Meet the crew and choose a factory job.",
+              "prompt": "Open Procurement & jobs · E / Use"
+            },
+            {
+              "id": "factory-fabrication",
+              "name": "Component fabrication",
+              "kind": "fabrication",
+              "position": {
+                "x": -30,
+                "y": 0.02,
+                "z": 0
+              },
+              "equipmentPosition": {
+                "x": -30,
+                "y": 0.02,
+                "z": -3.5
+              },
+              "interactionDistance": 6,
+              "description": "Operate the press and machining cell to create your game components.",
+              "prompt": "Open Component fabrication · E / Use"
+            },
+            {
+              "id": "factory-assembly",
+              "name": "Rocket assembly",
+              "kind": "assembly",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "equipmentPosition": {
+                "x": 0,
+                "y": 0.02,
+                "z": -3.5
+              },
+              "interactionDistance": 6,
+              "description": "Join the crafted components in the interactive assembly cradle.",
+              "prompt": "Open Rocket assembly · E / Use"
+            },
+            {
+              "id": "factory-calibration",
+              "name": "Quality & systems test",
+              "kind": "calibration",
+              "position": {
+                "x": 27,
+                "y": 0.02,
+                "z": 0
+              },
+              "equipmentPosition": {
+                "x": 27,
+                "y": 0.02,
+                "z": -3.5
+              },
+              "interactionDistance": 6,
+              "description": "Run the fictional systems check before releasing the finished model.",
+              "prompt": "Open Quality & systems test · E / Use"
+            },
+            {
+              "id": "factory-loading",
+              "name": "Freight loading bay",
+              "kind": "loading",
+              "position": {
+                "x": 40,
+                "y": 0.02,
+                "z": -20
+              },
+              "equipmentPosition": {
+                "x": 40,
+                "y": 0.02,
+                "z": -23.5
+              },
+              "interactionDistance": 6,
+              "description": "Drive the factory dump truck here to load your finished model.",
+              "prompt": "Open Freight loading bay · E / Use"
+            },
+            {
+              "id": "factory-dispatch",
+              "name": "Dispatch & collection",
+              "kind": "dispatch",
+              "position": {
+                "x": 30,
+                "y": 0.02,
+                "z": 28
+              },
+              "equipmentPosition": {
+                "x": 30,
+                "y": 0.02,
+                "z": 24.5
+              },
+              "interactionDistance": 6,
+              "description": "Deliver the loaded truck, then exit and collect your model in Backpack.",
+              "prompt": "Open Dispatch & collection · E / Use"
+            }
+          ],
+          "recipes": [
+            {
+              "id": "training-missile",
+              "name": "Aster Training Missile",
+              "costMzk": 180,
+              "buildAssetId": "factory-training-missile",
+              "description": "Create a reusable inert training model with an articulated display stand.",
+              "steps": [
+                {
+                  "stationId": "factory-fabrication",
+                  "name": "Fabricate model components",
+                  "durationMs": 7000
+                },
+                {
+                  "stationId": "factory-assembly",
+                  "name": "Assemble training model",
+                  "durationMs": 9000
+                },
+                {
+                  "stationId": "factory-calibration",
+                  "name": "Run training systems check",
+                  "durationMs": 6000
+                }
+              ]
+            },
+            {
+              "id": "cargo-rocket",
+              "name": "Orbit Cargo Rocket",
+              "costMzk": 320,
+              "buildAssetId": "factory-cargo-rocket",
+              "description": "Build a detailed cargo rocket collectible with a service cradle and animated display.",
+              "steps": [
+                {
+                  "stationId": "factory-fabrication",
+                  "name": "Fabricate cargo modules",
+                  "durationMs": 9000
+                },
+                {
+                  "stationId": "factory-assembly",
+                  "name": "Assemble cargo rocket",
+                  "durationMs": 12000
+                },
+                {
+                  "stationId": "factory-calibration",
+                  "name": "Run cargo systems check",
+                  "durationMs": 8000
+                }
+              ]
+            }
+          ],
+          "crew": [
+            {
+              "id": "factory-foreman-mara",
+              "name": "Mara Voss",
+              "role": "Production foreman",
+              "home": {
+                "x": -26,
+                "y": 0.02,
+                "z": 29
+              },
+              "position": {
+                "x": -26,
+                "y": 0.02,
+                "z": 29
+              },
+              "color": "#e9b04b",
+              "skin": "#ad7659",
+              "activity": "working",
+              "greeting": "Take a production order, operate the three cells, then drive the truck from loading to dispatch. Your finished model goes to Backpack."
+            },
+            {
+              "id": "factory-machinist-dex",
+              "name": "Dex Okafor",
+              "role": "Fabrication machinist",
+              "home": {
+                "x": -25,
+                "y": 0.02,
+                "z": -5
+              },
+              "position": {
+                "x": -25,
+                "y": 0.02,
+                "z": -5
+              },
+              "color": "#5ca9b3",
+              "skin": "#805238",
+              "activity": "working",
+              "greeting": "I can assist your next cycle. You still choose each station and supervise the work."
+            },
+            {
+              "id": "factory-tech-iona",
+              "name": "Iona Park",
+              "role": "Systems test technician",
+              "home": {
+                "x": 24,
+                "y": 0.02,
+                "z": -5
+              },
+              "position": {
+                "x": 24,
+                "y": 0.02,
+                "z": -5
+              },
+              "color": "#a98bd3",
+              "skin": "#d8aa85",
+              "activity": "working",
+              "greeting": "Every model passes our game systems check before freight loading."
+            },
+            {
+              "id": "factory-logistics-sol",
+              "name": "Sol Reyes",
+              "role": "Freight dispatcher",
+              "home": {
+                "x": 22,
+                "y": 0.02,
+                "z": 34
+              },
+              "position": {
+                "x": 22,
+                "y": 0.02,
+                "z": 34
+              },
+              "color": "#85b26b",
+              "skin": "#bc8c68",
+              "activity": "walking",
+              "greeting": "Load at the north freight bay, follow the marked haul lane, and deliver here in the same truck."
+            }
+          ]
+        },
+        "construction": {
+          "enabled": true,
+          "tower": {
+            "x": -65,
+            "z": -38,
+            "width": 6,
+            "depth": 6,
+            "baseY": 0,
+            "floorHeight": 4,
+            "maxFloors": 3
+          },
+          "supply": {
+            "x": -65,
+            "y": 0.8,
+            "z": 10
+          },
+          "excavation": {
+            "x": 65,
+            "z": 10,
+            "width": 16,
+            "depth": 16,
+            "radius": 8,
+            "maxDepth": 4
+          },
+          "stockpile": {
+            "x": 65,
+            "z": 58,
+            "width": 16,
+            "depth": 16
+          },
+          "yard": {
+            "minX": -76,
+            "maxX": 76,
+            "minZ": -70,
+            "maxZ": 70
+          },
+          "earthworks": {
+            "cellSize": 2,
+            "patches": []
+          },
+          "crew": {
+            "autoStart": false,
+            "muster": {
+              "x": -64,
+              "y": 0,
+              "z": 45
+            },
+            "jobBoard": {
+              "x": -64,
+              "y": 0,
+              "z": 40
+            },
+            "staging": {
+              "x": -62,
+              "y": 0,
+              "z": 52
+            },
+            "loading": {
+              "x": 65,
+              "y": 0,
+              "z": 20
+            },
+            "dump": {
+              "x": 65,
+              "y": 0,
+              "z": 58
+            },
+            "grade": {
+              "x": 65,
+              "y": 0,
+              "z": 58
+            }
+          }
+        },
+        "locations": [
+          {
+            "id": "factory-procurement",
+            "name": "Procurement & jobs",
+            "x": -32,
+            "z": 28,
+            "width": 14,
+            "depth": 12,
+            "description": "Spend MZK on a production order. Meet the crew and choose a factory job."
+          },
+          {
+            "id": "factory-fabrication",
+            "name": "Component fabrication",
+            "x": -30,
+            "z": 0,
+            "width": 14,
+            "depth": 12,
+            "description": "Operate the press and machining cell to create your game components."
+          },
+          {
+            "id": "factory-assembly",
+            "name": "Rocket assembly",
+            "x": 0,
+            "z": 0,
+            "width": 14,
+            "depth": 12,
+            "description": "Join the crafted components in the interactive assembly cradle."
+          },
+          {
+            "id": "factory-calibration",
+            "name": "Quality & systems test",
+            "x": 27,
+            "z": 0,
+            "width": 14,
+            "depth": 12,
+            "description": "Run the fictional systems check before releasing the finished model."
+          },
+          {
+            "id": "factory-loading",
+            "name": "Freight loading bay",
+            "x": 40,
+            "z": -20,
+            "width": 16,
+            "depth": 12,
+            "description": "Drive the factory dump truck here to load your finished model."
+          },
+          {
+            "id": "factory-dispatch",
+            "name": "Dispatch & collection",
+            "x": 30,
+            "z": 28,
+            "width": 14,
+            "depth": 12,
+            "description": "Deliver the loaded truck, then exit and collect your model in Backpack."
+          },
+          {
+            "id": "factory-haul-lane",
+            "name": "Freight haul lane",
+            "x": 44,
+            "z": 8,
+            "width": 16,
+            "depth": 64,
+            "description": "Keep the truck route clear between loading and dispatch."
+          },
+          {
+            "id": "factory-steel-yard",
+            "name": "Crane & steel yard",
+            "x": -65,
+            "z": 12,
+            "width": 20,
+            "depth": 16,
+            "description": "Use the existing tower crane to move steel and assemble the side-yard frame."
+          },
+          {
+            "id": "factory-material-yard",
+            "name": "Materials excavation yard",
+            "x": 65,
+            "z": 10,
+            "width": 16,
+            "depth": 16,
+            "description": "Operate the excavator with finite terrain and haul materials to the southern stockpile."
+          },
+          {
+            "id": "factory-spoil-yard",
+            "name": "Yard grading & stockpile",
+            "x": 65,
+            "z": 58,
+            "width": 16,
+            "depth": 16,
+            "description": "Tip and spread materials with the existing dump truck and bulldozer."
+          }
+        ],
+        "residents": [
+          {
+            "id": "factory-foreman-mara",
+            "name": "Mara Voss",
+            "role": "Production foreman",
+            "home": {
+              "x": -26,
+              "y": 0.02,
+              "z": 29
+            },
+            "position": {
+              "x": -26,
+              "y": 0.02,
+              "z": 29
+            },
+            "color": "#e9b04b",
+            "skin": "#ad7659",
+            "activity": "working",
+            "greeting": "Take a production order, operate the three cells, then drive the truck from loading to dispatch. Your finished model goes to Backpack."
+          },
+          {
+            "id": "factory-machinist-dex",
+            "name": "Dex Okafor",
+            "role": "Fabrication machinist",
+            "home": {
+              "x": -25,
+              "y": 0.02,
+              "z": -5
+            },
+            "position": {
+              "x": -25,
+              "y": 0.02,
+              "z": -5
+            },
+            "color": "#5ca9b3",
+            "skin": "#805238",
+            "activity": "working",
+            "greeting": "I can assist your next cycle. You still choose each station and supervise the work."
+          },
+          {
+            "id": "factory-tech-iona",
+            "name": "Iona Park",
+            "role": "Systems test technician",
+            "home": {
+              "x": 24,
+              "y": 0.02,
+              "z": -5
+            },
+            "position": {
+              "x": 24,
+              "y": 0.02,
+              "z": -5
+            },
+            "color": "#a98bd3",
+            "skin": "#d8aa85",
+            "activity": "working",
+            "greeting": "Every model passes our game systems check before freight loading."
+          },
+          {
+            "id": "factory-logistics-sol",
+            "name": "Sol Reyes",
+            "role": "Freight dispatcher",
+            "home": {
+              "x": 22,
+              "y": 0.02,
+              "z": 34
+            },
+            "position": {
+              "x": 22,
+              "y": 0.02,
+              "z": 34
+            },
+            "color": "#85b26b",
+            "skin": "#bc8c68",
+            "activity": "walking",
+            "greeting": "Load at the north freight bay, follow the marked haul lane, and deliver here in the same truck."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "factory": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=muzikaz-missile-factory&house=muzikaz-missile-factory&autoplay=1&mode=multiplayer"
   }
 ]

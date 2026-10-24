@@ -14,7 +14,7 @@ export class LocalHockeyMotion{
  reset(){this.current=null;this.history=[];this.offset={x:0,z:0};this.key=null;this.lastTime=-Infinity;this.clockOffset=null;this.bestRtt=Infinity;this.receivedAt=-Infinity;}
  accept(state,selfId,{sentAt,receivedAt=performance.now(),serverTime}={}){
   const player=state?.players.find(p=>p.human===selfId);if(!player){this.reset();return;}
-  const active=['playing','shootout'].includes(state.phase)&&player.onIce!==false&&!(player.penalty>0&&!player.queuedReplacement)&&!player.ejected&&!(player.misconduct>0),key=[player.id,state.period,state.phase,active].join(':');
+  const active=['playing','shootout'].includes(state.phase)&&player.onIce!==false&&!(player.penalty>0&&!player.queuedReplacement)&&!player.ejected&&!(player.misconduct>0),key=[player.id,state.period,state.phase,active,player.movementRevision||0].join(':');
   if(Number.isFinite(sentAt)&&Number.isFinite(serverTime)){const rtt=Math.max(0,receivedAt-sentAt);if(rtt<=this.bestRtt){this.bestRtt=rtt;this.clockOffset=(sentAt+receivedAt)/2-serverTime;}}
   const time=Number.isFinite(serverTime)&&this.clockOffset!==null?serverTime+this.clockOffset:receivedAt;this.receivedAt=receivedAt;this.active=active;this.goalie=player.goalie&&!state.goaliesPulled?.[player.team];
   if(!this.current||this.key!==key){this.key=key;this.current={...player};this.offset={x:0,z:0};this.history=[{time,...this.current}];this.lastTime=time;return;}

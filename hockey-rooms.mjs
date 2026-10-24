@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {createHockey,joinHockey,leaveHockey,hockeyInput,nextHockeyGame,restartHockey,stepHockey,changeHockeyLine,toggleHockeyGoalie,switchHockeyPlayer,requestHockeyTimeout} from './public/js/hockey-rules.js';
+import {createHockey,joinHockey,leaveHockey,hockeyInput,nextHockeyGame,restartHockey,stepHockey,changeHockeyLine,toggleHockeyGoalie,switchHockeyPlayer,requestHockeyTimeout,relocateHockeyPlayer} from './public/js/hockey-rules.js';
 /** One authoritative simulation per arena. Routes supply authenticated identities. */
 export class HockeyRooms {
  constructor({now=Date.now}={}){this.now=now;this.rooms=new Map();}
@@ -28,6 +28,7 @@ export class HockeyRooms {
    else{
     if(spectator)throw Object.assign(Error('Spectators cannot control players or match results.'),{statusCode:403});
     if(command.action==='input'){const inputState=room.inputClients.get(actor);if(command.inputSequence!==undefined&&(!Number.isSafeInteger(command.inputSequence)||command.inputSequence<0))throw Object.assign(Error('Invalid input sequence.'),{statusCode:422});if((command.inputEpoch===undefined||command.inputEpoch===inputState?.epoch)&&(command.inputSequence===undefined||command.inputSequence>(inputState?.sequence??-1))){hockeyInput(s,actor,command.input);if(inputState&&command.inputSequence!==undefined)inputState.sequence=command.inputSequence;}}
+    else if(command.action==='teleport-floor'){relocateHockeyPlayer(s,actor,command.position);room.inputClients.set(actor,{epoch:randomUUID(),sequence:-1});}
     else if(command.action==='next')nextHockeyGame(s,actor);
     else if(command.action==='rematch')restartHockey(s,actor);
     else if(command.action==='line')changeHockeyLine(s,actor);

@@ -129,6 +129,16 @@ See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. B
 
 ## Map travel and vehicle loading
 
+The permanent **MUZIKAZ Missile & Rocket Factory** shares the existing server,
+MZK wallet, Backpack, resident AI and construction vehicles. Buy a parts kit,
+operate fabrication/assembly/test cells, haul the finished model by dump truck,
+and collect a detailed training missile or cargo rocket. Production and factory
+skills survive travel and restarts. Enter from the **Factory** world category.
+All nine factory item types are available in Marketplace and Builder's
+**Factory & engineering** category. The editable factory template keeps station
+roles, crew, vehicle jobs and local maps connected after moving or removing items.
+See [factory controls and production](docs/missile-factory.md).
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases
@@ -140,6 +150,8 @@ controls. See [map travel and spoken objectives](docs/open-map-travel.md).
 ## In-game camera views
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.
+
+Double-tap (or double-click) a clear ground spot to move directly there in either view, including hockey and the Neon Junction park. Held movement is released on arrival; dragging and control-button taps retain their usual actions.
 
 ## VR headset play
 
