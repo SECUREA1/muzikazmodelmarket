@@ -45,6 +45,7 @@ test('native catalog browses without an account and exposes canonical functions,
     {id:'map:tower',source:'native-map',name:'Office Tower',category:'Map templates',basic:true,builderUrl:'environment-builder.html?layout=repository-tower',visitUrl:'model-explorer.html?environment=tower',itemCount:2,components:[{name:'Working Lift',count:2,sku:'backpack:lift'}]},
     {id:'model:private',source:'model',name:'Repository model'},
     {id:'upgrade:repository:a',sku:'repository:a',source:'upgrade',name:'Repository model'},
+    {id:'upgrade:backpack:discovered',sku:'backpack:discovered',source:'upgrade',native:false,name:'Discovered non-native model'},
     {id:'player:sale',source:'player',name:'Member sale'}
   ];
   const requests=[];
@@ -59,7 +60,7 @@ test('native catalog browses without an account and exposes canonical functions,
   assert.match(html,/2 map pieces · 1 item types/);
   assert.match(html,/Working Lift × 2/);
   assert.match(html,/href="environment-builder.html\?layout=repository-tower"/);
-  assert.doesNotMatch(html,/Member sale|Repository model/);
+  assert.doesNotMatch(html,/Member sale|Repository model|Discovered non-native model/);
   get('#builder-native-search').value='elevator';pack.renderNativeCatalog();
   assert.match(get('#builder-native-status').textContent,/1 of 2/);
   get('#builder-native-search').value='Office Tower';get('#builder-native-category').value='Builder furniture';pack.renderNativeCatalog();

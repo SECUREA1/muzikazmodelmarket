@@ -42,7 +42,7 @@
       const items = await api('/api/market/catalog');
       if (version !== nativeVersion) return;
       if (!Array.isArray(items)) throw new Error('Native catalog is invalid.');
-      nativeItems = items.filter(item => item.source === 'native-map' || item.source === 'upgrade' && item.sku && (item.native || !item.sku.startsWith('repository:')));
+      nativeItems = items.filter(item => item.source === 'native-map' || item.source === 'upgrade' && item.sku && (item.native === true || item.native == null && !item.sku.startsWith('repository:')));
       const selected = $('#builder-native-category').value;
       const categories = [...new Set(nativeItems.map(item => item.category).filter(Boolean))].sort();
       $('#builder-native-category').innerHTML = '<option value="">All categories</option>' + categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
