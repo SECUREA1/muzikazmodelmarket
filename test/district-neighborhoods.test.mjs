@@ -26,6 +26,6 @@ test('atlas upgrades districts once and the directory uses real deed identities 
  const deeds=[{id:'dock-deed',name:'Harbor estate',ownerId:'account:sailor',ownerName:'Sailor',worldId:'neon-docks',hostedSpace:{environmentId:'public-commons',name:'Harbor estate'}}];
  const {environments}=await synchronizeWorldDirectory(atlas,[],deeds);const harbor=environments.find(map=>map.id==='world-district-neon-docks');assert.ok(districtLocations(harbor).some(place=>place.id==='harbor-crane'));
  const destinations=districtDestinations(harbor,environments.map(map=>({mapId:map.id,districtId:map.districtId,name:map.name,deedId:map.deedId,ownerName:map.ownerName})));
- const deed=destinations.find(item=>item.deedId==='dock-deed');assert.ok(deed);assert.equal(deed.ownerName,'Sailor');assert.ok(!destinations.some(item=>item.mapId==='world-district-echo-gardens'));
+ const deed=destinations.find(item=>item.deedId==='dock-deed');assert.ok(deed);assert.equal(deed.ownerName,'Sailor');assert.ok(destinations.some(item=>item.mapId==='world-district-echo-gardens'),'all public districts remain reachable from every map');
  const before=await atlas.read();await synchronizeWorldDirectory(atlas,[],deeds);assert.equal((await atlas.read()).revision,before.revision);
 });

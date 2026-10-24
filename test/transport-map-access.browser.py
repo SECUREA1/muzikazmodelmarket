@@ -38,16 +38,15 @@ try:
     assert page.evaluate('commands[0].action')=='map-access'
     assert page.evaluate('commands[0].locationId')==page.evaluate('world.builderScene.layoutMeta.locations[0].id')
     dialog.get_by_role('button',name='Close',exact=True).click();assert not dialog.is_visible()
-    opener.click();board=dialog.get_by_role('button',name='Board ',exact=False).first;board.click();assert dialog.is_visible()
+    opener.click();board=dialog.get_by_role('button',name='Board ',exact=False).first;board.click();page.wait_for_function('!localMap.dialog.open');assert not dialog.is_visible()
     assert page.evaluate('commands[1].entityId')==page.evaluate('craft[0].id')
-    dialog.get_by_role('button',name='Close',exact=True).click();assert not dialog.is_visible()
     opener.click();page.evaluate('fail=true');dialog.get_by_role('button',name='Board ',exact=False).first.click();assert dialog.is_visible();assert dialog.get_by_role('status').inner_text().startswith('Travel could not')
-    page.evaluate("live.actors[craft[0].id].holderId='alice';localMap.updateLive(live,'alice')");assert dialog.get_by_role('button',name='Occupied',exact=True).count()==2
+    page.evaluate("live.actors[craft[0].id].holderId='alice';localMap.updateLive(live,'alice')");assert dialog.get_by_role('button',name='Occupied',exact=True).count()==1;assert dialog.get_by_role('button',name='Open vehicle controls',exact=True).is_enabled()
     if kind=='airport':
      page.evaluate('fail=false')
      dialog.get_by_role('button',name='Board Piper Cub',exact=False).click()
      assert page.evaluate('commands.at(-1).entityId')==page.evaluate('craft[2].id')
-     assert dialog.is_visible()
+     assert not dialog.is_visible()
     assert not errors,errors;page.close()
   browser.close()
  print('Both transport maps: mobile/desktop travel, live players, occupancy, boarding and failed-command handling passed.')

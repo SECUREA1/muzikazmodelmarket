@@ -48,6 +48,18 @@ test('readiness waits for a confirmed player rather than a loaded map',async()=>
   release(response(confirmed()));await pending;assert.equal(client.ready,true);
  });
 });
+test('a pending selection timing out does not close an established room during recovery',async()=>{
+ let available=true,sequence=0;const failures=[];
+ await withRoom(async path=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  if(!available)throw Error('temporary offline');
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();available=false;await pause(180);assert.equal(client.ready,false);
+  await assert.rejects(client.whenReady(10),/connection/);assert.deepEqual(failures,[]);
+  available=true;await pause(1300);assert.equal(client.ready,true);await client.send('interact');
+ },{onError:error=>failures.push(error)});
+});
 test('expired account sessions reject the join and stop the retry loop',async()=>{
  let count=0;const failures=[];
  await withRoom(async()=>{count++;return response({message:'Session expired',code:'SESSION_EXPIRED'},401);},async client=>{

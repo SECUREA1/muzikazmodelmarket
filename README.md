@@ -127,6 +127,16 @@ in the existing wallet. Enter from the world menu's **Fitness** category or open
 `model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&mode=multiplayer&autoplay=1`.
 See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. Builder includes a **Gold Fitness Centre** template with 58 editable equipment assemblies, and all 26 gym item types are available in **ITEMS → Fitness & gym** and **Marketplace → All game items → Fitness & gym upgrades**.
 
+## Map travel and vehicle loading
+
+Public maps keep travel and vehicle selection available during connection
+recovery. Selecting a vehicle immediately shows a nonblocking loading display,
+waits for its model and exposes its controls. Map travel automatically releases
+seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
+and offers all public destinations. Jobs, objective changes, nearby NPCs and
+crew work are voiced after the first player gesture, with shared mute/replay
+controls. See [map travel and spoken objectives](docs/open-map-travel.md).
+
 ## In-game camera views
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.

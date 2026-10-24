@@ -10,21 +10,21 @@ const loadWorld=section('  async function loadById(','\n\n  let cachedAvatars');
 const resetRoom=section('  function resetRoomConnection()','  function showConnectionFailure');
 const joinRoom=section('  async function startRoomGameplay(','  async function warmGameDisplay');
 const initialize=section('  function startRadToxGame()','  canvas.addEventListener(\'webglcontextlost\'');
-const hostCommand=section('  function serverCommand(','\n');
+const hostCommand=section('  async function serverCommand(','\n  let stickSprinting');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const turns=async()=>{for(let index=0;index<6;index++)await Promise.resolve();};
 function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
   districtMap:{setReady:value=>readinessChanges.push(value)},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
-  serverInput:()=>({}),renderServerRoom:reset,fitnessUI:{visible:()=>false},radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
+  serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
   stage:{scrollIntoView:reset},gameStartButton:{disabled:false},gameStartScreen:{classList:{add:reset,remove:reset}},gameLoadStatus:{textContent:''},graphicsContextLost:false,
   activeWorldSpawn:{position:{x:1,y:.02,z:2},rotationY:0},resetPlayer:reset,hideLevelLoader:reset,scheduleGameResize:reset,
@@ -113,11 +113,13 @@ test('same-world map travel does not release held game controls',async()=>{
  assert.deepEqual(effects,[['resident',false],['transport']]);
 });
 
-test('a joined room still rejects commands during a real network interruption',async()=>{
- const reply=deferred(),{context,effects,statuses,client}=commandFixture(reply);
- client.ready=false;
- assert.equal(await context.serverCommand('map-access',{locationId:'court'}),false);
- assert.deepEqual(effects,[]);assert.match(statuses[0],/Waiting for the shared server/);
+test('a joined room retains a selection until the connection recovers',async()=>{
+ const reply=deferred(),connection=deferred(),{context,effects,statuses,client}=commandFixture(reply);const sent=[];
+ client.ready=false;client.whenReady=()=>connection.promise;client.send=(action,fields)=>{sent.push({action,fields});return reply.promise;};
+ const pending=context.serverCommand('map-access',{locationId:'court'});await turns();
+ assert.equal(sent.length,0);assert.deepEqual(effects,[]);assert.match(statuses[0],/Reconnecting/);
+ client.ready=true;connection.resolve(client);reply.resolve({result:{message:'Arrived'}});await pending;
+ assert.deepEqual(sent,[{action:'map-access',fields:{locationId:'court'}}]);assert.deepEqual(effects,[['resident',false],['transport']]);
 });
 
 test('early navigation cannot stop the pending room join or start a second world load',async()=>{
