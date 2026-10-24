@@ -1,4 +1,5 @@
 import {isRoadVehicle} from './road-vehicles.js';
+import {requestGameInputRelease} from './game-input-release.js';
 import {mountQuestConversationPanel} from './quest-conversation-panel.js';
 import {unlockQuestConversation,questConversationVoice} from './quest-conversation-voice.js';
 import {mountQuestTeamPanel} from './quest-team-panel.js';
@@ -23,7 +24,7 @@ export function mountTransportActivity({stage,command,THREE,scene,airportRadio})
  const text=(selector,value)=>{const node=panel.querySelector(selector);if(node.textContent!==value)node.textContent=value;};
  function fitPanel(){if(panel.hidden)return;const viewport=window.visualViewport,topEdge=viewport?.offsetTop||0,bottomEdge=topEdge+(viewport?.height||innerHeight),area=stage.getBoundingClientRect(),anchor=toggle.getBoundingClientRect(),withinStage=area.height>=240;const bottom=Math.min(bottomEdge,withinStage?area.bottom:bottomEdge)-12;const top=Math.max(topEdge+12,Math.min(anchor.bottom+8,bottom-160));panel.style.setProperty('--radio-panel-top',top+'px');panel.style.setProperty('--radio-panel-height',Math.max(120,bottom-top)+'px');}
  const fitObserver=new ResizeObserver(fitPanel);fitObserver.observe(stage);fitObserver.observe(toggle);window.addEventListener('resize',fitPanel);window.addEventListener('scroll',fitPanel,{passive:true});window.visualViewport?.addEventListener('resize',fitPanel);window.visualViewport?.addEventListener('scroll',fitPanel);
- const open=value=>{panel.hidden=!value;toggle.setAttribute('aria-expanded',String(value));if(value){document.exitPointerLock?.();fitPanel();panel.scrollTop=0;panel.querySelector('[data-close]').focus({preventScroll:true});}else if(shell.contains(document.activeElement))toggle.focus({preventScroll:true});};toggle.onclick=()=>open(panel.hidden);panel.querySelector('[data-close]').onclick=()=>open(false);
+ const open=value=>{if(panel.hidden===value)requestGameInputRelease(value?'transport-panel-open':'transport-panel-close');panel.hidden=!value;toggle.setAttribute('aria-expanded',String(value));if(value){document.exitPointerLock?.();fitPanel();panel.scrollTop=0;panel.querySelector('[data-close]').focus({preventScroll:true});}else if(shell.contains(document.activeElement))toggle.focus({preventScroll:true});};toggle.onclick=()=>open(panel.hidden);panel.querySelector('[data-close]').onclick=()=>open(false);
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();open(false);}});
  for(const type of ['pointerdown','click','wheel'])shell.addEventListener(type,event=>event.stopPropagation());
  // Companion radio shares movement and jump; editing and Enter stay local.

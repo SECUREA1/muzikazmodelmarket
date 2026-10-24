@@ -38,6 +38,27 @@ test('automatic pointer capture release preserves the first completed tap',()=>{
  const f=fixture();f.tap();f.send('lostpointercapture');f.tap();assert.equal(f.taps.length,1);f.dispose();f.tap();f.tap();assert.equal(f.taps.length,1);
 });
 
+test('a second finger can explicitly release controls while another finger remains held',()=>{
+ const surface=new EventTarget(),taps=[];let time=0;
+ const dispose=bindGroundDoubleTap(surface,{allowNonPrimary:true,onDoubleTap:event=>taps.push(event.isPrimary),now:()=>time});
+ for(let tap=0;tap<2;tap++){
+  for(const type of ['pointerdown','pointerup']){
+   const event=new Event(type,{cancelable:true});Object.assign(event,{pointerId:2,pointerType:'touch',isPrimary:false,button:0,clientX:40,clientY:70});surface.dispatchEvent(event);time+=30;
+  }
+  time+=60;
+ }
+ assert.deepEqual(taps,[false]);dispose();
+});
+
+test('a held canvas drag cannot consume the first tap of a second-finger reset',()=>{
+ const surface=new EventTarget();let resets=0,time=0;
+ const dispose=bindGroundDoubleTap(surface,{allowNonPrimary:true,onDoubleTap:()=>resets++,now:()=>time});
+ const send=(type,fields={})=>{const event=new Event(type,{cancelable:true});Object.assign(event,{pointerId:1,pointerType:'touch',isPrimary:true,button:0,clientX:40,clientY:70,...fields});surface.dispatchEvent(event);time+=30;};
+ send('pointerdown');send('pointermove',{clientX:90});
+ for(let tap=0;tap<2;tap++){send('pointerdown',{pointerId:2,isPrimary:false});send('pointerup',{pointerId:2,isPrimary:false});}
+ assert.equal(resets,1);dispose();
+});
+
 test('ground targeting selects the tapped floor and rejects sky, walls and off-canvas points',()=>{
  const camera=new THREE.PerspectiveCamera(60,1,.01,100);camera.position.set(0,3,8);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;floor.updateMatrixWorld(true);

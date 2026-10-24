@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-test('game pickers use modal containment, right-side scrolling and shared close cleanup',()=>{
+test('settings and backpack menus use modal containment, scrolling and shared close cleanup',()=>{
  const source=readFileSync('public/js/house-explorer-glb.js','utf8');
  const helper=readFileSync('public/js/fullscreen-panels.js','utf8');
  assert.ok(helper.includes("document.createElement('dialog')"));
@@ -16,7 +16,7 @@ test('game pickers use modal containment, right-side scrolling and shared close 
  assert.ok(source.includes('fullscreenPanel(library'));
 });
 
-test('building paint remains editable before equip and menus block background gameplay input',()=>{
+test('building paint remains editable before equip and modal menus block background gameplay input',()=>{
  const source=readFileSync('public/js/house-explorer-glb.js','utf8');
  assert.ok(source.includes('data-building-paint-label'));
  assert.ok(source.includes('data-building-natural'));
@@ -25,7 +25,6 @@ test('building paint remains editable before equip and menus block background ga
   assert.ok(catalog.includes('building-paint-options'));assert.ok(!catalog.includes('data-build-transform'));assert.ok(!catalog.includes('New piece staged'));
  assert.ok(source.includes("buildingPopup.hidden=true;closeTools()"));
  assert.ok(!source.includes("this.setTool('brick');buildingPopup.hidden=true"));
- assert.ok(source.includes('keys.clear();mobile.clear()'));
  assert.ok(source.includes('const menuOpen=Boolean(xrGameControls?.menuOpen||gameplayOverlayOpen())'));
  assert.ok(source.includes('if(radToxEnabled&&!serverHostedRoom&&!menuOpen&&!isCleanSportsEnvironment(activeEnvironment))toxicBubbleSystem.update'));
 });

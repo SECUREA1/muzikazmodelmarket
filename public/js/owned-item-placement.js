@@ -11,7 +11,8 @@ export class OwnedItemPlacement {
   this.editButton.addEventListener('click',async()=>{if(this.pending){this.panel.hidden=!this.panel.hidden;this.editButton.setAttribute('aria-expanded',String(!this.panel.hidden));this.apply();}else if(this.last&&!this.active){if(await this.start(this.last.asset,this.last)){this.panel.hidden=false;this.editButton.setAttribute('aria-expanded','true');}}});
   this.panel.addEventListener('click',event=>{const action=event.target.closest('[data-place-action]')?.dataset.placeAction;if(!this.pending||this.saving)return;if(action==='quick'){this.setQuickMode(true);this.confirm();return;}if(action==='single'){this.setQuickMode(false);return;}if(action==='lock'){this.confirm();return;}if(action==='cancel'){this.cancel();return;}if(action==='left')this.pending.yaw-=Math.PI/12;if(action==='right')this.pending.yaw+=Math.PI/12;if(action==='smaller')this.pending.scale=Math.max(.25,this.pending.scale-.1);if(action==='larger')this.pending.scale=Math.min(3,this.pending.scale+.1);if(action==='aim')this.pending.follow=true;this.apply();});
   const place=event=>{if(!this.pending||this.saving||event.isPrimary===false)return;event.preventDefault();event.stopImmediatePropagation();const rect=canvas.getBoundingClientRect(),point=this.pointAt({x:(event.clientX-rect.left)/rect.width*2-1,y:-(event.clientY-rect.top)/rect.height*2+1});if(point){this.pending.point=point.clone();this.pending.follow=false;this.apply();}};
-  for(const inputCanvas of new Set([canvas,...inputCanvases])){
+  this.inputCanvases=new Set([canvas,...inputCanvases]);
+  for(const inputCanvas of this.inputCanvases){
   inputCanvas.addEventListener('pointerdown',event=>{if(!this.pending)return;this.pointer=event.pointerId;this.pointerStart={x:event.clientX,y:event.clientY};this.pointerDragged=false;try{canvas.setPointerCapture(event.pointerId);}catch{}place(event);},true);
   inputCanvas.addEventListener('pointermove',event=>{if(this.pointer===event.pointerId){this.pointerDragged ||= Math.hypot(event.clientX-this.pointerStart.x,event.clientY-this.pointerStart.y)>8;place(event);}},true);
   for(const name of ['pointerup','pointercancel'])inputCanvas.addEventListener(name,event=>{if(this.pointer!==event.pointerId)return;this.pointer=null;if(this.pending){event.preventDefault();event.stopImmediatePropagation();if(name==='pointerup'&&(this.pending.quick||this.panel.hidden)&&!this.pointerDragged)this.confirm();}},true);
@@ -19,6 +20,7 @@ export class OwnedItemPlacement {
   }
  }
  setEditLabel(label){this.editButton.setAttribute('aria-label',label);this.editButton.title=label;this.editButton.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 7 4v8l-7 4-7-4V7l7-4Zm-7 4 7 4 7-4m-7 4v8M3 20h5m-5 0v-5m0 5 4-4M21 4h-4m4 0v4"/></svg>';}
+ releaseInputs(){const pointer=this.pointer;this.pointer=null;this.pointerStart=null;this.pointerDragged=false;for(const canvas of this.inputCanvases){try{if(pointer!=null&&canvas.hasPointerCapture?.(pointer))canvas.releasePointerCapture(pointer);}catch{}}}
  get active(){return Boolean(this.pending);}
  async start(asset,existing=null){
   if(this.saving)return false;document.exitPointerLock?.();this.cancel();const generation=this.generation;

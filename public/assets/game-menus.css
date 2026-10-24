@@ -431,3 +431,14 @@ html.game-menu-open { overflow:hidden; }
 .world-lobby .world-lobby-detail[data-kind=fitness]{border-color:#b9923c;background:linear-gradient(145deg,#3e331c,#211e15)}
 .world-lobby-detail[data-kind=fitness] .world-lobby-join{background:#d8ad45;border-color:#f2d17d;color:#211b0d}
 .world-lobby .world-lobby-filters button[data-world-filter=fitness]{border-color:#b9923c;color:#f2d17d}
+
+/* World selection stays beside the running game and above the touch sticks. */
+dialog.game-fullscreen-dialog.game-companion-dialog{inset:max(64px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) auto auto!important;width:min(620px,calc(100vw - 24px))!important;max-width:calc(100vw - 24px)!important;height:auto!important;max-height:min(58dvh,calc(100dvh - 240px))!important;min-height:120px!important;margin:0!important;padding:8px!important;border:1px solid #77966b!important;border-radius:12px!important;z-index:46!important;box-shadow:0 12px 36px #0007;}
+.game-companion-dialog .game-menu-header{padding:4px 0;margin-bottom:6px;gap:8px;}
+.game-companion-dialog .game-menu-header h2{font-size:17px;}
+.game-companion-dialog .game-fullscreen-content:not([hidden]){padding:8px!important;border:0!important;}
+.game-companion-dialog .world-lobby>header{display:none;}
+.game-companion-dialog .world-lobby .world-lobby-layout{gap:8px;}
+.game-companion-dialog .world-lobby .world-map-wheel{max-width:240px;}
+.game-companion-dialog .world-lobby .world-map-detail .world-preview-viewport{height:140px;}
+@media(max-height:520px){dialog.game-fullscreen-dialog.game-companion-dialog{inset:56px 8px auto auto!important;width:min(440px,calc(100vw - 130px))!important;max-width:calc(100vw - 130px)!important;max-height:calc(100dvh - 240px)!important;}}

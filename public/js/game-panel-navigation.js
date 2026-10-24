@@ -1,3 +1,4 @@
+import {requestGameInputRelease} from './game-input-release.js';
 // Keep each game menu screen separate while preserving its controls and listeners.
 export function mountGamePanelNavigation(host, screens, {initial = screens[0]?.id} = {}) {
   const navigation = document.createElement('nav');
@@ -16,6 +17,7 @@ export function mountGamePanelNavigation(host, screens, {initial = screens[0]?.i
   function show(id, {remember = true, focus = true} = {}) {
     const screen = screens.find(candidate => candidate.id === id);
     if (!screen) return false;
+    if(current&&current!==id)requestGameInputRelease('panel-navigation');
     if (remember && current && current !== id) history.push(current);
     current = id;
     for (const candidate of screens) {

@@ -8,6 +8,15 @@ import {SharedRoomStore} from '../shared-room-store.mjs';
 import {validateOwnedPlacement} from '../owned-item-placement.mjs';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {anchorServerAsset,projectServerActor} from '../public/js/server-scene-projection.js';
+import {OwnedItemPlacement} from '../public/js/owned-item-placement.js';
+
+test('releasing placement input drops capture without committing or discarding its preview',()=>{
+ const captured=new Set([7]),canvas={hasPointerCapture:id=>captured.has(id),releasePointerCapture:id=>captured.delete(id)},pending={asset:{id:'chair'}};
+ const placement=Object.assign(Object.create(OwnedItemPlacement.prototype),{pointer:7,pointerStart:{x:1,y:2},pointerDragged:true,inputCanvases:new Set([canvas]),pending});
+ placement.releaseInputs();
+ assert.equal(placement.pointer,null);assert.equal(placement.pointerStart,null);assert.equal(placement.pointerDragged,false);
+ assert.equal(captured.size,0);assert.strictEqual(placement.pending,pending);assert.equal(placement.active,true);
+});
 
 test('owned placement is shared, durable, owner-only, revision checked and charged once',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'owned-placement-'));let charges=0;

@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.3.9-ground-travel-feeds';
+const CACHE = 'muzikaz-world-v2.3.10-input-release';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
