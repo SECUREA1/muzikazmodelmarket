@@ -1,8 +1,10 @@
 import {isCasinoEnvironment} from './casino-config.js';
 import {roadFleetAnchors} from './road-network.js';
 import {localMapLocations} from './local-map-locations.js';
+import {mapQuestOffers} from './map-quest-catalog.js';
+import {siteWorkOffers} from './site-work-contracts.js';
 export function questCatalog(environment){
- if(isCasinoEnvironment(environment))return [];
+ if(isCasinoEnvironment(environment))return [...mapQuestOffers(environment),...siteWorkOffers(environment)];
  const offers=[];const add=(id,title,kind,mode,description,reward=650)=>offers.push({id,title,kind,mode,description,reward,winBonus:kind==='race'?200:0,timeLimit:600});
  if(environment?.builderScene?.layoutMeta?.harbor){
   add('patrol-raid','Smuggler interdiction','attack','gunboat','Pilot Sentinel 07, disable two armed drug-running launches, secure their cargo and return to dispatch.',1200);
@@ -39,7 +41,7 @@ export function questCatalog(environment){
   add('land-recovery','Recover lost equipment','recovery','foot','Search an activity space, recover a marked equipment crate and return it to dispatch.',400);
   add('land-explore','Activity spaces discovery','explore','foot','Visit the main activity spaces and check in at each marked objective.',300);
  }
- return offers;
+ return [...offers,...mapQuestOffers(environment),...siteWorkOffers(environment)];
 }
 export function questPoint(mission,actors={}){const point=mission?.checkpoints?.[mission.index];if(!point)return null;const actor=point.actorId&&actors[point.actorId];return actor?{...point,...actor.position}:point;}
 export function questMapTags(live,selfId){

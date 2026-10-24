@@ -8,12 +8,13 @@ import {boatMovementBlocked} from './server-boat-assist.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftOverlap} from './public/js/harbor-water.js';
 import {airportRunways} from './public/js/airport-navigation.js';
+import {harborQuestRadii} from './public/js/harbor-quest-routes.js';
 const separation=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const routeCache=new WeakMap();
 function routes(environment){if(routeCache.has(environment))return routeCache.get(environment);const result=buildRoutes(environment);routeCache.set(environment,result);return result;}
 function buildRoutes(environment){
  const half=(environment.builderScene?.mapSize||1024)/2,harbor=environment.builderScene?.layoutMeta?.harbor;
- if(harbor){const extent=harbor.extent||256;return [.66,.84].map((factor,index)=>({kind:'boat',radius:extent*factor,y:0,speed:4+index,modelId:index?'harbor-sailboat':'harbor-skiff',callsign:index?'Palm Runner':'Beacon Tender',crew:index?'Captain Maya':'Captain Ellis'})).filter(route=>Array.from({length:96},(_,i)=>({x:Math.cos(i*Math.PI/48)*route.radius,z:Math.sin(i*Math.PI/48)*route.radius})).every(point=>harborWaterAt(environment,point,12)));}
+ if(harbor)return harborQuestRadii(environment).map((radius,index)=>({kind:'boat',radius,y:0,speed:4+index,modelId:index?'harbor-sailboat':'harbor-skiff',callsign:index?'Palm Runner':'Beacon Tender',crew:index?'Captain Maya':'Captain Ellis'}));
  if(environment.airport?.enabled&&half>100&&(environment.airport.ceiling||80)>35)return [.48,.67].map((factor,index)=>({kind:'aircraft',radius:half*factor,y:Math.min(environment.airport.ceiling||80,80)-12-index*14,speed:index?13:18,modelId:index?'piper-cub':'diamond-da40',callsign:index?'Cub Two':'Diamond One',crew:index?'Pilot Sam':'Pilot Alex'}));
  return [];
 }

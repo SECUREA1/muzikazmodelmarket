@@ -54,6 +54,8 @@ jobs:
           python-version: '3.12'
       - name: Verify shared session proofs during panel refreshes
         run: node --test test/session-store.test.mjs test/room-session.test.mjs test/gameplay-session-proof.test.mjs
+      - name: Verify per-map quests, site work and native game challenges
+        run: node --test test/harbor-quest-routes.test.mjs test/solo-map-quests.test.mjs test/map-quest-catalog.test.mjs test/site-quests.test.mjs test/site-quest-world-matrix.test.mjs test/site-work-contracts.test.mjs test/map-quest-prompts.test.mjs test/native-game-challenges.test.mjs test/expanded-quests.test.mjs test/road-quests.test.mjs test/mountain-flight-quests.test.mjs test/patrol-team-quests.test.mjs test/quest-conversations.test.mjs
       - name: Verify RSS and model discovery feeds
         run: node --test test/rss-feed.test.mjs test/github-glb-discovery.test.mjs
       - name: Verify touch, overlays and input request recovery
@@ -77,6 +79,12 @@ jobs:
           python test/harbor-operations.browser.py
           python test/vehicle-actions.browser.py
           python test/harbor-navigation.browser.py
+      - name: Verify quest popups and playable local objectives
+        run: |
+          python test/map-quest-prompts.browser.py
+          python test/native-game-challenges.browser.py
+          python test/native-game-challenges-live.browser.py
+          python test/map-quests.browser.py
       - name: Verify live walking under delayed network input
         run: python test/live-motion.browser.py
       - name: Verify controls after transport menus and map travel
