@@ -6,6 +6,7 @@ import {BUILDING_MATERIALS,buildingType} from './public/js/building-materials.js
 import {EXTRA_WEAPONS,RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './public/js/missile-factory-items.js';
+import {NATIVE_BUILDER_ITEMS,nativeBuilderItem} from './public/js/native-builder-items.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const backpack=(await json('./public/models/backpack-assets.json')).assets;
 const document=await json('./public/models/glb-models.json');
@@ -30,7 +31,19 @@ const raw=[
  ...models.filter(item=>item.visibility!=='private'&&item.modelUrl).map(item=>({...item,sku:'repository:'+item.id,category:'Models',kind:'asset',assetType:item.assetType||'props',priceMzk:Math.round(Number(item.price||25)*100),useCostMzk:item.assetType==='avatar'?0:2})),
  ...discoveredModels.map(item=>({id:'discovered-'+item.assetId,sku:'discovered:'+item.assetId,name:item.name,description:'Authored MUZIKAZ '+(item.assetType==='environment'?'environment model':'3D model')+' for editable maps and shared worlds.',category:item.assetType==='environment'||item.assetType==='terrain'?'Map models & environments':'Models',kind:'asset',assetType:item.assetType==='environment'||item.assetType==='terrain'?'lands':item.assetType==='avatar'?'avatars':item.assetType==='vehicle'?'vehicles':'props',format:item.modelPath.split('.').pop().toLowerCase(),modelUrl:item.modelPath,thumbnailUrl:item.thumbnail,priceMzk:500,useCostMzk:2,source:'repository-discovery'}))
 ];
-export const GAME_ECONOMY=raw.map(record=>{const native=FACTORY_ITEMS[record.buildAssetId],item=native?{...record,...native,kind:record.kind,category:'Factory & engineering',builderCategory:'factory',function_data:factoryItemSettings(record.buildAssetId)}:record;const priceMzk=catalogItemPrice(item);return {...item,priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};});
+// Retain published SKUs/prices so existing ownership and receipts remain valid.
+// New native definitions automatically enter the same server purchase flow.
+const registered = new Set(raw.map(item=>item.buildAssetId || (item.materialId?'material:'+item.materialId:null)).filter(Boolean));
+for(const definition of Object.values(NATIVE_BUILDER_ITEMS))if(!registered.has(definition.id)){
+ raw.push({...definition,id:'native-'+definition.id,sku:'native:'+definition.id,kind:'asset',assetType:definition.type,priceMzk:100,useCostMzk:1});
+ registered.add(definition.id);
+}
+export const GAME_ECONOMY=raw.map(record=>{
+ const factory=FACTORY_ITEMS[record.buildAssetId],item=factory?{...record,...factory,kind:record.kind,category:'Factory & engineering',builderCategory:'factory',function_data:factoryItemSettings(record.buildAssetId)}:record;
+ const priceMzk=catalogItemPrice(item),native=nativeBuilderItem(item.buildAssetId || (item.materialId?'material:'+item.materialId:null));
+ const metadata=native?{...native,...item,buildAssetId:native.buildAssetId,behavior:native.behavior,assetType:['avatar','enemy','vehicle','wearable'].includes(native.type)?native.type:item.assetType,builderCategory:item.builderCategory||native.category,description:native.description||item.description,format:'procedural-3d',function_data:factory?item.function_data:{...native.function_data,...item.function_data,behavior:native.behavior},...Object.fromEntries(['vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState'].filter(key=>native[key]||item[key]).map(key=>[key,{...native[key],...item[key]}]))}:item;
+ return {...metadata,native:Boolean(native||item.kind==='tool'||item.builderLayoutId),nativeFunction:native?.behavior||(item.kind==='tool'?item.toolId:item.builderLayoutId?'map-template':null),priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};
+});
 export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);}
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
 export function ownsEconomyItem(state,item){return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}

@@ -291,7 +291,23 @@ export class UserJsonDatabase {
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
   }
 
-  async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),bundles:economyBundles(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
+  async economy(walletId){
+    const state=await this.get(walletId);
+    const ownedAssets=state.items.map(item=>{
+      if(item.type==='land-entitlement')return {...item,assetType:'lands',requiresReveal:true};
+      if(item.type==='land-deed')return {...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)};
+      const catalog=economyItem(item.economySku||item.sku);
+      if(!catalog?.native)return item;
+      // Older purchases keep their inventory identity and member configuration;
+      // fill runtime defaults from today's catalog without rewriting ownership.
+      const asset={...catalog,...item};
+      for(const key of ['function_data','vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState']){
+        if(catalog[key])asset[key]={...catalog[key],...plainObject(item[key])};
+      }
+      return asset;
+    });
+    return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),bundles:economyBundles(state),ownedAssets};
+  }
   economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;const cost=prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(prepaid)user.memory.materialCredits[sku]--;if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
 
   buyMaterialBulk(walletId,sku,quantity,expectedPriceMzk,requestId){

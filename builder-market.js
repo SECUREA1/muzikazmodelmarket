@@ -17,6 +17,53 @@
     return `<article class="builder-card">${marketItemPreview(asset)}<small>${escapeHtml(asset.builder_category)} · v${escapeHtml(asset.version)}</small><h3>${escapeHtml(asset.name)}</h3><p>${escapeHtml(asset.description || 'Reusable MUZIKAZ builder component.')}</p>${functional ? '<div class="builder-card__meta"><span>CONFIGURABLE FUNCTION</span></div>' : ''}${body}<div class="builder-actions">${actions}</div></article>`;
   }
   const button = (label, action, id, allowed = true) => allowed ? `<button type="button" data-action="${action}" data-id="${escapeHtml(id)}">${label}</button>` : '';
+  let nativeItems = [], nativeLimit = 36, nativeVersion = 0, nativeMarketplace;
+  const nativeMaps = item => (item.nativeMaps || item.maps || []).map(map => typeof map === 'string' ? map : map.name || map.id || '').filter(Boolean);
+  const nativeFunctions = item => [...new Set([item.nativeFunction, item.behavior, item.configuration?.behavior, item.function_data?.behavior, ...(item.interactions || [])].filter(value => typeof value === 'string' && value !== 'decor'))];
+  function renderNativeCatalog() {
+    const query = $('#builder-native-search').value.trim().toLowerCase(), category = $('#builder-native-category').value;
+    const matches = nativeItems.filter(item => (!category || item.category === category) && [item.name, item.description, item.category, ...nativeMaps(item), ...nativeFunctions(item), JSON.stringify(item.function_data || {}), ...(item.components || []).map(component => component.name)].join(' ').toLowerCase().includes(query));
+    const visible = matches.slice(0, nativeLimit);
+    $('#builder-native-status').textContent = `${matches.length} of ${nativeItems.length} native items${visible.length < matches.length ? ` · showing ${visible.length}` : ''}.`;
+    $('#builder-native-items').innerHTML = visible.map(item => {
+      const functions = nativeFunctions(item), maps = nativeMaps(item), template = item.source === 'native-map';
+      const components = template && item.components?.length ? `<details class="builder-native__components"><summary>${Number(item.itemCount || item.components.reduce((sum, part) => sum + part.count, 0))} map pieces · ${item.components.length} item types</summary><ul>${item.components.map(part => `<li>${escapeHtml(part.name)} × ${Number(part.count || 1)}${part.sku ? ` <button type="button" data-native-open="${escapeHtml(part.sku)}">VIEW ITEM</button>` : ''}</li>`).join('')}</ul></details>` : '';
+      const actions = template ? `${item.builderUrl ? `<a class="builder-link" href="${escapeHtml(item.builderUrl)}">EDIT MAP TEMPLATE</a>` : ''}${item.visitUrl ? `<a class="builder-link" href="${escapeHtml(item.visitUrl)}">VISIT MAP</a>` : ''}` : `<button type="button" data-native-open="${escapeHtml(item.sku)}">${item.basic ? 'OPEN BASIC ITEM' : 'VIEW / BUY WITH MZK'}</button>`;
+      return `<article class="builder-card">${marketItemPreview(item)}<small>${escapeHtml(item.category)}</small><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || 'Reusable native game item.')}</p>${functions.length ? `<p class="builder-native__function">Functions: ${escapeHtml(functions.map(value => value.replaceAll('-', ' ')).join(' · '))}</p>` : ''}${maps.length ? `<p class="builder-native__maps">Maps: ${escapeHtml(maps.join(' · '))}</p>` : ''}${components}<strong class="builder-price">${item.basic ? template ? 'Public map template · free' : 'Basic kit · free' : `${Number(item.priceMzk || 0).toLocaleString()} MZK`}</strong><div class="builder-actions">${actions}<button type="button" data-native-preview="${escapeHtml(item.sku || item.id)}">PREVIEW</button></div></article>`;
+    }).join('') || '<p class="builder-empty">No native items match your filters.</p>';
+    $('#builder-native-more').hidden = visible.length >= matches.length;
+    hydrateMarketPreviews($('#builder-native-items'));
+  }
+  async function loadNativeCatalog() {
+    const version = ++nativeVersion;
+    $('#builder-native-status').textContent = 'Loading native items…';
+    $('#builder-native-refresh').disabled = true;
+    try {
+      const items = await api('/api/market/catalog');
+      if (version !== nativeVersion) return;
+      if (!Array.isArray(items)) throw new Error('Native catalog is invalid.');
+      nativeItems = items.filter(item => item.source === 'native-map' || item.source === 'upgrade' && item.sku && (item.native || !item.sku.startsWith('repository:')));
+      const selected = $('#builder-native-category').value;
+      const categories = [...new Set(nativeItems.map(item => item.category).filter(Boolean))].sort();
+      $('#builder-native-category').innerHTML = '<option value="">All categories</option>' + categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
+      $('#builder-native-category').value = categories.includes(selected) ? selected : '';
+      nativeLimit = 36;
+      renderNativeCatalog();
+    } catch (error) {
+      if (version === nativeVersion) $('#builder-native-status').textContent = `${error.message} Refresh to retry the native catalog.`;
+    } finally { if (version === nativeVersion) $('#builder-native-refresh').disabled = false; }
+  }
+  async function openNativeItem(sku) {
+    if (!nativeItems.some(item => item.sku === sku)) return;
+    if (!nativeMarketplace) {
+      const {createGameMarketplace} = await import('./public/js/in-game-market.js');
+      nativeMarketplace = createGameMarketplace();
+      nativeMarketplace.dialog.id = 'builder-native-market';
+      nativeMarketplace.dialog.querySelector('h2').id = 'builder-native-market-title';
+      nativeMarketplace.dialog.setAttribute('aria-labelledby', 'builder-native-market-title');
+    }
+    nativeMarketplace.open('upgrades', {sku});
+  }
   let packFilter = 'all';
   const trayKey = 'muzikaz.builder.buildTray';
   function readTray() { try { const tray = JSON.parse(localStorage.getItem(trayKey) || '[]'); return Array.isArray(tray) ? tray : []; } catch { return []; } }
@@ -37,7 +84,7 @@
       const models = catalog.assets.filter(item => item.buildAssetId);
       const layouts = catalog.assets.filter(item => item.builderLayoutId);
       if (!models.length || !layouts.length) throw new Error('Builder catalog is empty.');
-      builderModels = models.map(item => [item.buildAssetId, item.name, item.builderCategory, item.thumbnailUrl]);
+      builderModels = models.map(item => [item.buildAssetId, item.name, item.builderCategory || item.type || 'props', item.thumbnailUrl]);
       roomStyles = layouts.filter(item => item.builderLayoutId !== 'grand-floor').map(item => ({id:item.builderLayoutId,name:item.name,label:item.description || 'Editable world layout',color:'#61e7ff',walls:'l'}));
       document.querySelector('[data-layout-count]').textContent = `${roomStyles.length} layouts`;
       const filters = document.querySelector('.builder-library__filters');
@@ -93,6 +140,16 @@
   $('#builder-category').addEventListener('change', () => refresh().catch((error) => status(error.message, true))); $('#open-create-asset').addEventListener('click', createAsset);
   renderBuilderPack();
   loadCompletePack();
+  loadNativeCatalog();
+  for (const selector of ['#builder-native-search', '#builder-native-category']) $(selector).addEventListener(selector.endsWith('search') ? 'input' : 'change', () => { nativeLimit = 36; renderNativeCatalog(); });
+  $('#builder-native-reset').addEventListener('click', () => { $('#builder-native-search').value = ''; $('#builder-native-category').value = ''; nativeLimit = 36; renderNativeCatalog(); });
+  $('#builder-native-refresh').addEventListener('click', loadNativeCatalog);
+  $('#builder-native-more').addEventListener('click', () => { nativeLimit += 36; renderNativeCatalog(); });
+  $('#builder-native-items').addEventListener('click', event => {
+    const open = event.target.closest('[data-native-open]'), preview = event.target.closest('[data-native-preview]');
+    if (open) openNativeItem(open.dataset.nativeOpen).catch(error => { $('#builder-native-status').textContent = error.message; });
+    if (preview) { const item = nativeItems.find(item => (item.sku || item.id) === preview.dataset.nativePreview); if (item) openMarketPreview(item); }
+  });
   document.querySelector('.builder-library__filters').addEventListener('click', event => { const control = event.target.closest('[data-pack-filter]'); if (!control) return; document.querySelectorAll('[data-pack-filter]').forEach(item => item.classList.toggle('active', item === control)); renderBuilderPack(control.dataset.packFilter); setPackStatus(`${control.textContent.trim()} shapes shown.`); });
   $('#room-style-grid').addEventListener('click', (event) => { const room = event.target.closest('[data-room-style]'); if (!room) return; location.href = `environment-builder.html?layout=${encodeURIComponent(room.dataset.roomStyle)}`; });
   $('#builder-model-grid').addEventListener('click', (event) => { const model = event.target.closest('[data-builder-model]'); if (!model) return; const tray = readTray(), index = tray.findIndex(item => item.id === model.dataset.builderModel);

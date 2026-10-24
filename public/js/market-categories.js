@@ -3,7 +3,7 @@ import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['flight','Flight & mobility'],
- ['fitness','Fitness & gym upgrades'],['factory','Factory & engineering'],['arcade','Arcade & card machines'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
+ ['fitness','Fitness & gym upgrades'],['factory','Factory & engineering'],['arcade','Arcade & card machines'],['sports','Sports & equipment'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
  ['avatars','Characters & avatars'],['vehicles','Vehicles'],['pets','Pets & creatures'],
  ['wearables','Clothing & wearables'],['lands','Land & worlds'],['props','Props & models'],['care','Care supplies'],['other','Other items']
 ].map(([id,label])=>({id,label})));
@@ -15,6 +15,15 @@ export function marketCategory(item={},section='upgrades'){
  if(device&&['video','audio','image','board'].includes(device.kind))return 'media';
  if(ENTERABLE_BUILDINGS[nativeId])return 'buildings';
  const category=String(item.category||item.asset?.builder_category||'').toLowerCase();
+ const nativeCategory=item.native?String(item.builderCategory||'').toLowerCase():'';
+ if(String(nativeId||'').startsWith('hockey-')||category==='sports')return 'sports';
+ if(nativeCategory==='arcade')return 'arcade';
+ if(nativeCategory==='weapons')return 'weapons';
+ if(nativeCategory==='characters')return 'avatars';
+ if(nativeCategory==='creatures')return 'pets';
+ if(nativeCategory==='buildings')return 'buildings';
+ if(['landscape','plants'].includes(nativeCategory))return 'outdoors';
+ if(nativeCategory==='terrain'&&item.kind!=='material')return 'lands';
  if(Array.isArray(item.entries)&&category.includes('luxury'))return 'furniture';
  if(category.includes('media & live'))return 'media';if(category.includes('buildings & businesses'))return 'buildings';if(category.includes('nature & outdoors'))return 'outdoors';
  if(category.includes('arcade')||category.includes('card machines'))return 'arcade';
