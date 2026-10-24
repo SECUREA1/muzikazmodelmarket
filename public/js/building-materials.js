@@ -1,3 +1,36 @@
+// Metre-scaled native pieces use the same placement, paint and ownership path
+// as the original blocks. Their artwork is projected from their actual meshes.
+export const EXPANDED_BUILDING_PIECES = Object.freeze([
+  {id:'timber-pitched-roof',name:'Timber pitched roof',shape:'pitched-roof',dimensions:[4.8,1.2,3.6],type:'fort',color:0x8a5738,description:'Two sloping timber roof panels with a ridge beam.',keywords:['house','gable','roofing']},
+  {id:'metal-pitched-roof',name:'Metal pitched roof',shape:'pitched-roof',dimensions:[4.8,1.8,4.8],type:'fort',color:0x708495,metalness:.7,roughness:.4,description:'Wide metal gable roof for workshops and warehouses.',keywords:['industrial','warehouse','roofing']},
+  {id:'storey-staircase',name:'Full-storey staircase',shape:'staircase',dimensions:[2.4,3.7,4.8],type:'access',color:0x9b9c97,description:'Walkable 2.8 metre stair rise with open side handrails.',keywords:['stairs','floor','handrail','building']},
+  {id:'service-staircase',name:'Narrow service staircase',shape:'staircase',dimensions:[1.2,3.3,3.6],type:'access',color:0x758394,metalness:.7,description:'Compact 2.4 metre stair rise with safety handrails.',keywords:['stairs','industrial','maintenance']},
+  {id:'garden-staircase',name:'Garden staircase',shape:'staircase',dimensions:[2.4,1.7,2.4],type:'access',color:0xa7a18e,description:'Low garden steps with handrails and an 0.8 metre rise.',keywords:['stairs','landscape','terrace']},
+  {id:'covered-walkway',name:'Covered pedestrian walkway',shape:'covered-walkway',dimensions:[2.4,2.8,4.8],type:'access',color:0x6c8c7c,description:'Raised deck, open railings and a shelter roof.',keywords:['path','bridge','covered','pedestrian']},
+  {id:'railed-walkway',name:'Railed pedestrian walkway',shape:'walkway',dimensions:[2.4,1.2,4.8],type:'access',color:0x9a947f,description:'Long deck with open handrails along both sides.',keywords:['path','bridge','pedestrian','safety']},
+  {id:'warehouse-loading-ramp',name:'Warehouse loading ramp',shape:'ramp',dimensions:[3.6,1.2,4.8],type:'access',color:0x8d9294,description:'Broad stepped ramp connecting a loading yard to a raised floor.',keywords:['industrial','loading','access','warehouse']},
+  {id:'factory-service-platform',name:'Factory service platform',shape:'platform-rails',dimensions:[4.8,1.4,3.6],type:'fort',color:0x70889b,metalness:.7,description:'Raised industrial deck with three open-railed sides and one access edge.',keywords:['industrial','maintenance','safety','catwalk']},
+  {id:'railed-balcony-deck',name:'Railed balcony deck',shape:'platform-rails',dimensions:[3.6,1.2,2.4],type:'fort',color:0xa08b6a,description:'Balcony floor with open railings and an unobstructed entrance.',keywords:['house','terrace','railing']},
+  {id:'framed-window-grid',name:'Framed window grid',shape:'glazing',dimensions:[2.4,2.4,.2],type:'access',color:0xd3d6cd,description:'Framed glazed wall with transparent panes and crossbars.',keywords:['glass','window','house','facade']},
+  {id:'shopfront-glazing',name:'Shopfront glazing',shape:'glazing',dimensions:[4.8,2.8,.25],type:'access',color:0x4e646b,metalness:.5,description:'Wide transparent storefront divided into framed glass panes.',keywords:['glass','window','shop','facade']},
+  {id:'double-entry-doors',name:'Opening double entry doors',shape:'double-door',dimensions:[2.4,2.8,.25],type:'access',color:0x9a6a45,description:'Paired doors in a rigid frame. Toggle to open both leaves.',keywords:['door','entrance','opening','house']},
+  {id:'warehouse-loading-gate',name:'Opening warehouse loading gate',shape:'double-door',dimensions:[3.6,3.2,.3],type:'access',color:0x6a808a,metalness:.7,description:'Wide paired loading doors that open to leave a clear passage.',keywords:['door','industrial','opening','warehouse']},
+  {id:'garden-arbor',name:'Garden arbor',shape:'arbor',dimensions:[2.4,2.8,1.2],type:'props',color:0x9c7c4f,description:'Four posts and a slatted timber roof frame an open garden entrance.',keywords:['garden','plants','entrance','landscape']},
+  {id:'timber-pergola',name:'Timber pergola',shape:'arbor',dimensions:[3.6,2.8,3.6],type:'props',color:0xa1875a,description:'Large open-sided garden shelter with individual roof slats.',keywords:['garden','shelter','landscape','shade']},
+  {id:'raised-garden-bed',name:'Raised garden bed',shape:'garden-bed',dimensions:[2.4,.6,1.2],type:'props',color:0x9c754c,description:'Timber planting box with recessed soil and green plant clusters.',keywords:['garden','plants','flowers','landscape']},
+  {id:'corner-garden-bed',name:'Corner garden bed',shape:'corner-garden-bed',dimensions:[2.4,.9,2.4],type:'props',color:0x9b6850,description:'L-shaped planting bed that leaves its inside corner open.',keywords:['garden','plants','flowers','landscape']},
+  {id:'warehouse-pallet-rack',name:'Warehouse pallet rack',shape:'pallet-rack',dimensions:[3.6,3.2,1.2],type:'market',color:0x5185a4,metalness:.6,description:'Four upright posts and four open storage tiers for a warehouse.',keywords:['industrial','warehouse','storage','shelves']},
+  {id:'workshop-bench',name:'Workshop workbench',shape:'workbench',dimensions:[2.4,1.2,.9],type:'market',color:0x7b8d93,metalness:.5,description:'Solid worktop, open knee space and a lower tool shelf.',keywords:['industrial','table','craft','workshop']},
+  {id:'packing-station',name:'Packing station',shape:'packing-station',dimensions:[3.6,2.4,1.2],type:'market',color:0x859b9c,metalness:.5,description:'Packing worktop with a lower shelf and an overhead supply rack.',keywords:['industrial','warehouse','table','storage']},
+  {id:'locker-bank',name:'Workshop locker bank',shape:'lockers',dimensions:[2.4,1.8,.6],type:'market',color:0x6c8790,metalness:.6,description:'Four individual locker faces with raised vents and handles.',keywords:['industrial','storage','cabinet','workshop']},
+  {id:'safety-bollard-row',name:'Safety bollard row',shape:'bollards',dimensions:[3.6,1.2,.4],type:'access',color:0xe6b74c,metalness:.5,description:'Four separate safety posts with open gaps between them.',keywords:['street','industrial','safety','parking']},
+  {id:'street-bus-shelter',name:'Street bus shelter',shape:'shelter',dimensions:[3.6,2.8,1.8],type:'props',color:0x5d7d85,metalness:.5,description:'Roofed street shelter with glazed side panels and a bench.',keywords:['street','transport','shelter','city']},
+  {id:'industrial-pipe-rack',name:'Industrial pipe rack',shape:'pipe-rack',dimensions:[2.4,1.8,1.2],type:'props',color:0x7b999c,metalness:.75,description:'Three horizontal pipes carried by a four-post support rack.',keywords:['industrial','utility','pipes','factory']},
+  {id:'utility-gantry',name:'Utility service gantry',shape:'gantry',dimensions:[3.6,2.8,.6],type:'fort',color:0xd7ab4a,metalness:.6,description:'Twin upright supports and crossbeams leave an open passage below.',keywords:['industrial','frame','factory','support']},
+  {id:'park-picnic-table',name:'Park picnic table',shape:'picnic-table',dimensions:[2.4,1.1,1.8],type:'props',color:0xa48256,description:'A raised tabletop and two separate long benches.',keywords:['garden','park','table','landscape']},
+  {id:'terraced-spectator-stand',name:'Terraced spectator stand',shape:'grandstand',dimensions:[4.8,1.8,3.6],type:'entertainment',color:0x6c8c9d,description:'Six walkable spectator tiers with safety rails along the sides.',keywords:['sports','event','seating','stadium']},
+].map(piece=>Object.freeze({roughness:.8,...piece})));
+
 export const BUILDING_MATERIALS = Object.freeze([
   { id: 'studs', name: 'Studded block', color: 0x9cff00, roughness: .72 },
   { id: 'brick', name: 'Masonry brick', color: 0xb65438, roughness: .9, detail: 'mortar' },
@@ -101,6 +134,7 @@ export const BUILDING_MATERIALS = Object.freeze([
   {"id": "display-plinth", "name": "Round display plinth", "color": 13748666, "roughness": 0.8, "type": "market", "shape": "cylinder", "dimensions": [1.2, 0.6, 1.2]},
   {"id": "tiered-seating", "name": "Tiered spectator seating", "color": 7046309, "roughness": 0.65, "type": "entertainment", "shape": "steps", "dimensions": [3.6, 1.2, 2.4]},
   {"id": "race-curb", "name": "Racing track curb", "color": 13193033, "roughness": 0.65, "type": "entertainment", "shape": "curb", "dimensions": [2.4, 0.2, 0.4]},
+  ...EXPANDED_BUILDING_PIECES,
 ].map(material => Object.freeze({ solid: true, metalness: 0, ...material })));
 
 export function buildingMaterial(id) {
@@ -158,7 +192,121 @@ function createStructure(T, profile, tint) {
     root.add(mesh); return mesh;
   };
   const shaped=geometry=>{const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:tint??profile.color,roughness:profile.roughness,metalness:profile.metalness,emissive:profile.emissive??0,emissiveIntensity:profile.emissiveIntensity??0}));mesh.userData.brickPaintPart='body';mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;};
+  const glass=mesh=>{mesh.material.color.setHex(0x9ed8df);mesh.material.transparent=true;mesh.material.opacity=.28;mesh.material.depthWrite=false;mesh.material.roughness=.12;return mesh;};
+  const railing=(axis,fixed,length,bottom=0,height=.9)=>{
+    const count=Math.max(1,Math.ceil(length/1.2));
+    for(let i=0;i<=count;i++){const offset=-length/2+length*i/count;part(.08,height,.08,axis==='x'?offset:fixed,bottom,axis==='x'?fixed:offset);}
+    for(const y of [height*.45,height-.08])part(axis==='x'?length:.08,.08,axis==='x'?.08:length,axis==='x'?0:fixed,bottom+y,axis==='x'?fixed:0);
+  };
   switch(profile.shape) {
+    case 'pitched-roof': {
+      const run=(w-.12)/2,rise=h-.18,slope=Math.hypot(run,rise),angle=Math.atan2(rise,run);
+      for(const side of [-1,1]){const panel=shaped(new T.BoxGeometry(slope,.12,d));panel.rotation.z=-side*angle;panel.position.set(side*run/2,-h/2+.08+rise/2,0);}
+      part(.12,.12,d,0,h-.12);break;
+    }
+    case 'staircase': case 'grandstand': {
+      const railHeight=profile.shape==='grandstand'?.65:.85,rise=h-railHeight-.05,count=profile.shape==='grandstand'?6:Math.max(4,Math.ceil(rise/.22)),tread=d/count;
+      for(let i=0;i<count;i++)part(w,rise*(i+1)/count,tread,0,0,-d/2+tread*(i+.5));
+      for(const x of [-w/2+.06,w/2-.06]){
+        for(let i=0;i<count;i+=2)part(.08,railHeight,.08,x,rise*(i+1)/count,-d/2+tread*(i+.5));
+        part(.08,railHeight,.08,x,rise,d/2-tread/2);
+        const length=d-tread,climb=rise-rise/count,rail=shaped(new T.BoxGeometry(.08,.08,Math.hypot(length,climb)));
+        rail.rotation.x=-Math.atan2(climb,length);rail.position.set(x,-h/2+rise*(1+1/count)/2+railHeight,0);
+      }
+      break;
+    }
+    case 'walkway': case 'covered-walkway': case 'platform-rails': {
+      const covered=profile.shape==='covered-walkway',deck=.2,railHeight=covered?.9:Math.min(1,h-deck);
+      part(w,deck,d);
+      for(const x of [-w/2+.06,w/2-.06])railing('z',x,d-.12,deck,railHeight);
+      if(profile.shape==='platform-rails')railing('x',d/2-.06,w-.12,deck,railHeight);
+      if(covered){for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.14,h-.14,.14,x,0,z);part(w,.14,d,0,h-.14);}
+      break;
+    }
+    case 'glazing': {
+      const frame=.12;glass(part(w-frame*2,h-frame*2,.04,0,frame));
+      for(const x of [-w/2+frame/2,w/2-frame/2])part(frame,h,d,x);
+      for(const y of [0,h/2-frame/2,h-frame])part(w,frame,d,0,y);
+      const columns=Math.max(2,Math.round(w/1.2));for(let i=1;i<columns;i++)part(.07,h,d,-w/2+w*i/columns);
+      break;
+    }
+    case 'double-door': {
+      const frame=.15,leafWidth=(w-frame*2)/2;
+      for(const x of [-w/2+frame/2,w/2-frame/2])part(frame,h,d,x);
+      part(w,frame,d,0,h-frame);
+      for(const side of [-1,1]){
+        const leaf=part(leafWidth-.025,h-frame-.025,.1,side*leafWidth/2,.0125);leaf.userData.buildDoorLeaf=true;
+        const handle=part(.055,.22,.07,side*.15,h*.45,-d/2+.05,0xd3bb76);handle.userData.buildDoorLeaf=true;
+      }
+      root.userData.canToggle=true;root.userData.open=false;break;
+    }
+    case 'arbor': {
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.16,h-.14,.16,x,0,z);
+      for(const x of [-w/2+.1,w/2-.1])part(.18,.18,d,x,h-.28);
+      const slats=Math.max(4,Math.round(d/.4));for(let i=0;i<slats;i++)part(w,.12,.14,0,h-.12,-d/2+.07+(d-.14)*i/(slats-1));break;
+    }
+    case 'garden-bed': case 'corner-garden-bed': {
+      const bed=(width,depth,x,z)=>{
+        const wall=.1,boxHeight=h*.7;
+        for(const side of [-1,1]){part(wall,boxHeight,depth,x+side*(width-wall)/2,0,z);part(width,boxHeight,wall,x,0,z+side*(depth-wall)/2);}
+        part(width-wall*2,.08,depth-wall*2,x,h*.52,z,0x59442e);
+        const count=Math.max(2,Math.round(width/.55));for(let i=0;i<count;i++)part(.24,h*.36,Math.min(.35,depth-.24),x-width/2+(i+.5)*width/count,h*.64,z,0x5c8d45);
+      };
+      if(profile.shape==='corner-garden-bed'){bed(w,.72,0,d/2-.36);bed(.72,d-.72,-w/2+.36,-.36);}
+      else bed(w,d,0,0);break;
+    }
+    case 'pallet-rack': {
+      for(const x of [-w/2+.07,w/2-.07])for(const z of [-d/2+.07,d/2-.07])part(.14,h,.14,x,0,z);
+      for(const y of [.12,h/3,h*2/3,h-.1]){part(w,.1,d,0,y,0,0xbf9565);for(const z of [-d/2+.06,d/2-.06])part(w,.13,.12,0,y-.03,z,0xd48f43);}
+      break;
+    }
+    case 'workbench': case 'packing-station': {
+      const workHeight=profile.shape==='packing-station'?h*.45:h,top=.12;
+      part(w,top,d,0,workHeight-top,0,0xb49b6d);
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.14,workHeight-top,.14,x,0,z);
+      part(w-.2,.1,d-.2,0,.15);
+      if(profile.shape==='packing-station'){for(const x of [-w/2+.1,w/2-.1])part(.14,h,.14,x,0,d/2-.1);part(w,.12,d*.45,0,h-.12,d*.25);}
+      break;
+    }
+    case 'lockers': {
+      part(w,.08,d);part(w,.08,d,0,h-.08);part(w,h,.06,0,0,-d/2+.03);
+      const count=4,bay=w/count;
+      for(let i=0;i<=count;i++)part(.05,h,d,-w/2+.025+(w-.05)*i/count);
+      for(let i=0;i<count;i++){
+        const x=-w/2+bay*(i+.5);part(bay-.06,h-.12,.04,x,.06,d/2-.05);
+        for(let row=0;row<3;row++)part(bay*.5,.025,.015,x,h*.73+row*.075,d/2-.0125,0x223b42);
+        part(.04,.16,.04,x+bay*.25,h*.45,d/2-.02,0xd2d6cc);
+      }
+      break;
+    }
+    case 'bollards': {
+      const count=4;for(let i=0;i<count;i++){
+        const x=-w/2+d/2+(w-d)*i/(count-1);part(d,.08,d,x);
+        const post=shaped(new T.CylinderGeometry(d*.22,d*.22,h-.08,12));post.position.set(x,.04,0);
+        part(d*.5,.13,d*.5,x,h*.68,0,0x26383c);
+      }break;
+    }
+    case 'shelter': {
+      part(w,.12,d);part(w,.14,d,0,h-.14);
+      for(const x of [-w/2+.08,w/2-.08])for(const z of [-d/2+.08,d/2-.08])part(.12,h,.12,x,0,z);
+      glass(part(w-.24,h-.4,.04,0,.15,d/2-.08));for(const x of [-w/2+.08,w/2-.08])glass(part(.04,h-.4,d-.24,x,.15));
+      part(w-.6,.12,.45,0,.5,d*.22);for(const x of [-w/2+.6,w/2-.6])part(.1,.5,.4,x,0,d*.22);part(w-.6,.5,.08,0,.6,d*.22+.2);
+      break;
+    }
+    case 'pipe-rack': {
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.14,h,.14,x,0,z);
+      for(const x of [-w/2+.1,w/2-.1])for(const y of [.25,h*.65])part(.16,.12,d,x,y);
+      for(const z of [-d*.3,0,d*.3]){const pipe=shaped(new T.CylinderGeometry(.1,.1,w-.12,12));pipe.rotation.z=Math.PI/2;pipe.position.set(0,-h/2+h*.8,z);}
+      break;
+    }
+    case 'gantry':
+      for(const x of [-w/2+.1,w/2-.1])part(.2,h,d,x);
+      part(w,.2,d,0,h-.2);part(w,.12,d,0,h*.72);break;
+    case 'picnic-table':
+      part(w,.12,d*.48,0,h-.12);
+      for(const side of [-1,1]){part(w,.1,d*.2,0,h*.44,side*d*.4);for(const x of [-w/2+.3,w/2-.3])part(.12,h*.44,d*.2,x,0,side*d*.4);}
+      for(const x of [-w/2+.3,w/2-.3]){part(.16,h-.12,.16,x);part(.16,.1,d,x,.15);}
+      break;
     case 'cylinder': shaped(new T.CylinderGeometry(w/2,w/2,h,16)).scale.z=d/w;break;
     case 'sphere': shaped(new T.SphereGeometry(.5,16,10)).scale.set(w,h,d);break;
     case 'dome': {const mesh=shaped(new T.SphereGeometry(.5,16,8,0,Math.PI*2,0,Math.PI/2));mesh.scale.set(w,h*2,d);mesh.position.y=-h/2;break;}
@@ -295,5 +443,6 @@ export function buildingType(material) {
   return 'props';
 }
 export function matchesBuildingItem(material,type='all',query='') {
-  return (type==='all'||buildingType(material)===type) && material.name.toLowerCase().includes(query.trim().toLowerCase());
+  const text=[material.name,material.description,...(material.keywords||[])].filter(Boolean).join(' ').toLowerCase();
+  return (type==='all'||buildingType(material)===type) && query.trim().toLowerCase().split(/\s+/).every(word=>text.includes(word));
 }
