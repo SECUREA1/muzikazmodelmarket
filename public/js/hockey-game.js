@@ -1,5 +1,6 @@
 import {LocalHockeyMotion,createHockeyInputPump} from './hockey-local-motion.js';
 import {HOCKEY_CHALLENGES,mountNativeGameChallenges} from './native-game-challenges.js';
+import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
 import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
@@ -168,7 +169,9 @@ const xrControls=mountXRGameControls({renderer,scene,camera,rig:vrRig,parent:acc
  {label:'Return to lobby',run:()=>$('#restart').onclick()},{label:'Exit VR',run:()=>xrControls.endSession()}
 ]});
 
-const hockeyChallenges=mountNativeGameChallenges({parent:document.body,name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:()=>{keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;hockeyController.reset();flushInput();},onReturnFocus:()=>canvas.focus({preventScroll:true})});
+function releaseHockeyGameInput(){keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;hockeyController.reset();flushInput();}
+document.addEventListener(GAME_INPUT_RELEASE_EVENT,releaseHockeyGameInput,true);
+const hockeyChallenges=mountNativeGameChallenges({parent:document.body,name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:releaseHockeyGameInput,onReturnFocus:()=>canvas.focus({preventScroll:true})});
 function updateHockeyChallenges(){
  const elapsed=state?.elapsed||0,me=state?.players.find(player=>player.human===selfId);
  if(running&&!nativeHockeyWasRunning||elapsed<nativeHockeyLastElapsed-.1)nativeHockeyEpoch++;

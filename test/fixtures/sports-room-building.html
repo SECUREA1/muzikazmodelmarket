@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}canvas{width:390px;height:400px;background:#17331c}nav{height:50px}</style></head><body><nav></nav><canvas width="390" height="400"></canvas><script type="module">
 import * as THREE from '../../public/vendor/three/three.module.min.js';
 import {mountSportsRoomBuilding} from '../../public/js/sports-room-building.js';
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(60,390/400,.1,100);camera.position.set(0,5,5);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+const inputCanvases=[];window.inputCanvases=inputCanvases;const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(60,390/400,.1,100);camera.position.set(0,5,5);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
 const floor=new THREE.Mesh(new THREE.BoxGeometry(50,.2,50),new THREE.MeshBasicMaterial());floor.position.y=-.1;scene.add(floor);
-window.building=mountSportsRoomBuilding({THREE,scene,camera,canvas:document.querySelector('canvas'),parent:document.querySelector('nav'),roomId:'browser-build-test',surfaces:()=>[floor],mode:()=>({live:false}),announce:()=>{}});window.scene=scene;
+window.building=mountSportsRoomBuilding({THREE,scene,camera,canvas:document.querySelector('canvas'),inputCanvases,parent:document.querySelector('nav'),roomId:'browser-build-test',surfaces:()=>[floor],mode:()=>({live:false}),announce:()=>{}});window.scene=scene;
 function frame(){window.building.update();requestAnimationFrame(frame)}frame();document.body.dataset.ready='true';
 </script></body></html>

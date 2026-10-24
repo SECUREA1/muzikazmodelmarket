@@ -1,4 +1,5 @@
 import {arcadeChallenges,mountNativeGameChallenges} from './native-game-challenges.js';
+import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
 import {sportIcon} from './sports-action-bar.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {explorerBroadcastPose} from './explorer-camera.js';
@@ -446,7 +447,9 @@ const arcadePeopleToolbar=document.querySelector('.arcade-display-toolbar');arca
 mountResidentWorldLink(arcadePeopleToolbar,environmentId,{compact:true,baseUrl:residentLinkBase});
 mountResidentWorldLink(document.querySelector('.arcade-display-popup[aria-label="Explore the arcade"]'),environmentId,{baseUrl:residentLinkBase});
 
-const nativeChallenges=mountNativeGameChallenges({parent:document.body,name:mapName,offers:arcadeChallenges(availableAttractionIds()),onRelease:()=>{pressed.clear();walkKeys.clear();touchKeys.clear();controllerWalkKeys.clear();controllerMove={x:0,y:0};drag=false;arcadeController.reset();requestGameInput();},onReturnFocus:()=>{(game===null?renderer.domElement:canvas).focus({preventScroll:true});}});
+function releaseArcadeGameInput(){pressed.clear();walkKeys.clear();touchKeys.clear();controllerWalkKeys.clear();controllerMove={x:0,y:0};drag=false;arcadeController.reset();requestGameInput();}
+document.addEventListener(GAME_INPUT_RELEASE_EVENT,releaseArcadeGameInput,true);
+const nativeChallenges=mountNativeGameChallenges({parent:document.body,name:mapName,offers:arcadeChallenges(availableAttractionIds()),onRelease:releaseArcadeGameInput,onReturnFocus:()=>{(game===null?renderer.domElement:canvas).focus({preventScroll:true});}});
 function updateArcadeChallenges(){
  // The nonmodal game viewport sits below dashboard chrome. Keep companion
  // challenges beside it so their controls remain above the dashboard header.

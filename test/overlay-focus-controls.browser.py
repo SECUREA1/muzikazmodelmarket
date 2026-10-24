@@ -66,7 +66,7 @@ try:
             assert page.locator(panel).is_hidden(), 'Jump must not reopen the closed panel.'
             assert toggle.get_attribute('aria-expanded') == 'false'
 
-        page.get_by_role('button',name='Expand local map',exact=True).click()
+        page.get_by_role('button',name='Open map markers',exact=True).click()
         pin=page.locator('.live-local-map svg [role="button"]').first
         pin.focus()
         page.keyboard.press('w')
@@ -74,11 +74,12 @@ try:
         assert page.evaluate('gameKeys.splice(0)') == ['w', 'f'], 'A nonmodal map pin must not trap gameplay.'
         page.keyboard.press('Enter')
         page.keyboard.press('Space')
-        assert page.evaluate('mapSelections') == 2
+        assert page.evaluate('mapSelections') == 0, 'Marker activation stays in the marker popup.'
         assert page.evaluate('gameKeys.splice(0)') == [], 'Pins keep their activation keys.'
-        page.get_by_role('button',name='Collapse local map',exact=True).click()
+        page.get_by_role('button',name='Expand full map',exact=True).click()
+        assert page.evaluate('mapSelections') == 1
         gameplay_keys()
-        assert page.get_by_role('button',name='Expand local map',exact=True).get_attribute('aria-expanded') == 'false'
+        assert page.get_by_role('button',name='Open map markers',exact=True).get_attribute('aria-expanded') == 'false'
 
         page.evaluate('''async()=>{
             const {mountSkiResortControls}=await import('/public/js/ski-resort-ui.js');
@@ -89,7 +90,11 @@ try:
         ski_toggle.click()
         page.get_by_role('button',name='Close ski race panel',exact=True).focus()
         page.keyboard.press('w')
-        assert page.evaluate('gameKeys.splice(0)') == []
+        assert page.evaluate('gameKeys.splice(0)') == ['w'], 'The ski companion must share fresh movement.'
+        assert page.locator('.ski-resort-controls').get_attribute('data-gameplay-blocking') == 'false'
+        page.get_by_label('Lobby name',exact=True).fill('Walk with friends')
+        page.keyboard.press('w')
+        assert page.evaluate('gameKeys.splice(0)') == [], 'Ski lobby text keeps its typing keys.'
         page.keyboard.press('Escape')
         assert ski_toggle.evaluate('(node)=>node===document.activeElement')
         gameplay_keys()

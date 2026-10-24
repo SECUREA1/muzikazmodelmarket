@@ -52,7 +52,7 @@ export function constructionSteelStep(state={},site={}){
 
 export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const stylesheet=document.createElement('link');stylesheet.rel='stylesheet';stylesheet.href=new URL('../assets/construction-ui.css',import.meta.url).href;document.head.append(stylesheet);
- const panel=document.createElement('section');panel.className='construction-controls';panel.hidden=true;panel.setAttribute('aria-label','Construction machine dashboard');
+ const panel=document.createElement('section');panel.className='construction-controls';panel.hidden=true;panel.dataset.gameplayBlocking='false';panel.setAttribute('aria-label','Construction machine dashboard');
  const manual=document.createElement('div');manual.className='construction-manual';
  const heading=document.createElement('header');heading.className='construction-header';heading.innerHTML='<strong></strong><nav class="construction-mode-switch" aria-label="Machine control mode"><button type="button" data-construction-mode="work" aria-pressed="true">Work</button><button type="button" data-construction-mode="drive" aria-pressed="false">Drive</button></nav><button type="button" data-construction-view="instruments" aria-haspopup="dialog">Instruments</button>';
  const compactState=document.createElement('output');compactState.className='construction-compact-state';compactState.setAttribute('aria-label','Machine summary');
@@ -80,10 +80,10 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const crewActions=document.createElement('div');crewActions.className='construction-crew-actions';
  for(const [operation,label]of [['start','Start crew'],['pause','Pause crew']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.crewOperation=operation;button.onclick=()=>requestCrew(operation);crewActions.append(button);}
  const crewWorkers=document.createElement('div');crewWorkers.className='construction-crew-workers';const crewJobs=document.createElement('section');crewJobs.className='construction-crew-jobs';crewJobs.setAttribute('aria-label','Construction job progress');crewDialog.append(crewStatus,crewActions,crewWorkers,crewJobs);
- const workerNodes=new Map(),jobNodes=new Map();let crewBusy=false;
+ const workerNodes=new Map(),jobNodes=new Map();let crewBusy=false,crewRevision=0;
 
  manual.append(pads,travelPanel);panel.append(heading,compactState,manual);stage.append(panel);
- let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',inFlight=0,neutralInFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null;
+ let current=null,kind=null,actorId=null,snapshot=null,selfId=null,disposed=false,controlsVisible=true,controlMode='work',inFlight=0,neutralInFlight=false,pending=false,actionBusy=false,workView=true,feedback=null,lastDialogOpener=null,machineRevision=0;
  let axes={},sticks=[],keyboardResets=[],travel={forward:0,side:0,held:false},instrumentNodes=new Map(),axisNodes=new Map();
  const canUse=()=>!disposed&&!!current&&controlsVisible&&!panel.hidden&&!document.hidden&&!gameplayOverlayOpen();
  function showFeedback(message,failed=false){message=String(message);feedback={message,failed,until:performance.now()+(failed?6500:2500)};setText(status,message);setText(compactState,message);setAttr(compactState,'title',message);setAttr(compactState,'data-feedback',failed?'error':'notice');}
@@ -91,20 +91,22 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  async function flushAxes(){
   const neutral=!Object.values(axes).some(value=>Math.abs(value)>.001);
   if((neutral?neutralInFlight:inFlight>=2)||!pending||!actorId||disposed)return;
-  const entityId=actorId,sent={...axes};pending=false;inFlight++;if(neutral)neutralInFlight=true;
-  try{await command('construction-controls',{operation:'control',entityId,axes:sent});}catch(error){if(actorId===entityId&&!panel.hidden)report(error);}finally{inFlight--;if(neutral)neutralInFlight=false;if(pending&&!disposed)void flushAxes();}
+  const entityId=actorId,sent={...axes},revision=machineRevision;pending=false;inFlight++;if(neutral)neutralInFlight=true;
+  try{await command('construction-controls',{operation:'control',entityId,axes:sent});}catch(error){if(!disposed&&revision===machineRevision&&!panel.hidden)report(error);}finally{if(!disposed&&revision===machineRevision){inFlight--;if(neutral)neutralInFlight=false;if(pending)void flushAxes();}}
  }
  function sendAxes(){pending=true;void flushAxes();}
  function changeAxes(values){let changed=false;for(const [axis,value]of Object.entries(values)){let next=Math.max(-1,Math.min(1,Number(value)||0));if(kind==='truck'&&Math.abs(current?.driving?.speed||0)>.5)next=0;if((axes[axis]||0)!==next){axes[axis]=next;changed=true;}}if(changed){feedback=null;updateAxisFeedback();updateInstruments();sendAxes();}}
  function setTravel(next,{notify=true}={}){const changed=travel.forward!==next.forward||travel.side!==next.side||travel.held!==next.held;travel=next;if(changed&&next.held){feedback=null;updateInstruments();}if(changed&&notify)onInput();}
  function reset({notify=true}={}){const active=Object.values(axes).some(value=>Math.abs(value)>.001);axes={};setTravel({forward:0,side:0,held:false},{notify});for(const resetKey of keyboardResets)resetKey();for(const stick of sticks)stick.reset();if(active)sendAxes();updateAxisFeedback();}
  function safeReset(){reset();}
+ // A replacement cab owns fresh request slots; old replies cannot change it.
+ function replaceMachineRequests(){machineRevision++;actionBusy=false;inFlight=0;neutralInFlight=false;pending=false;feedback=null;}
  async function request(operation,fields={}){
   if(actionBusy||!actorId||disposed)return;
-  requestGameInputRelease('machine-action');actionBusy=true;refreshAction();
-  try{const result=await command(operation==='exit'?'interact':'construction-controls',operation==='exit'?{}:{operation,entityId:actorId,...fields});if(result?.result?.message)showFeedback(result.result.message);else if(!result)showFeedback('Request was not applied. Check the machine or site conditions and try again.',true);}catch(error){report(error);}finally{actionBusy=false;refreshAction();}
+  const revision=machineRevision;requestGameInputRelease('machine-action');actionBusy=true;refreshAction();
+  try{const result=await command(operation==='exit'?'interact':'construction-controls',operation==='exit'?{}:{operation,entityId:actorId,...fields});if(disposed||revision!==machineRevision)return;if(result?.result?.message)showFeedback(result.result.message);else if(!result)showFeedback('Request was not applied. Check the machine or site conditions and try again.',true);}catch(error){if(!disposed&&revision===machineRevision)report(error);}finally{if(!disposed&&revision===machineRevision){actionBusy=false;refreshAction();}}
  }
- const utilities=document.createElement('div');utilities.className='sports-action-utilities construction-action-utilities';utilities.hidden=true;stage.append(utilities);
+ const utilities=document.createElement('div');utilities.className='sports-action-utilities construction-action-utilities';utilities.hidden=true;utilities.dataset.gameplayBlocking='false';stage.append(utilities);
  const toggle=document.createElement('button');toggle.type='button';toggle.className='sports-icon-button construction-controls-toggle';toggle.setAttribute('aria-label','Show or hide construction dashboard');toggle.setAttribute('aria-expanded','true');utilities.append(toggle);
  const crewToggle=document.createElement('button');crewToggle.type='button';crewToggle.className='sports-icon-button construction-crew-toggle';crewToggle.setAttribute('aria-label','Construction crew and jobs');crewToggle.setAttribute('aria-haspopup','dialog');crewToggle.innerHTML=sportIcon('tools')+'<span>Crew / jobs</span>';crewToggle.onclick=event=>openDialog(crewDialog,event.currentTarget);utilities.append(crewToggle);
  const bar=document.createElement('div');bar.className='sports-action-bar construction-action-bar';bar.setAttribute('aria-label','Construction machine actions');
@@ -160,10 +162,10 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  function addQuick(label,operation){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.operation=operation;button.onclick=()=>request(operation,operation==='precision'?{enabled:!current?.construction?.precision}:{});quick.append(button);return button;}
  async function requestCrew(operation,fields={}){
   if(crewBusy||disposed||!snapshot?.construction)return;
-  requestGameInputRelease('crew-action');crewBusy=true;updateCrew();
-  try{const result=await command('construction-crew',{operation,...fields});const message=result?.result?.message||(!result?'Crew request was not applied. Check that you are near the construction site.':'Crew request confirmed.');setText(crewStatus,message);crewStatus.dataset.feedbackUntil=String(performance.now()+6500);}
-  catch(error){setText(crewStatus,error?.message||String(error));crewStatus.dataset.feedbackUntil=String(performance.now()+6500);}
-  finally{crewBusy=false;updateCrew();}
+  const revision=crewRevision;requestGameInputRelease('crew-action');crewBusy=true;updateCrew();
+  try{const result=await command('construction-crew',{operation,...fields});if(disposed||revision!==crewRevision)return;const message=result?.result?.message||(!result?'Crew request was not applied. Check that you are near the construction site.':'Crew request confirmed.');setText(crewStatus,message);crewStatus.dataset.feedbackUntil=String(performance.now()+6500);}
+  catch(error){if(!disposed&&revision===crewRevision){setText(crewStatus,error?.message||String(error));crewStatus.dataset.feedbackUntil=String(performance.now()+6500);}}
+  finally{if(!disposed&&revision===crewRevision){crewBusy=false;updateCrew();}}
  }
  function options(select,entries,preferred){
   const signature=JSON.stringify(entries);if(select.dataset.options===signature)return;
@@ -255,10 +257,12 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const releaseEvent=()=>reset({notify:false});window.addEventListener('blur',safeReset);document.addEventListener('visibilitychange',safeReset);document.addEventListener('muzikaz:release-game-input',releaseEvent);
  const dialogObserver=new MutationObserver(records=>{if(records.some(({target,attributeName})=>attributeName==='open'?target.localName==='dialog'&&target.open:target.id==='crib-chat-panel'&&!target.hidden)&&gameplayOverlayOpen())reset();});dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
  return {releaseInputs:reset,get workView(){return !!kind&&workView;},inputs(){return canUse()&&kind!=='crane'&&travel.held&&current?.construction?.telemetry?.travelAllowed!==false?{forward:travel.forward,side:travel.side,brake:false}:null;},update(nextSnapshot,id){
+  const replacement=selfId!==id||!!snapshot?.construction!==!!nextSnapshot?.construction;
+  if(replacement){crewRevision++;crewBusy=false;crewStatus.dataset.feedbackUntil='0';}
   snapshot=nextSnapshot;selfId=id;updateCrew();const self=snapshot.players?.[selfId],next=snapshot.actors?.[self?.vehicleId],nextKind=constructionMachineKind(next),active=!!nextKind&&next?.active!==false&&self?.health!==0;
-  if(!active){reset();current=null;actorId=null;kind=null;delete stage.dataset.constructionMachine;syncVisibility();return;}
-  if(actorId!==next.id||kind!==nextKind){reset();current=next;actorId=next.id;kind=nextKind;controlMode='work';feedback=null;buildControls();setText(status,'');}else current=next;
+  if(!active){reset();if(actorId||replacement)replaceMachineRequests();current=null;actorId=null;kind=null;delete stage.dataset.constructionMachine;syncVisibility();return;}
+  if(replacement||actorId!==next.id||kind!==nextKind){reset();replaceMachineRequests();current=next;actorId=next.id;kind=nextKind;controlMode='work';buildControls();setText(status,'');}else current=next;
   setAttr(stage,'data-construction-machine',kind);syncVisibility();refreshAction();
   updateInstruments();
- },dispose(){reset();disposed=true;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);document.removeEventListener('muzikaz:release-game-input',releaseEvent);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
+ },dispose(){reset();disposed=true;replaceMachineRequests();crewRevision++;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);document.removeEventListener('muzikaz:release-game-input',releaseEvent);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
 }

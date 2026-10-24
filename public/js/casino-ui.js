@@ -27,7 +27,8 @@ export function mountCasinoUI({stage,getEnvironment,getPosition,request,announce
  const panel=document.createElement('section');panel.id='muzikaz-casino-panel';panel.className='casino-panel';panel.hidden=true;panel.setAttribute('aria-label','MUZIKAZ Casino');
  panel.innerHTML='<div class="casino-panel__top"><div><span class="casino-eyebrow">STARLIGHT GRAND · MUZIKAZ CASINO</span><h3 data-casino-title></h3><p data-casino-subtitle></p></div><div class="casino-balance"><small>WALLET BALANCE</small><strong data-casino-balance>— MZK</strong></div></div><div data-casino-content></div><p class="casino-message" data-casino-message role="status" aria-live="polite"></p><div class="casino-panel__footer"><span>All bets and winnings settle in MZK.</span><button type="button" data-casino-people>Meet staff &amp; find a favor</button><button type="button" data-casino-close>Return to walking</button></div>';
  stage.append(panel);
- let nearby=null,current=null,state=null,pending=false,loading=false,disposed=false,holds=new Set(),bet=5,selection='red',rounds={},message='',failedCommand=null,loadToken=0;
+ let nearby=null,current=null,state=null,pending=false,loading=false,disposed=false,holds=new Set(),bet=5,selection='red',rounds={},message='',failedCommand=null,loadToken=0,commandGeneration=0;
+ const currentCommand=generation=>!disposed&&generation===commandGeneration;
  const $=selector=>panel.querySelector(selector),content=$('[data-casino-content]');
  const screen=fullscreenPanel(panel,{onOpen:()=>{document.exitPointerLock?.();onOpen();},onClose:()=>{current=null;holds.clear();trigger.setAttribute('aria-expanded','false');}});
  screen.dialog.classList.add('casino-dialog');
@@ -38,6 +39,7 @@ export function mountCasinoUI({stage,getEnvironment,getPosition,request,announce
   return result?.success===true&&Object.hasOwn(result,'data')?result.data:result;
  }
  async function refresh(){
+  if(disposed)return;
   const token=++loadToken;loading=true;render();
   try{const next=await api('/api/casino/state');if(disposed||token!==loadToken)return;state=next;for(const kind of Object.keys(GAME_NAMES)){const round=next.activeRounds?.[kind]||next.history?.find(item=>item.game===kind);if(round)rounds[kind]=round;else delete rounds[kind];}onBalance(next.balance);message='';}
   catch(error){if(!disposed&&token===loadToken){if(authenticationError(error))clearAccount();message=error.message;}}
@@ -90,42 +92,45 @@ export function mountCasinoUI({stage,getEnvironment,getPosition,request,announce
   content.querySelectorAll('[data-vendor]').forEach(button=>button.onclick=()=>purchase(button.dataset.vendor));
   content.querySelector('[data-refresh]')?.addEventListener('click',refresh);
  }
- async function mutate(path,body){
+ async function mutate(path,body,generation){
   const signature=JSON.stringify({path,body}),retry=failedCommand?.signature===signature?failedCommand:null;
   const payload=retry?.payload||{...body,requestId:crypto.randomUUID()};failedCommand={signature,payload};
   const session=await api('/api/market/session');
-  const result=await api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(payload)});failedCommand=null;return result;
+  if(!currentCommand(generation))return null;
+  const result=await api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(payload)});if(!currentCommand(generation))return null;failedCommand=null;return result;
  }
  async function command(operation){
-  if(pending||!current||!isGame(current.kind))return;
+  if(disposed||pending||!current||!isGame(current.kind))return;
+  const generation=commandGeneration;
   const station=current,game=current.kind,round=rounds[game],body={game,operation};
   if(operation==='bet'){
    if(!Number.isInteger(bet)||bet<1||bet>100){message='Choose a whole-number bet from 1 to 100 MZK.';render();return;}
    Object.assign(body,{betMzk:bet,selection:game==='roulette'&&/^\d+$/.test(String(selection))?Number(selection):selection});
   }else{if(!round)return;Object.assign(body,{roundId:round.id,revision:round.revision});if(operation==='draw')body.holds=[...holds].sort((a,b)=>a-b);}
   pending=true;message='';render();
-  try{const result=await mutate('/api/casino/play',body);if(disposed)return;rounds[game]=result.round;setBalance(result.balance);onOutcome(station,result);holds.clear();message=result.message||'Round updated.';if(result.round?.phase==='complete')announce(message);}
-  catch(error){if(!disposed){if(authenticationError(error))clearAccount();message=error.message;announce(message);}}
-  finally{if(!disposed){pending=false;render();}}
+  try{const result=await mutate('/api/casino/play',body,generation);if(!currentCommand(generation))return;rounds[game]=result.round;setBalance(result.balance);onOutcome(station,result);holds.clear();message=result.message||'Round updated.';if(result.round?.phase==='complete')announce(message);}
+  catch(error){if(currentCommand(generation)){if(authenticationError(error))clearAccount();message=error.message;announce(message);}}
+  finally{if(currentCommand(generation)){pending=false;render();}}
  }
  async function purchase(itemId){
-  if(pending)return;pending=true;message='';render();
-  try{const result=await mutate('/api/casino/vendor',{itemId});if(disposed)return;setBalance(result.balance);message=result.message||'Your refreshment is served.';announce(message);}
-  catch(error){if(!disposed){if(authenticationError(error))clearAccount();message=error.message;}}
-  finally{if(!disposed){pending=false;render();}}
+  if(disposed||pending||!current)return;const generation=commandGeneration;pending=true;message='';render();
+  try{const result=await mutate('/api/casino/vendor',{itemId},generation);if(!currentCommand(generation))return;setBalance(result.balance);message=result.message||'Your refreshment is served.';announce(message);}
+  catch(error){if(currentCommand(generation)){if(authenticationError(error))clearAccount();message=error.message;}}
+  finally{if(currentCommand(generation)){pending=false;render();}}
  }
  function close(){screen.close();}
  function open(){
-  update();if(!nearby||gameplayOverlayOpen()||pending)return false;
+  if(disposed)return false;update();if(!nearby||gameplayOverlayOpen()||pending)return false;
   current=nearby;holds.clear();selection=current.kind==='dice'?'low':'red';message='';panel.setAttribute('aria-label','Starlight Grand · '+title());render();screen.open();trigger.setAttribute('aria-expanded','true');void refresh();return true;
  }
  function update(){
   if(disposed)return;nearby=nearestCasinoStation(getEnvironment(),getPosition());
   const visible=Boolean(nearby)&&!screen.dialog.open&&!gameplayOverlayOpen();trigger.hidden=!visible;
   if(nearby){const label=(isGame(nearby.kind)?'Play ':nearby.kind==='vault'?'Inspect ':'Use ')+(GAME_NAMES[nearby.kind]||nearby.name);if(trigger.dataset.station!==nearby.id){trigger.dataset.station=nearby.id;trigger.innerHTML='<span class="casino-use__key">E</span><span><small>STARLIGHT GRAND</small>'+escape(label)+'</span>';trigger.setAttribute('aria-label',label);}}
-  if(current){const pos=getPosition(),env=getEnvironment();if((typeof env==='string'?env:env?.id)!==CASINO_ID||Math.hypot(pos.x-current.position.x,pos.z-current.position.z)>8)close();}
+  if(current){const pos=getPosition(),env=getEnvironment();if((typeof env==='string'?env:env?.id)!==CASINO_ID){reset();return;}if(Math.hypot(pos.x-current.position.x,pos.z-current.position.z)>8)close();}
  }
+ function reset(){loadToken++;commandGeneration++;loading=pending=false;clearAccount();message='';close();nearby=null;trigger.hidden=true;}
  trigger.onclick=open;$('[data-casino-close]').onclick=close;$('[data-casino-people]').onclick=()=>{const station=current;close();onConversations(station);};
  for(const type of ['pointerdown','click','wheel'])panel.addEventListener(type,event=>event.stopPropagation());
- return {update,open,available(){update();return Boolean(nearby)&&!screen.dialog.open&&!gameplayOverlayOpen()&&!pending;},reset(){loadToken++;loading=false;close();nearby=null;trigger.hidden=true;},dispose(){if(disposed)return;disposed=true;loadToken++;screen.close();screen.disconnect();screen.dialog.remove();trigger.remove();}};
+ return {update,open,available(){update();return !disposed&&Boolean(nearby)&&!screen.dialog.open&&!gameplayOverlayOpen()&&!pending;},reset,dispose(){if(disposed)return;reset();disposed=true;screen.disconnect();screen.dialog.remove();trigger.remove();}};
 }

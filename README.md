@@ -130,6 +130,11 @@ still select challenges, and conversation fields keep their typing controls.
 Routine toolbar updates preserve open conversation focus. Map travel ends an
 active walking route.
 
+Facility menus release held walking and machine controls when opened or closed.
+Changing maps or machines also clears obsolete button locks and ignores replies
+from the previous site. Factory and gym panels close before a replacement player
+joins; ski menus share movement while keeping text and selection keys local.
+
 The top toolbar’s SVG **Quests** button opens local objectives and AI contacts.
 Ask a contact a question or request a live demonstration: construction operators
 use the real hydraulics and finite site materials, and factory specialists run

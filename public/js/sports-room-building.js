@@ -5,6 +5,7 @@ import {anchorServerAsset,disposeProjection} from './server-scene-projection.js'
 import {projectSharedBuildings} from './authoritative-room-client.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
 import {mountRoomBuildingToggle} from './room-building-toggle.js';
+import {requestGameInputRelease} from './game-input-release.js';
 
 /** A shared building layer for native sports, separate from scores and match input. */
 export function mountSportsRoomBuilding({THREE,scene,camera,canvas,inputCanvases=[],parent,roomId,surfaces,mode,announce=()=>{},onChange=()=>{}}){
@@ -39,7 +40,10 @@ export function mountSportsRoomBuilding({THREE,scene,camera,canvas,inputCanvases
    return {id,revision:records[id]?.revision||1,placement:transform};
   }
  });
- button.onclick=()=>{refreshPolicy();if(!dialog.open)dialog.showModal();};
+ let menuOpen=false;
+ button.onclick=()=>{refreshPolicy();if(!dialog.open){menuOpen=true;requestGameInputRelease('sports-building-open');dialog.showModal();}};
+ dialog.addEventListener('keydown',event=>event.stopPropagation());
+ dialog.addEventListener('close',()=>{if(dialog.open||!menuOpen)return;menuOpen=false;requestGameInputRelease('sports-building-close');if(!document.querySelector('dialog:modal'))[...inputCanvases,canvas].find(node=>node?.isConnected&&!node.closest('[hidden],[inert]')&&node.getClientRects().length&&(!node.checkVisibility||node.checkVisibility({visibilityProperty:true})))?.focus({preventScroll:true});});
  dialog.querySelector('[data-close]').onclick=()=>dialog.close();
  dialog.querySelector('[data-stop]').onclick=()=>{placement.cancel();dialog.close();};
  dialog.querySelector('[data-equip]').onclick=async()=>{if(!policy.enabled)return;dialog.close();const material=buildingMaterial(select.value);if(await placement.start({id:'material:'+material.id,materialId:material.id,name:material.name}))placement.setQuickMode(true);};

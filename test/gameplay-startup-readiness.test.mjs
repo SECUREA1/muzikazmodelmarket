@@ -22,7 +22,7 @@ function fixture(extra={}){
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
-  districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
+  districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
@@ -89,6 +89,20 @@ test('world navigation stays disabled through joining and restores only for a co
  context.multiplayerWorldLoading=false;context.authoritativeClient.ready=false;assert.equal(context.gameplayControlsReady(),true,'a joined player keeps controls during transport recovery');
  context.authoritativeClient=null;assert.equal(context.gameplayControlsReady(),false,'a disposed room does not accept gameplay input');
  context.serverHostedRoom=false;assert.equal(context.gameplayControlsReady(),true,'solo startup needs no room connection');
+});
+
+test('resetting a room clears facility gates and machine controls before a retry',()=>{
+ const panels=new Set(['factory','fitness','ski','device','land','casino','yacht']);let machineHeld=true,stops=0;
+ const facility=name=>({visible:()=>panels.has(name),update(snapshot){if(!snapshot)panels.delete(name);}});
+ const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true,stop(){stops++;}},
+  factoryUI:facility('factory'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
+  skiResortControls:{update:()=>panels.delete('ski')},deviceUI:{reset:()=>panels.delete('device')},landSaleUI:{reset:()=>panels.delete('land')},casinoUI:{reset:()=>panels.delete('casino')},yachtGames:{reset:()=>panels.delete('yacht')}
+ });
+ context.resetRoomConnection();
+ assert.equal(panels.size,0,'old facility panels must not cover retry or suspend the replacement player');
+ assert.equal(machineHeld,false);assert.equal(stops,1);assert.equal(context.authoritativeClient,null);assert.equal(context.gameplayControlsReady(),false);
+ context.authoritativeClient={ready:true};context.serverPlayerInitialized=true;context.gameplayStarted=true;
+ assert.equal(context.gameplayControlsReady(),true,'a confirmed replacement player can regain control');
 });
 
 test('transient connection recovery never locks navigation or changes map visibility',async()=>{
