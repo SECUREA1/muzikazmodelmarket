@@ -2236,11 +2236,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
   function shootAtReticle() { if(!gameplayControlsReady())return false;if(isAircraft(serverActors[serverVehicleId]))return fireAircraft();if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active&&toxicBubbleSystem.tool!=='spray'&&!UTILITY_TOOLS[toxicBubbleSystem.tool])return basketballTrigger();if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
 
-  // Anchor walking to the initial touch; the 8px tap zone stays neutral.
+  // Both sticks use their visible center; a center press stays neutral.
   function setupThumbstick(name) {
     const stick=document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`),knob=stick?.querySelector('.thumbstick-knob');
     if(!stick||!knob)return;
-    let pointerId=null,startX=0,startY=0,stickRect;
+    let pointerId=null,stickRect;
     const reset=(notify=true)=>{
       const previous=pointerId,changed=previous!==null||thumbInput[`${name}X`]!==0||thumbInput[`${name}Y`]!==0;
       pointerId=null;stickRect=null;thumbInput[`${name}X`]=thumbInput[`${name}Y`]=0;
@@ -2251,10 +2251,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     thumbstickResetters.add(reset);
     const write=event=>{
       const rect=stickRect,radius=rect.width*.29;
-      let x=THREE.MathUtils.clamp(event.clientX-(name==='left'?startX:rect.left+rect.width/2),-radius,radius),y=THREE.MathUtils.clamp(event.clientY-(name==='left'?startY:rect.top+rect.height/2),-radius,radius);
+      let x=THREE.MathUtils.clamp(event.clientX-(rect.left+rect.width/2),-radius,radius),y=THREE.MathUtils.clamp(event.clientY-(rect.top+rect.height/2),-radius,radius);
       const length=Math.hypot(x,y);if(length>radius){x=x/length*radius;y=y/length*radius;}
       knob.style.transform=`translate(${x}px, ${y}px)`;
-      const axes=name==='left'&&(isAircraft(serverActors[serverVehicleId])||isWatercraft(serverActors[serverVehicleId])||isRoadVehicle(serverActors[serverVehicleId]))?flightStickAxes(x/radius,y/radius):name==='left'?walkingStick(x/radius,y/radius,Math.min(.9,8/radius)):{x:x/radius,y:y/radius};
+      const axes=name==='left'&&(isAircraft(serverActors[serverVehicleId])||isWatercraft(serverActors[serverVehicleId])||isRoadVehicle(serverActors[serverVehicleId]))?flightStickAxes(x/radius,y/radius):name==='left'?walkingStick(x/radius,y/radius):{x:x/radius,y:y/radius};
       thumbInput[`${name}X`]=axes.x;thumbInput[`${name}Y`]=axes.y;if(name==='left')authoritativeClient?.requestInput();
     };
     const release=event=>{if(pointerId===event.pointerId)reset();};
@@ -2264,7 +2264,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       // discarded the previous gesture's terminal events while suspending.
       if(pointerId!==null&&event.isPrimary===true&&event.pointerId!==pointerId)reset(false);
       if(pointerId!==null||event.button>0)return;
-      event.preventDefault();pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;stickRect=stick.getBoundingClientRect();
+      event.preventDefault();pointerId=event.pointerId;stickRect=stick.getBoundingClientRect();
       safelyCapturePointer(stick,pointerId);stick.classList.add('is-active');
       safelyInteract(`${name} controller interaction`,()=>{write(event);return isAircraft(serverActors[serverVehicleId])||isWatercraft(serverActors[serverVehicleId])||isRoadVehicle(serverActors[serverVehicleId])?true:name==='left'?shootAtReticle():jump();});
     });
