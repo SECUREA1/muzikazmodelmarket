@@ -32,6 +32,7 @@ export function marketFacets(record={}){
  else if(category==='lands')assign(/deed|plot|entitle/.test(text)?'plots':'maps','travel','build');
  else if(/tree|plant|flower|rock|mushroom|bush|cactus|pond|garden/.test(text))assign('nature','decorate','build');
  else if(/terrain|landscape/.test(text))assign('terrain','build','travel');
+ else if(category==='sports')assign('sports','play','build');
  else if(/bed/.test(text))assign('beds','build','decorate');
  else if(/chair|sofa|seat|pillow|bench/.test(text))assign('seating','build','decorate');
  else if(/lamp|light|beacon/.test(text))assign('lighting','build','decorate');

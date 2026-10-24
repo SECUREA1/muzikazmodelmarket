@@ -74,7 +74,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
-import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
+import {compileBuilderScene,normalizeBuilderObject} from './public/js/builder-gameplay-pipeline.js';
 import {buildingDimensions} from './public/js/building-materials.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
@@ -545,9 +545,16 @@ export class AuthoritativeRooms {
     if(asset.consumable&&asset.petId){const pet=Object.values(sim.actors).find(actor=>actor.asset?.id===asset.petId&&actor.active);if(!pet)fail('Deploy your pet in this room before feeding it.',409);pet.boostUntil=now+10000;result.message=pet.asset.name+' received a treat.';}else{
     const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
     if(!chosenPlacement&&!isBasketball({asset}))Object.assign(position,this.collision.stackAsset(environment,asset,position,rotation,scale,sim.actors,room.objects));
-    const behavior=deviceDefinition(asset.buildAssetId)?'interact':asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:isCombatBoat({asset})?650:isWatercraft({asset})?200:100;const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,device:deviceDefinition(asset.buildAssetId)?asset.buildAssetId:undefined,health:spawnHealth,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest,...factoryItemSettings(asset.buildAssetId),...(RESORT_PRODUCTS[asset.buildAssetId]?resortProductSettings(RESORT_PRODUCTS[asset.buildAssetId]):{})},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
-    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(isAircraft({asset})?{modelId:asset.buildAssetId,maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{modelId:asset.buildAssetId,maxHealth:isCombatBoat({asset})?650:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
+    // Deploy the same authored contract as the editor. Canonical server assets
+    // carry native seats, quests, devices and vehicle settings through purchase;
+    // replacing them with generic interactions makes the market copy inert.
+    const modelId=asset.buildAssetId||asset.id,device=deviceDefinition(modelId,asset.function_data||{});
+    const settings={damage:0,interactionDistance:3,cooldown:1,...factoryItemSettings(modelId),...(RESORT_PRODUCTS[modelId]?resortProductSettings(RESORT_PRODUCTS[modelId]):{}),...asset.function_data,...asset.interaction_data,...asset.configuration};
+    const behavior=settings.behavior||asset.behavior||(device?'interact':['vehicle','vehicles'].includes(asset.assetType)?'vehicle':asset.assetType==='pets'?'patrol':'interact');
+    const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:isCombatBoat({asset})?650:isWatercraft({asset})?200:clamp(settings.health||100,1,100000);
+    const definition=normalizeBuilderObject({id:entityId,modelId,objectType:asset.assetType||asset.type,position,rotation,scale,asset,functionalSettings:{...settings,behavior,health:spawnHealth,...(device?{device:settings.device||modelId}:{})},vehicleSettings:asset.vehicleSettings,movementSettings:{speed:1,...settings.movement,...asset.movementSettings},aiSettings:asset.aiSettings,questSettings:asset.questSettings||settings.quest,dialogueSettings:asset.dialogueSettings||settings.dialogue||{text:settings.prompt||''},environmentSettings:asset.environmentSettings,animationState:asset.animationState||{clip:asset.animation},metadata:asset.metadata});
+    definition.position={...position};
+    sim.actors[entityId]={id:entityId,modelId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(typeof settings.destructible==='boolean'?{destructible:settings.destructible}:{}),...(isAircraft({asset})?{maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{maxHealth:isCombatBoat({asset})?650:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
     }
    }

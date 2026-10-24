@@ -3,10 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
+async function builderSource(){return (await Promise.all(['../environment-builder.js','../public/js/native-builder-items.js'].map(path=>readFile(new URL(path,import.meta.url),'utf8')))).join('\n');}
+
 test('environment builder exposes layout, placement and editing controls', async () => {
   const [html, script, launcher] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/rad-tox-launcher.js', import.meta.url), 'utf8')
   ]);
   for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
@@ -48,7 +50,7 @@ test('multiplayer map list pins live user maps with a flashing status', async ()
 test('canvas manipulation keeps object controls behind an intentional double tap', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   assert.match(html, /Drag to move · Shift-drag to rotate/);
   assert.match(html, /Double-tap for controls/);
@@ -61,7 +63,7 @@ test('canvas manipulation keeps object controls behind an intentional double tap
 test('expanded maps include detailed building interiors and large playable landscapes', async () => {
   const [html, script, models] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
   ]);
   for (const item of ['studio-desk', 'recording-booth', 'modular-wall', 'glass-door', 'loft-bed', 'wardrobe', 'bathroom-vanity', 'dining-set', 'fireplace', 'elevator']) {
@@ -81,7 +83,7 @@ test('expanded maps include detailed building interiors and large playable lands
 test('responsive customization sheet includes commercial FPS and training scenes', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   for (const layout of ['blacksite', 'cargo-yard', 'neon-arena', 'desert-outpost', 'mega-mall', 'office-tower', 'firing-range', 'movie-studio']) {
@@ -141,7 +143,7 @@ test('playable firing range supports unlimited free play and real desktop, mobil
 test('builder maze group is playable and walking uses continuous physical support', async () => {
   const [html, builder, loader, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
@@ -165,7 +167,7 @@ test('builder maze group is playable and walking uses continuous physical suppor
 test('environment builder supports custom role-play actors and interactions', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   for (const control of ['open-item-maker', 'item-maker', 'custom-item-name', 'custom-item-type', 'custom-item-color', 'custom-item-behavior', 'object-color', 'object-behavior']) {
     assert.match(html, new RegExp(`id="${control}"`));
@@ -182,7 +184,7 @@ test('environment builder supports custom role-play actors and interactions', as
 test('custom item game mechanics use accessible option toggles for every function group', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   for (const group of ['behavior', 'animation', 'action']) assert.match(html, new RegExp(`data-mechanic-group="${group}"`));
@@ -195,7 +197,7 @@ test('custom item game mechanics use accessible option toggles for every functio
 test('portal assets expose a locked tuner for local and cross-map destinations', async () => {
   const [html, builder, pipeline, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/builder-gameplay-pipeline.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
@@ -211,7 +213,7 @@ test('portal assets expose a locked tuner for local and cross-map destinations',
 test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-only models', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   for (const control of ['custom-model-drawing', 'custom-model-strokes', 'custom-brush-size', 'custom-model-depth', 'custom-model-bevel', 'custom-model-material', 'download-model-svg', 'undo-model-stroke', 'clear-model-drawing']) {
     assert.match(html, new RegExp(`id="${control}"`));
@@ -224,7 +226,7 @@ test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-o
 test('custom item toolkit starts from editable models in every requested category', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   for (const control of ['starter-category-tabs', 'starter-model-grid', 'starter-selection-status', 'start-blank-item']) {
@@ -244,7 +246,7 @@ test('custom item toolkit starts from editable models in every requested categor
 test('item forge includes editable weapons, loot, tools and vehicles', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   assert.match(html, /ITEM \+ WEAPON FORGE/);
   for (const category of ['weapon', 'interactive', 'vehicle']) {
@@ -263,7 +265,7 @@ test('item forge includes editable weapons, loot, tools and vehicles', async () 
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   for (const form of ['solid', 'sculpted', 'lightweight']) assert.match(html, new RegExp(`data-custom-form="${form}"`));
@@ -278,7 +280,7 @@ test('every drawn custom item saves three toggleable 3D forms with fitted clip-o
 test('environment builder places grounded 3D assets and persists complete runtime state', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   for (const control of ['scene-canvas', 'side-view-canvas', 'elevation-control', 'snap-ground', 'animation-enabled', 'interact-object']) {
     assert.match(html, new RegExp(`id="${control}"`));
@@ -296,7 +298,7 @@ test('environment builder places grounded 3D assets and persists complete runtim
 test('builder maps use shared procedural textures and a tabletop presentation', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   assert.match(html, /id="texture-credit"/);
@@ -310,7 +312,7 @@ test('builder maps use shared procedural textures and a tabletop presentation', 
 test('avatar look lab provides deep fitted customization for every wearable icon', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   for (const control of ['avatar-category-tabs', 'avatar-variants', 'randomize-avatar', 'save-avatar-look', 'clear-avatar-look']) {
     assert.match(html, new RegExp(`id="${control}"`));
@@ -415,7 +417,7 @@ test('world ground and solid scenery always participate in gameplay collision', 
 
 test('saved sandbox maps embed custom item definitions for exact game reconstruction', async () => {
   const [script, game] = await Promise.all([
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
@@ -438,7 +440,7 @@ test('Builder Pack layouts open as new environment maps', async () => {
 test('expanded asset library covers deployable worlds, weapons, ghosts, slime and graded materials', async () => {
   const [html, script, models] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
   ]);
   for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.ok(BUILDER_SECTIONS.some(([id])=>id===category));
@@ -455,7 +457,7 @@ test('expanded asset library covers deployable worlds, weapons, ghosts, slime an
 test('premade assets stay clean while custom SVG clip-ons remain explicit', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    builderSource()
   ]);
   assert.match(script, /assetKind:'premade'/);
   assert.match(script, /assetKind:'custom-svg'/);
@@ -469,7 +471,7 @@ test('premade assets stay clean while custom SVG clip-ons remain explicit', asyn
 
 test('every library preview renders without aborting builder initialization', async () => {
   const [script, models] = await Promise.all([
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
   ]);
   assert.match(script, /function itemSilhouette\(model,alt=model\.name\)/);
@@ -489,7 +491,7 @@ test('every library preview renders without aborting builder initialization', as
 test('workspace panels toggle and custom drawing accepts any model type with quality certification', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    builderSource(),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   for (const panel of ['library', 'details', 'inspector', 'quality']) assert.match(html, new RegExp(`data-workspace-panel="${panel}"`));

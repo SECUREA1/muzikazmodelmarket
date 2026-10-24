@@ -38,7 +38,12 @@
     <nav class="builder-tabs" aria-label="Builder areas"><button class="active" data-builder-tab="market">BUILD MARKET</button><button data-builder-tab="backpack">BUILDER BACKPACK</button><button data-builder-tab="worlds">MY LAND / WORLDS</button><a class="builder-launch" href="environment-builder.html">OPEN ENVIRONMENT BUILDER <span aria-hidden="true">↗</span></a></nav>
     <p class="builder-status" id="builder-status" role="status">Connecting to your MUZIKAZ account…</p>
     <section class="builder-panel active" data-builder-panel="market" aria-labelledby="market-title">
-      <header><div><p class="kicker">asset_usage = game_builder</p><h2 id="market-title">Reusable assets for playable worlds</h2></div><select id="builder-category" aria-label="Filter category"><option value="">ALL CATEGORIES</option></select></header>
+      <section class="builder-native" aria-labelledby="native-market-title">
+        <header><p class="kicker">Native game and builder catalog</p><h2 id="native-market-title">Build with the world’s working items</h2><p>Browse native models, map pieces, tools and interactive functions. Open an item to buy with MZK or use your owned copy through Backpack.</p></header>
+        <div class="builder-native__controls"><label>Find an item or function<input id="builder-native-search" type="search" placeholder="Item, map or function"></label><label>Category<select id="builder-native-category"><option value="">All categories</option></select></label><button id="builder-native-reset" type="button">RESET FILTERS</button><button id="builder-native-refresh" type="button">REFRESH</button></div>
+        <p id="builder-native-status" role="status" aria-live="polite">Loading native items…</p><div class="builder-grid" id="builder-native-items"></div><button id="builder-native-more" type="button" hidden>SHOW MORE ITEMS</button>
+      </section>
+      <header><div><p class="kicker">Member-created assets</p><h2 id="market-title">Reusable assets for playable worlds</h2></div><select id="builder-category" aria-label="Filter member asset category"><option value="">ALL CATEGORIES</option></select></header>
       <div class="builder-grid" id="builder-listings"></div>
     </section>
     <section class="builder-panel" data-builder-panel="backpack" aria-labelledby="backpack-title">

@@ -1,5 +1,27 @@
 import {placementBounds} from './placed-item-collision.js';
 import {meshStackPlacementOffset,stackPlacementOffset} from './stack-placement.js';
+import {normalizeCatalogModel} from './builder-catalog.js';
+import {compileBuilderScene} from './builder-gameplay-pipeline.js';
+
+// Reuse the same scene contract for locally dropped market items. Moving an
+// existing placement replaces its actor so interactions never target a ghost.
+export function registerOwnedPlacement(runtime,asset,placement,id){
+ const model=normalizeCatalogModel(asset,0);
+ if(!model)return null;
+ const vector=values=>Object.fromEntries(['x','y','z'].map((axis,index)=>[axis,values[index]]));
+ const item={id:String(id),modelId:model.buildAssetId||model.id,objectType:model.type,
+  asset:{buildAssetId:model.buildAssetId,modelUrl:model.modelUrl,basketballTeam:model.basketballTeam,attachment:model.attachment},
+  position:vector(placement.position),rotation:vector(placement.rotation),scale:vector(placement.scale),
+  functionalSettings:{behavior:model.behavior,action:model.action||'none',...model.function_data},
+  animationState:model.animationState,vehicleSettings:model.vehicleSettings,movementSettings:model.movementSettings,
+  aiSettings:model.aiSettings,questSettings:model.questSettings,dialogueSettings:model.dialogueSettings,environmentSettings:model.environmentSettings};
+ const compiled=compileBuilderScene({objects:[item]}),manifest=runtime.manifest;
+ manifest.objects=manifest.objects.filter(object=>object.objectId!==item.id).concat(compiled.objects);
+ manifest.actors=manifest.actors.filter(actor=>actor.objectId!==item.id).concat(compiled.actors);
+ manifest.objectCount=manifest.objects.length;manifest.actorCount=manifest.actors.length;
+ runtime.instances.delete(item.id);runtime.cooldowns.delete(item.id);
+ return item;
+}
 export class OwnedItemPlacement {
  constructor({THREE,scene,canvas,inputCanvases=[],stage,createPreview,pointAt,save,solids=()=>[],surfaces=null,canPlace=()=>true,announce=()=>{}}){
   Object.assign(this,{THREE,scene,canvas,createPreview,pointAt,save,solids,surfaces,canPlace,announce});this.pending=null;this.last=null;this.generation=0;this.saving=false;this.quickSettings={};try{this.quickSettings=JSON.parse(localStorage.getItem('muzikazQuickBricks')||'{}')||{};}catch{}
