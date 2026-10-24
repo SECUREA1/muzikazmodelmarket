@@ -17,13 +17,32 @@ export function mountGameDisplayFlow(stage){
  const overflow=document.createElement('div');overflow.className='game-view-overflow';overflow.hidden=true;overflow.dataset.gameplayBlocking='false';overflow.setAttribute('role','group');overflow.setAttribute('aria-label','More view controls');
  const more=document.createElement('button');more.type='button';more.className='game-view-more';more.hidden=true;more.setAttribute('aria-label','More view controls');more.setAttribute('aria-expanded','false');more.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';views.append(more,overflow);
  const closeOverflow=()=>{overflow.hidden=true;more.setAttribute('aria-expanded','false');};more.onclick=()=>{const open=overflow.hidden;overflow.hidden=!open;more.setAttribute('aria-expanded',String(open));};
- const groups=[];let fitting=false,frame=null;
+ const groups=[];let fitting=false,frame=null,lastLayout=null;
  const visible=node=>!node.hidden&&!node.closest('[hidden]')&&getComputedStyle(node).display!=='none';
+ const panelControls='.world-resident-panel,.transport-radio-panel,.live-local-map [data-body]';
+ function layoutState(){
+  const state=[views.clientWidth];
+  for(const group of groups){
+   state.push(group,group.hidden);
+   const controls=group.matches('button')?[group]:[...group.querySelectorAll('button')].filter(button=>!button.closest(panelControls));
+   for(const button of controls){
+    let hidden=false;
+    for(let node=button;node&&node!==views&&node!==overflow;node=node.parentElement)if(node.hidden){hidden=true;break;}
+    state.push(button,hidden);
+   }
+  }
+  return state;
+ }
  function fit(){
   frame=null;if(fitting)return;fitting=true;
   // Keep original components and their handlers intact while fitting one row.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
   const priority=node=>{const i=['game-camera-toggle','map-quest-launcher','district-map-toggle','factory-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?6:i;};groups.sort((a,b)=>priority(a)-priority(b));
+  // Status badges and repeated snapshots do not change the toolbar footprint.
+  // Reparenting an unchanged overflow group drops focus and pointer capture.
+  const layout=layoutState();
+  if(lastLayout&&layout.length===lastLayout.length&&layout.every((value,index)=>value===lastLayout[index])){fitting=false;return;}
+  lastLayout=layout;
   // The marker popup keeps a permanent right-hand slot beside overflow controls.
   const pinned=groups.filter(node=>node.classList.contains('live-local-map')),ordinary=groups.filter(node=>!pinned.includes(node));
   let anchor=more;for(let i=ordinary.length-1;i>=0;i--){const node=ordinary[i];if(node.parentElement!==views||node.nextSibling!==anchor)views.insertBefore(node,anchor);anchor=node;}
@@ -36,7 +55,7 @@ export function mountGameDisplayFlow(stage){
   stage.style.setProperty('--game-view-controls-height','44px');fitting=false;
  }
  const schedule=()=>{if(frame===null)frame=requestAnimationFrame(fit);};
- stylesheet.addEventListener('load',schedule);
+ stylesheet.addEventListener('load',()=>{lastLayout=null;schedule();});
  const outside=event=>{if(!views.contains(event.target))closeOverflow();};stage.ownerDocument.addEventListener('pointerdown',outside,true);
  views.addEventListener('keydown',event=>{if(event.key==='Escape'&&!overflow.hidden){event.preventDefault();event.stopPropagation();closeOverflow();more.focus();}});
  overflow.addEventListener('click',()=>{if(document.querySelector('dialog:modal'))closeOverflow();});
@@ -46,7 +65,7 @@ export function mountGameDisplayFlow(stage){
  // Only new direct children need collecting. Changes inside an existing panel
  // already participate in its layout and must not rescan the whole stage.
  collect();const observer=new MutationObserver(collect);observer.observe(stage,{childList:true});
- const changes=new MutationObserver(records=>{if(records.some(({target})=>target!==more&&target!==overflow&&!target.closest('.world-resident-panel,.transport-radio-panel,.live-local-map [data-body]')))schedule();});changes.observe(views,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ const changes=new MutationObserver(records=>{if(records.some(({target,oldValue})=>oldValue!==target.getAttribute('hidden')&&target!==more&&target!==overflow&&!target.closest(panelControls)))schedule();});changes.observe(views,{subtree:true,attributes:true,attributeFilter:['hidden'],attributeOldValue:true});
  const resize=typeof ResizeObserver==='undefined'?null:new ResizeObserver(schedule);resize?.observe(views);
  return {root,views,dispose(){observer.disconnect();changes.disconnect();resize?.disconnect();if(frame!==null)cancelAnimationFrame(frame);stage.ownerDocument.removeEventListener('pointerdown',outside,true);for(const child of [...root.children]){if(child===actions||child===views)stage.append(...child.children);else stage.append(child);}for(const child of groups)if(child.isConnected)stage.append(child);views.remove();root.remove();stylesheet.remove();stage.style.removeProperty('--game-view-controls-height');}};
 }

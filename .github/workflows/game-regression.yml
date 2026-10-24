@@ -61,7 +61,7 @@ jobs:
       - name: Verify RSS and model discovery feeds
         run: node --test test/rss-feed.test.mjs test/github-glb-discovery.test.mjs
       - name: Verify touch, overlays and input request recovery
-        run: node --test test/joystick-movement.test.mjs test/instant-stick-actions.test.mjs test/ground-double-tap.test.mjs test/held-game-input.test.mjs test/game-input-release.test.mjs test/game-companion-release.test.mjs test/rad-tox-controller.test.mjs test/game-menu-controls.test.mjs test/game-request-deadline.test.mjs test/walking-surface-budget.test.mjs
+        run: node --test test/joystick-movement.test.mjs test/instant-stick-actions.test.mjs test/ground-double-tap.test.mjs test/held-game-input.test.mjs test/game-keyboard-input.test.mjs test/game-input-release.test.mjs test/game-companion-release.test.mjs test/rad-tox-controller.test.mjs test/game-menu-controls.test.mjs test/game-request-deadline.test.mjs test/walking-surface-budget.test.mjs
       - name: Install browser test tools
         run: |
           python -m pip install playwright
@@ -89,6 +89,7 @@ jobs:
           python test/construction-crew-interactions.browser.py
           python test/ai-quest-work.browser.py
           python test/native-game-challenges.browser.py
+          python test/arcade-display-controls.browser.py
           python test/native-game-challenges-live.browser.py
           python test/map-quests.browser.py
       - name: Verify live walking under delayed network input

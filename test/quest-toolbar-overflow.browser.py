@@ -37,6 +37,16 @@ try:
    assert page.locator('.game-view-more').get_attribute('aria-expanded')=='true'
    assert page.locator('.transport-radio-toggle').get_attribute('aria-expanded')=='true'
    assert page.locator('.transport-radio-panel [data-close]').evaluate('button=>document.activeElement===button')
+   # Repeated status/visibility updates must not detach an overflow control
+   # while its conversation field has focus.
+   page.evaluate('''()=>{
+    const input=document.createElement('input');input.setAttribute('aria-label','Toolbar conversation draft');input.value='Keep this draft';document.querySelector('.transport-radio-panel').append(input);input.focus();input.setSelectionRange(5,9);
+    const badge=document.createElement('span');badge.hidden=true;document.querySelector('.map-quest-launcher').append(badge);window.toolbarBadge=badge;
+   }''')
+   for hidden in [False, True, True]:
+    page.evaluate('(hidden)=>toolbarBadge.hidden=hidden',hidden)
+    page.wait_for_timeout(100)
+    assert page.get_by_role('textbox',name='Toolbar conversation draft').evaluate('input=>document.activeElement===input&&input.selectionStart===5&&input.selectionEnd===9'),'Unchanged toolbar layout must preserve conversation focus and selection.'
    page.locator('.transport-radio-panel [data-close]').click()
    page.locator('.game-view-more').click()
    assert not page.locator('.game-view-overflow').is_visible()

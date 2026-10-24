@@ -50,10 +50,12 @@ export function mountNativeGameChallenges({parent=document.body,name='This map',
  function setOpen(value){if(panel.hidden===!value)return;onRelease();panel.hidden=!value;toggle.setAttribute('aria-expanded',String(value));}
  function render(force=false){const active=tracker.active,signature=JSON.stringify([active,tracker.ready]);if(!force&&signature===lastRender)return;lastRender=signature;const running=active?.status==='active';for(const button of buttons)button.disabled=!tracker.ready||running;list.hidden=running;cancel.hidden=!running;status.textContent=running?active.offer.title+' · '+Math.floor(active.progress)+' / '+active.offer.goal+' '+active.offer.unit:active?.message||(tracker.ready?'Choose a challenge. Only new progress after acceptance counts.':'Start or join a game as a player to accept a challenge.');toggle.setAttribute('aria-label',running?'Challenge · '+Math.floor(active.progress)+' / '+active.offer.goal:'Challenges');toggle.title=running?active.offer.title+' · '+Math.floor(active.progress)+' / '+active.offer.goal:'Quests and challenges';badge.hidden=!running;badge.textContent=running?Math.floor(active.progress)+'/'+active.offer.goal:'';}
  toggle.onclick=()=>setOpen(panel.hidden);close.onclick=()=>{setOpen(false);onReturnFocus();};
- root.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setOpen(false);onReturnFocus();}});
+ const escape=event=>{if(event.key!=='Escape'||event.defaultPrevented||panel.hidden||document.querySelector('dialog:modal'))return;event.preventDefault();event.stopPropagation();setOpen(false);onReturnFocus();};
+ document.addEventListener('keydown',escape,true);
+ root.addEventListener('keydown',event=>{if(event.target.closest('input,textarea,select,[contenteditable=true]')||event.key==='Enter')event.stopPropagation();else if(event.key===' '&&event.target.closest('button'))event.preventDefault();});
  for(const type of ['pointerdown','click','wheel'])root.addEventListener(type,event=>event.stopPropagation());
  return {root,update(snapshot){tracker.update(snapshot);if(tracker.revision!==shownRevision){shownRevision=tracker.revision;if(tracker.active?.status==='completed'||tracker.active?.status==='cancelled'){
    // A status notification does not capture focus or clear fresh movement.
    panel.hidden=false;toggle.setAttribute('aria-expanded','true');
-  }}render();},dispose(){root.remove();style.remove();},snapshot:()=>tracker.active};
+  }}render();},dispose(){document.removeEventListener('keydown',escape,true);root.remove();style.remove();},snapshot:()=>tracker.active};
 }

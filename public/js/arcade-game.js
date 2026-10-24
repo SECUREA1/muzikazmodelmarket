@@ -164,6 +164,8 @@ addEventListener('keydown',e=>{
  if(isGameCameraToggleKey(e)){e.preventDefault();setCameraMode(nextGameCameraMode(cameraMode));return;}
  if(e.key==='Escape'&&ride!==null){e.preventDefault();reset();return;}
  if(e.key==='Escape'&&game!==null){e.preventDefault();closeGame();return;}
+ // Reuse the game handler for fresh controls while the challenge popup is focused.
+ if(game!==null&&e.target.closest?.('.native-game-challenges')&&['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','e','q','x'].includes(e.key.toLowerCase())){canvas.focus({preventScroll:true});canvas.onkeydown?.(e);return;}
  if(game!==null||ride!==null)return;
  if(e.code==='KeyE'||e.code==='Enter'&&!e.target.matches('button,a')){e.preventDefault();if(!e.repeat)interactNearby();return;}
  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();if(e.repeat&&!walkKeys.has(e.code))return;walkKeys.add(e.code);}
@@ -446,7 +448,8 @@ mountResidentWorldLink(document.querySelector('.arcade-display-popup[aria-label=
 
 const nativeChallenges=mountNativeGameChallenges({parent:document.body,name:mapName,offers:arcadeChallenges(availableAttractionIds()),onRelease:()=>{pressed.clear();walkKeys.clear();touchKeys.clear();controllerWalkKeys.clear();controllerMove={x:0,y:0};drag=false;arcadeController.reset();requestGameInput();},onReturnFocus:()=>{(game===null?renderer.domElement:canvas).focus({preventScroll:true});}});
 function updateArcadeChallenges(){
- const host=game===null?document.body:$('#game');if(nativeChallenges.root.parentNode!==host)host.append(nativeChallenges.root);
+ // The nonmodal game viewport sits below dashboard chrome. Keep companion
+ // challenges beside it so their controls remain above the dashboard header.
  nativeChallenges.update({sessionId:environmentId+':'+(requestedPart||'park')+':'+nativeArcadeEpoch,playing:!startupError&&availableAttractionIds().size>0,spectating:game!==null&&(localSpectator||liveGame&&roomSnapshot?.role==='spectator'),metrics:{rounds:nativeArcadeRounds,laps:nativeRideLaps}});
 }
 updateArcadeChallenges();

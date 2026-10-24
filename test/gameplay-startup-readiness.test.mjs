@@ -17,12 +17,12 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
-  districtMap:{setReady:value=>readinessChanges.push(value)},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
+  districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
@@ -92,12 +92,13 @@ test('world navigation stays disabled through joining and restores only for a co
 });
 
 test('transient connection recovery never locks navigation or changes map visibility',async()=>{
- const {context,controls,readinessChanges}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true}});
+ const {context,controls,readinessChanges}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true},fitnessUI:{visible:()=>true,update(){}}});
  context.setGameplayReadiness();context.authoritativeClient.ready=false;context.setGameplayReadiness();
  assert.equal(controls.get('house-world-button').disabled,false);
  assert.deepEqual(readinessChanges,[true],'transport status does not close the maps');
  // The gameplay renderer runs before connectAuthoritativeRoom confirms ready.
- // Exercise its real entry hook without constructing unrelated scene meshes.
+ // Exercise its real entry hook and the open training panel's early return
+ // without constructing unrelated scene meshes.
  const renderEntry=section('  function renderServerRoom(snapshot,selfId,timing={}){','skiResortControls.update');
  vm.runInContext(renderEntry+'}',context);
  context.renderServerRoom({},'self');context.authoritativeClient.ready=true;

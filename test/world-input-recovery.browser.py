@@ -63,6 +63,16 @@ async def main():
                             assert any(abs(value.get('forward', 0)) > .5 for value in inputs), (world, label, 'focused control swallowed movement')
                             assert ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 > .3, (world, label, start, end)
 
+                        # Choosing a local quest leaves the native selector
+                        # focused. Arrows keep editing it; WASD resumes walking
+                        # directly, without an extra click on the game canvas.
+                        quest_select = page.get_by_label('Choose local challenge', exact=True)
+                        await quest_select.focus()
+                        await page.keyboard.press('ArrowDown')
+                        assert await page.evaluate('document.activeElement?.matches(".map-quest-card select")'), (world, 'Quest selector lost keyboard selection.')
+                        await walk_from_focused_control('quest selector', 's')
+                        assert await page.evaluate('document.activeElement?.id === "house-explorer-canvas"'), (world, 'Quest selection did not return movement focus.')
+
                         # Closing a resident conversation deliberately restores focus
                         # to its toggle. Movement must work without clicking the canvas.
                         residents = page.get_by_role('button', name='Residents, conversations and daily objectives', exact=True)

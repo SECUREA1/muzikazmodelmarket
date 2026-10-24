@@ -220,7 +220,16 @@ def complete_solo_quest(context, base):
         assert 'practice score' in page.locator('.map-quest-card').inner_text()
         assert page.get_by_role('button', name='Open crew radio', exact=True).count() == 0
         initial = page.evaluate('MuzikazHouseExplorer.snapshot().localQuests')
-        page.get_by_label('Choose local challenge', exact=True).select_option('map:' + world + ':tour')
+        selector = page.get_by_label('Choose local challenge', exact=True)
+        selector.select_option('map:' + world + ':tour')
+        selector.focus()
+        start = page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
+        page.keyboard.down('s')
+        page.wait_for_timeout(600)
+        page.keyboard.up('s')
+        end = page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
+        assert math.hypot(end[0] - start[0], end[2] - start[2]) > .3, 'A focused solo quest selector blocked movement.'
+        assert page.evaluate('document.activeElement.id === "house-explorer-canvas"'), 'Solo selection did not return gameplay focus.'
         page.locator('[data-quest-accept]').click()
         page.wait_for_function('MuzikazHouseExplorer.snapshot().localQuests.vehicleMission?.status === "active"')
         page.locator('.map-quest-objective').wait_for(state='visible')

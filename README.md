@@ -125,7 +125,10 @@ favors. Shared quests award room score once and record completion counts and bes
 times. Solo routes award local practice score. Hockey and arcade offer their own
 challenges based on live match progress, completed rounds and full ride laps.
 Quest cards leave movement available; explicit opening or closing clears held
-controls. Map travel ends an active walking route.
+controls. WASD resumes movement directly from a quest selector; arrows and Enter
+still select challenges, and conversation fields keep their typing controls.
+Routine toolbar updates preserve open conversation focus. Map travel ends an
+active walking route.
 
 The top toolbar’s SVG **Quests** button opens local objectives and AI contacts.
 Ask a contact a question or request a live demonstration: construction operators

@@ -21,6 +21,7 @@ try:
    const {mountNativeGameChallenges,HOCKEY_CHALLENGES}=await import('/public/js/native-game-challenges.js');
    window.widget=mountNativeGameChallenges({name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:()=>releases++,onReturnFocus:()=>returned++});
    window.state={sessionId:'rink:1',playing:false,spectating:false,metrics:{matchSeconds:100,teamGoals:5}};widget.update(state);
+   window.gameKeys=[];window.addEventListener('keydown',event=>gameKeys.push(event.key));
   }''')
   toggle=page.locator('.native-challenge-toggle')
   assert toggle.locator('svg').count()==1
@@ -30,7 +31,16 @@ try:
   assert accept.is_disabled()
   page.evaluate('state.playing=true;widget.update(state)')
   assert accept.is_enabled()
-  accept.click()
+  page.get_by_role('button',name='Close challenges',exact=True).focus()
+  page.keyboard.press('Space')
+  assert page.get_by_label('Ice hockey challenges',exact=True).is_visible(), 'Game action must not activate a focused challenge button.'
+  assert page.evaluate('gameKeys.at(-1)')==' ', 'Fresh game action must reach the native game handler.'
+  page.keyboard.press('w')
+  assert page.evaluate('gameKeys.at(-1)')=='w', 'Challenge buttons must share fresh movement with the native game.'
+  accept.focus()
+  page.keyboard.press('Enter')
+  assert page.evaluate("widget.snapshot().offer.id==='team-goal'"), 'Enter must retain accessible button activation.'
+  assert page.evaluate("gameKeys.at(-1)==='w'"), 'Enter from a challenge button must stay local.'
   assert not page.get_by_label('Ice hockey challenges',exact=True).is_visible()
   assert page.evaluate("widget.snapshot().progress===0")
   page.evaluate('window.releaseBaseline=releases;for(let i=0;i<20;i++)widget.update(state)')
@@ -57,7 +67,9 @@ try:
    rect=page.get_by_label('Ice hockey challenges',exact=True).bounding_box()
    assert 0<=rect['x'] and rect['x']+rect['width']<=width+1
    assert rect['y']+rect['height']<height-90, rect
-  page.evaluate('widget.dispose()')
+  page.evaluate('widget.dispose();window.disposalReleases=releases')
+  page.keyboard.press('Escape')
+  assert page.evaluate('releases===disposalReleases'), 'Disposed challenge panels must stop listening for game controls.'
   assert page.get_by_label('Map challenges',exact=True).count()==0
   assert not errors, errors
   browser.close()

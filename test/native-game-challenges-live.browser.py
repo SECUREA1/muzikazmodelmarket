@@ -7,7 +7,7 @@ import json
 import os
 import argparse
 
-parser=argparse.ArgumentParser();parser.add_argument('--world',choices=['all','hockey','arcade'],default='all');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--world',choices=['all','hockey','arcade'],default='all');parser.add_argument('--input-only',action='store_true');args=parser.parse_args()
 os.chdir(Path(__file__).resolve().parents[1])
 worlds=json.loads(Path('public/models/environments/environments.json').read_text())
 for world in worlds:
@@ -37,6 +37,12 @@ try:
    page.locator('#start').click()
    page.wait_for_function("MuzikazHockey.snapshot().running&&MuzikazHockey.snapshot().phase==='playing'")
    page.get_by_role('button',name='Challenges',exact=True).click()
+   initial=page.evaluate('MuzikazHockey.snapshot().player')
+   page.keyboard.down('w');page.wait_for_timeout(900);page.keyboard.up('w')
+   moved=page.evaluate('MuzikazHockey.snapshot().player')
+   assert abs(moved['x']-initial['x'])+abs(moved['z']-initial['z'])>.3,('Open challenges swallowed skating.',initial,moved)
+   assert page.get_by_label('Ice hockey challenges',exact=True).is_visible()
+   assert page.evaluate("document.activeElement.id==='rink'"), 'Fresh skating must return keyboard focus to the game.'
    page.get_by_role('button',name='Accept Find your skating rhythm',exact=True).click()
    initial=page.evaluate('MuzikazHockey.snapshot().player')
    page.keyboard.down('w');page.wait_for_timeout(1600);page.keyboard.up('w')
@@ -77,25 +83,41 @@ try:
    assert page.evaluate('NeonJunction.snapshot().playerPosition')==neutral
    page.keyboard.down('s');page.wait_for_timeout(500);page.keyboard.up('s')
    assert page.evaluate('NeonJunction.snapshot().playerPosition')!=neutral, page.evaluate('NeonJunction.snapshot().walking')
-   page.get_by_role('button',name='Challenges',exact=True).click()
-   page.get_by_role('button',name='Accept Explore the park by ride',exact=True).click()
-   page.get_by_role('button',name='Arcade menu and match lobby',exact=True).click()
-   page.locator('#attractions [data-attraction=train]').click()
-   page.wait_for_function('NeonJunction.snapshot().ride!==null')
-   page.wait_for_function("NeonJunction.snapshot().challenge?.status==='completed'",timeout=90000)
-   assert page.evaluate("NeonJunction.snapshot().mode==='explore'")
-   page.get_by_role('button',name='Close challenges',exact=True).click()
+   if not args.input_only:
+    page.get_by_role('button',name='Challenges',exact=True).click()
+    page.get_by_role('button',name='Accept Explore the park by ride',exact=True).click()
+    page.get_by_role('button',name='Arcade menu and match lobby',exact=True).click()
+    page.locator('#attractions [data-attraction=train]').click()
+    page.wait_for_function('NeonJunction.snapshot().ride!==null')
+    page.wait_for_function("NeonJunction.snapshot().challenge?.status==='completed'",timeout=90000)
+    assert page.evaluate("NeonJunction.snapshot().mode==='explore'")
+    page.get_by_role('button',name='Close challenges',exact=True).click()
    page.get_by_role('button',name='Challenges',exact=True).click()
    page.get_by_role('button',name='Accept Finish an arcade round',exact=True).click()
    page.get_by_role('button',name='Arcade menu and match lobby',exact=True).click()
    page.locator('#attractions [data-attraction=shooting]').click()
    page.wait_for_function('NeonJunction.snapshot().gameStarted&&NeonJunction.snapshot().game===1')
-   page.locator('#play').focus();page.keyboard.press('Space')
-   page.wait_for_function("NeonJunction.snapshot().challenge?.status==='completed'",timeout=90000)
-   assert page.evaluate('NeonJunction.snapshot().ended')
-   assert page.get_by_role('status').filter(has_text='Challenge complete').is_visible()
+   page.locator('.native-challenge-toggle').click()
+   pointer=page.evaluate('NeonJunction.snapshot().pointer')
+   page.keyboard.down('d');page.wait_for_timeout(400);page.keyboard.up('d')
+   moved_pointer=page.evaluate('NeonJunction.snapshot().pointer')
+   assert moved_pointer['x']>pointer['x']+5,('Open challenges swallowed arcade aiming.',pointer,moved_pointer)
+   assert page.evaluate("document.activeElement.id==='play'"), 'Fresh aiming must return keyboard focus to the arcade game.'
+   page.get_by_role('button',name='Close challenges',exact=True).focus()
+   attempts=page.evaluate('NeonJunction.snapshot().attempts')
+   page.keyboard.press('Space')
+   assert page.locator('.native-challenge-panel').is_visible(), 'Space must shoot without clicking a challenge button.'
+   page.wait_for_function('(before)=>NeonJunction.snapshot().attempts>before',arg=attempts)
+   if not args.input_only:
+    page.wait_for_function("NeonJunction.snapshot().challenge?.status==='completed'",timeout=90000)
+    assert page.evaluate('NeonJunction.snapshot().ended')
+    assert page.get_by_role('status').filter(has_text='Challenge complete').is_visible()
+   else:
+    page.keyboard.press('Escape')
+    assert not page.locator('.native-challenge-panel').is_visible()
+    assert page.evaluate('NeonJunction.snapshot().gameStarted'), 'Escape must close companion quests and retain the game.'
    page.close()
   assert not errors,errors
   browser.close()
-  print(('Hockey native challenge run' if args.world=='hockey' else 'Arcade native full ride lap and played round completion')+' passes; no page errors.',flush=True)
+  print(('Hockey native challenge run' if args.world=='hockey' else 'Arcade native challenge input recovery' if args.input_only else 'Arcade native full ride lap and played round completion')+' passes; no page errors.',flush=True)
 finally:server.shutdown()
