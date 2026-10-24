@@ -118,6 +118,15 @@ lantern trails. Accept the Alpine Ridge supply flight or camper evacuation in
 **Quests**; the campground and ranger boards offer separate walking collection
 quests. These activities award room score. See [mountain fly-in](docs/mountain-fly-in.md).
 
+Every explorer map offers local discovery routes and timed checkpoint challenges
+through the **Quests** popup. Facility jobs require using the actual marked
+objects; fitness and casino work contracts count newly completed sets and staff
+favors. Shared quests award room score once and record completion counts and best
+times. Solo routes award local practice score. Hockey and arcade offer their own
+challenges based on live match progress, completed rounds and full ride laps.
+Quest cards leave movement available; explicit opening or closing clears held
+controls. Map travel ends an active walking route.
+
 ## Fitness Centre
 
 The permanent **MUZIKAZ Fitness Centre** includes seven playable skill stations,

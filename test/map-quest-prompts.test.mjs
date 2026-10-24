@@ -9,6 +9,10 @@ test('map quest guidance accepts walking only after leaving seats, lifts and veh
  for(const state of [{vehicleId:'plane'},{seatedId:'bench'},{skiLift:{id:'lift'}}])assert.match(questOfferRequirement(offer,{...player,...state}),/Leave your vehicle or seat/);
  assert.match(questOfferRequirement(offer,{...player,health:0}),/respawn/);
  assert.match(questOfferRequirement(offer,null),/Join/);
+ const completed={...player,vehicleMission:{status:'completed',finishedAt:10000}};
+ assert.match(questOfferRequirement(offer,completed,{serverTime:20000}),/preparing your next/);
+ assert.equal(questOfferRequirement(offer,completed,{serverTime:70000}),'');
+ assert.equal(questOfferRequirement(offer,{...completed,localQuests:true},{serverTime:20000}),'');
 });
 test('specialist offers explain live game and correct craft requirements',()=>{
  assert.match(questOfferRequirement({mode:'foot',kind:'marksman'},player),/firing lane/);

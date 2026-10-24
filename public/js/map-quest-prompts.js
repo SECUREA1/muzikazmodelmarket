@@ -9,6 +9,8 @@ import {requestGameInputRelease} from './game-input-release.js';
 // These are guidance rules only. The server validates every acceptance/action.
 export function questOfferRequirement(offer,self,snapshot={}){
  if(!self||self.health<=0)return 'Join the world and respawn to accept this challenge.';
+ const previous=self.vehicleMission,finishedAt=previous?.finishedAt??previous?.completedAt;
+ if(!self.localQuests&&previous?.status==='completed'&&Number.isFinite(finishedAt)&&snapshot.serverTime<finishedAt+60000)return 'Dispatch is preparing your next assignment. Explore the map and try again shortly.';
  const craft=snapshot.actors?.[self.vehicleId];
  if(offer.mode==='foot'&&(self.vehicleId||self.seatedId||self.skiLift))return 'Leave your vehicle or seat to begin on foot.';
  if(offer.mode!=='foot'){

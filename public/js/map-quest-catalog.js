@@ -7,6 +7,21 @@ const position=point=>({x:Number(point.x),y:Number(point.y)||0,z:Number(point.z)
 const separation=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const name=value=>String(value||'Local site').trim().slice(0,100);
 
+function harborWalkingArea(environment,origin){
+ const harbor=environment.builderScene?.layoutMeta?.harbor;
+ if(!harbor)return {allows:()=>true,survey:()=>true};
+ const contains=(point,patch)=>Math.abs(point.x-patch.x)<=patch.width/2&&Math.abs(point.z-patch.z)<=patch.depth/2;
+ const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
+ const patch=patches.find(patch=>contains(origin,patch));
+ const onLake=point=>(harbor.lakes||[]).some(lake=>contains(point,lake));
+ // A walking assignment cannot require boarding a boat to reach another
+ // island. Named stops must share the arrival's actual authored land patch.
+ // Unclassified pier arrivals get only nearby floor surveys; the live room
+ // checks their real deck floors instead of assuming a connection to shore.
+ const allows=point=>!!patch&&contains(point,patch)&&!onLake(point);
+ return {allows,survey:point=>patch?allows(point):separation(point,origin)<=4&&!patches.some(patch=>contains(point,patch))&&!onLake(point),localDeck:!patch};
+}
+
 function mapTheme(environment){
  if(environment.airport?.enabled||environment.game==='airport')return {tour:'Airport ground discovery',challenge:'Airport ground route challenge',service:'Airport ground-service briefing'};
  if(environment.builderScene?.layoutMeta?.harbor)return {tour:'Waterfront discovery walk',challenge:'Waterfront checkpoint challenge',service:'Harbor services briefing'};
@@ -40,12 +55,13 @@ function interactionSite(object,origin){
 
 function buildOffers(environment){
  const origin=arrival(environment),theme=mapTheme(environment),mapId=String(environment.id||'local-world');
+ const walkingArea=harborWalkingArea(environment,origin);
  const prefix='map:'+encodeURIComponent(mapId)+':';
  const scene=environment.builderScene||environment.placementScene;
  const objects=Array.isArray(scene?.objects)?scene.objects:[];
- const interactions=objects.map(object=>interactionSite(object,origin)).filter(Boolean).sort((a,b)=>separation(a,origin)-separation(b,origin));
+ const interactions=objects.map(object=>interactionSite(object,origin)).filter(site=>site&&walkingArea.allows(site)).sort((a,b)=>separation(a,origin)-separation(b,origin));
  const authoredPlaces=!environment.builderScene&&scene?.layoutMeta?(scene.layoutMeta.locations||scene.layoutMeta.commonsLocations||localMapLocations(environment)):localMapLocations(environment);
- const locations=authoredPlaces.filter(finitePoint).map((place,index)=>({id:String(place.id||'location-'+index),name:name(place.name||place.id),...position(place),action:'check-in'}));
+ const locations=authoredPlaces.filter(finitePoint).map((place,index)=>({id:String(place.id||'location-'+index),name:name(place.name||place.id),...position(place),action:'check-in'})).filter(walkingArea.allows);
  if(locations.length<3)for(const site of interactions){locations.push({id:site.id,name:site.name,x:site.x,y:site.y,z:site.z,action:'check-in'});}
  const candidates=locations.filter(point=>separation(point,origin)>=5).sort((a,b)=>separation(a,origin)-separation(b,origin));
  const unique=[origin];for(const point of candidates){if(unique.every(other=>separation(point,other)>=5&&point.name!==other.name))unique.push(point);if(unique.length>=5)break;}
@@ -53,10 +69,10 @@ function buildOffers(environment){
   // Sparse model-only maps have no invented shops or NPCs. The live room must
   // find a real clear floor near these proposed survey points before accepting.
   const mapSize=Number(environment.builderScene?.mapSize||environment.playableSize)||64;
-  const step=Math.max(4,Math.min(10,mapSize/8));
+  const step=walkingArea.localDeck?4:Math.max(4,Math.min(10,mapSize/8));
   for(const [index,[dx,dz]]of [[step,0],[0,-step],[-step,0],[0,step]].entries()){
    const point={id:'floor-survey-'+index,name:'Nearby floor survey '+(index+1),x:origin.x+dx,y:origin.y,z:origin.z+dz,action:'check-in',survey:true};
-   if(unique.every(other=>separation(point,other)>=4))unique.push(point);if(unique.length>=3)break;
+   if(walkingArea.survey(point)&&unique.every(other=>separation(point,other)>=4))unique.push(point);if(unique.length>=3)break;
   }
  }
  const tourSites=unique.slice(0,4),tourNames=tourSites.slice(1).map(site=>site.name).join(', ');
@@ -75,7 +91,7 @@ function buildOffers(environment){
 export function mapQuestOffers(environment){
  if(!environment||typeof environment!=='object')return [];
  const scene=environment.builderScene||environment.placementScene,meta=scene?.layoutMeta;
- const signature=[environment.id,environment.name,environment.updatedAt,environment.contentUpdatedAt,environment.spawn,scene,scene?.version,scene?.updatedAt,scene?.objects,scene?.objects?.length,meta,meta?.locations,meta?.commonsLocations];
+ const signature=[environment.id,environment.name,environment.updatedAt,environment.contentUpdatedAt,environment.spawn,scene,scene?.version,scene?.updatedAt,scene?.objects,scene?.objects?.length,meta,meta?.locations,meta?.commonsLocations,meta?.harbor,meta?.harbor?.islands,meta?.harbor?.lakes];
  const previous=cache.get(environment);if(previous&&signature.every((value,index)=>value===previous.signature[index]))return previous.offers;
  const offers=buildOffers(environment);cache.set(environment,{signature,offers});return offers;
 }

@@ -9,6 +9,7 @@ import {airportWorld} from '../airport-world.mjs';
 import {fitnessWorld} from '../fitness-world.mjs';
 import {casinoWorld} from '../casino-world.mjs';
 import {constructionWorld} from '../construction-world.mjs';
+import {neonMarina} from '../neon-marina.mjs';
 import {WorldAtlas} from '../world-atlas.mjs';
 import {synchronizeWorldDirectory} from '../world-directory.mjs';
 
@@ -75,6 +76,25 @@ test('catalog cache reuses immutable map data and refreshes on saved scene chang
  world.builderScene.objects=[{id:'guide',name:'New guide',position:{x:6,y:0,z:0},functionalSettings:{behavior:'talk'}}];
  const second=mapQuestOffers(world);assert.notEqual(second,first);assert.ok(second.some(offer=>offer.kind==='site-job'));
  world.name='Saved title';world.updatedAt='revision-2';assert.match(mapQuestOffers(world)[0].title,/Saved title/);
+});
+
+test('harbor walking routes stay on the arrival island and use real mainland guidance before surveys',()=>{
+ const marina=neonMarina(),world={id:'mainland-harbor',name:'Neon Marina',spawn:{x:124,y:0,z:30},builderScene:{mapSize:1536,objects:marina.objects,layoutMeta:{harbor:marina.harbor,locations:marina.locations.filter(place=>place.x>128||Math.abs(place.z)>128)}}};
+ const offers=verifyOffers(world);
+ for(const offer of offers)for(const site of offer.sites){assert.ok(Math.abs(site.x)<=128&&Math.abs(site.z)<=128,offer.id+' stays on mainland: '+site.name);assert.equal(/Beacon Island|Palm Key|North Haven|Crescent Island|Silver Coast|Reed Cay|Sunset Key/.test(site.name),false);}
+ const tour=offers.find(offer=>offer.id.endsWith(':tour'));assert.ok(tour.sites.slice(1).every(site=>!site.survey),'filtered locations are supplemented with real usable guides');
+ assert.ok(tour.sites.slice(1).every(site=>marina.objects.some(object=>object.id===site.id)));
+ assert.equal(questCatalog(world).filter(offer=>offer.mode==='boat'||offer.mode==='gunboat').length,10,'all maritime assignments remain offered');
+});
+
+test('island arrivals keep walking routes on that island, with bounded same-island survey fallback',()=>{
+ const marina=neonMarina(),island=marina.harbor.islands.find(island=>island.id==='beacon-island');
+ for(const objects of [marina.objects,[]]){
+  const world={id:'island-harbor-'+objects.length,name:'Beacon Island',spawn:{x:island.x+island.width/2-1,y:0,z:island.z},builderScene:{mapSize:1536,objects,layoutMeta:{harbor:marina.harbor,locations:objects.length?marina.locations:[island]}}};
+  const offers=verifyOffers(world);
+  for(const offer of offers)for(const site of offer.sites)assert.ok(Math.abs(site.x-island.x)<=island.width/2&&Math.abs(site.z-island.z)<=island.depth/2,offer.id+' stays on Beacon Island: '+site.name);
+  if(!objects.length)assert.ok(offers.flatMap(offer=>offer.sites).some(site=>site.survey));
+ }
 });
 
 test('generated commons and every district offer work tied to their saved guides and facilities',async t=>{

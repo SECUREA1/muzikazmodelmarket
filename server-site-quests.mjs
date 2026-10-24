@@ -50,6 +50,8 @@ export function prepareSiteQuest(sim,player,quest,environment,{collision,objects
  if(points.length<(quest.kind==='site-job'?1:2))throw Error('This route has no clear walking access right now. Choose another local assignment.');
  if(quest.kind==='site-job'&&!points.some(point=>point.entityId))throw Error('The local service items are unavailable. Choose another assignment.');
  quest.worldId=environment.id;quest.checkpoints=points;
+ quest.description=quest.kind==='site-job'?'Visit '+points.map(point=>point.name).join(', ')+'. Use each marked object to complete the job.':(quest.challenge?'Complete the marked route before time runs out: ':'Explore the marked walking route: ')+points.map(point=>point.name).join(' → ')+'. Pause at each stop and confirm your check-in.';
+ quest.message=quest.description;
  // Do not expose raw survey candidates as a route after authoritative floors
  // have been resolved. The accepted checkpoints are the playable objectives.
  delete quest.sites;
