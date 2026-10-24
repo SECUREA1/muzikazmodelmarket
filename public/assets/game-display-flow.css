@@ -55,8 +55,9 @@
 .house-stage .game-view-overflow button{min-width:44px;min-height:44px;box-sizing:border-box}
 .house-stage .game-view-overflow [hidden]{display:none!important}
 .house-stage .game-display-flow-views .live-local-map{position:static!important;inset:auto!important;width:44px!important;height:44px!important;min-width:44px;max-height:none;overflow:visible;margin:0;border:0;background:none;box-shadow:none}
+.house-stage>.game-display-flow-views>.live-local-map{order:100;margin-left:auto;flex:0 0 44px}
 .house-stage .game-display-flow-views .live-local-map header{position:static;inset:auto;padding:0;display:block}
-.house-stage .game-display-flow-views .live-local-map header strong,.house-stage .game-display-flow-views .live-local-map [data-expand]{display:none}
+.house-stage .game-display-flow-views .live-local-map header strong{display:none}
 .house-stage .game-display-flow-views .live-local-map [data-collapse]{width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:8px;border:1px solid #799b99;border-radius:9px;background:#112c30ed;color:#e9f9ee}
 .house-stage .game-display-flow-views .live-local-map [data-body]{position:absolute;top:52px;right:0;width:175px;max-height:none;border:1px solid #799b99;border-radius:10px;background:#102b30ed;overflow:hidden;pointer-events:auto}
 .house-stage .game-display-flow-views .live-local-map [data-body][hidden]{display:none!important}

@@ -19,3 +19,14 @@
 @media(max-width:600px){.transport-radio-panel{position:fixed!important;inset: max(12px,env(safe-area-inset-top)) 12px auto auto!important;max-height:calc(100dvh - 24px - env(safe-area-inset-bottom))!important}}
 .transport-radio-panel>header{position:sticky;top:-14px;z-index:2;background:#10282b;padding:6px 0;min-width:0}
 .transport-radio-panel>header button{flex:0 0 auto;white-space:nowrap}
+
+/* The secondary locator opens a compact marker popup; expansion is explicit. */
+.live-local-map:not(.is-collapsed)>header{display:none}
+.live-local-map>header [data-collapse] svg{width:25px;height:25px;aspect-ratio:auto;background:none}
+.live-map-popup-controls{position:absolute;top:5px;left:5px;z-index:3;display:flex;gap:4px;pointer-events:auto}
+.live-local-map .live-map-popup-controls>button{display:grid;place-items:center;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;margin:0!important;padding:6px!important;border:1px solid #91b6a5;border-radius:8px;background:#102b30ed;box-shadow:0 2px 7px #0004;touch-action:manipulation}
+.live-local-map .live-map-popup-controls>button svg{width:22px;height:22px;aspect-ratio:1;background:none}
+.live-local-map .live-map-canvas>svg [aria-pressed=true]>circle{stroke:#fff;stroke-width:.8;fill:#456d58}
+.house-stage .game-display-flow-views .live-local-map [data-body]{width:min(175px,var(--live-map-room,175px),calc(100vw - 32px));max-height:none}
+.house-stage .game-display-flow-views .live-local-map [data-body] [data-expand]{display:grid}
+.live-local-map .live-map-popup-controls>button:focus-visible{outline:3px solid #fff0b5;outline-offset:-3px}
