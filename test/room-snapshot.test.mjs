@@ -35,3 +35,10 @@ test('a changed map revision forces a full scenery baseline even when actor iden
  assert.equal(compactRoomSnapshot(next,{action:'input',snapshotMode:'compact',sceneVersion:'old-map'}),next);
  const compact=compactRoomSnapshot(next,{action:'input',snapshotMode:'compact',sceneVersion:'new-map'});assert.equal(compact.actorsPartial,true);
 });
+
+test('hydraulic heartbeat acknowledgements omit the scene and preserve the authoritative operator epoch',()=>{
+ const state={selfId:'me',sequence:10,inputEpoch:'epoch',serverTime:100,players:{me:{vehicleId:'crane'}},actors:{crane:{id:'crane',construction:{axes:{hoist:1}}},scenery:{resident:{history:'x'.repeat(100000)}}},construction:{earthworks:{cells:'x'.repeat(100000)}},result:{message:'Hydraulic controls updated.'}};
+ const ack=compactRoomSnapshot(state,{action:'construction-controls',operation:'control',controlResponse:'ack'});
+ assert.equal(ack.constructionControlAck,true);assert.equal(ack.inputEpoch,'epoch');assert.equal(ack.entityId,'crane');assert.deepEqual(ack.axes,{hoist:1});assert.ok(JSON.stringify(ack).length<1000);assert.equal(ack.actors,undefined);
+ assert.equal(compactRoomSnapshot(state,{action:'construction-controls',operation:'park',controlResponse:'ack'}),state,'discrete machine actions still return a full authoritative scene');
+});

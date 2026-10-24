@@ -32,7 +32,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  }
  async function post(path,body) {
   let proof=session||await roomSession();
-  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',signal:lifecycle.signal,timeout:body.action==='join'?25000:8000,headers:{'X-CSRF-Token':proof.csrfToken},body:JSON.stringify(body)});};
+  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',signal:lifecycle.signal,timeout:body.action==='join'?25000:8000,...(body.controlResponse==='ack'?{priority:'high'}:{}),headers:{'X-CSRF-Token':proof.csrfToken},body:JSON.stringify(body)});};
   try { return await request(); }
   catch (error) {
    if (error.code!=='CSRF_INVALID') throw error;
@@ -77,13 +77,14 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:fireTool==='laser'?0:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);if(radToxStarted||aircraftShot)onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
-    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:'compact',sceneVersion:latestSnapshot?.sceneVersion,actorSetRevision:latestSnapshot?.actorSetRevision,earthworksRevision:latestSnapshot?.construction?.earthworks?.revision,...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
+    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:'compact',sceneVersion:latestSnapshot?.sceneVersion,actorSetRevision:latestSnapshot?.actorSetRevision,earthworksRevision:latestSnapshot?.construction?.earthworks?.revision,...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch,controlResponse:'ack'}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.
     if(revision!==connectionRevision)return state;
     const selfId=state?.selfId||client.selfId;
-    if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
+    const controlAck=action==='construction-controls'&&fields.operation==='control'&&state?.constructionControlAck===true;
+    if(!selfId||(!controlAck&&!state?.players?.[selfId]))throw Error('The server has not confirmed your player in this room.');
     const currentInput=action!=='input'||issuedEpoch===inputEpoch,currentEpoch=state.inputEpoch??state.result?.inputEpoch;
     // An input may overtake the response that boarded, exited or teleported us.
     // Track the epoch independently of rendered snapshots, and recover from a
@@ -93,6 +94,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
      if(action==='join'||currentEpoch!==inputEpoch){inputEpoch=currentEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;pendingInput=null;}
     }
     if(!currentInput)return state;
+    if(controlAck)return state;
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
     client.selfId=selfId;

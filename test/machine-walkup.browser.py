@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       if context.request.get(base+'/api/health',timeout=1000).ok:break
      except Exception:time.sleep(.1)
     assert context.request.post(base+'/api/access/guest',data={}).ok
-    page=context.new_page();errors=[];sizes=[];full_sizes=[]
+    page=context.new_page();errors=[];sizes=[];full_sizes=[];control_sizes=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
     page.route('https://**/*',lambda route:route.abort())
     def command(action,**fields):
@@ -41,6 +41,8 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
        action=res.request.post_data_json.get('action')
        if action=='input':sizes.append(len(res.body()))
        elif action=='join':full_sizes.append(len(res.body()))
+       elif action=='construction-controls' and res.request.post_data_json.get('operation')=='control':
+        assert res.json()['data'].get('constructionControlAck');control_sizes.append(len(res.body()))
       except Exception:pass
     page.on('response',response)
     try:
@@ -72,13 +74,25 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
        assert panel.is_visible(),'Cached-page restore disposed the machine dashboard'
       before=s['actors'][machine_id]['construction'][field]
       lever=panel.locator('.construction-work-sticks .construction-stick').last
-      lever.focus();page.keyboard.down('ArrowDown');page.wait_for_timeout(450);page.keyboard.up('ArrowDown')
+      lever.focus();page.keyboard.down('ArrowDown');page.wait_for_timeout(450)
+      if machine=='excavator':
+       assert 'engaged' in panel.locator('.construction-compact-state').inner_text().lower()
+       page.screenshot(path='/tmp/excavator-controls-engaged.png')
+      page.keyboard.up('ArrowDown')
       s=wait(lambda s:s['actors'][machine_id]['construction'][field]>before+.005,'hydraulic lever did not move '+machine)
       wait(lambda s:all(abs(v)<.001 for v in s['actors'][machine_id]['construction']['axes'].values()),'release did not neutralise '+machine)
       if machine=='truck':
        lever.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(900);page.keyboard.up('ArrowUp')
        wait(lambda s:s['actors'][machine_id]['construction']['bed']<=.08,'body did not lower')
       panel.locator('[data-operation=park]').click()
+      if machine!='crane':
+       panel.locator('[data-construction-mode=drive]').click()
+       travel=panel.locator('.construction-travel-stick');before_position=state()['actors'][machine_id]['position']
+       travel.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(1200);page.keyboard.up('ArrowUp')
+       wait(lambda s:abs(s['actors'][machine_id].get('driving',{}).get('speed',0))>.02 or ((s['actors'][machine_id]['position']['x']-before_position['x'])**2+(s['actors'][machine_id]['position']['z']-before_position['z'])**2)**.5>.05,'dashboard travel did not engage '+machine)
+       panel.locator('[data-operation=park]').click()
+       wait(lambda s:abs(s['actors'][machine_id].get('driving',{}).get('speed',0))<.01,'Park did not stop travel '+machine)
+       panel.locator('[data-construction-mode=work]').click()
       if machine=='excavator':page.screenshot(path='/tmp/excavator-walkup-controls.png')
       panel.locator('[data-operation=exit]').click()
       wait(lambda s:not s['players'][next(iter(s['players']))].get('vehicleId'),'exit failed '+machine)
@@ -93,6 +107,7 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
      environments=context.request.get(base+'/api/environments').json()['data']
      assert all('playerCount' in e and 'aiCount' in e for e in environments)
      assert len(sizes)>5 and sorted(sizes)[len(sizes)//2]<100000,sorted(sizes)[-5:]
+     assert control_sizes and max(control_sizes)<2000,control_sizes
      assert not errors,errors
      print('Named crew conversations, all-map population metadata and compact input median '+str(sorted(sizes)[len(sizes)//2])+' bytes; full join '+str(full_sizes)+' bytes passed',flush=True)
     except Exception:
