@@ -141,6 +141,8 @@ controls. See [map travel and spoken objectives](docs/open-map-travel.md).
 
 Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.
 
+Double-tap (or double-click) a clear ground spot to move directly there in either view, including hockey and the Neon Junction park. Held movement is released on arrival; dragging and control-button taps retain their usual actions.
+
 ## VR headset play
 
 The RAD-TOX House Explorer supports WebXR immersive VR in browsers that expose

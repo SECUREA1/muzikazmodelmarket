@@ -21,6 +21,20 @@ function blocked(x, z, radius, colliders) {
   });
 }
 
+/** Relocation uses the same boundary and furniture clearance as walking,
+ * without clamping a selected point to some other destination.
+ */
+export function relocateArcadeWalker(walker, point, {
+  bounds = {minX: -26, maxX: 26, minZ: -18, maxZ: 18}, colliders = []
+} = {}) {
+  if (!point || ![point.x, point.y, point.z].every(Number.isFinite)) return false;
+  const {x, y, z} = point, radius = walker.radius;
+  if (x < bounds.minX + radius || x > bounds.maxX - radius ||
+      z < bounds.minZ + radius || z > bounds.maxZ - radius || blocked(x, z, radius, colliders)) return false;
+  walker.x = x; walker.z = z; walker.ground = y;
+  return true;
+}
+
 /** Small swept steps prevent tunnelling through furniture on a slow device.
  * Separate axes allow the visitor to slide along a bench or table edge.
  */

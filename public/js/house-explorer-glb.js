@@ -2115,7 +2115,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   gameInputResetters.add(()=>{toxicTap=null;toxicConsumedClick=false;});
   gameInputResetters.add(()=>ownedPlacement.releaseInputs());
   bindGroundDoubleTap(canvas,{allowNonPrimary:true,captureTarget:document,onDoubleTap:event=>{
-    const canTravel=event.isPrimary!==false&&activeTouchPointers.size<=1&&!cameraGesture&&!avatarDrag&&!avatarPinch&&groundTravelEnabled(event);
+    const canTravel=activeTouchPointers.size<=1&&!cameraGesture&&!avatarDrag&&!avatarPinch&&groundTravelEnabled(event);
     requestGameInputRelease('canvas-double-tap');toxicConsumedClick=true;releasedDoubleTapAt=event.timeStamp;
     if(ownedPlacement.active)ownedPlacement.cancel();
     toxicBubbleSystem.buildEditor.cancel();

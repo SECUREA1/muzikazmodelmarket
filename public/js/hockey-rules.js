@@ -29,6 +29,19 @@ export function joinHockey(s,id,name='Player',slotId=null){
 }
 export function leaveHockey(s,id){const p=s.players.find(p=>p.human===id);if(p){p.human=null;p.name='AI skater';p.input={};}s.spectators=s.spectators.filter(p=>p.id!==id);if(s.host===id)s.host=s.players.find(p=>p.human)?.human||null;}
 export function hockeyInput(s,id,i={}){const p=s.players.find(p=>p.human===id);if(!p)throw Object.assign(Error('Join this hockey room first.'),{statusCode:409});p.input=sanitizeHockeyInput(i);}
+/** A deliberate ground jump uses the same playable ice and net clearance as skating. */
+export function relocateHockeyPlayer(s,id,position){
+ const p=s.players.find(player=>player.human===id);
+ if(!p)throw Object.assign(Error('Join this hockey room first.'),{statusCode:409});
+ if(!['playing','shootout'].includes(s.phase)||p.onIce===false||p.penalty>0&&!p.queuedReplacement||p.ejected||p.misconduct>0)throw Object.assign(Error('Wait until your skater is on the ice and play resumes.'),{statusCode:409});
+ if(!position||!['x','y','z'].every(axis=>Number.isFinite(position[axis]))||Math.abs(position.y)>.12)throw Object.assign(Error('Choose a clear spot on the ice.'),{statusCode:422});
+ const point={x:position.x,z:position.z,vx:0,vz:0};constrain(point,.4);blockNets(point);
+ if(Math.hypot(point.x-position.x,point.z-position.z)>1e-6||s.players.some(other=>other!==p&&other.onIce!==false&&Math.hypot(other.x-point.x,other.z-point.z)<.65))throw Object.assign(Error('Choose a clear spot inside the rink.'),{statusCode:422});
+ Object.assign(p,{x:point.x,z:point.z,vx:0,vz:0,input:{},animation:'idle',movementRevision:(p.movementRevision||0)+1});
+ // Leave the puck at its previous spot rather than dragging it through the rink.
+ if(s.puck.owner===p.id){s.puck.owner=null;s.puck.vx=s.puck.vz=s.puck.vy=0;s.puck.icing=null;}
+ return p;
+}
 function release(s,p,pass){
  const d=attackDirection(s,p.team),mates=s.players.filter(q=>q.team===p.team&&q!==p&&!q.goalie&&q.onIce&&q.penalty<=0),tier=HOCKEY_TIERS[s.config.difficulty];
  let target=pass?mates.sort((a,b)=>(dist(p,a)-d*a.x*.3)-(dist(p,b)-d*b.x*.3))[0]:{x:d*RINK.goalX,z:Math.sin(s.elapsed*3)*(.8-tier.accuracy*.25)};
