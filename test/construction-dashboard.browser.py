@@ -31,6 +31,7 @@ def instruments(page):
  page.locator('[data-construction-view=instruments]').click()
  dialog=page.locator('.construction-instruments-dialog')
  assert dialog.is_visible()
+ assert dialog.evaluate('node=>!node.matches(":modal")&&node.dataset.gameplayBlocking==="false"')
  return dialog
 
 def close_instruments(page):

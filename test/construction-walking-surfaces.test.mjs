@@ -44,3 +44,15 @@ test('slewing a stationary crane refreshes nearby walking surfaces from its real
  assert.ok(crane.position.equals(position),'crane chassis never moved');
  assert.ok(crane.quaternion.equals(orientation),'crane chassis never rotated');
 });
+
+test('earthwork walking cache follows a moved patch without a geometry edit',()=>{
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(4,.2,4));mesh.geometry.computeBoundingBox();
+ const context=vm.createContext({THREE,placementBounds,placementTriangles,constructionScene:{groundMeshes:[mesh]},buildingSolids:()=>[],walkingSurfaceCache:new WeakMap()});
+ vm.runInContext(walkingSource,context);
+ const first=context.walkingSurfaces()[0];
+ assert.equal(context.walkingSurfaces()[0],first,'unchanged patch reuses its triangles');
+ mesh.position.set(12,3,-8);
+ const moved=context.walkingSurfaces()[0];
+ assert.notEqual(moved,first);assert.equal(moved.bounds.min.x,10);assert.ok(moved.triangles.every(t=>t.a.x>=10&&t.a.x<=14));
+ assert.equal(context.walkingSurfaces()[0],moved);
+});

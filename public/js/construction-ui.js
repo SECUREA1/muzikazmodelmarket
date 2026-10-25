@@ -69,7 +69,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const quick=document.createElement('div');quick.className='construction-quick-actions';
  const help=document.createElement('p');help.className='construction-help';
  const status=document.createElement('p');status.className='construction-status';status.setAttribute('role','status');
- const createDialog=(name,title,closeLabel)=>{const dialog=document.createElement('dialog');dialog.className=name+' construction-dialog';dialog.setAttribute('aria-label',title);const header=document.createElement('header'),h=document.createElement('h2'),close=document.createElement('button');h.textContent=title;close.type='button';close.textContent=closeLabel;close.onclick=()=>dialog.close();header.append(h,close);dialog.append(header);dialog.addEventListener('keydown',event=>{event.stopPropagation();if(event.key==='Escape'){event.preventDefault();dialog.close();}});document.body.append(dialog);return dialog;};
+ const createDialog=(name,title,closeLabel)=>{const dialog=document.createElement('dialog');dialog.className=name+' construction-dialog';dialog.dataset.gameplayBlocking='false';dialog.setAttribute('aria-label',title);const header=document.createElement('header'),h=document.createElement('h2'),close=document.createElement('button');h.textContent=title;close.type='button';close.textContent=closeLabel;close.onclick=()=>dialog.close();header.append(h,close);dialog.append(header);dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();event.preventDefault();dialog.close();}});document.body.append(dialog);return dialog;};
  const instrumentsDialog=createDialog('construction-instruments-dialog','Machine instruments','Close instruments');
  instrumentsDialog.append(systems,readout,instruments,cycle,warning,progress,axisFeedback,reference,help,status);
  const functionsDialog=createDialog('construction-functions-dialog','Machine functions','Close functions');functionsDialog.append(quick);
@@ -127,7 +127,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  function setMode(mode){if(mode===controlMode||mode==='drive'&&kind==='crane')return;requestGameInputRelease('machine-mode');controlMode=mode;syncVisibility();refreshAction();updateInstruments();}
  for(const button of heading.querySelectorAll('[data-construction-mode]'))button.onclick=()=>setMode(button.dataset.constructionMode);
  toggle.onclick=()=>{requestGameInputRelease('machine-controls');controlsVisible=!controlsVisible;syncVisibility();};
- function openDialog(dialog,opener){requestGameInputRelease('machine-panel');closeDialogs();lastDialogOpener=opener;(document.fullscreenElement||document.body).append(dialog);if(!dialog.open)dialog.showModal();}
+ function openDialog(dialog,opener){requestGameInputRelease('machine-panel');closeDialogs();lastDialogOpener=opener;(document.fullscreenElement||document.body).append(dialog);if(!dialog.open)dialog.show();}
  for(const dialog of [instrumentsDialog,functionsDialog,crewDialog])dialog.addEventListener('close',()=>{const opener=lastDialogOpener;if(opener?.isConnected&&!opener.hidden&&!gameplayOverlayOpen()&&(document.activeElement===document.body||dialog.contains(document.activeElement)))opener.focus({preventScroll:true});});
  heading.querySelector('[data-construction-view=instruments]').onclick=event=>openDialog(instrumentsDialog,event.currentTarget);more.onclick=event=>openDialog(functionsDialog,event.currentTarget);
  function availability(operation){
@@ -254,6 +254,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   updateAxisFeedback();
  }
  const timer=setInterval(()=>{if(!canUse()){if(Object.values(axes).some(Boolean)||travel.held)reset();return;}if(Object.values(axes).some(Boolean))sendAxes();},100);
+ const closeCompanionOnEscape=event=>{if(event.key!=='Escape'||gameplayOverlayOpen())return;const dialog=[instrumentsDialog,functionsDialog,crewDialog].find(node=>node.open);if(dialog){event.preventDefault();event.stopImmediatePropagation();dialog.close();}};window.addEventListener('keydown',closeCompanionOnEscape,true);
  const releaseEvent=()=>reset({notify:false});window.addEventListener('blur',safeReset);document.addEventListener('visibilitychange',safeReset);document.addEventListener('muzikaz:release-game-input',releaseEvent);
  const dialogObserver=new MutationObserver(records=>{if(records.some(({target,attributeName})=>attributeName==='open'?target.localName==='dialog'&&target.open:target.id==='crib-chat-panel'&&!target.hidden)&&gameplayOverlayOpen())reset();});dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
  return {releaseInputs:reset,get workView(){return !!kind&&workView;},inputs(){return canUse()&&kind!=='crane'&&travel.held&&current?.construction?.telemetry?.travelAllowed!==false?{forward:travel.forward,side:travel.side,brake:false}:null;},update(nextSnapshot,id){
@@ -264,5 +265,5 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   if(replacement||actorId!==next.id||kind!==nextKind){reset();replaceMachineRequests();current=next;actorId=next.id;kind=nextKind;controlMode='work';buildControls();setText(status,'');}else current=next;
   setAttr(stage,'data-construction-machine',kind);syncVisibility();refreshAction();
   updateInstruments();
- },dispose(){reset();disposed=true;replaceMachineRequests();crewRevision++;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);document.removeEventListener('muzikaz:release-game-input',releaseEvent);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
+ },dispose(){reset();disposed=true;replaceMachineRequests();crewRevision++;delete stage.dataset.constructionMachine;closeDialogs();clearInterval(timer);dialogObserver.disconnect();window.removeEventListener('keydown',closeCompanionOnEscape,true);window.removeEventListener('blur',safeReset);document.removeEventListener('visibilitychange',safeReset);document.removeEventListener('muzikaz:release-game-input',releaseEvent);for(const stick of sticks)stick.dispose();actions.dispose();panel.remove();stylesheet.remove();}};
 }

@@ -1861,9 +1861,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
     for(const mesh of constructionScene.groundMeshes){
       mesh.updateWorldMatrix(true,false);const geometry=mesh.geometry,positions=geometry.attributes.position,cached=walkingSurfaceCache.get(mesh);
-      if(cached?.geometry===geometry&&cached.version===positions.version){groups.push(cached.group);continue;}
+      if(cached?.geometry===geometry&&cached.version===positions.version&&mesh.matrixWorld.elements.every((value,i)=>value===cached.matrix[i])){groups.push(cached.group);continue;}
       const bounds=geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld),group={constructionEarth:true,name:mesh.name,bounds,triangles:placementTriangles(THREE,[mesh])};
-      walkingSurfaceCache.set(mesh,{geometry,version:positions.version,group});groups.push(group);
+      walkingSurfaceCache.set(mesh,{geometry,version:positions.version,matrix:[...mesh.matrixWorld.elements],group});groups.push(group);
     }
     return groups;
   }
