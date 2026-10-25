@@ -24,7 +24,7 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
   for(const call of snapshot.transportRadio||[]){
    if(call.id<=radio)continue;radio=call.id;
    if(!ready||call.conversation||call.recipients&&!call.recipients.includes(selfId)||!call.interaction&&!call.recipients?.includes(selfId)||snapshot.serverTime-call.at>12000)continue;
-   say((call.speaker?call.speaker+'. ':'')+call.text,'radio:'+call.id,{source:call.source,entityId:call.speakerId});
+   say((call.speaker?call.speaker+'. ':'')+call.text,'radio:'+call.id,{source:call.source,entityId:call.speakerId,voice:call.voice||call.speaker||'Dispatch',role:call.role||'dispatcher'});
   }
   for(const job of snapshot.construction?.crew?.jobs||[]){
    const key='crew:'+job.id,state=changed(key,job.status);if(!ready||!state.changed)continue;

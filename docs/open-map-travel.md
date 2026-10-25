@@ -45,6 +45,13 @@ relative to the camera, with distance falloff and orientation updates as you
 move or look around. NPC browser voices use distance-based volume; browser speech
 synthesis does not expose a Web Audio source for stereo positioning. Map
 introductions and radio-style objectives stay clear regardless of distance.
+NPCs and AI contacts prefer natural, neural or enhanced voices installed in the
+browser, with a stable voice per character and restrained personality-based
+pacing. Voice loading is allowed a brief grace period; an unavailable online
+voice can fall back locally. Spoken game shorthand is expanded without changing
+captions, and long replies receive enough time to finish. Voice quality depends
+on the voices available on the player's device.
+
 Disabling spatial audio centers world sounds and removes distance falloff.
 Browsers without speech retain visible captions and status; those without a
 panner retain distance attenuation.

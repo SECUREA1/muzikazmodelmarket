@@ -66,3 +66,26 @@ test('flat map source positions remain audible and watchdog cancels stalled spee
  assert.equal(spoken.at(-1).text,'Next response');
  spoken[0].onend();assert.equal(voice.state.speaking,true,'late callback cannot end the next response');
 });
+
+test('failed online natural voice retries once locally without allowing old callbacks to finish the retry',()=>{
+ const spoken=[],remote={name:'Online Natural',lang:'en-US',voiceURI:'online',localService:false},local={name:'Local enhanced',lang:'en-US',voiceURI:'local',localService:true};
+ const voice=createQuestConversationVoice({speech:{getVoices:()=>[remote,local],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ voice.unlock();announce(voice,'Your next objective is ready.','dialogue');assert.equal(spoken[0].voice,remote);
+ spoken[0].onerror({error:'network'});assert.equal(spoken.length,2);assert.equal(spoken[1].voice,local);
+ spoken[0].onend();assert.equal(voice.state.speaking,true);
+ spoken[1].onerror({error:'synthesis-failed'});assert.equal(spoken.length,2);assert.equal(voice.state.speaking,false);
+ voice.dispose();
+});
+
+test('an error after speech begins never repeats the NPC sentence',()=>{
+ const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>[],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ voice.unlock();announce(voice,'Please follow the marked route.','dialogue');spoken[0].onstart();spoken[0].onerror({error:'network'});
+ assert.equal(spoken.length,1);assert.equal(voice.state.speaking,false);voice.dispose();
+});
+
+test('long fresh dialogue keeps its follow-up while outdated announcements expire',()=>{
+ const {voice,spoken,advance,timers}=fixture();voice.unlock();
+ const long=Array.from({length:140},()=> 'training').join(' ')+'.';announce(voice,long,'dialogue');
+ assert.equal(timers.size,1);announce(voice,'I understand.','dialogue');announce(voice,'A stale job update.');
+ advance(65000);spoken[0].onend();assert.equal(spoken[1].text,'I understand.');spoken[1].onend();assert.equal(spoken.length,2);voice.dispose();
+});

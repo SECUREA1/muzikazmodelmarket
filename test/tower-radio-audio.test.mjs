@@ -28,3 +28,42 @@ test('cannon visual cadence starts immediately and continues while three network
 test('external reticle inputs share cannon cooldown without requiring expanded manual controls',()=>{
  const time=clock(),shots=[],trigger=createAircraftCannonTrigger({...time,canFire:options=>options.external===true,fire:()=>true,onVisual:shot=>shots.push(shot.at)});assert.equal(trigger.fireOnce(),false);assert.equal(trigger.fireOnce({external:true}),true);assert.equal(trigger.fireOnce({external:true}),false);time.advance(200);trigger.start({external:true});time.advance(400);assert.deepEqual(shots,[0,200,400,600]);trigger.dispose();
 });
+
+
+test('tower chooses a stable natural voice while captions retain original game shorthand',()=>{
+ const spoken=[],captions=[],timers=[];
+ const natural={name:'English Natural',voiceURI:'natural',lang:'en-US'},basic={name:'eSpeak',voiceURI:'basic',lang:'en-US'};
+ let voices=[basic,natural];
+ const radio=createTowerRadioAudio({speech:{getVoices:()=>voices,speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:(run,delay)=>{timers.push({run,delay});return timers.length;},clearTimer(){},audioFactory:()=>null,onCaption:value=>captions.push(value)});
+ const original='Tower. Earn +50 MZK → return to base.';
+ radio.call(original);radio.unlock();
+ assert.equal(captions[0],original);assert.equal(spoken[0].voice,natural);assert.equal(spoken[0].lang,'en-US');assert.ok(spoken[0].text.includes('M Z K'));assert.equal(spoken[0].text.includes('→'),false);
+ assert.ok(spoken[0].rate>=.88&&spoken[0].rate<=1.12);assert.ok(spoken[0].pitch>=.9&&spoken[0].pitch<=1.1);
+ spoken[0].onend();voices.reverse();radio.call('Tower. Continue approach.',{key:'next'});assert.equal(spoken[1].voice,natural);
+ spoken[1].onend();radio.call('Continue along the marked route. '.repeat(20),{key:'long'});
+ assert.ok(timers.at(-1).delay>22000,'long calls have enough time to finish naturally');radio.dispose();
+});
+
+
+test('tower retries an unavailable natural voice once before speech starts without repeating warning tones',()=>{
+ const spoken=[],tones=[],time=clock(),natural={name:'English Natural',voiceURI:'online',lang:'en-US',localService:false},local={name:'English installed',voiceURI:'local',lang:'en-US',localService:true};
+ const radio=createTowerRadioAudio({...time,speech:{getVoices:()=>[local,natural],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,tone:()=>tones.push('warning')});
+ radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning'});radio.unlock();assert.equal(spoken[0].voice,natural);assert.equal(tones.length,1);
+ spoken[0].onerror({error:'network'});assert.equal(spoken.length,2);assert.equal(spoken[1].voice,local);assert.equal(tones.length,1,'fallback does not replay the warning beep');assert.equal(radio.state.speechAvailable,true);
+ spoken[0].onend();spoken[0].onerror({error:'synthesis-failed'});assert.equal(spoken.length,2);assert.equal(radio.state.speaking,true,'late callbacks from the failed attempt cannot end its fallback');
+ spoken[1].onstart();spoken[1].onerror({error:'network'});assert.equal(spoken.length,2,'never repeat a sentence after speech began');assert.equal(radio.state.speechAvailable,false);radio.dispose();
+});
+
+test('tower falls back to the browser default when no local voice is installed',()=>{
+ const spoken=[],natural={name:'English Natural',voiceURI:'online',lang:'en-US',localService:false};
+ const radio=createTowerRadioAudio({speech:{getVoices:()=>[natural],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,setTimer:()=>1,clearTimer(){}});
+ radio.call('Tower. Continue approach.');radio.unlock();spoken[0].onerror({error:'voice-unavailable'});
+ assert.equal(spoken.length,2);assert.equal(spoken[1].voice,undefined);spoken[1].onerror({error:'synthesis-failed'});assert.equal(spoken.length,2,'fallback is bounded to one attempt');assert.equal(radio.state.speechAvailable,false);radio.dispose();
+});
+
+test('tower never retries a natural voice after the call becomes audible',()=>{
+ const spoken=[],natural={name:'English Natural',voiceURI:'online',lang:'en-US',localService:false},local={name:'English installed',voiceURI:'local',lang:'en-US',localService:true};
+ const radio=createTowerRadioAudio({speech:{getVoices:()=>[natural,local],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,setTimer:()=>1,clearTimer(){}});
+ radio.call('Tower. Cleared to land.');radio.unlock();spoken[0].onstart();spoken[0].onerror({error:'network'});
+ assert.equal(spoken.length,1,'partially heard calls are not restarted with another voice');assert.equal(radio.state.speaking,false);radio.dispose();
+});
