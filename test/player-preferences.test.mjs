@@ -7,3 +7,12 @@ test('player preferences bound gameplay controls and discard untrusted fields',(
  assert.deepEqual(normalizePlayerPreferences(null),PLAYER_DEFAULTS);assert.equal(normalizePlayerPreferences({mouseSensitivity:NaN}).mouseSensitivity,1);
  assert.equal(normalizePlayerPreferences({reticleColor:'#FF12AA'}).reticleColor,'#ff12aa');
 });
+
+test('audio preferences retain independent mute states and default spatial playback on',()=>{
+ const keys=['masterMuted','introductionMuted','announcementsMuted','dialogueMuted','effectsMuted','mediaMuted'];
+ const saved=normalizePlayerPreferences({...Object.fromEntries(keys.map(key=>[key,true])),spatialAudio:false,effectsVolume:42});
+ for(const key of keys){assert.equal(saved[key],true);assert.equal(PLAYER_DEFAULTS[key],false);assert.equal(normalizePlayerPreferences({[key]:'true'})[key],false);}
+ assert.equal(saved.spatialAudio,false);assert.equal(saved.effectsVolume,42);
+ assert.equal(normalizePlayerPreferences({spatialAudio:'false'}).spatialAudio,true);
+ assert.equal(normalizePlayerPreferences({effectsMuted:true,effectsVolume:82}).effectsVolume,82);
+});

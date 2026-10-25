@@ -164,6 +164,10 @@ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice[hidden],dialo
 .player-settings-grid,.player-settings-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px;}
 .player-settings-grid label,.player-settings-metrics label{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px;padding:10px;border:1px solid #354d32;border-radius:8px;color:#e5f3dd;}
 .player-settings-grid input[type=range],.player-settings-metrics meter{grid-column:1/-1;width:100%;min-width:0;min-height:30px;accent-color:#caff49;}
+.player-settings-grid [data-setting-toggle]{min-height:48px;padding:10px;text-align:left;white-space:normal;border:1px solid #496442;border-radius:8px;background:#19301e;color:#e5f3dd;}
+.player-settings-grid [data-setting-toggle][aria-pressed=true]{border-color:#c4a264;background:#3b3020;}
+.player-settings-grid [data-player-setting=spatialAudio][aria-pressed=true]{border-color:#a8ce65;background:#243b1c;}
+.player-settings-grid [data-setting-toggle]:focus-visible{outline:2px solid #caff49;outline-offset:2px;}
 .player-settings-grid input[type=color]{width:48px;height:44px;padding:3px;}
 .player-settings-grid .player-setting-check{display:flex;gap:10px;min-height:44px;}
 .player-settings-grid input[type=checkbox]{width:20px;height:20px;accent-color:#caff49;}

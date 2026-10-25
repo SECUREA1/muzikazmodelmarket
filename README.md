@@ -199,9 +199,9 @@ Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
-and offers all public destinations. Jobs, objective changes, nearby NPCs and
-crew work are voiced after the first player gesture, with shared mute/replay
-controls. See [map travel and spoken objectives](docs/open-map-travel.md).
+and offers all public destinations. A map introduction plays once per page session after the first player gesture.
+Only new jobs, objective changes and game interactions are then voiced.
+Settings provides independent audio mutes and distance-based spatial sound. See [map travel and spoken objectives](docs/open-map-travel.md).
 
 ## In-game camera views
 

@@ -25,12 +25,29 @@ Static map footprints retain their DOM elements between snapshots. Occupancy
 updates do not reorder and replace vehicle buttons during a tap. Touch boarding
 dispatches once on pointer release and suppresses the delayed compatibility click.
 
-Spoken announcements are enabled by default after the player's first gesture.
-They cover new assignments, changed objectives, completions, crew jobs, nearby
-guides, walking quests and radio dispatch. The shared conversation voice
-deduplicates repeated snapshots and respects private recipients and mute.
-Crew radio provides mute and replay controls; changing worlds preserves mute.
-Browsers without speech retain visible captions and status.
+Spoken audio starts after the player's first gesture. Each map has one short
+introduction per page session. Returning to a previously visited map does not
+replay it. Initial snapshots establish the job baseline without reading existing work
+or past traffic aloud. Subsequent new jobs, changed objectives, completions,
+walking quests and requested game interactions are announced once. Nearby NPCs
+and periodic traffic chatter remain visible without automatic speech. Private
+calls stay restricted to their recipients, and stale or muted calls are discarded.
+
+Open **Settings → Audio settings** to mute all audio or independently mute world
+introductions, new jobs and map announcements, NPC conversations, game effects,
+and shared media. Changes preview immediately; **Save settings** persists them to
+your member account. Muting effects preserves the effects volume slider. Local
+radio replay/enable controls cannot override a Settings mute. Captions remain
+available throughout.
+
+Spatial audio defaults on. World effects and shared media use HRTF positioning
+relative to the camera, with distance falloff and orientation updates as you
+move or look around. NPC browser voices use distance-based volume; browser speech
+synthesis does not expose a Web Audio source for stereo positioning. Map
+introductions and radio-style objectives stay clear regardless of distance.
+Disabling spatial audio centers world sounds and removes distance falloff.
+Browsers without speech retain visible captions and status; those without a
+panner retain distance attenuation.
 
 Validation includes authoritative travel/switching/respawn tests, bounded model
 presentation and reconnect tests, announcement privacy/deduplication tests,

@@ -36,10 +36,10 @@
     stopMeter(id);if(!audioContext||!stream)return;
     const source=audioContext.createMediaStreamSource(stream),analyser=audioContext.createAnalyser();analyser.fftSize=256;source.connect(analyser);
     const meter={source,analyser,data:new Uint8Array(256)};
-    if(id!==sessionId&&audioContext.createStereoPanner){meter.panner=audioContext.createStereoPanner();meter.gain=audioContext.createGain();meter.gain.gain.value=speakerOn?1:0;analyser.connect(meter.panner);meter.panner.connect(meter.gain);meter.gain.connect(audioContext.destination);const audio=remoteAudio.get(id);if(audio)audio.muted=true;}
+    if(id!==sessionId&&audioContext.createStereoPanner){meter.panner=audioContext.createStereoPanner();meter.gain=audioContext.createGain();meter.gain.gain.value=speakerAudible()?1:0;analyser.connect(meter.panner);meter.panner.connect(meter.gain);meter.gain.connect(audioContext.destination);const audio=remoteAudio.get(id);if(audio)audio.muted=true;}
     meters.set(id,meter);
   }
-  const meterTimer=setInterval(()=>{for(const [id,meter]of meters){if(meter.panner){const user=currentUsers.find(user=>user.sessionId===id),listener=window.MUZIKAZ_HOUSE_TRACKING||{},position=window.MUZIKAZ_ROOM_AUDIO_POSES?.[id]||user?.position,dx=(position?.x||0)-(listener.position?.x||0),dz=(position?.z||0)-(listener.position?.z||0),yaw=listener.rotation?.y||0,pan=(dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,Math.hypot(dx,dz));meter.panner.pan.setTargetAtTime(pan*.65,audioContext.currentTime,.08);}meter.analyser.getByteTimeDomainData(meter.data);let energy=0;for(const sample of meter.data)energy+=((sample-128)/128)**2;const level=Math.min(1,Math.sqrt(energy/meter.data.length)*6);emitLevel(id,level);if(id===sessionId){micToggle.style.setProperty('--voice-level',level);micToggle.classList.toggle('is-speaking',level>.06);}}},80);
+  const meterTimer=setInterval(()=>{for(const [id,meter]of meters){if(meter.panner){const user=currentUsers.find(user=>user.sessionId===id),listener=window.MUZIKAZ_HOUSE_TRACKING||{},position=window.MUZIKAZ_ROOM_AUDIO_POSES?.[id]||user?.position,dx=(position?.x||0)-(listener.position?.x||0),dz=(position?.z||0)-(listener.position?.z||0),yaw=listener.rotation?.y||0,pan=(dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,Math.hypot(dx,dz));const spatial=window.MUZIKAZ_AUDIO_PREFERENCES?.spatialAudio!==false,distance=position&&listener.position?Math.hypot(dx,(position.y||0)-(listener.position.y||0),dz):0,attenuation=spatial?Math.max(0,1-distance/40)**2:1;meter.panner.pan.setTargetAtTime(spatial?pan*.65:0,audioContext.currentTime,.08);meter.gain.gain.setTargetAtTime(speakerAudible()?attenuation:0,audioContext.currentTime,.02);}meter.analyser.getByteTimeDomainData(meter.data);let energy=0;for(const sample of meter.data)energy+=((sample-128)/128)**2;const level=Math.min(1,Math.sqrt(energy/meter.data.length)*6);emitLevel(id,level);if(id===sessionId){micToggle.style.setProperty('--voice-level',level);micToggle.classList.toggle('is-speaking',level>.06);}}},80);
   function stopCaptions(){clearTimeout(recognitionTimer);clearTimeout(captionTimer);const old=recognition;recognition=null;if(old){old.onend=null;old.abort();}caption='';captionAt=0;}
   function startCaptions(){
     const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -59,6 +59,11 @@
   function closePeers(){for(const [id,peer]of peers){signal(id,'hangup').catch(()=>{});peer.close();stopMeter(id);}peers.clear();pendingCandidates.clear();remoteAudio.forEach(audio=>audio.remove());remoteAudio.clear();}
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, presenceRequest=null;
+  const speakerAudible=()=>speakerOn&&!window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted;
+  window.addEventListener('muzikaz:audio-preferences',()=>{
+    for(const [id,audio]of remoteAudio){const gain=meters.get(id)?.gain;if(gain)gain.gain.setValueAtTime(speakerAudible()?1:0,audioContext.currentTime);audio.muted=!speakerAudible()||Boolean(gain);}
+    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted)window.speechSynthesis?.cancel();
+  });
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
@@ -77,7 +82,7 @@
   }
   function speakMessage(item) {
     const activeRoom = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
-    if (!textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
+    if (window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted || !textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
     const utterance = new SpeechSynthesisUtterance(`${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`);
     utterance.lang = document.documentElement.lang || navigator.language || 'en';
     utterance.rate = 1; utterance.volume = 1;
@@ -147,7 +152,7 @@
     const peer = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }] });
     if(localStream)localStream.getTracks().forEach((track) => peer.addTrack(track, localStream));else peer.addTransceiver('audio',{direction:'recvonly'});
     peer.onicecandidate = (event) => { if (event.candidate) signal(remoteId, 'candidate', event.candidate).catch(() => {}); };
-    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0] || new MediaStream([event.track]); audio.volume=1;meterStream(remoteId,audio.srcObject); audio.muted = !speakerOn||Boolean(meters.get(remoteId)?.gain); audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
+    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0] || new MediaStream([event.track]); audio.volume=1;meterStream(remoteId,audio.srcObject); audio.muted = !speakerAudible()||Boolean(meters.get(remoteId)?.gain); audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') voiceStatus.textContent = `Voice live · ${peers.size} connection${peers.size === 1 ? '' : 's'}`; if (['failed','closed'].includes(peer.connectionState)&&peers.get(remoteId)===peer) { peer.close(); peers.delete(remoteId);stopMeter(remoteId);remoteAudio.get(remoteId)?.remove();remoteAudio.delete(remoteId); } };
     peers.set(remoteId, peer); return peer;
   }
@@ -221,7 +226,7 @@
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   document.addEventListener('pointerdown',()=>{prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject&&!meters.has(id))meterStream(id,audio.srcObject);}).catch(()=>{});},{once:true});
   micToggle.addEventListener('click', async () => { if(micToggle.disabled)return; micToggle.disabled=true; try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Allow microphone access in your browser, then tap Mic off to retry.' : error.message; } finally { micToggle.disabled=false; } });
-  speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn; remoteAudio.forEach((audio,id) => { const gain=meters.get(id)?.gain;if(gain)gain.gain.setTargetAtTime(speakerOn?1:0,audioContext.currentTime,.02);audio.muted = !speakerOn||Boolean(gain); if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
+  speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn; remoteAudio.forEach((audio,id) => { const gain=meters.get(id)?.gain;if(gain)gain.gain.setTargetAtTime(speakerAudible()?1:0,audioContext.currentTime,.02);audio.muted = !speakerAudible()||Boolean(gain); if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { ttsToggle.disabled = true; ttsToggle.title = 'Text to speech is not supported by this browser'; }
   setTextToSpeech(textToSpeechOn);
   ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { window.speechSynthesis.cancel(); setTextToSpeech(!textToSpeechOn, true); } });
