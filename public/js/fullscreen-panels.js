@@ -10,6 +10,7 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
   const dialog = document.createElement('dialog');
   dialog.className = 'game-fullscreen-dialog';
   if(panel.id==='rad-tox-tools')dialog.classList.add('tools-pouch-screen');
+  if(panel.id==='rad-build-menu')dialog.classList.add('builder-catalog-screen');
   dialog.setAttribute('aria-label', panel.getAttribute('aria-label') || 'Game menu');
   panel.classList.add('game-fullscreen-content');
   dialog.append(panel);
@@ -20,7 +21,9 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
   const header=document.createElement('header');header.className='game-menu-header';
   const title=document.createElement('h2');title.textContent=panel.id==='rad-tox-tools'?'Tools':dialog.getAttribute('aria-label');
   if(panel.id==='game-explorer-options')title.insertAdjacentHTML('afterbegin',shortcutIcon('settings'));
-  header.append(title,close);dialog.prepend(header);
+  header.append(title,close);
+  // The builder provides its own compact sticky header and delegated close.
+  if(panel.id!=='rad-build-menu')dialog.prepend(header);
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
   const isCompanion=()=>typeof companion==='function'?companion()===true:companion===true;
   let wasOpen=false, returnFocus=null,companionMode=false;
