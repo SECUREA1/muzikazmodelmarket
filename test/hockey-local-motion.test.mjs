@@ -22,3 +22,15 @@ test('hockey room ignores stale input and old-session requests without losing cu
 test('local hockey motion consumes elapsed time equally at 5, 10, 20, 30 and 60 FPS',()=>{
  const positions=[];for(const fps of [5,10,20,30,60]){const state=arena(),motion=new LocalHockeyMotion();motion.accept(state,'pilot',{serverTime:1000,sentAt:0,receivedAt:0});let player;for(let frame=1;frame<=fps;frame++)player=motion.sample(frame/fps*1000,1/fps,{x:1,z:0});positions.push(player.x);}for(const x of positions)assert.ok(Math.abs(x-positions.at(-1))<1e-8,'slow rendering must not drop simulation time');
 });
+
+test('fresh skating, braking and reversal stay responsive after long snapshot gaps',()=>{
+ for(const age of [1600,5000,20000]){
+  const state=arena(),saved=structuredClone(state),motion=new LocalHockeyMotion(),source=state.players.find(player=>player.human==='pilot');
+  motion.accept(state,'pilot',{serverTime:1000,sentAt:0,receivedAt:0});
+  const moving=motion.sample(age,.2,{x:1,z:0});assert.ok(moving.x>source.x+.2,'fresh input must move before another server reply');assert.ok(moving.vx>1);
+  const released=motion.sample(age+200,.2,{x:0,z:0});assert.ok(released.vx<moving.vx,'released input follows the shared skate friction');
+  const reversed=motion.sample(age+450,.25,{x:-1,z:0});assert.ok(reversed.vx<0,'fresh reverse input cannot be discarded as stale');
+  const bounds=stepLocalHockeySkater({...reversed,x:100,z:100},{x:1,z:1},.05);assert.ok(bounds.x<31&&bounds.z<15,'the rink boards still constrain skating');
+  assert.deepEqual(state,saved,'local input does not simulate opponents, puck, goals or match time');
+ }
+});

@@ -1,0 +1,1168 @@
+{
+  "schemaVersion": 1,
+  "validatedAtUtc": "2026-10-25T14:12:47.072144+00:00",
+  "coverage": [
+    "All 40 public maps: unchanged startup UI, touch and keyboard displacement, sustained movement, held authoritative input acknowledgement and control release.",
+    "Airport/docks: open 2D/3D maps, keyboard, touch, jump, fire, travel, vehicle exit and injected 503 recovery."
+  ],
+  "limitations": [
+    "Movement/control and collision validation does not guarantee device FPS.",
+    "Tracked request failures cover /api/rooms/*/gameplay and /api/game/room-session, not every application endpoint."
+  ],
+  "launchModeSemantics": [
+    "Some solo launches require hosted worlds; house-map hosted flags are captured from runtime snapshots.",
+    "Native hockey uses the selected local/live mode. Arcade directory checks cover local park traversal in both launch modes, not entry into every attraction match."
+  ],
+  "fullSuite": {
+    "tests": 2161,
+    "passed": 2161,
+    "failed": 0,
+    "log": "/tmp/app-final-full-tests.log",
+    "note": "Followed by the targeted refinements below; counts overlap and are not summed."
+  },
+  "postSuiteTargetedRefinements": [
+    {
+      "name": "transport",
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "name": "backend/storage",
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "name": "hockey",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "name": "saved-pose",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "name": "jump/local",
+      "passed": 35,
+      "failed": 0
+    }
+  ],
+  "openMapWorkflows": {
+    "tested": 2,
+    "passed": 2,
+    "maps": [
+      "muzikaz-airport",
+      "world-district-neon-docks"
+    ],
+    "report": "/tmp/nonblocking-map-controls-final.json",
+    "log": "/tmp/nonblocking-map-controls-final.log"
+  },
+  "runs": {
+    "solo": {
+      "launchMode": "solo",
+      "tested": 40,
+      "passed": 40,
+      "failed": 0,
+      "pageErrors": 0,
+      "hostedMaps": 18,
+      "localMaps": 22,
+      "trackedRequestFailures": 1,
+      "report": "/tmp/all-world-solo-release.json",
+      "log": "/tmp/all-world-solo-release.log"
+    },
+    "shared": {
+      "launchMode": "multiplayer",
+      "tested": 40,
+      "passed": 40,
+      "failed": 0,
+      "pageErrors": 0,
+      "hostedMaps": 39,
+      "localMaps": 1,
+      "trackedRequestFailures": 0,
+      "report": "/tmp/all-world-shared-release.json",
+      "log": "/tmp/all-world-shared-release.log"
+    }
+  },
+  "maps": [
+    {
+      "id": "basketball-arena",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.91,
+          "keyboard": 2.432,
+          "sustainedTouch": 9.3
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 2.723,
+          "keyboard": 2.98,
+          "sustainedTouch": 8.348
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "crew-plaza-in",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 2.685,
+          "keyboard": 2.424,
+          "sustainedTouch": 7.998
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 1.429,
+          "keyboard": 1.272,
+          "sustainedTouch": 6.228
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "crew-plaza-inside",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.108,
+          "keyboard": 2.33,
+          "sustainedTouch": 8.176
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.097,
+          "keyboard": 2.957,
+          "sustainedTouch": 6.587
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "crew-plaza-outdoors",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 5.985,
+          "keyboard": 2.375,
+          "sustainedTouch": 2.938
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 5.414,
+          "keyboard": 1.606,
+          "sustainedTouch": 5.609
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "firing-range",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 0.508,
+          "keyboard": 2.802,
+          "sustainedTouch": 4.658
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 0.508,
+          "keyboard": 2.952,
+          "sustainedTouch": 4.658
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "force-training-range",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 0.508,
+          "keyboard": 2.884,
+          "sustainedTouch": 4.756
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 0.508,
+          "keyboard": 2.868,
+          "sustainedTouch": 4.661
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "hockey-arena",
+      "kind": "hockey",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 15.135,
+          "keyboard": 4.563,
+          "sustainedTouch": 14.935
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 13.059,
+          "keyboard": 2.462,
+          "sustainedTouch": 13.76
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "jail-cells",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.812,
+          "keyboard": 2.657,
+          "sustainedTouch": 5.644
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.749,
+          "keyboard": 2.979,
+          "sustainedTouch": 5.836
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "kitchen",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.562,
+          "keyboard": 2.575,
+          "sustainedTouch": 3.368
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.92,
+          "keyboard": 2.946,
+          "sustainedTouch": 1.428
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "kitchen-upper-deck",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.411,
+          "keyboard": 2.32,
+          "sustainedTouch": 5.69
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.375,
+          "keyboard": 0.876,
+          "sustainedTouch": 4.968
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-bassline-badlands",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.827,
+          "keyboard": 2.89,
+          "sustainedTouch": 10.354
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.743,
+          "keyboard": 2.816,
+          "sustainedTouch": 8.138
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-crew-plaza",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.268,
+          "keyboard": 3.031,
+          "sustainedTouch": 12.956
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.229,
+          "keyboard": 2.854,
+          "sustainedTouch": 7.726
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-echo-gardens",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.839,
+          "keyboard": 3.058,
+          "sustainedTouch": 8.777
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.183,
+          "keyboard": 2.925,
+          "sustainedTouch": 8.611
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-neon-docks",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.372,
+          "keyboard": 2.916,
+          "sustainedTouch": 10.962
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.64,
+          "keyboard": 3.038,
+          "sustainedTouch": 7.351
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-pixel-peaks",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.765,
+          "keyboard": 3.146,
+          "sustainedTouch": 7.384
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.597,
+          "keyboard": 2.84,
+          "sustainedTouch": 6.808
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-skyline-deck",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.341,
+          "keyboard": 2.988,
+          "sustainedTouch": 8.724
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.494,
+          "keyboard": 2.89,
+          "sustainedTouch": 6.349
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-studio-ridge",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.969,
+          "keyboard": 3.232,
+          "sustainedTouch": 9.479
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.807,
+          "keyboard": 2.813,
+          "sustainedTouch": 6.942
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "land-field-volt-city",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.027,
+          "keyboard": 2.99,
+          "sustainedTouch": 8.272
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.866,
+          "keyboard": 3.048,
+          "sustainedTouch": 6.498
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-airport",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.385,
+          "keyboard": 1.701,
+          "sustainedTouch": 13.247
+        },
+        "trackedRequestFailures": 1,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.806,
+          "keyboard": 3.017,
+          "sustainedTouch": 9.949
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-casino",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.924,
+          "keyboard": 3.058,
+          "sustainedTouch": 8.808
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.499,
+          "keyboard": 2.434,
+          "sustainedTouch": 6.86
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-fitness-centre",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 2.758,
+          "keyboard": 2.822,
+          "sustainedTouch": 7.503
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 2.758,
+          "keyboard": 2.888,
+          "sustainedTouch": 8.92
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-full-house",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.896,
+          "keyboard": 2.286,
+          "sustainedTouch": 1.052
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.534,
+          "keyboard": 3.039,
+          "sustainedTouch": 1.98
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-main",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.475,
+          "keyboard": 2.405,
+          "sustainedTouch": 7.49
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.356,
+          "keyboard": 3.488,
+          "sustainedTouch": 2.844
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-missile-factory",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 9.642,
+          "keyboard": 2.879,
+          "sustainedTouch": 8.314
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.304,
+          "keyboard": 3.0,
+          "sustainedTouch": 5.838
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "muzikaz-upper",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 12.33,
+          "keyboard": 2.796,
+          "sustainedTouch": 5.288
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.35,
+          "keyboard": 2.0,
+          "sustainedTouch": 6.216
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "neon-junction",
+      "kind": "arcade",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 3.944,
+          "keyboard": 2.428,
+          "sustainedTouch": 4.236
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 3.099,
+          "keyboard": 0.826,
+          "sustainedTouch": 2.996
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "pixel-peaks-ski-resort",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.664,
+          "keyboard": 1.773,
+          "sustainedTouch": 6.679
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 5.934,
+          "keyboard": 0.58,
+          "sustainedTouch": 8.562
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "public-commons",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 10.677,
+          "keyboard": 2.918,
+          "sustainedTouch": 14.491
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.837,
+          "keyboard": 2.989,
+          "sustainedTouch": 7.247
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "sheepbase",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.278,
+          "keyboard": 2.305,
+          "sustainedTouch": 7.964
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.43,
+          "keyboard": 2.916,
+          "sustainedTouch": 5.783
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "skyscraper-construction",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.214,
+          "keyboard": 2.714,
+          "sustainedTouch": 10.61
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.892,
+          "keyboard": 2.898,
+          "sustainedTouch": 7.063
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "studio-ridge-in",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.421,
+          "keyboard": 2.549,
+          "sustainedTouch": 12.134
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.538,
+          "keyboard": 2.938,
+          "sustainedTouch": 6.365
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "studio-ridge-out",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 4.756,
+          "keyboard": 2.293,
+          "sustainedTouch": 2.866
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 4.466,
+          "keyboard": 2.667,
+          "sustainedTouch": 3.34
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-bassline-badlands",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.049,
+          "keyboard": 2.244,
+          "sustainedTouch": 13.079
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.01,
+          "keyboard": 2.908,
+          "sustainedTouch": 8.241
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-crew-plaza",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.992,
+          "keyboard": 2.366,
+          "sustainedTouch": 14.308
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.671,
+          "keyboard": 2.926,
+          "sustainedTouch": 6.996
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-echo-gardens",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 8.188,
+          "keyboard": 2.318,
+          "sustainedTouch": 8.561
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.782,
+          "keyboard": 2.929,
+          "sustainedTouch": 6.655
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-neon-docks",
+      "kind": "house",
+      "solo": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.058,
+          "keyboard": 3.052,
+          "sustainedTouch": 10.242
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.974,
+          "keyboard": 2.948,
+          "sustainedTouch": 6.305
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-pixel-peaks",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.163,
+          "keyboard": 2.345,
+          "sustainedTouch": 8.253
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.698,
+          "keyboard": 2.846,
+          "sustainedTouch": 6.504
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-skyline-deck",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.528,
+          "keyboard": 2.17,
+          "sustainedTouch": 7.193
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.46,
+          "keyboard": 2.715,
+          "sustainedTouch": 6.557
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-studio-ridge",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.998,
+          "keyboard": 2.32,
+          "sustainedTouch": 6.713
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 7.529,
+          "keyboard": 2.944,
+          "sustainedTouch": 8.022
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-district-volt-city",
+      "kind": "house",
+      "solo": {
+        "hosted": false,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.589,
+          "keyboard": 2.337,
+          "sustainedTouch": 8.003
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      },
+      "shared": {
+        "hosted": true,
+        "passed": true,
+        "displacement": {
+          "startupTouch": 6.495,
+          "keyboard": 2.86,
+          "sustainedTouch": 6.685
+        },
+        "trackedRequestFailures": 0,
+        "pageErrors": 0
+      }
+    }
+  ],
+  "integrationAfterRemoteUpdate": {
+    "integratedAtUtc": "2026-10-25T14:23:48.228065+00:00",
+    "remoteBase": "48732d238d19d78baeb6b18056f5a3b32aedae8a",
+    "upstreamCommits": [
+      "f6da51e9",
+      "732ef247",
+      "c0dfb432",
+      "48732d23"
+    ],
+    "scopeNote": "The full-suite and directory-sweep results above preceded this integration. The following focused checks validated the combined changes.",
+    "targetedRegressions": {
+      "tests": 108,
+      "passed": 108,
+      "failed": 0,
+      "log": "/tmp/push-integration-tests.log"
+    },
+    "liveBrowserChecks": {
+      "maps": [
+        "muzikaz-airport",
+        "skyscraper-construction"
+      ],
+      "passed": true,
+      "checks": [
+        "initial touch without canvas focus",
+        "keyboard walking",
+        "keyboard and touch jump",
+        "vehicle directory"
+      ],
+      "log": "/tmp/push-browser-integration.log"
+    },
+    "staticBuild": "passed",
+    "staticCheck": "passed",
+    "preservedBehavior": [
+      "native destination meeting points and launch mode",
+      "solo ski collision geometry",
+      "placed actor/object/terrain entry clearance",
+      "compact valid saved poses and occupied ski lifts",
+      "responsive movement and nonblocking range startup"
+    ]
+  }
+}

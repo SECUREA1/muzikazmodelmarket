@@ -1,6 +1,7 @@
 import {LocalHockeyMotion,createHockeyInputPump} from './hockey-local-motion.js';
 import {HOCKEY_CHALLENGES,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
+import {isGameTypingTarget} from './game-keyboard-input.js';
 import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
@@ -48,8 +49,22 @@ async function travelToIce(event){
   viewInitialized=false;updateCamera(0,performance.now()/1000);$('#call').textContent='Moved to the selected ice spot.';
  }catch(error){$('#call').textContent=error.message;}finally{groundTravelPending=false;flushInput();}
 }
-// The challenge popup shares fresh game controls instead of owning keyboard input.
-addEventListener('keydown',e=>{if(isGameCameraToggleKey(e)){e.preventDefault();toggleCamera();return;}const companion=!!e.target.closest?.('.native-game-challenges');if(!running||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)||document.activeElement.tagName==='BUTTON'&&!companion)return;const k=e.key.toLowerCase();if(['shift','h','j','k','f',' ','arrowup','arrowdown','arrowleft','arrowright','w','a','s','d','e','q','c','x','l','g','t'].includes(k)&&companion)canvas.focus({preventScroll:true});if(['shift','h','j','k','f',' ','arrowup','arrowdown','arrowleft','arrowright','w','a','s','d','e','q'].includes(k)){if(e.repeat&&!keys.has(k))return;keys.add(k);flushInput();e.preventDefault();}if(k==='c'&&!e.repeat){centerView();e.preventDefault();}if(['x','l','g','t'].includes(k)&&!e.repeat){e.preventDefault();void action(k==='x'?'switch':k==='l'?'line':k==='t'?'timeout':'goalie');}});addEventListener('keyup',e=>{const key=e.key.toLowerCase();keys.delete(key);if(key===' ')hockeyTrigger.reset();flushInput();});addEventListener('blur',()=>{keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;flushInput();});document.addEventListener('visibilitychange',()=>{keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;flushInput();});
+// Native dialog closure returns focus to its toolbar opener. Fresh movement
+// from that button must resume skating while Space/Enter still activate it.
+addEventListener('keydown',e=>{
+ if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||isGameTypingTarget(e.target)||document.querySelector('dialog[open]'))return;
+ if(isGameCameraToggleKey(e)){e.preventDefault();toggleCamera();return;}
+ const companion=!!e.target.closest?.('.native-game-challenges'),k=e.key.toLowerCase();
+ const movement=['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k);
+ if(!running||e.target.closest?.('button,a,[role="button"]')&&!companion&&!movement)return;
+ if(movement||['shift','h','j','k','f',' ','e','q','c','x','l','g','t'].includes(k)&&companion)canvas.focus({preventScroll:true});
+ if(['shift','h','j','k','f',' ','arrowup','arrowdown','arrowleft','arrowright','w','a','s','d','e','q'].includes(k)){
+  if(e.repeat&&!keys.has(k))return;
+  keys.add(k);flushInput();e.preventDefault();
+ }
+ if(k==='c'&&!e.repeat){centerView();e.preventDefault();}
+ if(['x','l','g','t'].includes(k)&&!e.repeat){e.preventDefault();void action(k==='x'?'switch':k==='l'?'line':k==='t'?'timeout':'goalie');}
+});addEventListener('keyup',e=>{const key=e.key.toLowerCase();keys.delete(key);if(key===' ')hockeyTrigger.reset();flushInput();});addEventListener('blur',()=>{keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;flushInput();});document.addEventListener('visibilitychange',()=>{keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;flushInput();});
 for(const button of document.querySelectorAll('[data-key]')){button.addEventListener('pointerdown',e=>{keys.add(button.dataset.key);flushInput();button.setPointerCapture(e.pointerId);e.preventDefault();});for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>{keys.delete(button.dataset.key);if(button.dataset.key===' ')hockeyTrigger.reset();flushInput();});}
 let controllerMove={x:0,y:0};const vrSpectatorPosition=new THREE.Vector3(0,2,27);let vrSpectatorYaw=0;
 function input(){if(groundTravelPending||xrControls?.menuOpen||document.querySelector('dialog[open]')){hockeyTrigger.reset();return {};}const p=state?.players.find(p=>p.human===selfId),view=$('#camera-view').value;
@@ -58,7 +73,15 @@ function input(){if(groundTravelPending||xrControls?.menuOpen||document.querySel
  return {...movement,aimX:aim.x,aimZ:aim.z,...hockeyTrigger.read(state,p,{pressed:keys.has(' '),mode:triggerMode,aim,manual:{shoot:keys.has('shoot'),pass:keys.has('e'),check:keys.has('q'),poke:keys.has('f'),hook:keys.has('h'),slash:keys.has('j'),hold:keys.has('k')}}),lift:keys.has('shift')};}
 async function command(action,fields={}){session ||= await api.roomSession();try{return await api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({action,...fields})});}catch(e){if(e.code!=='CSRF_INVALID')throw e;session=await api.roomSession();return api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({action,...fields})});}}
 function accept(snapshot,timing={}){if(snapshot.sequence<=sequence)return;sequence=snapshot.sequence;connectionError='';state=snapshot.state;selfId=snapshot.selfId;hockeyInputEpoch=snapshot.inputEpoch||hockeyInputEpoch;spectating=snapshot.role==='spectator';if(spectating){localSkating.reset();localSkater=null;}else{localSkating.accept(state,selfId,{...timing,serverTime:snapshot.serverTime});localSkater=localSkating.sample(performance.now(),0,{});}}
-async function inputFailure(error){keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();connectionError='Connection interrupted · '+error.message;if(running&&error.status===409&&!busy){busy=true;inputPump.reset();try{localSkating.reset();accept(await command(spectating?'spectate':'join',{slot:$('#player-slot').value||null,settings:{difficulty:$('#difficulty').value,mode:$('#format').value,periodSeconds:Number($('#period-seconds').value),aiFill:$('#hockey-ai-fill').checked}}));}catch(failure){$('#call').textContent=failure.message;}finally{busy=false;}}}
+async function inputFailure(error){
+ const replaced=error.code==='ROOM_SWITCHED',rejoin=error.status===409&&!replaced;
+ const terminal=replaced||error.status===403||error.status===401&&error.code!=='CSRF_INVALID';
+ // A delayed failed request describes the network, not today's physical
+ // controls. Keep fresh held input through recoverable outages and proof races.
+ if(terminal||rejoin){keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();}
+ connectionError='Connection interrupted · '+error.message;
+ if(running&&rejoin&&!busy){busy=true;inputPump.reset();try{localSkating.reset();accept(await command(spectating?'spectate':'join',{slot:$('#player-slot').value||null,settings:{difficulty:$('#difficulty').value,mode:$('#format').value,periodSeconds:Number($('#period-seconds').value),aiFill:$('#hockey-ai-fill').checked}}));}catch(failure){$('#call').textContent=failure.message;}finally{busy=false;}}
+}
 const inputPump=createHockeyInputPump({send:input=>command('input',{input,inputSequence:++localInputSequence,inputEpoch:hockeyInputEpoch}),onSnapshot:(snapshot,timing)=>{if(running&&live){accept(snapshot,timing);$('#status').textContent='';}},onError:inputFailure});
 function flushInput(){if(!running||!live||spectating||groundTravelPending)return;nextPollAt=performance.now()+50;inputPump.push(document.hidden?{}:input());}
 async function poll(){if(!running||!live||performance.now()<nextPollAt)return;nextPollAt=performance.now()+(spectating?200:50);if(!spectating){flushInput();return;}if(busy)return;busy=true;const sentAt=performance.now();try{const snapshot=await command('watch');if(running)accept(snapshot,{sentAt,receivedAt:performance.now()});$('#status').textContent='';}catch(error){await inputFailure(error);}finally{busy=false;}}

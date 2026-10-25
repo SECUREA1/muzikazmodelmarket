@@ -13,7 +13,8 @@ const finitePosition=position=>['x','y','z'].every(axis=>Number.isFinite(positio
 export class LocalWalkingView {
  constructor({radius=.34,height=1.65}={}){
   this.radius=Math.max(.05,Number(radius)||.34);this.height=Math.max(this.radius*2+.01,Number(height)||1.65);
-  this.motion=new WalkingMotion({immediate:true,staleAfter:1200,staleFade:0,maxDelta:.25});this.reset();
+  // These are current local controls, not extrapolation of old server input.
+  this.motion=new WalkingMotion({immediate:true,staleAfter:Infinity,staleFade:0,maxDelta:.25,recoverAfter:1200});this.reset();
  }
  reset(){
   this.motion.reset();this.capsule=null;this.position=null;this.grounded=false;this.velocityY=0;this.jumpQueued=false;this.jumpDown=false;this.verticalHistory=[];this.verticalCorrection=0;this.floorRecovery=null;
@@ -67,11 +68,11 @@ export class LocalWalkingView {
  jump(){if(!this.capsule||!this.grounded)return false;this.jumpQueued=true;return true;}
  sample(now,delta,input={},options={},target={}){
   if(!this.capsule)return target;
-  const dt=Math.max(0,Math.min(.25,Number(delta)||0)),stale=now-this.motion.receivedAt>1200;
+  const dt=Math.max(0,Math.min(.25,Number(delta)||0));
   this.recoverFloor(now,options);
-  const jumpPressed=input.jump===true;if(jumpPressed&&!this.jumpDown&&!stale)this.jumpQueued=true;this.jumpDown=jumpPressed;
+  const jumpPressed=input.jump===true;if(jumpPressed&&!this.jumpDown)this.jumpQueued=true;this.jumpDown=jumpPressed;
   if(this.jumpQueued&&this.grounded){this.velocityY=6;this.grounded=false;}this.jumpQueued=false;
-  const candidate={x:this.position.x,z:this.position.z};this.motion.sample(now,dt,stale?{}:input,Math.max(0,Number(options.speed??4)||0),candidate);
+  const candidate={x:this.position.x,z:this.position.z};this.motion.sample(now,dt,input,Math.max(0,Number(options.speed??4)||0),candidate);
   const previous={...this.position},proposed={x:candidate.x,y:previous.y,z:candidate.z},constrained=options.constrain?.(previous,proposed)||proposed;
   const dx=(Number.isFinite(constrained.x)?constrained.x:previous.x)-previous.x,dz=(Number.isFinite(constrained.z)?constrained.z:previous.z)-previous.z;
   const steps=Math.max(1,Math.ceil(dt/(1/60))),step=dt/steps,correction=this.verticalCorrection;this.verticalCorrection=0;

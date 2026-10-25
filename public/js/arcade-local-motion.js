@@ -6,7 +6,7 @@ const ownSlot=room=>room?.slots?.findIndex(slot=>slot.actor===room.selfId)??-1;
 // Only the controlled player's presentation is predicted. Match physics,
 // possession, scores, clocks and all other players remain server snapshots.
 export class LocalArcadeMotion {
- constructor(){this.motion=new WalkingMotion({immediate:true,staleAfter:1200,staleFade:0});this.reset();}
+ constructor(){this.motion=new WalkingMotion({immediate:true,staleAfter:Infinity,staleFade:0,recoverAfter:1200});this.reset();}
  reset(){this.motion.reset();this.identity=null;this.stoppage=0;this.receivedAt=0;}
  reconcile(room,{sentAt,receivedAt=performance.now()}={}){
   const slot=ownSlot(room),state=room?.state,player=state?.basketball?.players?.[slot];

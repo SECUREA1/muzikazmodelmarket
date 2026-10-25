@@ -32,6 +32,7 @@ test('game connects the standard vehicle controller to keyboard, rendering and a
   assert.match(game, /new BuilderVehicleController/);
   assert.match(game, /key === 'f'/);
   assert.match(game, /if\(!serverHostedRoom&&!menuOpen&&!vehicleController\.update\(/);
+  assert.match(game, /vehicleController\.update\(frameDelta\)/);
   assert.match(game, /setPlayerAvatarVisible\(false\)/);
   assert.match(game, /setPlayerAvatarVisible\(true\)/);
 });
@@ -52,13 +53,15 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
 });
 
 test('nearby item actions are stable and rate-limited for touch devices', async () => {
-  const game = await read('../public/js/house-explorer-glb.js');
+  const [game, actionButton] = await Promise.all([read('../public/js/house-explorer-glb.js'), read('../public/js/game-action-button.js')]);
   assert.match(game, /function resolveNearbyAction\((?:key=null)?\)/);
   assert.match(game, /function renderNearbyAction\(next\)/);
   assert.match(game, /now-nearbyActionCheckedAt<100/);
   assert.match(game, /if\(nearbyActionLocked\)return/);
   assert.match(game, /setTimeout\(\(\)=>\{nearbyActionLocked=false;\},180\)/);
   assert.match(game, /bindGameActionButton\(builderActionButton,activateNearbyAction\)/);
+  assert.match(actionButton, /button\.addEventListener\('pointerup',up\)/);
+  assert.match(actionButton, /event\.pointerType!=='touch'/);
   assert.match(game, /touch-action:manipulation/);
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('strong'\)\.textContent/);
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('small'\)\.textContent/);

@@ -261,3 +261,11 @@ test('successful startup publishes readiness only after room confirmation and ga
  assert.equal(context.gameplayStarted,false);assert.equal(readinessChanges.at(-1),false);
  begin.resolve();await starting;assert.equal(context.gameplayStarted,true);assert.equal(readinessChanges.at(-1),true);
 });
+
+test('a confirmed player receives immediate local jump feedback while its server connection recovers',async()=>{
+ const acknowledgement=deferred(),calls=[];
+ const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:false,requestInput:()=>calls.push('refresh')},localWalkingActive:true,localWalkingView:{jump:()=>calls.push('local-jump')},toxicBubbleSystem:{tool:'laser'},serverInput:()=>({forward:1}),serverCommand:(_action,fields)=>{assert.equal(fields.input.jump,true);calls.push('server-jump');return acknowledgement.promise;}});
+ const start=source.indexOf('  function jump()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ const jumping=context.jump();assert.deepEqual(calls,['local-jump','server-jump']);
+ acknowledgement.resolve();await jumping;assert.deepEqual(calls,['local-jump','server-jump','refresh']);
+});

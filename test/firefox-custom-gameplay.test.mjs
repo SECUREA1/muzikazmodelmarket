@@ -14,7 +14,7 @@ test('custom SVG and GLB builds bridge into the playable 3D backpack', async () 
   assert.match(game, /new THREE\.TextureLoader\(\)\.loadAsync/);
   assert.match(game, /await addAvatarToScene/);
   assert.match(game, /muzikazCustomGamePlacements/);
-  assert.match(game, /customItem:true,type:'props'/);
+  assert.match(game, /root\.userData\.customItem=asset/, 'the deployed mesh keeps the complete custom item configuration');
 });
 
 test('adaptive WebGL quality keeps Firefox-compatible texture uploads current', async () => {

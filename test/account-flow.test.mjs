@@ -4,11 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
+import { Wallet } from '../vendor/ethers/ethers.mjs';
 
 async function runningServer(t) {
   const data = await mkdtemp(join(tmpdir(), 'mzk-api-'));
   const port = 18000 + Math.floor(Math.random() * 1000);
-  const child = spawn(process.execPath, ['server.mjs'], { cwd: new URL('..', import.meta.url), env: { ...process.env, PORT: String(port), MUZIKAZ_DATA_DIR: data, MUZIKAZ_ACCOUNTS_FILE: join(data, 'accounts.json'), MUZIKAZ_USER_DATABASE_FILE: join(data, 'users.json'), MUZIKAZ_PAYMENT_ORDERS_FILE: join(data, 'orders.json') }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, ['server.mjs'], { cwd: new URL('..', import.meta.url), env: { ...process.env, PORT: String(port), MUZIKAZ_DATA_DIR: data, MUZIKAZ_ACCOUNTS_FILE: join(data, 'accounts.json'), MUZIKAZ_USER_DATABASE_FILE: join(data, 'users.json'), MUZIKAZ_PAYMENT_ORDERS_FILE: join(data, 'orders.json'), MUZIKAZ_ADMIN_USERNAME: 'account-test-admin', MUZIKAZ_ADMIN_PASSWORD: 'account-test-password' }, stdio: ['ignore', 'pipe', 'pipe'] });
   t.after(async () => { child.kill(); await rm(data, { recursive: true, force: true }); });
   await new Promise((resolve, reject) => { child.stdout.on('data', resolve); child.once('exit', (code) => reject(new Error(`server exited ${code}`))); });
   return `http://127.0.0.1:${port}`;
@@ -24,9 +25,10 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(unauthenticated.response.status, 401); assert.equal(unauthenticated.body.code, 'SESSION_REQUIRED');
   assert.match(unauthenticated.response.headers.get('content-type'), /json/);
 
-  const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'giraff', password: 'boots' }) });
-  const standardAdmin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: 'boots' }) });
-  assert.equal(standardAdmin.response.status, 200, 'admin / boots opens the full administrator session');
+  const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'account-test-admin', password: 'account-test-password' }) });
+  const standardAdmin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: 'account-test-password' }) });
+  assert.equal(admin.response.status, 200, 'the configured administrator opens a full session');
+  assert.equal(standardAdmin.response.status, 200, 'the admin alias accepts the configured fixture password');
   const makeCode = async () => (await json(base, '/api/admin/access-codes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-token': admin.body.data.token }, body: '{}' })).body.data.code;
   const redeem = async (code) => json(base, '/api/access-codes/redeem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
   const first = await redeem(await makeCode()); const second = await redeem(await makeCode());
@@ -63,13 +65,20 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const anonymousGame = await json(base, '/api/game/session', { method: 'POST', headers: { 'x-csrf-token': 'client-controlled' }, body: '{}' });
   assert.equal(anonymousGame.response.status, 401); assert.equal(anonymousGame.body.stage, 'authentication');
   const invalidBearer = await json(base, '/api/account/bootstrap', { headers: { authorization: 'Bearer invalid-session', cookie: first.cookie } });
-  assert.equal(invalidBearer.response.status, 401, 'an invalid explicit bearer token is not replaced by a different cookie identity');
-  const walletOnly = await json(base, '/api/access/wallet', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: '0x1111111111111111111111111111111111111111' }) });
+  assert.equal(invalidBearer.response.status, 200, 'a stale browser token can recover through a valid account cookie');
+  assert.equal(invalidBearer.body.data.account.accountId, first.body.data.account.accountId);
+  const wallet = Wallet.createRandom();
+  const unsignedWallet = await json(base, '/api/access/wallet', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: wallet.address }) });
+  assert.equal(unsignedWallet.response.status, 401, 'an address alone cannot open an account session');
+  const challenge = await json(base, '/api/access/wallet/challenge', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: wallet.address }) });
+  const walletOnly = await json(base, '/api/access/wallet', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: wallet.address, challengeId: challenge.body.data.challengeId, signature: await wallet.signMessage(challenge.body.data.message) }) });
+  assert.equal(walletOnly.response.status, 200);
   const walletOnlyHeaders = { authorization: `Bearer ${walletOnly.body.data.sessionToken}`, 'x-csrf-token': walletOnly.body.data.csrfToken };
-  const denied = await json(base, '/api/game/session', { method: 'POST', headers: walletOnlyHeaders, body: '{}' });
-  assert.equal(denied.response.status, 403); assert.equal(denied.body.code, 'LOADOUT_ACCESS_REQUIRED'); assert.equal(denied.body.stage, 'entitlement');
+  const walletGame = await json(base, '/api/game/session', { method: 'POST', headers: walletOnlyHeaders, body: '{}' });
+  assert.equal(walletGame.response.status, 201, 'a verified wallet member receives game access');
   const otherGame = await json(base, '/api/game/session', { headers: { ...walletOnlyHeaders, 'x-game-session': gameCreation.body.data.gameSessionToken } });
-  assert.equal(otherGame.response.status, 403, 'an unentitled account cannot use another account game session');
+  assert.equal(otherGame.response.status, 409, 'a wallet member cannot use another account game session');
+  assert.equal(otherGame.body.code, 'GAME_SESSION_ACCOUNT_CONFLICT');
   const logout = await json(base, '/api/session', { method: 'DELETE', headers: bearerHeaders });
   assert.equal(logout.response.status, 200);
   assert.equal((await json(base, '/api/account/bootstrap', { headers: bearerHeaders })).response.status, 401, 'DELETE revokes the portable session');

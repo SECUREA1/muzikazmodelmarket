@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 import {Readable} from 'node:stream';
+import {LAND_VALUES} from '../public/js/game-item-pricing.js';
 
 test('marketplace bundle API authenticates purchases, validates prices, and updates shared ownership once',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'bundle-api-')),previous={...process.env};
@@ -36,6 +37,6 @@ test('marketplace bundle API authenticates purchases, validates prices, and upda
   assert.equal((await call('/api/economy/materials/buy',bulkHeaders,{...order,expectedPriceMzk:1})).status,409);
   const bulk=await call('/api/economy/materials/buy',bulkHeaders,order);assert.equal(bulk.status,200);assert.equal((await call('/api/economy/materials/buy',bulkHeaders,order)).body.data.id,bulk.body.data.id);
   const bulkAfter=(await call('/api/economy',bulkHeaders)).body.data;assert.equal(bulkAfter.balance,bulkBefore.balance-400);assert.equal(bulkAfter.items.find(item=>item.sku==='material:wall').stock,100);
-  const catalog=(await call('/api/market/catalog')).body.data;assert.ok(catalog.some(item=>item.id===bundle.id&&item.source==='bundle'));assert.equal(catalog.find(item=>item.worldId==='pixel-peaks').priceMzk,10000);assert.equal(catalog.find(item=>item.worldId==='skyline-deck').priceMzk,1000);
+  const catalog=(await call('/api/market/catalog')).body.data;assert.ok(catalog.some(item=>item.id===bundle.id&&item.source==='bundle'));for(const id of ['pixel-peaks','skyline-deck'])assert.equal(catalog.find(item=>item.worldId===id).priceMzk,LAND_VALUES[id].priceMzk,'the API uses the current land tier price');
  }finally{for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);await rm(dir,{recursive:true,force:true});}
 });

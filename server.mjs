@@ -130,7 +130,19 @@ function activePresence() {
 }
 function presencePayload() { const users = activePresence(); return { count: users.length, capacity: maxHouseUsers, coordinateSystem: 'right-handed-y-up', users }; }
 
-async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); for (const file of [dataFile, assetsFile, modelsFile, environmentDataFile, avatarProfilesFile, customMapsFile]) { try { await stat(file); } catch { await writeFile(file, '[]'); } } }
+async function ensureStorage() {
+  await Promise.all([dataDir,uploadDir,assetUploadDir,environmentUploadDir].map(directory=>mkdir(directory,{recursive:true})));
+  await Promise.all([dataFile,assetsFile,modelsFile,environmentDataFile,avatarProfilesFile,customMapsFile].map(async file=>{
+    try { await stat(file); }
+    catch(error){
+      if(error.code!=='ENOENT')throw error;
+      // Another request may create or populate the file after the stat. Never
+      // replace that live data with an empty initialization document.
+      try { await writeFile(file,'[]',{flag:'wx'}); }
+      catch(error){if(error.code!=='EEXIST')throw error;}
+    }
+  }));
+}
 
 
 async function readRepositoryEnvironments() {
@@ -323,7 +335,7 @@ async function roomIdentity(req,res,join=false){
  const authentication=await roomAuthentication(req,res,true);if(!authentication)return null;
  const key=authentication.accountId,cached=roomIdentityCache.get(key);if(!join&&cached&&Date.now()-cached.at<5000)return cached.identity;
  const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account){authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');return null;}const state=await userDatabase.ensureAccount(account);const context={account,walletId:state.walletId};
- const identity={accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member',avatar:await designatedAvatar(req,{id:context.walletId},authentication),stats:(await userDatabase.rpgState(context.walletId)).stats};
+ const identity={accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member',avatar:await designatedAvatar(req,{id:context.walletId},authentication,account,state),stats:(await userDatabase.rpgState(context.walletId)).stats};
  roomIdentityCache.set(key,{at:Date.now(),identity});if(roomIdentityCache.size>1000)roomIdentityCache.delete(roomIdentityCache.keys().next().value);return identity;
 }
 async function builderContext(req, res, csrf = false) {
@@ -363,10 +375,10 @@ async function multiplayerContext(req, res) {
 }
 const STARTER_AVATAR = { id: 'starter-avatar', name: 'Starter Avatar', state: 'revealed', eligible: true, modelUrl: '/public/models/avatars/DAX.glb', assetType: 'avatar', category: 'Avatars' };
 function publicModelUrl(value = '') { const url = String(value); return !url || url.startsWith('/') ? url : `/${url}`; }
-async function repositoryGameCatalog() {
+async function repositoryGameCatalog({includeEnvironments=true}={}) {
   const [modelDocument, environments] = await Promise.all([
     readFile(repositoryModelManifest, 'utf8').then(JSON.parse).catch(() => ({ models: [] })),
-    combinedEnvironments()
+    includeEnvironments?combinedEnvironments():[]
   ]);
   const models = (Array.isArray(modelDocument) ? modelDocument : modelDocument.models || []).filter((model) => model.visibility !== 'private' && model.modelUrl).map((model) => ({
     id: `repository-${model.id}`, name: model.name, assetType: model.assetType || 'prop', category: model.category || 'Game items', priceUsd:Number(model.priceUsd||model.price)||0, modelUrl: publicModelUrl(model.modelUrl), thumbnailUrl: publicModelUrl(model.thumbnailUrl), scale: Number(model.scale) || 1, rotation: model.rotation || 0, source: 'repository', accessType: 'included'
@@ -393,14 +405,15 @@ async function reconcileStorePayments(){
     for(const order of batch){try{const verified=['PAID','FULFILLED'].includes(order.paymentStatus)?order:await paymentOrderStore.verify(order.orderId);await deliverVerifiedStoreOrder(verified);}catch(error){console.error('[Store delivery]',order.orderId,error.message);}}
   }finally{reconcilingStorePayments=false;}
 }
-async function backpackFor(account) {
+async function backpackFor(account,{includeEnvironments=true,synchronizeOrders=true,walletState:materializedState=null}={}) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
   const rawAssets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
-  for(const order of await paymentOrderStore.records())if(order.memberAccountId===account.accountId&&order.purchaseType==='MARKETPLACE'&&['PAID','FULFILLED'].includes(order.paymentStatus))await deliverVerifiedStoreOrder(order);
-  const walletState=await userDatabase.ensureAccount(account);
+  if(synchronizeOrders)for(const order of await paymentOrderStore.records())if(order.memberAccountId===account.accountId&&order.purchaseType==='MARKETPLACE'&&['PAID','FULFILLED'].includes(order.paymentStatus))await deliverVerifiedStoreOrder(order);
+  const expectedWallet=String(account.primaryEthereumWallet||'account:'+account.accountId).toLowerCase();
+  const walletState=!synchronizeOrders&&materializedState?.walletId===expectedWallet&&materializedState.memory?.account?.accountId===account.accountId?materializedState:await userDatabase.ensureAccount(account);
   const assets = rawAssets.filter(asset => asset.name === 'Starter Avatar' || walletState.items.some(item => item.name === asset.name));
   const ownedNative=walletState.items.filter(item=>item.buildAssetId).map(item=>({...item,assetType:item.assetType||item.type,state:'revealed',eligible:true,owned:true}));
-  const catalog = [...(await repositoryGameCatalog()).filter(asset=>walletState.items.some(item=>item.modelUrl&&publicModelUrl(item.modelUrl)===publicModelUrl(asset.modelUrl))),...ownedNative];
+  const catalog = [...(await repositoryGameCatalog({includeEnvironments})).filter(asset=>walletState.items.some(item=>item.modelUrl&&publicModelUrl(item.modelUrl)===publicModelUrl(asset.modelUrl))),...ownedNative];
   const inventoryAvatars=walletState.items.filter(item=>item.modelUrl&&(['avatar','avatars'].includes(item.assetType||item.type))).map(item=>({...item,eligible:true,state:'revealed'}));
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
   return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: walletState.items.filter(item=>['land-deed','land-entitlement'].includes(item.type)).map(item=>({...item,state:item.type==='land-deed'?'revealed':'unrevealed',requiresReveal:item.type==='land-entitlement',...(item.type==='land-deed'?{spaceId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:{})})), avatars: [STARTER_AVATAR, ...inventoryAvatars, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => ['vehicle','vehicles'].includes(asset.assetType)), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: [STARTER_AVATAR,...inventoryAvatars,...catalogAvatars].some(item=>item.id===account.selectedAvatarId)?account.selectedAvatarId:STARTER_AVATAR.id, updatedAt: account.updatedAt };
@@ -417,25 +430,33 @@ function isPublicAsset(asset) { return asset.visibility !== 'private' && (asset.
 function isGlbAvatar(asset) { const url = asset.publicUrl || asset.modelUrl || ''; const labels = `${asset.category || ''} ${asset.tags || ''} ${asset.intendedUse || ''}`; return /\.glb(?:$|[?#])/i.test(url) && /avatar|character|player/i.test(labels) && !/prop|building|vehicle|weapon|environment/i.test(labels); }
 async function readAvatarProfiles() { await ensureStorage(); return JSON.parse(await readFile(avatarProfilesFile, 'utf8')); }
 async function writeAvatarProfiles(records) { await ensureStorage(); await writeFile(avatarProfilesFile, JSON.stringify(records, null, 2)); }
-async function readPublicAvatars() { try { const catalog = await repositoryGameCatalog(); return catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, id: asset.id.replace(/^repository-/, ''), creator: 'MUZIKAZ' })); } catch { try { return JSON.parse(await readFile(publicAvatarManifest, 'utf8')); } catch { return []; } } }
-async function avatarCatalog(actor) {
+async function readPublicAvatars() { try { const catalog = await repositoryGameCatalog({includeEnvironments:false}); return catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, id: asset.id.replace(/^repository-/, ''), creator: 'MUZIKAZ' })); } catch { try { return JSON.parse(await readFile(publicAvatarManifest, 'utf8')); } catch { return []; } } }
+async function avatarCatalog(actor,materializedState=null) {
   const [assets, models, publicModels] = await Promise.all([readAssets(), readModels(), readPublicAvatars()]);
   const owned = assets.filter((a) => a.ownerId === actor.id && isGlbAvatar(a)).map((a) => ({ id: a.id, name: a.title, creator: a.creator || a.ownerDisplayName, modelUrl: a.publicUrl, source: 'Owned', accessType: 'owned', scale: Number(a.defaultScale) || 1 }));
   const shared = models.filter((m) => (m.status === 'published' || m.visibility === 'public') && /\.glb(?:$|[?#])/i.test(m.modelUrl || '') && !/environment|prop|vehicle|weapon/i.test(`${m.category || ''} ${m.description || ''}`)).map((m) => ({ id: m.id, name: m.name || m.title, creator: m.creatorName || m.owner, modelUrl: m.modelUrl, source: 'Shared', accessType: 'shared', scale: Number(m.scale) || 1, rotation: m.rotation || null }));
-  const state=await userDatabase.get(actor.id);
+  const state=materializedState?.walletId===actor.id?materializedState:await userDatabase.get(actor.id);
   return [STARTER_AVATAR,...owned,...[...shared,...publicModels].filter(asset=>state.items.some(item=>item.modelUrl&&publicModelUrl(item.modelUrl)===publicModelUrl(asset.modelUrl)))];
 }
 function approvedAvatarUrl(value) { return typeof value === 'string' && (/^\/uploads\/assets\/[a-zA-Z0-9._-]+\.glb$/i.test(value) || /^\/public\/models\/(?:[a-zA-Z0-9 %._-]+\/)*[a-zA-Z0-9 %._-]+\.glb$/i.test(value) || /^https:\/\//i.test(value)); }
-async function validatedAvatar(actor, assetId) { const requested = cleanText(assetId, ''); const asset = (await avatarCatalog(actor)).find((item) => item.id === requested || `repository-${item.id}` === requested || item.id === requested.replace(/^repository-/, '')); if (!asset || !approvedAvatarUrl(asset.modelUrl)) return null; return { ...asset, id: requested || asset.id }; }
-async function designatedAvatar(req, actor, authentication=req.muzikazAuthentication) {
-  const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id);
-  const selected = profile && await validatedAvatar(actor, profile.assetId);
-  if (selected) return selected;
+async function validatedAvatar(actor, assetId,materializedState=null) { const requested = cleanText(assetId, ''); const asset = (await avatarCatalog(actor,materializedState)).find((item) => item.id === requested || `repository-${item.id}` === requested || item.id === requested.replace(/^repository-/, '')); if (!asset || !approvedAvatarUrl(asset.modelUrl)) return null; return { ...asset, id: requested || asset.id }; }
+async function designatedAvatar(req, actor, authentication=req.muzikazAuthentication, currentAccount=null,currentState=null) {
   const active = authentication?.session;
+  const knownAccount=active&&currentAccount?.accountId===active.accountId?currentAccount:null;
+  const knownWallet=knownAccount&&String(knownAccount.primaryEthereumWallet||'account:'+knownAccount.accountId).toLowerCase();
+  const materializedState=knownAccount&&currentState?.walletId===knownWallet&&knownWallet===actor.id&&currentState.memory?.account?.accountId===active.accountId?currentState:null;
+  const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id);
+  const selected = profile && await validatedAvatar(actor, profile.assetId,materializedState);
+  if (selected) return selected;
   if (!active) return null;
-  const account = await loadoutCodeStore.getAccount(active.accountId);
+  const account = knownAccount||await loadoutCodeStore.getAccount(active.accountId);
   if (!account) return null;
-  const backpack = await backpackFor(account);
+  // The starter is always eligible. Resolving it must not scan purchases and
+  // synchronize the entire world directory on every movement identity refresh.
+  if (!account.selectedAvatarId || account.selectedAvatarId===STARTER_AVATAR.id) return STARTER_AVATAR;
+  // Avatar checks do not fulfill orders: inventory APIs and the scheduled
+  // reconciler deliver purchases. Only already-owned avatar models are needed.
+  const backpack = await backpackFor(account,{includeEnvironments:false,synchronizeOrders:false,walletState:materializedState});
   const item = backpack.avatars.find((avatar) => avatar.id === backpack.selectedAvatarId && avatar.eligible);
   return item && approvedAvatarUrl(item.modelUrl) ? item : null;
 }

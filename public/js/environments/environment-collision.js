@@ -1,4 +1,5 @@
 import {layoutCollisionGeometry} from './layout-terrain.js';
+import {triangleWallSegments} from '../walking-triangles.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 import { Octree } from '../../vendor/three/addons/math/Octree.js';
 
@@ -246,7 +247,10 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   if (buildOctree) collisionMeshes.forEach(mesh => {
     mesh.updateWorldMatrix(true, false);
     const add = matrix => {
-      const clone = mesh.isInstancedMesh ? new THREE.Mesh(mesh.geometry, mesh.material) : mesh.clone(false);
+      // Collision uses only geometry and its complete transform. Native
+      // gameplay meshes can contain circular owner references in userData;
+      // Object3D.clone() serializes those references and aborts the rebuild.
+      const clone = new THREE.Mesh(mesh.geometry, mesh.material);
       clone.name = mesh.name;
       clone.geometry = colliderGeometry(mesh.geometry, matrix);
       clone.material = mesh.material;
@@ -273,6 +277,49 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   return { octree, octreeBuilt:buildOctree, triangleCount, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
 }
 
+function spawnClearance(root, playerHeight) {
+  const parts = [];
+  root.traverse(mesh => {
+    if (!mesh.isMesh || !mesh.geometry?.attributes?.position || collisionIsDisabled(mesh)) return;
+    if (!isDedicatedCollider(mesh) && (!isRenderedMesh(mesh) || EXCLUDE_RE.test(mesh.name || ''))) return;
+    const geometry = layoutCollisionGeometry(mesh.geometry);
+    if (!geometry.boundingBox) geometry.computeBoundingBox();
+    const matrices = [];
+    if (mesh.isInstancedMesh) {
+      const instance = new THREE.Matrix4();
+      for (let index = 0; index < mesh.count; index++) {
+        mesh.getMatrixAt(index, instance);
+        matrices.push(new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, instance));
+      }
+    } else matrices.push(mesh.matrixWorld);
+    for (const matrix of matrices) parts.push({geometry, matrix, bounds: geometry.boundingBox.clone().applyMatrix4(matrix)});
+  });
+  const body = new THREE.Box3(), triangle = new THREE.Triangle();
+  return point => {
+    body.min.set(point.x - .38, point.y + .1, point.z - .38);
+    body.max.set(point.x + .38, point.y + playerHeight, point.z + .38);
+    for (const {geometry, matrix, bounds} of parts) {
+      if (!bounds.intersectsBox(body)) continue;
+      const position = geometry.attributes.position, index = geometry.index, count = index ? index.count : position.count;
+      for (let offset = 0; offset + 2 < count; offset += 3) {
+        triangle.a.fromBufferAttribute(position, index ? index.getX(offset) : offset).applyMatrix4(matrix);
+        triangle.b.fromBufferAttribute(position, index ? index.getX(offset + 1) : offset + 1).applyMatrix4(matrix);
+        triangle.c.fromBufferAttribute(position, index ? index.getX(offset + 2) : offset + 2).applyMatrix4(matrix);
+        // Walking slopes support an entry; upright faces through its body do
+        // not. Use transformed faces, including every instance, rather than
+        // a building's enclosing box, which also encloses its empty rooms.
+        if (!body.intersectsTriangle(triangle)) continue;
+        for (const {a, b} of triangleWallSegments(triangle, body.min.y, body.max.y)) {
+          const dx = b.x - a.x, dz = b.z - a.z, lengthSquared = dx * dx + dz * dz;
+          const ratio = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.z - a.z) * dz) / lengthSquared));
+          if (Math.hypot(point.x - a.x - dx * ratio, point.z - a.z - dz * ratio) < .38) return false;
+        }
+      }
+    }
+    return true;
+  };
+}
+
 export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHeight = 1.65) {
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
@@ -295,5 +342,25 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
   const hit = findWalkableFloorHit(floorMeshes, candidate, box, playerHeight) || findWalkableFloorHit(floorMeshes, center, box, playerHeight);
   if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
   else candidate.copy(alignPointAboveFloor(candidate, floorMeshes, box, playerHeight));
+  const clear = spawnClearance(root, playerHeight);
+  if (!clear(candidate)) {
+    // Old saved entry metadata can overlap scenery added by a map update.
+    // Keep the authored entry when clear, otherwise find nearby real floor
+    // before controls start, instead of leaving the capsule trapped in it.
+    let replacement = null;
+    for (const radius of [.5, 1, 2, 3, 4, 6]) {
+      for (let direction = 0; direction < 16; direction++) {
+        const angle = direction * Math.PI / 8;
+        const point = candidate.clone().add(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
+        if (point.x < box.min.x + margin || point.x > box.max.x - margin || point.z < box.min.z + margin || point.z > box.max.z - margin) continue;
+        const floor = findWalkableFloorHit(floorMeshes, point, box, playerHeight);
+        if (!floor || Math.abs(floor.point.y + FLOOR_ENTRY_OFFSET - candidate.y) > .35) continue;
+        point.copy(floor.point); point.y += FLOOR_ENTRY_OFFSET;
+        if (clear(point)) { replacement = point; break; }
+      }
+      if (replacement) break;
+    }
+    if (replacement) candidate.copy(replacement);
+  }
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }

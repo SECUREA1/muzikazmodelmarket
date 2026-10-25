@@ -19,9 +19,23 @@ test('late snapshots replay inputs rather than pausing or rewinding the visible 
  const before=structuredClone(view.actor);server.health=350;view.reconcile(server,{sentAt:0,receivedAt:600,serverTime:1000200,simulationTime:1000200});assert.ok(Math.hypot(view.actor.position.x-before.position.x,view.actor.position.y-before.position.y,view.actor.position.z-before.position.z)<1e-6);assert.equal(view.actor.health,350);
  const after=view.sample(1000*37/60,1/60,controls,options);assert.ok(after.position.z<before.position.z);assert.ok(after.rotation.y<before.rotation.y);
 });
-test('prediction stops after lost snapshots and authoritative travel, destruction and ownership changes reset it',()=>{
- const view=new LocalVehicleView();view.reconcile(aircraft(),timing());for(let frame=1;frame<=120;frame++)view.sample(frame*1000/60,1/60,{throttle:1},options);const stopped=structuredClone(view.actor.position);view.sample(2200,.05,{throttle:1},options);assert.deepEqual(view.actor.position,stopped);
+test('fresh flight controls continue after lost snapshots while authoritative travel and destruction reset presentation',()=>{
+ const view=new LocalVehicleView();view.reconcile(aircraft(),timing());for(let frame=1;frame<=120;frame++)view.sample(frame*1000/60,1/60,{throttle:1},options);const before=structuredClone(view.actor.position);view.sample(2200,.05,{throttle:1},options);assert.ok(Math.hypot(view.actor.position.x-before.x,view.actor.position.z-before.z)>.1);
  const relocated={...aircraft(),position:{x:50,y:.4,z:0},flight:{speed:0,altitude:0}};view.reconcile(relocated,{...timing(2200),teleport:true});assert.deepEqual(view.actor.position,relocated.position);view.reconcile({...relocated,active:false,health:0},timing(2250));view.sample(2300,.05,{throttle:1},options);assert.equal(view.actor.health,0);assert.equal(view.actor.active,false);assert.deepEqual(view.actor.position,relocated.position);
+});
+
+test('aircraft, boats and road vehicles retain fresh controls and collisions through snapshot gaps',()=>{
+ const truck=()=>({id:'truck',holderId:'self',modelId:'site-dumptruck',active:true,position:{x:0,y:.02,z:0},rotation:{x:0,y:0,z:0},construction:{kind:'truck',bed:0},driving:{speed:0,parked:true}});
+ for(const age of [1500,5000,20000])for(const source of [aircraft(),boat(),truck()]){
+  const view=new LocalVehicleView(),saved=structuredClone(source),settings={environment:source.flight?airport:harbor,groundAt:()=>.4,cleared:true};
+  view.reconcile(source,timing());const moved=view.sample(age,.05,{throttle:1,forward:1},settings);
+  assert.ok(Math.hypot(moved.position.x-source.position.x,moved.position.z-source.position.z)>.05,source.modelId+' must respond after '+age+' ms without a snapshot');
+  const released=view.sample(age+50,.05,{throttle:0,forward:0,brake:true},settings);
+  assert.equal((released.flight||released.boating||released.driving).throttleCommand??released.driving?.throttle,0,'fresh release/brake commands still reach the physical simulation');
+  assert.deepEqual(source,saved,'prediction cannot mutate the authoritative actor');
+  const blocked=new LocalVehicleView();blocked.reconcile(source,timing());const held=blocked.sample(age,.05,{throttle:1,forward:1},{...settings,blocked:()=>true});
+  assert.equal(held.position.x,source.position.x);assert.equal(held.position.z,source.position.z,'fresh controls do not bypass collision sweeps');
+ }
 });
 test('aircraft honors local floor, clearance and obstruction checks without applying damage',()=>{
  const view=new LocalVehicleView(),source=aircraft();view.reconcile(source,timing());const result=view.sample(50,.05,{throttle:1},{...options,blocked:()=>true});assert.deepEqual(result.position,source.position);assert.equal(result.flight.phase,'hold');assert.equal(result.flight.impactDamage,0);assert.equal(result.health,400);

@@ -18,6 +18,14 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 
 
+def finite_json(value):
+    if isinstance(value, dict):
+        return {key: finite_json(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [finite_json(item) for item in value]
+    return None if isinstance(value, float) and not math.isfinite(value) else value
+
+
 async def snapshot(page):
     return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
@@ -66,11 +74,13 @@ async def target(page, locator):
     return box
 
 
-async def touch(page, cdp, rows, *, directions=None, hold=1400):
+async def touch(page, cdp, rows, *, directions=None, hold=1400, allow_unready=False):
     directions = directions or [(0,-.85),(0,.85),(.85,0),(-.85,0)]
     attempts = []
     for dx, dy in directions:
         await map_is_nonblocking(page)
+        if not allow_unready:
+            await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady',timeout=30000)
         stick = page.locator('[data-thumbstick="left"] .thumbstick-base')
         box = await target(page, stick)
         center = {'id':1,'x':box['x']+box['width']/2,'y':box['y']+box['height']/2}
@@ -80,11 +90,13 @@ async def touch(page, cdp, rows, *, directions=None, hold=1400):
         await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[center]})
         # Go beyond the base edge, as a real held walking gesture often does.
         await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{**center,'x':center['x']+dx*box['width']*.75,'y':center['y']+dy*box['height']*.75}]})
-        await page.wait_for_timeout(hold)
-        held = await snapshot(page)
-        await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         axis = 'side' if dx else 'forward'
-        await reply(rows,before,lambda row:applied(row,axis),'Open map swallowed fresh '+axis+' touch input.')
+        try:
+            await reply(rows,before,lambda row:applied(row,axis),'Open map swallowed fresh '+axis+' touch input.')
+            await page.wait_for_timeout(hold)
+            held = await snapshot(page)
+        finally:
+            await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         progress = distance(start,held['player']['position'])
         attempts.append({'direction':[dx,dy],'start':start,'held':held['player']['position'],'progress':round(progress,3),'serverReadyAtStart':initial['serverReady'],'serverReadyWhileHeld':held['serverReady']})
         await map_is_nonblocking(page)
@@ -95,21 +107,26 @@ async def touch(page, cdp, rows, *, directions=None, hold=1400):
 
 async def foot_controls(page, cdp, rows, label):
     await map_is_nonblocking(page)
+    await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady',timeout=30000)
     before = len(rows)
     start = (await snapshot(page))['player']['position']
     await page.keyboard.down('w')
-    await page.wait_for_timeout(1000)
-    await page.keyboard.up('w')
-    await reply(rows,before,lambda row:applied(row,'forward'),label+': map focus swallowed W.')
+    try:
+        await reply(rows,before,lambda row:applied(row,'forward'),label+': map focus swallowed W.')
+        await page.wait_for_timeout(1000)
+    finally:
+        await page.keyboard.up('w')
     keyboard_progress = distance(start,(await snapshot(page))['player']['position'])
     await page.wait_for_function('MuzikazHouseExplorer.snapshot().player.serverGrounded',timeout=20000)
     await page.evaluate('''()=>{window.openMapJump=[];window.openMapJumpActive=true;const sample=()=>{if(!openMapJumpActive)return;openMapJump.push(MuzikazHouseExplorer.snapshot().player.position[1]);requestAnimationFrame(sample);};requestAnimationFrame(sample);}''')
     before = len(rows)
     await page.keyboard.down('Space')
-    await page.wait_for_timeout(180)
-    await page.keyboard.up('Space')
+    try:
+        await reply(rows,before,lambda row:row['ok'] and row['action']=='input' and row['request'].get('input',{}).get('jump'),label+': map swallowed Space.')
+        await page.wait_for_timeout(180)
+    finally:
+        await page.keyboard.up('Space')
     await page.wait_for_timeout(1150)
-    await reply(rows,before,lambda row:row['ok'] and row['action']=='input' and row['request'].get('input',{}).get('jump'),label+': map swallowed Space.')
     heights = await page.evaluate('()=>{openMapJumpActive=false;return openMapJump;}')
     assert heights and max(heights)-min(heights)>.15, (label,'Rendered jumping stopped.',heights)
     touches = await touch(page,cdp,rows)
@@ -140,6 +157,13 @@ async def vehicle(page, rows, world):
     before = len(rows)
     await craft.first.tap()
     boarded = await reply(rows,before,lambda row:row['ok'] and row['action']=='map-access' and row['self'].get('vehicleId'),'Map-open boarding failed.')
+    # Boarding intentionally reveals the cockpit/helm. Reopen both companions
+    # to verify that the active vehicle controls remain usable behind them.
+    await dialog.wait_for(state='hidden')
+    await page.locator('.district-map-toggle').tap()
+    mini=page.locator('.live-local-map [data-collapse]')
+    if await mini.get_attribute('aria-expanded')!='true':
+        await mini.tap()
     await map_is_nonblocking(page)
     toggle = page.locator('.aircraft-controls-toggle' if world=='muzikaz-airport' else '.harbor-functions-toggle')
     await toggle.wait_for(state='visible')
@@ -162,11 +186,11 @@ async def vehicle(page, rows, world):
     await reply(rows,before,lambda row:row['ok'] and row['action']=='interact' and row['self'] and not row['self'].get('vehicleId'),'The open map blocked vehicle exit.')
     await exit_button.wait_for(state='hidden')
     await map_is_nonblocking(page)
-    return {'vehicleId':boarded['self']['vehicleId'],'aircraftCannonsFired':cannon,'exited':True,'mapStayedOpen':True}
+    return {'vehicleId':boarded['self']['vehicleId'],'aircraftCannonsFired':cannon,'exited':True,'mapReopenedAfterBoarding':True,'mapStayedOpenDuringVehicleControls':True}
 
 
-async def exercise(browser, base, world, index, page_fullscreen):
-    context = await browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,service_workers='block',reduced_motion='reduce')
+async def exercise(browser, base, world, index, page_fullscreen, raster_scale=1):
+    context = await browser.new_context(viewport={'width':390,'height':844},device_scale_factor=raster_scale,is_mobile=True,has_touch=True,service_workers='block',reduced_motion='reduce')
     page = await context.new_page()
     page.set_default_timeout(30000)
     if page_fullscreen:
@@ -196,7 +220,7 @@ async def exercise(browser, base, world, index, page_fullscreen):
             await route.fulfill(status=503,content_type='application/json',body=json.dumps({'success':False,'message':'Transient map-open connection test.'}));fired.set()
         else:await route.continue_()
     await page.route('**/api/rooms/*/gameplay',fail_current_input)
-    report={'id':world,'passed':False,'phases':[]}
+    report={'id':world,'passed':False,'phases':[],'rasterScale':raster_scale}
     started=time.monotonic()
     try:
         await page.goto(base+'/model-explorer.html?environment='+world+'&autoplay=1&mode=multiplayer',wait_until='domcontentloaded',timeout=90000)
@@ -206,13 +230,21 @@ async def exercise(browser, base, world, index, page_fullscreen):
         await access.get_by_label('Password',exact=True).fill('local-open-map-regression')
         await access.get_by_role('button',name='Sign in and continue',exact=True).tap()
         await page.wait_for_function('MuzikazHouseExplorer.snapshot().controlsReady',timeout=120000)
-        if not await page.evaluate('document.querySelector(".house-stage").dataset.viewportExpanded==="true"'):
-            await page.get_by_role('button',name='Full screen',exact=True).tap()
-        await page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
-        report['fullscreen']=await page.evaluate('({mode:document.querySelector(".house-explorer-shell").dataset.viewportMode,native:!!document.fullscreenElement})')
+        await page.evaluate('''()=>{window.nonblockingControlEvents=[];window.addEventListener('keydown',event=>nonblockingControlEvents.push({key:event.key,prevented:event.defaultPrevented,target:event.target?.id||event.target?.getAttribute('aria-label'),time:performance.now()}),true);document.addEventListener('muzikaz:release-game-input',event=>nonblockingControlEvents.push({release:event.detail?.reason,time:performance.now()}),true);}''')
+        fullscreen=page.get_by_role('button',name='Full screen',exact=True,include_hidden=True)
+        if await fullscreen.count():
+            if not await fullscreen.is_visible():
+                await page.get_by_role('button',name='More view controls',exact=True).tap()
+            await fullscreen.tap()
+            await page.wait_for_function('document.querySelector(".house-stage").dataset.viewportExpanded==="true"')
+        report['fullscreen']=await page.evaluate('({mode:document.querySelector(".house-explorer-shell").dataset.viewportMode||"inline",native:!!document.fullscreenElement})')
         cdp=await context.new_cdp_session(page)
-        await page.locator('.live-local-map [data-collapse]').tap()
+        mini=page.locator('.live-local-map [data-collapse]')
         await page.locator('.district-map-toggle').tap()
+        # Opening the full map deliberately closes marker previews. Reopen the
+        # independent marker popup to exercise both companion views together.
+        if await mini.get_attribute('aria-expanded')!='true':
+            await mini.tap()
         dialog=page.locator('.district-map-dialog')
         for view in ['2D plan','3D map']:
             print(json.dumps({'id':world,'phase':view+' open'}),flush=True)
@@ -234,7 +266,7 @@ async def exercise(browser, base, world, index, page_fullscreen):
             report['observedPrivateServerUnready']=True
         except Exception:report['observedPrivateServerUnready']=False
         await map_is_nonblocking(page)
-        report['recoveryTouch']=await touch(page,cdp,rows,hold=3200)
+        report['recoveryTouch']=await touch(page,cdp,rows,hold=3200,allow_unready=True)
         await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady',timeout=20000)
         report['phases'].append(await foot_controls(page,cdp,rows,'after transient error, map still open'))
         assert not errors,errors
@@ -245,6 +277,8 @@ async def exercise(browser, base, world, index, page_fullscreen):
         except Exception:pass
     finally:
         report.update({'elapsedSeconds':round(time.monotonic()-started,2),'pageErrors':errors,'responses':rows,'outage':outage,'requests':requests[-60:]})
+        try:report['controlEvents']=await page.evaluate('nonblockingControlEvents.slice(-100)')
+        except Exception:pass
         try:report['diagnostic']=await page.evaluate('({state:window.MuzikazHouseExplorer?.snapshot(),mapOpen:document.querySelector(".district-map-dialog")?.open,mapModal:document.querySelector(".district-map-dialog")?.matches(":modal"),focus:document.activeElement?.outerHTML.slice(0,250),inert:[...document.querySelectorAll("[inert]")].map(node=>node.className),buttons:[...document.querySelectorAll(".house-stage button")].filter(node=>node.getBoundingClientRect().width&&node.getBoundingClientRect().height).map(node=>({label:node.getAttribute("aria-label"),hidden:node.hidden,rect:node.getBoundingClientRect().toJSON()}))})')
         except Exception:pass
         await context.close()
@@ -253,7 +287,7 @@ async def exercise(browser, base, world, index, page_fullscreen):
 
 async def main(args):
     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
-    source_files=[prefix+name for prefix in ['','dist/'] for name in ['public/js/house-explorer-glb.js','public/js/district-map.js','public/js/local-live-map.js','public/js/game-menu-controls.js','public/js/game-display-flow.js','public/js/airport-operations.js','public/js/harbor-operations.js','public/assets/district-map.css','public/assets/game-display-flow.css']]
+    source_files=['server.mjs','authoritative-room.mjs']+[prefix+name for prefix in ['','dist/'] for name in ['public/js/house-explorer-glb.js','public/js/authoritative-room-client.js','public/js/local-walking-view.js','public/js/walking-motion.js','public/js/local-vehicle-view.js','public/js/district-map.js','public/js/local-live-map.js','public/js/game-menu-controls.js','public/js/game-display-flow.js','public/js/airport-operations.js','public/js/harbor-operations.js','public/assets/district-map.css','public/assets/game-display-flow.css']]
     source={'head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'sha256':{name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in source_files}}
     with tempfile.TemporaryDirectory(prefix='nonblocking-map-controls-') as directory:
         with open(Path(directory)/'server.log','w') as log:
@@ -268,8 +302,8 @@ async def main(args):
                         except Exception:await asyncio.sleep(.15)
                     await probe.dispose();results=[]
                     for index,world in enumerate(args.world or ['muzikaz-airport','world-district-neon-docks']):
-                        result=await exercise(browser,base,world,index,args.page_fullscreen);results.append(result)
-                        Path(args.report).write_text(json.dumps({'source':source,'results':results},indent=2))
+                        result=await exercise(browser,base,world,index,args.page_fullscreen,args.raster_scale);results.append(result)
+                        Path(args.report).write_text(json.dumps(finite_json({'source':source,'results':results}),indent=2,allow_nan=False))
                         print(json.dumps({'id':world,'passed':result['passed'],'error':result.get('error'),'elapsedSeconds':result['elapsedSeconds']}),flush=True)
                         if not result['passed']:break
                     await browser.close()
@@ -280,5 +314,6 @@ async def main(args):
 parser=argparse.ArgumentParser()
 parser.add_argument('--world',action='append')
 parser.add_argument('--page-fullscreen',action='store_true')
+parser.add_argument('--raster-scale',type=float,default=1)
 parser.add_argument('--report',default='/tmp/nonblocking-map-controls-results.json')
 asyncio.run(main(parser.parse_args()))

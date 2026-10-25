@@ -90,7 +90,7 @@ test('game colliders exclude carried gear from spray hits and mark room meshes a
   builderDecor.add(gear);
   const colliders = new Function('playerRig', 'builderDecor', 'playerCollider', 'THREE', 'FLAME_CONFIG',
     'return function(){' + body)(playerRig, builderDecor, {}, THREE, FLAME_CONFIG).call({
-      bubbles: [enemy], avatarTargets: () => [], bricks: [], lootBlocks: [], drawingStrokes: [],
+      active: true, bubbles: [enemy], avatarTargets: () => [], bricks: [], lootBlocks: [], drawingStrokes: [],
       environmentSurfaces: () => [surface], loader: { collisionMeshes: [surface] },
     });
   assert.equal(colliders.find(t => t.root === gear).projectiles, false);

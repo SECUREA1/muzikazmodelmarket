@@ -41,7 +41,7 @@ test('multiplayer map list pins live user maps with a flashing status', async ()
   assert.match(picker, /mapWheelSvg/);
   const {mapWheelSvg}=await import('../public/js/map-wheel-svg.js');
   const wheel=mapWheelSvg([{env:{id:'live-world',name:'Live world'},count:3}],'live-world');
-  assert.match(wheel,/3 LIVE/);assert.match(wheel,/has-players/);
+  assert.match(wheel,/3 USERS LIVE/);assert.match(wheel,/has-players/);
   assert.match(game, /@keyframes multiplayerLiveFlash/);
   assert.match(server, /presence' && req\.method === 'GET'/);
   assert.match(rust, /method == "GET"/);
@@ -97,8 +97,8 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(css, /\.inspector-open \.object-inspector/);
   assert.match(script, /Force Training Range/);
   const range=await readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8');
-  assert.match(range, /reactiveTarget=true/);
-  assert.match(range, /rangeTrainee=true/);
+  assert.match(range, /group\.userData\.rangeTargetId=definition\.id/);
+  assert.match(range, /group\.userData\.rangeLane=definition\.lane/);
   assert.match(html, /ACTIVE TARGETS ONLINE/);
   assert.match(html, /Tournament · 3 rounds/);
   assert.match(html, /id="range-result"/);
@@ -117,12 +117,14 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /data-range-mode="freeplay"/);
   assert.match(game, /Unlimited time · unlimited shots/);
   assert.match(game, /function handleRangeShot/);
-  assert.match(game, /rangeRaycaster\.intersectObject\(envLoader\.world,true\)/, 'range scoring raycasts the actual loaded world');
+  assert.match(game, /fireExtraWeapon\(rangeRaycaster\.ray\.origin,rangeRaycaster\.ray\.direction\)/, 'range shots use the same world collision and weapon path as ordinary gameplay');
+  assert.match(game, /raycast:\(start,end\)=>this\.flameSystem\.sweep\(start,end,targets\)/, 'weapon shots test the scene colliders');
+  assert.match(game, /rangeActive&&target\.userData\.rangeTarget/, 'range scoring requires an actual target hit');
   assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
   assert.match(game, /radToxStickMarkup/, 'firing range uses the shared RAD-TOX controller');
   assert.match(await readFile(new URL('../public/js/rad-tox-controller.js',import.meta.url),'utf8'), /Move \/ shoot/, 'shared movement stick retains tap-to-shoot');
-  assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
+  assert.match(game, /name==='left'\?shootAtReticle\(\):jump\(\)/, 'the walking movement stick fires at the range reticle while the look stick jumps');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
   for (const control of ['house-world-button','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library and begin/reset remain available in the main controls');
@@ -134,9 +136,9 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /muzikaz:range-session-complete/, 'qualification results connect to the wider game event system');
   assert.match(game, /localStorage\.setItem\(RANGE_BEST_KEY/, 'qualification personal bests persist across game worlds');
   assert.match(game, /rangeScore\.toLocaleString\(\).*PTS.*accuracy/, 'points and accuracy remain visible on the in-frame Range ops button');
-  assert.match(game, /RANGE_WEAPONS\[toxicBubbleSystem\.tool\]\|\|RANGE_WEAPONS\.laser/, 'non-range tools cannot disable firing-range scoring');
+  assert.match(game, /!RANGED_WEAPONS\[toxicBubbleSystem\.tool\]&&!UTILITY_TOOLS\[toxicBubbleSystem\.tool\]&&toxicBubbleSystem\.tool!=='flamethrower'/, 'range input recognizes ranged weapons, utilities and the flamethrower before dispatch');
   assert.match(game, /the range and the regular game/, 'range weapons explicitly remain equipped in regular gameplay');
-  assert.match(loader, /mesh\.userData\.rangeTarget=true/);
+  assert.match(loader, /rangeTarget:group,rangeTargetId:definition\.id/, 'hit meshes reference their scoring target group');
   for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
 });
 
@@ -292,7 +294,7 @@ test('environment builder places grounded 3D assets and persists complete runtim
   assert.match(script, /castShadow=true/);
   assert.match(script, /receiveShadow=true/);
   assert.match(script, /mixer\?\.stopAllAction/);
-  assert.match(script, /model\.procedural\?template\.clone\(true\):cloneSkeleton/);
+  assert.match(script, /model\.procedural\?cloneBuilderRuntime\(template\):cloneBuilderRuntime\(template,cloneSkeleton\)/);
 });
 
 test('builder maps use shared procedural textures and a tabletop presentation', async () => {
@@ -356,13 +358,14 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /BUILDER_TEMPLATE_\$\{layout\}/, 'the playable map reconstructs the template set dressing instead of loading an empty terrain');
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
-  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:!this\.serverAuthoritative\(\)\}\)/, 'procedural terrain enters the normal collision pipeline');
-  assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, \(builderLand\?builderBaseSpawn\(environment\):environment\.spawn\)\)/, 'the initial player position is resolved against verified collision floors');
+  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:this\.localCollision\|\|!this\.serverAuthoritative\(\),maxTriangles:this\.serverAuthoritative\(\)\?60000:Infinity\}\)/, 'procedural terrain enters the bounded local and server collision pipeline');
+  assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, builderLand\?\(builderBaseSpawn\(environment\)\|\|environment\.spawn\|\|\{\}\):environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
-  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=authored\?\{y:Number\(item\.position\.y\)\|\|0\}:floorPointAt/, 'authored positions preserve interior floor heights while legacy placements resolve their floor');
+  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=\['collider-base','waterline','aircraft-origin'\]\.includes\(item\.placementAnchor\)/, 'explicit placement anchors preserve authored heights');
+  assert.match(game, /floorPointAt\(new THREE\.Vector3\(worldX,Number\(item\.position\?\.y\)\|\|floor,worldZ\)\)/, 'ordinary placements resolve the active map floor');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
@@ -387,11 +390,7 @@ test('collision floors protect spawn, teleport and continuous walking', async ()
   assert.match(game, /triangleGroups:walkingSurfaces\(\)/, 'placed solids participate in the same movement query');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
-  assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
-  assert.match(game, /const fellThroughWorld=base\.y<mapFloorLimit/, 'recovery only begins after the player has fallen below the complete world bounds');
   assert.doesNotMatch(game, /safeFloorLimit/, 'jumping or walking down to a lower valid floor cannot be mistaken for falling through the world');
-  assert.match(game, /setPlayerCapsuleFeet\(recovery\)/, 'a missed floor collider restores the capsule to safe ground');
-  assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
   assert.doesNotMatch(game, /resolveBrickCollisions|collision\.normal\.multiplyScalar/, 'walking never applies a second depenetration push');
   assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|fellThroughWorld/, 'walking never silently teleports to a previous floor position');
   assert.match(game, /maxExtrapolation:0/, 'the live view cannot extrapolate beyond accepted wall contact');

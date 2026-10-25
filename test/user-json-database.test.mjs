@@ -130,7 +130,7 @@ test('lists every member and atomically trades a listed pack with MZK', async (t
   await database.listItem('seller', 'pack-1', 40);
 
   assert.deepEqual((await database.members()).map((member) => member.displayName), ['Buyer', 'Seller']);
-  assert.deepEqual(await database.marketListings(), [{ sellerId: 'seller', sellerName: 'Seller', itemId: 'pack-1', itemName: 'Legends Pack', itemType: 'Backpack item', priceMzk: 40, listedAt: (await database.marketListings())[0].listedAt, thumbnailUrl: '' }]);
+  assert.deepEqual(await database.marketListings(), [{ sellerId: 'seller', sellerName: 'Seller', itemId: 'pack-1', itemName: 'Legends Pack', itemType: 'Backpack item', priceMzk: 40, listedAt: (await database.marketListings())[0].listedAt, thumbnailUrl: '',modelUrl:'',buildAssetId:null,materialId:null,toolId:null,category:'Item' }]);
   const trade = await database.trade({ buyerId: 'buyer', sellerId: 'seller', itemId: 'pack-1', requestId: 'checkout-1' });
   assert.equal(trade.priceMzk, 40);
   assert.equal((await database.get('buyer')).tokens.MZK, 60);

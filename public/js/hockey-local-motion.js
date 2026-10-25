@@ -24,7 +24,7 @@ export class LocalHockeyMotion{
   this.current.stamina=player.stamina;this.current.cooldown=player.cooldown;const errorLength=Math.hypot(this.offset.x,this.offset.z);if(errorLength>.5){this.offset.x*=.5/errorLength;this.offset.z*=.5/errorLength;}
  }
  sample(now,delta,input){
-  if(!this.current)return null;let remaining=clamp(delta,0,.25);if(this.active){const intent=now-this.receivedAt<1500?input:{x:0,z:0};while(remaining>1e-6){const dt=Math.min(1/60,remaining);this.current=stepLocalHockeySkater(this.current,intent,dt,this.goalie);remaining-=dt;}}
+  if(!this.current)return null;let remaining=clamp(delta,0,.25);if(this.active){while(remaining>1e-6){const dt=Math.min(1/60,remaining);this.current=stepLocalHockeySkater(this.current,input,dt,this.goalie);remaining-=dt;}}
   const decay=Math.exp(-18*clamp(delta,0,.25));this.offset.x*=decay;this.offset.z*=decay;this.history.push({time:now,...this.current});while(this.history.length>256||this.history.length>2&&this.history[1].time<now-2000)this.history.shift();return {...this.current,x:this.current.x+this.offset.x,z:this.current.z+this.offset.z};
  }
 }

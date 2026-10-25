@@ -8,7 +8,7 @@ import {furnishBuildings} from '../public/js/building-furnishing.js';
 import {createBuildingDistrict,BUILDING_DISTRICTS} from '../public/js/building-districts.js';
 import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
 const threeUrl=new URL('../public/vendor/three/three.module.min.js',import.meta.url).href;
-const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8')).replace("'./layout-terrain.js'",JSON.stringify(new URL('../public/js/environments/layout-terrain.js',import.meta.url).href)).replace("'../../vendor/three/three.module.min.js'",JSON.stringify(threeUrl)).replace(/https:\/\/cdn.jsdelivr.net\/npm\/three@0.160.0\/\+esm/g,threeUrl).replace(/import \{ Octree \} from '[^']+';/,"class Octree {fromGraphNode(){}}" );
+const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8')).replace("'../walking-triangles.js'",JSON.stringify(new URL('../public/js/walking-triangles.js',import.meta.url).href)).replace("'./layout-terrain.js'",JSON.stringify(new URL('../public/js/environments/layout-terrain.js',import.meta.url).href)).replace("'../../vendor/three/three.module.min.js'",JSON.stringify(threeUrl)).replace(/https:\/\/cdn.jsdelivr.net\/npm\/three@0.160.0\/\+esm/g,threeUrl).replace(/import \{ Octree \} from '[^']+';/,"class Octree {fromGraphNode(){}}" );
 const {buildCollision,resolveSafeSpawn}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 test('empty builder and urban maps retain visible terrain, colliders and a safe spawn',()=>{
  for(const layout of ['grand-floor','urban-downtown',...Object.keys(BUILDING_DISTRICTS)]){

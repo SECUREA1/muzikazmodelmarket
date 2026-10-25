@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {INTERACTIVE_DEVICES} from '../public/js/interactive-devices.js';
+import {INTERACTIVE_DEVICES,deviceArtworkUrl} from '../public/js/interactive-devices.js';
 import {createDeviceDemo} from '../public/js/device-demos.js';
 import {newArcadeGame,arcadeMove} from '../server-arcade-games.mjs';
 import {previewDescriptor} from '../public/js/market-item-preview.js';
@@ -10,7 +10,7 @@ const rng=max=>Math.floor(max/2);
 test('every machine has original artwork and a built-in local demo',async()=>{
  for(const [id,profile]of Object.entries(INTERACTIVE_DEVICES)){
   const demo=createDeviceDemo(profile,rng);assert.ok(demo.view().text.length,id);assert.ok(Array.isArray(demo.view().buttons),id);
-  const svg=await readFile(new URL('../public/images/interactive-devices/'+id+'.svg',import.meta.url),'utf8');assert.ok(svg.includes('retro pin-up poster'),id);assert.ok(svg.includes('ORIGINAL SERIES'),id);
+  const artwork=deviceArtworkUrl(id),svg=await readFile(new URL('..'+artwork,import.meta.url),'utf8');assert.match(svg,/<title[\s>]/,id);assert.match(svg,/<desc[\s>]/,id);if(artwork.includes('/interactive-devices/')){assert.ok(svg.includes('retro pin-up poster'),id);assert.ok(svg.includes('ORIGINAL SERIES'),id);}
   demo.reset();assert.ok(demo.view().text);
  }
 });

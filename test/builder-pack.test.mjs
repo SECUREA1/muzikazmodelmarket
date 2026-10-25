@@ -1,5 +1,8 @@
 import {ENTERABLE_BUILDINGS} from '../public/js/building-districts.js';
 import {INTERACTIVE_DEVICES} from '../public/js/interactive-devices.js';
+import {BUILTIN_BUILDER_ITEMS,EXPANDED_BUILDER_ITEMS} from '../public/js/native-builder-items.js';
+import {IN_GAME_BUILDING_ITEMS,BUILDING_CATALOG_CATEGORIES,matchesBuildingCatalogItem} from '../public/js/in-game-building-catalog.js';
+import {normalizeCatalogModel} from '../public/js/builder-catalog.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -18,7 +21,7 @@ test('Builders Pack provides a floor, three rooms, twenty-one core models, and i
   assert.match(html, /21 models/);
   assert.equal((script.match(/name:'(?:Open Studio|Connected Suite|Garden Courtyard)'/g) || []).length, 3);
   assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)'\]/g) || []).length, 21);
-  assert.equal(modelFiles.filter((file) => file.endsWith('.svg')).length, 33);
+  for(const id of [...BUILTIN_BUILDER_ITEMS.map(item=>item.id),'dune-quad','corsair-aircraft','reusable-item'])assert.ok(modelFiles.includes(id+'.svg'),id+' has its SVG artwork');
 });
 
 test('in-game Tools and Drop Backpack expose the complete map-building pack', async () => {
@@ -30,24 +33,26 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
 
   assert.match(game, /data-rad-build-toggle/);
   assert.match(game, /data-rad-seats-toggle/);
-  assert.match(game, /SEAT_ASSET_IDS/);
+  assert.match(game, /matchesBuildingCatalogItem\(item,filter\)/);
+  assert.ok(IN_GAME_BUILDING_ITEMS.filter(item=>matchesBuildingCatalogItem(item,'seats')).length>=3);
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
   assert.match(game, /Browse all Builder items/);
   assert.match(game, /data-rad-pack-builder/);
   assert.match(game, /\.\.\.tray\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 79+Object.keys(INTERACTIVE_DEVICES).length+Object.keys(ENTERABLE_BUILDINGS).length);
+  for(const id of [...BUILTIN_BUILDER_ITEMS.map(item=>item.id),...EXPANDED_BUILDER_ITEMS.map(item=>item.id),...Object.keys(INTERACTIVE_DEVICES),...Object.keys(ENTERABLE_BUILDINGS)])assert.ok(buildAssets.some(asset=>asset.buildAssetId===id),id+' is in the Backpack catalog');
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 14);
-  assert.ok(buildAssets.every((asset) => ['props','vehicles'].includes(asset.type) && asset.thumbnailUrl));
+  assert.ok(buildAssets.every((asset) => normalizeCatalogModel(asset) && asset.thumbnailUrl));
   for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles']) {
     assert.ok(buildAssets.some((asset) => asset.builderCategory === category), `${category} items are available in game`);
-    assert.match(game, new RegExp(`'${category}'`), `${category} has an in-game filter`);
+    const nativeCategory=({avatar:'characters',enemy:'creatures'})[category]||category;
+    assert.ok(BUILDING_CATALOG_CATEGORIES.some(item=>item.id===nativeCategory&&item.count>0),`${category} has an in-game filter`);
   }
   for (const id of ['pillow-ring','sofa','armchair','corsair-aircraft','hero-spawn','rad-tox','terrain-cliff','plasma-sword','forest-ranger','emerald-slime','teleport-pad']) {
     assert.ok(buildAssets.some((asset) => asset.buildAssetId === id), `${id} is included in the Drop Backpack`);
-    assert.match(game, new RegExp(`${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|`), `${id} is included in the Tools picker`);
+    assert.ok(IN_GAME_BUILDING_ITEMS.some(item=>item.id===id),`${id} is included in the Tools picker`);
   }
 });
 

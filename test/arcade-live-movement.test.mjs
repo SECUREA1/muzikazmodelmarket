@@ -45,6 +45,17 @@ test('a single slow render frame consumes its full elapsed movement time',()=>{
  const shown=motion.sample(room,{moveX:1,moveY:0},.2,200);near(shown.basketball.players[0].x,328);near(shown.basketball.players[0].y,220);near(room.state.basketball.players[0].x,300);
 });
 
+test('fresh basketball controls keep moving, release and reverse after long snapshot gaps',()=>{
+ for(const age of [1500,5000,20000]){
+  const room=roomFixture(),saved=structuredClone(room),motion=new LocalArcadeMotion();acknowledge(motion,room,0,0);
+  let shown=motion.sample(room,{moveX:1,moveY:0},.1,age);near(shown.basketball.players[0].x,314);
+  shown=motion.sample(room,{moveX:0,moveY:0},.1,age+100);near(shown.basketball.players[0].x,314);
+  shown=motion.sample(room,{moveX:-1,moveY:0},.1,age+200);near(shown.basketball.players[0].x,300);
+  for(let frame=1;frame<=300;frame++)shown=motion.sample(room,{moveX:-1,moveY:0},.05,age+200+frame*50);
+  near(shown.basketball.players[0].x,115);assert.deepEqual(room,saved,'the server still owns scores, opponents and the original snapshot');
+ }
+});
+
 test('basketball bounds normalize diagonals and a new input epoch discards old presentation movement',()=>{
  const room=roomFixture(),motion=new LocalArcadeMotion();acknowledge(motion,room,0,0);
  let shown=motion.sample(room,{moveX:1,moveY:1},1/60,1000/60);near(shown.basketball.players[0].x-300,140/Math.sqrt(2)/60);near(shown.basketball.players[0].y-220,140/Math.sqrt(2)/60);

@@ -1559,6 +1559,18 @@
       "description": "Sky Ray from the Environment Builder, ready to drop into the running game."
     },
     {
+      "id": "builder-land-basketball-stadium",
+      "name": "Basketball Stadium",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "basketball-stadium",
+      "builderUrl": "/environment-builder.html?layout=basketball-stadium",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "Regulation hardwood court, two baskets and a live scoreboard in an editable professional stadium."
+    },
+    {
       "id": "builder-land-hockey-arena",
       "name": "Ice Hockey Arena",
       "owner": "MUZIKAZ",

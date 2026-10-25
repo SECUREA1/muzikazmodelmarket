@@ -64,6 +64,18 @@ test('ordinary movement does not reset presentation; deliberate relocation is ma
  assert.equal(relocated.players['account:you'].movementRevision,before+1);
 });
 
+test('a removed or unavailable seat releases walking immediately without requiring a reload',async t=>{
+ for(const state of ['missing','inactive','another-player']){
+  const f=await fixture(t);
+  await f.setup((room,player)=>{
+   player.seatedId='old-seat';
+   if(state!=='missing')room.simulation.actors['old-seat']={id:'old-seat',modelId:'market-bench',active:state!=='inactive',holderId:state==='another-player'?'account:other':'account:you',position:{...player.position}};
+  });
+  const player=(await f.tick({side:1,yaw:0})).players['account:you'];
+  assert.equal(player.seatedId,null,state+' seat no longer owns controls');assert.ok(player.position.x>.1,state+' seat does not pin walking speed to zero');
+ }
+});
+
 test('legacy spawn variables reset once on join without discarding progress',async t=>{
  const f=await fixture(t);
  await f.setup((_room,player)=>Object.assign(player,{floorVersion:3,position:{x:999,y:-50,z:999},velocityY:-10,score:123,heldId:'stale-held',seatedId:'stale-seat',vehicleId:'stale-vehicle'}));

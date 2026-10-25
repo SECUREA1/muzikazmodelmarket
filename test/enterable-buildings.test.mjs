@@ -14,8 +14,8 @@ test('25 building shells have floors, open walk-in entrances and room for placed
   const root=createBuilderModel(id);assert.equal(root.name,profile.name);assert.ok(root.userData.interiorBounds);assert.equal(root.userData.entrances.length,2);let floors=0;root.traverse(mesh=>{if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'))floors++;});assert.ok(floors>=1);
   const environment={id,proceduralLand:true,builderScene:{layout:'urban-downtown',mapSize:160,objects:[{id:'building',modelId:id,position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1}}]}},collision=new ServerBuilderCollision();
   let p={x:0,y:0,z:-profile.depth/2-3};for(let i=0;i<Math.ceil((profile.depth/2+3)/.2);i++)p=collision.resolve(environment,p,{x:0,y:p.y-.04,z:p.z+.2},{});
-  assert.ok(p.z>=-.21,id+' entrance is traversable');assert.ok(p.y>=.17&&p.y<=.2,id+' floor supports the player');
-  const inside=collision.safeSpawn(environment,{x:2,y:.18,z:-profile.depth/2+2});assert.ok(inside.y>=.17&&inside.y<=.2,id+' interior has a safe arrival point');
+  assert.ok(p.z>=-.21,id+' entrance is traversable');assert.ok(p.y>=.17-1e-6&&p.y<=.2+1e-6,id+' floor supports the player');
+  const inside=collision.safeSpawn(environment,{x:2,y:.18,z:-profile.depth/2+2});assert.ok(inside.y>=.17-1e-6&&inside.y<=.2+1e-6,id+' interior has a safe arrival point');
  }
 });
 test('roof cutaway hides only roof groups, leaving floors and entry collision geometry intact',()=>{

@@ -1,5 +1,6 @@
 import {arcadeChallenges,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
+import {isGameTypingTarget} from './game-keyboard-input.js';
 import {sportIcon} from './sports-action-bar.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {explorerBroadcastPose} from './explorer-camera.js';
@@ -161,12 +162,13 @@ function interactNearby(){if(ride===null&&game===null&&nearby)select(nearby.inde
 $('#interact').onclick=interactNearby;
 $('#exitride').onclick=()=>reset();
 addEventListener('keydown',e=>{
- if(e.target.matches('input,select,textarea')||$('#park-settings').open)return;
+ if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||isGameTypingTarget(e.target)||document.querySelector('.arcade-display-popup[open],.rad-controller-menu[open],#park-settings[open]'))return;
  if(isGameCameraToggleKey(e)){e.preventDefault();setCameraMode(nextGameCameraMode(cameraMode));return;}
  if(e.key==='Escape'&&ride!==null){e.preventDefault();reset();return;}
  if(e.key==='Escape'&&game!==null){e.preventDefault();closeGame();return;}
- // Reuse the game handler for fresh controls while the challenge popup is focused.
- if(game!==null&&e.target.closest?.('.native-game-challenges')&&['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','e','q','x'].includes(e.key.toLowerCase())){canvas.focus({preventScroll:true});canvas.onkeydown?.(e);return;}
+ // Menus and view/sound buttons retain focus after closing or activation.
+ // Fresh directional input returns to the game from any nonediting control.
+ if(game!==null&&e.target!==canvas&&(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())||e.target.closest?.('.native-game-challenges')&&[' ','e','q','x'].includes(e.key.toLowerCase()))){canvas.focus({preventScroll:true});canvas.onkeydown?.(e);return;}
  if(game!==null||ride!==null)return;
  if(e.code==='KeyE'||e.code==='Enter'&&!e.target.matches('button,a')){e.preventDefault();if(!e.repeat)interactNearby();return;}
  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();if(e.repeat&&!walkKeys.has(e.code))return;walkKeys.add(e.code);}

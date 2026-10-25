@@ -1,8 +1,8 @@
 // Predict only the local walking view. The server still owns collisions and position.
 // Reconcile against historical motion, then ease the visible correction separately.
 export class WalkingMotion {
- constructor({immediate=false,staleAfter=500,staleFade=200,maxDelta=.05}={}){this.maxDelta=Math.max(.001,Math.min(.25,Number(maxDelta)||.05));this.immediate=immediate;this.staleAfter=staleAfter;this.staleFade=staleFade;this.reset();}
- reset(){this.position=null;this.history=[];this.velocity={x:0,z:0};this.offset={x:0,z:0};this.lastDirection={x:0,z:0};this.lastSnapshot=-Infinity;this.receivedAt=0;this.clockOffset=null;this.bestRtt=Infinity;this.pendingSnapshot=null;}
+ constructor({immediate=false,staleAfter=500,staleFade=200,maxDelta=.05,recoverAfter=Infinity}={}){this.maxDelta=Math.max(.001,Math.min(.25,Number(maxDelta)||.05));this.immediate=immediate;this.staleAfter=staleAfter;this.staleFade=staleFade;this.recoverAfter=recoverAfter;this.reset();}
+ reset(){this.position=null;this.history=[];this.velocity={x:0,z:0};this.offset={x:0,z:0};this.lastDirection={x:0,z:0};this.lastSnapshot=-Infinity;this.receivedAt=0;this.clockOffset=null;this.bestRtt=Infinity;this.pendingSnapshot=null;this.recoveryPending=false;this.recovering=false;}
  reconcile(position,{serverTime,simulationTime=serverTime,sentAt,receivedAt}){
   if(Number.isFinite(sentAt)&&Number.isFinite(serverTime)){
    const rtt=Math.max(0,receivedAt-sentAt);
@@ -13,6 +13,7 @@ export class WalkingMotion {
   }
   const time=Number.isFinite(simulationTime)&&this.clockOffset!==null?Math.min(receivedAt,simulationTime+this.clockOffset):receivedAt;
   if(time<=this.lastSnapshot)return;
+  if(this.position&&receivedAt-this.receivedAt>this.recoverAfter)this.recoveryPending=true;
   this.lastSnapshot=time;this.receivedAt=receivedAt;
   if(!this.position){this.position={x:position.x,z:position.z};this.history=[{time,x:position.x,z:position.z}];return;}
   let predicted=this.history[0];
@@ -40,6 +41,8 @@ export class WalkingMotion {
  }
  correct(position,predicted,time){
   const dx=position.x-predicted.x,dz=position.z-predicted.z;
+  if(this.recoveryPending&&Math.hypot(dx,dz)>1)this.recovering=true;
+  this.recoveryPending=false;
   this.position.x+=dx;this.position.z+=dz;
   if(!this.immediate&&Math.hypot(dx,dz)>3){
    this.position={x:position.x,z:position.z};this.offset={x:0,z:0};this.velocity={x:0,z:0};this.history=[{time,x:position.x,z:position.z}];return;
@@ -79,10 +82,15 @@ export class WalkingMotion {
    // Current controls own progress along the walking direction. Old
    // acknowledgments cannot brake or replay that progress; safe lateral
    // corrections still pass through the physical sweep. Relocations reset.
-   const along=correction.x*this.lastDirection.x+correction.z*this.lastDirection.z;
-   correction.x-=along*this.lastDirection.x;correction.z-=along*this.lastDirection.z;
+   // After a long outage, a large real correction must eventually converge.
+   // Its bounded share of a held move cannot cancel fresh user progress.
+   if(!this.recovering){const along=correction.x*this.lastDirection.x+correction.z*this.lastDirection.z;
+    correction.x-=along*this.lastDirection.x;correction.z-=along*this.lastDirection.z;}
    if(movementSpeed){
     const length=Math.hypot(correction.x,correction.z),limit=movementSpeed*dt*.2;
+    if(length>limit){const scale=limit/length;correction.x*=scale;correction.z*=scale;}
+   }else if(this.recovering){
+    const length=Math.hypot(correction.x,correction.z),limit=Math.max(1,speed)*dt;
     if(length>limit){const scale=limit/length;correction.x*=scale;correction.z*=scale;}
    }
   }
@@ -92,6 +100,7 @@ export class WalkingMotion {
    this.offset[axis]-=correction[axis];
    target[axis]=this.position[axis]+this.offset[axis];
   }
+  if(this.recovering&&Math.hypot(this.offset.x,this.offset.z)<.01)this.recovering=false;
   this.history.push({time:now,x:this.position.x,z:this.position.z});
   while(this.history.length>256||this.history.length>2&&this.history[1].time<now-2000)this.history.shift();
   return target;

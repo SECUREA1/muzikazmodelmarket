@@ -42,9 +42,10 @@ test('PvP records accepted shots, misses, hits, kills and deaths exactly once wi
  let state=await send('alice','fire',{tool:'laser',direction:[0,0,-1],damage:100000,hitId:'account:bob',score:999},'first-shot');
  assert.equal(state.players['account:bob'].hitsRemaining,44);assert.equal(state.players['account:alice'].combat.shots,1);assert.equal(state.players['account:alice'].score,0);
  await send('alice','fire',{tool:'laser',direction:[0,0,-1]},'first-shot');state=await refresh();assert.equal(state.players['account:bob'].hitsRemaining,44,'replayed action cannot deal damage twice');
- await assert.rejects(send('alice','fire',{tool:'laser',direction:[0,0,-1]}),{statusCode:429});
+ state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});
+ assert.equal(state.players['account:bob'].hitsRemaining,43,'a new laser action is accepted immediately; laser has no cooldown');assert.equal(state.players['account:alice'].combat.shots,2);
  advance(250);state=await send('alice','fire',{tool:'laser',direction:[1,0,0],hitId:'account:bob'});assert.equal(state.players['account:alice'].combat.misses,1,'a forged hit ID does not turn a miss into a hit');
- for(let i=0;i<44;i++){advance(250);await send('bob','input',{input:{}});state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});}
+ for(let i=0;i<43;i++){advance(250);await send('bob','input',{input:{}});state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});}
  assert.equal(state.players['account:bob'].health,0);assert.equal(state.players['account:bob'].combat.deaths,1);assert.equal(state.players['account:bob'].combat.hitsTaken,45);
  const stats=state.players['account:alice'].combat;assert.equal(stats.shots,46);assert.equal(stats.hits,45);assert.equal(stats.misses,1);assert.equal(stats.playerKills,1);assert.equal(stats.enemyKills,0);assert.equal(state.players['account:alice'].score,25);
  await assert.rejects(send('bob','fire',{tool:'laser',direction:[0,0,1]}),{statusCode:409});

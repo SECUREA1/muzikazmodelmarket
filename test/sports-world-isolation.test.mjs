@@ -7,6 +7,7 @@ import {createBuilderLand} from '../public/js/environments/builder-land.js';
 import {replaceServerStreets} from '../public/js/environments/server-streets.js';
 import {collectSlimeFloorMeshes} from '../public/js/environments/slime-floor.js';
 import {selectedWorldId} from '../public/js/world-navigation.js';
+import {FIRING_RANGE_TARGETS,firingRangeTargetOffset} from '../public/js/firing-range.js';
 const maps=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)));
 const streets=[{id:'crossing',name:'Crossing',width:5,from:{x:-20,z:0},to:{x:20,z:0}}];
 for(const id of ['basketball-arena','hockey-arena','firing-range','neon-junction'])test(`${id} rejects roads and slime even after a map refresh`,()=>{
@@ -29,9 +30,11 @@ test('legacy basketball links return to the original native arena, and arcade-on
  assert.equal(legacyArcadeDestination('neon-junction'),null);
  assert.equal(maps.find(m=>m.id==='basketball-arena').sourceCommit,BASKETBALL_SOURCE_COMMIT);
 });
-test('range silhouettes animate and honor reduced motion without moving floor geometry',()=>{
+test('range silhouettes follow authoritative target motion without moving floor geometry',()=>{
  const root=createBuilderLand(maps.find(m=>m.id==='firing-range')),targets=[];
- root.traverse(mesh=>{if(mesh.userData.targetHomeX!==undefined)targets.push(mesh);});assert.equal(targets.length,10);
- const home=targets[0].position.x;root.userData.updateRangeEffects(1);assert.notEqual(targets[0].position.x,home);
- root.userData.updateRangeEffects(2,true);assert.equal(targets[0].position.x,home);
+ root.traverse(node=>{if(node.isGroup&&node.userData.rangeTargetId)targets.push(node);});assert.equal(targets.length,10);
+ const floors=[];root.updateMatrixWorld(true);root.traverse(mesh=>{if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'))floors.push({mesh,matrix:mesh.matrixWorld.clone()});});assert.ok(floors.length);
+ const settings={mode:'moving',targetSpeed:1};root.userData.setFiringRangeState({state:'live',settings},{serverTime:1000});root.userData.updateFiringRangeEffects(2000);
+ for(const target of targets){const definition=FIRING_RANGE_TARGETS.find(item=>item.id===target.userData.rangeTargetId),expected=firingRangeTargetOffset(definition,2000,settings);assert.ok(Math.abs(target.position.x-expected.x)<1e-9,definition.id);if(definition.moving)assert.notEqual(target.position.x,definition.position.x);}
+ root.updateMatrixWorld(true);for(const {mesh,matrix}of floors)assert.deepEqual(mesh.matrixWorld.elements,matrix.elements);
 });

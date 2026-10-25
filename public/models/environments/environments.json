@@ -1393,7 +1393,7 @@
       ],
       "ceiling": 140
     },
-    "contentUpdatedAt": "2026-10-23T00:00:00.000Z",
+    "contentUpdatedAt": "2026-10-25T00:00:00.000Z",
     "permanent": true,
     "publicDestination": true,
     "proceduralLand": true,
@@ -1409,7 +1409,7 @@
     "scale": 1,
     "spaceScale": 1,
     "spawn": {
-      "x": -60,
+      "x": -58,
       "y": 0.02,
       "z": 74,
       "rotationY": 0

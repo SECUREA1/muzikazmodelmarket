@@ -5,6 +5,8 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { Wallet } from '../vendor/ethers/ethers.mjs';
+import { UserJsonDatabase } from '../user-json-database.mjs';
 
 async function freePort() { return new Promise((resolve) => { const server = createServer(); server.listen(0, '127.0.0.1', () => { const { port } = server.address(); server.close(() => resolve(port)); }); }); }
 async function waitFor(url, process) {
@@ -59,7 +61,7 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const pass = await json(`${base}/api/admin/loadout-codes`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresInDays: 7, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
   assert.equal(pass.response.status, 201); assert.equal(pass.body.data.label, 'MZK Loadout Pass');
   assert.equal(pass.body.data.activationPath, `/members.html#access-code=${pass.body.data.code}`, 'admin receives a directly shareable activation route');
-  const wallet = '0x5555555555555555555555555555555555555555';
+  const signer = Wallet.createRandom(), wallet = signer.address.toLowerCase();
   const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, username: 'New User' }) });
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
@@ -69,37 +71,41 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.deepEqual(memberMultiplayer.body.messages, []);
   const gameBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
   assert.equal(gameBackpack.response.status, 200);
-  assert.equal(gameBackpack.body.data.environments.length, 12, 'every labeled repository environment is loaded into the game Backpack');
-  assert.equal(gameBackpack.body.data.avatars.filter((item) => item.source === 'repository').length, 30, 'every labeled avatar is available to the game');
-  assert.equal(gameBackpack.body.data.props.length, 4, 'prop-folder models stay in the prop inventory');
-  assert.equal(gameBackpack.body.data.vehicles.length, 1, 'vehicle-folder models stay in the vehicle inventory');
-  const liveMap = await json(`${base}/api/custom-maps`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: { id: 'integration-live-map', name: 'Integration Live Map', layout: 'grand-floor', objects: [{ id: 'spawn-1', modelId: 'hero-spawn', position: { x: 0, y: 0, z: 0 } }] } }) });
+  assert.ok(gameBackpack.body.data.avatars.some(item=>item.id==='starter-avatar'&&item.eligible), 'a new member can equip the included starter avatar');
+  assert.ok(gameBackpack.body.data.assets.some(item=>item.name==='Starter Avatar'), 'the starter grant appears in the durable Backpack');
+  assert.equal(gameBackpack.body.data.catalogAssets.length, 0, 'catalog models require ownership before entering the member inventory');
+  const liveMap = await json(`${base}/api/custom-maps`, { method: 'POST', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: { id: 'integration-live-map', name: 'Integration Live Map', layout: 'grand-floor', objects: [{ id: 'spawn-1', modelId: 'hero-spawn', position: { x: 0, y: 0, z: 0 } }] } }) });
   assert.equal(liveMap.response.status, 201, 'Save & Play Live publishes through the persistent API');
   assert.equal(liveMap.body.data.ownerId, `account:${activation.body.data.account.accountId}`, 'the API binds a live map to the authenticated Backpack rather than a spoofable header');
   const liveEnvironments = await json(`${base}/api/environments`);
   assert.ok(liveEnvironments.body.data.some((environment) => environment.id === 'integration-live-map' && environment.builderScene.objects.length === 1), 'the multiplayer map registry exposes the complete playable scene');
-  const updatedBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
-  assert.ok(updatedBackpack.body.data.environments.some((environment) => environment.id === 'environment-integration-live-map'), 'published maps flow back into the game Backpack');
-  const dax = gameBackpack.body.data.avatars.find((item) => item.id === 'repository-dax');
+  const customMaps = await json(`${base}/api/custom-maps`, { headers: { Cookie: accountCookie } });
+  assert.ok(customMaps.body.data.some(environment=>environment.id==='integration-live-map'&&environment.ownerId===liveMap.body.data.ownerId), 'published maps remain in the persistent public world directory');
+  const dax = gameBackpack.body.data.avatars.find((item) => item.id === 'starter-avatar');
   assert.equal((await fetch(`${base}${dax.modelUrl}`)).status, 200, 'catalog model URLs resolve through the backend');
   const avatarSelection = await json(`${base}/api/avatar-selection`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ avatarId: dax.id }) });
-  assert.equal(avatarSelection.response.status, 200, 'an included repository avatar can be equipped from the Backpack');
+  assert.equal(avatarSelection.response.status, 200, 'the included starter avatar can be equipped from the Backpack');
   assert.equal(avatarSelection.body.data.selectedAvatarId, dax.id);
-  const cribPresence = await json(`${base}/api/houses/ioncore-house/presence`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ roomId: 'rad-tox' }) });
+  const joined = await json(`${base}/api/rooms/muzikaz-airport/gameplay`, {method:'POST',headers:{Cookie:accountCookie,'X-CSRF-Token':activation.body.data.csrfToken,'Content-Type':'application/json'},body:JSON.stringify({action:'join',requestId:'server-flow-join',radToxEnabled:false})});
+  assert.equal(joined.response.status,200,'a member joins the authoritative map before publishing chat presence');
+  const cribPresence = await json(`${base}/api/houses/ioncore-house/presence`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ roomId: 'muzikaz-airport' }) });
   assert.equal(cribPresence.response.status, 200, 'a member with a designated avatar can join the shared room');
   const spokenChat = await json(`${base}/api/houses/ioncore-house/chat`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'Hello shared room' }) });
   assert.equal(spokenChat.response.status, 201, 'room text is sent through the shared server for text-to-speech clients');
   assert.equal(spokenChat.body.message, 'Hello shared room');
-  assert.equal(spokenChat.body.roomId, 'rad-tox', 'the server identifies the room that should speak the message');
+  assert.equal(spokenChat.body.roomId, 'muzikaz-airport', 'the server identifies the room that should speak the message');
   const codeOnlyState = await json(`${base}/api/wallet/state`, { headers: { Cookie: accountCookie } });
   assert.equal(codeOnlyState.response.status, 200, 'an access-code session opens the new Backpack without an Ethereum address');
   assert.ok(codeOnlyState.body.data.items.some((item) => item.name === 'Starter Avatar'), 'the loadout is in durable game memory');
   assert.equal(codeOnlyState.body.data.tokens.MZK, 2000, 'the starter balance is available to multiplayer and market APIs');
-  const walletLogin = await json(`${base}/api/access/wallet`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet }) });
-  assert.equal(walletLogin.response.status, 200); assert.equal(walletLogin.body.data.account.primaryEthereumWallet, wallet);
-  assert.equal(walletLogin.body.data.account.accountId, activation.body.data.account.accountId, 'wallet and code open one canonical account');
-  assert.equal(walletLogin.body.data.account.backpackId, activation.body.data.account.backpackId, 'opening Ethereum attaches it to the code-created Backpack');
-  assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  const challenge = await json(`${base}/api/access/wallet/challenge`, {method:'POST',headers:{Cookie:accountCookie,'X-CSRF-Token':activation.body.data.csrfToken,'Content-Type':'application/json'},body:JSON.stringify({wallet,purpose:'attach'})});
+  assert.equal(challenge.response.status,200);
+  const walletLogin = await json(`${base}/api/wallets/attach`, { method: 'POST', headers: { Cookie: accountCookie, 'X-CSRF-Token':activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet,challengeId:challenge.body.data.challengeId,signature:await signer.signMessage(challenge.body.data.message) }) });
+  assert.equal(walletLogin.response.status, 200); assert.equal(walletLogin.body.data.primaryEthereumWallet, wallet);
+  assert.equal(walletLogin.body.data.accountId, activation.body.data.account.accountId, 'wallet and code open one canonical account');
+  assert.equal(walletLogin.body.data.backpackId, activation.body.data.account.backpackId, 'a verified Ethereum signature attaches to the code-created Backpack');
+  assert.ok(walletLogin.body.data.gameAssets.includes('Starter Avatar'));
+
 
   const bypassDenied = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'wrong' }) });
   assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
@@ -118,11 +124,22 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(updatedAdminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
   assert.equal(updatedAdminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
-  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
-  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
-  const secondSeller = '0x6666666666666666666666666666666666666666';
-  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': secondSeller, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 10 }, items: [{ id: 'second-pack', name: 'Second Seller Pack' }], memory: { profile: { displayName: 'Second Seller' } } }) });
-  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': secondSeller, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'second-pack', priceMzk: 25 }) });
+  const anonymousWrite = await json(`${base}/api/wallet/state`, {method:'PUT',headers:{'X-Wallet-Address':wallet,'Content-Type':'application/json'},body:JSON.stringify({tokens:{MZK:100},items:[{id:'forged-item',name:'Forged Item'}]})});
+  assert.equal(anonymousWrite.response.status,401,'a wallet header cannot grant inventory or authenticate a seller');
+  const second = await json(`${base}/api/access/free-play`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'SecondSeller',password:'seller-password'})});
+  assert.equal(second.response.status,200);
+  const secondCookie=second.response.headers.get('set-cookie').split(';')[0],secondOwner='account:'+second.body.data.account.accountId;
+  // Seed owned sale fixtures through the database, never through client balance writes.
+  const fixtureDatabase=new UserJsonDatabase(join(directory,'users.json'));
+  for(const [owner,itemId,name] of [[wallet,'new-user-pack','New User'],[secondOwner,'second-pack','Second Seller']]){
+    const current=await fixtureDatabase.get(owner);
+    await fixtureDatabase.put(owner,{items:[...current.items,{id:itemId,name:name+' Pack'}],memory:{profile:{displayName:name}}});
+  }
+  const sellerHeaders={Cookie:accountCookie,'X-CSRF-Token':activation.body.data.csrfToken,'Content-Type':'application/json'};
+  const firstListing=await json(`${base}/api/market/listings`,{method:'PUT',headers:sellerHeaders,body:JSON.stringify({itemId:'new-user-pack',priceMzk:75})});
+  assert.equal(firstListing.response.status,200,'a signed-in owner can list an owned item');
+  const secondListing=await json(`${base}/api/market/listings`,{method:'PUT',headers:{Cookie:secondCookie,'X-CSRF-Token':second.body.data.csrfToken,'Content-Type':'application/json'},body:JSON.stringify({itemId:'second-pack',priceMzk:25})});
+  assert.equal(secondListing.response.status,200);
   const listings = await json(`${base}/api/market/listings`);
   assert.equal(listings.response.status, 200, 'the aggregate listing feed is public');
   assert.deepEqual(new Set(listings.body.data.map((item) => item.sellerName)), new Set(['New User', 'Second Seller']), 'an anonymous visitor sees active listings from every seller');
@@ -142,17 +159,19 @@ test('member entry verifies an account session for designer and inventory access
   assert.match(login, /\/api\/access\/free-play/, 'member login must authenticate the API session');
 });
 
-test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
+test('the VibeVerse multiplayer client uses server-confirmed sessions without a client Loadout gate', async () => {
   const [source, page, server] = await Promise.all([
     readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8'),
     readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
   assert.doesNotMatch(source, /apiFetch\('\/api\/account\/bootstrap'/);
-  assert.match(source, /localStorage\.getItem\('muzikazBottleMember'\)/);
+  assert.doesNotMatch(source, /localStorage\.getItem\('muzikazBottleMember'\)/, 'local flags cannot authenticate multiplayer');
+  assert.match(source, /apiFetch\('\/api\/market\/session'/, 'voice requests obtain the authenticated session proof');
   assert.match(source, /'X-User-Name': username/);
   assert.doesNotMatch(page, /data-multiplayer-control disabled/);
   assert.doesNotMatch(page, /id="multiplayer-paywall"/);
   const routes = server.slice(server.indexOf("'/api/houses/ioncore-house/events'"), server.indexOf("url.pathname.startsWith('/api/')"));
-  assert.doesNotMatch(routes, /multiplayerContext/, 'multiplayer routes must not require an account entitlement');
+  assert.doesNotMatch(routes, /multiplayerContext/, 'chat uses the active session and authoritative room membership');
+  assert.match(server, /Join the authoritative room before sending presence/, 'presence cannot spoof a player outside its room');
 });

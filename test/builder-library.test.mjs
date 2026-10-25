@@ -5,10 +5,12 @@ import {libraryModels,libraryCounts,catalogRecords,createPlacementSelection} fro
 import {normalizeCatalogModel} from '../public/js/builder-catalog.js';
 import {INTERACTIVE_DEVICES} from '../public/js/interactive-devices.js';
 import {ENTERABLE_BUILDINGS} from '../public/js/building-districts.js';
+import {ARCADE_PARTS} from '../public/js/arcade-rules.js';
 test('all interactive devices and buildings appear in their own categories with usable behaviors',async()=>{
  const manifest=JSON.parse(await readFile('public/models/backpack-assets.json','utf8')),models=manifest.assets.map(normalizeCatalogModel).filter(Boolean),interactive=libraryModels(models,'interactive'),arcade=libraryModels(models,'arcade'),buildings=libraryModels(models,'buildings');
  for(const id of Object.keys(INTERACTIVE_DEVICES)){const model=interactive.find(item=>item.buildAssetId===id);assert.ok(model,id);assert.equal(model.behavior,'interact');assert.equal(model.function_data.device,id);}
- assert.equal(arcade.length,15);for(const id of Object.keys(ENTERABLE_BUILDINGS))assert.ok(buildings.some(item=>item.buildAssetId===id),id);
+ const arcadeIds=[...Object.entries(INTERACTIVE_DEVICES).filter(([,device])=>['arcade','poker','slots','trivia'].includes(device.kind)).map(([id])=>id),...ARCADE_PARTS.map(part=>'arcade-part-'+part.id)];
+ assert.deepEqual(new Set(arcade.map(item=>item.buildAssetId)),new Set(arcadeIds));for(const id of Object.keys(ENTERABLE_BUILDINGS))assert.ok(buildings.some(item=>item.buildAssetId===id),id);
  const counts=libraryCounts(models);assert.equal(counts.interactive,interactive.length);assert.equal(counts.all,libraryModels(models).length);
 });
 test('catalog aliases deduplicate without hiding custom variants or owned Backpack items',()=>{

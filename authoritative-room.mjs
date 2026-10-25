@@ -81,6 +81,12 @@ import {buildingDimensions} from './public/js/building-materials.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const copy=value=>JSON.parse(JSON.stringify(value));
+function clearUnavailableAttachments(sim,player,actorId=player.actorId){
+ for(const key of ['heldId','seatedId','vehicleId']){
+  const id=player[key],actor=sim.actors[id];
+  if(id&&(!actor||actor.active===false||actor.holderId&&actor.holderId!==actorId))player[key]=null;
+ }
+}
 const fitnessRoundSnapshot=round=>{if(!round)return null;const {rewardReceipt,...publicRound}=round;return publicRound;};
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
@@ -190,6 +196,7 @@ export class AuthoritativeRooms {
    if(environment.game==='ski'&&player.skiRace?.status==='countdown'){stepSkiRace(sim,player,player.position,now);if(player.skiRace.status==='countdown'){player.input={};player.skiSpeed=0;continue;}}
 
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom)continue;if(environment.game==='ski'&&stepSkiLift(player,dt,now))continue;if(now-player.lastSeen>1000)continue;
+   clearUnavailableAttachments(sim,player);
    const bench=sim.actors[player.seatedId];if(bench?.basketballSpectatorSeat){player.position={...bench.position};player.floor=bench.position.y;player.velocityY=0;player.grounded=true;player.input={};continue;}
    if(environment.game==='ski'&&player.skiing&&player.position.x>-101&&player.position.x<-59&&player.position.z>343&&player.position.z<377){player.skiing=false;player.skiSpeed=0;}
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
@@ -286,13 +293,21 @@ export class AuthoritativeRooms {
  view(room){const sim=room.simulation,now=this.now();return {authoritative:true,sceneVersion:sim.environmentUpdatedAt,population:worldPopulation(sim,now),residentLife:residentLifeView(sim),casinoLife:casinoLifeView(sim),fitness:fitnessView(sim,now),factory:factoryView(sim,now),construction:constructionView(sim),questTeams:questTeamOffers(sim),liveDispatch:sim.liveDispatch||null,questOffers:sim.questOffers||[],questResults:sim.questResults||[],transportRadio:sim.transportRadio||[],skiCompetition:skiCompetitionView(sim),airport:sim.airport?{runwayHolder:sim.airport.runwayHolder||null,expires:sim.airport.expires||0}:null,building:buildingPolicy(room),firingRange:sim.firingRange?copy(sim.firingRange):null,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:projectArcadeDevices(sim.devices||{}),players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,radToxReady:p.radToxReady!==false,radToxEnabled:p.radToxEnabled!==false,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,fitness:fitnessRoundSnapshot(p.fitness),fitnessProgress:p.fitnessProgress||null,factory:p.factory?{job:p.factory.job,progress:p.factory.progress}:null,fitnessCoach:p.fitnessCoach||null,vehicleMission:p.vehicleMission||null,mapQuestProgress:p.mapQuestProgress||null,npcConversation:p.npcConversation||null,residentTask:p.residentTask||null,residentProgress:residentProgressView(p),casinoTask:casinoTaskView(p),casinoProgress:casinoProgressView(p),residentNearby:p.residentNearby||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballStealAt:p.basketballStealAt??null,firingRangeRole:p.firingRangeRole||null,firingRangeLane:p.firingRangeLane??null,seatedId:p.seatedId,vehicleId:p.vehicleId,skiing:!!p.skiing,skiSpeed:p.skiSpeed||0,skiHeading:p.skiHeading??p.yaw,skiAssist:p.skiAssist!==false,skiRace:p.skiRace||null,skiStats:p.skiStats||null,skiLift:p.skiLift||null,vehicleSeat:isAircraft(sim.actors[p.vehicleId])?'cockpit':isWatercraft(sim.actors[p.vehicleId])?'helm':null,grounded:p.grounded}])),events:sim.events.slice(-30).map(event=>event.factory?{...event,factory:publicFactoryState(event.factory)}:event)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
  command(id,environment,identity,command){const receivedAt=this.now(),requestedAction=command.action,transientCommand=requestedAction==='input'||requestedAction==='construction-controls'&&command.operation==='control';this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
-  const actorId='account:'+identity.accountId,arrivingPlayer=room.simulation?.players?.[actorId],freshInput=requestedAction==='input'&&arrivingPlayer&&!arrivingPlayer.replacedByRoom&&receivedAt-arrivingPlayer.lastSeen<15000;
-  // Queue/physics latency is server processing time, not a disconnected client.
-  // Only input from a player still present when it arrived can renew presence.
-  if(freshInput)arrivingPlayer.lastSeen=this.now();
+  const actorId='account:'+identity.accountId,arrivingPlayer=room.simulation?.players?.[actorId];
+  const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
+  const currentInput=Boolean(arrivingPlayer?.inputEpoch&&command.inputEpoch===arrivingPlayer.inputEpoch&&Number.isSafeInteger(command.inputSequence)&&command.inputSequence>=0&&command.inputSequence>(arrivingPlayer.lastInputSequence??-1));
+  const returningInput=currentInput&&!room.simulation?.receipts?.[actorId+':'+requestId];
+  const freshInput=requestedAction==='input'&&arrivingPlayer&&!arrivingPlayer.replacedByRoom&&(receivedAt-arrivingPlayer.lastSeen<15000||returningInput);
+  // Shader compilation or a suspended tab can outlast the presence lease.
+  // Fresh ordered controls for the current join resume that same player; old
+  // epochs, replays and players who changed rooms still require a new join.
+  if(freshInput){if(receivedAt-arrivingPlayer.lastSeen>=15000){
+   const active=Object.entries(room.simulation.players).filter(([id,p])=>id!==actorId&&!p.basketballAI&&receivedAt-p.lastSeen<15000);
+   if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
+   arrivingPlayer.input={};
+  }arrivingPlayer.lastSeen=this.now();}
   const {sim,manifest}=this.step(room,environment),now=this.now();
   if(freshInput&&sim.players[actorId]&&!sim.players[actorId].replacedByRoom)sim.players[actorId].lastSeen=now;
-  const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
   sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:sim.receipts[receiptKey].result};}
   let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   const rangeWasActive=Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000);
@@ -308,6 +323,7 @@ export class AuthoritativeRooms {
    const defaultEntry=manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2};
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects,entryCollision):!player||player.floorVersion!==4?this.collision.safeSpawn(environment,defaultEntry,entryCollision):null;
    if(travel){const reciprocal=ensureCommonsArrivalReturn(sim,environment,manifest,travel.from,this.activeWorlds.get(travel.from)?.name,this.collision,room.objects,now);if(reciprocal){manifest.objects.push(reciprocal);manifest.actors.push(reciprocal);}spawn=portalArrivalPosition(environment,manifest,travel.from,this.collision,sim.actors,room.objects);}
+   if(player)clearUnavailableAttachments(sim,player,actorId);
    if(player&&player.floorVersion!==4&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=4;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;for(const key of ['heldId','seatedId','vehicleId']){const attached=sim.actors[player[key]];if(attached?.holderId===actorId)attached.holderId=null;player[key]=null;}}
    const enteringWalkthrough=command.residentWalkthrough===true&&!player?.residentWalkthroughMode;
    if(!player&&!meeting&&!travel&&command.residentWalkthrough!==true){const count=active.length;spawn=this.collision.safeSpawn(environment,sim.basketball?{x:-5.25+(count%8)*1.5,y:0,z:7.5-Math.floor(count/8)}:{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2},entryCollision);}
@@ -320,8 +336,9 @@ export class AuthoritativeRooms {
      const point=player.position,finite=point&&['x','y','z'].every(axis=>Number.isFinite(point[axis]));
      const floor=finite&&this.collision.groundAt(environment,point,entryCollision);
      const supported=floor&&point.y>=floor.y-.1&&(!player.grounded||Math.abs(point.y-floor.y)<.45);
-     let clear=supported&&this.collision.hasBodyClearance(environment,point,.38,entryCollision);
-     if(clear&&player.grounded){try{this.collision.teleportPosition(environment,point,point,sim.actors,room.objects,{localMap:true,earthworks:entryCollision.earthworks});}catch{clear=false;}}
+     // Returning players use their real capsule and may slide away from a
+     // nearby wall; the larger new-entry clearance would reject small rooms.
+     const clear=supported&&this.collision.hasWalkingExit(environment,point,sim.actors,room.objects,{earthworks:entryCollision.earthworks});
      if(!clear){
       const recovered=this.collision.safeSpawn(environment,finite?point:defaultEntry,entryCollision);
       player.position={...recovered};player.floor=recovered.y;player.velocityY=0;player.grounded=true;player.skiLift=null;player.skiing=false;player.skiSpeed=0;

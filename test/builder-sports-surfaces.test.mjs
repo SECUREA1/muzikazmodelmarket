@@ -37,7 +37,7 @@ test('rebuilding sports dressing releases unique owned resources and retains sha
 
 test('world unloading preserves cached sports textures while releasing ordinary texture maps',async()=>{
  const source=await readFile(new URL('../public/js/environments/environment-loader.js',import.meta.url),'utf8');
- const method=source.slice(source.indexOf('  disposeMaterial(material)'),source.indexOf('  clearFloorEffects()'));
+ const method=source.slice(source.indexOf('  disposeMaterial('),source.indexOf('  clearFloorEffects()'));
  const Loader=vm.runInNewContext(`(class {${method}})`);
  const shared=new THREE.Texture();shared.userData.sportsSurfaceShared=true;
  const ordinary=new THREE.Texture(),material=new THREE.MeshStandardMaterial({map:shared,normalMap:ordinary});

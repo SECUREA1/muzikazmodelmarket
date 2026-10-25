@@ -16,7 +16,7 @@ function fixture(){
     THREE,Capsule,player,playerCollider:new Capsule(feet.clone().add(new THREE.Vector3(0,player.radius,0)),feet.clone().add(new THREE.Vector3(0,player.height-player.radius,0)),player.radius),
     playerRig:{position:new THREE.Vector3(4,.99,-3)},localGroundViewY:.99,
     alignSpawnToCurrentFloor:point=>point.setY(1.23),updateLandingFrame(){},setStatus(){},
-    serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},
+    serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},soloMapQuests:{relocate(){}},soloQuestWorld:null,
     envLoader:{world:{},setSpaceScale:scale=>({scale})},
     scaleControl:{querySelector:()=>({})},toxicBubbleSystem:{handleSpaceScaleChanged(){}}
   });

@@ -5,7 +5,7 @@ import {fullscreenPanel} from '../public/js/fullscreen-panels.js';
 test('Backpack opens synchronously, clears stale hidden state, and survives a queued close event',()=>{
  const previous={document:globalThis.document,MutationObserver:globalThis.MutationObserver};
  class Element{
-  constructor(){this.hidden=false;this.children=[];this.attributes=new Map();this.handlers=new Map();const classes=new Set();this.classList={add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)};}
+  constructor(){this.hidden=false;this.dataset={};this.children=[];this.attributes=new Map();this.handlers=new Map();const classes=new Set();this.classList={add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name),toggle:(name,on)=>on?classes.add(name):classes.delete(name)};}
   setAttribute(name,value){this.attributes.set(name,value);}
   getAttribute(name){return this.attributes.get(name);}
   append(...children){for(const child of children){child.parentElement=this;this.children.push(child);}}
@@ -14,7 +14,7 @@ test('Backpack opens synchronously, clears stale hidden state, and survives a qu
   showModal(){this.open=true;this.shown=(this.shown||0)+1;}
   close(){this.open=false;}
  }
- const body=new Element(),root=new Element(),trigger=new Element();trigger.setAttribute('aria-controls','house-picker-panel');trigger.setAttribute('aria-expanded','true');globalThis.document={createElement:()=>new Element(),body,documentElement:root,querySelector:()=>null,querySelectorAll:()=>[trigger]};
+ const body=new Element(),root=new Element(),trigger=new Element();trigger.setAttribute('aria-controls','house-picker-panel');trigger.setAttribute('aria-expanded','true');globalThis.document={createElement:()=>new Element(),body,documentElement:root,querySelector:()=>null,querySelectorAll:selector=>selector==='[aria-controls]'?[trigger]:[]};
  globalThis.MutationObserver=class{observe(){}disconnect(){}};
  try{
   const panel=new Element();panel.id='house-picker-panel';panel.hidden=true;panel.classList.add('is-collapsed');panel.setAttribute('aria-label','Avatar Backpack');

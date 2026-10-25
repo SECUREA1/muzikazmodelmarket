@@ -130,6 +130,37 @@ still select challenges, and conversation fields keep their typing controls.
 Routine toolbar updates preserve open conversation focus. Map travel ends an
 active walking route.
 
+Airport arrivals start clear of terminal scenery. Local map loading checks the
+player body against actual wall faces and repairs obstructed saved entry points
+on nearby floor; shared rooms also recover fully trapped returning players.
+Hockey and arcade accept fresh movement keys after toolbar and menu use, without
+requiring another click on the canvas. Fresh ordered controls also resume the
+current player after a slow load or suspended tab outlasts the presence window;
+old requests cannot restart movement or revive a previous destination. Current
+keyboard and stick input stays responsive during snapshot gaps in walking,
+arcade, hockey and vehicles. Local collision checks remain active; large walking
+corrections converge gradually after reconnecting. Range operations open only
+when requested, so arriving at either training range leaves movement available.
+Gameplay avatar refreshes resolve models directly without rebuilding the world
+directory or processing purchases on the movement request path.
+
+Run the movement checks against a fresh build (the Node server serves `dist/`
+when present):
+
+```bash
+npm run build && npm run check
+npm run check:environments
+node --test test/spawn-clearance.test.mjs test/movement-presence-recovery.test.mjs test/world-traversal-matrix.test.mjs
+python3 test/all-world-input.browser.py --mode multiplayer
+python3 test/all-world-input.browser.py --mode solo
+python3 test/game-toolbar-movement.browser.py
+```
+
+The public-world browser matrix tests untouched startup, rendered touch and
+keyboard displacement, map use, and sustained input. It discovers maps from the
+live directory and writes a JSON result for each map; it never dismisses startup
+dialogs to make movement pass.
+
 Facility menus release held walking and machine controls when opened or closed.
 Changing maps or machines also clears obsolete button locks and ignores replies
 from the previous site. Factory and gym panels close before a replacement player

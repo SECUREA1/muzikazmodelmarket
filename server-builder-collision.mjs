@@ -245,6 +245,21 @@ export class ServerBuilderCollision {
   }
   return true;
  }
+ hasWalkingExit(environment,point,actors={},objects={},{earthworks}={}){
+  if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return true;
+  // Entry search uses extra clearance, but a saved pose only needs the
+  // actual capsule radius. A valid small room must not require a long exit.
+  if(this.hasBodyClearance(environment,point,PLAYER_RADIUS,{actors,objects,earthworks}))return true;
+  // A saved position close to a wall is valid when there is room to reverse
+  // or slide. Only an entry trapped in every direction needs relocation.
+  for(let direction=0;direction<8;direction++){
+   const angle=direction*Math.PI/4,next={x:point.x+Math.cos(angle)*.3,y:point.y-.01,z:point.z+Math.sin(angle)*.3};
+   const resolved=this.resolve(environment,point,next,actors,objects,{earthworks});
+   // Moving within a solid volume is not a valid escape from it.
+   if(Math.hypot(resolved.x-point.x,resolved.z-point.z)>.15&&this.hasBodyClearance(environment,resolved,PLAYER_RADIUS,{actors,objects,earthworks}))return true;
+  }
+  return false;
+ }
  safeSpawn(environment,point,{actors={},objects={},earthworks}={}){
   const placed={actors,objects,earthworks};
   if(!builderBaseEnvironment(environment)&&(environment.builderScene||environment.proceduralLand))return this.meetingPosition(environment,point,actors,objects,{earthworks});

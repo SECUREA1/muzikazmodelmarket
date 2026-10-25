@@ -9,6 +9,7 @@ import {Readable} from 'node:stream';
 test('concurrent panel session reads preserve the proof used by ongoing gameplay', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'gameplay-session-proof-'));
   const previous = {...process.env};
+  let stopFixture;
   Object.assign(process.env, {
     MUZIKAZ_DATA_DIR: directory,
     MUZIKAZ_USER_DATABASE_FILE: join(directory, 'users.json'),
@@ -23,11 +24,12 @@ test('concurrent panel session reads preserve the proof used by ongoing gameplay
     const original = await readFile(new URL('../server.mjs', import.meta.url), 'utf8');
     const source = original
       .replace(/from '(\.\/[^']+)'/g, (_, path) => `from '${new URL('../' + path, import.meta.url).href}'`)
-      .replace(/server\.listen\(port,[^\n]+\);/, 'export {server};')
+      .replace(/server\.listen\(port,[^\n]+\);/, 'export {server}; export async function stopFixture(){masterMaintenance=true;await drainServerState();}')
       .replace(/\nbackgroundJob\(\(\)=>snapshotServer\(\)\);/, '');
     const filename = join(directory, 'handler.mjs');
     await writeFile(filename, source);
-    const {server} = await import(pathToFileURL(filename).href);
+    const fixture = await import(pathToFileURL(filename).href);
+    const {server} = fixture; stopFixture = fixture.stopFixture;
     const handler = server.listeners('request')[0];
     async function call(url, headers = {}, body) {
       const request = Readable.from(body ? [Buffer.from(JSON.stringify(body))] : []);
@@ -67,6 +69,7 @@ test('concurrent panel session reads preserve the proof used by ongoing gameplay
       assert.equal(denied.body.code, 'CSRF_INVALID');
     }
   } finally {
+    await stopFixture?.();
     for (const key of Object.keys(process.env)) if (!(key in previous)) delete process.env[key];
     Object.assign(process.env, previous);
     await rm(directory, {recursive: true, force: true});

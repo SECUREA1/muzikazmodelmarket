@@ -19,8 +19,11 @@ test('map failures and completed builder levels never substitute a generic world
  const game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  assert.doesNotMatch(game,/const env = registry.find\(id\) \|\| registry.all\(\)\[0\]/);
  assert.doesNotMatch(game,/opening the main floor fallback|const fallbackEnv/);
- const load=game.slice(game.indexOf('  async function loadById('),game.indexOf('\n\n  let cachedAvatars'));
- assert.ok(load.indexOf('multiplayerWorldLoading=true')<load.indexOf('envLoader.unload()'));
- assert.match(load,/envLoader\.unload\(\);clearBuilderDecor\(\)/);
+ const loading=game.slice(game.indexOf('  async function loadById('),game.indexOf('\n\n  let cachedAvatars'));
+ assert.match(loading,/const env = registry\.find\(id\)\|\|await registry\.resolve\(id\)/);
+ assert.ok(loading.indexOf('if (!env) throw')<loading.indexOf('envLoader.unload()'), 'a missing destination is rejected before removing the current world');
+ assert.match(loading,/envLoader\.unload\(\);clearBuilderDecor\(\)/, 'a confirmed destination clears the old scene and placed objects');
+ assert.match(loading,/await envLoader\.load\(env\)/, 'the selected destination is the world that loads');
+ assert.ok(loading.indexOf('multiplayerWorldLoading=true')<loading.indexOf('envLoader.unload()'));
  assert.match(game,/activeEnvironment\?\.memberPlot\|\|activeEnvironment\?\.builderScene/);
 });

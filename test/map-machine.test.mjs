@@ -20,12 +20,18 @@ test('every repository map and empty builder map gets exactly one playable floor
 test('existing authored or player-deployed machines prevent and replace the automatic fixture',()=>{
  const collision=new ServerBuilderCollision(),map={id:'has-machine',builderScene:{layout:'grand-floor',objects:[]}},sim={actors:{}},manifest=compileBuilderScene({objects:[]});
  populateMapMachine(sim,manifest,map,collision,100000);const fallback=Object.values(sim.actors)[0];assert.ok(fallback);
- sim.actors.owned={id:'owned',active:true,spawned:true,asset:{buildAssetId:'market-atm'},position:{x:8,y:0,z:8}};populateMapMachine(sim,manifest,map,collision,100100);
+ sim.actors.owned={id:'owned',active:true,spawned:true,asset:{buildAssetId:'retro-pong-cabinet'},position:{x:8,y:0,z:8}};populateMapMachine(sim,manifest,map,collision,100100);
  assert.equal(sim.actors[fallback.id],undefined);assert.ok(sim.actors.owned);
  assert.ok(hasMapMachine([{modelId:'custom',functionalSettings:{device:'retro-pong-cabinet'}}]));
 });
 test('moving irrelevant loot never rebuilds placed solid collision geometry',()=>{
- const collision=new ServerBuilderCollision(),actors={coin:{id:'coin',spawned:true,active:true,position:{x:0,y:0,z:0},loot:{currency:'MZK'}}};const before=collision.placedWorld(actors);actors.coin.position.x=1;assert.equal(collision.placedWorld(actors),before);
+ const collision=new ServerBuilderCollision(),actors={chair:{id:'chair',spawned:true,active:true,asset:{buildAssetId:'armchair'},position:{x:4,y:0,z:0}},coin:{id:'coin',spawned:true,active:true,position:{x:0,y:0,z:0},loot:{currency:'MZK'}}};
+ const before=collision.placedWorld(actors),geometry=collision.placedCache.world;assert.ok(before.meshes.length,'include solid geometry in the cache check');
+ actors.coin.position.x=1;const after=collision.placedWorld(actors);assert.equal(collision.placedCache.world,geometry);assert.equal(after.root,before.root);assert.equal(after.meshes.length,before.meshes.length);assert.ok(after.meshes.every((mesh,index)=>mesh===before.meshes[index]));
 });
 
-test('an existing authored interactive machine suppresses fallback placement',()=>{const environment={id:'authored',builderScene:{layout:'grand-floor'}},manifest=compileBuilderScene({objects:[{id:'jukebox',modelId:'shared-jukebox',position:{x:0,y:0,z:0},functionalSettings:{behavior:'interact'}}]}),sim={actors:{jukebox:{id:'jukebox',modelId:'shared-jukebox',active:true,position:{x:0,y:0,z:0}}}};populateMapMachine(sim,manifest,environment,{},100000);assert.deepEqual(Object.keys(sim.actors),['jukebox']);});
+test('an existing authored arcade machine suppresses fallback placement',()=>{const environment={id:'authored',builderScene:{layout:'grand-floor'}},manifest=compileBuilderScene({objects:[{id:'pong',modelId:'retro-pong-cabinet',position:{x:0,y:0,z:0},functionalSettings:{behavior:'interact'}}]}),sim={actors:{pong:{id:'pong',modelId:'retro-pong-cabinet',active:true,position:{x:0,y:0,z:0}}}};populateMapMachine(sim,manifest,environment,{},100000);assert.deepEqual(Object.keys(sim.actors),['pong']);});
+
+test('audio and market devices preserve access to a playable automatic arcade',()=>{
+ for(const modelId of ['shared-jukebox','market-atm']){const environment={id:modelId,builderScene:{layout:'grand-floor'}},sim={actors:{authored:{id:'authored',modelId,active:true,position:{x:8,y:0,z:8}}}};populateMapMachine(sim,compileBuilderScene({objects:[]}),environment,new ServerBuilderCollision(),100000);assert.equal(sim.actors.authored.modelId,modelId);assert.equal(Object.values(sim.actors).filter(actor=>actor.runtimeMachine).length,1);}
+});

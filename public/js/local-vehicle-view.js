@@ -15,7 +15,7 @@ const cloneActor=actor=>({...actor,position:{...actor.position},rotation:{...act
 // Only the local vehicle's presentation is predicted. Snapshots retain all
 // authority over health, ownership, impacts, boarding and travel operations.
 export class LocalVehicleView {
- constructor({staleAfter=1200,snapDistance=5,correctionRate=18}={}){this.staleAfter=staleAfter;this.snapDistance=snapDistance;this.correctionRate=correctionRate;this.reset();}
+ constructor({maxStepMs=1200,snapDistance=5,correctionRate=18}={}){this.maxStepMs=Math.max(50,Math.min(1200,Number(maxStepMs)||1200));this.snapDistance=snapDistance;this.correctionRate=correctionRate;this.reset();}
  reset(){this.state=null;this.display=null;this.history=[];this.options={};this.offset={x:0,y:0,z:0};this.rotationOffset={x:0,y:0,z:0};this.clockOffset=null;this.bestRtt=Infinity;this.lastSnapshotTime=-Infinity;this.lastSimulationTime=-Infinity;this.receivedAt=-Infinity;this.lastNow=-Infinity;this.lastRenderNow=-Infinity;this.lastServerTime=null;}
  get actor(){return this.display;}
  get current(){return this.display;}
@@ -63,7 +63,7 @@ export class LocalVehicleView {
   let state=actor;
   // The render frame may be slow; retain its elapsed time while recalculating
   // assistance and physical sweeps in short, deterministic control intervals.
-  for(let remaining=Math.max(0,Math.min(this.staleAfter/1000,delta));remaining>1e-8;){const step=Math.min(.05,remaining);remaining-=step;state=this.advanceStep(state,input,step,options,localTime-remaining*1000);}
+  for(let remaining=Math.max(0,Math.min(this.maxStepMs/1000,delta));remaining>1e-8;){const step=Math.min(.05,remaining);remaining-=step;state=this.advanceStep(state,input,step,options,localTime-remaining*1000);}
   return state;
  }
  advanceStep(actor,input,delta,options,localTime){
@@ -97,7 +97,9 @@ export class LocalVehicleView {
   if(!this.state)return null;if(!Number.isFinite(now))return this.display;this.options=options;
   // Simulation uses this predictor's actual sampling timeline. Frame-start
   // deltas can omit expensive work before this call or be visually capped.
-  const dt=Math.max(0,Math.min(this.staleAfter/1000,(now-this.lastRenderNow)/1000)),end=Math.min(now,this.receivedAt+this.staleAfter),duration=Math.max(0,Math.min(this.staleAfter/1000,(end-this.lastNow)/1000)),start=end-duration*1000;
+  // Current controls remain live between replies. Keep the per-frame physics
+  // budget bounded without expiring the player's control timeline.
+  const dt=Math.max(0,Math.min(this.maxStepMs/1000,(now-this.lastRenderNow)/1000)),end=now,duration=Math.max(0,Math.min(this.maxStepMs/1000,(end-this.lastNow)/1000)),start=end-duration*1000;
   if(duration>0&&this.state.active!==false){
    this.state=this.advance(this.state,controls,duration,options,end);this.history.push({start,end,input:{...controls}});
    while(this.history.length>512||this.history.length>2&&this.history[1].end<now-3000)this.history.shift();

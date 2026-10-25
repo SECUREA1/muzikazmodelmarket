@@ -134,12 +134,13 @@ test('real ceiling triangles clip a jump and allow a clean landing',()=>{
  assert.ok(highest>.1&&highest<.8);assert.equal(hitCeiling,true);near(target.y,.02);assert.equal(motion.grounded,true);
 });
 
-test('explicit teleports and world resets clear prediction while long outages stop movement',()=>{
+test('explicit teleports and resets clear prediction while current controls survive long snapshot gaps',()=>{
  const {motion,target}=fixture(),geometry=options();motion.sample(100, .025,{side:1},geometry,target);assert.ok(target.x>0);
  acknowledge(motion,{x:20,y:.02,z:10},200,200,{teleport:true});motion.sample(200,0,{},geometry,target);near(target.x,20);near(target.y,.02);near(target.z,10);
  motion.sample(220, .02,{side:1},geometry,target);near(target.x,20.08);
  for(let frame=1;frame<=180;frame++)motion.sample(220+frame*1000/60,1/60,{side:1},geometry,target);
- const stopped={...target};motion.sample(4000,.05,{side:1},geometry,target);near(target.x,stopped.x);near(target.z,stopped.z);
+ const moving={...target};motion.sample(4000,.05,{side:1},geometry,target);near(target.x,moving.x+.2);near(target.z,moving.z);
+ const stopped={...target};motion.sample(4050,.05,{},geometry,target);near(target.x,stopped.x);near(target.z,stopped.z);
  motion.reset();const sentinel={x:-99,y:-99,z:-99};motion.sample(4100,.02,{side:1},geometry,sentinel);assert.deepEqual(sentinel,{x:-99,y:-99,z:-99});near(motion.velocityY,0);
 });
 
@@ -183,8 +184,32 @@ test('large delayed walking acknowledgments never rewind held or released local 
  }
 });
 
-test('an explicit jump stays responsive through a delayed heartbeat without extending stale walking',()=>{
+test('fresh walking and jumping stay responsive through a delayed heartbeat',()=>{
  const {motion,target}=fixture();motion.sample(2700,.016,{forward:1},options(),target);const before={...target};
  motion.jump();motion.sample(2716,.016,{forward:1},options(),target);
- assert.ok(target.y>before.y+.05);near(target.x,before.x);near(target.z,before.z);
+ assert.ok(target.y>before.y+.05);near(target.x,before.x);near(target.z,before.z-.064);
+});
+
+test('fresh movement, release and jump remain physical after a long missing snapshot interval',()=>{
+ const {motion,target}=fixture(),wall=bounds(1,0,-10,1.01,3,10),geometry=options(floor(),[{bounds:wall,triangles:trianglesForBox(wall)}]);
+ for(let frame=1;frame<=300;frame++)motion.sample(frame*1000/60,1/60,{side:1},geometry,target);
+ assert.ok(target.x>.65&&target.x<=.660001,'current input reaches but never crosses the wall even with no server replies');
+ const atWall=target.x;motion.sample(10000,.1,{side:-1},geometry,target);near(target.x,atWall-.4);
+ const released={...target};motion.sample(10100,.1,{},geometry,target);near(target.x,released.x);near(target.z,released.z);
+ motion.sample(10116,1/60,{jump:true},geometry,target);assert.ok(target.y>released.y+.05,'a fresh keyboard jump is not discarded as stale');
+});
+
+test('large corrections after an outage converge at bounded speed without cancelling held movement',()=>{
+ const {motion,target}=fixture(),geometry=options();
+ for(let frame=1;frame<=300;frame++)motion.sample(frame*1000/60,1/60,{side:1},geometry,target);
+ near(target.x,20);
+ acknowledge(motion,{x:2,y:.02,z:0},5100,5100);
+ const before=target.x;motion.sample(5116,1/60,{side:1},geometry,target);
+ assert.ok(target.x-before>=4/60*.799,'recovery cannot consume more than twenty percent of fresh walking');
+ assert.ok(target.x-before<=4/60+.000001);
+ for(let frame=1;frame<=360;frame++){
+  const previous=target.x;motion.sample(5116+frame*1000/60,1/60,{},geometry,target);
+  assert.ok(Math.abs(target.x-previous)<=4/60+.000001,'neutral correction remains bounded instead of snapping');
+ }
+ assert.ok(Math.abs(target.x-motion.motion.position.x)<.02,'prediction cannot remain permanently separated from the server after reconnection');
 });

@@ -51,7 +51,9 @@ for (const record of records) {
     if (!details.size) throw new Error(`${path} is empty.`);
   }
   if (!record.spawn || !Number.isFinite(Number(record.spawn.y))) throw new Error(`${record.id} needs spawn metadata.`);
-  if (!Number.isFinite(Number(record.spaceScale)) || Number(record.spaceScale) < 0.1 || Number(record.spaceScale) > 100) throw new Error(`${record.id} needs a spaceScale between 0.1 and 100.`);
-  if (!record.playable || !Number.isFinite(Number(record.playableSize)) || Number(record.playableSize) < 20) throw new Error(`${record.id} needs a playable size of at least 20 meters.`);
+  const spaceScale = Number(record.spaceScale ?? (procedural ? 1 : undefined));
+  if (!Number.isFinite(spaceScale) || spaceScale < 0.1 || spaceScale > 100) throw new Error(`${record.id} needs a spaceScale between 0.1 and 100.`);
+  const playableSize = Number(record.playableSize ?? (procedural ? record.builderScene?.mapSize : undefined));
+  if (!record.playable || !Number.isFinite(playableSize) || playableSize < 20) throw new Error(`${record.id} needs a playable size of at least 20 meters.`);
 }
 console.log(`Validated ${records.length} repository environments, ${categorizedFiles.length} categorized models, and GLB headers.`);

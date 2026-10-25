@@ -53,6 +53,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify fresh movement during delayed snapshots and startup
+        run: node --test test/local-walking-view.test.mjs test/arcade-local-motion.test.mjs test/hockey-local-motion.test.mjs test/local-vehicle-view.test.mjs test/movement-presence-recovery.test.mjs test/firing-range-startup.test.mjs test/gameplay-avatar-identity.test.mjs test/server-storage-initialization.test.mjs test/hockey-input-recovery.test.mjs
       - name: Verify shared session proofs during panel refreshes
         run: node --test test/session-store.test.mjs test/room-session.test.mjs test/gameplay-session-proof.test.mjs
       - name: Verify per-map quests, site work and native game challenges
@@ -96,6 +98,7 @@ jobs:
           python test/ai-quest-work.browser.py
           python test/native-game-challenges.browser.py
           python test/arcade-display-controls.browser.py
+          python test/game-toolbar-movement.browser.py
           python test/native-game-challenges-live.browser.py
           python test/map-quests.browser.py
       - name: Verify live walking under delayed network input
@@ -124,7 +127,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Verify startup, connection recovery and map lifecycle
-        run: node --test test/gameplay-startup-readiness.test.mjs test/rad-tox-startup.test.mjs test/live-map-interaction.test.mjs test/vehicle-input-routing.test.mjs test/xr-game-controls.test.mjs test/api-connection.test.mjs test/game-request-deadline.test.mjs test/local-map-3d.test.mjs test/collision-world-cache.test.mjs test/collision-candidate-scope.test.mjs
+        run: node --test test/gameplay-startup-readiness.test.mjs test/rad-tox-startup.test.mjs test/live-map-interaction.test.mjs test/vehicle-input-routing.test.mjs test/xr-game-controls.test.mjs test/api-connection.test.mjs test/game-request-deadline.test.mjs test/local-map-3d.test.mjs test/collision-world-cache.test.mjs test/collision-candidate-scope.test.mjs test/spawn-clearance.test.mjs test/movement-presence-recovery.test.mjs
       - name: Install browser test tools
         run: |
           python -m pip install playwright
@@ -149,6 +152,10 @@ jobs:
           name: nonblocking-map-controls-results
           path: /tmp/nonblocking-map-controls-results.json
   world-input:
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [multiplayer, solo]
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -166,10 +173,10 @@ jobs:
         run: |
           python -m pip install playwright
           sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
-      - name: Verify sustained touch and map travel in every public world
-        run: python test/all-world-input.browser.py --report /tmp/all-world-input-results.json
+      - name: Verify startup, keyboard and sustained touch in every public world
+        run: python test/all-world-input.browser.py --mode ${{ matrix.mode }} --skip-map-travel --hold-ms 700 --report /tmp/all-world-input-results.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: all-world-input-results
+          name: all-world-input-results-${{ matrix.mode }}
           path: /tmp/all-world-input-results.json

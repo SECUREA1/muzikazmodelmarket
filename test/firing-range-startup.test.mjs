@@ -13,7 +13,7 @@ async function beginSource(){
  return source.slice(start,end);
 }
 
-test('opening the range confirms its lobby without waiting for unrelated combat artwork',async()=>{
+test('range startup confirms readiness without opening a movement-blocking lobby or waiting for combat artwork',async()=>{
  const calls=[],range={state:'ready',dedicated:true};
  const context={environment:{id:'firing-range'},snapshot:range,client:{ready:true,async send(action){calls.push(action);return {firingRange:range};}},
   system:{initAudio(){calls.push('audio');},ensureResources(){throw Error('Combat artwork must not block range entry.');}},hud:{open(){calls.push('lobby');}},status:message=>calls.push(message)};
@@ -24,7 +24,9 @@ test('opening the range confirms its lobby without waiting for unrelated combat 
   return toxicBubbleSystem.begin;
  `)(context,openFiringRangeSession,isFiringRangeEnvironment);
  assert.equal(await begin(),true);
- assert.deepEqual(calls.slice(0,3),['range-ready','audio','lobby']);
+ assert.deepEqual(calls.slice(0,2),['range-ready','audio']);
+ assert.equal(calls.includes('lobby'),false,'range entry leaves movement available; the player opens operations explicitly');
+ assert.ok(calls.some(call=>call.startsWith('Firing range ready.')));
  assert.equal(context.system.state,'active');assert.equal(context.system.active,false);
 });
 

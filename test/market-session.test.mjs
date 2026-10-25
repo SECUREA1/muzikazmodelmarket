@@ -8,13 +8,13 @@ import {pathToFileURL} from 'node:url';
 import {Readable,Writable} from 'node:stream';
 
 test('cookie and bearer member sessions own market and care actions without a browser wallet',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'market-session-'));const oldEnv={...process.env};
+ const dir=await mkdtemp(join(tmpdir(),'market-session-'));const oldEnv={...process.env};let stopFixture;
  Object.assign(process.env,{MUZIKAZ_ADMIN_PASSWORD:'boots',MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(dir,'avatar-uploads'),MUZIKAZ_ASSET_UPLOAD_DIR:join(dir,'asset-uploads'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(dir,'environment-uploads')});
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
-  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence, paymentOrderStore, reconcileStorePayments };');
-  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence,paymentOrderStore,reconcileStorePayments}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
+  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence, paymentOrderStore, reconcileStorePayments }; export async function stopFixture(){masterMaintenance=true;await drainServerState();}');
+  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const fixture=await import(pathToFileURL(modulePath).href);const {server,presence,paymentOrderStore,reconcileStorePayments}=fixture;stopFixture=fixture.stopFixture;const handler=server.listeners('request')[0];
   async function call(url,headers={},body,method=body?'POST':'GET'){
    const req=Readable.from(body?[Buffer.from(JSON.stringify(body))]:[]);Object.assign(req,{url,method,headers:{host:'localhost','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}});
    const result={headers:{}};const res={setHeader(key,value){result.headers[key.toLowerCase()]=value;},getHeader(key){return result.headers[key.toLowerCase()];},writeHead(status,headers){result.status=status;for(const[key,value]of Object.entries(headers))this.setHeader(key,value);this.headersSent=true;},end(data){result.body=JSON.parse(data);}};
@@ -74,7 +74,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/backpack/items/'+ownedPurchase.id+'/export')).status,401);
   const reused=await call('/api/backpack/import',paymentHeaders,{...modelFile.body.data,content:{item:{id:ownedPurchase.id,modelUrl:'/forged.glb'}}});assert.equal(reused.status,200);assert.equal(reused.body.data.item.modelUrl,ownedPurchase.modelUrl);
   assert.equal((await call('/api/backpack/import',paymentHeaders,{...modelFile.body.data,itemId:'not-owned'})).status,403);
-  const publicCatalog=await call('/api/market/catalog');assert.equal(publicCatalog.status,200);assert.ok(publicCatalog.body.data.some(item=>item.source==='model'));assert.ok(publicCatalog.body.data.some(item=>item.source==='upgrade'));assert.ok(publicCatalog.body.data.some(item=>item.source==='land'&&item.worldId==='volt-city'&&!item.claimed));assert.ok(publicCatalog.body.data.some(item=>item.source==='care'));
+  const publicCatalog=await call('/api/market/catalog');assert.equal(publicCatalog.status,200);assert.ok(publicCatalog.body.data.some(item=>item.source==='model'));assert.ok(publicCatalog.body.data.some(item=>item.source==='upgrade'));assert.ok(publicCatalog.body.data.some(item=>item.source==='land'&&item.worldId==='skyline-deck'&&!item.claimed));assert.ok(publicCatalog.body.data.some(item=>item.source==='care'));
   const builderAsset=await call('/api/builder/assets',paymentHeaders,{name:'Shared market sign',asset_type:'prop',builder_category:'PROPS',glb_url:ownedPurchase.modelUrl});assert.equal(builderAsset.status,201);
   const builderId=builderAsset.body.data.asset.id;
   assert.equal((await call('/api/backpack/items/'+builderId+'/export',paymentHeaders)).body.data.content.item.id,builderId);
@@ -103,7 +103,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const published=await call('/api/custom-maps',paymentHeaders,{scene:{id:'room-test',name:'Shared test',objects:[]}});assert.equal(published.status,201);assert.equal(published.body.data.ownerName,'SessionCarePlayer');assert.equal(published.body.data.roomId,'room-test');assert.match(published.body.data.playUrl,/environment=room-test/);
   presence.set('room-count-fixture',{sessionId:'room-count-fixture',accountId:'test-builder',roomId:'room-test',lastActiveAt:new Date().toISOString()});
   const liveMaps=(await call('/api/environments')).body.data;assert.ok(liveMaps.every((map,index)=>index===0||liveMaps[index-1].playerCount>=map.playerCount));assert.equal(liveMaps.find(map=>map.id==='room-test').playerCount,1);assert.equal(liveMaps.find(map=>map.id==='room-test').live,true);assert.equal((await call('/api/member-maps')).body.data.some(map=>map.id==='room-test'),true);presence.delete('room-count-fixture');
-  const joined=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'join',requestId:'join-room'});assert.equal(joined.status,200);assert.equal(joined.body.data.authoritative,true);
+  const joined=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'join',requestId:'join-room',deferRadTox:true,radToxEnabled:false});assert.equal(joined.status,200);assert.equal(joined.body.data.authoritative,true);
   assert.ok((await call('/api/world-atlas')).body.data.locations.some(place=>place.mapId==='room-test'&&place.ownerName==='SessionCarePlayer'));
   const placedModel=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'spawn',requestId:'spawn-owned-model',itemId:ownedPurchase.id});assert.equal(placedModel.status,200);assert.ok(Object.values(placedModel.body.data.actors).some(actor=>actor.asset?.id===ownedPurchase.id));
   const object={materialId:'wood',position:[1,0,1],rotation:[0,0,0],scale:[1,1,1],paint:[],open:false};
@@ -111,7 +111,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/rooms/room-test/objects')).body.data.objects['wood-1'].materialId,'wood');
   assert.equal((await call('/api/rooms/missing/objects')).status,404);
   assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'unowned',revision:0,object:{...object,materialId:'glass'}})).status,403);
-  const plot=await call('/api/land/claims',paymentHeaders,{worldId:'volt-city',requestId:'api-plot'});assert.equal(plot.status,201);assert.match(plot.body.data.playUrl,/environment=plot-deed-volt-city/);
+  const plot=await call('/api/land/claims',paymentHeaders,{worldId:'skyline-deck',expectedPriceMzk:5000,requestId:'api-plot'});assert.equal(plot.status,201);assert.match(plot.body.data.playUrl,/environment=plot-deed-skyline-deck/);
   const ownedLand=(await call('/api/backpack',paymentHeaders)).body.data.land;
   assert.ok(ownedLand.some(item=>item.id===plot.body.data.id&&item.playUrl===plot.body.data.playUrl));
   assert.equal((await call('/api/land/reveal',paymentHeaders,{itemId:plot.body.data.id})).body.data.spaceId,plot.body.data.spaceId);
@@ -125,16 +125,16 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.ok(Object.values(deployed.body.data.actors).some(actor=>actor.asset?.id===saved.body.data.id&&actor.asset.renderKind==='image'));
   assert.equal((await call('/data/users.json')).status,404);assert.equal((await call('/data/backups/manifest.json')).status,404);
   assert.equal((await call('/api/admin/backups')).status,403);
-  assert.equal((await call('/api/market/catalog')).body.data.find(item=>item.source==='land'&&item.worldId==='volt-city').claimed,true);
+  assert.equal((await call('/api/market/catalog')).body.data.find(item=>item.source==='land'&&item.worldId==='skyline-deck').claimed,true);
   const deedFile=(await call('/api/backpack/items/'+plot.body.data.id+'/export',paymentHeaders)).body.data;assert.equal(deedFile.content.world.id,plot.body.data.spaceId);assert.equal(deedFile.content.world.players,undefined);
-  const mapFile=(await call('/api/backpack/items/room-test/export',paymentHeaders)).body.data;assert.equal(mapFile.content.world.id,'room-test');assert.equal((await call('/api/backpack/import',paymentHeaders,mapFile)).body.data.playUrl,published.body.data.playUrl);
+  const mapFile=(await call('/api/backpack/items/room-test/export',paymentHeaders)).body.data;assert.equal(mapFile.content.world.id,'room-test');const importedUrl=new URL((await call('/api/backpack/import',paymentHeaders,mapFile)).body.data.playUrl,'http://localhost'),publishedUrl=new URL(published.body.data.playUrl,'http://localhost');assert.equal(importedUrl.pathname,publishedUrl.pathname);assert.deepEqual([...importedUrl.searchParams].sort(),[...publishedUrl.searchParams].sort(),'import preserves the destination and gameplay mode regardless of query ordering');
   await call('/api/market/listings',paymentHeaders,{itemId:saved.body.data.id,priceMzk:20},'PUT');assert.ok((await call('/api/market/catalog')).body.data.some(item=>item.category==='Custom items'&&item.name==='Public sign'));
-  const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-volt-city'),true);
-  assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-volt-city'),true);
+  const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-skyline-deck'),true);
+  assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-skyline-deck'),true);
   const environments=(await call('/api/environments')).body.data.filter(env=>!env.memberPlot&&env.playable!==false&&env.visibility!=='private');const template=environments.find(env=>env.id!=='muzikaz-main')||environments[0];
-  const configured=await call('/api/land/deeds/deed-volt-city/space',paymentHeaders,{environmentId:template.id,name:'Member API test plot'},'PUT');assert.equal(configured.status,200);
-  const hosted=(await call('/api/environments/plot-deed-volt-city')).body.data;assert.equal(hosted.name,'Member API test plot');assert.equal(hosted.baseEnvironmentId,template.id);assert.equal(hosted.roomId,'plot-deed-volt-city');
-  assert.equal((await call('/api/land/deeds/deed-volt-city/space',paymentHeaders,{environmentId:'not-a-server-map'},'PUT')).status,400);
+  const configured=await call('/api/land/deeds/deed-skyline-deck/space',paymentHeaders,{environmentId:template.id,name:'Member API test plot'},'PUT');assert.equal(configured.status,200);
+  const hosted=(await call('/api/environments/plot-deed-skyline-deck')).body.data;assert.equal(hosted.name,'Member API test plot');assert.equal(hosted.baseEnvironmentId,template.id);assert.equal(hosted.roomId,'plot-deed-skyline-deck');
+  assert.equal((await call('/api/land/deeds/deed-skyline-deck/space',paymentHeaders,{environmentId:'not-a-server-map'},'PUT')).status,400);
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
@@ -155,7 +155,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const state=await call('/api/rpg/state',bearer);assert.equal(state.status,200);assert.equal(state.body.data.owner_id,owner);assert.equal(state.body.data.stats.health,use.body.data.stats.health);
   const history=await call('/api/market/activity',cookieHeaders);assert.equal(history.status,200);
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
-  assert.equal((await call('/api/land/deeds/deed-volt-city/space',{authorization:'Bearer '+second.body.data.sessionToken},{environmentId:template.id,name:'Stolen plot'},'PUT')).status,403);
+  assert.equal((await call('/api/land/deeds/deed-skyline-deck/space',{authorization:'Bearer '+second.body.data.sessionToken},{environmentId:template.id,name:'Stolen plot'},'PUT')).status,403);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
   const publicFileVisit=await call('/api/backpack/import',secondHeaders,mapFile);assert.equal(publicFileVisit.status,200);assert.equal(publicFileVisit.body.data.action,'visit');assert.equal(publicFileVisit.body.data.ownershipGranted,false);assert.equal(publicFileVisit.body.data.playUrl,published.body.data.playUrl);
   assert.equal((await call('/api/backpack/items/'+ownedPurchase.id+'/export',secondHeaders)).status,403);
@@ -174,7 +174,9 @@ test('cookie and bearer member sessions own market and care actions without a br
   presence.get('voice-b').roomId='other';
   assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,400);
   presence.get('voice-b').roomId='arena';presence.get('voice-b').voiceEnabled=false;
-  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,400);
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,202,'a player with their mic off can listen to a speaking player');
+  presence.get('voice-a').voiceEnabled=false;
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,400,'a voice connection requires at least one active microphone');
 
   assert.equal((await call('/api/designer/drafts/'+draftId,secondHeaders)).status,404);
   assert.equal((await call('/api/designer/drafts',secondHeaders)).body.data.length,0);
@@ -220,6 +222,6 @@ test('cookie and bearer member sessions own market and care actions without a br
   await call('/api/session',headers,undefined,'DELETE');
   assert.equal((await call('/api/game/room-session',liveHeaders)).status,401,'logging out revokes linked gameplay access too');
   const expired=await call('/api/market/session',bearer);assert.equal(expired.status,401);
- }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
+ }finally{await stopFixture?.();process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
 });
 

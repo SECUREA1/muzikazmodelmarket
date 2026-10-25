@@ -41,7 +41,7 @@ test('the live firing range remains a permanent public destination after directo
 test('the firing range is listed and searchable in map selectors and website locations without active players',()=>{
  const place={...canonical,mapId:canonical.id,column:1,row:0};
  const worlds=[{env:{id:'empty-world',name:'Quiet map'},count:0},{env:place,count:0},{env:{id:'busy-world'},count:2}];
- assert.deepEqual(sortWorlds(worlds).map(item=>item.env.id),['busy-world','firing-range','empty-world']);
+ assert.deepEqual(sortWorlds(worlds).map(item=>item.env.id),['firing-range','busy-world','empty-world']);
  assert.equal(filterWorlds(worlds,'firing range')[0].env.id,place.id);
  assert.equal(filterAtlasLocations([place],'firing range')[0].mapId,place.id);
  assert.equal(atlasLocationPosition(place).mapId,place.id);

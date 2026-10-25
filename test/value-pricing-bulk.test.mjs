@@ -2,8 +2,8 @@ import test from 'node:test';import assert from 'node:assert/strict';import {mkd
 import {UserJsonDatabase} from '../user-json-database.mjs';import {GAME_ECONOMY,economyItem} from '../game-economy.mjs';import {LAND_VALUES,materialBulkQuote} from '../public/js/game-item-pricing.js';
 test('value pricing uses cents at 100 MZK per dollar and explicit land tiers',()=>{
  assert.equal(GAME_ECONOMY.find(item=>item.buildAssetId==='armchair').priceMzk,25);assert.equal(economyItem('material:wall').priceMzk,5);
- for(const item of GAME_ECONOMY.filter(item=>!item.basic)){assert.ok(item.priceMzk>=5&&item.priceMzk<=1000,item.sku);if(item.priceMzk<10)assert.match(item.name,/wall/i);}
- assert.equal(Math.min(...Object.values(LAND_VALUES).map(item=>item.priceMzk)),1000);assert.equal(Math.max(...Object.values(LAND_VALUES).map(item=>item.priceMzk)),10000);
+ for(const item of GAME_ECONOMY.filter(item=>!item.basic)){assert.ok(item.priceMzk>=5&&item.priceMzk<=1000,item.sku);if(item.priceMzk<10)assert.match(item.materialId||item.buildAssetId||item.name,/wall/i);}
+ assert.equal(Math.min(...Object.values(LAND_VALUES).map(item=>item.priceMzk)),5000);assert.equal(Math.max(...Object.values(LAND_VALUES).map(item=>item.priceMzk)),25000);
  const wall=economyItem('material:wall');assert.equal(materialBulkQuote(wall,10).priceMzk,50);assert.equal(materialBulkQuote(wall,50).priceMzk,225);assert.equal(materialBulkQuote(wall,100).priceMzk,400);
  for(const quantity of [0,-1,1.2,1001,'100',NaN])assert.throws(()=>materialBulkQuote(wall,quantity));
 });

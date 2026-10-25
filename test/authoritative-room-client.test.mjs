@@ -251,7 +251,10 @@ test('an expired room rejoin preserves position by omitting the consumed arrival
   if(command.action==='input'&&!expired){expired=true;return response({message:'Rejoin required',code:'ROOM_JOIN_REQUIRED'},409);}
   return response(confirmed(++sequence));
  },async client=>{
-  await client.whenReady();await pause(220);const joins=commands.filter(c=>c.action==='join');assert.equal(joins.length,2);assert.equal(joins[0].meetingId,'commons-entry');assert.equal(joins[0].travelToken,'proof');assert.equal(joins[1].meetingId,undefined);assert.equal(joins[1].travelToken,undefined);assert.equal(client.ready,true);
+  await client.whenReady();
+  const deadline=performance.now()+3000;
+  while((commands.filter(command=>command.action==='join').length<2||!client.ready)&&performance.now()<deadline)await pause(10);
+  const joins=commands.filter(c=>c.action==='join');assert.equal(joins.length,2);assert.equal(joins[0].meetingId,'commons-entry');assert.equal(joins[0].travelToken,'proof');assert.equal(joins[1].meetingId,undefined);assert.equal(joins[1].travelToken,undefined);assert.equal(client.ready,true);
  },{meetingId:'commons-entry',arrival:{from:'previous-room',token:'proof'}});
 });
 
@@ -377,6 +380,32 @@ test('a hundred urgent input edges keep at most three requests and flush only th
  },{input:()=>({side})});
 });
 
+test('same-room travel frees obsolete input slots before their delayed responses settle',async()=>{
+ const pending=[];let side=0,sequence=0,epoch='before';
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='input')return new Promise((resolve,reject)=>pending.push({command,signal:options.signal,resolve,reject}));
+  if(command.action==='map-access')epoch='after';
+  return response({...confirmed(++sequence),inputEpoch:epoch});
+ },async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();
+  side=1;client.requestInput();side=-1;client.requestInput();await flushInputTasks();
+  assert.equal(pending.length,3);
+  await client.send('map-access',{position:{x:10,z:10}});
+  assert.ok(pending.every(request=>request.signal.aborted),'obsolete HTTP requests must release browser connection slots');
+  side=1;client.requestInput();await flushInputTasks();
+  assert.equal(pending.length,4,'fresh controls must bypass all old-epoch responses');
+  assert.equal(pending[3].command.inputEpoch,'after');assert.equal(pending[3].command.inputSequence,1);assert.equal(pending[3].command.input.side,1);
+  pending[3].resolve(response({...confirmed(++sequence),inputEpoch:epoch}));await flushInputTasks();
+  void heartbeat();await flushInputTasks();
+  assert.equal(pending.length,5,'the previous epoch cannot leave the heartbeat busy');
+  pending[4].resolve(response({...confirmed(++sequence),inputEpoch:epoch}));
+  for(const old of pending.slice(0,3))old.reject(Error('obsolete input aborted'));
+  await flushInputTasks();assert.equal(client.ready,true);
+ },{input:()=>({side})});
+});
+
 test('stopping with three pending inputs discards queued edges and ignores late responses',async()=>{
  const room=controlledInputs(),rendered=[];let side=0;
  await withControlledRoom(room.fetch,async(client,heartbeat)=>{
@@ -438,7 +467,7 @@ test('aircraft cannons keep a bounded firing window without waiting for late rep
   window.dispatchEvent=event=>events.push(event);await client.whenReady();
   const fields={tool:'laser',aircraftShot:true,direction:[0,0,-1],origin:{x:0,y:10,z:0}},pending=[];
   try{
-   pending.push(client.send('fire',fields,'cannon-1'));await pause(5);
+   pending.push(client.send('fire',fields,'cannon-1'));
    assert.equal(await client.send('fire',fields,'too-soon'),null,'local cooldown still applies');
    await pause(205);pending.push(client.send('fire',fields,'cannon-2'));
    await pause(205);pending.push(client.send('fire',fields,'cannon-3'));await pause(5);
@@ -768,4 +797,20 @@ test('weapons give immediate feedback without RAD-TOX and coalesced requests do 
   while(!release)await pause(1);release();await Promise.all([first,second]);
   assert.equal(previews.length,1,'confirmation must not replay the predicted shot');
  },{deferRadTox:true,radToxEnabled:false,inputInterval:1000,onShot:shot=>previews.push(shot),render:state=>renders.push(state)});
+});
+
+test('movement, room joins and their session proofs take priority over streamed map assets',async()=>{
+ const oldWindow=globalThis.window,oldDocument=globalThis.document,requests=[];let sequence=0;
+ globalThis.document={hidden:false};
+ globalThis.window={fetch:async(path,options)=>{
+  const body=options.body?JSON.parse(options.body):null;requests.push({path,body,priority:options.priority});
+  return {ok:true,json:async()=>({data:path==='/api/game/room-session'?{csrfToken:'proof'}:{selfId:'me',sequence:++sequence,inputEpoch:'epoch',players:{me:{position:{x:0,y:0,z:0}}},actors:{},objects:{}}})};
+ }};
+ const client=connectAuthoritativeRoom({roomId:'priority',input:()=>({forward:1}),render(){}});
+ try{
+  await client.whenReady();await client.send('input',{input:{forward:1}});await client.send('interact');
+  for(const action of ['join','input'])assert.ok(requests.some(request=>request.body?.action===action&&request.priority==='high'));
+  assert.ok(requests.some(request=>request.path==='/api/game/room-session'&&request.priority==='high'));
+  assert.equal(requests.find(request=>request.body?.action==='interact').priority,undefined);
+ }finally{client.stop();globalThis.window=oldWindow;globalThis.document=oldDocument;}
 });

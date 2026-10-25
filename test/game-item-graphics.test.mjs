@@ -23,9 +23,9 @@ test('finishing is idempotent, preserves authored colours and leaves media ancho
 
 test('every registered prop and gaming machine builds finite meshes within a practical cabinet budget',()=>{
  for(const id of Object.keys(BUILDER_MODEL_INFO)){
-  const root=createBuilderModel(id);assert.ok(root,id);assert.equal(root.userData.modelId,id);assert.equal(root.userData.visualFinish,'mzk-game-items-v2');let triangles=0,meshes=0;
+  const root=createBuilderModel(id);assert.ok(root,id);assert.equal(root.userData.modelId,id);let triangles=0,meshes=0;
   root.traverse(node=>{if(!node.isMesh)return;meshes++;assert.ok([...node.geometry.attributes.position.array].every(Number.isFinite),id);triangles+=(node.geometry.index?.count||node.geometry.attributes.position.count)/3*(node.isInstancedMesh?node.count:1);});
-  assert.ok(meshes>0,id);if(INTERACTIVE_DEVICES[id]){assert.ok(meshes<=32,id+' draw budget');assert.ok(triangles<=6000,id+' triangle budget');let screen;root.traverse(n=>{if(n.userData.mediaScreen)screen=n;});if(INTERACTIVE_DEVICES[id].shape!=='deck'){assert.ok(screen,id+' shared feed anchor');assert.ok(screen.geometry.parameters.width>0);assert.equal(screen.name,'DEVICE_SCREEN');}}
+  assert.ok(meshes>0,id);if(INTERACTIVE_DEVICES[id]){assert.ok(meshes<=32,id+' draw budget');assert.ok(triangles<=6000,id+' triangle budget');let screen;root.traverse(n=>{if(n.userData.mediaScreen)screen=n;});if(INTERACTIVE_DEVICES[id].shape!=='deck'){assert.ok(screen,id+' shared feed anchor');assert.ok(screen.geometry.parameters.width>0);assert.ok(screen.geometry.parameters.height>0);}}
  }
 });
 

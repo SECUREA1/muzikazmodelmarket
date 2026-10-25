@@ -17,5 +17,5 @@ test('builder exposes discoverable mobile list modes and explicit placement cont
  const html=await readFile('environment-builder.html','utf8'),source=await readFile('environment-builder.js','utf8'),css=await readFile('environment-builder.css','utf8');
  for(const id of ['library-browser-toggle','library-browser-content','library-tile-size','touch-open-library','touch-place-center','touch-move','touch-rotate','touch-cancel'])assert.ok(html.includes('id="'+id+'"'),id);
  for(const view of ['tiles','list','slider'])assert.ok(html.includes('data-library-view="'+view+'"'));
- assert.match(source,/if\(e.pointerType==='touch'\)return;if\(e.button/);assert.match(source,/installBuilderTouchGestures\(renderer.domElement,tapBuilderCanvas\)/);assert.match(css,/\.builder-library-open \.object-library#library-panel/);
+ assert.match(source,/addEventListener\('pointerdown',e=>\{\s*if\(e.pointerType==='touch'\|\|e.button!==0/);assert.match(source,/installBuilderTouchGestures\(renderer.domElement,tapBuilderCanvas\)/);assert.match(css,/\.builder-library-open \.object-library#library-panel/);
 });

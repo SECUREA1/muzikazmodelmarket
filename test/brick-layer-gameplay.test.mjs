@@ -39,7 +39,7 @@ test('ranged weapons always render distinct shot feedback, including misses', as
   assert.match(script, /'rail-cannon':\{[^}]*color:0xc66bff/, 'the Rail Cannon has a distinct purple shot');
   assert.match(script, /showWeaponShot\(tool,origin,direction,target=null\)/, 'one shared smooth feedback path renders every ranged weapon');
   assert.match(script, /this\.showWeaponShot\(this\.tool,origin,direction,target\);if\(!hit\)return true/, 'mouse and touch misses still render and count as a fired tool');
-  assert.match(script, /toxicBubbleSystem\.showWeaponShot\(toxicBubbleSystem\.tool,rangeRaycaster\.ray\.origin/, 'the firing range renders shot feedback too');
+  assert.match(script, /return toxicBubbleSystem\.fireExtraWeapon\(rangeRaycaster\.ray\.origin,rangeRaycaster\.ray\.direction\)/, 'the firing range uses the shared weapon path that renders shot feedback');
   assert.match(script, /weaponFlash:true/, 'each shot includes visible muzzle feedback');
 });
 
