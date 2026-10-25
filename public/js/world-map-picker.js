@@ -139,7 +139,7 @@ export function mountWorldMapPicker(root, worlds, {currentId, onJoin, onClose}) 
       const destination = new URL(url, location.href);
       const id = destination.searchParams.get('environment');
       const entry = worlds.find(item => item.env.id === id);
-      await onJoin({...entry?.env, id, name:entry?.env.name || id, meetingId:destination.searchParams.get('meet')});
+      await onJoin({...entry?.env, id, name:entry?.env.name || id, multiplayer:destination.searchParams.get('mode')==='solo'?false:entry?.env.multiplayer, meetingId:destination.searchParams.get('meet')});
     }});
   });
   render();

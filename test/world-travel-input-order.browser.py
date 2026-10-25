@@ -73,7 +73,7 @@ async def main():
                             for attempt in range(3):
                                 await page.wait_for_function('MuzikazHouseExplorer.snapshot().serverReady')
                                 await dialog.get_by_role('button', name='Port to ', exact=False).first.click()
-                                await page.wait_for_function('travelRace.processed||document.querySelector(".local-map-status")?.textContent.startsWith("Travel could not complete")')
+                                await page.wait_for_function('travelRace.processed||document.querySelector(".local-map-status")?.textContent.includes("Simulated lost map response")')
                                 if await page.evaluate('travelRace.processed'):
                                     break
                             assert await page.evaluate('travelRace.processed'), (world,drop,'Map action was not accepted',await page.locator('.local-map-status').inner_text(),await page.evaluate('travelRace.replies.slice(-8)'),await page.locator('.game-live-connection').inner_text())
@@ -82,7 +82,7 @@ async def main():
                             assert await dialog.is_visible(), 'The held travel response must keep its map open.'
                             await page.evaluate('()=>{travelRace.released=true;travelRace.release();}')
                             if drop:
-                                await page.wait_for_function('document.querySelector(".local-map-status")?.textContent.includes("Travel could not complete")')
+                                await page.wait_for_function('document.querySelector(".local-map-status")?.textContent.includes("Simulated lost map response")')
                             else:
                                 await page.wait_for_function('travelRace.delivered')
                             assert await dialog.is_visible(), 'Travel results must not automatically close the map.'

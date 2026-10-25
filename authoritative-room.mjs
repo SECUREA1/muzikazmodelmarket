@@ -304,11 +304,32 @@ export class AuthoritativeRooms {
     if(pending?.token===command.travelToken&&pending.to===id&&pending.expiresAt>=now)travel=pending;
     else if(!(player?.lastPortalArrival?.token===command.travelToken&&player.lastPortalArrival.from===command.travelFrom&&player.lastPortalArrival.expiresAt>=now))fail('This portal trip has expired. Enter the portal again.',409,'PORTAL_TRIP_EXPIRED');
    }
-   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2});
+   const entryCollision={actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks};
+   const defaultEntry=manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2};
+   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects,entryCollision):!player||player.floorVersion!==4?this.collision.safeSpawn(environment,defaultEntry,entryCollision):null;
    if(travel){const reciprocal=ensureCommonsArrivalReturn(sim,environment,manifest,travel.from,this.activeWorlds.get(travel.from)?.name,this.collision,room.objects,now);if(reciprocal){manifest.objects.push(reciprocal);manifest.actors.push(reciprocal);}spawn=portalArrivalPosition(environment,manifest,travel.from,this.collision,sim.actors,room.objects);}
    if(player&&player.floorVersion!==4&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=4;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;for(const key of ['heldId','seatedId','vehicleId']){const attached=sim.actors[player[key]];if(attached?.holderId===actorId)attached.holderId=null;player[key]=null;}}
    const enteringWalkthrough=command.residentWalkthrough===true&&!player?.residentWalkthroughMode;
-   if(!player&&!meeting&&!travel&&command.residentWalkthrough!==true){const count=active.length;spawn=this.collision.safeSpawn(environment,sim.basketball?{x:-5.25+(count%8)*1.5,y:0,z:7.5-Math.floor(count/8)}:{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
+   if(!player&&!meeting&&!travel&&command.residentWalkthrough!==true){const count=active.length;spawn=this.collision.safeSpawn(environment,sim.basketball?{x:-5.25+(count%8)*1.5,y:0,z:7.5-Math.floor(count/8)}:{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2},entryCollision);}
+   if(player&&player.floorVersion===4&&!meeting&&!travel){
+    const occupied=id=>{const actor=sim.actors[id];return actor&&actor.active!==false&&actor.holderId===actorId;};
+    const attached=occupied(player.seatedId)||occupied(player.vehicleId)||environment.game==='ski'&&skiLifts.some(lift=>lift.id===player.skiLift?.id);
+    // Preserve valid walking, jumping and occupied vehicle/seat positions. A
+    // saved position can become unsafe when a room is edited while away.
+    if(!attached&&(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length)){
+     const point=player.position,finite=point&&['x','y','z'].every(axis=>Number.isFinite(point[axis]));
+     const floor=finite&&this.collision.groundAt(environment,point,entryCollision);
+     const supported=floor&&point.y>=floor.y-.1&&(!player.grounded||Math.abs(point.y-floor.y)<.45);
+     let clear=supported&&this.collision.hasBodyClearance(environment,point,.38,entryCollision);
+     if(clear&&player.grounded){try{this.collision.teleportPosition(environment,point,point,sim.actors,room.objects,{localMap:true,earthworks:entryCollision.earthworks});}catch{clear=false;}}
+     if(!clear){
+      const recovered=this.collision.safeSpawn(environment,finite?point:defaultEntry,entryCollision);
+      player.position={...recovered};player.floor=recovered.y;player.velocityY=0;player.grounded=true;player.skiLift=null;player.skiing=false;player.skiSpeed=0;
+      for(const key of ['seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId===actorId)actor.holderId=null;player[key]=null;}
+      player.movementRevision=(player.movementRevision||0)+1;
+     }
+    }
+   }
    if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:4,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;if(previous.residentTask?.status==='active'){previous.residentTask.status='cancelled';previous.residentTask.message='World travel ended this favor. Ask your contact to start again.';}if(previous.casinoTask?.status==='active'){previous.casinoTask.status='cancelled';previous.casinoTask.message='World travel ended this casino favor. Ask your contact to start again.';}previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
@@ -412,8 +433,13 @@ export class AuthoritativeRooms {
      const place=localMapLocations(environment).find(location=>location.id===command.locationId);
      if(!place)fail('Choose a listed map location.',422);
      const base={x:place.arrival?.x??place.x,y:place.arrival?.y??place.y??0,z:place.arrival?.z??place.z};
-     const candidates=[base];for(const radius of [2,4,6,8,10,12])for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
-     let arrival=null;for(const candidate of candidates){try{const floor=this.collision.groundAt(environment,candidate,{entry:true,actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});if(floor&&(!environment.builderScene?.layoutMeta?.harbor||floor.y>=-.05)){arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true,earthworks:sim.construction?.earthworks});break;}const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);releaseForMapTravel(sim,player,manifest,now);player.position=arrival;result.message='Arrived at '+place.name+'.';
+     // Some listed landmarks are solid buildings wider than the old 12 m
+     // search. Reach their perimeter while retaining the same physical floor
+     // and obstruction checks used for smaller destinations.
+     const reach=Math.max(12,Math.min(128,Math.hypot(Number(place.width)||0,Number(place.depth)||0)/2+2));
+     const radii=[];for(let radius=2;radius<reach;radius+=2)radii.push(radius);radii.push(reach);
+     const candidates=[base];for(const radius of radii)for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
+     let arrival=null;for(const candidate of candidates){try{const floor=this.collision.groundAt(environment,candidate,{entry:true,actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks});if(floor&&(!environment.builderScene?.layoutMeta?.harbor||floor.y>=-.05)){arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true,earthworks:sim.construction?.earthworks});break;}const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(Math.hypot(point.x-base.x,point.z-base.z)>reach+.01||environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=this.collision.teleportPosition(environment,player.position,point,sim.actors,room.objects,{localMap:true,earthworks:sim.construction?.earthworks});break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);releaseForMapTravel(sim,player,manifest,now);player.position=arrival;result.message='Arrived at '+place.name+'.';
     }
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};if(!reopening)player.movementRevision=(player.movementRevision||0)+1;
    }

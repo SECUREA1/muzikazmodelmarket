@@ -4,6 +4,7 @@ import {mkdtemp,rm,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {atlasPercentPoint,resolveIndexDestination} from '../public/js/index-atlas-travel.js';
+import {atlasTravelDestination,atlasMeetingDestination} from '../public/js/atlas-travel.js';
 import {WorldAtlas} from '../world-atlas.mjs';
 import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
@@ -45,4 +46,53 @@ test('atlas pins persist across restart, deduplicate and retain account-specific
  await atlas.synchronize([{id:'published-map',name:'Published map',source:'custom-builder',builderScene:{layout:'grand-floor',objects:[]}}]);await atlas.pin('published-map',null,alice,{x:37,y:68});
  pins=await new WorldAtlas(file).pins(alice);assert.equal(pins.length,2);assert.ok(pins.some(pin=>pin.mapId==='published-map'));
  await atlas.synchronize([],{complete:true});assert.ok(!(await atlas.pins(alice)).some(pin=>pin.mapId==='published-map'),'deleted maps leave no dead saved links');
+});
+
+test('optional pin failures never prevent a confirmed saved destination from opening',async()=>{
+ for(const failure of ['session','pin'])for(const status of [401,403,404,500]){
+  const inventory={
+   roomSession:async options=>{assert.equal(options.timeout,1500);if(failure==='session')throw Object.assign(Error('Session unavailable'),{status});return {csrfToken:'proof'};},
+   api:async(path,options)=>{if(path.startsWith('/api/environments/'))return {id:'live-map',playUrl:'model-explorer.html?environment=live-map&mode=solo'};assert.equal(options.timeout,1500);throw Object.assign(Error('Pin unavailable'),{status});}
+  };
+  const url=new URL(await resolveIndexDestination(inventory,{mapId:'live-map',meetingId:'meet-2-4',x:20,y:40}),'https://world.example/');
+  assert.equal(url.searchParams.get('environment'),'live-map');assert.equal(url.searchParams.get('meet'),'meet-2-4');assert.equal(url.searchParams.get('mode'),'solo');
+ }
+});
+
+test('atlas and saved-index travel retain the canonical game page and meeting instead of a pin redirect',async()=>{
+ for(const page of ['hockey','arcade','model-explorer']){
+  const playUrl=page+'.html?environment=game-map&house=game-map&mode=solo&meet=meet-6-8';
+  const inventory={roomSession:async()=>({csrfToken:'proof'}),api:async path=>path.startsWith('/api/environments/')?{id:'game-map',playUrl}:{playUrl:'model-explorer.html?environment=wrong-map'}};
+  assert.equal(await atlasTravelDestination(inventory,playUrl,{mapId:'game-map',meetingId:'meet-6-8'}),playUrl);
+  const meetingUrl=new URL(atlasMeetingDestination(playUrl,'game-map','meet-4-2'),'https://world.example/');
+  assert.equal(meetingUrl.pathname,'/'+page+'.html');assert.equal(meetingUrl.searchParams.get('meet'),'meet-4-2');assert.equal(meetingUrl.searchParams.get('mode'),'solo');
+  const url=new URL(await resolveIndexDestination(inventory,{mapId:'game-map',meetingId:'meet-6-8',x:50,y:50}),'https://world.example/');
+  assert.equal(url.pathname,'/'+page+'.html');assert.equal(url.searchParams.get('environment'),'game-map');assert.equal(url.searchParams.get('meet'),'meet-6-8');assert.equal(url.searchParams.get('mode'),'solo');
+ }
+});
+
+test('server atlas pins and coordinate meetings preserve each destination game route across reloads',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'atlas-game-route-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const file=join(dir,'atlas.json'),atlas=new WorldAtlas(file),identity={accountId:'alice',username:'Alice'};
+ for(const page of ['hockey','arcade']){
+  const id=page+'-map';await atlas.synchronize([{id,name:id,playUrl:page+'.html?environment='+id+'&attraction=game&mode=solo',roomId:id,visibility:'public'}]);
+  const cell=Object.values((await atlas.read()).cells).find(cell=>cell.mapId===id);
+  const resolved=await atlas.resolve(cell.column*256,cell.row*256,identity);
+  const pin=await new WorldAtlas(file).pin(id,resolved.meeting.id,identity);
+  for(const playUrl of [resolved.playUrl,pin.playUrl]){
+   const url=new URL(playUrl,'https://world.example/');assert.equal(url.pathname,'/'+page+'.html');assert.equal(url.searchParams.get('environment'),id);assert.equal(url.searchParams.get('meet'),resolved.meeting.id);assert.equal(url.searchParams.get('attraction'),'game');assert.equal(url.searchParams.get('mode'),'solo');
+  }
+ }
+});
+
+test('pins use native game routes before directory metadata has added a play URL',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'atlas-native-route-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const atlas=new WorldAtlas(join(dir,'atlas.json')),identity={accountId:'alice',username:'Alice'};
+ for(const [id,page,layout]of [['custom-hockey','hockey','hockey-arena'],['custom-arcade','arcade','arcade-park']]){
+  const {environments}=await synchronizeWorldDirectory(atlas,[{id,name:id,source:'custom-builder',builderScene:{layout,objects:[],gameplay:{multiplayer:false}}}]);
+  const map=environments.find(map=>map.id===id),pin=await atlas.pin(id,null,identity);
+  assert.equal(new URL(pin.playUrl,'https://world.example/').pathname,'/'+page+'.html');
+  assert.equal(new URL(pin.playUrl,'https://world.example/').searchParams.get('mode'),'solo');
+  assert.equal(new URL(pin.playUrl,'https://world.example/').searchParams.get('environment'),map.id);
+ }
 });

@@ -19,6 +19,8 @@ test('map failures and completed builder levels never substitute a generic world
  const game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  assert.doesNotMatch(game,/const env = registry.find\(id\) \|\| registry.all\(\)\[0\]/);
  assert.doesNotMatch(game,/opening the main floor fallback|const fallbackEnv/);
- assert.match(game,/multiplayerWorldLoading=true;envLoader\.unload\(\);clearBuilderDecor\(\)/);
+ const load=game.slice(game.indexOf('  async function loadById('),game.indexOf('\n\n  let cachedAvatars'));
+ assert.ok(load.indexOf('multiplayerWorldLoading=true')<load.indexOf('envLoader.unload()'));
+ assert.match(load,/envLoader\.unload\(\);clearBuilderDecor\(\)/);
  assert.match(game,/activeEnvironment\?\.memberPlot\|\|activeEnvironment\?\.builderScene/);
 });

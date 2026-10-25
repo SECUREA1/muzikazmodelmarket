@@ -1,3 +1,4 @@
+import {atlasTravelDestination,atlasMeetingDestination} from './atlas-travel.js';
 // The illustrated 0–100 map covers the live atlas's -8192–8192 world grid.
 export function atlasPercentPoint(position){
  const coordinate=value=>{const n=Number(value);if(!Number.isFinite(n))throw Error('Choose valid map coordinates.');return (Math.max(0,Math.min(100,n))-50)*163.84;};
@@ -16,9 +17,8 @@ export async function resolveIndexDestination(inventory,position,asset){
  if(saved){
   const map=await inventory.api('/api/environments/'+encodeURIComponent(saved));
   if(!map?.id)throw Error('This pinned map is not currently listed on the server.');
-  const session=await inventory.roomSession();
-  const pin=await inventory.api('/api/world-atlas/pins',{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({mapId:map.id,meetingId:savedMeeting(position),point:{x:Number(position.x),y:Number(position.y)}})});
-  if(!pin?.playUrl)throw Error('The server has not confirmed this pinned destination.');return pin.playUrl;
+  const meetingId=savedMeeting(position),playUrl=atlasMeetingDestination(map.playUrl,map.id,meetingId,map.roomId||map.id);
+  return atlasTravelDestination(inventory,playUrl,{mapId:map.id,meetingId,point:{x:Number(position.x),y:Number(position.y)}});
  }
  if(asset){const id='world-district-'+asset.id;return `model-explorer.html?environment=${encodeURIComponent(id)}&house=${encodeURIComponent(id)}&autoplay=1&mode=multiplayer`;}
  const session=await inventory.roomSession();

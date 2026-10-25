@@ -222,7 +222,7 @@ export class ServerBuilderCollision {
   if(!point||!['x','y','z'].every(axis=>Number.isFinite(point[axis]))||(!localMap&&Math.hypot(point.x-origin.x,point.y-origin.y,point.z-origin.z)>256))reject();
   if(restrictedCasinoVault(environment,point))throw Object.assign(Error('The bank vault is locked. Choose a public casino floor spot.'),{statusCode:403,code:'CASINO_VAULT_LOCKED'});
   const floor=this.groundAt(environment,point,{actors,objects,earthworks});if(!floor||Math.abs(floor.y-point.y)>.45)reject();
-  if(earthworks&&!this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,{actors,objects,earthworks}))reject();
+  if(!this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,{actors,objects,earthworks}))reject();
   const eye={x:origin.x,y:origin.y+1.6,z:origin.z},delta=[floor.x-eye.x,floor.y+.08-eye.y,floor.z-eye.z],length=Math.hypot(...delta);
   if(!localMap&&length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
@@ -232,6 +232,9 @@ export class ServerBuilderCollision {
  }
  hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
   const world=this.world(environment);
+  // Surface distance alone misses a capsule entirely enclosed by a saved
+  // solid. Check the solid volumes as well as their nearby wall triangles.
+  if(placed&&this.placedWorld(placed.actors,placed.objects,environment).boxes.some(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03))return false;
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
@@ -242,8 +245,9 @@ export class ServerBuilderCollision {
   }
   return true;
  }
- safeSpawn(environment,point){
-  if(!builderBaseEnvironment(environment)&&(environment.builderScene||environment.proceduralLand))return this.meetingPosition(environment,point);
+ safeSpawn(environment,point,{actors={},objects={},earthworks}={}){
+  const placed={actors,objects,earthworks};
+  if(!builderBaseEnvironment(environment)&&(environment.builderScene||environment.proceduralLand))return this.meetingPosition(environment,point,actors,objects,{earthworks});
   if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const world=this.world(environment),bounds=world.bounds,center=bounds.getCenter(new THREE.Vector3());
   const named=world.root.getObjectByName('SPAWN_PLAYER')||world.root.getObjectByName('SPAWN_DEFAULT');
@@ -251,8 +255,8 @@ export class ServerBuilderCollision {
   const anchor=named?named.getWorldPosition(new THREE.Vector3()):finite?point:builderBaseSpawn(environment)||center;
   const candidates=[anchor,builderBaseSpawn(environment),{x:center.x,y:anchor.y,z:center.z}].filter(Boolean);
   for(let r=1;r<=6;r++)for(let i=0;i<8;i++)candidates.push({x:anchor.x+Math.cos(i*Math.PI/4)*r,y:anchor.y,z:anchor.z+Math.sin(i*Math.PI/4)*r});
-  const accept=candidate=>{const floor=this.groundAt(environment,candidate,{entry:true});return floor&&this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08)?floor:null;};
-  for(const clearance of [.8,PLAYER_RADIUS+.08])for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true});if(floor&&this.hasBodyClearance(environment,floor,clearance))return floor;}
+  const accept=candidate=>{const floor=this.groundAt(environment,candidate,{entry:true,...placed});return floor&&this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,placed)?floor:null;};
+  for(const clearance of [.8,PLAYER_RADIUS+.08])for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true,...placed});if(floor&&this.hasBodyClearance(environment,floor,clearance,placed))return floor;}
   // A moved base, distant decoration or blocked centre must not strand a valid
   // floor outside the small entry search. Sample real mesh footprints first.
   const fallback=[];
@@ -278,8 +282,8 @@ export class ServerBuilderCollision {
   }
   return enemy?null:{...center};
  }
- meetingPosition(environment,point,actors={},objects={}){
-  if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
+ meetingPosition(environment,point,actors={},objects={},{earthworks}={}){
+  if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point,{actors,objects,earthworks});
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')||mesh.userData.walkableFloor===true);
   const bounds=new THREE.Box3();terrain.forEach(mesh=>bounds.expandByObject(mesh));
   const candidates=[],entry={x:Number(point?.x)||0,z:Number(point?.z)||0};
@@ -293,7 +297,7 @@ export class ServerBuilderCollision {
    const hit=new THREE.Raycaster(new THREE.Vector3(x,bounds.max.y+100,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false).find(hit=>placementHitNormal(THREE,hit)?.y>.55);
    if(!hit)continue;const y=hit.point.y;
    const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});
-   if(!blocked)return {x,y:y+PLAYER_FLOOR_CLEARANCE,z};
+   if(!blocked){const floor=earthworks?this.groundAt(environment,{x,y,z},{entry:true,actors,objects,earthworks}):{x,y:y+PLAYER_FLOOR_CLEARANCE,z};if(floor&&(!environment.builderScene?.layoutMeta?.harbor||floor.y>=-.05)&&this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,{actors,objects,earthworks}))return floor;}
   }
   throw Object.assign(new Error('This meeting location has no safe arrival point.'),{statusCode:409});
  }

@@ -18,6 +18,11 @@ export class BuilderVehicleController {
     if (this.active) return this.exit();
     const vehicle = this.nearest();
     if (!vehicle) { this.status('Move closer to a ride, then press F to enter.'); return false; }
+    return this.enter(vehicle);
+  }
+  enter(vehicle) {
+    if (!vehicle?.userData.vehicle || !this.vehicles.children.includes(vehicle) || vehicle.visible === false) return false;
+    if (this.active === vehicle) return true;
     this.active = vehicle;
     this.velocity = 0;
     this.onEnter(vehicle);

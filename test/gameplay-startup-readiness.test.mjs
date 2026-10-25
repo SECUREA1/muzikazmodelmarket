@@ -128,6 +128,18 @@ test('same-world map travel does not release held game controls',async()=>{
  assert.deepEqual(effects,[['resident',false],['transport']]);
 });
 
+test('map and automatic-route failures preserve their server reason for the map panel and allow a retry',async()=>{
+ for(const action of ['map-access','vehicle-navigate']){
+  const reply=deferred(),{context,statuses,client}=commandFixture(reply);
+  const failed=context.serverCommand(action,{locationId:'tower'});
+  reply.reject(Error('This location has no clear landing. Choose another location.'));
+  await assert.rejects(failed,/no clear landing/);
+  assert.match(statuses.at(-1),/no clear landing/);
+  client.send=async()=>({result:{message:'Arrived at Tower.'}});
+  assert.equal((await context.serverCommand(action)).result.message,'Arrived at Tower.');
+ }
+});
+
 test('a joined room retains a selection until the connection recovers',async()=>{
  const reply=deferred(),connection=deferred(),{context,effects,statuses,client}=commandFixture(reply);const sent=[];
  client.ready=false;client.whenReady=()=>connection.promise;client.send=(action,fields)=>{sent.push({action,fields});return reply.promise;};
@@ -167,6 +179,19 @@ test('failed destination discovery restores current-world readiness without repl
  assert.equal(context.worldLoadGeneration,1);assert.equal(context.authoritativeClient,client);assert.equal(stops,0);
 });
 
+test('native game redirects retain a selected atlas meeting point and play mode',async()=>{
+ for(const game of ['hockey','arcade']){
+  let destination;
+  const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id})},canonicalWorldId:id=>id,isArcadeMap:()=>game==='arcade',isHockeyMap:()=>game==='hockey',location:{href:'http://localhost/model-explorer.html?mode=solo',assign:url=>{destination=new URL(url);}}});
+  vm.runInContext(loadWorld,context);
+  await context.loadById('selected-game',{meetingId:'meet-4-2'});
+  assert.equal(destination.pathname,'/'+game+'.html');
+  assert.equal(destination.searchParams.get('environment'),'selected-game');
+  assert.equal(destination.searchParams.get('mode'),'solo');
+  assert.equal(destination.searchParams.get('meet'),'meet-4-2');
+ }
+});
+
 test('choosing multiplayer from a ready solo map validates the current room before changing transport mode',async()=>{
  let selected=null;
  const {context}=fixture({gameplayStarted:true,guestSolo:true,serverHostedRoom:false,authoritativeClient:null,pickerPanel:{dialog:{close(){}}},library:{classList:{add(){}}},worldButton:{setAttribute(){}},replaceGameLocation(){},loadById:async id=>{assert.equal(context.requireGameplayReady(),true);assert.equal(context.serverHostedRoom,false,'the previous solo room remains current until the load begins');selected=id;}});
@@ -174,6 +199,15 @@ test('choosing multiplayer from a ready solo map validates the current room befo
  vm.runInContext('globalThis.chooseDestination=('+onJoin+');',context);
  await context.chooseDestination({id:'public-commons',name:'Public Commons',multiplayer:true});
  assert.equal(selected,'public-commons');assert.equal(context.guestSolo,false);
+});
+
+test('a failed world selection reopens the picker so its error remains visible',async()=>{
+ let reopened=0,collapsed=true;
+ const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,pickerPanel:{dialog:{close(){}},open(){reopened++;}},library:{classList:{add(){},remove(){collapsed=false;}}},worldButton:{setAttribute(){}},replaceGameLocation(){},loadById:async()=>{throw Error('Destination unavailable');}});
+ const onJoin=section('onJoin:async env=>{','}});\n  }').slice('onJoin:'.length)+'}';
+ vm.runInContext('globalThis.chooseDestination=('+onJoin+');',context);
+ await assert.rejects(context.chooseDestination({id:'missing',name:'Missing'}),/Destination unavailable/);
+ assert.equal(reopened,1);assert.equal(collapsed,false);
 });
 
 test('a late room join success or failure cannot complete or reset a newer world',async()=>{
