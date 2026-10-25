@@ -1,4 +1,11 @@
 // Standard enter / drive-or-fly / exit controller for procedural Builder vehicles.
+export function usableBuilderVehicle(vehicle) {
+  const config = vehicle?.userData?.vehicle;
+  return Boolean(config && vehicle.visible !== false && vehicle.userData.active !== false && config.active !== false
+    && Array.isArray(config.seat) && config.seat.length === 3 && config.seat.every(Number.isFinite)
+    && Number.isFinite(config.speed) && config.speed > 0 && Number.isFinite(config.turnSpeed) && config.turnSpeed >= 0);
+}
+
 export class BuilderVehicleController {
   constructor({ THREE, vehicles, playerRig, camera, keys, input = () => ({}), status = () => {}, onEnter = () => {}, onExit = () => {} }) {
     Object.assign(this, { THREE, vehicles, playerRig, camera, keys, input, status, onEnter, onExit });
@@ -8,7 +15,7 @@ export class BuilderVehicleController {
   nearest(maxDistance = 4) {
     let result = null, distance = maxDistance;
     this.vehicles.children.forEach((vehicle) => {
-      if (!vehicle.userData.vehicle) return;
+      if (!usableBuilderVehicle(vehicle)) return;
       const next = vehicle.position.distanceTo(this.playerRig.position);
       if (next < distance) { result = vehicle; distance = next; }
     });
@@ -21,7 +28,7 @@ export class BuilderVehicleController {
     return this.enter(vehicle);
   }
   enter(vehicle) {
-    if (!vehicle?.userData.vehicle || !this.vehicles.children.includes(vehicle) || vehicle.visible === false) return false;
+    if (!usableBuilderVehicle(vehicle) || !this.vehicles.children.includes(vehicle)) return false;
     if (this.active === vehicle) return true;
     this.active = vehicle;
     this.velocity = 0;

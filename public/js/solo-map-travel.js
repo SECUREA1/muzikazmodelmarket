@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import {Capsule} from '../vendor/three/addons/math/Capsule.js';
 import {localMapLocations} from './local-map-locations.js';
+import {usableBuilderVehicle} from './builder-vehicle-controller.js';
 import {FLOOR_ENTRY_OFFSET} from './environments/environment-collision.js';
 import {placementBounds,placementTriangles,placementHitNormal} from './placed-item-collision.js';
 
@@ -70,8 +71,7 @@ export function resolveSoloMapAccess({environment,fields={},loader,roots=[],vehi
  if(fields.entityId){
   vehicle=vehicles.find(root=>root.userData.builderObjectId===fields.entityId);
   const source=environment?.builderScene?.objects?.find(object=>object.id===fields.entityId);
-  if(!vehicle?.userData.vehicle||vehicle.visible===false||source?.active===false||source?.trafficAI||source?.holderId||source?.flight?.airborne)throw Error('This craft is unavailable. Choose a parked player vehicle.');
-  if(!Array.isArray(vehicle.userData.vehicle.seat)||vehicle.userData.vehicle.seat.length!==3||!vehicle.userData.vehicle.seat.every(Number.isFinite))throw Error('This vehicle’s seat is still unavailable.');
+  if(!usableBuilderVehicle(vehicle)||source?.active===false||source?.trafficAI||source?.holderId||source?.flight?.airborne)throw Error('This craft is unavailable. Choose a parked player vehicle.');
   if(activeVehicle===vehicle)return {vehicle,reopening:true,message:'Vehicle controls are ready.'};
   base=vehicle.getWorldPosition(new THREE.Vector3());
   if(![base.x,base.y,base.z].every(Number.isFinite))throw Error('This vehicle has no valid boarding position.');

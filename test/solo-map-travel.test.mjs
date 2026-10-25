@@ -59,6 +59,9 @@ test('solo craft selection boards the exact parked vehicle and rejects unavailab
  const result=travelSoloMap(options,{release(){controller.exit();},move(point){rig.position.copy(point);},board(vehicle){assert.equal(controller.enter(vehicle),true);controller.update(0);}});
  assert.equal(controller.active,selected);assert.notEqual(controller.active,first);assert.equal(rig.position.x,20);assert.equal(result.vehicle,selected);
  assert.equal(resolveSoloMapAccess({...options,activeVehicle:selected}).reopening,true);
+ const speed=selected.userData.vehicle.speed;delete selected.userData.vehicle.speed;
+ let released=false;assert.throws(()=>travelSoloMap(options,{release(){released=true;}}),/unavailable/);assert.equal(released,false,'invalid craft must not release the current ride before boarding is rejected');
+ selected.userData.vehicle.speed=speed;
  assert.throws(()=>resolveSoloMapAccess({...options,environment:{builderScene:{objects:[{id:'selected',trafficAI:true}]}}}),/unavailable/);
  controller.exit();selected.position.y=20;vehicles.updateMatrixWorld(true);
  assert.throws(()=>resolveSoloMapAccess({...options,loader:loader(world,[vehicles])}),/landed/);
