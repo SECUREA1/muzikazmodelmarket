@@ -82,3 +82,34 @@ test('owned-item controls toggle only through the SVG and a normal tap drops wit
  for(const type of ['pointerdown','pointerup']){const event=new Event(type,{cancelable:true});Object.assign(event,{pointerId:5,clientX:20,clientY:20,isPrimary:true});canvas.dispatchEvent(event);}
  await Promise.resolve();await Promise.resolve();await Promise.resolve();assert.equal(saves.length,1);assert.equal(placement.panel.hidden,true);});
 });
+
+test('grid snapping aligns horizontal position and height changes save the exact preview without drift',async()=>{
+ await withPlacement(async({placement,saves})=>{
+  await placement.start(brick);placement.pending.point.set(1.24,0,2.34);
+  placement.adjust('snap');placement.adjust('raise');placement.adjust('raise');
+  assert.deepEqual(placement.pending.root.position.toArray(),[1,.5+.5,2.5]);
+  placement.apply();placement.apply();assert.deepEqual(placement.pending.root.position.toArray(),[1,1,2.5]);
+  assert.deepEqual(placement.pending.point.toArray(),[1.24,0,2.34],'snapping preserves the aim position for switching back');
+  placement.adjust('snap');assert.deepEqual(placement.pending.root.position.toArray(),[1.24,1,2.34]);
+  placement.adjust('snap');await placement.confirm();assert.deepEqual(saves[0].transform.position,[1,1,2.5]);
+ });
+});
+
+test('reset changes restores the starting transform and quick drops remember edited grid and height settings',async()=>{
+ await withPlacement(async({placement,saves,stored})=>{
+  await placement.start(brick);placement.pending.point.set(8,0,9);placement.adjust('left');placement.adjust('larger');placement.adjust('raise');placement.adjust('snap');
+  placement.adjust('reset');assert.deepEqual(placement.pending.point.toArray(),[1,0,2]);assert.equal(placement.pending.yaw,0);assert.equal(placement.pending.scale,1);assert.equal(placement.pending.height,0);assert.equal(placement.pending.snap,false);
+  placement.setQuickMode(true);placement.adjust('raise');placement.adjust('snap');placement.adjust('right');await placement.confirm();
+  const preset=JSON.parse(stored.get('muzikazQuickBricks'))[brick.materialId];assert.equal(preset.height,.25);assert.equal(preset.snap,true);assert.equal(preset.yaw,Math.PI/12);
+  placement.cancel();await placement.start(brick);assert.equal(placement.pending.height,.25);assert.equal(placement.pending.snap,true);assert.deepEqual(saves[1].transform.position,[1,.75,2]);
+ });
+});
+
+test('editing an existing item keeps its anchor and resets only the current changes',async()=>{
+ await withPlacement(async({placement,saves})=>{
+  const existing={id:'old',placement:{position:[1.2,3,2.3],rotation:[0,.4,0],scale:[1.5,1.5,1.5]}};
+  await placement.start(brick,existing);placement.adjust('raise');placement.adjust('snap');placement.adjust('left');placement.adjust('smaller');
+  placement.apply();assert.deepEqual(placement.pending.root.position.toArray(),[1,3.25,2.5]);
+  placement.adjust('reset');await placement.confirm();assert.deepEqual(saves[0].transform,existing.placement);assert.equal(saves[0].existing.id,'old');
+ });
+});

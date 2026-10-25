@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {marketItemPreview,previewDescriptor,safePreviewUrl} from '../public/js/market-item-preview.js';
+import {marketItemPreview,previewDescriptor,safePreviewUrl,previewModelSource,loadPreviewModel,disposePreviewModel} from '../public/js/market-item-preview.js';
 import {GAME_ECONOMY} from '../game-economy.mjs';
 test('market records preserve artwork and model identity across listing formats',()=>{
  assert.equal(previewDescriptor({itemName:'Member prop',modelUrl:'/owned.glb',thumbnailUrl:'/art.svg'}).model,'/owned.glb');
@@ -14,6 +14,16 @@ test('catalog entries always have accessible visuals and distinguish illustratio
  for(const item of GAME_ECONOMY){const html=marketItemPreview(item);assert.match(html,/data-item-preview=/);assert.match(html,/role="img"/);assert.match(html,/<figcaption>/);}
  assert.match(marketItemPreview({name:'Logic script',category:'SCRIPTS'}),/Illustration · SCRIPTS/);
  const bundle=marketItemPreview({name:'Furniture bundle',entries:[{name:'Sofa',quantity:2},{name:'Lamp',quantity:1}]});assert.match(bundle,/2 × Sofa/);assert.match(bundle,/1 × Lamp/);
+});
+test('builder previews use the same material, native and GLB sources as placement',async()=>{
+ const native=previewDescriptor({name:'Native hero',buildAssetId:'hero-spawn',modelUrl:'/reference.glb',thumbnailUrl:'/generic.svg'});
+ assert.equal(previewModelSource(native),'native');
+ assert.equal(previewModelSource(previewDescriptor({materialId:'wood',buildAssetId:'material:wood'})),'material');
+ assert.equal(previewModelSource(previewDescriptor({modelUrl:'/authored.glb'})),'glb');
+ assert.match(marketItemPreview(native,{preferModel:true}),/data-preview-prefer-model="true"/);
+ assert.doesNotMatch(marketItemPreview(native),/data-preview-prefer-model/);
+ const {root}=await loadPreviewModel(native);assert.ok(root);assert.ok(root.children.length);disposePreviewModel(root);
+ await assert.rejects(loadPreviewModel(previewDescriptor({buildAssetId:'missing-native',modelUrl:'/unrelated.glb'})),/No visual model/);
 });
 test('untrusted preview metadata cannot execute scripts or inject markup',()=>{
  for(const url of ['javascript:alert(1)','data:text/html,evil','//evil.test/a','https:\\evil.test','\u0000https://evil.test'])assert.equal(safePreviewUrl(url),'');

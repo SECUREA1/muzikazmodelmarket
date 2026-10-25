@@ -31,14 +31,14 @@ try:
    page.wait_for_selector('#camera-options [data-camera-preview]')
    page.evaluate("document.querySelector('#camera-options').close()")
    page.wait_for_function("document.querySelectorAll('[data-camera-preview]').length===0")
-   page.evaluate('''async()=>{document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());const root=document.createElement('aside');root.id='build-browse';root.className='rad-build-menu';root.style.padding='8px';document.body.append(root);const {mountBuildAssetBrowser}=await import('/public/js/build-asset-browser.js');window.buildUI=mountBuildAssetBrowser(root,{assets:[{id:'sofa',buildAssetId:'sofa',name:'Lounge sofa',category:'seats',description:'A shared seat'},{id:'armchair',buildAssetId:'armchair',name:'Armchair',category:'seats',description:'A single seat'}]});window.buildActions=[];root.onclick=event=>{const button=event.target.closest('[data-build-asset]');if(button)buildActions.push(button.dataset.buildAsset);};}''')
-   build=page.locator('#build-browse');build.locator('.market-workspace-item').nth(1).click()
-   assert build.locator('.is-market-selected h3').inner_text()=='Armchair'
+   page.evaluate('''async()=>{document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());const root=document.createElement('aside');root.id='build-browse';root.className='rad-build-menu';root.style.padding='8px';document.body.append(root);const {mountBuildAssetBrowser}=await import('/public/js/build-asset-browser.js');window.buildUI=mountBuildAssetBrowser(root,{assets:[{id:'sofa',buildAssetId:'sofa',name:'Lounge sofa',owned:true,category:'seats',description:'A shared seat'},{id:'armchair',buildAssetId:'armchair',name:'Armchair',owned:true,category:'seats',description:'A single seat'}]});window.buildActions=[];root.onclick=event=>{const button=event.target.closest('[data-build-asset]');if(button)buildActions.push(button.dataset.buildAsset);};}''')
+   build=page.locator('#build-browse');build.locator('[data-build-select]').nth(1).click()
+   assert build.locator('[data-build-inspector] h3').inner_text()=='Armchair'
    assert page.evaluate('buildActions')==[]
    build.get_by_role('button',name='Add to build inventory',exact=True).click();assert page.evaluate('buildActions')==['armchair']
-   build.get_by_role('button',name='▦ Tiles',exact=True).click();assert build.locator('.market-workspace').get_attribute('data-item-view')=='tiles'
-   build.get_by_label('Find a building item',exact=True).fill('lounge');assert build.locator('.market-workspace-item').count()==1
-   assert build.locator('.market-workspace').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+   assert build.locator('[data-build-card]').count()==2
+   build.get_by_label('Find an item',exact=True).fill('lounge');assert build.locator('[data-build-card]').count()==1
+   assert build.locator('[data-build-layout]').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
    assert not errors,errors;page.close()
   browser.close()
  print('Pie map and preview open side by side, compact filters, single close control, view toggles and contextual camera controls passed on mobile and desktop.')
