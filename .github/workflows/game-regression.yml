@@ -58,7 +58,7 @@ jobs:
       - name: Verify shared session proofs during panel refreshes
         run: node --test test/session-store.test.mjs test/room-session.test.mjs test/gameplay-session-proof.test.mjs
       - name: Verify per-map quests, site work and native game challenges
-        run: node --test test/harbor-quest-routes.test.mjs test/solo-map-quests.test.mjs test/map-quest-catalog.test.mjs test/site-quests.test.mjs test/site-quest-world-matrix.test.mjs test/site-work-contracts.test.mjs test/map-quest-prompts.test.mjs test/native-game-challenges.test.mjs test/expanded-quests.test.mjs test/road-quests.test.mjs test/mountain-flight-quests.test.mjs test/patrol-team-quests.test.mjs test/quest-conversations.test.mjs
+        run: node --test test/harbor-quest-routes.test.mjs test/solo-map-quests.test.mjs test/map-quest-catalog.test.mjs test/site-quests.test.mjs test/site-quest-world-matrix.test.mjs test/site-work-contracts.test.mjs test/map-quest-prompts.test.mjs test/native-game-challenges.test.mjs test/expanded-quests.test.mjs test/road-quests.test.mjs test/cargo-hauling.test.mjs test/mountain-flight-quests.test.mjs test/patrol-team-quests.test.mjs test/quest-conversations.test.mjs
       - name: Verify live AI conversations and server machine work
         run: node --test test/ai-conversation-actions.test.mjs test/ai-conversation-ui.test.mjs test/ai-world-actions.test.mjs test/ai-interactions.integration.test.mjs test/construction-crew-interactions.test.mjs test/factory-crew-work.test.mjs
       - name: Verify RSS and model discovery feeds

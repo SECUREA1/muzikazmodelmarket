@@ -1,3 +1,4 @@
+import {createFreightModel,updateFreightVisual} from './freight-models.js';
 import {FACTORY_MODEL_INFO,createFactoryModel,updateFactoryModel} from './missile-factory-model.js';
 import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness-equipment.js';
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
@@ -52,6 +53,8 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'harbor-patrol':['Sentinel Combat Patrol','Armored patrol launch with a steerable deck cannon, rescue equipment and shared combat missions.',[3,2.9,7.8]],
   'harbor-fishing-boat':['Reefrunner Angler Fishing Boat','Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.',[2.7,2.7,6.3]],
   ...Object.fromEntries(FISHING_GEAR.map(item=>[item.id,[item.name,item.description,item.kind==='rod'?[.3,2.5,.2]:item.kind==='net'?[.6,1.65,.1]:[.55,.4,.35]]])),
+  'utility-cargo-trailer':['Frontier Tandem Cargo Trailer','Hitchable eight-crate cargo trailer.',[2.1,1.45,4.8]],
+  'freight-loading-bay':['Freight Loading Bay','Loading, stacking and shipping station.',[7,2.9,8]],
   ...Object.fromEntries(Object.entries(ROAD_VEHICLES).map(([id,c])=>[id,[c.name,c.siteOnly?'Animated construction machine with hydraulic controls, detailed cab and synchronized instruments.':'Premium driveable road vehicle with detailed cockpit and live instruments.',[c.width,c.height||1.7,c.length]]])),
   'construction-steel-beam':['Structural Steel I-Beam','An eighteen metre S355 steel I-beam with reinforced ends and lifting shackles.',[18,.73,.44]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
@@ -302,6 +305,7 @@ function estateModule(id){
 export function createBuilderModel(id,options={}) {
   if(id==='world-resident')return createWorldResident();
   if(CONSTRUCTION_MODEL_IDS.includes(id))return createConstructionModel(id);
+  if(['utility-cargo-trailer','freight-loading-bay'].includes(id))return createFreightModel(id);
   if(ROAD_VEHICLES[id])return createRoadVehicle(id);
   if(RESORT_PRODUCTS[id])return createResortProduct(THREE,id);
   if(id==='lot-owned-sign'||id==='lot-boundary-stake'||id.startsWith('lot-sale-sign-'))return createLandSaleModel(id);
@@ -365,7 +369,7 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

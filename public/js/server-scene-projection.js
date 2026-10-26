@@ -38,6 +38,7 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
  if(!actor){root.visible=false;return;}
  if(actor.construction){root.userData.construction=actor.construction;root.traverse(child=>{if(child.userData.constructionModel){child.userData.construction=actor.construction;child.userData.driving=actor.driving||{};}});}
  if(actor.constructionStructure?.kind==='facade')root.traverse(mesh=>{if(mesh.isMesh){mesh.userData.collider=true;mesh.userData.collisionOnly=true;mesh.castShadow=false;for(const material of [].concat(mesh.material||[]))material.visible=false;}});
+ root.userData.freight=actor.freight||{crates:[],secured:true};
  if(actor.resident)root.userData.residentState=actor.resident;
  if(actor.questContact){root.userData.questContact=true;root.userData.questSpeaking=!!actor.speaking;}
  if(isRoadVehicle(actor)){root.userData.driving=actor.driving||{};if(!root.userData.roadDriver){const driver=seatedPilot(),seat=roadVehicleType(actor).seat;driver.position.set(seat[0],seat[1]-.89,seat[2]-.63);root.add(driver);root.userData.roadDriver=driver;}root.userData.roadDriver.visible=!!(actor.holderId||actor.trafficAI)&&actor.holderId!==localId;}
