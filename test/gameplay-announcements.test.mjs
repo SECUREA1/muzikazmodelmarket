@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGameplayAnnouncements} from '../public/js/gameplay-announcements.js';
+import {createGameplayAnnouncements,interactionHasDialogue} from '../public/js/gameplay-announcements.js';
 import {createQuestConversationVoice} from '../public/js/quest-conversation-voice.js';
 
 function fixture(){const calls=[],voice={announce:(text,options)=>calls.push({text,...options})},announcer=createGameplayAnnouncements({voice}),world={id:'world',name:'Public world'};return {calls,announcer,world};}
@@ -12,7 +12,7 @@ test('introduction happens once per map, while initial jobs and nearby residents
  state.actors.ranger={id:'ranger',active:true,position:{x:2,y:0,z:0},resident:{name:'Rowan',role:'Ranger',task:'Preparing trail supplies.'}};
  state.construction.crew.jobs.push({id:'build',label:'Repair the bridge',status:'active'});
  state.transportRadio=[{id:1,at:100000,speaker:'Pilot',text:'Patrolling airspace.'}];
- announcer.update(state,'p',world);assert.equal(calls.length,1);assert.equal(calls[0].category,'introduction');assert.match(calls[0].text,/Welcome to Public world/);
+ announcer.update(state,'p',world);assert.equal(calls.length,1);assert.equal(calls[0].category,'introduction');assert.equal(calls[0].role,'narrator');assert.equal(calls[0].voice,'World narrator');assert.match(calls[0].text,/Welcome to Public world/);
  announcer.update(state,'p',world);assert.equal(calls.length,1);
  announcer.update(state,'p',{id:'camp',name:'Camp'});assert.equal(calls.length,2);
  announcer.update(state,'p',world);assert.equal(calls.length,2);
@@ -58,4 +58,16 @@ test('audio starts at a gesture, defaults to enabled, respects mute and shares d
  voice.announce('Boarding ready.',{worldId:'airport',key:'board'});assert.equal(voice.state.pending,0);spoken[0].onend();
  voice.setMuted(true);voice.announce('Muted objective.',{worldId:'airport',key:'muted'});assert.equal(spoken.length,1);
  voice.setMuted(false);voice.announce('Next objective.',{worldId:'airport',key:'next'});assert.equal(spoken.at(-1).text,'Next objective.');voice.dispose();
+});
+
+
+test('a fresh NPC reply suppresses duplicate interaction narration without silencing other actions',()=>{
+ const call={conversation:true,role:'guide',speakerId:'rowan',at:100000,recipients:['p']};
+ const state={serverTime:100000,players:{p:{npcConversation:{conversation:[call]}}}};
+ assert.equal(interactionHasDialogue(state,'p','rowan'),true);
+ assert.equal(interactionHasDialogue(state,'p','van'),false);
+ assert.equal(interactionHasDialogue(state,'other','rowan'),false);
+ call.role='player';assert.equal(interactionHasDialogue(state,'p','rowan'),false);
+ call.role='guide';call.at=90000;assert.equal(interactionHasDialogue(state,'p','rowan'),false);
+ call.at=100000;call.recipients=['private'];assert.equal(interactionHasDialogue(state,'p','rowan'),false);
 });

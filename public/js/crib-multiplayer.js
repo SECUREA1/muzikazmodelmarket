@@ -59,10 +59,13 @@
   function closePeers(){for(const [id,peer]of peers){signal(id,'hangup').catch(()=>{});peer.close();stopMeter(id);}peers.clear();pendingCandidates.clear();remoteAudio.forEach(audio=>audio.remove());remoteAudio.clear();}
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, presenceRequest=null;
+  let speechTools=null,activeChatSpeech=null,finishChatSpeech=null,chatSpeechGeneration=0,chatSpeechDisposed=false;
+  const speechToolsReady=import(new URL('./game-speech-owner.js',document.currentScript?.src||location.href).href).then(module=>speechTools=module).catch(()=>null);
+  function cancelChatSpeech(){chatSpeechGeneration++;if(activeChatSpeech)speechTools?.cancelGameSpeech(window.speechSynthesis,activeChatSpeech);finishChatSpeech?.();}
   const speakerAudible=()=>speakerOn&&!window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted;
   window.addEventListener('muzikaz:audio-preferences',()=>{
     for(const [id,audio]of remoteAudio){const gain=meters.get(id)?.gain;if(gain)gain.gain.setValueAtTime(speakerAudible()?1:0,audioContext.currentTime);audio.muted=!speakerAudible()||Boolean(gain);}
-    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted)window.speechSynthesis?.cancel();
+    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted)cancelChatSpeech();
   });
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
@@ -80,13 +83,19 @@
     ttsToggle.querySelector('b').textContent = textToSpeechOn ? 'Read text on' : 'Read text off';
     if (announce) voiceStatus.textContent = textToSpeechOn ? 'Room messages will be read aloud' : 'Text to speech off';
   }
-  function speakMessage(item) {
-    const activeRoom = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
-    if (window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted || !textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
+  async function speakMessage(item) {
+    const roomId=activeRoom(),generation=chatSpeechGeneration;
+    if (chatSpeechDisposed || window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted || !textToSpeechOn || !item?.message || (item.roomId && item.roomId !== roomId) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
+    const tools=await speechToolsReady;
+    if(chatSpeechDisposed||generation!==chatSpeechGeneration||!tools||!textToSpeechOn||window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted||roomId!==activeRoom()||tools.isGameSpeechActive(window.speechSynthesis))return;
     const utterance = new SpeechSynthesisUtterance(`${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`);
     utterance.lang = document.documentElement.lang || navigator.language || 'en';
-    utterance.rate = 1; utterance.volume = 1;
-    window.speechSynthesis.speak(utterance);
+    utterance.rate = 1;utterance.pitch=1;utterance.volume=.85;
+    const owner=Symbol('room-message'),finish=()=>{clearTimeout(watchdog);tools.releaseGameSpeech(window.speechSynthesis,owner);if(activeChatSpeech===owner){activeChatSpeech=null;finishChatSpeech=null;}};
+    let watchdog=null;activeChatSpeech=owner;finishChatSpeech=finish;
+    tools.claimGameSpeech(window.speechSynthesis,owner,finish);utterance.onend=finish;utterance.onerror=finish;
+    watchdog=setTimeout(()=>{tools.cancelGameSpeech(window.speechSynthesis,owner);finish();},30000);
+    try{window.speechSynthesis.speak(utterance);}catch{finish();}
   }
 
   function renderPresence(data = {}) {
@@ -229,7 +238,7 @@
   speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn; remoteAudio.forEach((audio,id) => { const gain=meters.get(id)?.gain;if(gain)gain.gain.setTargetAtTime(speakerAudible()?1:0,audioContext.currentTime,.02);audio.muted = !speakerAudible()||Boolean(gain); if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { ttsToggle.disabled = true; ttsToggle.title = 'Text to speech is not supported by this browser'; }
   setTextToSpeech(textToSpeechOn);
-  ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { window.speechSynthesis.cancel(); setTextToSpeech(!textToSpeechOn, true); } });
+  ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { cancelChatSpeech(); setTextToSpeech(!textToSpeechOn, true); } });
   async function loadChat() {
     const roomId = activeRoom();
     if (loadingChat?.roomId === roomId) return loadingChat.promise;
@@ -253,8 +262,8 @@
   },1000);
   const beginPresence = () => heartbeat().catch((error) => { joined=false;status.textContent = error.message; });
   window.addEventListener('muzikaz:multiplayer-room-ready',beginPresence);
-  window.addEventListener('muzikaz:multiplayer-world-change', () => { disableMicrophone();closePeers(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
+  window.addEventListener('muzikaz:multiplayer-world-change', () => { cancelChatSpeech();disableMicrophone();closePeers(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
-  window.addEventListener('pagehide', event => { if(event.persisted)return;clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined; joined=false; window.speechSynthesis?.cancel(); disableMicrophone();closePeers();audioContext?.close().catch(()=>{}); events?.close(); if (wasJoined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  window.addEventListener('pagehide', event => { cancelChatSpeech();if(event.persisted)return;chatSpeechDisposed=true;clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined; joined=false; disableMicrophone();closePeers();audioContext?.close().catch(()=>{}); events?.close(); if (wasJoined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

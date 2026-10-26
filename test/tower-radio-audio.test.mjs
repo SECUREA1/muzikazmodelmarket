@@ -67,3 +67,13 @@ test('tower never retries a natural voice after the call becomes audible',()=>{
  radio.call('Tower. Cleared to land.');radio.unlock();spoken[0].onstart();spoken[0].onerror({error:'network'});
  assert.equal(spoken.length,1,'partially heard calls are not restarted with another voice');assert.equal(radio.state.speaking,false);radio.dispose();
 });
+
+test('passive audio unlock stays quiet until a radio introduction is explicitly requested',()=>{
+ const f=radioFixture();f.radio.unlock({introduce:false});assert.equal(f.spoken.length,0);
+ f.radio.unlock();assert.equal(f.spoken.length,1);assert.match(f.spoken[0].text,/Radio connected/);
+ f.spoken[0].onend();f.radio.unlock();assert.equal(f.spoken.length,1,'opening again does not loop the introduction');f.radio.dispose();
+});
+
+test('replay on a locked tower speaks one introduction rather than starting and cancelling two copies',()=>{
+ const f=radioFixture();f.radio.replay();assert.equal(f.spoken.length,1);assert.match(f.spoken[0].text,/Radio connected/);f.spoken[0].onend();f.radio.unlock();assert.equal(f.spoken.length,1,'replay has already introduced this radio');f.radio.dispose();
+});

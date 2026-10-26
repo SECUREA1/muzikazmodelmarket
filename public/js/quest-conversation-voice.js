@@ -1,10 +1,11 @@
+import {claimGameSpeech,releaseGameSpeech,cancelGameSpeech} from './game-speech-owner.js';
 import {spatialEffectGain} from './shared-effect-audio.js';
 import {chooseCharacterVoice,characterSpeechStyle,prepareSpeechText,speechTimeout} from './character-voice-profile.js';
 
 export function createQuestConversationVoice({speech=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance,setTimer=setTimeout,clearTimer=clearTimeout,now=()=>Date.now()}={}){
  let unlocked=false,muted=false,disposed=false,failed=false,current=null,utterance=null,timer=null,generation=0,scope=null,latest=null;
  let preferences={},listener=null,actors={},voiceWait=null,voicesWaited=false;
- const queue=[],seen=new Set(),cast=new Map();
+ const queue=[],seen=new Set(),cast=new Map(),speechOwner=Symbol('world-voice');
  const supported=()=>!!(speech?.speak&&Utterance)&&!failed;
  const blocked=call=>muted||preferences.masterMuted||preferences[({introduction:'introductionMuted',announcements:'announcementsMuted',dialogue:'dialogueMuted'})[call.category||'dialogue']];
  const voices=()=>{try{return speech?.getVoices?.()||[];}catch{return [];}};
@@ -13,14 +14,16 @@ export function createQuestConversationVoice({speech=globalThis.speechSynthesis,
   const source=call.source||actors[call.speakerId||call.entityId]?.position;
   // Browser speech synthesis exposes volume, but cannot connect to a Web Audio
   // panner. World voices use distance attenuation; radio/objectives stay clear.
+  if(call.category==='introduction')return .85;
   return .9*(preferences.spatialAudio!==false&&source&&listener?spatialEffectGain({...source,y:source.y??0},{...listener,y:listener.y??0},call.range||32):1);
  }
  function characterFor(call){
+  if(call.category==='introduction')return {id:'world-narrator',name:'World narrator',role:'narrator'};
   const actor=actors[call.speakerId||call.entityId],resident=actor?.resident||{};
   return {id:call.role==='player'?(call.speakerId||call.speaker):resident.personalityId||resident.name||actor?.name||call.voice||call.speaker||'World guide',name:resident.name||actor?.name||call.speaker||call.voice,role:resident.role||call.role,personality:call.personality||resident.personality,mood:call.mood||resident.mood,voiceProfile:call.voiceProfile||resident.voiceProfile||actor?.voiceProfile};
  }
  function clearVoiceWait(){clearTimer(voiceWait);voiceWait=null;}
- function cancelCurrent(){const owned=!!current;generation++;clearTimer(timer);timer=null;current=null;utterance=null;if(owned)try{speech?.cancel?.();}catch{}}
+ function cancelCurrent(){const owned=!!current;generation++;clearTimer(timer);timer=null;current=null;utterance=null;if(owned)cancelGameSpeech(speech,speechOwner);}
  function stop(){clearVoiceWait();cancelCurrent();queue.length=0;}
  function play(){
   if(disposed||!unlocked||current||!supported())return;
@@ -37,8 +40,9 @@ export function createQuestConversationVoice({speech=globalThis.speechSynthesis,
   const token=++generation,character=characterFor(call),style=characterSpeechStyle(character,{text:call.text}),spokenText=prepareSpeechText(call.text),available=voices();
   const selected=chooseCharacterVoice(available,character,{language:style.lang,preferredVoiceURI:cast.get(character.id)});
   if(selected){cast.set(character.id,selected.voiceURI||selected.name);if(cast.size>128)cast.delete(cast.keys().next().value);}
+  claimGameSpeech(speech,speechOwner,stop);
   current=call;let attempt=0;
-  function finish(){if(token!==generation||disposed)return;clearTimer(timer);timer=null;current=null;utterance=null;play();}
+  function finish(){if(token!==generation||disposed)return;clearTimer(timer);timer=null;current=null;utterance=null;releaseGameSpeech(speech,speechOwner);play();}
   function speak(voice,retry=false){
    if(token!==generation||disposed||blocked(call))return;
    let started=false;const attemptId=++attempt;

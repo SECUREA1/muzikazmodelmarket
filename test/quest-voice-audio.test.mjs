@@ -89,3 +89,12 @@ test('long fresh dialogue keeps its follow-up while outdated announcements expir
  assert.equal(timers.size,1);announce(voice,'I understand.','dialogue');announce(voice,'A stale job update.');
  advance(65000);spoken[0].onend();assert.equal(spoken[1].text,'I understand.');spoken[1].onend();assert.equal(spoken.length,2);voice.dispose();
 });
+
+test('introductions use a clear centered narrator without character pitch or distance effects',()=>{
+ const spoken=[],uk={name:'UK Natural',lang:'en-GB',voiceURI:'uk'},us={name:'US Natural',lang:'en-US',voiceURI:'us',default:true};
+ const voice=createQuestConversationVoice({speech:{getVoices:()=>[uk,us],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ voice.setScene({listener:{x:100,y:0,z:0},actors:{npc:{position:{x:0,y:0,z:0},resident:{name:'Energetic pilot',personality:'Urgent',voiceProfile:{rate:1.8,pitch:.5}}}}});
+ voice.unlock();voice.announce('Welcome to the world.',{worldId:'map',category:'introduction',entityId:'npc',source:{x:0,y:0,z:0},voiceProfile:{pitch:.5,rate:1.8}});
+ assert.equal(spoken[0].voice,us);assert.equal(spoken[0].pitch,1);assert.equal(spoken[0].rate,1);assert.equal(spoken[0].volume,.85);
+ voice.setScene({listener:{x:500,y:0,z:0}});assert.equal(voice.state.speaking,true);assert.equal(spoken[0].volume,.85);voice.dispose();
+});

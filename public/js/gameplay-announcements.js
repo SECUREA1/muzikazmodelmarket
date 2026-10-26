@@ -15,7 +15,7 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
  return {update(snapshot,selfId,environment){
   if(!snapshot||!selfId)return;const self=snapshot.players?.[selfId];if(!self)return;
   const worldId=environment?.id||snapshot.worldId||'world';
-  if(scope!==worldId){scope=worldId;radio=0;ready=false;states.clear();if(!introduced.has(scope)){introduced.add(scope);say('Welcome to '+(environment?.name||'this world')+'. Movement, map travel and vehicle selection are available.','arrival',{category:'introduction'});}}
+  if(scope!==worldId){scope=worldId;radio=0;ready=false;states.clear();if(!introduced.has(scope)){introduced.add(scope);say('Welcome to '+(environment?.name||'this world')+'. Explore the map, choose a vehicle, and discover new jobs.','arrival',{category:'introduction',voice:'World narrator',role:'narrator'});}}
   task(self.vehicleMission,'Vehicle job');task(self.urbanMission,'Local job');task(self.residentTask,'Resident favor');task(self.casinoTask,'Local objective');
   const dispatch=snapshot.liveDispatch,dispatchState=changed('live-dispatch',dispatch?.id||null);
   if(ready&&dispatchState.changed&&dispatch?.id&&(!dispatch.expires||dispatch.expires>snapshot.serverTime))say('New local job. '+dispatch.title+'. Open the local map to volunteer.','dispatch:'+dispatch.id);
@@ -40,4 +40,15 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
   }
   ready=true;if(states.size>160)for(const key of [...states.keys()].slice(0,40))states.delete(key);
  },say:(text,key=text,options={})=>say(text,'action:'+key,options),unlock:()=>voice.unlock(),setMuted:value=>voice.setMuted(value),replay:()=>voice.replay()};
+}
+
+// An NPC reply is already spoken by the conversation player. Keep the generic
+// command status visible without reading a second version of that response.
+export function interactionHasDialogue(snapshot,selfId,entityId){
+ if(!snapshot||!selfId||!entityId)return false;
+ const player=snapshot.players?.[selfId];
+ return [player?.npcConversation,player?.vehicleMission].some(conversation=>(conversation?.conversation||[]).some(call=>
+  call.conversation&&call.role!=='player'&&call.speakerId===entityId&&
+  (!call.recipients||call.recipients.includes(selfId))&&
+  Number.isFinite(call.at)&&Number.isFinite(snapshot.serverTime)&&snapshot.serverTime-call.at>=0&&snapshot.serverTime-call.at<=5000));
 }

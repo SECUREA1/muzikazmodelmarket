@@ -47,8 +47,11 @@ synthesis does not expose a Web Audio source for stereo positioning. Map
 introductions and radio-style objectives stay clear regardless of distance.
 NPCs and AI contacts prefer natural, neural or enhanced voices installed in the
 browser, with a stable voice per character and restrained personality-based
-pacing. Voice loading is allowed a brief grace period; an unavailable online
-voice can fall back locally. Spoken game shorthand is expanded without changing
+pacing at the voice’s native pitch. The welcome uses a neutral narrator at normal
+speed, with direct speech and no added reverb, delay or spatial processing.
+Speech ownership prevents radio, NPC and optional chat voices from competing;
+passive gestures do not trigger an extra tower introduction. Voice loading is
+allowed a brief grace period; an unavailable online voice can fall back locally. Spoken game shorthand is expanded without changing
 captions, and long replies receive enough time to finish. Voice quality depends
 on the voices available on the player's device.
 

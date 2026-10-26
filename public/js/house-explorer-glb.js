@@ -1,5 +1,5 @@
 import {applyFactoryMachineActivity} from './missile-factory-model.js';
-import {createGameplayAnnouncements} from './gameplay-announcements.js';
+import {createGameplayAnnouncements,interactionHasDialogue} from './gameplay-announcements.js';
 import {createSpatialEffectOutput,updateAudioListener} from './shared-effect-audio.js';
 import {gameActionLoading,waitForVehiclePresentation} from './game-action-loading.js';
 import {bindGameActionButton} from './game-action-button.js';
@@ -897,7 +897,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         if(!rendered){state.result||={};state.result.message='Vehicle selected. Its model is still streaming; your controls remain active. Reopen this vehicle to check loading.';}
       }
       if(state&&action==='map-access'){residentUI.open(false);transportActivity.close();}
-      if(state?.result?.message){setStatus(state.result.message);if(action==='interact'||/^(fitness|factory)-/.test(action))gameplayAnnouncements.say(state.result.message,state.result.requestId||crypto.randomUUID(),{entityId:fields?.entityId});}
+      if(state?.result?.message){setStatus(state.result.message);if((action==='interact'&&!interactionHasDialogue(state,state.selfId||client.selfId,fields?.entityId))||/^(fitness|factory)-/.test(action))gameplayAnnouncements.say(state.result.message,state.result.requestId||crypto.randomUUID(),{entityId:fields?.entityId});}
       if(state?.result?.residentId)residentUI.open();
       if(state?.result?.landLotId){lockMenuInput();landSaleUI.open(state.result.landLotId);}
       if(action==='vehicle-navigate'&&state){airportOps.acceptAutomaticRoute();harborOps.acceptAutomaticRoute();}
@@ -1808,7 +1808,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
-  window.addEventListener('pagehide', event => { if(event.persisted)return;casinoUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
+  window.addEventListener('pagehide', event => {gameplayVoice.reset();airportOps.stopAudio();if(event.persisted)return;airportOps.dispose();casinoUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
   async function checkForHouseUpdates({ startup = false } = {}) {

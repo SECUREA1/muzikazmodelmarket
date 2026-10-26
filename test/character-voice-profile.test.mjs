@@ -45,8 +45,8 @@ test('character delivery stays natural, consistent and responsive to personality
  const calm=characterSpeechStyle(character),lively=characterSpeechStyle({...character,personality:'Outgoing, enthusiastic and lively'});
  assert.deepEqual(characterSpeechStyle(character),calm);
  for(const style of [calm,lively,characterSpeechStyle({...character,mood:'urgent'},{text:'Watch out! Please move back.'})]){
-  assert.ok(style.rate>=.85&&style.rate<=1.15,JSON.stringify(style));
-  assert.ok(style.pitch>=.9&&style.pitch<=1.1,JSON.stringify(style));
+  assert.ok(style.rate>=.96&&style.rate<=1.04,JSON.stringify(style));
+  assert.equal(style.pitch,1,'native voice timbre stays unprocessed');
   assert.match(style.lang,/^en/i);
  }
  assert.ok(lively.rate>calm.rate,'lively delivery has a little more energy than patient delivery');
@@ -67,4 +67,33 @@ test('speech watchdog scales with words and rate so long replies can finish',()=
  assert.ok(Number.isFinite(brief)&&brief>0);assert.ok(full>22000,'long dialogue is not clipped by the old fixed watchdog');
  assert.ok(full>brief);assert.ok(speechTimeout(long,.9)>speechTimeout(long,1.1));
  assert.ok(Number.isFinite(speechTimeout('',0)),'invalid rate cannot create an infinite watchdog');
+});
+
+
+test('all character voices retain native pitch and authored pace stays restrained',()=>{
+ for(const pitch of [.5,.9,1.1,2,Infinity,'high']){
+  const style=characterSpeechStyle({...character,mood:'urgent',voiceProfile:{pitch}},{text:'Warning! Watch out!'});
+  assert.equal(style.pitch,1);
+ }
+ assert.equal(characterSpeechStyle({...character,voiceProfile:{rate:.2,pitch:.5}}).rate,.9);
+ assert.equal(characterSpeechStyle({...character,voiceProfile:{rate:3,pitch:2}}).rate,1.1);
+ assert.equal(characterSpeechStyle({...character,voiceProfile:{rate:1.03}}).rate,1.03);
+ assert.equal(characterSpeechStyle({voiceProfile:{rate:'fast'}}).rate,1);
+});
+
+test('introduction narrator is neutral even with character traits or authored effects',()=>{
+ const intro={...character,role:'narrator',mood:'urgent',personality:'Energetic and outgoing',voiceProfile:{rate:1.8,pitch:.5,language:'en-GB'}};
+ assert.deepEqual(characterSpeechStyle(intro,{text:'Warning! Incoming!'}),{rate:1,pitch:1,lang:'en-GB'});
+ assert.deepEqual(characterSpeechStyle({role:'guide',voiceProfile:{style:'narrator',rate:.5,pitch:2,language:'invalid language'}}),{rate:1,pitch:1,lang:'en-US'});
+});
+
+test('introduction narrator selects a consistent exact-locale voice with a default tie',()=>{
+ const us=voice('US Natural'),preferredUS=voice('US Default Natural','en-US',{default:true}),uk=voice('UK Neural','en-GB',{default:true});
+ for(let i=0;i<12;i++){
+  const intro={id:'intro-'+i,role:'narrator'};
+  assert.equal(chooseCharacterVoice([uk,us,preferredUS],intro),preferredUS);
+  assert.equal(chooseCharacterVoice([preferredUS,us,uk],intro,{preferredVoiceURI:uk.voiceURI}),preferredUS,'a cached accent cannot override the matching narrator locale');
+ }
+ assert.equal(chooseCharacterVoice([standard,uk],{role:'narrator'}),uk,'a natural regional voice still takes priority over a basic engine');
+ assert.equal(chooseCharacterVoice([us,uk],{voiceProfile:{style:'narrator',language:'en-GB'}}),uk);
 });
