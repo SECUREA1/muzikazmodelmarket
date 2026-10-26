@@ -1,3 +1,4 @@
+import {isCargoTrailer,trailerOverlap} from './cargo-hauling.js';
 import {isRoadVehicle,roadVehicleType} from './road-vehicles.js';
 import {Box3,Ray,Vector3} from '../vendor/three/three.module.min.js';
 import {isAircraft} from './aircraft-flight.js';
@@ -68,7 +69,7 @@ export function createVehicleCollision({octree=null,triangleGroups=[],actors={},
   if(!from||!to)return false;
   const road=isRoadVehicle(actor),config=roadVehicleType(actor),vessel=isWatercraft(actor),plane=isAircraft(actor),id=value(ignoreId)??actor?.id,all=value(actors)||{};
   if(isConstructionMachine(actor))return machineryBlocked(from,to,yaw,actor);
-  if(road&&Object.values(all).some(other=>other.id!==id&&other.active!==false&&isRoadVehicle(other)&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3))return true;
+  if(road&&Object.values(all).some(other=>other.id!==actor?.trailerId&&other.active!==false&&isCargoTrailer(other)&&trailerOverlap(other,to,config.width/2)||other.id!==id&&other.active!==false&&isRoadVehicle(other)&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3))return true;
   if(vessel){
    if(Object.values(all).some(other=>other.id!==id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,actor,other)))return true;
    const map=value(environment);if(map&&!watercraftFootprint(to,yaw,actor).every(vertex=>harborWaterAt(map,vertex,.25)))return true;

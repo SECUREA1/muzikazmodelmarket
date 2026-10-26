@@ -1,9 +1,19 @@
+import {isPickup} from './public/js/cargo-hauling.js';
 import {roadRoute,roadNetwork,nearestRoadNode,roadPath} from './public/js/road-network.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {createRoadCrew,followRoadRoute} from './server-road-activity.mjs';
 import {questRadio} from './server-quest-radio.mjs';
 export function prepareRoadQuest(sim,player,q,environment,now,{collision,objects,spawn}){
- const craft=sim.actors[q.vehicleId],seed=[...q.instanceId].reduce((sum,c)=>sum+c.charCodeAt(0),0),route=roadRoute(environment,craft.position,seed);if(route.length<2)throw Error('No connected road route is available here.');
+ const craft=sim.actors[q.vehicleId];
+ if(q.kind==='freight'){
+  if(!isPickup(craft))throw Error('Board a Frontier pickup for freight contracts.');
+  const hubs=sim.freightHubs||[],source=[...hubs].sort((a,b)=>Math.hypot(a.x-craft.position.x,a.z-craft.position.z)-Math.hypot(b.x-craft.position.x,b.z-craft.position.z))[0],destination=hubs.find(h=>h.id!==source?.id);if(!destination)throw Error('This map needs two clear connected freight bays.');
+  if((craft.freight?.crates?.length||0)+(sim.actors[craft.trailerId]?.freight?.crates?.length||0))throw Error('Deliver the current cargo before accepting another manifest.');
+  q.freightCount=q.id==='freight-trailer'?8:q.id==='freight-express'?4:3;q.freightSource=source.id;q.freightDestination=destination.id;
+  const point=(name,hub,action)=>({...hub,name,action,radius:9,stopped:true,dwell:1});
+  q.checkpoints=[...(q.freightCount>4?[{...craft.position,name:'Hitch the nearby cargo trailer',action:'hitch',radius:12,stopped:true,dwell:1}]:[]),point('Load '+q.freightCount+' crates at '+source.name,source,'load'),point('Stack and secure the manifest',source,'secure'),point('Unload the complete manifest at '+destination.name,destination,'unload')];return;
+ }
+ const seed=[...q.instanceId].reduce((sum,c)=>sum+c.charCodeAt(0),0),route=roadRoute(environment,craft.position,seed);if(route.length<2)throw Error('No connected road route is available here.');
  const ground=p=>{const floor=collision?.groundAt?.(environment,p,{actors:Object.fromEntries(Object.entries(sim.actors).filter(([id])=>id!==craft.id)),objects});if(collision&&!floor)throw Error('This road objective has no safe ground.');return {...p,y:floor?.y??p.y};};
  const places=localMapLocations(environment),name=p=>{const near=[...places].sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];return near&&Math.hypot(near.x-p.x,near.z-p.z)<35?near.name:p.name||'road service stop';};
  const point=(title,p,extra={})=>({...ground(p),name:title,radius:5,...extra}),destination=route.at(-1),origin={...craft.position},home=point('Report back to road dispatch',origin,{action:'check-in',stopped:true,dwell:2});q.roadRoute=route;

@@ -1889,6 +1889,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const groups=[];
     for(const visualRoot of buildingSolids()){
       const actor=serverActors[visualRoot.userData.builderObjectId];let root=visualRoot;
+      if(serverVehicleId&&actor?.towVehicleId===serverVehicleId)continue;
       if(actor?.trafficAI){if(!isAircraft(actor)&&!isWatercraft(actor))continue;root=trafficWalkingProxies.get(visualRoot);if(!root){root=createTrafficCollisionProxy(THREE,actor);trafficWalkingProxies.set(visualRoot,root);}const offset=visualRoot.userData.serverRenderOffset||{};root.position.set(visualRoot.position.x-(offset.x||0),visualRoot.position.y-(offset.y||0),visualRoot.position.z-(offset.z||0));root.rotation.copy(visualRoot.rotation);root.scale.set(actor.scale?.x||1,actor.scale?.y||1,actor.scale?.z||1);}
       if(root.userData.solid===false)continue;
       root.updateWorldMatrix(true,false);const matrix=root.matrixWorld.elements,mechanism=actor?.construction||root.userData.construction,shapeKey=mechanism?[mechanism.slew,mechanism.trolley,mechanism.hoist,mechanism.bed,mechanism.blade,mechanism.swing,mechanism.boom,mechanism.stick,mechanism.bucket,actor?.driving?.steering??root.userData.driving?.steering].join('|'):null;let bounds=walkingRootBounds.get(root);

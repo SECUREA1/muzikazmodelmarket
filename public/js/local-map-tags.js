@@ -1,3 +1,4 @@
+import {isCargoTrailer} from './cargo-hauling.js';
 import {isRoadVehicle,roadVehicleType} from './road-vehicles.js';
 import {questMapTags} from './quest-catalog.js';
 import {aircraftDisplayName} from './aircraft-types.js';
@@ -24,6 +25,7 @@ export function localMapTags(environment,live={},selfId=null){
  for(const worker of live.construction?.crew?.workers||[])add('crew:'+worker.id,worker.name+' · '+worker.role+' · AI','resident',worker.position,{residentId:worker.id,description:worker.message||worker.state});
  const daily=live.players?.[selfId]?.residentTask;if(daily?.status==='active'){const point=daily.checkpoints[daily.index],position=point.actorId?(actors[point.actorId]?.position||live.construction?.crew?.workers?.find(worker=>worker.id===point.actorId)?.position):point;if(position)add('resident-daily:'+daily.id,point.name,'mission',position,{description:'Daily objective · '+daily.reward+' score · Stop here and confirm in Residents'});}
  for(const tag of questMapTags(live,selfId))add(tag.id,tag.name,tag.kind,tag,tag);
+ for(const actor of Object.values(actors))if(isCargoTrailer(actor)&&actor.active!==false)add('trailer:'+actor.id,actor.name,'landmark',actor.position,{icon:'▤',color:'#ffc46f',description:(actor.towVehicleId?'Hitched':'Free trailer · align the pickup rear hitch with its tongue')+' · '+(actor.freight?.crates?.length||0)+'/8 crates'});
  const spawn=environment.spawn?.position||environment.spawn||{x:0,y:0,z:0};add('arrival','Arrival','arrival',spawn,{arrival:true});
  for(const [id,player]of Object.entries(live?.players||{}))add('player:'+id,id===selfId?'You':player.username||'Player',id===selfId?'self':'player',player.position,{description:id===selfId?'Your live position':'Live player'});
  return tags;
