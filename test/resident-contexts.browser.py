@@ -21,6 +21,14 @@ try:
         page.get_by_role('button',name='Residents, conversations and daily objectives',exact=True).click()
         assert 'Harbor Marina' in page.locator('.world-resident-panel>header').inner_text()
         assert 'Navigation' in page.locator('.resident-life-card').first.inner_text()
+        page.evaluate("Object.assign(state.actors['host-'+world.id].resident,{identity:{form:'foxfolk',ambition:'discover every public landmark',quirk:'keeps a notebook'},appearance:{form:'foxfolk'},objectivesCompleted:3,objective:{id:'tour',title:'Pier inspection',status:'active',index:1,checkpoints:[{name:'Read the board'},{name:'Inspect the east pier'},{name:'Return to dispatch'}]},sharedTask:{id:'crew-check',title:'Check dock equipment',partnerId:'friend-'+world.id,responsibility:'Review the departure list',progress:.5}});ui.update(state,'me',world)")
+        card=page.locator('.resident-life-card').first
+        assert 'Foxfolk' in card.inner_text() and 'discover every public landmark' in card.inner_text()
+        assert 'Step 2 of 3: Inspect the east pier' in card.locator('[data-resident-objective]').inner_text()
+        assert card.get_by_role('progressbar').evaluate('(node)=>node.value')==1/3
+        assert 'Taylor North' in card.locator('[data-resident-shared-task]').inner_text()
+        assert '50%' in card.locator('[data-resident-shared-task]').inner_text()
+        assert '3 personal objectives' in card.inner_text()
         assert page.locator('[data-resident-chatter] li').count()==8
         assert 'boats' in page.locator('[data-resident-chatter]').inner_text()
         contact=page.get_by_role('button',name='Start conversation with Maya Reed',exact=True)

@@ -1,5 +1,6 @@
 import {residentActivityRestricted} from './server-resident-life.mjs';
 import {questRadio} from './server-quest-radio.mjs';
+import {residentClamp,residentSkillGain} from './public/js/resident-personalities.js';
 import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
 
 const caches=new WeakMap();
@@ -176,16 +177,17 @@ export function requestAIWorldAction(sim,player,npc,input={},now,context={}){
 }
 
 function autonomous(sim,environment,npc,now,context){
- const info=npc.resident;if(!info||info.factory||info.fitness||info.casino||npc.questContact||info.machineWork?.status==='active'||info.conversationId||info.speaking||info.activitySuspended||info.goal?.kind==='practice')return;
+ const info=npc.resident;if(!info||info.factory||info.fitness||info.casino||npc.questContact||info.machineWork?.status==='active'||info.conversationId||info.speaking||info.activitySuspended||info.sharedTask||info.objective?.status==='active'||now<(info.pauseUntil||0)||info.goal?.kind==='practice')return;
  info.nextWorldActionAt??=now+10000+hash(npc.id)%15000;
  if(now<info.nextWorldActionAt)return;
  info.nextWorldActionAt=now+30000+hash(npc.id+now)%25000;
- const records=describeAIWorldActions(sim,environment,npc,{now,maxDistance:8}).filter(record=>record.kind!=='door'&&!protectedTarget(sim,sim.actors[record.targetId],now));
- const choices=records.filter(record=>record.kind!==npc.aiLastActionKind),choice=(choices.length?choices:records)[hash(npc.id+Math.floor(now/30000))%Math.max(1,(choices.length?choices:records).length)];
+ const records=describeAIWorldActions(sim,environment,npc,{now,maxDistance:16}).filter(record=>record.kind!=='door'&&(record.kind!=='heal'||npc.health<(npc.maxHealth||100))&&!protectedTarget(sim,sim.actors[record.targetId],now));
+ const urgency=record=>record.kind==='heal'?(1-npc.health/(npc.maxHealth||100))*200:record.kind==='talk'?(100-(info.needs?.social??60))*.7:record.kind==='inspect'?(100-(info.needs?.curiosity??60))*.7:35;
+ const choices=records.filter(record=>record.kind!==npc.aiLastActionKind),choice=(choices.length?choices:records).sort((a,b)=>urgency(b)-urgency(a)||hash(npc.id+a.id+Math.floor(now/30000))-hash(npc.id+b.id+Math.floor(now/30000)))[0];
  if(!choice)return;
  const target=sim.actors[choice.targetId],route=approach(sim,environment,npc,target,{...context,now});if(!route)return;
  sim.aiWorldSequence=(sim.aiWorldSequence||0)+1;
- npc.aiTask={id:'ai-world-'+sim.aiWorldSequence,worldId:environment.id,status:'active',stage:planar(npc.position,route.point)<.25?'operating':'walking',kind:choice.kind,targetId:choice.targetId,targetName:choice.targetName,targetPosition:{...target.position},targetRevision:target.placementRevision||0,ownerId:null,autonomous:true,startedAt:now,deadline:now+45000,approach:route.point,via:route.via||null,reach:route.reach,message:'Checking '+choice.targetName+'.'};
+ npc.aiTask={id:'ai-world-'+sim.aiWorldSequence,worldId:environment.id,status:'active',stage:planar(npc.position,route.point)<.25?'operating':'walking',kind:choice.kind,...(choice.kind==='switch'?{desiredState:true}:{}),targetId:choice.targetId,targetName:choice.targetName,targetPosition:{...target.position},targetRevision:target.placementRevision||0,ownerId:null,autonomous:true,startedAt:now,deadline:now+45000,approach:route.point,via:route.via||null,reach:route.reach,message:'Checking '+choice.targetName+'.'};
  target.aiWorldOperator={npcId:npc.id,taskId:npc.aiTask.id,expiresAt:now+1500};
  info.goal=null;setPresentation(npc,npc.aiTask,npc.aiTask.message);
 }
@@ -194,7 +196,8 @@ export function stepAIWorldActions(sim,environment,now,dt,context={}){
  const scoped=navigationContext(sim,context);return navigationScope(scoped,()=>stepWorldActions(sim,environment,now,dt,scoped));
 }
 function stepWorldActions(sim,environment,now,dt,context){
- sim.actors||={};ensureDefinitions(sim,environment,now);const cast=Object.values(sim.actors).filter(actorReady).slice(0,48),players=Object.values(sim.players||{}).filter(player=>player.health>0&&!player.replacedByRoom&&now-(player.lastSeen??0)<15000);
+ sim.actors||={};ensureDefinitions(sim,environment,now);
+ for(const npc of Object.values(sim.actors))if(npc.aiTask?.status==='active'&&!actorReady(npc))finish(sim,npc,npc.aiTask,now,'cancelled','The helper is unavailable; the item is free again.');const cast=Object.values(sim.actors).filter(actorReady).slice(0,48),players=Object.values(sim.players||{}).filter(player=>player.health>0&&!player.replacedByRoom&&now-(player.lastSeen??0)<15000);
  let autonomousCount=cast.filter(npc=>npc.aiTask?.status==='active'&&npc.aiTask.autonomous).length;
  for(const npc of cast){
   if(npc.aiTask?.status!=='active'&&autonomousCount<3){autonomous(sim,environment,npc,now,context);if(npc.aiTask?.status==='active'&&npc.aiTask.autonomous)autonomousCount++;}
@@ -222,7 +225,12 @@ function stepWorldActions(sim,environment,now,dt,context){
   const cooldown=Math.max(0,Math.min(30,Number(configFor(target).cooldown)||0))*1000;
   if(now<(target.aiLastUsedAt||0)+cooldown){task.stage='waiting';task.message='Waiting for the item control to reset.';continue;}
   const reply=applyWorldObjectAction(target,task.kind,{actor:npc,now,desiredState:task.desiredState});npc.aiLastActionKind=task.kind;
-  if(npc.resident){npc.resident.speech=reply;npc.resident.speechUntil=now+4500;npc.resident.speaking=true;npc.resident.worldActionsCompleted=(npc.resident.worldActionsCompleted||0)+1;}
+  if(npc.resident){
+   const info=npc.resident;info.speech=reply;info.speechUntil=now+4500;info.speaking=true;info.worldActionsCompleted=(info.worldActionsCompleted||0)+1;
+   if(info.skills)residentSkillGain(info.skills,'observation',.35);
+   if(info.needs){info.needs.purpose=residentClamp(info.needs.purpose+12);if(task.kind==='inspect'||task.kind==='talk')info.needs.curiosity=residentClamp(info.needs.curiosity+18);}
+   info.memory=[...(info.memory||[]),{kind:'world-action',subjectId:target.id,text:safeText('Used '+task.targetName+': '+reply),at:now}].slice(-8);
+  }
   sim.events||=[];sim.events.push({id:task.id+':complete',action:'ai-world-action',actorId:npc.id,entityId:target.id,kind:task.kind,message:reply,at:now});sim.events=sim.events.slice(-100);
   finish(sim,npc,task,now,'completed',task.targetName+': '+reply);
  }

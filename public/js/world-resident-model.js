@@ -1,5 +1,6 @@
 import * as T from '../vendor/three/three.module.min.js';
 import {updateFitnessResident} from './fitness-resident-model.js';
+import {RESIDENT_FORMS} from './resident-personalities.js';
 
 // Speech remains legible nearby without turning a character into a fullscreen
 // billboard. Values are CSS pixels converted to world units for each camera.
@@ -19,7 +20,8 @@ function residentVisualHash(value){let hash=2166136261;for(const character of St
 export function residentVisualStyle(state={}){
  const seed=residentVisualHash([state.personalityId,state.name,state.role,state.placeName,state.index].join('|'));
  const supplied=state.appearance||{},hairstyles=['short','swept','curly','bob','bun','bald'];
- const appearance={outfit:state.color||['#527d91','#8c687f','#698267','#997557','#5b6e9a'][seed%5],skin:state.skin||['#b78361','#e5ba98','#76503d','#c99275','#946343'][seed%5],hair:['#32241e','#332a29','#5b3928','#746452','#161e27'][Math.floor(seed/5)%5],accent:['#d8b56b','#a2d0c6','#c2a3dd'][seed%3],hairstyle:hairstyles[seed%6],accessory:['none','glasses','watch','earrings','necklace'][Math.floor(seed/7)%5],height:.95+seed%6*.025,build:.94+seed%5*.035,...supplied};
+ const appearance={form:state.identity?.form||'human',outfit:state.color||['#527d91','#8c687f','#698267','#997557','#5b6e9a'][seed%5],skin:state.skin||['#b78361','#e5ba98','#76503d','#c99275','#946343'][seed%5],hair:['#32241e','#332a29','#5b3928','#746452','#161e27'][Math.floor(seed/5)%5],accent:['#d8b56b','#a2d0c6','#c2a3dd'][seed%3],hairstyle:hairstyles[seed%6],accessory:['none','glasses','watch','earrings','necklace'][Math.floor(seed/7)%5],height:.95+seed%6*.025,build:.94+seed%5*.035,...supplied};
+ if(!RESIDENT_FORMS.includes(appearance.form))appearance.form='human';
  if(!hairstyles.includes(appearance.hairstyle))appearance.hairstyle='short';
  const role=String(state.role||'').toLowerCase(),duty=String(state.duty||'').toLowerCase();
  let uniform=state.uniform||supplied.uniform;
@@ -47,9 +49,23 @@ export function createWorldResident(){
  const curly=hairstyle('curly');for(let i=0;i<9;i++){const a=i/9*Math.PI*2;sphere(curly,.078,hair,[Math.cos(a)*.13,.23+Math.sin(i*3)*.03,Math.sin(a)*.12+.01]);}sphere(curly,.14,hair,[0,.27,.03]);
  const bob=hairstyle('bob');add(bob,new T.SphereGeometry(.215,14,10,0,Math.PI*2,0,Math.PI*.5),hair,[0,.13,.02]);for(const side of [-1,1]){const sideHair=sphere(bob,.105,hair,[side*.17,.06,.045]);sideHair.scale.set(.6,1.6,1.05);}
  const bun=hairstyle('bun');add(bun,new T.SphereGeometry(.198,14,10,0,Math.PI*2,0,Math.PI*.47),hair,[0,.12,.02]);sphere(bun,.105,hair,[0,.23,.15]);hairstyle('bald');
- sphere(head,.045,skin,[0,.075,-.186],'RESIDENT_NOSE');
+ const nose=sphere(head,.045,skin,[0,.075,-.186],'RESIDENT_NOSE');
  for(const x of [-.075,.075]){sphere(head,.035,white,[x,.115,-.165]);sphere(head,.017,dark,[x,.115,-.193],'RESIDENT_PUPIL');sphere(head,.04,skin,[x*2.5,.09,0]);const brow=box(head,[.065,.014,.014],hair,[x,.165,-.18]);brow.rotation.z=x<0?.08:-.08;}
  const smile=add(head,new T.TorusGeometry(.055,.009,6,14,Math.PI),dark,[0,.015,-.177],'RESIDENT_MOUTH');smile.rotation.z=Math.PI;
+ // All forms share the same limbs and public-space footprint, so uniforms,
+ // gestures and interactions work equally for organic and mechanical locals.
+ const forms=new T.Group();forms.name='RESIDENT_FORMS';head.add(forms);
+ const formGroup=name=>{const group=new T.Group();group.name=name;group.visible=false;forms.add(group);return group;};
+ const foxfolk=formGroup('foxfolk');for(const side of [-1,1]){const ear=add(foxfolk,new T.ConeGeometry(.085,.22,4),hair,[side*.14,.32,.015]);ear.rotation.z=-side*.16;const inner=add(foxfolk,new T.ConeGeometry(.045,.13,4),accent,[side*.14,.33,-.04]);inner.rotation.z=-side*.16;}
+ const muzzle=sphere(foxfolk,.09,skin,[0,.04,-.17]);muzzle.scale.set(1,.65,.8);sphere(foxfolk,.024,dark,[0,.07,-.238]);
+ const mossling=formGroup('mossling');for(const side of [-1,1]){const leaf=sphere(mossling,.1,hair,[side*.2,.15,.01]);leaf.scale.set(1.25,.5,.4);leaf.rotation.z=side*.4;}
+ const sprout=add(mossling,new T.CylinderGeometry(.014,.018,.18,6),hair,[0,.31,.02]);for(const side of [-1,1]){const leaf=sphere(mossling,.075,hair,[side*.065,.39,.02]);leaf.scale.set(1,.38,.5);leaf.rotation.z=side*.35;}
+ const automaton=formGroup('automaton'),signal=material('#b8ede0',{emissive:'#398d79',emissiveIntensity:.35,roughness:.4});
+ const faceplate=box(automaton,[.3,.2,.04],skin,[0,.095,-.154],'RESIDENT_AUTOMATON_FACEPLATE');
+ for(const side of [-1,1]){const hinge=add(automaton,new T.CylinderGeometry(.065,.065,.045,10),accent,[side*.2,.1,.015]);hinge.rotation.z=Math.PI/2;}
+ add(automaton,new T.CylinderGeometry(.012,.012,.13,6),accent,[.09,.34,.015]);sphere(automaton,.035,signal,[.09,.41,.015],'RESIDENT_AUTOMATON_SIGNAL');
+ const seams=box(automaton,[.16,.012,.02],accent,[0,-.015,-.16]);
+ const tail=new T.Group();tail.name='RESIDENT_FOX_TAIL';tail.position.set(0,.77,.22);body.add(tail);const plume=add(tail,new T.CapsuleGeometry(.075,.2,4,8),hair,[0,-.08,.07]);plume.rotation.x=-.5;const tailTip=sphere(tail,.075,accent,[0,-.21,.14]);tailTip.scale.y=.7;tail.visible=false;
  const glasses=new T.Group();glasses.name='RESIDENT_GLASSES';head.add(glasses);for(const x of [-.076,.076])add(glasses,new T.TorusGeometry(.048,.008,5,16),dark,[x,.11,-.205]);box(glasses,[.06,.01,.012],dark,[0,.11,-.208]);
  const earrings=new T.Group();earrings.name='RESIDENT_EARRINGS';head.add(earrings);for(const x of [-.198,.198])add(earrings,new T.TorusGeometry(.023,.006,5,12),accent,[x,.035,-.005]);
  const cap=new T.Group();cap.name='RESIDENT_GUARD_CAP';head.add(cap);add(cap,new T.CylinderGeometry(.18,.21,.11,16),dark,[0,.3,.01]);const brim=add(cap,new T.CylinderGeometry(.23,.23,.025,16),dark,[0,.245,-.05]);brim.scale.z=.8;box(cap,[.07,.055,.02],accent,[0,.31,-.18]);
@@ -89,7 +105,7 @@ export function createWorldResident(){
  const dice=new T.Group();dice.name='dice';prop.add(dice);for(const x of [-.1,.1]){box(dice,[.14,.14,.14],cardMaterial,[x,0,0]);for(const dx of [-.025,.025])sphere(dice,.012,dark,[x+dx,.025,-.075]);}
  const tray=new T.Group();tray.name='tray';prop.add(tray);add(tray,new T.CylinderGeometry(.23,.23,.022,20),gold,[0,-.04,0]);for(const x of [-.1,.1]){add(tray,new T.CylinderGeometry(.055,.045,.17,12),material('#a7d6d2',{metalness:.12,roughness:.22}),[x,.055,0]);add(tray,new T.CylinderGeometry(.047,.047,.018,12),material('#ce7049'),[x,.145,0]);}
  for(const part of [formal,badge,radio,cap,glasses,earrings,necklace,nameTag,highVis,hardHat,earProtection,nautical,sport,apron,scarf,toolBelt,arcade])part.visible=false;
- root.userData.residentParts={body,head,hairstyles,glasses,earrings,cap,formal,badge,radio,necklace,nameTag,smile,highVis,hardHat,earProtection,nautical,sport,apron,scarf,toolBelt,arcade};
+ root.userData.residentParts={body,head,hairstyles,glasses,earrings,cap,formal,badge,radio,necklace,nameTag,smile,highVis,hardHat,earProtection,nautical,sport,apron,scarf,toolBelt,arcade,forms,tail,nose};
  if(typeof document!=='undefined'){
   const canvas=document.createElement('canvas');canvas.width=768;canvas.height=192;const texture=new T.CanvasTexture(canvas),label=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true}));label.name='RESIDENT_SPEECH_LABEL';label.position.set(0,2.05,0);label.scale.set(3.1,.775,1);root.add(label);root.userData.residentLabel={canvas,texture,label,key:''};
   const worldPosition=new T.Vector3(),cameraPoint=new T.Vector3(),eye=new T.Vector3(),parentScale=new T.Vector3(),size=new T.Vector2();
@@ -104,7 +120,9 @@ export function updateWorldResident(root,time){
  materials.outfit.color.set(appearance.outfit);materials.skin.color.set(appearance.skin);materials.hair.color.set(appearance.hair);materials.accent.color.set(appearance.accent);
  const height=state.ageGroup==='child'?.74:T.MathUtils.clamp(Number(appearance.height)||1,.9,1.12),build=T.MathUtils.clamp(Number(appearance.build)||1,.85,1.15);
  parts.body.scale.set(build,height,build);if(root.userData.residentLabel)root.userData.residentLabel.label.position.y=height*1.84+.21;
- for(const style of parts.hairstyles.children)style.visible=style.name===(['construction','security'].includes(uniform)?'short':appearance.hairstyle);
+ for(const style of parts.hairstyles.children)style.visible=style.name===(appearance.form==='automaton'?'bald':['construction','security'].includes(uniform)?'short':appearance.hairstyle);
+ for(const form of parts.forms.children)form.visible=form.name===appearance.form;
+ parts.tail.visible=appearance.form==='foxfolk';parts.tail.rotation.z=Math.sin(time*(moving?5:1.2))*(moving?.18:.08);parts.nose.visible=!['foxfolk','automaton'].includes(appearance.form);
  parts.glasses.visible=appearance.accessory==='glasses';parts.earrings.visible=appearance.accessory==='earrings';parts.necklace.visible=appearance.accessory==='necklace';parts.cap.visible=uniform==='security';parts.badge.visible=uniform==='security';parts.radio.visible=uniform==='security';parts.formal.visible=uniform==='formal';parts.nameTag.visible=['formal','hospitality','training','aviation','arcade'].includes(uniform);
  parts.highVis.visible=['construction','aviation','training'].includes(uniform);parts.hardHat.visible=uniform==='construction';parts.earProtection.visible=['aviation','training'].includes(uniform);parts.nautical.visible=uniform==='nautical';parts.sport.visible=uniform==='sports';parts.apron.visible=uniform==='hospitality';parts.arcade.visible=uniform==='arcade';parts.scarf.visible=uniform==='music';parts.toolBelt.visible=uniform==='construction';
  root.getObjectByName('RESIDENT_WATCH').visible=appearance.accessory==='watch';root.traverse(node=>{if(node.name==='RESIDENT_SHIRT_CUFF')node.visible=parts.formal.visible;});
