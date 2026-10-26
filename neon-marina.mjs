@@ -1,6 +1,6 @@
 import {resortProductPlacement} from './public/js/resort-products.js';
 import {FISHING_ZONES,FISHING_GUIDES} from './public/js/fishing-config.js';
-export const NEON_MARINA_VERSION=3;
+export const NEON_MARINA_VERSION=4;
 export function neonMarina(){
  const harbor={version:NEON_MARINA_VERSION,extent:768,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48},{id:'crescent-island',name:'Crescent Island',x:-390,z:270,width:240,depth:200},{id:'silver-coast',name:'Silver Coast',x:430,z:-300,width:220,depth:200},{id:'reed-cay',name:'Reed Cay',x:360,z:340,width:88,depth:72},{id:'sunset-key',name:'Sunset Key',x:-370,z:-310,width:96,depth:80}],lakes:[{id:'crescent-lake',name:'Crescent Lake',x:-390,z:280,width:96,depth:64},{id:'silver-lake',name:'Silver Lake',x:430,z:-280,width:80,depth:64}]};
  harbor.fishingZones=structuredClone(FISHING_ZONES);harbor.fishingGuides=structuredClone(FISHING_GUIDES);
@@ -8,6 +8,8 @@ export function neonMarina(){
  const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-marina-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
  const tile=(id,x,z,scale=[1,1,1],y=0)=>add(id,'material:floor',x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]}});
  const guide=(id,title,x,z,text)=>add(id,'street-sign',x,0,z,{name:title,functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Read '+title},dialogueSettings:{text}});
+ add('hormuz-shipping-portal','archway',124,0,-58,{name:'Sea extension · Strait of Hormuz Shipping Academy',functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:5,destructible:false,prompt:'Enter the Strait of Hormuz shipping world',portal:{enabled:true,destinationType:'map',targetMapId:'hormuz-shipping',ownerName:'MUZIKAZ',color:'#5bd4e3'}}});
+ locations.push({id:'hormuz-shipping-portal',name:'Sea portal · Strait of Hormuz',x:124,z:-58,width:4,depth:4,description:'A connected large-water shipping world: cargo loading, traffic lanes, six ports, delivery contracts and marketplace stock rewards.'});
  locations.push({id:'marina',name:'Neon Marina',x:138,z:49.2,width:66,depth:120,description:'Board a launch or sailboat with E / Use. Steer with movement controls. Use E again to leave the boat; landing piers and steps let you reach each island.'});
  // Main jetty connects the mainland edge to a spine and three finger slips.
  for(let i=0;i<10;i++)tile('main-jetty-'+i,124+i*2.4,30);

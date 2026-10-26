@@ -14,7 +14,7 @@ const live=session=>session&&['waiting','bite','reeling','caught'].includes(sess
 export const fishingLocked=player=>live(player?.fishing?.session);
 const prizes=[60,35,20];
 const defaultStats=()=>({catches:0,releases:0,totalWeightKg:0,bestKg:0,totalEarnedMzk:0});
-const enabled=environment=>!!environment?.builderScene?.layoutMeta?.harbor;
+const enabled=environment=>!!environment?.builderScene?.layoutMeta?.harbor&&environment.builderScene.layoutMeta.harbor.fishingEnabled!==false;
 
 function stateFor(player){return player.fishing ||= {session:null,creel:[],stats:defaultStats(),gear:FISHING_GEAR.filter(item=>item.basic).map(item=>item.id)};}
 export function applyFishingAccount(player,account){

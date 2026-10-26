@@ -23861,6 +23861,390 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-shipping-container",
+      "name": "Strait Container Carrier",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/shipping/shipping-container.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "shipping-container",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        10,
+        11.5,
+        40
+      ],
+      "priceMzk": 750,
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "behavior": "vehicle",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Strait Container Carrier"
+      }
+    },
+    {
+      "assetId": "builder-shipping-container-box",
+      "name": "Intermodal Cargo Container",
+      "category": "props",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/shipping/shipping-parts-stock.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "shipping-container-box",
+      "builderCategory": "props",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        2.4,
+        2.6,
+        6
+      ],
+      "priceMzk": 100,
+      "description": "Corrugated steel container with locking bars and corner castings.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3
+      }
+    },
+    {
+      "assetId": "builder-shipping-feeder",
+      "name": "Gulf Feeder",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/shipping/shipping-feeder.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "shipping-feeder",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        6.4,
+        7.4,
+        20
+      ],
+      "priceMzk": 750,
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "behavior": "vehicle",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Gulf Feeder"
+      }
+    },
+    {
+      "assetId": "builder-shipping-port-crane",
+      "name": "Ship-to-Shore Gantry Crane",
+      "category": "props",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/shipping/hormuz-shipping.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "shipping-port-crane",
+      "builderCategory": "props",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        14,
+        26,
+        40
+      ],
+      "priceMzk": 100,
+      "description": "Container terminal gantry with boom, lift cables, trolley and spreader.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3
+      }
+    },
+    {
+      "assetId": "builder-shipping-tanker",
+      "name": "Oman Product Tanker",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/shipping/shipping-tanker.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "shipping-tanker",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        11,
+        12.5,
+        46
+      ],
+      "priceMzk": 750,
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "behavior": "vehicle",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Oman Product Tanker"
+      }
+    },
+    {
       "assetId": "builder-site-bulldozer",
       "name": "D9 Crawler Bulldozer",
       "category": "vehicles",
@@ -28464,7 +28848,7 @@
     }
   ],
   "audit": {
-    "assetCount": 440,
+    "assetCount": 445,
     "generatedCount": 44,
     "warnings": [
       {

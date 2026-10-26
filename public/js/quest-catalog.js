@@ -6,7 +6,10 @@ import {siteWorkOffers} from './site-work-contracts.js';
 export function questCatalog(environment){
  if(isCasinoEnvironment(environment))return [...mapQuestOffers(environment),...siteWorkOffers(environment)];
  const offers=[];const add=(id,title,kind,mode,description,reward=650)=>offers.push({id,title,kind,mode,description,reward,winBonus:kind==='race'?200:0,timeLimit:600});
- if(environment?.builderScene?.layoutMeta?.harbor){
+ const harbor=environment?.builderScene?.layoutMeta?.harbor;
+ // The original maritime assignments run complete origin-centred circuits.
+ // Narrow regional seas use their authored shipping routes instead.
+ if(harbor&&harbor.mainIsland!==false){
   add('patrol-raid','Smuggler interdiction','attack','gunboat','Pilot Sentinel 07, disable two armed drug-running launches, secure their cargo and return to dispatch.',1200);
   add('patrol-defense','Relief convoy defense','defense','gunboat','Protect a relief launch from armed smugglers. Request an AI wingmate or share the operation with players.',1400);
   add('patrol-recovery','Patrol rescue operation','recovery','gunboat','Recover a stranded crew from the shipping channel and deliver them safely to the marina.',1000);
@@ -36,7 +39,9 @@ export function questCatalog(environment){
  if(/firing|range/.test(environment?.game||'')||environment?.firingRange||['firing-range','force-training-range'].includes(environment?.id)||environment?.builderScene?.layout==='firing-range')add('range-marksman','Range marksman contract','marksman','foot','Join a firing lane, then land five new server-confirmed target hits.',450);
  if(roadFleetAnchors(environment).length){add('road-delivery','Road supply delivery','delivery','road','Collect supplies, follow local roads and stop safely to unload at a map service point.',600);add('road-recovery','Roadside traveler recovery','recovery','road','Find a stranded traveler on the connected road, stop to help, and report back.',650);add('road-escort','Road crew escort','escort','road','Accompany a working AI supply crew for twenty seconds, then return to dispatch.',700);add('road-tour','Local road discovery','explore','road','Drive the marked local road stops and park to check in at each one.',500);add('road-rally','Road time challenge','race','road','Hold for the countdown, follow ordered road gates against a live AI rival, and finish within the posted limit.',800);}
  const locations=localMapLocations(environment).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z));
- if(locations.length>=2){
+ // Regional ports are separated by sea; their dock orientation offers stay
+ // on the arrival land patch, while cargo voyages use shipping contracts.
+ if(locations.length>=2&&harbor?.mainIsland!==false){
   add('land-delivery','Local supply run','delivery','foot','Collect supplies at one activity space and deliver them on foot to another.',350);
   add('land-recovery','Recover lost equipment','recovery','foot','Search an activity space, recover a marked equipment crate and return it to dispatch.',400);
   add('land-explore','Activity spaces discovery','explore','foot','Visit the main activity spaces and check in at each marked objective.',300);

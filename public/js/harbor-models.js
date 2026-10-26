@@ -1,8 +1,11 @@
 import {finishMarineDesign} from './marine-design-finish.js';
 import {createYachtBilliards} from './yacht-billiards.js';
 import * as THREE from '../vendor/three/three.module.min.js';
+import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
+import {createShippingVessel} from './shipping-models.js';
 
 export const HARBOR_HELM_POSES=Object.freeze({
+ ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,Object.freeze({position:spec.seat,lookForward:Object.freeze([0,0,-1]),near:.025,fov:78})])),
  'harbor-fishing-boat':Object.freeze({position:Object.freeze([.39,1.50,-.1]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-patrol':Object.freeze({position:Object.freeze([.42,1.43,1.15]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-yacht':Object.freeze({position:Object.freeze([0,5.8,-9]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
@@ -37,6 +40,7 @@ function sailGeometry(front,top,rear){
  for(let i=0;i<segments;i++)for(let j=0;j<6;j++){const a=i*7+j,b=a+7;indices.push(a,b,a+1,b,b+1,a+1);}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;
 }
 export function createHarborBoat(id){
+ if(SHIPPING_VESSELS[id])return createShippingVessel(id);
  if(id==='harbor-yacht')return createSuperyacht();
  const sailboat=id==='harbor-sailboat',root=new THREE.Group();root.name=sailboat?'SEA_GLASS_COASTAL_SLOOP':'NEON_MARINA_SPORT_LAUNCH';
  const navy=material(0x123e51,.37,.37,{side:THREE.DoubleSide}),ivory=material(0xe2e5d8,.46,.12,{side:THREE.DoubleSide}),teak=material(0xa17d56,.88,.03),seam=material(0x4e4334,.95,.01),chrome=material(0xa7b8bf,.24,.78),black=material(0x17242b,.73,.12),cushion=material(0xc7d0c9,.88,.02),orange=material(0xefad66,.46,.1),white=material(0xeaf4ee,.65,.05),glass=material(0x9bcbd7,.14,.08,{transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false});
@@ -81,6 +85,9 @@ export function updateHarborBoat(root,state={},elapsed=0){
  if(rig.billiardBalls&&root.userData.yachtBilliards)rig.billiardBalls.forEach((ball,index)=>{const record=root.userData.yachtBilliards.balls[index];if(record){ball.visible=!record.sunk;ball.position.set(record.x,3.25,record.z);}});
  if(rig.billiardAim){const angle=root.userData.yachtAim,cue=root.userData.yachtBilliards?.balls?.[0]||{x:2.4,z:9.3};rig.billiardAim.visible=typeof angle==='number'&&!root.userData.yachtBilliards?.moving;if(rig.billiardAim.visible){const points=rig.billiardAim.geometry.attributes.position;points.setXYZ(0,cue.x,3.28,cue.z);points.setXYZ(1,cue.x+Math.sin(angle)*2,3.28,cue.z-Math.cos(angle)*2);points.needsUpdate=true;rig.billiardAim.geometry.computeBoundingSphere();}}
  if(rig.dancer){rig.dancer.rotation.y=time*.65;rig.dancer.rotation.z=Math.sin(time*1.4)*.1;}
+ if(rig.radar)rig.radar.rotation.y=time*.6;
+ if(rig.cargoSlots){const cargo=Math.max(0,Math.floor(finite(state.cargoCount))),sides={port:0,starboard:0},bySide=Number.isFinite(state.cargoPortCount)&&Number.isFinite(state.cargoStarboardCount);rig.cargoSlots.forEach((slot,index)=>{const side=slot.userData.shippingSide;slot.visible=bySide?sides[side]++<Math.max(0,state[side==='port'?'cargoPortCount':'cargoStarboardCount']):index<cargo;});}
+ if(rig.cargoIndicator)rig.cargoIndicator.scale.y=.03+THREE.MathUtils.clamp(finite(state.cargoCount)/Math.max(1,finite(state.cargoCapacity,root.userData.boatRig.cargoSlots.length)),0,1)*.97;
  rig.wheel.rotation.z=-rudder*2.6;rig.throttle.rotation.x=-throttle*.65;if(rig.rudder)rig.rudder.rotation.y=-rudder*.44;if(rig.propeller)rig.propeller.rotation.z=time*rpm*.08;if(rig.boom)rig.boom.rotation.y=(.05+trim*.28)*(finite(state.windSide,1)<0?-1:1);if(rig.sail)rig.sail.scale.x=.72+power*.28;rig.flag.rotation.y=Math.sin(time*2.8)*.12+rudder*.05;
  for(const needle of rig.needles){const kind=needle.userData.instrument;needle.rotation.z=kind==='speed'?-2.2+Math.min(1,Math.abs(speed)/14)*4.4:kind==='rpm'?-2.2+Math.min(1,rpm/6000)*4.4:-finite(state.heading)*Math.PI/180;}
  const strength=THREE.MathUtils.clamp(finite(state.wakeStrength,Math.abs(speed)/10),0,1);rig.wake.visible=strength>.025;rig.foam.forEach((mesh,index)=>{const phase=(time*.6+index/rig.foam.length)%1;const design=root.userData.wakeDesign||{stern:2.05,length:3.3,width:.7};mesh.position.set(0,-.165,design.stern+phase*design.length);mesh.scale.set(design.width+phase*(2.8+strength),1,.65+phase*1.6);mesh.material.opacity=strength*(1-phase)*.34;});

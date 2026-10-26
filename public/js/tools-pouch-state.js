@@ -2,7 +2,7 @@ const CATEGORY_ALIASES = {
   avatar:'avatars', avatars:'avatars', character:'avatars', characters:'avatars',
   pet:'pets', pets:'pets', companion:'pets', companions:'pets',
   vehicle:'vehicles', vehicles:'vehicles', wearable:'wearables', wearables:'wearables',
-  clothing:'wearables', supply:'supplies', supplies:'supplies', 'rpg-consumable':'supplies',
+  clothing:'wearables', supply:'supplies', supplies:'supplies', 'rpg-consumable':'supplies', 'shipping-stock':'supplies',
   tool:'tools', tools:'tools', weapon:'tools', weapons:'tools',
   material:'bricks', materials:'bricks', brick:'bricks', bricks:'bricks',
   land:'lands', lands:'lands', environment:'lands', map:'lands',
@@ -86,13 +86,14 @@ export function toolsPouchState({records = [], tool = 'laser', materialId = '', 
     const equipped = category === 'tools' && asset.toolId === tool
       || category === 'bricks' && tool === 'brick' && asset.materialId === materialId
       || category === 'avatars' && Boolean(playerAvatar && sameAsset(asset, playerAvatar));
-    const disabled = consumed.has(asset.id);
-    const status = disabled ? 'Consumed' : equipped ? 'Equipped' : deployedCount ? 'Deployed · ' + deployedCount : 'Owned';
+    const shipping=Boolean(asset.shippingSupplyId),quantity=shipping?Math.max(0,Number(asset.quantity??stock)||0):null;
+    const disabled = consumed.has(asset.id)||shipping&&quantity<=0;
+    const status = shipping ? quantity+' stock units · exchange at port' : disabled ? 'Consumed' : equipped ? 'Equipped' : deployedCount ? 'Deployed · ' + deployedCount : 'Owned';
     const details = [asset.description];
-    if (useCostMzk !== undefined) details.push(useCostMzk + ' MZK / use');
-    if (stock !== undefined) details.push(stock + ' prepaid pieces');
+    if (useCostMzk !== undefined&&!shipping) details.push(useCostMzk + ' MZK / use');
+    if (stock !== undefined&&!shipping) details.push(stock + ' prepaid pieces');
     return {...asset, category, active:!disabled && (equipped || deployedCount > 0), equipped, deployedCount,
-      disabled, actionLabel:disabled ? 'Consumed' : actionFor(category), status,
+      disabled, actionLabel:shipping ? 'Exchange at shipping port' : disabled ? 'Consumed' : actionFor(category), status,
       description:details.filter(Boolean).join(' · '), ...(useCostMzk !== undefined ? {useCostMzk} : {}),
       ...(stock !== undefined ? {stock} : {}), ...(synthetic ? {synthetic:true} : {})};
   }

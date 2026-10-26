@@ -1,7 +1,9 @@
 import {fishingZones} from './fishing-config.js';
+import {isShippingEnvironment,SHIPPING_PORTS} from './shipping-config.js';
 // Display centers only; navigation chooses safe water-side approaches.
 export function harborDestinations(environment,vehicle=null){
  const meta=environment?.builderScene?.layoutMeta,harbor=meta?.harbor;if(!harbor)return [];
+ if(isShippingEnvironment(environment))return SHIPPING_PORTS.map(port=>({id:port.id,name:port.name,x:port.x,z:port.z,kind:'shipping-port'}));
  const lake=(harbor.lakes||[]).find(lake=>vehicle?.position&&Math.abs(vehicle.position.x-lake.x)<lake.width/2&&Math.abs(vehicle.position.z-lake.z)<lake.depth/2);
  if(lake)return [{id:'open-water',name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2},{id:lake.id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5},...fishingZones(environment).filter(zone=>zone.water==='fresh'&&Math.abs(zone.x-lake.x)<lake.width/2&&Math.abs(zone.z-lake.z)<lake.depth/2)];
  const marina=(meta.locations||[]).find(place=>place.id==='marina')||{id:'marina',name:'Neon Marina',x:132,z:30};

@@ -1,17 +1,22 @@
 import {constructionInteractionPoint} from './construction-access.js';
-export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol','harbor-fishing-boat']);
+import {SHIPPING_VESSELS,shippingVesselType} from './shipping-vessel-specs.js';
+export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol','harbor-fishing-boat',...Object.keys(SHIPPING_VESSELS)]);
+export const harborLandPatches=harbor=>[...(harbor?.mainIsland===false?[]:[{x:0,z:0,width:256,depth:256}]),...(harbor?.islands||[])];
 export const hasWalkableInterior=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht';
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
 export function harborWaterAt(environment,point,margin=0){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return false;
  const {x,z}=point,extent=harbor.extent||256;if(Math.abs(x)>extent-margin||Math.abs(z)>extent-margin)return false;
- const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
+ const patches=harborLandPatches(harbor);
  return (harbor.lakes||[]).some(p=>Math.abs(x-p.x)<p.width/2-margin&&Math.abs(z-p.z)<p.depth/2-margin)||!patches.some(p=>Math.abs(x-p.x)<=p.width/2+margin&&Math.abs(z-p.z)<=p.depth/2+margin);
 }
-export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.5,3.9]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-fishing-boat'?[1.35,3.15]:[1,2.4];
+export const watercraftSize=actor=>shippingVesselType(actor)?[shippingVesselType(actor).beam/2,shippingVesselType(actor).length/2]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.5,3.9]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-fishing-boat'?[1.35,3.15]:[1,2.4];
 export function watercraftFootprint(point,yaw=0,actor=null){
- const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=['harbor-yacht','harbor-fishing-boat'].includes(actor?.modelId||actor?.asset?.buildAssetId)?watercraftSize(actor):(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.35,3.7]:[.9,2];
+ const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=shippingVesselType(actor)||['harbor-yacht','harbor-fishing-boat'].includes(actor?.modelId||actor?.asset?.buildAssetId)?watercraftSize(actor):(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.35,3.7]:[.9,2];
  const points=[[0,0],[-w,-l],[w,-l],[-w,l],[w,l]];if(w>1)points.push([-w,0],[w,0],[0,-l],[0,l]);
+ // A long freighter can straddle a narrow point of land between its corners.
+ // Probe both rails every four metres as well as the bow and stern.
+ if(shippingVesselType(actor))for(let z=-l+4;z<l;z+=4)points.push([-w,z],[0,z],[w,z]);
  return points.map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
 }
 // Separating-axis test for complete oriented hulls, including occupied boats.
@@ -28,5 +33,5 @@ export function watercraftInteractionPoint(actor,feet){
  return position;
 }
 export function watercraftInteractionReach(actor,feet,reach=5){
- return hasWalkableInterior(actor)?watercraftInteractionPoint(actor,feet)!==actor.position?3:Math.min(24,reach):Math.min(5,reach);
+ return hasWalkableInterior(actor)?watercraftInteractionPoint(actor,feet)!==actor.position?3:Math.min(24,reach):shippingVesselType(actor)?Math.min(16,reach):Math.min(5,reach);
 }

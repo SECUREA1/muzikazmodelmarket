@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {isWatercraft,watercraftOverlap,watercraftSize} from './public/js/harbor-water.js';
+import {isShippingVessel} from './public/js/shipping-vessel-specs.js';
 import {boatWaterwayClear} from './public/js/vehicle-actions.js';
 import {planBoatNavigation} from './public/js/boat-navigation.js';
 import {harborRadio} from './server-harbor-operations.mjs';
@@ -12,7 +13,7 @@ export function boatMovementBlocked(environment,boat,actors,collision,objects={}
   if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,boat,other)))return true;
   const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;
   const direction=[dx/span,0,dz/span];
-  const [beam,length]=['harbor-yacht','harbor-patrol','harbor-fishing-boat'].includes(boat.modelId||boat.asset?.buildAssetId)?watercraftSize(boat):[.85,2];
+  const [beam,length]=isShippingVessel(boat)||['harbor-yacht','harbor-patrol','harbor-fishing-boat'].includes(boat.modelId||boat.asset?.buildAssetId)?watercraftSize(boat):[.85,2];
   return [-beam,0,beam].some(side=>{
    const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*length,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*length};
    if(collision?.blocksShot(environment,origin,direction,span+.12,Object.fromEntries(Object.entries(actors).filter(([id])=>id!==boat.id))))return true;

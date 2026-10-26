@@ -103,3 +103,36 @@ test('generated commons and every district offer work tied to their saved guides
  const generated=environments.filter(world=>world.source==='community-atlas');assert.equal(generated.length,9);
  for(const world of generated){const offers=verifyOffers(world),service=offers.find(offer=>offer.kind==='site-job');assert.ok(service,world.id+' has usable authored guidance');for(const site of service.sites)assert.ok(world.builderScene.objects.some(object=>object.id===site.entityId));}
 });
+
+
+test('shipping seas without a default mainland keep foot quests on their authored arrival terminal',()=>{
+ const harbor={mainIsland:false,extent:1400,islands:[{id:'terminal',x:-700,z:200,width:160,depth:120},{id:'far-port',x:800,z:-300,width:120,depth:80}],lakes:[]};
+ const locations=[{id:'arrival-office',name:'Cargo office',x:-700,z:200},{id:'crane-briefing',name:'Crane briefing',x:-680,z:180},{id:'quay-check',name:'Quay safety check',x:-720,z:220},{id:'phantom-mainland',name:'Uncharted sea',x:0,z:0},{id:'remote-port',name:'Remote port',x:800,z:-300}];
+ const guide={id:'cargo-guide',name:'Cargo master',position:{x:-692,y:0,z:200},functionalSettings:{behavior:'talk',interactionDistance:4}};
+ const world={id:'shipping-water',game:'shipping',name:'Shipping sea',spawn:{x:-700,y:0,z:200},builderScene:{mapSize:2800,objects:[guide],layoutMeta:{harbor,locations}}};
+ const offers=verifyOffers(world);
+ for(const offer of offers)for(const site of offer.sites){assert.ok(site.x>=-780&&site.x<=-620&&site.z>=140&&site.z<=260,offer.id+' stays on the arrival terminal');assert.equal(site.name==='Uncharted sea'||site.name==='Remote port',false);}
+ assert.match(offers[0].title,/Cargo terminal/);
+ assert.equal(offers.find(offer=>offer.kind==='site-job').sites[0].entityId,'cargo-guide');
+ const seaArrival={...world,id:'sea-arrival',spawn:{x:0,y:0,z:0}};
+ for(const offer of mapQuestOffers(seaArrival))for(const site of offer.sites)assert.ok(Math.hypot(site.x,site.z)<=4,'sea arrival does not invent an origin mainland or distant walkable quay');
+});
+
+
+test('narrow shipping regions exclude circular maritime and cross-sea walking assignments',()=>{
+ const world={id:'narrow-shipping',game:'shipping',spawn:{x:-1000,y:0,z:500},builderScene:{mapSize:2800,objects:[],layoutMeta:{harbor:{mainIsland:false,extent:1400,islands:[{id:'south-coast',x:0,z:700,width:2800,depth:800},{id:'north-coast',x:0,z:-700,width:2800,depth:800}],lakes:[]},locations:[{id:'local-quay',name:'Local quay',x:-1000,z:500},{id:'local-crane',name:'Crane briefing',x:-990,z:510},{id:'remote-quay',name:'Far port',x:1000,z:-500}]}}};
+ const offers=questCatalog(world);
+ assert.ok(offers.some(offer=>offer.siteQuest),'dock orientation and checkpoint quests remain');
+ assert.equal(offers.some(offer=>['boat','gunboat'].includes(offer.mode)),false,'no invented complete water circuit through coasts');
+ assert.equal(offers.some(offer=>['land-delivery','land-recovery','land-explore'].includes(offer.id)),false,'no walk across shipping sea');
+ for(const offer of offers.filter(offer=>offer.siteQuest))for(const site of offer.sites)assert.ok(site.z>=300,'dock quests remain on the starting coast');
+});
+
+
+test('dock walking quests can reach an overlapping quay without crossing to a disconnected port',()=>{
+ const world={id:'connected-shipping-quay',game:'shipping',spawn:{x:0,y:0,z:25},builderScene:{mapSize:1000,objects:[{id:'quay-guide',name:'Loading supervisor',position:{x:0,y:0,z:0},functionalSettings:{behavior:'talk',interactionDistance:4}}],layoutMeta:{harbor:{mainIsland:false,extent:500,islands:[{id:'coast',x:0,z:70,width:200,depth:100},{id:'quay',x:0,z:10,width:60,depth:40},{id:'remote-port',x:300,z:-100,width:60,depth:40}]},locations:[{id:'quay-office',name:'Dock office',x:0,z:0},{id:'coastal-market',name:'Stock market',x:20,z:40},{id:'remote-office',name:'Remote office',x:300,z:-100}]}}};
+ const offers=verifyOffers(world);
+ assert.ok(offers.find(offer=>offer.kind==='site-job').sites.some(site=>site.entityId==='quay-guide'),'a continuous dock floor reaches its crew briefing');
+ assert.ok(offers.flatMap(offer=>offer.sites).some(site=>site.name==='Dock office'));
+ assert.equal(offers.flatMap(offer=>offer.sites).some(site=>site.name==='Remote office'),false);
+});

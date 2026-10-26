@@ -5957,6 +5957,201 @@
         "speed": 8,
         "turnSpeed": 0.8
       }
+    },
+    {
+      "id": "builder-shipping-feeder",
+      "buildAssetId": "shipping-feeder",
+      "name": "Gulf Feeder",
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "dimensions": [
+        6.4,
+        7.4,
+        20
+      ],
+      "type": "vehicles",
+      "category": "vehicles",
+      "size": 72,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "vehicle",
+      "image": "/public/images/boats/shipping-feeder.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Gulf Feeder"
+      },
+      "action": "boat",
+      "vehicleSettings": {
+        "mode": "boat",
+        "seat": [
+          0,
+          5.4,
+          5
+        ],
+        "speed": 10,
+        "turnSpeed": 0.27
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "vehicles",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/shipping/shipping-feeder.svg",
+      "priceMzk": 750,
+      "useCostMzk": 5
+    },
+    {
+      "id": "builder-shipping-container",
+      "buildAssetId": "shipping-container",
+      "name": "Strait Container Carrier",
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "dimensions": [
+        10,
+        11.5,
+        40
+      ],
+      "type": "vehicles",
+      "category": "vehicles",
+      "size": 72,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "vehicle",
+      "image": "/public/images/boats/shipping-container.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Strait Container Carrier"
+      },
+      "action": "boat",
+      "vehicleSettings": {
+        "mode": "boat",
+        "seat": [
+          0,
+          8.4,
+          13
+        ],
+        "speed": 11,
+        "turnSpeed": 0.18
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "vehicles",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/shipping/shipping-container.svg",
+      "priceMzk": 750,
+      "useCostMzk": 5
+    },
+    {
+      "id": "builder-shipping-tanker",
+      "buildAssetId": "shipping-tanker",
+      "name": "Oman Product Tanker",
+      "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
+      "dimensions": [
+        11,
+        12.5,
+        46
+      ],
+      "type": "vehicles",
+      "category": "vehicles",
+      "size": 72,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "vehicle",
+      "image": "/public/images/boats/shipping-tanker.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 16,
+        "health": 900,
+        "destructible": true,
+        "prompt": "Board Oman Product Tanker"
+      },
+      "action": "boat",
+      "vehicleSettings": {
+        "mode": "boat",
+        "seat": [
+          0,
+          9.4,
+          16
+        ],
+        "speed": 9,
+        "turnSpeed": 0.15
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "vehicles",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/shipping/shipping-tanker.svg",
+      "priceMzk": 750,
+      "useCostMzk": 5
+    },
+    {
+      "id": "builder-shipping-container-box",
+      "buildAssetId": "shipping-container-box",
+      "name": "Intermodal Cargo Container",
+      "description": "Corrugated steel container with locking bars and corner castings.",
+      "dimensions": [
+        2.4,
+        2.6,
+        6
+      ],
+      "type": "props",
+      "category": "props",
+      "size": 72,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "props",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/shipping/shipping-parts-stock.svg",
+      "priceMzk": 100,
+      "useCostMzk": 1
+    },
+    {
+      "id": "builder-shipping-port-crane",
+      "buildAssetId": "shipping-port-crane",
+      "name": "Ship-to-Shore Gantry Crane",
+      "description": "Container terminal gantry with boom, lift cables, trolley and spreader.",
+      "dimensions": [
+        14,
+        26,
+        40
+      ],
+      "type": "props",
+      "category": "props",
+      "size": 72,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "props",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/shipping/hormuz-shipping.svg",
+      "priceMzk": 100,
+      "useCostMzk": 1
     }
   ]
 }

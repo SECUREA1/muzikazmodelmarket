@@ -1,5 +1,6 @@
 import {localMapLocations} from './local-map-locations.js';
 import {builderBaseSpawn} from './environments/builder-base.js';
+import {harborLandPatches} from './harbor-water.js';
 
 const cache=new WeakMap();
 const finitePoint=point=>point&&Number.isFinite(Number(point.x))&&Number.isFinite(Number(point.z));
@@ -11,19 +12,24 @@ function harborWalkingArea(environment,origin){
  const harbor=environment.builderScene?.layoutMeta?.harbor;
  if(!harbor)return {allows:()=>true,survey:()=>true};
  const contains=(point,patch)=>Math.abs(point.x-patch.x)<=patch.width/2&&Math.abs(point.z-patch.z)<=patch.depth/2;
- const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
- const patch=patches.find(patch=>contains(origin,patch));
+ const patches=harborLandPatches(harbor);
+ const patch=patches.find(patch=>contains(origin,patch)),connected=patch?[patch]:[];
+ // A quay may overlap the coast in several authored floor rectangles. Keep
+ // their connected component so dock offices remain reachable on foot.
+ const touches=(a,b)=>{const x=Math.min(a.x+a.width/2,b.x+b.width/2)-Math.max(a.x-a.width/2,b.x-b.width/2),z=Math.min(a.z+a.depth/2,b.z+b.depth/2)-Math.max(a.z-a.depth/2,b.z-b.depth/2);return x>=-.01&&z>=-.01&&Math.max(x,z)>=.8;};
+ for(let index=0;index<connected.length;index++)for(const candidate of patches)if(!connected.includes(candidate)&&touches(connected[index],candidate))connected.push(candidate);
  const onLake=point=>(harbor.lakes||[]).some(lake=>contains(point,lake));
  // A walking assignment cannot require boarding a boat to reach another
- // island. Named stops must share the arrival's actual authored land patch.
+ // island. Named stops must share the arrival's connected authored land.
  // Unclassified pier arrivals get only nearby floor surveys; the live room
  // checks their real deck floors instead of assuming a connection to shore.
- const allows=point=>!!patch&&contains(point,patch)&&!onLake(point);
+ const allows=point=>connected.some(patch=>contains(point,patch))&&!onLake(point);
  return {allows,survey:point=>patch?allows(point):separation(point,origin)<=4&&!patches.some(patch=>contains(point,patch))&&!onLake(point),localDeck:!patch};
 }
 
 function mapTheme(environment){
  if(environment.airport?.enabled||environment.game==='airport')return {tour:'Airport ground discovery',challenge:'Airport ground route challenge',service:'Airport ground-service briefing'};
+ if(environment.game==='shipping'||environment.builderScene?.layoutMeta?.shipping)return {tour:'Cargo terminal orientation',challenge:'Dock checkpoint challenge',service:'Shipping crew briefing'};
  if(environment.builderScene?.layoutMeta?.harbor)return {tour:'Waterfront discovery walk',challenge:'Waterfront checkpoint challenge',service:'Harbor services briefing'};
  if(environment.game==='missile-factory'||environment.factory?.enabled)return {tour:'Factory floor orientation',challenge:'Factory checkpoint challenge',service:'Factory crew briefing'};
  if(environment.game==='construction')return {tour:'Construction site orientation',challenge:'Construction checkpoint challenge',service:'Construction safety briefing'};

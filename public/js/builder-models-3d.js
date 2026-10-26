@@ -11,6 +11,8 @@ import {RESORT_PRODUCTS} from './resort-products.js';
 import {createResortProduct} from './resort-product-models.js';
 import {createAircraftModel,updateAircraftModel} from './aircraft-model.js';
 import {createHarborBoat,updateHarborBoat} from './harbor-models.js';
+import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
+import {createShippingContainer,createShippingPortCrane} from './shipping-models.js';
 import {createFishingBoat,createFishingGear} from './fishing-models.js';
 import {FISHING_GEAR} from './fishing-config.js';
 import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
@@ -35,6 +37,9 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,[spec.name,'Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.',[spec.beam,spec.height,spec.length]]])),
+  'shipping-container-box':['Intermodal Cargo Container','Corrugated steel container with locking bars and corner castings.',[2.4,2.6,6]],
+  'shipping-port-crane':['Ship-to-Shore Gantry Crane','Container terminal gantry with boom, lift cables, trolley and spreader.',[14,26,40]],
   ...FACTORY_MODEL_INFO,
   ...FITNESS_MODEL_INFO,
   'lot-owned-sign':['Claimed Deed Sign','Timber sign marking a lot with an existing deed owner.',[1.5,1.95,.14]],
@@ -304,7 +309,9 @@ export function createBuilderModel(id,options={}) {
   if(id==='harbor-patrol')return createPatrolBoat();
   if(id==='harbor-fishing-boat')return createFishingBoat();
   if(FISHING_GEAR.some(item=>item.id===id))return createFishingGear(id);
-  if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
+  if(['harbor-skiff','harbor-sailboat','harbor-yacht',...Object.keys(SHIPPING_VESSELS)].includes(id))return createHarborBoat(id);
+  if(id==='shipping-container-box')return createShippingContainer();
+  if(id==='shipping-port-crane')return createShippingPortCrane();
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 
   if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}

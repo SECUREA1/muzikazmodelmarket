@@ -5,6 +5,7 @@ import {editableFitnessScene} from './fitness-builder.js';
 import {AIRCRAFT_TYPES} from './aircraft-types.js';
 import {RESORT_PRODUCTS,resortProductSettings} from './resort-products.js';
 import {CAMP_ITEMS} from './summer-camp.js';
+import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
 export const mapSourceLayout=map=>map.builderScene?.sourceLayout||map.builderScene?.layout||map.layout||(map.game==='hockey'?'hockey-arena':map.game==='arcade'?'arcade-park':map.basketball?'basketball-stadium':'grand-floor');
 // Copy an authorized map into a new draft. Preserve authored IDs and references;
 // never edit the source room or silently discard objects with unknown models.
@@ -14,6 +15,7 @@ export function editableMapScene(map,{id='custom-'+map.id,layout='repository-'+m
 }
 export function editableMapChoices(...sources){const found=new Map();for(const source of sources){const rows=Array.isArray(source)?source:Array.isArray(source?.data)?source.data:Array.isArray(source?.environments)?source.environments:[];for(const map of rows)if(map?.id&&map.playable!==false&&map.visibility!=='private')found.set(map.id,map);}return [...found.values()];}
 export function nativeItemGameplay(id){
+ if(SHIPPING_VESSELS[id]){const spec=SHIPPING_VESSELS[id];return {image:'/public/images/boats/'+id+'.svg',type:'vehicle',category:'vehicles',behavior:'vehicle',action:'boat',vehicleSettings:{mode:'boat',seat:[...spec.seat],speed:spec.speed,turnSpeed:spec.turnRate},function_data:{behavior:'vehicle',health:900,destructible:true,interactionDistance:16,prompt:'Board '+spec.name}};}
  if(FACTORY_ITEMS[id]){const item=FACTORY_ITEMS[id];return {type:'props',category:'factory',image:item.thumbnailUrl,behavior:item.kind?'interact':'decor',priceMzk:item.priceMzk,function_data:factoryItemSettings(id)};}
  if(FITNESS_ITEMS[id]){const item=FITNESS_ITEMS[id];return {type:'props',category:'fitness',image:item.thumbnailUrl,behavior:item.kind?'interact':'decor',priceMzk:item.priceMzk,function_data:{...fitnessItemSettings(id),active:true,damage:0}};}
 

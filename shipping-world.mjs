@@ -1,0 +1,39 @@
+import {SHIPPING_ID,SHIPPING_RULES,SHIPPING_PORTS,SHIPPING_COASTS,SHIPPING_LANES,SHIPPING_ROUTES,SHIPPING_CARGO,SHIPPING_VESSELS} from './public/js/shipping-config.js';
+
+export const SHIPPING_WORLD_VERSION=1;
+export const SHIPPING_HARBOR_ID='world-district-neon-docks';
+export function shippingWorld(){
+ const objects=[],locations=[];
+ const add=(id,modelId,x,y,z,extra={})=>{const item={id:'shipping-'+id,modelId,name:id.replaceAll('-',' '),placementAnchor:'collider-base',position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:240},...extra};objects.push(item);return item;};
+ const deck=(id,x,z,width,depth)=>add(id,'material:floor',x,-.198,z,{scale:{x:width/2.4,y:1,z:depth/2.4},functionalSettings:{behavior:'decor',destructible:false}});
+ const sign=(id,name,x,z,text)=>add(id,'street-sign',x,0,z,{name,functionalSettings:{behavior:'talk',interactionDistance:5,prompt:'Read '+name,destructible:false},dialogueSettings:{text}});
+ const dockPatches=[];
+ for(const port of SHIPPING_PORTS){
+  const signZ=Math.sign(port.position.z-port.z),near=port.z+signZ*12,far=port.position.z+signZ*4,depth=Math.abs(far-near),center=(near+far)/2;
+  dockPatches.push({id:port.id+'-quay',name:port.name+' quay',x:port.x,z:center,width:110,depth});
+  deck(port.id+'-cargo-quay',port.x,center,110,depth);
+  const workZ=port.z+signZ*35;
+  add(port.id+'-crane','shipping-port-crane',port.x+31,0,workZ,{name:port.name+' dock crane',rotation:{x:0,y:signZ>0?0:Math.PI,z:0},functionalSettings:{behavior:'decor',destructible:false}});
+  for(let column=0;column<3;column++)for(let row=0;row<2;row++)add(port.id+'-stock-'+column+'-'+row,'shipping-container-box',port.x-36+column*9,0,workZ+signZ*row*9,{name:port.name+' warehouse stock',materialSettings:{useAccent:true,accent:['#c97544','#4b94ab','#d3af5c'][column]}});
+  for(const dx of [-48,48])add(port.id+'-beacon-'+dx,'lamp-post',port.x+dx,0,port.z+signZ*9,{name:port.name+' berth beacon',functionalSettings:{behavior:'decor',destructible:false}});
+  sign(port.id+'-port-office',port.name+' · port office',port.x,port.z+signZ*26,'Welcome to '+port.name+'. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. '+port.description);
+  add(port.id+'-harbormaster','world-resident',port.x+8,0,port.z+signZ*28,{name:port.name.split(' · ')[0]+' harbormaster',functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Ask the harbormaster',destructible:false},dialogueSettings:{text:port.description+' Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane.'}});
+  locations.push({id:port.id,name:port.name,x:port.x,z:port.z+signZ*26,width:110,depth:Math.max(24,depth),arrival:{x:port.x,y:.02,z:port.z+signZ*26},icon:'⚓',description:port.description});
+ }
+ const home=SHIPPING_PORTS[0];
+ locations.push({id:'shipping-dispatch',name:'Shipping dispatch & training',x:home.x,z:382,width:22,depth:20,description:'Start Dock induction to learn balanced loading, secure manifests, navigation and unloading.'},{id:'shipping-supply-market',name:'Dock supply exchange',x:home.x-28,z:414,width:16,depth:14,description:'Delivered cargo becomes durable supply stock. Trade food, parts and tools through the marketplace and Shipping panel.'});
+ sign('welcome','Strait of Hormuz · shipping academy',home.x+12,406,'This condensed arcade world mirrors the Strait of Hormuz: the Persian Gulf lies west, the Gulf of Oman east, with Qeshm and Hormuz islands north and Musandam south. The two lanes keep inbound and outbound traffic apart. Start Dock induction for loading, securing, sailing and unloading. Conditions and hazards are fictional game scenarios.');
+ add('supply-market','market-stall',home.x-28,0,414,{name:'Dock supply exchange',functionalSettings:{behavior:'talk',interactionDistance:5,prompt:'Visit the dock supply exchange',destructible:false},dialogueSettings:{text:'Delivery rewards add food, parts and tools to your connected marketplace inventory. Use Shipping → Supply exchange to exchange stock for supplies and tools.'}});
+ const craft=(id,modelId,x,z,name,yaw=Math.PI/2)=>add(id,modelId,x,0,z,{name,placementAnchor:'waterline',rotation:{x:0,y:yaw,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:16,prompt:'Take cargo ship helm · E / Use',destructible:true,health:modelId==='shipping-feeder'?650:1200}});
+ craft('starter-feeder','shipping-feeder',home.x,home.z,'Gulf Runner · public training feeder');
+ craft('second-feeder','shipping-feeder',home.x,home.z-40,'Gulf Runner II · shared feeder');
+ craft('northern-container','shipping-container',400,-595,'Strait Pioneer · container carrier');
+ craft('eastern-tanker','shipping-tanker',1030,675,'Oman Horizon · cargo tanker');
+ craft('island-feeder','shipping-feeder',-80,-280,'Island Supply · Qeshm feeder');
+ craft('coastguard-patrol','harbor-patrol',home.x-180,home.z,'Strait Guardian · coastguard patrol');
+ const gate=add('neon-harbor-gateway','archway',home.x-12,0,384,{name:'Sea portal · return to Neon Harbor',scale:{x:1,y:1,z:1},functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:5,destructible:false,prompt:'Sail back to Neon Harbor',portal:{enabled:true,destinationType:'map',targetMapId:SHIPPING_HARBOR_ID,ownerName:'MUZIKAZ',color:'#5bd4e3'}}});
+ locations.push({id:'shipping-sea-portal',name:gate.name,x:gate.position.x,z:gate.position.z,width:5,depth:4,description:'Return to Neon Harbor and the connected fishing and island worlds.'});
+ const harbor={version:SHIPPING_WORLD_VERSION,mainIsland:false,extent:SHIPPING_RULES.extent,islands:[...SHIPPING_COASTS,...dockPatches],lakes:[],fishingEnabled:false,fishingZones:[],fishingGuides:[],docks:SHIPPING_PORTS.map(port=>({id:port.id,name:port.name,x:port.x,z:port.z+Math.sign(port.position.z-port.z)*10,width:port.width,depth:port.depth,approach:{...port.approach},entry:{...port.entry},yachtApproach:{...port.approach},yachtEntry:{...port.entry}})),shippingLanes:SHIPPING_LANES};
+ const shipping={enabled:true,version:SHIPPING_WORLD_VERSION,ports:SHIPPING_PORTS,lanes:SHIPPING_LANES,routes:SHIPPING_ROUTES,cargo:SHIPPING_CARGO,vessels:SHIPPING_VESSELS};
+ return {id:SHIPPING_ID,name:'Strait of Hormuz · Shipping Academy',label:'Gulf shipping · cargo, ports & convoy challenges',description:'A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Complete rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.',category:'Shipping & transport',game:'shipping',worldId:'neon-docks',permanent:true,publicDestination:true,proceduralLand:true,source:'repository',visibility:'public',playable:true,multiplayer:true,sharedWorld:true,canDelete:false,canEdit:false,ownerId:'muzikaz',ownerName:'MUZIKAZ',scale:1,spaceScale:1,playableSize:SHIPPING_RULES.mapSize,contentUpdatedAt:'2026-10-26T00:00:00.000Z',thumbnailUrl:'/public/images/shipping/hormuz-shipping.svg',spawn:{x:home.x,y:.02,z:382,rotationY:0},streets:[],shipping,builderScene:{version:3,layout:'neon-harbor',mapSize:SHIPPING_RULES.mapSize,objects,layoutMeta:{color:0xb39a6a,sky:0x8abcc8,harbor,shipping,locations},gameplay:{multiplayer:true,friendlyFire:false,radTox:false}},playUrl:'model-explorer.html?environment='+SHIPPING_ID+'&house='+SHIPPING_ID+'&autoplay=1&mode=multiplayer'};
+}

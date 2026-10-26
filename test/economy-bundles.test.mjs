@@ -10,7 +10,8 @@ async function member(run){const dir=await mkdtemp(join(tmpdir(),'bundles-'));tr
 
 test('every paid platform item and care supply belongs to a discount bundle',()=>{
  const upgrades=new Set(GAME_BUNDLES.flatMap(bundle=>bundle.entries.map(item=>item.sku)));
- for(const item of GAME_ECONOMY.filter(item=>!item.basic))assert.ok(upgrades.has(item.sku),item.name);
+ for(const item of GAME_ECONOMY.filter(item=>!item.basic&&!item.earnedOnly))assert.ok(upgrades.has(item.sku),item.name);
+ for(const item of GAME_ECONOMY.filter(item=>item.earnedOnly)){assert.equal(item.priceMzk,0);assert.equal(upgrades.has(item.sku),false,'earned cargo stock is unavailable in paid bundles');}
  const supplies=new Set(GAME_BUNDLES.flatMap(bundle=>bundle.entries.map(item=>item.catalogId)));
  for(const item of CARE_SUPPLIES)assert.ok(supplies.has(item.id));
  for(const bundle of economyBundles({items:[]})){assert.equal(bundle.discountPercent,20);assert.ok(bundle.priceMzk<bundle.subtotalMzk);assert.equal(bundle.priceMzk+bundle.savingsMzk,bundle.subtotalMzk);}

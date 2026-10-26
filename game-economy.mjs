@@ -6,6 +6,7 @@ import {BUILDING_MATERIALS,buildingType} from './public/js/building-materials.js
 import {EXTRA_WEAPONS,RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 import {FISHING_GEAR} from './public/js/fishing-config.js';
+import {SHIPPING_STOCK_ITEMS,shippingStockQuantity} from './public/js/shipping-market.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './public/js/missile-factory-items.js';
 import {NATIVE_BUILDER_ITEMS,nativeBuilderItem} from './public/js/native-builder-items.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
@@ -24,6 +25,7 @@ const tools={laser:'Starter laser',bat:'Basic bat',spray:'Paint gun',brick:'Buil
 const toolCosts={jetpack:[750,1],dynamite:[300,25],toxin:[250,5],flamethrower:[400,2],taser:[175,1],medkit:[100,5],'shield-kit':[180,5],scanner:[150,2]};
 const extraBuildItems=[['bathroom-vanity','Bathroom Vanity'],['dining-set','Dining Set'],['elevator','Working Elevator'],['fireplace','Modern Fireplace'],['glass-door','Glass Entry Door'],['loft-bed','Loft Bed'],['modular-wall','Modular Building Wall'],['studio-desk','Producer Studio Desk'],['wardrobe','Walk-in Wardrobe']];
 const raw=[
+ ...SHIPPING_STOCK_ITEMS,
  ...FISHING_GEAR.map(item=>({...item,sku:'tool:'+item.id,toolId:item.id,buildAssetId:item.id,kind:'tool',category:'Fishing tools & tackle',assetType:'tools',useCostMzk:0})),
  ...extraBuildItems.map(([id,name])=>({sku:'backpack:builder-'+id,id:'builder-'+id,name,buildAssetId:id,category:'Builder furniture',kind:'asset',assetType:'props',priceMzk:id==='elevator'?400:150,useCostMzk:1})),
  ...Object.entries(tools).map(([id,name])=>({sku:'tool:'+id,id,name,category:UTILITY_TOOLS[id]?'Utility tools':'Weapons & gear',kind:'tool',basic:basicTools.has(id),priceMzk:toolCosts[id]?.[0]||200,useCostMzk:toolCosts[id]?.[1]||1,toolId:id})),
@@ -48,13 +50,13 @@ export const GAME_ECONOMY=raw.map(record=>{
 });
 export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);}
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
-export function ownsEconomyItem(state,item){return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}
-export function economyInventory(state){return GAME_ECONOMY.map(item=>({...item,owned:ownsEconomyItem(state,item),...(item.kind==='material'?{stock:Number(state.memory?.materialCredits?.[item.sku]||0)}:{})}));}
+export function ownsEconomyItem(state,item){if(item?.kind==='stock')return shippingStockQuantity(state,item.shippingSupplyId)>0;return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}
+export function economyInventory(state){return GAME_ECONOMY.map(item=>({...item,owned:ownsEconomyItem(state,item),...(item.kind==='material'?{stock:Number(state.memory?.materialCredits?.[item.sku]||0)}:item.kind==='stock'?{stock:shippingStockQuantity(state,item.shippingSupplyId)}:{})}));}
 
 export const CARE_SUPPLIES=(await json('./public/models/ioncore-rpg-items.json')).items;
 export const BUNDLE_DISCOUNT_PERCENT=20;
 const bundleGroups=new Map();
-for(const item of GAME_ECONOMY.filter(item=>!item.basic)){
+for(const item of GAME_ECONOMY.filter(item=>!item.basic&&!item.earnedOnly)){
  const category=item.category==='Models'?`Models · ${item.assetType||'props'}`:item.category;
  if(!bundleGroups.has(category))bundleGroups.set(category,[]);
  bundleGroups.get(category).push({kind:'upgrade',sku:item.sku,name:item.name,priceMzk:item.priceMzk});

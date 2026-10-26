@@ -1,4 +1,5 @@
-import {harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftSize,isWatercraft} from './harbor-water.js';
+import {harborWaterAt,harborLandPatches,watercraftFootprint,watercraftOverlap,watercraftSize,isWatercraft} from './harbor-water.js';
+import {shippingVesselType} from './shipping-vessel-specs.js';
 import {fishingZones,fishingStationPosition,isFishingBoat} from './fishing-config.js';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -7,7 +8,7 @@ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export function harborApproach(environment,id,boat=null){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return null;
  const lake=(harbor.lakes||[]).find(lake=>boat?.position&&Math.abs(boat.position.x-lake.x)<lake.width/2&&Math.abs(boat.position.z-lake.z)<lake.depth/2);
- if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:{id,name:'Open-water passage',x:184,z:80};
+ if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:harbor.mainIsland===false?{id,name:'Strait traffic channel',...(harbor.openWater||{x:0,z:0})}:{id,name:'Open-water passage',x:184,z:80};
  const fishing=fishingZones(environment).find(zone=>zone.id===id);if(fishing&&((lake&&fishing.water==='fresh'&&Math.abs(fishing.x-lake.x)<lake.width/2&&Math.abs(fishing.z-lake.z)<lake.depth/2)||(!lake&&fishing.water==='salt')))return {id,name:fishing.name,x:fishing.x,z:fishing.z,kind:'fishing',zoneId:fishing.id,arrivalRadius:1.6};
  if(lake&&id===lake.id)return {id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5};
  if(id==='marina'&&boat?.modelId==='harbor-yacht')return {id,name:'Superyacht Marina Approach',x:170,z:99,entry:{x:225,z:99}};
@@ -46,10 +47,11 @@ export function planBoatNavigation(boat,environment,options={}){
 // Plan once along the coastline; physical sweeps reject piers and placed pieces.
 function planPassage(boat,environment,{actors={},blocked=()=>false,depart=false},goal){
  const harbor=environment.builderScene.layoutMeta.harbor,prefix=[],point={x:finite(boat.position?.x),z:finite(boat.position?.z)};
- const yacht=boat.modelId==='harbor-yacht',departureDock=(harbor.docks||[]).find(dock=>distance(point,yacht?dock.yachtApproach:dock.approach)<5);
+ const yacht=boat.modelId==='harbor-yacht',cargo=shippingVesselType(boat),departureDock=(harbor.docks||[]).find(dock=>distance(point,yacht?dock.yachtApproach:dock.approach)<5);
  const berth=(environment.builderScene.objects||[]).filter(isWatercraft).map(value=>({value,span:distance(value.position,point)})).sort((a,b)=>a.span-b.span)[0];
  if(depart||berth?.span<3||departureDock){
-  if(yacht&&point.x<151&&point.x>134&&point.z>80&&point.z<125){prefix.push({x:225,z:99,radius:4,gear:1,departureArc:true});}
+  if(cargo&&departureDock){const yaw=boat.rotation?.y||0;prefix.push({x:point.x-Math.sin(yaw)*100,z:point.z-Math.cos(yaw)*100,radius:3.3,gear:1,departureArc:true});}
+  else if(yacht&&point.x<151&&point.x>134&&point.z>80&&point.z<125){prefix.push({x:225,z:99,radius:4,gear:1,departureArc:true});}
   else if(yacht&&departureDock){const entry=departureDock.yachtEntry;prefix.push({...entry,radius:2,gear:-1},{x:entry.x+(departureDock.width>10?0:60),z:entry.z+(departureDock.width>10?-55:0),radius:4,gear:1});}
   else if(point.x>135&&point.x<151&&point.z>16&&point.z<49){
    const north=point.z<24,gear=-Math.sin(boat.rotation?.y||0)<-.7?-1:1;
@@ -59,8 +61,9 @@ function planPassage(boat,environment,{actors={},blocked=()=>false,depart=false}
    if(island)prefix.push({x:island.x-island.width/2-10,z:island.z-island.depth/2-14,radius:3.3,gear:1});
   }
  }
- const start=prefix.at(-1)||point,nodes=[start,goal.entry||goal],patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
- const cornerMargin=yacht?34:10;
+ const start=prefix.at(-1)||point,nodes=[start,goal.entry||goal],patches=harborLandPatches(harbor);
+ const cornerMargin=shippingVesselType(boat)?Math.hypot(...watercraftSize(boat))+12:yacht?34:10;
+ for(const vertex of harbor.navigationNodes||[])if(harborWaterAt(environment,vertex,2.8))nodes.push(vertex);
  for(const dock of harbor.docks||[])for(const sx of [-1,1])for(const sz of [-1,1]){const vertex={x:dock.x+sx*(dock.width/2+cornerMargin),z:dock.z+sz*(dock.depth/2+cornerMargin)};if(harborWaterAt(environment,vertex,2.8))nodes.push(vertex);}
  for(const patch of patches)for(const sx of [-1,1])for(const sz of [-1,1]){const vertex={x:patch.x+sx*(patch.width/2+cornerMargin),z:patch.z+sz*(patch.depth/2+cornerMargin)};if(harborWaterAt(environment,vertex,2.8))nodes.push(vertex);}
  const costs=nodes.map(()=>Infinity),previous=nodes.map(()=>-1),done=new Set(),edges=new Map();costs[0]=0;
@@ -103,14 +106,15 @@ export function navigationControls(boat,input,environment,actors,blocked,now=0){
  const common={...input,forward:0,side:0,rudder:0,anchor:false,brake:false};
  if((state.speed||0)*gear<-.15)return {...common,throttle:0,brake:true};
  if(last&&span<(point.radius||2.3)){state.assistStage=speed<.15?'arrived':'arrival';return {...common,throttle:0,brake:true,anchor:speed<.15};}
- if((boat.modelId==='harbor-yacht'||isFishingBoat(boat))&&!point.departureArc&&Math.abs(error)>.12){state.assistStage='maneuvering';return {...common,throttle:0,brake:speed>.12,side:-clamp(error*2,-1,1),bowThruster:speed<=.12};}
- const desired=Math.min(last?3.4:2.5,Math.abs(error)>.5?1.8:4,last?Math.max(0,(span-1)*.6):10),drag=1.8*desired+.023*desired*desired,force=(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat'?8:18;
- const throttle=gear*clamp((drag+(desired-speed)*3)/force,0,.5),rudder=-clamp(error*1.7,-1,1)*gear;
+ const cargo=shippingVesselType(boat);
+ if((boat.modelId==='harbor-yacht'||isFishingBoat(boat)||cargo)&&!point.departureArc&&Math.abs(error)>(cargo?(last?.018:.035):.12)){state.assistStage='maneuvering';return {...common,throttle:0,brake:speed>.12,side:-clamp(error*2,-1,1),bowThruster:speed<=.12};}
+ const desired=Math.min(last?3.4:cargo?7:2.5,Math.abs(error)>.5?1.8:cargo?7:4,last?Math.max(0,(span-1)*.6):10),drag=1.8*desired+.023*desired*desired,force=cargo?.thrust||((boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat'?8:18);
+ const throttle=gear*clamp((drag+(desired-speed)*3)/force,0,cargo?.85:.5),rudder=-clamp(error*1.7,-1,1)*gear;
  // Follow a short turning arc; occupied traffic retains the route and waits.
  const forecast=Math.max(1.2,speed*speed/14+speed*.35),steps=Math.ceil(forecast/.5),step=forecast/steps;
  let position={...boat.position},yaw=boat.rotation?.y||0,clear=true;
  for(let n=0;n<steps;n++){
-  const nextYaw=yaw-rudder*((boat.modelId||boat.asset?.buildAssetId)==='harbor-yacht'?.035:(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat'?.16:.2)*step*gear,next={x:position.x-Math.sin(nextYaw)*step*gear,y:0,z:position.z-Math.cos(nextYaw)*step*gear};
+  const nextYaw=yaw-rudder*(cargo?cargo.turnRate/4:(boat.modelId||boat.asset?.buildAssetId)==='harbor-yacht'?.035:(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat'?.16:.2)*step*gear,next={x:position.x-Math.sin(nextYaw)*step*gear,y:0,z:position.z-Math.cos(nextYaw)*step*gear};
   if(!hullClear(environment,boat,next,nextYaw,actors)||blocked(position,next,nextYaw)){clear=false;break;}position=next;yaw=nextYaw;
  }
  if(!clear){state.assistStage='waiting';state.navigationWarning='Passage occupied — holding position';return {...common,throttle:0,brake:true};}

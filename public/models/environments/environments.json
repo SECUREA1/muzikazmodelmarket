@@ -57253,5 +57253,4500 @@
       }
     },
     "playUrl": "model-explorer.html?environment=muzikaz-missile-factory&house=muzikaz-missile-factory&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "hormuz-shipping",
+    "name": "Strait of Hormuz · Shipping Academy",
+    "label": "Gulf shipping · cargo, ports & convoy challenges",
+    "description": "A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Complete rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.",
+    "category": "Shipping & transport",
+    "game": "shipping",
+    "worldId": "neon-docks",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 2800,
+    "contentUpdatedAt": "2026-10-26T00:00:00.000Z",
+    "thumbnailUrl": "/public/images/shipping/hormuz-shipping.svg",
+    "spawn": {
+      "x": -1030,
+      "y": 0.02,
+      "z": 382,
+      "rotationY": 0
+    },
+    "streets": [],
+    "shipping": {
+      "enabled": true,
+      "version": 1,
+      "ports": [
+        {
+          "id": "jebel-ali",
+          "name": "Jebel Ali · container gateway",
+          "x": -1030,
+          "z": 330,
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": 394
+          },
+          "berth": {
+            "x": -1030,
+            "z": 330,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": -1030,
+            "z": 330
+          },
+          "entry": {
+            "x": -930,
+            "z": 330
+          },
+          "departure": {
+            "x": -1130,
+            "z": 330
+          },
+          "seaApproach": {
+            "x": -1030,
+            "z": 220
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "UAE",
+          "specialty": "containers",
+          "description": "Start here: balance a feeder load, clear the outbound lane and supply the eastern coast."
+        },
+        {
+          "id": "ras-tanura",
+          "name": "Ras Tanura · energy terminal",
+          "x": -1030,
+          "z": -595,
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": -650
+          },
+          "berth": {
+            "x": -1030,
+            "z": -595,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": -1030,
+            "z": -595
+          },
+          "entry": {
+            "x": -930,
+            "z": -595
+          },
+          "departure": {
+            "x": -1130,
+            "z": -595
+          },
+          "seaApproach": {
+            "x": -1030,
+            "z": -500
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "Saudi Arabia",
+          "specialty": "energy",
+          "description": "Energy cargoes need careful handling and a stable load before departure."
+        },
+        {
+          "id": "bandar-abbas",
+          "name": "Bandar Abbas · northern cargo hub",
+          "x": 400,
+          "z": -595,
+          "position": {
+            "x": 400,
+            "y": 0,
+            "z": -650
+          },
+          "berth": {
+            "x": 400,
+            "z": -595,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": 400,
+            "z": -595
+          },
+          "entry": {
+            "x": 500,
+            "z": -595
+          },
+          "departure": {
+            "x": 300,
+            "z": -595
+          },
+          "seaApproach": {
+            "x": 400,
+            "z": -500
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "Iran",
+          "specialty": "materials",
+          "description": "Northern hub beyond Qeshm and Hormuz islands. Follow the marked approaches."
+        },
+        {
+          "id": "qeshm",
+          "name": "Qeshm · island supply dock",
+          "x": -80,
+          "z": -280,
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": -340
+          },
+          "berth": {
+            "x": -80,
+            "z": -280,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": -80,
+            "z": -280
+          },
+          "entry": {
+            "x": 20,
+            "z": -280
+          },
+          "departure": {
+            "x": -180,
+            "z": -280
+          },
+          "seaApproach": {
+            "x": -80,
+            "z": -180
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "Iran",
+          "specialty": "food",
+          "description": "A short island supply run introduces unloading and the strait traffic lanes."
+        },
+        {
+          "id": "khasab",
+          "name": "Khasab · Musandam relief dock",
+          "x": 180,
+          "z": 245,
+          "position": {
+            "x": 180,
+            "y": 0,
+            "z": 305
+          },
+          "berth": {
+            "x": 180,
+            "z": 245,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": 180,
+            "z": 245
+          },
+          "entry": {
+            "x": 280,
+            "z": 245
+          },
+          "departure": {
+            "x": 80,
+            "z": 245
+          },
+          "seaApproach": {
+            "x": 180,
+            "z": 160
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "Oman",
+          "specialty": "relief",
+          "description": "The peninsula narrows the channel. Give crossing traffic room and deliver relief supplies."
+        },
+        {
+          "id": "fujairah",
+          "name": "Fujairah · Gulf of Oman gateway",
+          "x": 1030,
+          "z": 675,
+          "position": {
+            "x": 1030,
+            "y": 0,
+            "z": 730
+          },
+          "berth": {
+            "x": 1030,
+            "z": 675,
+            "yaw": 1.5707963267948966
+          },
+          "approach": {
+            "x": 1030,
+            "z": 675
+          },
+          "entry": {
+            "x": 1130,
+            "z": 675
+          },
+          "departure": {
+            "x": 930,
+            "z": 675
+          },
+          "seaApproach": {
+            "x": 1030,
+            "z": 560
+          },
+          "width": 110,
+          "depth": 8,
+          "country": "UAE",
+          "specialty": "machinery",
+          "description": "Eastern gateway outside the strait, linking the open sea to Gulf stockrooms."
+        }
+      ],
+      "lanes": [
+        {
+          "id": "inbound",
+          "name": "Inbound · Gulf of Oman → Persian Gulf",
+          "direction": "westbound",
+          "points": [
+            {
+              "x": 1130,
+              "z": 380
+            },
+            {
+              "x": 700,
+              "z": 140
+            },
+            {
+              "x": 430,
+              "z": 70
+            },
+            {
+              "x": 170,
+              "z": 0
+            },
+            {
+              "x": -250,
+              "z": -100
+            },
+            {
+              "x": -700,
+              "z": -160
+            },
+            {
+              "x": -1180,
+              "z": -160
+            }
+          ]
+        },
+        {
+          "id": "outbound",
+          "name": "Outbound · Persian Gulf → Gulf of Oman",
+          "direction": "eastbound",
+          "points": [
+            {
+              "x": -1180,
+              "z": 0
+            },
+            {
+              "x": -700,
+              "z": 40
+            },
+            {
+              "x": -250,
+              "z": 90
+            },
+            {
+              "x": 170,
+              "z": 140
+            },
+            {
+              "x": 430,
+              "z": 210
+            },
+            {
+              "x": 700,
+              "z": 280
+            },
+            {
+              "x": 1130,
+              "z": 520
+            }
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "id": "dock-induction",
+          "name": "Dock induction · loading & handling",
+          "from": "jebel-ali",
+          "to": "jebel-ali",
+          "cargoId": "building-supplies",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 8,
+          "waypoints": [
+            {
+              "x": -1130,
+              "z": 330,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -1130,
+              "z": 250,
+              "name": "Clear the loading berth"
+            },
+            {
+              "x": -930,
+              "z": 250,
+              "name": "Basin turn and lookout"
+            },
+            {
+              "x": -930,
+              "z": 330,
+              "name": "Jebel Ali · container gateway · align with berth"
+            },
+            {
+              "x": -1030,
+              "z": 330,
+              "name": "Jebel Ali · container gateway · stop alongside"
+            }
+          ],
+          "rewardMzk": 20,
+          "hazard": "traffic"
+        },
+        {
+          "id": "gulf-gateway",
+          "name": "Gulf gateway supply run",
+          "from": "jebel-ali",
+          "to": "fujairah",
+          "cargoId": "building-supplies",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 8,
+          "waypoints": [
+            {
+              "x": -1130,
+              "z": 330,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -1030,
+              "z": 220,
+              "name": "Clear the departure basin"
+            },
+            {
+              "x": -700,
+              "z": 40,
+              "name": "Outbound Gulf lane"
+            },
+            {
+              "x": -250,
+              "z": 90,
+              "name": "Approach the strait"
+            },
+            {
+              "x": 170,
+              "z": 140,
+              "name": "Musandam traffic channel"
+            },
+            {
+              "x": 430,
+              "z": 210,
+              "name": "Hormuz east checkpoint"
+            },
+            {
+              "x": 700,
+              "z": 280,
+              "name": "Gulf of Oman"
+            },
+            {
+              "x": 1030,
+              "z": 560,
+              "name": "Fujairah approach"
+            },
+            {
+              "x": 1130,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · align with berth"
+            },
+            {
+              "x": 1030,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+            }
+          ],
+          "rewardMzk": 65,
+          "hazard": "traffic"
+        },
+        {
+          "id": "island-provisions",
+          "name": "Qeshm island provisions",
+          "from": "jebel-ali",
+          "to": "qeshm",
+          "cargoId": "island-provisions",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 4,
+          "waypoints": [
+            {
+              "x": -1130,
+              "z": 330,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -1030,
+              "z": 220,
+              "name": "Departure basin"
+            },
+            {
+              "x": -700,
+              "z": 40,
+              "name": "Gulf crossing"
+            },
+            {
+              "x": -250,
+              "z": -100,
+              "name": "Qeshm southern approach"
+            },
+            {
+              "x": -80,
+              "z": -180,
+              "name": "Island arrival lane"
+            },
+            {
+              "x": 20,
+              "z": -280,
+              "name": "Qeshm · island supply dock · align with berth"
+            },
+            {
+              "x": -80,
+              "z": -280,
+              "name": "Qeshm · island supply dock · stop alongside"
+            }
+          ],
+          "rewardMzk": 40,
+          "hazard": "traffic"
+        },
+        {
+          "id": "peninsula-relief",
+          "name": "Musandam relief convoy",
+          "from": "qeshm",
+          "to": "khasab",
+          "cargoId": "relief-supplies",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 4,
+          "waypoints": [
+            {
+              "x": -180,
+              "z": -280,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -80,
+              "z": -180,
+              "name": "Qeshm departure"
+            },
+            {
+              "x": -80,
+              "z": -70,
+              "name": "Check crossing traffic"
+            },
+            {
+              "x": 180,
+              "z": 0,
+              "name": "Strait separation channel"
+            },
+            {
+              "x": 180,
+              "z": 160,
+              "name": "Khasab approach"
+            },
+            {
+              "x": 280,
+              "z": 245,
+              "name": "Khasab · Musandam relief dock · align with berth"
+            },
+            {
+              "x": 180,
+              "z": 245,
+              "name": "Khasab · Musandam relief dock · stop alongside"
+            }
+          ],
+          "rewardMzk": 35,
+          "hazard": "pirates"
+        },
+        {
+          "id": "northern-materials",
+          "name": "Northern materials exchange",
+          "from": "ras-tanura",
+          "to": "bandar-abbas",
+          "cargoId": "building-supplies",
+          "units": 8,
+          "requiredVessel": "shipping-container",
+          "minSlots": 8,
+          "mass": 16,
+          "waypoints": [
+            {
+              "x": -1130,
+              "z": -595,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -1030,
+              "z": -500,
+              "name": "Energy terminal departure"
+            },
+            {
+              "x": -650,
+              "z": -180,
+              "name": "Pass west of Qeshm"
+            },
+            {
+              "x": 250,
+              "z": -180,
+              "name": "Pass east of Qeshm"
+            },
+            {
+              "x": 470,
+              "z": -180,
+              "name": "East of Hormuz Island"
+            },
+            {
+              "x": 470,
+              "z": -370,
+              "name": "Hormuz island clearance"
+            },
+            {
+              "x": 470,
+              "z": -500,
+              "name": "Northern channel"
+            },
+            {
+              "x": 400,
+              "z": -500,
+              "name": "Bandar approach"
+            },
+            {
+              "x": 500,
+              "z": -595,
+              "name": "Bandar Abbas · northern cargo hub · align with berth"
+            },
+            {
+              "x": 400,
+              "z": -595,
+              "name": "Bandar Abbas · northern cargo hub · stop alongside"
+            }
+          ],
+          "rewardMzk": 60,
+          "hazard": "debris"
+        },
+        {
+          "id": "oman-machinery",
+          "name": "Oman machinery return",
+          "from": "fujairah",
+          "to": "jebel-ali",
+          "cargoId": "machine-parts",
+          "units": 12,
+          "requiredVessel": "shipping-tanker",
+          "minSlots": 12,
+          "mass": 36,
+          "waypoints": [
+            {
+              "x": 930,
+              "z": 675,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": 1030,
+              "z": 560,
+              "name": "Eastern terminal departure"
+            },
+            {
+              "x": 1130,
+              "z": 380,
+              "name": "Join inbound lane"
+            },
+            {
+              "x": 700,
+              "z": 140,
+              "name": "Oman approach"
+            },
+            {
+              "x": 430,
+              "z": 70,
+              "name": "Strait inbound checkpoint"
+            },
+            {
+              "x": 170,
+              "z": 0,
+              "name": "Traffic separation"
+            },
+            {
+              "x": -250,
+              "z": -100,
+              "name": "Persian Gulf entry"
+            },
+            {
+              "x": -700,
+              "z": -160,
+              "name": "Western Gulf lane"
+            },
+            {
+              "x": -1180,
+              "z": -160,
+              "name": "Western turning point"
+            },
+            {
+              "x": -1180,
+              "z": 220,
+              "name": "Gateway approach"
+            },
+            {
+              "x": -1030,
+              "z": 220,
+              "name": "Jebel Ali basin"
+            },
+            {
+              "x": -930,
+              "z": 330,
+              "name": "Jebel Ali · container gateway · align with berth"
+            },
+            {
+              "x": -1030,
+              "z": 330,
+              "name": "Jebel Ali · container gateway · stop alongside"
+            }
+          ],
+          "rewardMzk": 70,
+          "hazard": "pirates"
+        },
+        {
+          "id": "energy-resupply",
+          "name": "Energy terminal resupply",
+          "from": "khasab",
+          "to": "ras-tanura",
+          "cargoId": "energy-equipment",
+          "units": 8,
+          "requiredVessel": "shipping-container",
+          "minSlots": 8,
+          "mass": 24,
+          "waypoints": [
+            {
+              "x": 80,
+              "z": 245,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": 180,
+              "z": 160,
+              "name": "Peninsula departure"
+            },
+            {
+              "x": 170,
+              "z": 0,
+              "name": "Inbound strait lane"
+            },
+            {
+              "x": -250,
+              "z": -100,
+              "name": "Gulf entry"
+            },
+            {
+              "x": -700,
+              "z": -160,
+              "name": "Western shipping lane"
+            },
+            {
+              "x": -1030,
+              "z": -500,
+              "name": "Energy terminal approach"
+            },
+            {
+              "x": -930,
+              "z": -595,
+              "name": "Ras Tanura · energy terminal · align with berth"
+            },
+            {
+              "x": -1030,
+              "z": -595,
+              "name": "Ras Tanura · energy terminal · stop alongside"
+            }
+          ],
+          "rewardMzk": 55,
+          "hazard": "mines"
+        },
+        {
+          "id": "eastern-relief",
+          "name": "Eastern coast relief run",
+          "from": "bandar-abbas",
+          "to": "fujairah",
+          "cargoId": "relief-supplies",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 4,
+          "waypoints": [
+            {
+              "x": 300,
+              "z": -595,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": 400,
+              "z": -500,
+              "name": "Northern departure"
+            },
+            {
+              "x": 470,
+              "z": -370,
+              "name": "Clear Hormuz Island"
+            },
+            {
+              "x": 470,
+              "z": -160,
+              "name": "Eastern island clearance"
+            },
+            {
+              "x": 430,
+              "z": 210,
+              "name": "Outbound channel"
+            },
+            {
+              "x": 700,
+              "z": 280,
+              "name": "Open Oman sea"
+            },
+            {
+              "x": 1030,
+              "z": 560,
+              "name": "Eastern port approach"
+            },
+            {
+              "x": 1130,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · align with berth"
+            },
+            {
+              "x": 1030,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+            }
+          ],
+          "rewardMzk": 60,
+          "hazard": "storm"
+        }
+      ],
+      "cargo": [
+        {
+          "id": "building-supplies",
+          "name": "Building supplies",
+          "mass": 2,
+          "stockId": "shipping-parts-stock",
+          "stockSku": "stock:shipping-parts-stock",
+          "stockUnits": 8,
+          "color": "#d3ad74",
+          "lesson": "Heavy cargo belongs low in the hold. Balance port and starboard loads."
+        },
+        {
+          "id": "island-provisions",
+          "name": "Island provisions",
+          "mass": 1,
+          "stockId": "shipping-food-stock",
+          "stockSku": "stock:shipping-food-stock",
+          "stockUnits": 10,
+          "color": "#76b98c",
+          "lesson": "Keep delivery paperwork with the cargo and unload only at its destination."
+        },
+        {
+          "id": "machine-parts",
+          "name": "Machine parts",
+          "mass": 3,
+          "stockId": "shipping-parts-stock",
+          "stockSku": "stock:shipping-parts-stock",
+          "stockUnits": 6,
+          "color": "#6b9fca",
+          "lesson": "A heavy load lengthens stopping distance. Reduce speed early for the berth."
+        },
+        {
+          "id": "relief-supplies",
+          "name": "Relief supplies",
+          "mass": 1,
+          "stockId": "shipping-food-stock",
+          "stockSku": "stock:shipping-food-stock",
+          "stockUnits": 12,
+          "color": "#f0dfc0",
+          "lesson": "Give way to crossing vessels and keep emergency access to the docks clear."
+        },
+        {
+          "id": "energy-equipment",
+          "name": "Energy equipment",
+          "mass": 3,
+          "stockId": "shipping-tools-stock",
+          "stockSku": "stock:shipping-tools-stock",
+          "stockUnits": 6,
+          "color": "#d59578",
+          "lesson": "Secure each load before leaving port. A safe detour protects cargo and crew."
+        }
+      ],
+      "vessels": [
+        {
+          "modelId": "shipping-feeder",
+          "name": "Gulf feeder",
+          "capacity": 12,
+          "slots": 4,
+          "unlockDeliveries": 0
+        },
+        {
+          "modelId": "shipping-container",
+          "name": "Strait container ship",
+          "capacity": 30,
+          "slots": 8,
+          "unlockDeliveries": 2
+        },
+        {
+          "modelId": "shipping-tanker",
+          "name": "Ocean cargo tanker",
+          "capacity": 48,
+          "slots": 12,
+          "unlockDeliveries": 5
+        }
+      ]
+    },
+    "builderScene": {
+      "version": 3,
+      "layout": "neon-harbor",
+      "mapSize": 2800,
+      "objects": [
+        {
+          "id": "shipping-jebel-ali-cargo-quay",
+          "modelId": "material:floor",
+          "name": "jebel ali cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.198,
+            "z": 370
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 23.333333333333336
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Jebel Ali · container gateway dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -999,
+            "y": 0,
+            "z": 365
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1066,
+            "y": 0,
+            "z": 365
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1066,
+            "y": 0,
+            "z": 374
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1057,
+            "y": 0,
+            "z": 365
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1057,
+            "y": 0,
+            "z": 374
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1048,
+            "y": 0,
+            "z": 365
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Jebel Ali · container gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1048,
+            "y": 0,
+            "z": 374
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Jebel Ali · container gateway berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1078,
+            "y": 0,
+            "z": 339
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Jebel Ali · container gateway berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -982,
+            "y": 0,
+            "z": 339
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-port-office",
+          "modelId": "street-sign",
+          "name": "Jebel Ali · container gateway · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": 356
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Jebel Ali · container gateway · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Jebel Ali · container gateway. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. Start here: balance a feeder load, clear the outbound lane and supply the eastern coast."
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-harbormaster",
+          "modelId": "world-resident",
+          "name": "Jebel Ali harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1022,
+            "y": 0,
+            "z": 358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Start here: balance a feeder load, clear the outbound lane and supply the eastern coast. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-cargo-quay",
+          "modelId": "material:floor",
+          "name": "ras tanura cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.198,
+            "z": -630.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 19.583333333333336
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Ras Tanura · energy terminal dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -999,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1066,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1066,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1057,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1057,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1048,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Ras Tanura · energy terminal warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1048,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Ras Tanura · energy terminal berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1078,
+            "y": 0,
+            "z": -604
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Ras Tanura · energy terminal berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -982,
+            "y": 0,
+            "z": -604
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-port-office",
+          "modelId": "street-sign",
+          "name": "Ras Tanura · energy terminal · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": -621
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Ras Tanura · energy terminal · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Ras Tanura · energy terminal. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. Energy cargoes need careful handling and a stable load before departure."
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-harbormaster",
+          "modelId": "world-resident",
+          "name": "Ras Tanura harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1022,
+            "y": 0,
+            "z": -623
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Energy cargoes need careful handling and a stable load before departure. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-cargo-quay",
+          "modelId": "material:floor",
+          "name": "bandar abbas cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.198,
+            "z": -630.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 19.583333333333336
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Bandar Abbas · northern cargo hub dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 431,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 364,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 364,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 373,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 373,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 382,
+            "y": 0,
+            "z": -630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Bandar Abbas · northern cargo hub warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 382,
+            "y": 0,
+            "z": -639
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Bandar Abbas · northern cargo hub berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 352,
+            "y": 0,
+            "z": -604
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Bandar Abbas · northern cargo hub berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 448,
+            "y": 0,
+            "z": -604
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-port-office",
+          "modelId": "street-sign",
+          "name": "Bandar Abbas · northern cargo hub · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": 0,
+            "z": -621
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Bandar Abbas · northern cargo hub · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Bandar Abbas · northern cargo hub. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. Northern hub beyond Qeshm and Hormuz islands. Follow the marked approaches."
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-harbormaster",
+          "modelId": "world-resident",
+          "name": "Bandar Abbas harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 408,
+            "y": 0,
+            "z": -623
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Northern hub beyond Qeshm and Hormuz islands. Follow the marked approaches. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-qeshm-cargo-quay",
+          "modelId": "material:floor",
+          "name": "qeshm cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -80,
+            "y": -0.198,
+            "z": -318
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 21.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-qeshm-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Qeshm · island supply dock dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -49,
+            "y": 0,
+            "z": -315
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -116,
+            "y": 0,
+            "z": -315
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -116,
+            "y": 0,
+            "z": -324
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -107,
+            "y": 0,
+            "z": -315
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -107,
+            "y": 0,
+            "z": -324
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -98,
+            "y": 0,
+            "z": -315
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-qeshm-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Qeshm · island supply dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -98,
+            "y": 0,
+            "z": -324
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-qeshm-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Qeshm · island supply dock berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -128,
+            "y": 0,
+            "z": -289
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-qeshm-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Qeshm · island supply dock berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -289
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-qeshm-port-office",
+          "modelId": "street-sign",
+          "name": "Qeshm · island supply dock · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": -306
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Qeshm · island supply dock · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Qeshm · island supply dock. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. A short island supply run introduces unloading and the strait traffic lanes."
+          }
+        },
+        {
+          "id": "shipping-qeshm-harbormaster",
+          "modelId": "world-resident",
+          "name": "Qeshm harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -72,
+            "y": 0,
+            "z": -308
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "A short island supply run introduces unloading and the strait traffic lanes. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-khasab-cargo-quay",
+          "modelId": "material:floor",
+          "name": "khasab cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.198,
+            "z": 283
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 21.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-khasab-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Khasab · Musandam relief dock dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 211,
+            "y": 0,
+            "z": 280
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 144,
+            "y": 0,
+            "z": 280
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 144,
+            "y": 0,
+            "z": 289
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 153,
+            "y": 0,
+            "z": 280
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 153,
+            "y": 0,
+            "z": 289
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 162,
+            "y": 0,
+            "z": 280
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-khasab-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Khasab · Musandam relief dock warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 162,
+            "y": 0,
+            "z": 289
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-khasab-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Khasab · Musandam relief dock berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 132,
+            "y": 0,
+            "z": 254
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-khasab-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Khasab · Musandam relief dock berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228,
+            "y": 0,
+            "z": 254
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-khasab-port-office",
+          "modelId": "street-sign",
+          "name": "Khasab · Musandam relief dock · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": 0,
+            "z": 271
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Khasab · Musandam relief dock · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Khasab · Musandam relief dock. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. The peninsula narrows the channel. Give crossing traffic room and deliver relief supplies."
+          }
+        },
+        {
+          "id": "shipping-khasab-harbormaster",
+          "modelId": "world-resident",
+          "name": "Khasab harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 188,
+            "y": 0,
+            "z": 273
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "The peninsula narrows the channel. Give crossing traffic room and deliver relief supplies. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-fujairah-cargo-quay",
+          "modelId": "material:floor",
+          "name": "fujairah cargo quay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.198,
+            "z": 710.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 45.833333333333336,
+            "y": 1,
+            "z": 19.583333333333336
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-fujairah-crane",
+          "modelId": "shipping-port-crane",
+          "name": "Fujairah · Gulf of Oman gateway dock crane",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1061,
+            "y": 0,
+            "z": 710
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-0-0",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 994,
+            "y": 0,
+            "z": 710
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-0-1",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 994,
+            "y": 0,
+            "z": 719
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c97544"
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-1-0",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1003,
+            "y": 0,
+            "z": 710
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-1-1",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1003,
+            "y": 0,
+            "z": 719
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#4b94ab"
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-2-0",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1012,
+            "y": 0,
+            "z": 710
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-fujairah-stock-2-1",
+          "modelId": "shipping-container-box",
+          "name": "Fujairah · Gulf of Oman gateway warehouse stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1012,
+            "y": 0,
+            "z": 719
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 240
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#d3af5c"
+          }
+        },
+        {
+          "id": "shipping-fujairah-beacon--48",
+          "modelId": "lamp-post",
+          "name": "Fujairah · Gulf of Oman gateway berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 982,
+            "y": 0,
+            "z": 684
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-fujairah-beacon-48",
+          "modelId": "lamp-post",
+          "name": "Fujairah · Gulf of Oman gateway berth beacon",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1078,
+            "y": 0,
+            "z": 684
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-fujairah-port-office",
+          "modelId": "street-sign",
+          "name": "Fujairah · Gulf of Oman gateway · port office",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": 0,
+            "z": 701
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Fujairah · Gulf of Oman gateway · port office",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Fujairah · Gulf of Oman gateway. Select a shipping contract, balance cargo between port and starboard, secure the manifest, follow the marked shipping lane and slow before the destination berth. Use the Shipping action panel to load and unload. Eastern gateway outside the strait, linking the open sea to Gulf stockrooms."
+          }
+        },
+        {
+          "id": "shipping-fujairah-harbormaster",
+          "modelId": "world-resident",
+          "name": "Fujairah harbormaster",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1038,
+            "y": 0,
+            "z": 703
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Ask the harbormaster",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Eastern gateway outside the strait, linking the open sea to Gulf stockrooms. Cargo trade and supply exchanges are available from the Shipping panel. The sea chart marks each port and lane."
+          }
+        },
+        {
+          "id": "shipping-welcome",
+          "modelId": "street-sign",
+          "name": "Strait of Hormuz · shipping academy",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1018,
+            "y": 0,
+            "z": 406
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Strait of Hormuz · shipping academy",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "This condensed arcade world mirrors the Strait of Hormuz: the Persian Gulf lies west, the Gulf of Oman east, with Qeshm and Hormuz islands north and Musandam south. The two lanes keep inbound and outbound traffic apart. Start Dock induction for loading, securing, sailing and unloading. Conditions and hazards are fictional game scenarios."
+          }
+        },
+        {
+          "id": "shipping-supply-market",
+          "modelId": "market-stall",
+          "name": "Dock supply exchange",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1058,
+            "y": 0,
+            "z": 414
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Visit the dock supply exchange",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Delivery rewards add food, parts and tools to your connected marketplace inventory. Use Shipping → Supply exchange to exchange stock for supplies and tools."
+          }
+        },
+        {
+          "id": "shipping-starter-feeder",
+          "modelId": "shipping-feeder",
+          "name": "Gulf Runner · public training feeder",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": 330
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 650
+          }
+        },
+        {
+          "id": "shipping-second-feeder",
+          "modelId": "shipping-feeder",
+          "name": "Gulf Runner II · shared feeder",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": -1030,
+            "y": 0,
+            "z": 290
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 650
+          }
+        },
+        {
+          "id": "shipping-northern-container",
+          "modelId": "shipping-container",
+          "name": "Strait Pioneer · container carrier",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": 400,
+            "y": 0,
+            "z": -595
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 1200
+          }
+        },
+        {
+          "id": "shipping-eastern-tanker",
+          "modelId": "shipping-tanker",
+          "name": "Oman Horizon · cargo tanker",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": 1030,
+            "y": 0,
+            "z": 675
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 1200
+          }
+        },
+        {
+          "id": "shipping-island-feeder",
+          "modelId": "shipping-feeder",
+          "name": "Island Supply · Qeshm feeder",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": -280
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 650
+          }
+        },
+        {
+          "id": "shipping-coastguard-patrol",
+          "modelId": "harbor-patrol",
+          "name": "Strait Guardian · coastguard patrol",
+          "placementAnchor": "waterline",
+          "position": {
+            "x": -1210,
+            "y": 0,
+            "z": 330
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 16,
+            "prompt": "Take cargo ship helm · E / Use",
+            "destructible": true,
+            "health": 1200
+          }
+        },
+        {
+          "id": "shipping-neon-harbor-gateway",
+          "modelId": "archway",
+          "name": "Sea portal · return to Neon Harbor",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1042,
+            "y": 0,
+            "z": 384
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 5,
+            "destructible": false,
+            "prompt": "Sail back to Neon Harbor",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-district-neon-docks",
+              "ownerName": "MUZIKAZ",
+              "color": "#5bd4e3"
+            }
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 11770474,
+        "sky": 9092296,
+        "harbor": {
+          "version": 1,
+          "mainIsland": false,
+          "extent": 1400,
+          "islands": [
+            {
+              "id": "iran-gulf-coast",
+              "name": "Iran · northern Gulf coast",
+              "x": -400,
+              "z": -980,
+              "width": 1800,
+              "depth": 700
+            },
+            {
+              "id": "iran-oman-coast",
+              "name": "Iran · Gulf of Oman coast",
+              "x": 950,
+              "z": -900,
+              "width": 600,
+              "depth": 800
+            },
+            {
+              "id": "qeshm-island",
+              "name": "Qeshm Island",
+              "x": -80,
+              "z": -390,
+              "width": 500,
+              "depth": 130
+            },
+            {
+              "id": "hormuz-island",
+              "name": "Hormuz Island",
+              "x": 390,
+              "z": -260,
+              "width": 110,
+              "depth": 100
+            },
+            {
+              "id": "arabian-gulf-coast",
+              "name": "Arabian Gulf coast",
+              "x": -850,
+              "z": 750,
+              "width": 900,
+              "depth": 740
+            },
+            {
+              "id": "musandam-peninsula",
+              "name": "Musandam Peninsula",
+              "x": 180,
+              "z": 680,
+              "width": 350,
+              "depth": 780
+            },
+            {
+              "id": "oman-coast",
+              "name": "Oman · eastern approaches",
+              "x": 830,
+              "z": 1000,
+              "width": 1000,
+              "depth": 580
+            },
+            {
+              "id": "jebel-ali-quay",
+              "name": "Jebel Ali · container gateway quay",
+              "x": -1030,
+              "z": 370,
+              "width": 110,
+              "depth": 56
+            },
+            {
+              "id": "ras-tanura-quay",
+              "name": "Ras Tanura · energy terminal quay",
+              "x": -1030,
+              "z": -630.5,
+              "width": 110,
+              "depth": 47
+            },
+            {
+              "id": "bandar-abbas-quay",
+              "name": "Bandar Abbas · northern cargo hub quay",
+              "x": 400,
+              "z": -630.5,
+              "width": 110,
+              "depth": 47
+            },
+            {
+              "id": "qeshm-quay",
+              "name": "Qeshm · island supply dock quay",
+              "x": -80,
+              "z": -318,
+              "width": 110,
+              "depth": 52
+            },
+            {
+              "id": "khasab-quay",
+              "name": "Khasab · Musandam relief dock quay",
+              "x": 180,
+              "z": 283,
+              "width": 110,
+              "depth": 52
+            },
+            {
+              "id": "fujairah-quay",
+              "name": "Fujairah · Gulf of Oman gateway quay",
+              "x": 1030,
+              "z": 710.5,
+              "width": 110,
+              "depth": 47
+            }
+          ],
+          "lakes": [],
+          "fishingEnabled": false,
+          "fishingZones": [],
+          "fishingGuides": [],
+          "docks": [
+            {
+              "id": "jebel-ali",
+              "name": "Jebel Ali · container gateway",
+              "x": -1030,
+              "z": 340,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": -1030,
+                "z": 330
+              },
+              "entry": {
+                "x": -930,
+                "z": 330
+              },
+              "yachtApproach": {
+                "x": -1030,
+                "z": 330
+              },
+              "yachtEntry": {
+                "x": -930,
+                "z": 330
+              }
+            },
+            {
+              "id": "ras-tanura",
+              "name": "Ras Tanura · energy terminal",
+              "x": -1030,
+              "z": -605,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": -1030,
+                "z": -595
+              },
+              "entry": {
+                "x": -930,
+                "z": -595
+              },
+              "yachtApproach": {
+                "x": -1030,
+                "z": -595
+              },
+              "yachtEntry": {
+                "x": -930,
+                "z": -595
+              }
+            },
+            {
+              "id": "bandar-abbas",
+              "name": "Bandar Abbas · northern cargo hub",
+              "x": 400,
+              "z": -605,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": 400,
+                "z": -595
+              },
+              "entry": {
+                "x": 500,
+                "z": -595
+              },
+              "yachtApproach": {
+                "x": 400,
+                "z": -595
+              },
+              "yachtEntry": {
+                "x": 500,
+                "z": -595
+              }
+            },
+            {
+              "id": "qeshm",
+              "name": "Qeshm · island supply dock",
+              "x": -80,
+              "z": -290,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": -80,
+                "z": -280
+              },
+              "entry": {
+                "x": 20,
+                "z": -280
+              },
+              "yachtApproach": {
+                "x": -80,
+                "z": -280
+              },
+              "yachtEntry": {
+                "x": 20,
+                "z": -280
+              }
+            },
+            {
+              "id": "khasab",
+              "name": "Khasab · Musandam relief dock",
+              "x": 180,
+              "z": 255,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": 180,
+                "z": 245
+              },
+              "entry": {
+                "x": 280,
+                "z": 245
+              },
+              "yachtApproach": {
+                "x": 180,
+                "z": 245
+              },
+              "yachtEntry": {
+                "x": 280,
+                "z": 245
+              }
+            },
+            {
+              "id": "fujairah",
+              "name": "Fujairah · Gulf of Oman gateway",
+              "x": 1030,
+              "z": 685,
+              "width": 110,
+              "depth": 8,
+              "approach": {
+                "x": 1030,
+                "z": 675
+              },
+              "entry": {
+                "x": 1130,
+                "z": 675
+              },
+              "yachtApproach": {
+                "x": 1030,
+                "z": 675
+              },
+              "yachtEntry": {
+                "x": 1130,
+                "z": 675
+              }
+            }
+          ],
+          "shippingLanes": [
+            {
+              "id": "inbound",
+              "name": "Inbound · Gulf of Oman → Persian Gulf",
+              "direction": "westbound",
+              "points": [
+                {
+                  "x": 1130,
+                  "z": 380
+                },
+                {
+                  "x": 700,
+                  "z": 140
+                },
+                {
+                  "x": 430,
+                  "z": 70
+                },
+                {
+                  "x": 170,
+                  "z": 0
+                },
+                {
+                  "x": -250,
+                  "z": -100
+                },
+                {
+                  "x": -700,
+                  "z": -160
+                },
+                {
+                  "x": -1180,
+                  "z": -160
+                }
+              ]
+            },
+            {
+              "id": "outbound",
+              "name": "Outbound · Persian Gulf → Gulf of Oman",
+              "direction": "eastbound",
+              "points": [
+                {
+                  "x": -1180,
+                  "z": 0
+                },
+                {
+                  "x": -700,
+                  "z": 40
+                },
+                {
+                  "x": -250,
+                  "z": 90
+                },
+                {
+                  "x": 170,
+                  "z": 140
+                },
+                {
+                  "x": 430,
+                  "z": 210
+                },
+                {
+                  "x": 700,
+                  "z": 280
+                },
+                {
+                  "x": 1130,
+                  "z": 520
+                }
+              ]
+            }
+          ]
+        },
+        "shipping": {
+          "enabled": true,
+          "version": 1,
+          "ports": [
+            {
+              "id": "jebel-ali",
+              "name": "Jebel Ali · container gateway",
+              "x": -1030,
+              "z": 330,
+              "position": {
+                "x": -1030,
+                "y": 0,
+                "z": 394
+              },
+              "berth": {
+                "x": -1030,
+                "z": 330,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": -1030,
+                "z": 330
+              },
+              "entry": {
+                "x": -930,
+                "z": 330
+              },
+              "departure": {
+                "x": -1130,
+                "z": 330
+              },
+              "seaApproach": {
+                "x": -1030,
+                "z": 220
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "UAE",
+              "specialty": "containers",
+              "description": "Start here: balance a feeder load, clear the outbound lane and supply the eastern coast."
+            },
+            {
+              "id": "ras-tanura",
+              "name": "Ras Tanura · energy terminal",
+              "x": -1030,
+              "z": -595,
+              "position": {
+                "x": -1030,
+                "y": 0,
+                "z": -650
+              },
+              "berth": {
+                "x": -1030,
+                "z": -595,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": -1030,
+                "z": -595
+              },
+              "entry": {
+                "x": -930,
+                "z": -595
+              },
+              "departure": {
+                "x": -1130,
+                "z": -595
+              },
+              "seaApproach": {
+                "x": -1030,
+                "z": -500
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "Saudi Arabia",
+              "specialty": "energy",
+              "description": "Energy cargoes need careful handling and a stable load before departure."
+            },
+            {
+              "id": "bandar-abbas",
+              "name": "Bandar Abbas · northern cargo hub",
+              "x": 400,
+              "z": -595,
+              "position": {
+                "x": 400,
+                "y": 0,
+                "z": -650
+              },
+              "berth": {
+                "x": 400,
+                "z": -595,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": 400,
+                "z": -595
+              },
+              "entry": {
+                "x": 500,
+                "z": -595
+              },
+              "departure": {
+                "x": 300,
+                "z": -595
+              },
+              "seaApproach": {
+                "x": 400,
+                "z": -500
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "Iran",
+              "specialty": "materials",
+              "description": "Northern hub beyond Qeshm and Hormuz islands. Follow the marked approaches."
+            },
+            {
+              "id": "qeshm",
+              "name": "Qeshm · island supply dock",
+              "x": -80,
+              "z": -280,
+              "position": {
+                "x": -80,
+                "y": 0,
+                "z": -340
+              },
+              "berth": {
+                "x": -80,
+                "z": -280,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": -80,
+                "z": -280
+              },
+              "entry": {
+                "x": 20,
+                "z": -280
+              },
+              "departure": {
+                "x": -180,
+                "z": -280
+              },
+              "seaApproach": {
+                "x": -80,
+                "z": -180
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "Iran",
+              "specialty": "food",
+              "description": "A short island supply run introduces unloading and the strait traffic lanes."
+            },
+            {
+              "id": "khasab",
+              "name": "Khasab · Musandam relief dock",
+              "x": 180,
+              "z": 245,
+              "position": {
+                "x": 180,
+                "y": 0,
+                "z": 305
+              },
+              "berth": {
+                "x": 180,
+                "z": 245,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": 180,
+                "z": 245
+              },
+              "entry": {
+                "x": 280,
+                "z": 245
+              },
+              "departure": {
+                "x": 80,
+                "z": 245
+              },
+              "seaApproach": {
+                "x": 180,
+                "z": 160
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "Oman",
+              "specialty": "relief",
+              "description": "The peninsula narrows the channel. Give crossing traffic room and deliver relief supplies."
+            },
+            {
+              "id": "fujairah",
+              "name": "Fujairah · Gulf of Oman gateway",
+              "x": 1030,
+              "z": 675,
+              "position": {
+                "x": 1030,
+                "y": 0,
+                "z": 730
+              },
+              "berth": {
+                "x": 1030,
+                "z": 675,
+                "yaw": 1.5707963267948966
+              },
+              "approach": {
+                "x": 1030,
+                "z": 675
+              },
+              "entry": {
+                "x": 1130,
+                "z": 675
+              },
+              "departure": {
+                "x": 930,
+                "z": 675
+              },
+              "seaApproach": {
+                "x": 1030,
+                "z": 560
+              },
+              "width": 110,
+              "depth": 8,
+              "country": "UAE",
+              "specialty": "machinery",
+              "description": "Eastern gateway outside the strait, linking the open sea to Gulf stockrooms."
+            }
+          ],
+          "lanes": [
+            {
+              "id": "inbound",
+              "name": "Inbound · Gulf of Oman → Persian Gulf",
+              "direction": "westbound",
+              "points": [
+                {
+                  "x": 1130,
+                  "z": 380
+                },
+                {
+                  "x": 700,
+                  "z": 140
+                },
+                {
+                  "x": 430,
+                  "z": 70
+                },
+                {
+                  "x": 170,
+                  "z": 0
+                },
+                {
+                  "x": -250,
+                  "z": -100
+                },
+                {
+                  "x": -700,
+                  "z": -160
+                },
+                {
+                  "x": -1180,
+                  "z": -160
+                }
+              ]
+            },
+            {
+              "id": "outbound",
+              "name": "Outbound · Persian Gulf → Gulf of Oman",
+              "direction": "eastbound",
+              "points": [
+                {
+                  "x": -1180,
+                  "z": 0
+                },
+                {
+                  "x": -700,
+                  "z": 40
+                },
+                {
+                  "x": -250,
+                  "z": 90
+                },
+                {
+                  "x": 170,
+                  "z": 140
+                },
+                {
+                  "x": 430,
+                  "z": 210
+                },
+                {
+                  "x": 700,
+                  "z": 280
+                },
+                {
+                  "x": 1130,
+                  "z": 520
+                }
+              ]
+            }
+          ],
+          "routes": [
+            {
+              "id": "dock-induction",
+              "name": "Dock induction · loading & handling",
+              "from": "jebel-ali",
+              "to": "jebel-ali",
+              "cargoId": "building-supplies",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 8,
+              "waypoints": [
+                {
+                  "x": -1130,
+                  "z": 330,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -1130,
+                  "z": 250,
+                  "name": "Clear the loading berth"
+                },
+                {
+                  "x": -930,
+                  "z": 250,
+                  "name": "Basin turn and lookout"
+                },
+                {
+                  "x": -930,
+                  "z": 330,
+                  "name": "Jebel Ali · container gateway · align with berth"
+                },
+                {
+                  "x": -1030,
+                  "z": 330,
+                  "name": "Jebel Ali · container gateway · stop alongside"
+                }
+              ],
+              "rewardMzk": 20,
+              "hazard": "traffic"
+            },
+            {
+              "id": "gulf-gateway",
+              "name": "Gulf gateway supply run",
+              "from": "jebel-ali",
+              "to": "fujairah",
+              "cargoId": "building-supplies",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 8,
+              "waypoints": [
+                {
+                  "x": -1130,
+                  "z": 330,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -1030,
+                  "z": 220,
+                  "name": "Clear the departure basin"
+                },
+                {
+                  "x": -700,
+                  "z": 40,
+                  "name": "Outbound Gulf lane"
+                },
+                {
+                  "x": -250,
+                  "z": 90,
+                  "name": "Approach the strait"
+                },
+                {
+                  "x": 170,
+                  "z": 140,
+                  "name": "Musandam traffic channel"
+                },
+                {
+                  "x": 430,
+                  "z": 210,
+                  "name": "Hormuz east checkpoint"
+                },
+                {
+                  "x": 700,
+                  "z": 280,
+                  "name": "Gulf of Oman"
+                },
+                {
+                  "x": 1030,
+                  "z": 560,
+                  "name": "Fujairah approach"
+                },
+                {
+                  "x": 1130,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · align with berth"
+                },
+                {
+                  "x": 1030,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+                }
+              ],
+              "rewardMzk": 65,
+              "hazard": "traffic"
+            },
+            {
+              "id": "island-provisions",
+              "name": "Qeshm island provisions",
+              "from": "jebel-ali",
+              "to": "qeshm",
+              "cargoId": "island-provisions",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 4,
+              "waypoints": [
+                {
+                  "x": -1130,
+                  "z": 330,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -1030,
+                  "z": 220,
+                  "name": "Departure basin"
+                },
+                {
+                  "x": -700,
+                  "z": 40,
+                  "name": "Gulf crossing"
+                },
+                {
+                  "x": -250,
+                  "z": -100,
+                  "name": "Qeshm southern approach"
+                },
+                {
+                  "x": -80,
+                  "z": -180,
+                  "name": "Island arrival lane"
+                },
+                {
+                  "x": 20,
+                  "z": -280,
+                  "name": "Qeshm · island supply dock · align with berth"
+                },
+                {
+                  "x": -80,
+                  "z": -280,
+                  "name": "Qeshm · island supply dock · stop alongside"
+                }
+              ],
+              "rewardMzk": 40,
+              "hazard": "traffic"
+            },
+            {
+              "id": "peninsula-relief",
+              "name": "Musandam relief convoy",
+              "from": "qeshm",
+              "to": "khasab",
+              "cargoId": "relief-supplies",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 4,
+              "waypoints": [
+                {
+                  "x": -180,
+                  "z": -280,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -80,
+                  "z": -180,
+                  "name": "Qeshm departure"
+                },
+                {
+                  "x": -80,
+                  "z": -70,
+                  "name": "Check crossing traffic"
+                },
+                {
+                  "x": 180,
+                  "z": 0,
+                  "name": "Strait separation channel"
+                },
+                {
+                  "x": 180,
+                  "z": 160,
+                  "name": "Khasab approach"
+                },
+                {
+                  "x": 280,
+                  "z": 245,
+                  "name": "Khasab · Musandam relief dock · align with berth"
+                },
+                {
+                  "x": 180,
+                  "z": 245,
+                  "name": "Khasab · Musandam relief dock · stop alongside"
+                }
+              ],
+              "rewardMzk": 35,
+              "hazard": "pirates"
+            },
+            {
+              "id": "northern-materials",
+              "name": "Northern materials exchange",
+              "from": "ras-tanura",
+              "to": "bandar-abbas",
+              "cargoId": "building-supplies",
+              "units": 8,
+              "requiredVessel": "shipping-container",
+              "minSlots": 8,
+              "mass": 16,
+              "waypoints": [
+                {
+                  "x": -1130,
+                  "z": -595,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -1030,
+                  "z": -500,
+                  "name": "Energy terminal departure"
+                },
+                {
+                  "x": -650,
+                  "z": -180,
+                  "name": "Pass west of Qeshm"
+                },
+                {
+                  "x": 250,
+                  "z": -180,
+                  "name": "Pass east of Qeshm"
+                },
+                {
+                  "x": 470,
+                  "z": -180,
+                  "name": "East of Hormuz Island"
+                },
+                {
+                  "x": 470,
+                  "z": -370,
+                  "name": "Hormuz island clearance"
+                },
+                {
+                  "x": 470,
+                  "z": -500,
+                  "name": "Northern channel"
+                },
+                {
+                  "x": 400,
+                  "z": -500,
+                  "name": "Bandar approach"
+                },
+                {
+                  "x": 500,
+                  "z": -595,
+                  "name": "Bandar Abbas · northern cargo hub · align with berth"
+                },
+                {
+                  "x": 400,
+                  "z": -595,
+                  "name": "Bandar Abbas · northern cargo hub · stop alongside"
+                }
+              ],
+              "rewardMzk": 60,
+              "hazard": "debris"
+            },
+            {
+              "id": "oman-machinery",
+              "name": "Oman machinery return",
+              "from": "fujairah",
+              "to": "jebel-ali",
+              "cargoId": "machine-parts",
+              "units": 12,
+              "requiredVessel": "shipping-tanker",
+              "minSlots": 12,
+              "mass": 36,
+              "waypoints": [
+                {
+                  "x": 930,
+                  "z": 675,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": 1030,
+                  "z": 560,
+                  "name": "Eastern terminal departure"
+                },
+                {
+                  "x": 1130,
+                  "z": 380,
+                  "name": "Join inbound lane"
+                },
+                {
+                  "x": 700,
+                  "z": 140,
+                  "name": "Oman approach"
+                },
+                {
+                  "x": 430,
+                  "z": 70,
+                  "name": "Strait inbound checkpoint"
+                },
+                {
+                  "x": 170,
+                  "z": 0,
+                  "name": "Traffic separation"
+                },
+                {
+                  "x": -250,
+                  "z": -100,
+                  "name": "Persian Gulf entry"
+                },
+                {
+                  "x": -700,
+                  "z": -160,
+                  "name": "Western Gulf lane"
+                },
+                {
+                  "x": -1180,
+                  "z": -160,
+                  "name": "Western turning point"
+                },
+                {
+                  "x": -1180,
+                  "z": 220,
+                  "name": "Gateway approach"
+                },
+                {
+                  "x": -1030,
+                  "z": 220,
+                  "name": "Jebel Ali basin"
+                },
+                {
+                  "x": -930,
+                  "z": 330,
+                  "name": "Jebel Ali · container gateway · align with berth"
+                },
+                {
+                  "x": -1030,
+                  "z": 330,
+                  "name": "Jebel Ali · container gateway · stop alongside"
+                }
+              ],
+              "rewardMzk": 70,
+              "hazard": "pirates"
+            },
+            {
+              "id": "energy-resupply",
+              "name": "Energy terminal resupply",
+              "from": "khasab",
+              "to": "ras-tanura",
+              "cargoId": "energy-equipment",
+              "units": 8,
+              "requiredVessel": "shipping-container",
+              "minSlots": 8,
+              "mass": 24,
+              "waypoints": [
+                {
+                  "x": 80,
+                  "z": 245,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": 180,
+                  "z": 160,
+                  "name": "Peninsula departure"
+                },
+                {
+                  "x": 170,
+                  "z": 0,
+                  "name": "Inbound strait lane"
+                },
+                {
+                  "x": -250,
+                  "z": -100,
+                  "name": "Gulf entry"
+                },
+                {
+                  "x": -700,
+                  "z": -160,
+                  "name": "Western shipping lane"
+                },
+                {
+                  "x": -1030,
+                  "z": -500,
+                  "name": "Energy terminal approach"
+                },
+                {
+                  "x": -930,
+                  "z": -595,
+                  "name": "Ras Tanura · energy terminal · align with berth"
+                },
+                {
+                  "x": -1030,
+                  "z": -595,
+                  "name": "Ras Tanura · energy terminal · stop alongside"
+                }
+              ],
+              "rewardMzk": 55,
+              "hazard": "mines"
+            },
+            {
+              "id": "eastern-relief",
+              "name": "Eastern coast relief run",
+              "from": "bandar-abbas",
+              "to": "fujairah",
+              "cargoId": "relief-supplies",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 4,
+              "waypoints": [
+                {
+                  "x": 300,
+                  "z": -595,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": 400,
+                  "z": -500,
+                  "name": "Northern departure"
+                },
+                {
+                  "x": 470,
+                  "z": -370,
+                  "name": "Clear Hormuz Island"
+                },
+                {
+                  "x": 470,
+                  "z": -160,
+                  "name": "Eastern island clearance"
+                },
+                {
+                  "x": 430,
+                  "z": 210,
+                  "name": "Outbound channel"
+                },
+                {
+                  "x": 700,
+                  "z": 280,
+                  "name": "Open Oman sea"
+                },
+                {
+                  "x": 1030,
+                  "z": 560,
+                  "name": "Eastern port approach"
+                },
+                {
+                  "x": 1130,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · align with berth"
+                },
+                {
+                  "x": 1030,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+                }
+              ],
+              "rewardMzk": 60,
+              "hazard": "storm"
+            }
+          ],
+          "cargo": [
+            {
+              "id": "building-supplies",
+              "name": "Building supplies",
+              "mass": 2,
+              "stockId": "shipping-parts-stock",
+              "stockSku": "stock:shipping-parts-stock",
+              "stockUnits": 8,
+              "color": "#d3ad74",
+              "lesson": "Heavy cargo belongs low in the hold. Balance port and starboard loads."
+            },
+            {
+              "id": "island-provisions",
+              "name": "Island provisions",
+              "mass": 1,
+              "stockId": "shipping-food-stock",
+              "stockSku": "stock:shipping-food-stock",
+              "stockUnits": 10,
+              "color": "#76b98c",
+              "lesson": "Keep delivery paperwork with the cargo and unload only at its destination."
+            },
+            {
+              "id": "machine-parts",
+              "name": "Machine parts",
+              "mass": 3,
+              "stockId": "shipping-parts-stock",
+              "stockSku": "stock:shipping-parts-stock",
+              "stockUnits": 6,
+              "color": "#6b9fca",
+              "lesson": "A heavy load lengthens stopping distance. Reduce speed early for the berth."
+            },
+            {
+              "id": "relief-supplies",
+              "name": "Relief supplies",
+              "mass": 1,
+              "stockId": "shipping-food-stock",
+              "stockSku": "stock:shipping-food-stock",
+              "stockUnits": 12,
+              "color": "#f0dfc0",
+              "lesson": "Give way to crossing vessels and keep emergency access to the docks clear."
+            },
+            {
+              "id": "energy-equipment",
+              "name": "Energy equipment",
+              "mass": 3,
+              "stockId": "shipping-tools-stock",
+              "stockSku": "stock:shipping-tools-stock",
+              "stockUnits": 6,
+              "color": "#d59578",
+              "lesson": "Secure each load before leaving port. A safe detour protects cargo and crew."
+            }
+          ],
+          "vessels": [
+            {
+              "modelId": "shipping-feeder",
+              "name": "Gulf feeder",
+              "capacity": 12,
+              "slots": 4,
+              "unlockDeliveries": 0
+            },
+            {
+              "modelId": "shipping-container",
+              "name": "Strait container ship",
+              "capacity": 30,
+              "slots": 8,
+              "unlockDeliveries": 2
+            },
+            {
+              "modelId": "shipping-tanker",
+              "name": "Ocean cargo tanker",
+              "capacity": 48,
+              "slots": 12,
+              "unlockDeliveries": 5
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "jebel-ali",
+            "name": "Jebel Ali · container gateway",
+            "x": -1030,
+            "z": 356,
+            "width": 110,
+            "depth": 56,
+            "arrival": {
+              "x": -1030,
+              "y": 0.02,
+              "z": 356
+            },
+            "icon": "⚓",
+            "description": "Start here: balance a feeder load, clear the outbound lane and supply the eastern coast."
+          },
+          {
+            "id": "ras-tanura",
+            "name": "Ras Tanura · energy terminal",
+            "x": -1030,
+            "z": -621,
+            "width": 110,
+            "depth": 47,
+            "arrival": {
+              "x": -1030,
+              "y": 0.02,
+              "z": -621
+            },
+            "icon": "⚓",
+            "description": "Energy cargoes need careful handling and a stable load before departure."
+          },
+          {
+            "id": "bandar-abbas",
+            "name": "Bandar Abbas · northern cargo hub",
+            "x": 400,
+            "z": -621,
+            "width": 110,
+            "depth": 47,
+            "arrival": {
+              "x": 400,
+              "y": 0.02,
+              "z": -621
+            },
+            "icon": "⚓",
+            "description": "Northern hub beyond Qeshm and Hormuz islands. Follow the marked approaches."
+          },
+          {
+            "id": "qeshm",
+            "name": "Qeshm · island supply dock",
+            "x": -80,
+            "z": -306,
+            "width": 110,
+            "depth": 52,
+            "arrival": {
+              "x": -80,
+              "y": 0.02,
+              "z": -306
+            },
+            "icon": "⚓",
+            "description": "A short island supply run introduces unloading and the strait traffic lanes."
+          },
+          {
+            "id": "khasab",
+            "name": "Khasab · Musandam relief dock",
+            "x": 180,
+            "z": 271,
+            "width": 110,
+            "depth": 52,
+            "arrival": {
+              "x": 180,
+              "y": 0.02,
+              "z": 271
+            },
+            "icon": "⚓",
+            "description": "The peninsula narrows the channel. Give crossing traffic room and deliver relief supplies."
+          },
+          {
+            "id": "fujairah",
+            "name": "Fujairah · Gulf of Oman gateway",
+            "x": 1030,
+            "z": 701,
+            "width": 110,
+            "depth": 47,
+            "arrival": {
+              "x": 1030,
+              "y": 0.02,
+              "z": 701
+            },
+            "icon": "⚓",
+            "description": "Eastern gateway outside the strait, linking the open sea to Gulf stockrooms."
+          },
+          {
+            "id": "shipping-dispatch",
+            "name": "Shipping dispatch & training",
+            "x": -1030,
+            "z": 382,
+            "width": 22,
+            "depth": 20,
+            "description": "Start Dock induction to learn balanced loading, secure manifests, navigation and unloading."
+          },
+          {
+            "id": "shipping-supply-market",
+            "name": "Dock supply exchange",
+            "x": -1058,
+            "z": 414,
+            "width": 16,
+            "depth": 14,
+            "description": "Delivered cargo becomes durable supply stock. Trade food, parts and tools through the marketplace and Shipping panel."
+          },
+          {
+            "id": "shipping-sea-portal",
+            "name": "Sea portal · return to Neon Harbor",
+            "x": -1042,
+            "z": 384,
+            "width": 5,
+            "depth": 4,
+            "description": "Return to Neon Harbor and the connected fishing and island worlds."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=hormuz-shipping&house=hormuz-shipping&autoplay=1&mode=multiplayer"
   }
 ]

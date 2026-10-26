@@ -1,4 +1,4 @@
-import {harborWaterAt} from './harbor-water.js';
+import {harborWaterAt,harborLandPatches} from './harbor-water.js';
 
 const cache=new WeakMap();
 const finite=(value,fallback)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -15,7 +15,7 @@ export function harborQuestRadii(environment,{count=2,margin=12,preferredFactors
  count=Math.max(0,Math.min(8,Math.floor(finite(count,2))));margin=Math.max(0,finite(margin,12));
  const signature=JSON.stringify(harbor),key=JSON.stringify([count,margin,preferredFactors]);let entry=cache.get(environment);
  if(!entry||entry.signature!==signature){entry={signature,variants:new Map()};cache.set(environment,entry);}if(entry.variants.has(key))return [...entry.variants.get(key)];
- const extent=finite(harbor.extent,256),limit=extent-margin,ranges=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])].map(patch=>rectRange(patch,margin)).sort((a,b)=>a[0]-b[0]);
+ const extent=finite(harbor.extent,256),limit=extent-margin,ranges=harborLandPatches(harbor).map(patch=>rectRange(patch,margin)).sort((a,b)=>a[0]-b[0]);
  const radii=[];
  const safe=radius=>{
   if(!Number.isFinite(radius)||radius<=0||radius>=limit)return false;
