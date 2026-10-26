@@ -18,7 +18,7 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,isFishingTool,gameplayOverlayOpen:()=>false,fishingUI:{visible:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,isFishingTool,gameplayOverlayOpen:()=>false,fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
@@ -274,7 +274,7 @@ test('a confirmed player receives immediate local jump feedback while its server
 
 test('fishing sessions and modal panels suppress primary actions, and every tackle tool opens fishing without firing',()=>{
  const calls=[];let active=false,overlay=false;
- const {context}=fixture({gameplayStarted:true,authoritativeClient:{ready:true},serverPlayerInitialized:true,serverActors:{},serverVehicleId:null,isAircraft:()=>true,fireAircraft:()=>calls.push('fire'),toxicBubbleSystem:{tool:'laser'},gameplayOverlayOpen:()=>overlay,fishingUI:{active:()=>active,open:()=>{calls.push('fishing');return true;}}});
+ const {context}=fixture({gameplayStarted:true,authoritativeClient:{ready:true},serverPlayerInitialized:true,serverActors:{},serverVehicleId:null,isAircraft:()=>true,fireAircraft:()=>calls.push('fire'),toxicBubbleSystem:{tool:'laser'},gameplayOverlayOpen:()=>overlay,fishingUI:{active:()=>active,visible:()=>active,open:()=>{calls.push('fishing');return true;}}});
  const start=source.indexOf('  function shootAtReticle()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
  active=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
  active=false;overlay=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);

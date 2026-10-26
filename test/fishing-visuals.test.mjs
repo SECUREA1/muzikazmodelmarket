@@ -58,3 +58,26 @@ test('fishing docking thruster aligns a stopped launch without moving or enlargi
  for(const input of [{side:1,throttle:0},{bowThruster:true,side:1,throttle:0,anchor:true}]){const held=boat();Object.assign(held,stepBoatSimulation(held,input,.25,{environment}));assert.equal(held.rotation.y,0);}
  const shoreline=boat(130);for(let i=0;i<80;i++)Object.assign(shoreline,stepBoatSimulation(shoreline,{bowThruster:true,side:1,throttle:0},.1,{environment}));assert.ok(watercraftFootprint(shoreline.position,shoreline.rotation.y,shoreline).every(point=>harborWaterAt(environment,point,.25)));assert.equal(shoreline.boating.impactDamage,0);assert.ok(Math.abs(shoreline.rotation.y)<.5,'the rotated hull cannot sweep through land');
 });
+
+for(const side of ['port','starboard'])test(side+' landed catch lifts to visible net height with its mouth attached to the real rod line',()=>{
+ const scene=new THREE.Scene(),boat=createFishingBoat(),rig=new THREE.Group(),camera=new THREE.PerspectiveCamera(74,390/844,.025,700),yaw=.85,sign=side==='port'?-1:1,origin=new THREE.Vector3(145,0,-38),turn=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),yaw);
+ boat.userData.builderObjectId='angler';boat.position.copy(origin);boat.quaternion.copy(turn);scene.add(boat,rig);rig.add(camera);
+ const station=new THREE.Vector3(sign*1.15,.55,.8).applyQuaternion(turn).add(origin),castPoint=new THREE.Vector3(sign*6.15,.05,.8).applyQuaternion(turn).add(origin),session={id:'visible-catch',status:'reeling',reeling:true,side,boatId:'angler',position:{x:station.x,y:station.y,z:station.z},castPoint:{x:castPoint.x,y:castPoint.y,z:castPoint.z},tension:.55,progress:.98},snapshot={players:{self:{position:{...session.position},fishing:{session}}},actors:{angler:{position:{x:origin.x,y:origin.y,z:origin.z},rotation:{y:yaw}}}};
+ const before=JSON.stringify(snapshot),visuals=createFishingScene(scene,{getRoots:()=>[boat]});visuals.update(snapshot);visuals.animate(1);assert.equal(JSON.stringify(snapshot),before,'cosmetics cannot modify authoritative session data');
+ session.status='caught';session.fish={weightKg:30,rarity:'legendary'};visuals.animate(1.1);const fish=scene.getObjectByName('LANDED_FISH'),startHeight=fish.position.y;visuals.animate(1.4);assert.ok(fish.position.y>startHeight,'catch rises in a short lift rather than appearing at the rod tip');visuals.animate(1.8);
+ const expected=new THREE.Vector3(sign*2.45,1.3,1.3).applyQuaternion(turn).add(origin);assert.ok(fish.position.distanceTo(expected)<1e-8);assert.ok(fish.visible);assert.ok(fish.scale.x<=1);
+ const controller=createHarborCamera({camera,playerRig:rig});controller.update({boat:{id:'angler',modelId:'harbor-fishing-boat',rotation:{y:yaw}},origin,view:'fishing-'+side,fishingTarget:session.castPoint,immediate:true});
+ const projected=fish.position.clone().project(camera);assert.ok(Math.abs(projected.x)<.6&&Math.abs(projected.y)<.7,'catch center stays within the narrow mobile side view');
+ fish.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(fish);for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){const corner=new THREE.Vector3(x,y,z).project(camera);assert.ok(Math.abs(corner.x)<1&&Math.abs(corner.y)<1,'the largest cosmetic catch fits without clipping: '+corner.toArray().join(','));}
+ const line=scene.getObjectByName('Fishing_cast_self').children.find(node=>node.isLine),points=line.geometry.attributes.position,tip=boat.userData.fishingRig.tips[side==='port'?0:1].getWorldPosition(new THREE.Vector3()),mouth=new THREE.Vector3(-.4,.025,0).multiplyScalar(fish.scale.x).applyQuaternion(fish.quaternion).add(fish.position);
+ assert.ok(new THREE.Vector3().fromBufferAttribute(points,0).distanceTo(tip)<.0001);assert.ok(new THREE.Vector3().fromBufferAttribute(points,2).distanceTo(mouth)<.0001);
+ // A standing/seated XR eye uses its own level head pose, not the desktop's
+ // downward fishing pitch. The same world-space catch remains in its frustum.
+ const xrEye=new THREE.Vector3(sign*.38,1.8,1.65).applyQuaternion(turn).add(origin),xrCamera=new THREE.PerspectiveCamera(90,1,.025,700);scene.add(xrCamera);xrCamera.position.copy(xrEye);xrCamera.lookAt(castPoint.x,xrEye.y,castPoint.z);xrCamera.updateMatrixWorld(true);const xrProjected=fish.position.clone().project(xrCamera);assert.ok(Math.abs(xrProjected.x)<1&&Math.abs(xrProjected.y)<1);
+ session.status='released';visuals.update(snapshot);assert.equal(scene.getObjectByName('LANDED_FISH'),undefined);visuals.dispose();
+});
+
+test('shore catches use the standing angler position and stay near hand height after a reconnect',()=>{
+ const scene=new THREE.Scene(),visuals=createFishingScene(scene),session={id:'shore-catch',status:'caught',position:{x:24,y:.2,z:-10},castPoint:{x:24,y:.05,z:-16},fish:{weightKg:.8},tension:.2},snapshot={players:{self:{position:{x:24,y:.2,z:-10},yaw:0,fishing:{session}}},actors:{}};
+ const before=JSON.stringify(snapshot);visuals.update(snapshot);visuals.animate(10);visuals.animate(10.7);const fish=scene.getObjectByName('LANDED_FISH');assert.ok(fish.position.distanceTo(new THREE.Vector3(24,.95,-11.6))<1e-8);assert.equal(JSON.stringify(snapshot),before);visuals.dispose();
+});

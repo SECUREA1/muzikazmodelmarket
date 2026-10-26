@@ -25,6 +25,6 @@ test('building paint remains editable before equip and modal menus block backgro
   assert.ok(catalog.includes('building-paint-options'));assert.ok(!catalog.includes('data-build-transform'));assert.ok(!catalog.includes('New piece staged'));
  assert.ok(source.includes("buildingPopup.hidden=true;closeTools()"));
  assert.ok(!source.includes("this.setTool('brick');buildingPopup.hidden=true"));
- assert.ok(source.includes('const menuOpen=Boolean(xrGameControls?.menuOpen||gameplayOverlayOpen()||fishingUI.active())'));
+ assert.ok(source.includes('const lookBlocked=Boolean(xrGameControls?.menuOpen||gameplayOverlayOpen()),menuOpen=lookBlocked||fishingUI.playing()'));assert.ok(source.includes('if(!lookBlocked){if(Math.abs(thumbInput.rightX)'),'fishing keeps free look while movement and firing stay blocked');
  assert.ok(source.includes('if(!serverHostedRoom&&!menuOpen)toxicBubbleSystem.update'));
 });

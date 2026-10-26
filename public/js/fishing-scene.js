@@ -2,7 +2,7 @@ import * as THREE from '../vendor/three/three.module.min.js';
 const visibleSession=session=>['waiting','bite','reeling','caught'].includes(session?.status);
 // Cosmetics read confirmed sessions only; catch generation and line physics stay on the server.
 export function createFishingScene(scene,{getRoots=()=>[]}={}){
- const root=new THREE.Group();root.name='SHARED_FISHING_LINES';root.userData.collisionDisabled=true;root.userData.collider=false;scene.add(root);const casts=new Map(),tip=new THREE.Vector3(),end=new THREE.Vector3();let snapshot=null,previousTime=null;
+ const root=new THREE.Group();root.name='SHARED_FISHING_LINES';root.userData.collisionDisabled=true;root.userData.collider=false;scene.add(root);const casts=new Map(),tip=new THREE.Vector3(),end=new THREE.Vector3(),landing=new THREE.Vector3();let snapshot=null,previousTime=null;
  function create(id){
   const group=new THREE.Group();group.name='Fishing_cast_'+id;root.add(group);
   const positions=new Float32Array(9),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:0xe2f4dd,transparent:true,opacity:.85}));group.add(line);
@@ -10,7 +10,7 @@ export function createFishingScene(scene,{getRoots=()=>[]}={}){
   const ripple=new THREE.Mesh(new THREE.RingGeometry(.2,.23,24),new THREE.MeshBasicMaterial({color:0xc0f8dc,transparent:true,opacity:.45,side:THREE.DoubleSide,depthWrite:false}));ripple.rotation.x=-Math.PI/2;group.add(ripple);
   const fish=new THREE.Group();fish.name='LANDED_FISH';const fishMaterial=new THREE.MeshStandardMaterial({color:0x83d9c2,metalness:.45,roughness:.3}),body=new THREE.Mesh(new THREE.SphereGeometry(.25,16,10),fishMaterial);body.scale.set(1.8,.65,.6);fish.add(body);const tail=new THREE.Mesh(new THREE.ConeGeometry(.2,.3,3),fishMaterial);tail.rotation.z=-Math.PI/2;tail.position.x=.5;fish.add(tail);const fin=new THREE.Mesh(new THREE.ConeGeometry(.14,.22,3),fishMaterial);fin.position.set(.03,.17,0);fin.scale.z=.2;fish.add(fin);for(const side of [-1,1]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),new THREE.MeshBasicMaterial({color:0x071b29}));eye.position.set(-.28,.06,side*.13);fish.add(eye);}fish.visible=false;group.add(fish);
   const rod=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xdec88a}));group.add(rod);
-  const cast={group,line,bobber,ripple,fish,fishMaterial,rod,tension:0};casts.set(id,cast);return cast;
+  const cast={group,line,bobber,ripple,fish,fishMaterial,rod,tension:0,landingAt:null,waterEnd:null};casts.set(id,cast);return cast;
  }
  function restoreRig(cast){if(cast.rigRod)cast.rigRod.rotation.z=cast.baseAngle;for(const joint of cast.joints||[])joint.rotation.z=0;if(cast.rotor)cast.rotor.rotation.x=0;if(cast.crank)cast.crank.rotation.x=0;}
  function remove(id){const cast=casts.get(id);if(!cast)return;restoreRig(cast);const geometries=new Set(),materials=new Set();cast.group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of Array.isArray(node.material)?node.material:node.material?[node.material]:[])materials.add(material);});for(const geometry of geometries)geometry.dispose();for(const material of materials)material.dispose();cast.group.removeFromParent();casts.delete(id);}
@@ -22,7 +22,17 @@ export function createFishingScene(scene,{getRoots=()=>[]}={}){
    if(rig?.tips?.[index]){rig.tips[index].updateWorldMatrix(true,false);rig.tips[index].getWorldPosition(tip);cast.rod.visible=false;}
    else{const origin=player.position||session.position||boat?.position||session.castPoint,yaw=boat?.rotation?.y||player.yaw||0,side=session.side==='port'?-1:1;tip.set(origin.x+Math.cos(yaw)*side*1.3,origin.y+1.7,origin.z-Math.sin(yaw)*side*1.3);const points=cast.rod.geometry.attributes.position;points.setXYZ(0,origin.x,origin.y+.8,origin.z);points.setXYZ(1,tip.x,tip.y,tip.z);points.needsUpdate=true;cast.rod.geometry.computeBoundingSphere();cast.rod.visible=true;}
    end.set(session.castPoint.x,Math.max(.05,session.castPoint.y||.05),session.castPoint.z);const bite=session.status==='bite';end.y+=(Math.sin(time*(bite?17:2.2))*(bite?.13:.025));if(session.status==='reeling'){end.lerp(tip,Math.min(.9,(session.progress||0)*.85));end.y=Math.max(.05,end.y*.08);end.x+=Math.sin(time*5)*.12;end.z+=Math.cos(time*4)*.12;}
-   if(session.status==='caught'){end.copy(tip).add(new THREE.Vector3(.2,-.5,0));cast.fish.visible=true;cast.fishMaterial.color.setHex(session.fish?.rarity==='legendary'?0xe5be5b:session.fish?.rarity==='rare'?0x73b5d7:session.fish?.water==='fresh'?0x94b973:0x83d9c2);cast.fish.position.copy(end);cast.fish.rotation.set(Math.sin(time*7)*.2,time*2,Math.sin(time*5)*.15);cast.fish.scale.setScalar(Math.min(2,Math.max(.6,Math.cbrt(session.fish?.weightKg||1))));}else cast.fish.visible=false;
+   if(session.status==='caught'){
+    // Land at the angler's hand/net height, not at the elevated rod tip. Keep
+    // this in world space so the same catch is visible to nearby players and VR.
+    const origin=session.position||player.position||boat?.position||session.castPoint,yaw=boat?.rotation?.y||player.yaw||0,dx=session.castPoint.x-origin.x,dz=session.castPoint.z-origin.z,span=Math.hypot(dx,dz),nx=span>.001?dx/span:-Math.sin(yaw),nz=span>.001?dz/span:-Math.cos(yaw),aboard=Number.isFinite(boat?.position?.x),aft=aboard?.5:0,reach=aboard?1.3:1.6;
+    landing.set(origin.x+nx*reach+Math.sin(yaw)*aft,(origin.y||0)+.75,origin.z+nz*reach+Math.cos(yaw)*aft);
+    if(cast.landingAt===null){cast.landingAt=time;cast.landingFrom=cast.waterEnd?.clone()||landing.clone().setY(.05);}
+    const lift=THREE.MathUtils.clamp((time-cast.landingAt)/.6,0,1),ease=1-Math.pow(1-lift,3);end.copy(cast.landingFrom).lerp(landing,ease);end.y+=Math.sin(lift*Math.PI)*.18;
+    cast.fish.visible=true;cast.fishMaterial.color.setHex(session.fish?.rarity==='legendary'?0xe5be5b:session.fish?.rarity==='rare'?0x73b5d7:session.fish?.water==='fresh'?0x94b973:0x83d9c2);cast.fish.position.copy(end);
+    cast.fish.rotation.set(Math.sin(time*7)*.1,Math.atan2(origin.x-end.x,origin.z-end.z)+Math.sin(time*2)*.1,-.18+Math.sin(time*5)*.07);cast.fish.scale.setScalar(Math.min(.85,Math.max(.55,Math.cbrt(session.fish?.weightKg||1)*.65)));
+    end.set(-.4,.025,0).multiplyScalar(cast.fish.scale.x).applyQuaternion(cast.fish.quaternion).add(cast.fish.position);
+   }else{cast.fish.visible=false;cast.landingAt=null;cast.waterEnd=end.clone();}
    const positions=cast.line.geometry.attributes.position;positions.setXYZ(0,tip.x,tip.y,tip.z);positions.setXYZ(1,(tip.x+end.x)/2,(tip.y+end.y)/2-(1-tension)*.12,(tip.z+end.z)/2);positions.setXYZ(2,end.x,end.y,end.z);positions.needsUpdate=true;cast.line.geometry.computeBoundingSphere();cast.bobber.position.copy(end);cast.bobber.visible=session.status!=='caught';cast.ripple.position.set(end.x,.04,end.z);cast.ripple.visible=session.status!=='caught';cast.ripple.scale.setScalar(1+(time%1)*1.7);cast.ripple.material.opacity=(1-time%1)*.4;
   }
  }
