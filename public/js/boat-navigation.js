@@ -1,4 +1,5 @@
 import {harborWaterAt,watercraftFootprint,watercraftOverlap,isWatercraft} from './harbor-water.js';
+import {fishingZones} from './fishing-config.js';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
@@ -7,6 +8,7 @@ export function harborApproach(environment,id,boat=null){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return null;
  const lake=(harbor.lakes||[]).find(lake=>boat?.position&&Math.abs(boat.position.x-lake.x)<lake.width/2&&Math.abs(boat.position.z-lake.z)<lake.depth/2);
  if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:{id,name:'Open-water passage',x:184,z:80};
+ const fishing=fishingZones(environment).find(zone=>zone.id===id);if(fishing&&((lake&&fishing.water==='fresh'&&Math.abs(fishing.x-lake.x)<lake.width/2)||(!lake&&fishing.water==='salt')))return {id,name:fishing.name,x:fishing.x,z:fishing.z};
  if(lake&&id===lake.id)return {id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5};
  if(id==='marina'&&boat?.modelId==='harbor-yacht')return {id,name:'Superyacht Marina Approach',x:170,z:99,entry:{x:225,z:99}};
  if(id==='marina')return {id,name:'Neon Marina approach',x:153,z:64};

@@ -8,7 +8,7 @@ const degrees=angle=>((angle*180/Math.PI)%360+360)%360;
 // heading, inertia, wind drive and shore contacts are calculated here.
 export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=()=>false}={}){
  input ||= {};
- const old=boat.boating||{},sailing=(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat',duration=clamp(finite(dt),0,.25),maximum=sailing?6.4:(boat.modelId||boat.asset?.buildAssetId)==='harbor-patrol'?12:9;
+ const old=boat.boating||{},sailing=(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat',duration=clamp(finite(dt),0,.25),maximum=sailing?6.4:(boat.modelId||boat.asset?.buildAssetId)==='harbor-patrol'?12:(boat.modelId||boat.asset?.buildAssetId)==='harbor-fishing-boat'?8:9;
  const position={x:finite(boat.position?.x),y:0,z:finite(boat.position?.z)};
  let yaw=normalizeAngle(finite(boat.rotation?.y)),speed=clamp(finite(old.speed),-2,maximum),throttle=clamp(finite(old.throttle),-1,1),rudder=clamp(finite(old.rudder),-1,1),impactDamage=0,held=false;
  const forward=clamp(finite(input.forward),-1,1),absolute=input.throttle!==undefined&&input.throttle!==null&&Number.isFinite(Number(input.throttle)),throttleCommand=absolute?clamp(Number(input.throttle),-1,1):Math.abs(forward)>.02?forward:clamp(finite(old.throttleCommand,finite(old.throttle)),-1,1);

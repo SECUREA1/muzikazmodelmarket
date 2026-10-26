@@ -5751,6 +5751,212 @@
         "factoryEquipment": true,
         "upgradeable": true
       }
+    },
+    {
+      "id": "builder-fishing-rod",
+      "name": "Coastal Spinning Rod",
+      "description": "Starter spinning rod with working reel, guides and line. Cast from a fishing station or a marked shore.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-rod",
+      "toolId": "fishing-rod",
+      "economySku": "tool:fishing-rod",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-rod.svg",
+      "priceMzk": 0,
+      "basic": true,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-rod",
+        "damage": 0,
+        "prompt": "Equip Coastal Spinning Rod"
+      }
+    },
+    {
+      "id": "builder-fishing-pro-rod",
+      "name": "Deepwater Carbon Rod",
+      "description": "Carbon rod for difficult fish and longer controlled fights.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-pro-rod",
+      "toolId": "fishing-pro-rod",
+      "economySku": "tool:fishing-pro-rod",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-pro-rod.svg",
+      "priceMzk": 120,
+      "basic": false,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-pro-rod",
+        "damage": 0,
+        "prompt": "Equip Deepwater Carbon Rod"
+      }
+    },
+    {
+      "id": "builder-fishing-bait",
+      "name": "Renewable Bait Tin",
+      "description": "Reusable practice bait for freshwater and coastal fish.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-bait",
+      "toolId": "fishing-bait",
+      "economySku": "tool:fishing-bait",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-bait.svg",
+      "priceMzk": 0,
+      "basic": true,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-bait",
+        "damage": 0,
+        "prompt": "Equip Renewable Bait Tin"
+      }
+    },
+    {
+      "id": "builder-fishing-reel",
+      "name": "Precision Drag Reel",
+      "description": "A smooth adjustable drag reel for the fishing loadout.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-reel",
+      "toolId": "fishing-reel",
+      "economySku": "tool:fishing-reel",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-reel.svg",
+      "priceMzk": 90,
+      "basic": false,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-reel",
+        "damage": 0,
+        "prompt": "Equip Precision Drag Reel"
+      }
+    },
+    {
+      "id": "builder-fishing-lure",
+      "name": "Silver Spoon Lure",
+      "description": "Reusable lure that attracts stronger fish.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-lure",
+      "toolId": "fishing-lure",
+      "economySku": "tool:fishing-lure",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-lure.svg",
+      "priceMzk": 60,
+      "basic": false,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-lure",
+        "damage": 0,
+        "prompt": "Equip Silver Spoon Lure"
+      }
+    },
+    {
+      "id": "builder-fishing-tackle-box",
+      "name": "Angler Tackle Box",
+      "description": "Organized hooks, floats and tackle for your fishing loadout.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-tackle-box",
+      "toolId": "fishing-tackle-box",
+      "economySku": "tool:fishing-tackle-box",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-tackle-box.svg",
+      "priceMzk": 80,
+      "basic": false,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-tackle-box",
+        "damage": 0,
+        "prompt": "Equip Angler Tackle Box"
+      }
+    },
+    {
+      "id": "builder-fishing-net",
+      "name": "Landing Net",
+      "description": "A landing net for bringing catches aboard.",
+      "owner": "MUZIKAZ",
+      "type": "tools",
+      "visibility": "public",
+      "buildAssetId": "fishing-net",
+      "toolId": "fishing-net",
+      "economySku": "tool:fishing-net",
+      "builderCategory": "tools",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/fishing/fishing-net.svg",
+      "priceMzk": 45,
+      "basic": false,
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-net",
+        "damage": 0,
+        "prompt": "Equip Landing Net"
+      }
+    },
+    {
+      "id": "builder-harbor-fishing-boat",
+      "name": "Reefrunner Angler Fishing Boat",
+      "description": "Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "harbor-fishing-boat",
+      "builderCategory": "vehicles",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.7,
+        2.7,
+        6.3
+      ],
+      "thumbnailUrl": "/public/images/boats/harbor-fishing-boat.svg",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 5,
+        "health": 300,
+        "destructible": true,
+        "prompt": "Board fishing boat"
+      },
+      "vehicleSettings": {
+        "mode": "boat",
+        "speed": 8,
+        "turnSpeed": 0.8
+      }
     }
   ]
 }

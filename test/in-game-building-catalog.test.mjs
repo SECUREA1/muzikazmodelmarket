@@ -111,7 +111,7 @@ test('catalog exposes every usable tool as an equip action with its existing pur
  const items=createBuildingCatalog(GAME_ECONOMY),tools=items.filter(item=>item.catalogSource==='tool');
  assert.equal(tools.length,GAME_ECONOMY.filter(item=>item.kind==='tool').length);
  for(const tool of tools){const raw=GAME_ECONOMY.find(item=>item.sku===tool.economySku);assert.equal(tool.toolId,raw.toolId);assert.equal(tool.category,'tools');assert.equal(tool.behavior,'equip');assert.equal(tool.buildAssetId,undefined);assert.equal(tool.modelUrl,undefined);assert.equal(matchesBuildingCatalogItem(tool,'tools','',{source:'tool',functionId:'equip'}),true);assert.equal(tool.owned,false);}
- assert.equal(buildingCatalogCategories(items).find(category=>category.id==='tools').count,tools.length);
+ assert.equal(buildingCatalogCategories(items).find(category=>category.id==='tools').count,items.filter(item=>matchesBuildingCatalogItem(item,'tools')).length);
 });
 
 test('owned native variants retain the usable SKU instead of a locked alias',()=>{
@@ -169,7 +169,7 @@ test('GLB configuration follows server precedence while keeping original authore
 
 test('tool descriptions explain their real gameplay use',()=>{
  const tools=createBuildingCatalog(GAME_ECONOMY).filter(item=>item.toolId);
- assert.equal(tools.length,24);
+ assert.equal(tools.length,GAME_ECONOMY.filter(item=>item.kind==='tool').length);
  for(const item of tools)assert.ok(!item.catalogDescription.startsWith('Equip '),item.toolId+' has specific instructions');
  assert.match(tools.find(item=>item.toolId==='repair-tool').catalogDescription,/Repair damage/);
  assert.match(tools.find(item=>item.toolId==='recycler').catalogDescription,/Remove an aimed/);

@@ -12,8 +12,8 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 const marina=neonMarina();
 const world={id:'marina-test',updatedAt:'1',proceduralLand:true,spawn:{x:124,y:0,z:30},builderScene:{layout:'community-park',mapSize:256,layoutMeta:{harbor:marina.harbor},objects:marina.objects}};
-test('harbor has real sea outside the mainland, seven island destinations, and fourteen catalog boats at accessible slips',()=>{
- assert.equal(marina.harbor.islands.length,7);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,14);
+test('harbor has real sea outside the mainland, seven island destinations, and fifteen catalog boats at accessible slips',()=>{
+ assert.equal(marina.harbor.islands.length,7);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,15);
  for(const boat of boats){assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(p=>harborWaterAt(world,p)));assert.ok(createBuilderModel(boat.modelId));}
  const land=createBuilderLand(world);assert.ok(land.getObjectByName('HARBOR_WATER_VISUAL').userData.collisionDisabled);const collision=new ServerBuilderCollision();
  assert.ok(Math.abs(collision.groundAt(world,{x:10,y:1,z:10}).y)<.1);

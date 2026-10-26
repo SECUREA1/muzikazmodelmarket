@@ -1,6 +1,7 @@
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
+import {FISHING_GEAR} from './fishing-config.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['flight','Flight & mobility'],
  ['fitness','Fitness & gym upgrades'],['factory','Factory & engineering'],['arcade','Arcade & card machines'],['sports','Sports & equipment'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
@@ -30,11 +31,12 @@ export function marketCategory(item={},section='upgrades'){
  const type=String(item.assetType||item.itemType||item.type||item.asset?.asset_type||'').toLowerCase();
  const sku=String(item.sku||item.economySku||item.itemId||item.id||'').replace(/^economy:/,'');
  const tool=item.toolId||(sku.startsWith('tool:')?sku.slice(5):'');
+ if(FISHING_GEAR.some(gear=>gear.id===tool||gear.id===nativeId))return 'tools';
  if(tool==='jetpack')return 'flight';
  if(item.kind==='material'||item.materialId||sku.startsWith('material:')||category.includes('building materials'))return 'materials';
  if(/vehicle/.test(type))return 'vehicles';
  if(category.includes('builder furniture')||sku.startsWith('backpack:builder-'))return 'furniture';
- if(category.includes('utility')||Object.hasOwn(UTILITY_TOOLS,tool)||['brick','spray','repair-tool','recycler'].includes(tool))return 'tools';
+ if(category.includes('fishing')||category.includes('utility')||Object.hasOwn(UTILITY_TOOLS,tool)||['brick','spray','repair-tool','recycler'].includes(tool))return 'tools';
  if(item.kind==='tool'||sku.startsWith('tool:')||category.includes('weapons')||/weapon|gear/.test(type))return 'weapons';
  const value=type+' '+category;
  if(/care|consumable|health|hydration|nutrition|recovery/.test(value))return 'care';

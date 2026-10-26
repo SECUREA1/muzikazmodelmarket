@@ -15105,6 +15105,524 @@
       }
     },
     {
+      "assetId": "builder-fishing-bait",
+      "name": "Renewable Bait Tin",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-bait.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-bait",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 0,
+      "description": "Reusable practice bait for freshwater and coastal fish.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-bait",
+        "damage": 0,
+        "prompt": "Equip Renewable Bait Tin"
+      }
+    },
+    {
+      "assetId": "builder-fishing-lure",
+      "name": "Silver Spoon Lure",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-lure.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-lure",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 60,
+      "description": "Reusable lure that attracts stronger fish.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-lure",
+        "damage": 0,
+        "prompt": "Equip Silver Spoon Lure"
+      }
+    },
+    {
+      "assetId": "builder-fishing-net",
+      "name": "Landing Net",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-net.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-net",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 45,
+      "description": "A landing net for bringing catches aboard.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-net",
+        "damage": 0,
+        "prompt": "Equip Landing Net"
+      }
+    },
+    {
+      "assetId": "builder-fishing-pro-rod",
+      "name": "Deepwater Carbon Rod",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-pro-rod.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-pro-rod",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 120,
+      "description": "Carbon rod for difficult fish and longer controlled fights.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-pro-rod",
+        "damage": 0,
+        "prompt": "Equip Deepwater Carbon Rod"
+      }
+    },
+    {
+      "assetId": "builder-fishing-reel",
+      "name": "Precision Drag Reel",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-reel.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-reel",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 90,
+      "description": "A smooth adjustable drag reel for the fishing loadout.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-reel",
+        "damage": 0,
+        "prompt": "Equip Precision Drag Reel"
+      }
+    },
+    {
+      "assetId": "builder-fishing-rod",
+      "name": "Coastal Spinning Rod",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-rod.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-rod",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 0,
+      "description": "Starter spinning rod with working reel, guides and line. Cast from a fishing station or a marked shore.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-rod",
+        "damage": 0,
+        "prompt": "Equip Coastal Spinning Rod"
+      }
+    },
+    {
+      "assetId": "builder-fishing-tackle-box",
+      "name": "Angler Tackle Box",
+      "category": "tools",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fishing/fishing-tackle-box.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fishing-tackle-box",
+      "builderCategory": "tools",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 80,
+      "description": "Organized hooks, floats and tackle for your fishing loadout.",
+      "behavior": "interact",
+      "function_data": {
+        "behavior": "interact",
+        "action": "fishing",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "fishingGear": "fishing-tackle-box",
+        "damage": 0,
+        "prompt": "Equip Angler Tackle Box"
+      }
+    },
+    {
       "assetId": "builder-fitness-agility-ladder",
       "name": "Gold Agility Ladder",
       "category": "fitness",
@@ -17854,6 +18372,83 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-harbor-fishing-boat",
+      "name": "Reefrunner Angler Fishing Boat",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/boats/harbor-fishing-boat.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "harbor-fishing-boat",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        2.7,
+        2.7,
+        6.3
+      ],
+      "description": "Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.",
+      "behavior": "vehicle",
+      "function_data": {
+        "behavior": "vehicle",
+        "action": "boat",
+        "interactionKey": "f",
+        "interactionDistance": 5,
+        "health": 300,
+        "destructible": true,
+        "prompt": "Board fishing boat"
+      }
+    },
+    {
       "assetId": "builder-harbor-patrol",
       "name": "Sentinel Combat Patrol",
       "category": "vehicles",
@@ -18666,6 +19261,61 @@
       "generated": true,
       "modelPath": "",
       "thumbnail": "/public/images/arcade.svg",
+      "generator": "extruded-svg",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-basketball-stadium",
+      "name": "Basketball Stadium",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/basketball-arena.svg",
       "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
@@ -27814,8 +28464,8 @@
     }
   ],
   "audit": {
-    "assetCount": 431,
-    "generatedCount": 43,
+    "assetCount": 440,
+    "generatedCount": 44,
     "warnings": [
       {
         "level": "info",
@@ -28014,6 +28664,12 @@
         "code": "GENERATED_REPLACEMENT",
         "asset": "rad-tox-dynamite",
         "generator": "dynamite-bundle"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-basketball-stadium",
+        "generator": "extruded-svg"
       },
       {
         "level": "info",

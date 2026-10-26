@@ -1,7 +1,9 @@
 import {resortProductPlacement} from './public/js/resort-products.js';
-export const NEON_MARINA_VERSION=2;
+import {FISHING_ZONES,FISHING_GUIDES} from './public/js/fishing-config.js';
+export const NEON_MARINA_VERSION=3;
 export function neonMarina(){
  const harbor={version:NEON_MARINA_VERSION,extent:768,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48},{id:'crescent-island',name:'Crescent Island',x:-390,z:270,width:240,depth:200},{id:'silver-coast',name:'Silver Coast',x:430,z:-300,width:220,depth:200},{id:'reed-cay',name:'Reed Cay',x:360,z:340,width:88,depth:72},{id:'sunset-key',name:'Sunset Key',x:-370,z:-310,width:96,depth:80}],lakes:[{id:'crescent-lake',name:'Crescent Lake',x:-390,z:280,width:96,depth:64},{id:'silver-lake',name:'Silver Lake',x:430,z:-280,width:80,depth:64}]};
+ harbor.fishingZones=structuredClone(FISHING_ZONES);harbor.fishingGuides=structuredClone(FISHING_GUIDES);
  const objects=[],locations=[];
  const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-marina-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
  const tile=(id,x,z,scale=[1,1,1],y=0)=>add(id,'material:floor',x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]}});
@@ -26,6 +28,12 @@ export function neonMarina(){
  guide('superyacht-guide','Tideglass Superyacht',127,113,'The superyacht is berthed alongside this pier. Walk up the stern gangway to explore the bedroom, lounge and billiards room. The port stairs lead to the flybridge helm: E / Use to drive. Stop or anchor, then E / Use returns you to the aft deck. At the billiards table choose Play billiards; aim, set power and shoot.');
  add('mainland-water-steps','material:stage-steps',130.8,-.65,28.2);
  guide('departure-guide','Marina Departures',122,26,'Launches, a sailboat and Sentinel 07 combat patrol are docked here. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
+ // The aft boarding pier leaves both side casting stations clear of the jetty.
+ for(let i=0;i<10;i++)tile('fishing-pier-'+i,124+i*2.4,-32.4);
+ add('angler-boat','harbor-fishing-boat',145,0,-38,{placementAnchor:'waterline',name:'Reefrunner Angler · Fishing Boat',functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Board fishing boat · E / Use',destructible:true,health:300}});
+ locations.push({id:'fishing-pier',name:'Angler Fishing Pier & Tackle',x:138,z:-32.4,width:28,depth:3,arrival:{x:124,y:0,z:-32.4},description:'Meet Captain Mara, equip rod and bait in Tools, then board the Reefrunner. Stop and anchor before casting from either side. Fishing hosts server tournaments and a catch market.'});
+ for(const zone of FISHING_ZONES)locations.push({...zone,width:zone.radius*2,depth:zone.radius*2,icon:'🎣',color:'#86e5ca',arrival:zone.water==='fresh'?{x:zone.x-zone.radius-26,y:0,z:zone.z}:{x:124,y:0,z:-32.4}});
+ for(const guide of FISHING_GUIDES){add('fishing-guide-'+guide.id,'world-resident',guide.position.x,0,guide.position.z,{name:guide.name+' · '+guide.role,functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Talk to '+guide.name},dialogueSettings:{text:guide.dialogue}});locations.push({id:guide.id,name:guide.name+' · Fishing Guide',...guide.position,width:2,depth:2,icon:'🎣',description:guide.dialogue});}
  for(const island of harbor.islands){
   locations.push({...island,...(harbor.lakes.some(lake=>Math.abs(lake.x-island.x)<island.width/2&&Math.abs(lake.z-island.z)<island.depth/2)?{arrival:{x:island.x-island.width/2+12,y:0,z:island.z}}:{}),description:'A real land destination with a landing pier, return boat, seating and a local landmark.'});
   const edge=island.x-island.width/2,landX=harbor.lakes.some(lake=>Math.abs(lake.x-island.x)<island.width/2&&Math.abs(lake.z-island.z)<island.depth/2)?edge+18:island.x;
@@ -61,7 +69,7 @@ export function neonMarina(){
   const shore=lake.x-lake.width/2;
   locations.push({...lake,arrival:{x:shore-6,y:0,z:lake.z},description:'An inland freshwater lake with a walkable shore, fishing pier and local launch. Reach the island by sea, then explore the lake on foot.'});
   tile(lake.id+'-pier',shore+3.6,lake.z,[5,1,1]);
-  add(lake.id+'-boat','harbor-skiff',shore+7,0,lake.z+5,{placementAnchor:'waterline',name:lake.name+' launch',rotation:{x:0,y:0,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Explore the lake · E / Use',destructible:true,health:200}});
+  add(lake.id+'-boat','harbor-fishing-boat',shore+7,0,lake.z+5,{placementAnchor:'waterline',name:lake.name+' Angler Boat',rotation:{x:0,y:0,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Board lake fishing boat · E / Use',destructible:true,health:300}});
   guide(lake.id+'-guide',lake.name,shore-6,lake.z-4,'This freshwater lake has its own launch. Board from the pier with E / Use, cruise within the lake, and return to the pier to explore the island.');
  }
  // Walk-in properties use individual Builder pieces throughout their structure.

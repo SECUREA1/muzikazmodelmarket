@@ -22,7 +22,7 @@ test('freshwater lakes have real swim floors, solid shores, accessible piers and
   assert.equal(harborWaterAt(world,shore),false);assert.ok(Math.abs(collision.groundAt(world,shore).y)<.03);
   const boat=marina.objects.find(object=>object.id.endsWith(lake.id+'-boat'));
   assert.ok(watercraftFootprint(boat.position,boat.rotation.y,boat).every(point=>harborWaterAt(world,point,.35)));
-  const destinations=harborDestinations(world,boat);assert.equal(destinations.length,2);
+  const destinations=harborDestinations(world,boat);assert.equal(destinations.length,3);
   for(const destination of destinations){const route=planBoatNavigation(boat,world,{destinationId:destination.id});assert.ok(route,'local lake route exists');for(const point of route.points)assert.ok(harborWaterAt(world,point,.35));}
   const arrival=marina.locations.find(place=>place.id===lake.id).arrival;
   assert.ok(collision.hasBodyClearance(world,arrival,.3));

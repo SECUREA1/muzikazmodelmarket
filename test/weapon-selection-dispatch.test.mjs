@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import {TOOL_IDS} from '../public/js/game-tool-rules.js';
+import {TOOL_IDS,isFishingTool,FISHING_TOOL_IDS} from '../public/js/game-tool-rules.js';
 import {isAircraft} from '../public/js/aircraft-flight.js';
 import {UTILITY_TOOLS} from '../public/js/game-utilities.js';
 import {supportsWorldTools} from '../public/js/rad-tox-rules.js';
@@ -11,14 +11,14 @@ const source=readFileSync('public/js/house-explorer-glb.js','utf8');
 function fixture(){
  const sent=[],calls=[],system={tool:'laser',sprayMode:'paintball',sprayColorIndex:0,initAudio:()=>{},placeBrick:()=>calls.push('brick')};
  for(const method of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[method]=()=>calls.push(method);
- const context=vm.createContext({THREE,UTILITY_TOOLS,isAircraft,supportsWorldTools,gameplayControlsReady:()=>true,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
+ const context=vm.createContext({THREE,UTILITY_TOOLS,isFishingTool,fishingUI:{active:()=>false,visible:()=>false,open:()=>{calls.push('fishing');return true;}},setStatus:()=>{},isAircraft,supportsWorldTools,gameplayControlsReady:()=>true,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
  const start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  return {context,system,sent,calls};
 }
 test('all selected weapons and utility kits dispatch their own shared action without falling back to laser',()=>{
  const {system,sent,calls}=fixture();
- for(const tool of TOOL_IDS){system.tool=tool;system.handlePointerInteraction({}, {centre:true});if(tool==='brick')assert.equal(calls.at(-1),'brick');else {assert.equal(sent.at(-1).tool,tool);assert.equal(sent.at(-1).action,'fire');}}
+ for(const tool of TOOL_IDS){system.tool=tool;const count=sent.length;system.handlePointerInteraction({}, {centre:true});if(isFishingTool(tool)){assert.equal(sent.length,count);assert.equal(calls.at(-1),'fishing');}else if(tool==='brick')assert.equal(calls.at(-1),'brick');else {assert.equal(sent.at(-1).tool,tool);assert.equal(sent.at(-1).action,'fire');}}
 });
 test('paintball and solid drawing work with combat off; menus block activation',()=>{
  const {context,system,sent}=fixture();context.radToxEnabled=false;system.tool='spray';system.handlePointerInteraction({}, {centre:true});assert.equal(sent.at(-1).action,'fire');
@@ -94,4 +94,12 @@ test('solo dynamite explodes and is removed after its fuse with encounters disab
  vm.runInContext(source.slice(gateStart,gateEnd),gateContext);
  system.explodeDynamite(stick);
  assert.equal(stick.parent,null);assert.equal(system.dynamites.length,0);assert.equal(system.explosions.length,1);assert.equal(gas,1);
+});
+
+
+test('all fishing tackle routes pointer and XR activation to fishing and cannot dispatch weapon fire',()=>{
+ for(const tool of FISHING_TOOL_IDS){const {context,system,sent,calls}=fixture();system.tool=tool;context.radToxEnabled=false;system.handlePointerInteraction({}, {centre:true});system.handleXRInteraction({});assert.deepEqual(calls,['fishing','fishing']);assert.equal(sent.length,0);
+  context.gameplayOverlayOpen=()=>true;system.handlePointerInteraction({}, {centre:true});assert.equal(calls.length,2,'a different modal retains control');
+  context.gameplayOverlayOpen=()=>false;context.fishingUI.active=()=>true;system.handleXRInteraction({});assert.equal(calls.length,2,'a live fishing cast cannot reopen or trigger another action');assert.equal(sent.length,0);
+ }
 });

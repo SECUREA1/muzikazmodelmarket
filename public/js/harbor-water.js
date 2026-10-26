@@ -1,5 +1,5 @@
 import {constructionInteractionPoint} from './construction-access.js';
-export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol']);
+export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol','harbor-fishing-boat']);
 export const hasWalkableInterior=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht';
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
 export function harborWaterAt(environment,point,margin=0){
@@ -8,9 +8,9 @@ export function harborWaterAt(environment,point,margin=0){
  const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
  return (harbor.lakes||[]).some(p=>Math.abs(x-p.x)<p.width/2-margin&&Math.abs(z-p.z)<p.depth/2-margin)||!patches.some(p=>Math.abs(x-p.x)<=p.width/2+margin&&Math.abs(z-p.z)<=p.depth/2+margin);
 }
-export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.5,3.9]:[1,2.4];
+export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.5,3.9]:(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-fishing-boat'?[1.35,3.15]:[1,2.4];
 export function watercraftFootprint(point,yaw=0,actor=null){
- const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(actor):(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.35,3.7]:[.9,2];
+ const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=['harbor-yacht','harbor-fishing-boat'].includes(actor?.modelId||actor?.asset?.buildAssetId)?watercraftSize(actor):(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-patrol'?[1.35,3.7]:[.9,2];
  const points=[[0,0],[-w,-l],[w,-l],[-w,l],[w,l]];if(w>1)points.push([-w,0],[w,0],[0,-l],[0,l]);
  return points.map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
 }

@@ -95,6 +95,11 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 ## Residents and local favors
 
+Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
+fishing grounds, tackle in the existing tools and markets, saved catches, MZK
+sales and shared fishing tournaments with AI rivals. See [fishing controls,
+equipment and competitions](docs/fishing.md).
+
 Contextual residents now work throughout the walkable world, including published
 Builder maps and restored saves. They have local roles, appearances, needs,
 practice routines, memories and relationships. Conversations remember interests

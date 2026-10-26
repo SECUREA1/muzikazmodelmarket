@@ -1,10 +1,18 @@
 import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
+import {FISHING_GEAR} from './fishing-config.js';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // These are tool illustrations, not substitutes for a placeable model. Distinct
 // silhouettes make equipment recognisable even without reading its label.
 const shapes=Object.freeze({
+ 'fishing-rod':'<path d="m12 57 6-13 29-37" fill="none" stroke="currentColor" stroke-width="4"/><path d="m14 53 5-9" stroke="#805b3e" stroke-width="7"/><circle cx="23" cy="44" r="6" fill="#172d36" stroke="currentColor" stroke-width="2"/><circle cx="23" cy="44" r="2"/><path d="M47 7c10 8 12 18 10 31v10q0 8-7 7-4 0-4-5" fill="none" stroke="#d9f1ec" stroke-width="1.5"/>',
+ 'fishing-pro-rod':'<path d="m10 58 9-18L44 5" fill="none" stroke="currentColor" stroke-width="4"/><path d="m13 53 6-12" stroke="#e2ad53" stroke-width="7"/><circle cx="25" cy="42" r="7" fill="#172d36" stroke="#e2ad53" stroke-width="2"/><path d="m24 42 8-2 1 6" fill="none" stroke="currentColor" stroke-width="3"/><path d="M44 5c13 6 14 16 13 33v12q-1 8-7 6-4-1-3-6" fill="none" stroke="#d9f1ec" stroke-width="1.5"/>',
+ 'fishing-reel':'<circle cx="29" cy="30" r="19" fill="#17303a" stroke="currentColor" stroke-width="5"/><circle cx="29" cy="30" r="11" fill="none" stroke="#dbece8" stroke-width="3"/><path d="M18 48v9h26V45M29 30h21v14h10" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="59" cy="44" r="4"/>',
+ 'fishing-bait':'<ellipse cx="31" cy="49" rx="22" ry="8" fill="#17303a"/><path d="M9 27v22q22 13 44 0V27"/><ellipse cx="31" cy="27" rx="22" ry="8" fill="#e2b784"/><path d="M16 28q2-10 8-4t8-3 9 3 5-3" fill="none" stroke="#bb665e" stroke-width="4"/><path d="M11 28v-7a20 14 0 0 1 40 0v7" fill="none" stroke="currentColor" stroke-width="3"/>',
+ 'fishing-lure':'<path d="M9 29q20-22 40 0-20 22-40 0Z"/><path d="m49 29 10-9v18Z" fill="#f3a26a"/><circle cx="18" cy="27" r="3" fill="#17303a"/><path d="m27 36 1 14q0 9 9 7 6-2 4-8m-4-10v8q0 8 7 7" fill="none" stroke="#c9dce1" stroke-width="2"/>',
+ 'fishing-tackle-box':'<rect x="6" y="22" width="52" height="34" rx="5"/><path d="M22 22v-9h20v9M6 33h52" fill="none" stroke="#17303a" stroke-width="4"/><rect x="28" y="28" width="9" height="13" rx="2" fill="#f8d58e"/><path d="M13 43h12m-12 6h12m17-6h9m-9 6h9" stroke="#d9f1ec" stroke-width="2"/>',
+ 'fishing-net':'<ellipse cx="32" cy="21" rx="22" ry="16" fill="none" stroke="currentColor" stroke-width="4"/><path d="M11 21q2 27 21 28 19-1 21-28M17 11l21 34M28 6l18 32M43 8 19 39M52 17 29 46M12 24h39M16 33h32M22 41h20M32 49v13" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M32 49v13" stroke="currentColor" stroke-width="6"/>',
  laser:'<path d="M6 24h33l9 6v10H27l-6 17H11l4-17H6Z"/><path d="M39 26h8v11h-8" fill="#24372e"/><path d="M48 31h13" stroke="currentColor" stroke-width="4"/><circle cx="25" cy="31" r="4" fill="#fff"/>',
  bat:'<path d="M11 55c-3-3-2-8 1-11L40 8c4-5 10-5 14-1s4 10-1 14L19 55c-2 2-6 2-8 0Z"/><path d="m18 39 8 8-7 8c-2 2-6 2-8 0-3-3-2-7 0-9Z" fill="#24372e"/><path d="m16 42 8 8m-12-3 8 8" stroke="#fff1d4"/>',
  spray:'<path d="M7 26h37v14H24l-5 16H9l5-16H7Z"/><path d="M19 26V13h17v13" fill="#f87dc8"/><path d="M23 13V8h9v5M44 30l14-9m-14 14 17 1m-17 4 14 9" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="58" cy="12" r="3" fill="#f5c851"/>',
@@ -34,6 +42,6 @@ const colors={bat:0xd9a468,spray:0x4cdcc7,brick:0xe0a264,flamethrower:0xff751f,t
 export const TOOL_PREVIEW_IDS=Object.freeze(Object.keys(shapes));
 export function toolPreviewArt(toolId,{name,color}={}){
  if(!Object.hasOwn(shapes,toolId))return '';
- const profile=RANGED_WEAPONS[toolId]||UTILITY_TOOLS[toolId],fill=/^#[\da-f]{6}$/i.test(color||'')?color:'#'+Number(profile?.color??colors[toolId]??0x9cff69).toString(16).padStart(6,'0');
- return `<svg viewBox="0 0 64 64" data-tool-illustration="${escape(toolId)}" role="img" aria-label="${escape(name||profile?.label||toolId)} tool illustration" style="color:${fill};fill:currentColor" stroke-linejoin="round" stroke-linecap="round">${shapes[toolId]}</svg>`;
+ const profile=RANGED_WEAPONS[toolId]||UTILITY_TOOLS[toolId]||FISHING_GEAR.find(item=>item.id===toolId),choice=color||profile?.color,fill=/^#[\da-f]{6}$/i.test(choice||'')?choice:'#'+Number(profile?.color??colors[toolId]??0x9cff69).toString(16).padStart(6,'0');
+ return `<svg viewBox="0 0 64 64" data-tool-illustration="${escape(toolId)}" role="img" aria-label="${escape(name||profile?.label||profile?.name||toolId)} tool illustration" style="color:${fill};fill:currentColor" stroke-linejoin="round" stroke-linecap="round">${shapes[toolId]}</svg>`;
 }

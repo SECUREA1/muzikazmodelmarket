@@ -11,6 +11,8 @@ import {RESORT_PRODUCTS} from './resort-products.js';
 import {createResortProduct} from './resort-product-models.js';
 import {createAircraftModel,updateAircraftModel} from './aircraft-model.js';
 import {createHarborBoat,updateHarborBoat} from './harbor-models.js';
+import {createFishingBoat,createFishingGear} from './fishing-models.js';
+import {FISHING_GEAR} from './fishing-config.js';
 import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
 import {finishGameItem} from './game-item-finish.js';
 import {CAMP_MODEL_INFO} from './summer-camp.js';
@@ -43,6 +45,8 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'piper-cub':['Piper Cub','Yellow high-wing taildragger with opening side window, tandem seating and analog instruments.',[10.7,2.6,6.8]],
   'harbor-yacht':['Tideglass Superyacht','A massive drivable yacht with bedroom, lounge, billiards and aft terrace.',[12,7,42]],
   'harbor-patrol':['Sentinel Combat Patrol','Armored patrol launch with a steerable deck cannon, rescue equipment and shared combat missions.',[3,2.9,7.8]],
+  'harbor-fishing-boat':['Reefrunner Angler Fishing Boat','Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.',[2.7,2.7,6.3]],
+  ...Object.fromEntries(FISHING_GEAR.map(item=>[item.id,[item.name,item.description,item.kind==='rod'?[.3,2.5,.2]:item.kind==='net'?[.6,1.65,.1]:[.55,.4,.35]]])),
   ...Object.fromEntries(Object.entries(ROAD_VEHICLES).map(([id,c])=>[id,[c.name,c.siteOnly?'Animated construction machine with hydraulic controls, detailed cab and synchronized instruments.':'Premium driveable road vehicle with detailed cockpit and live instruments.',[c.width,c.height||1.7,c.length]]])),
   'construction-steel-beam':['Structural Steel I-Beam','An eighteen metre S355 steel I-beam with reinforced ends and lifting shackles.',[18,.73,.44]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
@@ -298,6 +302,8 @@ export function createBuilderModel(id,options={}) {
   if(id==='lot-owned-sign'||id==='lot-boundary-stake'||id.startsWith('lot-sale-sign-'))return createLandSaleModel(id);
   if(['diamond-da40','piper-cub'].includes(id))return createCivilAircraft(id);
   if(id==='harbor-patrol')return createPatrolBoat();
+  if(id==='harbor-fishing-boat')return createFishingBoat();
+  if(FISHING_GEAR.some(item=>item.id===id))return createFishingGear(id);
   if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 

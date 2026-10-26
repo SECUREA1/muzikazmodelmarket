@@ -106,7 +106,7 @@ export function createBuildingCatalog(economyItems=[]){
  const tools=economyItems.filter(raw=>raw.kind==='tool'&&raw.toolId&&raw.visibility!=='private'&&raw.status!=='inactive')
   .filter((raw,index,records)=>records.findIndex(record=>(record.sku||record.economySku||record.toolId)===(raw.sku||raw.economySku||raw.toolId))===index)
   .map(raw=>describeItem({...raw,id:'tool:'+raw.toolId,sourceId:raw.id,economySku:raw.sku||raw.economySku,
-   type:'tool',category:'tools',behavior:'equip',action:'equip',owned:raw.owned===true,basic:raw.basic===true,
+   type:'tool',category:'tools',buildAssetId:undefined,modelUrl:undefined,behavior:'equip',action:'equip',owned:raw.owned===true,basic:raw.basic===true,
    description:raw.description||UTILITY_TOOLS[raw.toolId]?.description||RANGED_WEAPONS[raw.toolId]?.description||TOOL_DESCRIPTIONS[raw.toolId]||`Equip ${raw.name||readable(raw.toolId)} from your tools pouch to use it in this world.`},'tool'));
  return Object.freeze([...native,...glb,...tools]);
 }

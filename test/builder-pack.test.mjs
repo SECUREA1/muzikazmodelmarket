@@ -25,17 +25,19 @@ test('Builders Pack provides a floor, three rooms, twenty-one core models, and i
 });
 
 test('in-game Tools and Drop Backpack expose the complete map-building pack', async () => {
-  const [game, manifest] = await Promise.all([
+  const [game, manifest, browser] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/models/backpack-assets.json', import.meta.url), 'utf8').then(JSON.parse)
+    readFile(new URL('../public/models/backpack-assets.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../public/js/build-asset-browser.js', import.meta.url), 'utf8')
   ]);
   const buildAssets = manifest.assets.filter((asset) => asset.buildAssetId);
 
   assert.match(game, /data-rad-build-toggle/);
   assert.match(game, /data-rad-seats-toggle/);
-  assert.match(game, /matchesBuildingCatalogItem\(item,filter\)/);
+  assert.match(game, /mountBuildAssetBrowser\(buildMenu\.querySelector\('\[data-build-browser\]'\),\{assets,tray,previous\}\)/);
+  assert.match(browser, /assets\.filter\(asset=>matchesBuildingCatalogItem\(asset,categorySelect\.value,search\.value/);
   assert.ok(IN_GAME_BUILDING_ITEMS.filter(item=>matchesBuildingCatalogItem(item,'seats')).length>=3);
-  assert.match(game, /Build map & game/);
+  assert.match(game, /<h2>World Builder<\/h2>/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
   assert.match(game, /Browse all Builder items/);

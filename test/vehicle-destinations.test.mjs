@@ -11,10 +11,14 @@ import {boatAssistedInput} from '../public/js/boat-assist.js';
 import {stepBoatSimulation} from '../public/js/boat-simulation.js';
 import {harborWaterAt,watercraftFootprint} from '../public/js/harbor-water.js';
 const airport=airportWorld(),marina=neonMarina(),harbor={builderScene:{objects:marina.objects,layoutMeta:{harbor:marina.harbor}}};
-test('expanded worlds expose four landing strips, six harbour docks, and relevant vehicle routes',()=>{
+test('expanded worlds expose four landing strips, six harbour docks, three saltwater fishing areas, and relevant vehicle routes',()=>{
  assert.equal(airportRunways(airport).length,4);assert.ok(airport.builderScene.mapSize>=2000);assert.equal(marina.harbor.docks.length,6);assert.ok(marina.harbor.extent>=512);
  assert.equal(vehicleDestinations(airport,{modelId:'corsair-aircraft'}).length,4);assert.deepEqual(vehicleDestinations(airport,{modelId:'harbor-skiff'}),[]);
- assert.ok(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).every(place=>!marina.harbor.islands.some(island=>island.id===place.id)));assert.equal(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).length,8);
+ const yachtRoutes=vehicleDestinations(harbor,{modelId:'harbor-yacht'}),fishingAreas=marina.harbor.fishingZones.filter(zone=>zone.water==='salt');
+ assert.ok(yachtRoutes.every(place=>!marina.harbor.islands.some(island=>island.id===place.id)));assert.equal(yachtRoutes.length,11);
+ assert.equal(yachtRoutes.filter(place=>!marina.harbor.fishingZones.some(zone=>zone.id===place.id)).length,8);
+ assert.equal(fishingAreas.length,3);for(const zone of fishingAreas)assert.ok(yachtRoutes.some(place=>place.id===zone.id&&place.mode==='sail'));
+ assert.ok(yachtRoutes.every(place=>!marina.harbor.fishingZones.some(zone=>zone.water==='fresh'&&zone.id===place.id)));
 });
 for(const origin of airportRunways(airport))for(const destination of airportRunways(airport))test('automatic flight '+origin.id+' to '+destination.id+' lands and parks without damage',()=>{
  const plane={id:'plane',modelId:'corsair-aircraft',active:true,position:{x:origin.x-21,y:.4,z:origin.z},rotation:{y:0},flight:{}},player={actorId:'pilot',vehicleId:plane.id,input:{}},sim={actors:{plane},players:{pilot:player},airport:{runwayHolder:null,expires:0}};

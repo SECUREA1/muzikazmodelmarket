@@ -1,4 +1,5 @@
-const BASIC=new Set(['tool:laser','tool:bat','tool:spray','tool:brick','tool:repair-tool','tool:recycler','material:studs','material:wood','material:cement']);
+import {FISHING_GEAR} from './fishing-config.js';
+const BASIC=new Set(['tool:laser','tool:bat','tool:spray','tool:brick','tool:repair-tool','tool:recycler','material:studs','material:wood','material:cement',...FISHING_GEAR.filter(item=>item.basic).map(item=>'tool:'+item.id)]);
 export class GameEconomy {
  constructor({inventory,announce,shop,onChange=()=>{}}){Object.assign(this,{inventory,announce,shop,onChange});this.items=[];this.assets=[];this.pending=new Set();}
  get(sku){return this.items.find(item=>item.sku===sku);}

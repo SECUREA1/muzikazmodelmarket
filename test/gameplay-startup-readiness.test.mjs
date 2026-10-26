@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {isFishingTool,FISHING_TOOL_IDS} from '../public/js/game-tool-rules.js';
 
 const source=readFileSync(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
@@ -17,7 +18,7 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,isFishingTool,gameplayOverlayOpen:()=>false,fishingUI:{visible:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
@@ -92,10 +93,10 @@ test('world navigation stays disabled through joining and restores only for a co
 });
 
 test('resetting a room clears facility gates and machine controls before a retry',()=>{
- const panels=new Set(['factory','fitness','ski','device','land','casino','yacht']);let machineHeld=true,stops=0;
+ const panels=new Set(['factory','fitness','ski','device','land','casino','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0;
  const facility=name=>({visible:()=>panels.has(name),update(snapshot){if(!snapshot)panels.delete(name);}});
  const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true,stop(){stops++;}},
-  factoryUI:facility('factory'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
+  fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},factoryUI:facility('factory'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
   skiResortControls:{update:()=>panels.delete('ski')},deviceUI:{reset:()=>panels.delete('device')},landSaleUI:{reset:()=>panels.delete('land')},casinoUI:{reset:()=>panels.delete('casino')},yachtGames:{reset:()=>panels.delete('yacht')}
  });
  context.resetRoomConnection();
@@ -268,4 +269,16 @@ test('a confirmed player receives immediate local jump feedback while its server
  const start=source.indexOf('  function jump()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
  const jumping=context.jump();assert.deepEqual(calls,['local-jump','server-jump']);
  acknowledgement.resolve();await jumping;assert.deepEqual(calls,['local-jump','server-jump','refresh']);
+});
+
+
+test('fishing sessions and modal panels suppress primary actions, and every tackle tool opens fishing without firing',()=>{
+ const calls=[];let active=false,overlay=false;
+ const {context}=fixture({gameplayStarted:true,authoritativeClient:{ready:true},serverPlayerInitialized:true,serverActors:{},serverVehicleId:null,isAircraft:()=>true,fireAircraft:()=>calls.push('fire'),toxicBubbleSystem:{tool:'laser'},gameplayOverlayOpen:()=>overlay,fishingUI:{active:()=>active,open:()=>{calls.push('fishing');return true;}}});
+ const start=source.indexOf('  function shootAtReticle()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ active=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
+ active=false;overlay=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
+ overlay=false;for(const tool of FISHING_TOOL_IDS){context.toxicBubbleSystem.tool=tool;assert.equal(context.shootAtReticle(),false);}
+ assert.deepEqual(calls,Array(FISHING_TOOL_IDS.length).fill('fishing'));
+ context.toxicBubbleSystem.tool='laser';context.shootAtReticle();assert.equal(calls.at(-1),'fire','ordinary vehicle firing resumes after leaving fishing');
 });
