@@ -81,6 +81,13 @@ import {buildingDimensions} from './public/js/building-materials.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const copy=value=>JSON.parse(JSON.stringify(value));
+// Leaving combat must not carry a defeated, immobile state into exploration.
+// Wounded players keep their health; opting out cannot be used as a free heal.
+function resumeDefeatedExplorer(sim,player){
+ if(player.radToxEnabled!==false||player.health>0)return;
+ for(const key of ['heldId','seatedId','vehicleId']){const attached=sim.actors[player[key]];if(attached?.holderId===player.actorId)attached.holderId=null;player[key]=null;}
+ player.health=100;player.velocityY=0;player.input={};player.skiLift=null;player.skiing=false;player.skiSpeed=0;
+}
 function clearUnavailableAttachments(sim,player,actorId=player.actorId){
  for(const key of ['heldId','seatedId','vehicleId']){
   const id=player[key],actor=sim.actors[id];
@@ -358,6 +365,7 @@ export class AuthoritativeRooms {
    if(!supportsRadTox(environment)){player.radToxEnabled=false;player.radToxReady=true;}
    if(sim.basketball){player.health=100;if(basketballLateArrival||command.residentWalkthrough===true)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(supportsRadTox(environment)){if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;player.radToxReady=player.radToxEnabled===false||command.deferRadTox!==true;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
+   resumeDefeatedExplorer(sim,player);
    if(enteringWalkthrough&&!meeting&&!travel){const arrival=residentArrivalPosition(sim,environment,this.collision,room.objects);if(arrival){player.position={...arrival};player.floor=arrival.y;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;}if(player.residentTask?.status==='active'){player.residentTask.status='cancelled';player.residentTask.message='Entering the public walkthrough reset this favor.';}}
    room.building ||=buildingPolicy(room,environment);if(!room.building.hostId||!sim.players[room.building.hostId]||now-sim.players[room.building.hostId].lastSeen>=15000)room.building.hostId=actorId;
    result.message='Joined '+player.locationName;result.inputEpoch=player.inputEpoch;
@@ -420,11 +428,11 @@ export class AuthoritativeRooms {
    else if(command.action==='npc-social'){try{result.message=residentCommand(sim,player,environment,command,now,{collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});result.residentId=command.entityId||player.npcConversation?.entityId;}catch(error){fail(error.message,409);}}
    else if(command.action==='vehicle-mission'){try{result.message=vehicleMissionCommand(sim,player,environment,command.operation,now,{questId:command.questId,teamId:command.teamId,role:command.role,choice:command.choice,text:command.text,entityId:command.entityId,collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});}catch(error){fail(error.message,409);}}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now,environment);}
-   else if(command.action==='rad-tox-toggle'){player.radToxEnabled=supportsRadTox(environment)&&command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
+   else if(command.action==='rad-tox-toggle'){player.radToxEnabled=supportsRadTox(environment)&&command.enabled===true;resumeDefeatedExplorer(sim,player);result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
-   else if(player.radToxEnabled!==false&&sim.match?.state==='finished'&&!['input','interact','map-access','teleport-floor'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
-   else if(command.action==='respawn'){player.skiLift=null;player.skiing=false;player.skiSpeed=0;if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
+   else if(player.radToxEnabled!==false&&sim.match?.state==='finished'&&!['input','interact','map-access','teleport-floor','respawn'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
+   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.skiLift=null;player.skiing=false;player.skiSpeed=0;for(const key of ['heldId','seatedId','vehicleId']){const attached=sim.actors[player[key]];if(attached?.holderId===actorId)attached.holderId=null;player[key]=null;}player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2},{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&!['interact','map-access'].includes(command.action))fail('Respawn before acting.',409);
    else if(command.action==='map-access'){
     const reopening=!!command.entityId&&command.entityId===player.vehicleId;

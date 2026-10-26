@@ -6,17 +6,18 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
  const head=dialog.querySelector('thead tr');for(const [,label]of columns){const th=document.createElement('th');th.scope='col';th.textContent=label;head.append(th);}
  document.body.append(dialog);
  const button=document.createElement('button');button.type='button';button.className='house-bottom-control';button.title='Match results';button.setAttribute('aria-label','Match results');button.innerHTML='<b aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h10v6a5 5 0 0 1-10 0ZM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 14v6m-4 1h8"/></svg></b><span>Match results</span>';button.hidden=true;dock.append(button);
- let currentSnapshot=null,latest=null,selfId=null,openedEnd=null,openedDeath=null,pending=false,renderKey='',receivedAt=0,openedWave=null;
+ let currentSnapshot=null,latest=null,selfId=null,openedEnd=null,openedDeath=null,pending=false,renderKey='',receivedAt=0,openedWave=null,deathPrompt=false;
  const next=dialog.querySelector('[data-results-next]'),respawn=dialog.querySelector('[data-results-respawn]'),error=dialog.querySelector('[data-results-error]');
  function countdown(){const remaining=roundCountdown(currentSnapshot,Date.now()-receivedAt);if(!remaining)return;next.hidden=false;next.disabled=true;next.textContent=remaining.seconds?`${remaining.kind==='wave'?'Next wave':remaining.kind==='retry'?'Level retry':'Next level'} in ${remaining.seconds}s`:'Starting together…';}
  const countdownTimer=setInterval(countdown,250);countdownTimer.unref?.();
- function open(){onOpen();if(!dialog.open){(document.fullscreenElement||document.body).append(dialog);dialog.showModal();}}
+ function open({forDeath=false}={}){deathPrompt=forDeath;onOpen();if(!dialog.open){(document.fullscreenElement||document.body).append(dialog);dialog.showModal();}}
  button.addEventListener('click',()=>{open();if(currentSnapshot)api.render(currentSnapshot,selfId);});dialog.querySelector('[data-results-close]').addEventListener('click',()=>dialog.close());
  async function act(action){if(pending||!latest)return;pending=true;next.disabled=respawn.disabled=true;error.textContent='';try{await action();if(dialog.open)dialog.close();}catch(failure){error.textContent=failure.message||'Unable to continue. Try again.';}finally{pending=false;next.disabled=respawn.disabled=false;}}
  next.addEventListener('click',()=>act(()=>onNext(latest.id)));respawn.addEventListener('click',()=>act(onRespawn));
- const api={reset(){currentSnapshot=null;latest=null;selfId=null;openedEnd=openedDeath=openedWave=null;renderKey='';if(dialog.open)dialog.close();button.hidden=true;},render(snapshot,id){
+ const api={reset(){currentSnapshot=null;latest=null;selfId=null;openedEnd=openedDeath=openedWave=null;deathPrompt=false;renderKey='';if(dialog.open)dialog.close();button.hidden=true;},render(snapshot,id){
   currentSnapshot=snapshot;receivedAt=Date.now();selfId=id;latest=snapshot.match;button.hidden=!latest;if(!latest)return;
   const self=snapshot.players[id],finished=latest.state==='finished',wave=snapshot.radTox?.transition?.kind==='wave',waveKey=latest.id+':'+snapshot.radTox?.wave;
+  if(deathPrompt&&self?.health>0){deathPrompt=false;if(dialog.open)dialog.close();}
   if(!wave&&openedWave){openedWave=null;if(dialog.open)dialog.close();}
   if(!finished&&openedEnd&&openedEnd!==latest.id){openedEnd=null;if(dialog.open)dialog.close();}
   const deathToken=latest.id+':'+(self?.combat?.deaths||0);
@@ -32,7 +33,7 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
   if(wave){openedWave=waveKey;dialog.querySelector('h2').textContent=`Wave ${snapshot.radTox.wave} complete`;dialog.querySelector('[data-results-summary]').textContent='Level totals so far · everyone continues together.';}
   countdown();
   if(finished&&openedEnd!==latest.id){openedEnd=latest.id;}
-  else if(!finished&&self?.health<=0){const token=latest.id+':'+(self.combat?.deaths||0);if(openedDeath!==token){openedDeath=token;open();}}
+  else if(!finished&&self?.health<=0){const token=latest.id+':'+(self.combat?.deaths||0);if(openedDeath!==token){openedDeath=token;open({forDeath:true});}}
   else if(!finished&&openedEnd&&openedEnd!==latest.id){openedEnd=null;if(dialog.open)dialog.close();}
  }};
  return api;

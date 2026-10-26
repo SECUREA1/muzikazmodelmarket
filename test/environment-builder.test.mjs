@@ -358,7 +358,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /BUILDER_TEMPLATE_\$\{layout\}/, 'the playable map reconstructs the template set dressing instead of loading an empty terrain');
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
-  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:this\.localCollision\|\|!this\.serverAuthoritative\(\),maxTriangles:this\.serverAuthoritative\(\)\?60000:Infinity\}\)/, 'procedural terrain enters the bounded local and server collision pipeline');
+  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:this\.localCollision\|\|!this\.serverAuthoritative\(\)\}\)/, 'every playable map retains the bounded physical collision hierarchy');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, builderLand\?\(builderBaseSpawn\(environment\)\|\|environment\.spawn\|\|\{\}\):environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');

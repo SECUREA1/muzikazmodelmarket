@@ -128,6 +128,8 @@ jobs:
       - run: npm run build
       - name: Verify startup, connection recovery and map lifecycle
         run: node --test test/gameplay-startup-readiness.test.mjs test/rad-tox-startup.test.mjs test/live-map-interaction.test.mjs test/vehicle-input-routing.test.mjs test/xr-game-controls.test.mjs test/api-connection.test.mjs test/game-request-deadline.test.mjs test/local-map-3d.test.mjs test/collision-world-cache.test.mjs test/collision-candidate-scope.test.mjs test/spawn-clearance.test.mjs test/movement-presence-recovery.test.mjs
+      - name: Verify dense GLB collision and RAD-TOX movement recovery
+        run: node --test test/collision-tree.test.mjs test/local-environment-collision.test.mjs test/world-entry-safety.test.mjs test/yacht-walking.test.mjs test/rad-tox-movement-recovery.test.mjs test/rad-tox-solo-flow.test.mjs test/match-results-flow.test.mjs test/resident-world-link.test.mjs test/world-picker-refresh.test.mjs
       - name: Install browser test tools
         run: |
           python -m pip install playwright
@@ -175,8 +177,12 @@ jobs:
           sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
       - name: Verify startup, keyboard and sustained touch in every public world
         run: python test/all-world-input.browser.py --mode ${{ matrix.mode }} --skip-map-travel --hold-ms 700 --report /tmp/all-world-input-results.json
+      - name: Verify GLB walking during delayed replies and menu use
+        run: python test/glb-free-movement.browser.py --mode ${{ matrix.mode }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: all-world-input-results-${{ matrix.mode }}
-          path: /tmp/all-world-input-results.json
+          path: |
+            /tmp/all-world-input-results.json
+            /tmp/glb-free-movement-results.json

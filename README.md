@@ -144,6 +144,15 @@ when requested, so arriving at either training range leaves movement available.
 Gameplay avatar refreshes resolve models directly without rebuilding the world
 directory or processing purchases on the movement request path.
 
+Dense GLB houses keep local walking collision in solo and shared play. A bounded
+triangle hierarchy retains every physical surface without the overlapping octree
+subdivision that could stall startup; delayed snapshots no longer leave those
+maps dependent on server replies for each visible step. Focused People links
+also pass movement keys through. RAD-TOX resets reactivate solo play, and defeated
+players can respawn or return to exploration without a stale defeat dialog
+continuing to block controls. Late inventory refreshes preserve an open world
+picker instead of replacing its map controls with Backpack content.
+
 Run the movement checks against a fresh build (the Node server serves `dist/`
 when present):
 
@@ -154,6 +163,7 @@ node --test test/spawn-clearance.test.mjs test/movement-presence-recovery.test.m
 python3 test/all-world-input.browser.py --mode multiplayer
 python3 test/all-world-input.browser.py --mode solo
 python3 test/game-toolbar-movement.browser.py
+python3 test/glb-free-movement.browser.py
 ```
 
 The public-world browser matrix tests untouched startup, rendered touch and

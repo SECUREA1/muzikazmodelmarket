@@ -79,3 +79,12 @@ test('clearance rejects a capsule deep inside a saved solid and ignores an opene
  assert.equal(collision.hasBodyClearance(world,point,.38,{objects:{wall:{...wall,deleted:true}}}),true);
  collision.clearPlacedWorlds();
 });
+
+test('rotated saved walls preserve empty floor inside their world bounding box',async()=>{
+ const {ServerBuilderCollision}=await import('../server-builder-collision.mjs');
+ const collision=new ServerBuilderCollision(),world={id:'rotated-clear-entry',proceduralLand:true,builderScene:{layout:'grand-floor',objects:[]}};
+ const wall={id:'wall',materialId:'wall',position:[0,1.2,0],rotation:[0,Math.PI/4,0],scale:[4,1,1]},placed={objects:{wall}};
+ assert.equal(collision.hasBodyClearance(world,{x:1.5,y:.02,z:1.5},.38,placed),true,'the rotated world envelope is empty away from the actual wall');
+ assert.equal(collision.hasBodyClearance(world,{x:0,y:.02,z:0},.38,placed),false,'a player enclosed in the actual primitive still requires recovery');
+ assert.equal(collision.hasBodyClearance(world,{x:0,y:.02,z:.1},.38,placed),false,'nearby actual wall faces remain solid');
+});

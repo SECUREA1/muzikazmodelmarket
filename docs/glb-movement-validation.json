@@ -1,0 +1,567 @@
+{
+  "validatedDate": "2026-10-26",
+  "baseCommit": "50707cf1",
+  "scope": "GLB local and shared walking, RAD-TOX recovery, focused controls, rotated saved solids and yacht exits",
+  "changes": [
+    "Store all physical triangles in a balanced collision hierarchy without octant replication.",
+    "Keep local collision and walking prediction enabled for dense hosted GLB maps.",
+    "Restore solo combat after reset and recover shared movement after defeat, respawn or combat opt-out.",
+    "Dismiss automatic defeat dialogs when the server confirms recovery.",
+    "Pass movement and jump keys through focused People links.",
+    "Check saved solid enclosure in each mesh local frame so rotated walls do not block empty aisles.",
+    "Preserve the world picker and its focused controls when asynchronous inventory refreshes complete."
+  ],
+  "regressionTests": {
+    "passed": 313,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node --test --test-concurrency=4 (selected movement/collision/environment/recovery tests)",
+    "log": "/tmp/glb-radtox-final-regression.log",
+    "fileCount": 47
+  },
+  "upstreamAudioAndPlacementTests": {
+    "passed": 29,
+    "failed": 0,
+    "log": "/tmp/glb-upstream-integration.log"
+  },
+  "overlayFocusBrowser": {
+    "passed": true,
+    "log": "/tmp/glb-overlay-focus-final.log"
+  },
+  "environmentCheck": {
+    "environments": 31,
+    "categorizedModels": 35,
+    "passed": true
+  },
+  "geometry": {
+    "scope": "Actual bundled GLB geometry initial movement",
+    "method": "For each environment, load real assets through ServerBuilderCollision, find the safe authoritative entry, build full local collision tree and resolve local entry, then request a 0.15 unit step with gravity in 8 compass directions using authoritative resolve and moveWalkingCapsule. Distances rounded to 2 decimal places in observed console output.",
+    "passed": 12,
+    "failed": 0,
+    "indexBenchmark": {
+      "environment": "muzikaz-main",
+      "authoredTriangles": 331211,
+      "boundedBuildMilliseconds": 1841,
+      "oldBuild": "Exact baseline tree-only benchmark began construction and did not finish before the30second whole-process timeout (includes initial server geometry parsing). Earlier combined first-map probe was also stopped after more than60seconds."
+    },
+    "maps": [
+      {
+        "environment": "muzikaz-main",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "muzikaz-upper",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "sheepbase",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "studio-ridge-in",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "studio-ridge-out",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "crew-plaza-in",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "crew-plaza-inside",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "crew-plaza-outdoors",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "jail-cells",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "kitchen",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "kitchen-upper-deck",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "passed": true
+      },
+      {
+        "environment": "muzikaz-full-house",
+        "serverDistances": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "localDistances": [
+          0.07,
+          0.13,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.13
+        ],
+        "passed": true
+      }
+    ],
+    "notes": [
+      "All 12 maps retain nonzero movement in every direction. Layered fullhouse local entry is near actual wall geometry, so 3 directions clip tangentially rather than crossing the wall.",
+      "This geometry probe verifies collisions and spawn motion;browser keyboard/touch and network recovery are covered separately."
+    ]
+  },
+  "review": {
+    "blockingFindings": 0,
+    "independentRayQueriesMatchedBruteForce": 1000,
+    "randomTriangleCount": 10000
+  },
+  "notes": [
+    "All 12 bundled GLB entries were checked against actual assets in eight movement directions using both local and authoritative collision.",
+    "The browser regression uses a reduced raster scale in headless software rendering; CSS layout, collision and input behavior are unchanged.",
+    "Five upstream audio and builder commits were incorporated before the final regression run.",
+    "The final three-line picker guard was followed by 40 focused checks; the preceding 313-case collision and movement run remains separately recorded."
+  ],
+  "pickerRefreshFollowup": {
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/glb-picker-final-regression.log",
+    "scope": "Backpack, world picker, startup and world navigation after the final picker guard."
+  },
+  "browser": {
+    "passed": 4,
+    "failed": 0,
+    "log": "/tmp/glb-free-movement-final.log",
+    "command": "python3 test/glb-free-movement.browser.py --world muzikaz-main --world studio-ridge-in --mode both --report /tmp/glb-free-movement-final.json",
+    "checks": [
+      "Initial keyboard and touch movement",
+      "RAD-TOX enabled movement and return to exploration",
+      "Focused People link walking and jump input in solo",
+      "Tools closure and open/closed world picker movement",
+      "Inventory refresh preserves world picker controls, search and focus",
+      "Text search retains typing",
+      "Shared local walking during three seconds of withheld gameplay requests",
+      "No page errors"
+    ],
+    "results": [
+      {
+        "world": "muzikaz-main",
+        "mode": "multiplayer",
+        "passed": true,
+        "startupSeconds": 15.64,
+        "initialKeyboard": {
+          "w": 2.0,
+          "s": 1.03,
+          "a": 1.812,
+          "d": 1.494
+        },
+        "initialTouch": [
+          2.397,
+          3.872,
+          1.587,
+          2.292
+        ],
+        "radToxKeyboard": {
+          "w": 1.795,
+          "s": 3.646
+        },
+        "noNetworkMovement": [
+          {
+            "key": "w",
+            "distance": 2.829
+          }
+        ],
+        "afterToolsClose": {
+          "w": 1.896,
+          "s": 0.952
+        },
+        "worldPickerInventoryRefresh": true,
+        "openWorldPicker": {
+          "w": 1.409,
+          "s": 1.063
+        },
+        "afterWorldClose": {
+          "w": 1.399,
+          "s": 1.508
+        },
+        "finalTouch": [
+          2.329,
+          2.212,
+          1.306,
+          3.946
+        ]
+      },
+      {
+        "world": "studio-ridge-in",
+        "mode": "multiplayer",
+        "passed": true,
+        "startupSeconds": 4.32,
+        "initialKeyboard": {
+          "w": 1.285,
+          "s": 1.191,
+          "a": 1.286,
+          "d": 1.103
+        },
+        "initialTouch": [
+          2.634,
+          2.248,
+          2.186,
+          2.266
+        ],
+        "radToxKeyboard": {
+          "w": 1.255,
+          "s": 1.399
+        },
+        "noNetworkMovement": [
+          {
+            "key": "a",
+            "distance": 8.295
+          }
+        ],
+        "afterToolsClose": {
+          "w": 1.266,
+          "s": 1.237
+        },
+        "worldPickerInventoryRefresh": true,
+        "openWorldPicker": {
+          "w": 1.558,
+          "s": 1.064
+        },
+        "afterWorldClose": {
+          "w": 1.417,
+          "s": 1.094
+        },
+        "finalTouch": [
+          2.404,
+          2.501,
+          2.426,
+          2.715
+        ]
+      },
+      {
+        "world": "muzikaz-main",
+        "mode": "solo",
+        "passed": true,
+        "startupSeconds": 10.77,
+        "initialKeyboard": {
+          "w": 1.532,
+          "s": 0.838,
+          "a": 1.691,
+          "d": 0.724
+        },
+        "initialTouch": [
+          3.08,
+          3.043,
+          2.885,
+          3.032
+        ],
+        "radToxKeyboard": {
+          "w": 1.384,
+          "s": 0.673
+        },
+        "residentLinkKeyboard": {
+          "w": 0.984,
+          "s": 0.684
+        },
+        "residentLinkJumpInput": true,
+        "afterToolsClose": {
+          "w": 1.036,
+          "s": 0.915
+        },
+        "worldPickerInventoryRefresh": true,
+        "openWorldPicker": {
+          "w": 0.766,
+          "s": 0.114
+        },
+        "afterWorldClose": {
+          "w": 1.023,
+          "s": 1.023
+        },
+        "finalTouch": [
+          3.0,
+          2.887,
+          3.099,
+          3.434
+        ]
+      },
+      {
+        "world": "studio-ridge-in",
+        "mode": "solo",
+        "passed": true,
+        "startupSeconds": 3.54,
+        "initialKeyboard": {
+          "w": 0.876,
+          "s": 0.654,
+          "a": 1.037,
+          "d": 0.883
+        },
+        "initialTouch": [
+          2.525,
+          2.284,
+          2.453,
+          2.314
+        ],
+        "radToxKeyboard": {
+          "w": 1.068,
+          "s": 0.959
+        },
+        "residentLinkKeyboard": {
+          "w": 1.054,
+          "s": 0.641
+        },
+        "residentLinkJumpInput": true,
+        "afterToolsClose": {
+          "w": 1.022,
+          "s": 0.923
+        },
+        "worldPickerInventoryRefresh": true,
+        "openWorldPicker": {
+          "w": 1.035,
+          "s": 0.839
+        },
+        "afterWorldClose": {
+          "w": 1.084,
+          "s": 0.922
+        },
+        "finalTouch": [
+          2.275,
+          2.249,
+          2.261,
+          2.277
+        ]
+      }
+    ]
+  },
+  "staticBuildCheck": {
+    "passed": true
+  }
+}

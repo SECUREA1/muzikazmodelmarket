@@ -1,7 +1,7 @@
 import {layoutCollisionGeometry} from './layout-terrain.js';
 import {triangleWallSegments} from '../walking-triangles.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
-import { Octree } from '../../vendor/three/addons/math/Octree.js';
+import { Octree } from './collision-tree.js';
 
 const COLLISION_RE = /(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i;
 // Only effects with no physical surface are excluded.  In particular, do not
