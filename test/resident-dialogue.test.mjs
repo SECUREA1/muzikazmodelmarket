@@ -37,6 +37,22 @@ test('new map contacts inherit shared interests while relationship memories rema
  for(let index=0;index<12;index++)residentDialogue(f.sim,f.player,f.npc,f.world,'day','Hello',f.advance());assert.equal(f.player.residentSocial[f.world.id+'|'+f.npc.id].turns.length,6);
 });
 
+test('residents explain personal plans, team duties and their own form without changing player rewards',()=>{
+ const f=fixture(),info=f.npc.resident;delete info.sharedTask;
+ info.objective={id:'garden-tour',worldId:f.world.id,title:'Discover the garden',kind:'explore',status:'active',index:1,checkpoints:[{name:'Read the activity board'},{name:'Garden overlook'},{name:'Return to the lounge'}]};info.objectivesCompleted=2;
+ f.say('day');let answer=f.player.npcConversation.conversation.at(-1).text;
+ assert.match(answer,/discover the garden.*Garden overlook.*1 of 3.*2 personal objectives/);
+ f.say('question','What are your plans?');assert.match(f.player.npcConversation.conversation.at(-1).text,/Garden overlook/);
+ const partner=Object.values(f.sim.actors).find(actor=>actor.resident&&actor!==f.npc);
+ info.sharedTask={id:'equipment',partnerId:partner.id,title:'Check the equipment together',stage:'Work together',responsibility:'Review the equipment list',progress:.5};
+ f.say('resident-activity');answer=f.player.npcConversation.conversation.at(-1).text;
+ assert.ok(answer.includes(partner.resident.name));assert.match(answer,/review the equipment list.*50%/);
+ info.identity={form:'automaton',ambition:'discover every public landmark',quirk:'keeps a notebook of small discoveries'};info.appearance.form='automaton';
+ f.say('resident-personality');answer=f.player.npcConversation.conversation.at(-1).text;
+ assert.match(answer,/an automaton/);assert.match(answer,/discover every public landmark/);assert.match(answer,/I keep a notebook/);
+ assert.equal(f.player.score,0);assert.equal(f.player.tokens.MZK,900);
+});
+
 test('compatible daily favors grant score plus role practice and reputation once without creating MZK',()=>{
  const f=fixture();f.npc.resident.index=0;f.say('help');const offer=f.player.npcConversation.residentContext.taskOffer;assert.ok(offer.steps.length>=2);assert.equal(offer.reward.score,100);assert.ok(offer.reward.reputation>0);
  f.say('accept');const task=f.player.residentTask;assert.equal(task.status,'active');assert.ok(task.progressReward.skill);assert.equal(typeof task.reward,'number');

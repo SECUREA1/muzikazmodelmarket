@@ -1,5 +1,6 @@
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {residentIntelligence,observeResidentInteraction} from './server-resident-life.mjs';
+import {residentActivitySummary} from './public/js/resident-activity-summary.js';
 
 export const RESIDENT_DIALOGUE_CHOICES=[
  ['day','How is your day?'],['help','Do you need help?'],['accept','Accept daily objective'],['progress','Daily objective progress'],['confirm','Confirm pickup / check-in'],['resident-activity','What are you doing now?'],['resident-personality','Tell me about yourself'],['resident-skills','Our skills and progress'],['resident-staff','Who else is nearby?'],['resident-memory','What do you remember?'],['joke','Tell me something fun'],['question','Ask about this location'],['thanks','Thank you'],['cancel','Cancel daily objective'],['bye','See you later']
@@ -72,7 +73,7 @@ function intentFor(choice,text){
  if(/\b(rules?|controls?|how.*play|how.*start|join.*game)\b/i.test(text))return 'rules';
  if(/\b(skill|teach|learn|talent|good at|experience|practise|practice)\b/i.test(text))return 'skills';
  if(/\b(tell me about yourself|backstory|personality|hobbies|interests|why.*work|why.*here|your.*(?:favorite|favourite))\b/i.test(text))return 'personality';
- if(/\b(doing|working on|right now|happening|what happened|news)\b/i.test(text))return 'activity';
+ if(/\b(doing|working on|right now|happening|what happened|news|your plans?|your goals?|your objectives?|your teammates?)\b/i.test(text))return 'activity';
  if(/\b(who else|other residents|who.*help|staff|crew|host|guide)\b/i.test(text))return 'staff';
  if(/\b(help|quest|task|favor|favour|job|errand)\b/i.test(text))return 'help';
  if(/\b(joke|laugh|funny|amusing)\b/i.test(text))return 'joke';
@@ -82,7 +83,10 @@ function intentFor(choice,text){
  return /\?|what|how/i.test(text)?'question':'followup';
 }
 function currentActivity(sim,npc,intelligence){
- const info=npc.resident,goal=intelligence.goal||info.goal,target=goal?.targetId&&sim.actors[goal.targetId]?.resident;
+ const info=npc.resident,plans=residentActivitySummary(info,sim.actors),goal=intelligence.goal||info.goal,target=goal?.targetId&&sim.actors[goal.targetId]?.resident;
+ if(npc.aiTask?.status==='active'||info.machineWork?.status==='active')return 'Right now I am '+(info.machineWork?.message||npc.aiTask?.message||info.task||'finishing a requested job')+'.';
+ if(plans.shared){const work=plans.shared;return 'Right now I am working with '+work.partnerName+' on '+work.title.toLowerCase()+'. '+(work.responsibility?'My part is to '+work.responsibility.replace(/^[A-Z]/,letter=>letter.toLowerCase())+'. ':work.stage?'We are at '+work.stage.toLowerCase()+'. ':'')+'We are '+Math.floor(work.progress*100)+'% through our task.';}
+ if(plans.objective?.status==='active'){const work=plans.objective;return 'Right now I am working on '+work.title.toLowerCase()+'. '+(work.current?'My next stop is '+work.current+'. ':'')+(work.total?'I have completed '+work.index+' of '+work.total+' steps. ':'')+(plans.completedObjectives?'I have finished '+plans.completedObjectives+' personal objective'+(plans.completedObjectives===1?'':'s')+' here.':'');}
  let reply='Right now I am '+(intelligence.activity||info.task||'checking the public area')+'.';
  if(target)reply+=' I plan to catch up with '+target.name+' next.';
  else if(goal?.reason)reply+=' '+goal.reason+(/\.$/.test(goal.reason)?'':'.');
@@ -104,8 +108,11 @@ export function residentDialogue(sim,player,npc,environment,choice,text,now){
   reply=['I will remember your interest in ','Then we have a good starting point: ','Good to know you enjoy '][variant]+describe(interest)+'. '+(info.context?.primarySkill===interest?'That connects with my work here. ':'')+'Do you enjoy learning the details or getting straight into an activity?';
  }else if(intent==='memory')reply=visits?'Good to see you again, '+player.username+'. We have spoken '+visits+' time'+(visits===1?'':'s')+'. '+(memory.preferences.activity?'You told me you enjoy '+describe(memory.preferences.activity)+'. ':inherited?'Our hosts remember your interest in '+describe(inherited)+'. ':'')+(memory.preferences.pace?'You prefer '+memory.preferences.pace+'. ':'')+'We were last talking about '+describe(memory.topic)+'.':(inherited?'Our hosts note that you enjoy '+describe(inherited)+'. ':'')+'This is our first conversation here. Tell me what interests you, and I can keep it in mind.';
  else if(intent==='personality'){
+  const identity=residentActivitySummary(info,sim.actors);
   const story=String(intelligence.backstory||'').replace(new RegExp('^'+info.name.split(' ')[0]+'\\b'),'I').replace(/^I is\b/,'I am');
   reply='I am '+info.name+', the '+info.role.toLowerCase()+' at '+info.placeName+'. '+(story||'I enjoy helping visitors discover this area at their own pace.')+(intelligence.personality?' People describe me as '+String(intelligence.personality).toLowerCase()+'.':'')+(intelligence.preferences?.conversation?' I like talking about '+intelligence.preferences.conversation+'.':'');
+  const habit=identity.quirk.replace(/\b(keeps|counts|celebrates|asks|collects|likes)\b/g,word=>({keeps:'keep',counts:'count',celebrates:'celebrate',asks:'ask',collects:'collect',likes:'like'})[word]);
+  reply+=(identity.form?' I am '+(identity.form==='Automaton'?'an ':'a ')+identity.form.toLowerCase()+'.':'')+(identity.ambition&&!story.includes(identity.ambition)?' My ambition is to '+identity.ambition.replace(/^[A-Z]/,letter=>letter.toLowerCase())+'.':'')+(habit?' I '+habit+'.':'');
  }else if(intent==='activity')reply=currentActivity(sim,npc,intelligence);
  else if(intent==='rules')reply=(activityGuidance[interest||info.context?.primarySkill]||activityGuidance.exploration)+' I can explain the area or help you find its public activity point. You can inspect an activity before deciding to join.';
  else if(intent==='skills'){

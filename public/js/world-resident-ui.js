@@ -3,6 +3,7 @@ import {requestGameInputRelease} from './game-input-release.js';
 import {revealGameViewControl} from './game-display-flow.js';
 import {mountQuestConversationPanel} from './quest-conversation-panel.js';
 import {unlockQuestConversation} from './quest-conversation-voice.js';
+import {residentActivitySummary} from './resident-activity-summary.js';
 const CASINO='muzikaz-casino';
 const FITNESS='muzikaz-fitness-centre';
 const friendly=value=>String(value||'').replaceAll('-',' ').replaceAll('_',' ').replace(/\b\w/g,char=>char.toUpperCase());
@@ -35,11 +36,16 @@ export function mountWorldResidentUI(stage,command){
   for(const {actor,gap}of residents){
    const info=actor.resident;let card=residentCards.get(actor.id);
    if(!card){
-    const root=add('article','',list,'casino-resident-card resident-life-card'),heading=add('h4','',root),name=add('span','',heading),range=add('small','',heading),role=add('p','',root,'casino-resident-role'),button=add('button','',root),activity=add('p','',root),strengths=add('p','',root,'casino-resident-strengths'),friends=add('p','',root,'casino-resident-strengths'),speech=add('p','',root,'casino-resident-speech');
-    button.type='button';button.dataset.residentTalk=actor.id;button.onclick=()=>send(actor.id,'day');card={root,name,range,role,button,activity,strengths,friends,speech};residentCards.set(actor.id,card);
+    const root=add('article','',list,'casino-resident-card resident-life-card'),heading=add('h4','',root),name=add('span','',heading),range=add('small','',heading),role=add('p','',root,'casino-resident-role'),identity=add('p','',root,'casino-resident-strengths'),button=add('button','',root),activity=add('p','',root),objective=add('p','',root),progress=add('progress','',root),shared=add('p','',root),completed=add('p','',root,'casino-resident-strengths'),strengths=add('p','',root,'casino-resident-strengths'),friends=add('p','',root,'casino-resident-strengths'),speech=add('p','',root,'casino-resident-speech');
+    objective.dataset.residentObjective='';shared.dataset.residentSharedTask='';progress.max=1;
+    button.type='button';button.dataset.residentTalk=actor.id;button.onclick=()=>send(actor.id,'day');card={root,name,range,role,identity,button,activity,objective,progress,shared,completed,strengths,friends,speech};residentCards.set(actor.id,card);
    }
    text(card.name,info.name);text(card.range,Math.round(gap)+' m');text(card.role,info.role+' · AI'+(typeof info.personality==='string'?' · '+info.personality:''));text(card.button,'Talk to '+info.name);card.button.setAttribute('aria-label','Start conversation with '+info.name);card.button.disabled=gap>10||busy;
    text(card.activity,info.task||(inCasino?'Enjoying the casino floor':'Exploring nearby'));text(card.strengths,skillSummary(info.skills));card.strengths.hidden=!info.skills;
+   const plans=residentActivitySummary(info,latest.actors);text(card.identity,plans.identity);card.identity.hidden=!plans.identity;
+   text(card.objective,plans.objective?.text);card.objective.hidden=!plans.objective;card.progress.hidden=plans.objective?.status!=='active';card.progress.value=plans.objective?.progress||0;card.progress.setAttribute('aria-label',info.name+' · '+(plans.objective?.text||'Personal objective progress'));
+   text(card.shared,plans.shared?.text);card.shared.hidden=!plans.shared;
+   text(card.completed,plans.completedObjectives+' personal objectives · '+plans.completedCommunityTasks+' team tasks completed');card.completed.hidden=!plans.completedObjectives&&!plans.completedCommunityTasks;
    const friends=(info.relationships||[]).filter(person=>person.affinity>0&&latest.actors[person.id]?.resident).sort((a,b)=>b.affinity-a.affinity).slice(0,2).map(person=>latest.actors[person.id].resident.name);text(card.friends,friends.length?'Familiar faces: '+friends.join(' · '):'');card.friends.hidden=!friends.length;
    const speaking=info.speech&&(!info.speechUntil||info.speechUntil>latest.serverTime);text(card.speech,speaking?'“'+info.speech+'”':'');card.speech.hidden=!speaking;
   }
