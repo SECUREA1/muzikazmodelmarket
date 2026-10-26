@@ -61,7 +61,7 @@ export class EnvironmentLoader {
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
     this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes;
     this.collisionMeshes = collision.collisionMeshes;
     this.floorMeshes = collision.floorMeshes;
@@ -72,7 +72,7 @@ export class EnvironmentLoader {
   setSupplementalCollisionRoots(roots = []) {
     this.supplementalCollisionRoots = roots.filter(Boolean);
     if (!this.world) return null;
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
     this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
     return collision;
   }
@@ -115,7 +115,7 @@ export class EnvironmentLoader {
       // parallel shader compilation when the browser supports it.
       if(this.camera&&this.renderer.compileAsync&&(!this.serverAuthoritative()||Number(quality.triangleCount||0)<=60000))await this.renderer.compileAsync(nextWorld,this.camera,this.scene);
       if(token!==this.token){this.disposeWorld(nextWorld,nextMixers);return null;}
-      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
+      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative()});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, builderLand?(builderBaseSpawn(environment)||environment.spawn||{}):environment.spawn);
       this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);

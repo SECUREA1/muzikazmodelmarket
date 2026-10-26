@@ -29,7 +29,7 @@ class Anchor{
  set href(value){this.setAttribute('href',value);}
  get href(){return this.getAttribute('href')||'';}
  set tabIndex(value){this.setAttribute('tabindex',value);}
- dispatch(type){const event={prevented:false,stopped:false,preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;}};this.listeners.get(type)?.(event);return event;}
+ dispatch(type,fields={}){const event={...fields,prevented:false,stopped:false,preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;}};this.listeners.get(type)?.(event);return event;}
 }
 function fixture(){const parent={children:[],ownerDocument:{createElement(tag){assert.equal(tag,'a');return new Anchor();}},append(node){this.children.push(node);}};return parent;}
 
@@ -41,7 +41,14 @@ test('one persistent accessible link follows dynamic map changes before keyboard
  id='hockey-custom';assert.equal(link.dispatch('pointerdown').stopped,true);assert.equal(new URL(link.href).searchParams.get('environment'),id);
  id='park-custom';link.dispatch('contextmenu');assert.equal(new URL(link.href).searchParams.get('environment'),id);
  id='final';const event=link.dispatch('click');assert.equal(event.prevented,false);assert.equal(event.stopped,true);assert.equal(new URL(link.href).searchParams.get('environment'),id);assert.equal(parent.children.length,1);
- assert.equal(link.dispatch('keydown').stopped,true,'focused navigation does not also steer or trigger the match');
+ const activation=link.dispatch('keydown',{key:'Enter'});assert.equal(activation.stopped,true,'link activation does not also trigger the match');assert.equal(activation.prevented,false,'Enter retains native link activation');
+});
+
+test('a focused People link passes fresh movement and jump keys to gameplay',()=>{
+ const link=mountResidentWorldLink(fixture(),'garden',{compact:true,baseUrl:'https://example.test/'});
+ for(const key of ['w','A','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Shift','f','Escape']){
+  const event=link.dispatch('keydown',{key});assert.equal(event.stopped,false,`${key} reaches the gameplay listener`);assert.equal(event.prevented,false);
+ }
 });
 
 test('an unresolved map stays visibly disabled and recovers when a destination becomes available',()=>{

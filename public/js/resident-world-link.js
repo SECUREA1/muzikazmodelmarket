@@ -21,6 +21,8 @@ export function mountResidentWorldLink(parent,idOrGetter,{compact=false,baseUrl}
  }
  for(const type of ['pointerdown','focus','contextmenu'])link.addEventListener(type,event=>{refresh();if(type==='pointerdown')event.stopPropagation();});
  link.addEventListener('click',event=>{if(!refresh())event.preventDefault();event.stopPropagation();});
- link.addEventListener('keydown',event=>event.stopPropagation());
+ // Keep native link activation local while the focused toolbar still shares
+ // movement and jump keys with the game.
+ link.addEventListener('keydown',event=>{if(event.key==='Enter')event.stopPropagation();});
  refresh();parent.append(link);return link;
 }

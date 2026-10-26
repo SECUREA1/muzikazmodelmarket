@@ -232,9 +232,21 @@ export class ServerBuilderCollision {
  }
  hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
   const world=this.world(environment);
-  // Surface distance alone misses a capsule entirely enclosed by a saved
-  // solid. Check the solid volumes as well as their nearby wall triangles.
-  if(placed&&this.placedWorld(placed.actors,placed.objects,environment).boxes.some(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03))return false;
+  // Surface distance alone misses a capsule entirely enclosed by a saved solid.
+  // World AABBs are only a broad phase: a rotated yacht wall's enclosing box
+  // can cover its empty central aisle. Test the body axis in each mesh's
+  // authored frame, leaving capsule-to-surface distance to the triangles below.
+  if(placed){
+   const dynamic=this.placedWorld(placed.actors,placed.objects,environment),candidates=new Set(dynamic.boxes.filter(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03).map(box=>box.objectId));
+   for(const mesh of dynamic.meshes){
+    if(!candidates.has(builderObjectId(mesh)))continue;
+    if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
+    for(const matrix of placementMeshMatrices(THREE,mesh)){
+     const inverse=matrix.clone().invert(),bottom=new THREE.Vector3(point.x,point.y+.03,point.z).applyMatrix4(inverse),top=new THREE.Vector3(point.x,point.y+PLAYER_HEIGHT-.03,point.z).applyMatrix4(inverse),direction=top.clone().sub(bottom),length=direction.length(),hit=new THREE.Ray(bottom,direction.normalize()).intersectBox(mesh.geometry.boundingBox,new THREE.Vector3());
+     if(mesh.geometry.boundingBox.containsPoint(bottom)||(hit&&hit.distanceTo(bottom)<length))return false;
+    }
+   }
+  }
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));

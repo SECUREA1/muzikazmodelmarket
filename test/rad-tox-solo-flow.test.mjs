@@ -28,3 +28,22 @@ test('changing maps cancels pending solo wave and level transitions',()=>{
   assert.deepEqual(spawns,[]);assert.equal(game.advanced,undefined);
  }
 });
+
+test('resetting a defeated solo encounter resumes simulation and cancels old transitions',()=>{
+ const body=source.match(/resetRun\(\)\{([^\n]+?)\}dispose\(\)/)[1];
+ const reset=new Function('stage','TOXIC_BUBBLE_CONFIG','RAD_TOX_STATES',`return function(){${body}}`)({classList:{remove(){}}},{initialCount:8,maxHealth:100,maxAmmo:Infinity},{ACTIVE:'active',STANDBY:'standby'});
+ const spawns=[];
+ const game={active:false,state:'cleared',health:0,environmentGeneration:2,waveTransitionPending:true,levelCompletionScheduled:true,
+  clearCombatEffects(){},utilityKit:{reset(){}},clearUtilityEffects(){},buildEditor:{cancel(){}},flameSystem:{clear(){},refill(){}},
+  clearPickups(){},validEnvironment:()=>true,setState(state){this.state=state;},
+  spawnInitial:()=>spawns.push('enemies'),spawnBatPickup:()=>spawns.push('bat'),spawnFloorGas:()=>spawns.push('gas')};
+ reset.call(game);
+ assert.equal(game.active,true,'the render loop advances the restarted encounter');
+ assert.equal(game.state,'active');assert.equal(game.health,100);
+ assert.equal(game.environmentGeneration,3);assert.equal(game.waveTransitionPending,false);assert.equal(game.levelCompletionScheduled,false);
+ assert.deepEqual(spawns,['enemies','bat','gas']);
+ game.validEnvironment=()=>false;
+ reset.call(game);
+ assert.equal(game.active,false,'a missing map cannot run an encounter');assert.equal(game.state,'standby');
+ assert.deepEqual(spawns,['enemies','bat','gas']);
+});

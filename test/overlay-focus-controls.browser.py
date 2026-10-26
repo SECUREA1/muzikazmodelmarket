@@ -28,6 +28,7 @@ try:
             const {mountLiveLocalMap}=await import('/public/js/local-live-map.js');
             const {mountTransportActivity}=await import('/public/js/transport-activity.js');
             const {mountGameDisplayFlow}=await import('/public/js/game-display-flow.js');
+            const {mountResidentWorldLink}=await import('/public/js/resident-world-link.js');
             const THREE=await import('/public/vendor/three/three.module.min.js');
             const snapshot={serverTime:100000,players:{me:{position:{x:0,y:0,z:0}}},actors:{r:{id:'r',resident:{name:'Test',role:'Guide'},position:{x:0,y:0,z:0}}}};
             const world={id:'muzikaz-airport',airport:{enabled:true},builderScene:{mapSize:256,objects:[]}};
@@ -36,6 +37,9 @@ try:
             const radio=mountTransportActivity({stage,command,THREE,scene:new THREE.Scene(),airportRadio:{trafficAudio(){},receiveTraffic(){}}});radio.update(snapshot,'me',world);
             window.mapSelections=0;const mini=mountLiveLocalMap({stage,command,open(){mapSelections++;}});mini.update(world);
             mountGameDisplayFlow(stage);
+            window.residentLinkActivations=0;
+            const people=mountResidentWorldLink(stage,'muzikaz-main',{compact:true});
+            people.addEventListener('click',event=>{event.preventDefault();residentLinkActivations++;});
             window.gameKeys=[];
             // The real game's window handler prevents Space from activating a
             // focused HUD button while jumping. Exercise that browser default.
@@ -50,6 +54,11 @@ try:
 
         page.locator('canvas').focus()
         gameplay_keys()
+        page.locator('.resident-world-link').focus()
+        gameplay_keys()
+        page.keyboard.press('Enter')
+        assert page.evaluate('residentLinkActivations') == 1, 'Enter retains native People link activation.'
+        assert page.evaluate('gameKeys.splice(0)') == [], 'People link activation must not also trigger gameplay.'
         for toggle_label, close_label, panel in [
             ('Residents, conversations and daily objectives', 'Close resident conversations', '.world-resident-panel'),
             ('Crew radio and vehicle quests', 'Close crew radio', '.transport-radio-panel'),

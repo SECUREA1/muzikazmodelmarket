@@ -87,6 +87,9 @@ test('piloted yacht pose updates retain real decks, walls and shot collision at 
  const deck=collision.groundAt(environment,{x:0,y:10,z:0},{actors});assert.ok(Math.abs(deck.y-5.045)<1e-5);
  assert.equal(collision.hasBodyClearance(environment,{x:5,y:5.04,z:0},.3,{actors,objects:{}}),false);
  assert.equal(collision.blocksShot(environment,{x:-20,y:5.5,z:0},[1,0,0],40,actors),true);
+ // Solid-volume checks may finish before the lazy wall-triangle query. Read
+ // the query explicitly so the following pose changes test cache invalidation.
+ assert.ok(first.view.triangles.length);
  const triangles=first.static.wallTriangles,index=first.static.meshIndex;assert.ok(triangles);assert.ok(index);
  for(let frame=0;frame<30;frame++){
   yacht.position.x+=.01;const moved=state(collision,actors,{},environment);assert.strictEqual(moved.static,first.static);assert.deepEqual(moved.static.meshes.map(mesh=>mesh.geometry),geometries);

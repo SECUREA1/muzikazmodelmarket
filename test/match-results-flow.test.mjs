@@ -27,3 +27,19 @@ test('wave and level results do not interrupt movement, and remain available on 
   assert.equal(dialog.open,true,'a defeated player can still access respawn');
  }finally{globalThis.document=previous;}
 });
+
+test('a recovered player leaves the automatic death prompt while chosen results stay open',()=>{
+ const previous=globalThis.document,body=new Node(),dock=new Node();
+ globalThis.document={body,createElement:()=>new Node()};
+ try{
+  const results=mountMatchResults({dock}),dialog=body.children[0];
+  const snapshot={serverTime:1000,players:{self:{health:0,combat:{deaths:1}}},match:{id:'run',level:1,state:'active',results:[]},radTox:{wave:1}};
+  results.render(snapshot,'self');assert.equal(dialog.open,true);
+  const recovered={...snapshot,players:{self:{health:100,combat:{deaths:1}}}};
+  results.render(recovered,'self');assert.equal(dialog.open,false,'server recovery dismisses the death modal so controls resume');
+  dock.children[0].events.get('click')();assert.equal(dialog.open,true);
+  results.render(recovered,'self');assert.equal(dialog.open,true,'manually chosen standings stay open');
+  const finished={...recovered,match:{...snapshot.match,state:'finished',outcome:'victory',startedAt:0,endedAt:1000}};
+  results.render(finished,'self');assert.equal(dialog.open,true,'final results remain available until closed');
+ }finally{globalThis.document=previous;}
+});
