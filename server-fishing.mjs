@@ -1,7 +1,7 @@
 import {randomInt,randomUUID} from 'node:crypto';
 import {cleanWallet} from './user-json-database.mjs';
-import {FISH_SPECIES,FISHING_GEAR,FISHING_GUIDES,fishingZones,fishingZoneAt,isFishingBoat,fishingStationPosition} from './public/js/fishing-config.js';
-import {harborWaterAt} from './public/js/harbor-water.js';
+import {FISH_SPECIES,FISHING_GEAR,FISHING_GUIDES,FISHING_RULES,fishingZones,fishingZoneAt,isFishingBoat,fishingStationPosition} from './public/js/fishing-config.js';
+import {harborWaterAt,watercraftFootprint} from './public/js/harbor-water.js';
 import {stopBoat} from './server-harbor-operations.mjs';
 import {GAME_ECONOMY,ownsEconomyItem} from './game-economy.mjs';
 
@@ -30,23 +30,26 @@ export function cancelFishing(player,sim,now,message='Line packed away. You can 
  if(boat&&player.vehicleId===boat.id&&boat.holderId===player.actorId){player.position={...boat.position,y:.35};player.floor=.35;player.velocityY=0;player.grounded=true;}
 }
 
-function castSite(sim,player,environment,side='port'){
+function castSite(sim,player,environment,side='port',requestedZoneId=null){
  if(!enabled(environment))return {canCast:false,reason:'Fishing is available in Neon Harbor and its island lakes.'};
  if(player.health<=0||player.grounded===false||player.skiing||player.skiLift||player.seatedId||player.heldId)return {canCast:false,reason:'Stand still with free hands before fishing.'};
  const boat=sim.actors[player.vehicleId];
  if(player.vehicleId){
   if(!isFishingBoat(boat)||boat.active===false||boat.holderId!==player.actorId)return {canCast:false,reason:'Use the fishing boat or fish from a marked shore.'};
-  if(Math.abs(boat.boating?.speed||0)>.15||!boat.boating?.anchor||boat.boating?.assist)return {canCast:false,reason:'Stop the fishing boat, set the anchor, and cancel Auto before casting.'};
+  if(!Number.isFinite(boat.boating?.speed??0)||Math.abs(boat.boating?.speed||0)>FISHING_RULES.castSpeedLimit||boat.boating?.assist)return {canCast:false,reason:'Let the boat stop at your fishing destination, or slow down and cancel Auto before casting.'};
+  if(!watercraftFootprint(boat.position,boat.rotation?.y||0,boat).every(point=>harborWaterAt(environment,point,.25)))return {canCast:false,reason:'Move the fishing boat clear of the shore before casting.'};
+  const selectedZoneId=requestedZoneId||(fishingZones(environment).some(zone=>zone.id===boat.boating?.navigationZoneId)?boat.boating.navigationZoneId:null);
   const position=fishingStationPosition(boat,side),yaw=boat.rotation?.y||0,sign=side==='starboard'?1:-1;
-  const castPoint={x:position.x+Math.cos(yaw)*sign*5,y:.05,z:position.z-Math.sin(yaw)*sign*5},zone=fishingZoneAt(environment,castPoint);
+  const castPoint={x:position.x+Math.cos(yaw)*sign*5,y:.05,z:position.z-Math.sin(yaw)*sign*5},zone=fishingZoneAt(environment,castPoint,selectedZoneId);
   if(!zone||!harborWaterAt(environment,castPoint,.1))return {canCast:false,reason:'Choose the other side or sail to a marked fishing area.'};
-  return {canCast:true,position,castPoint,zoneId:zone.id,boatId:boat.id,water:zone.water,zone};
+  const preparationRequired=boat.boating?.anchor!==true||Math.abs(boat.boating?.speed||0)>.15;
+  return {canCast:true,ready:!preparationRequired,preparationRequired,position,castPoint,zoneId:zone.id,boatId:boat.id,water:zone.water,zone};
  }
  if(harborWaterAt(environment,player.position)&&player.position.y<.1)return {canCast:false,reason:'Climb onto a fishing pier or dry shore before casting.'};
  const yaw=player.yaw||0;
  for(const turn of [0,1,-1,2,-2,3,-3,4])for(const range of [5,8]){
-  const angle=yaw+turn*Math.PI/4,castPoint={x:player.position.x-Math.sin(angle)*range,y:.05,z:player.position.z-Math.cos(angle)*range},zone=fishingZoneAt(environment,castPoint);
-  if(zone&&harborWaterAt(environment,castPoint,.1))return {canCast:true,position:{...player.position},castPoint,zoneId:zone.id,water:zone.water,zone,boatId:null};
+  const angle=yaw+turn*Math.PI/4,castPoint={x:player.position.x-Math.sin(angle)*range,y:.05,z:player.position.z-Math.cos(angle)*range},zone=fishingZoneAt(environment,castPoint,requestedZoneId);
+  if(zone&&harborWaterAt(environment,castPoint,.1))return {canCast:true,ready:true,preparationRequired:false,position:{...player.position},castPoint,zoneId:zone.id,water:zone.water,zone,boatId:null};
  }
  return {canCast:false,reason:'Walk to a marked fishing pier, shoreline, or the fishing boat.'};
 }
@@ -69,8 +72,8 @@ function scoreFish(sim,player,session,now){
 
 function endSession(session,status,now,message){session.status=status;session.reeling=false;session.finishedAt=now;session.message=message;}
 
-/** Advance from server time, never client frame counts. Reel leases expire after
- * one second, so background tabs and lost pointer-up events cannot keep reeling. */
+/** Advance from server time, never client frame counts. Short reel leases allow
+ * mobile jitter but stop progress after backgrounding or a lost pointer-up. */
 export function stepFishing(sim,environment,now){
  sim.fishing ||= {enabled:enabled(environment),zones:[],guides:[],tournament:null};
  sim.fishing.enabled=enabled(environment);sim.fishing.zones=enabled(environment)?fishingZones(environment):[];sim.fishing.guides=enabled(environment)?FISHING_GUIDES:[];
@@ -90,24 +93,28 @@ export function stepFishing(sim,environment,now){
   if(!enabled(environment)||session.environmentId!==environment.id||player.health<=0||player.replacedByRoom||now-player.lastSeen>=15000||player.heldId||player.seatedId||session.boatId&&(!boat||boat.active===false||boat.holderId!==player.actorId||player.vehicleId!==boat.id||!boat.boating?.anchor||boat.boating?.assist||Math.abs(boat.boating?.speed||0)>.15)||!session.boatId&&player.vehicleId||distance(player.position,session.position)>.9||(player.movementRevision||0)!==session.movementRevision){cancelFishing(player,sim,now,'Fishing ended after movement, travel, disconnection, or leaving the boat.');continue;}
   player.input={};
   if(session.status==='caught')continue;
-  if(now>=session.startedAt+90000){endSession(session,'escaped',now,'The fish got away. Cast again.');continue;}
+  if(now>=session.startedAt+FISHING_RULES.sessionLimitMs){endSession(session,'escaped',now,'The fish got away. Cast again.');continue;}
   if(session.status==='waiting'&&now>=session.biteAt){session.status='bite';session.message='Bite! Tap Hook before the fish escapes.';}
   if(session.status==='bite'&&now>session.biteEndsAt){endSession(session,'escaped',now,'Missed bite. Wait for the next bite on a fresh cast.');continue;}
   if(session.status!=='reeling')continue;
-  const from=session.lastStepAt||now,until=Math.min(now,session.startedAt+90000);
+  const from=session.lastStepAt||now,until=Math.min(now,session.startedAt+FISHING_RULES.sessionLimitMs);
   for(let at=from;at<until;at+=50){
    const dt=Math.min(50,until-at)/1000,reeling=session.reeling&&at<session.reelUntil;
    const surge=Math.sin((at-session.hookedAt)/1400+session.fightPhase)>.55;
    const strength=(session.rodId==='fishing-pro-rod'?.82:1)*(state.gear.includes('fishing-reel')?.85:1);
-   session.tension=clamp(session.tension+(reeling?(surge?.20:.105)*session.difficulty*strength:-.24)*dt,0,1);
+   if(!reeling)session.dragEasing=false;
+   else if(session.tension>=FISHING_RULES.dragEaseAt)session.dragEasing=true;
+   else if(session.tension<=FISHING_RULES.dragRecoverAt)session.dragEasing=false;
+   session.tension=clamp(session.tension+(reeling?(session.dragEasing?-.16:(surge?.115:.07)*session.difficulty*strength):-.30)*dt,0,1);
    const netAssist=state.gear.includes('fishing-net')&&session.progress>.75?1.35:1;
-   session.progress=clamp(session.progress+(reeling?(surge?.055:.105)*netAssist/session.difficulty:-.004)*dt,0,1);
+   session.progress=clamp(session.progress+(reeling?(surge?.105:.14)*netAssist/session.difficulty*(session.dragEasing?.65:1):0)*dt,0,1);
    session.reeling=!!reeling;session.surge=surge;
    if(session.tension>=1){endSession(session,'escaped',at,'The line snapped. Release Reel when tension climbs.');break;}
    if(session.progress>=1){session.status='caught';session.landedAt=at;session.reeling=false;session.message='Fish landed! Keep it for the market or release it for conservation rewards.';break;}
   }
   session.lastStepAt=now;
-  if(session.status==='reeling')session.message=session.surge?'Fish surge! Ease off Reel to lower tension.':'Hold Reel to bring the fish in; release to ease tension.';
+  if(session.status==='reeling'&&now>=session.reelUntil)session.reeling=false;
+  if(session.status==='reeling')session.message=session.dragEasing?'Automatic drag is protecting your line. Keep holding Reel, or release to lower tension faster.':session.surge?'Fish surge! Hold Reel to bring it in, or release to lower tension.':'Hold Reel to bring the fish in. Release anytime; your progress is saved.';
   if(session.status==='caught')scoreFish(sim,player,session,session.landedAt);
  }
 }
@@ -116,7 +123,7 @@ export function fishingView(sim){
  const state=sim.fishing;if(!state?.enabled)return null;
  const tournament=state.tournament;
  const publicTournament=event=>({id:event.id,name:event.name,status:event.status,startsAt:event.startsAt,endsAt:event.endsAt,prizes,leaderboard:board(event).map(({nextCatchAt,...entry})=>entry),members:Object.values(event.entries).filter(entry=>!entry.ai).map(entry=>entry.actorId),claimedBy:Object.keys(event.claims||{})});
- return {enabled:true,zones:state.zones,guides:state.guides,tournament:tournament?publicTournament(tournament):null,recentTournaments:(state.history||[]).map(publicTournament)};
+ return {enabled:true,zones:state.zones,guides:state.guides,rules:FISHING_RULES,tournament:tournament?publicTournament(tournament):null,recentTournaments:(state.history||[]).map(publicTournament)};
 }
 
 export function playerFishingView(sim,player,environment={id:sim.fishing?.environmentId,builderScene:{layoutMeta:{harbor:sim.fishing?.harbor}}}){
@@ -165,7 +172,7 @@ export function fishingCommand(sim,player,environment,command,now,{integer=rando
   const rodId=command.rodId||'fishing-rod',baitId=command.baitId||'fishing-bait';
   if(!['fishing-rod','fishing-pro-rod'].includes(rodId)||!['fishing-bait','fishing-lure'].includes(baitId))fail('Equip a fishing rod and fishing bait or lure.',422);
   if(!state.gear.includes(rodId)||!state.gear.includes(baitId))fail('Unlock that fishing gear in the Tools market first.',403);
-  const site=castSite(sim,player,environment,side);if(!site.canCast)fail(site.reason);
+  const site=castSite(sim,player,environment,side,command.zoneId);if(!site.canCast)fail(site.reason);
   if(command.zoneId&&command.zoneId!==site.zoneId)fail('Cast from the marked fishing area you are standing beside.');
   const origin={...site.position,y:site.position.y+1.2};if(!visible(origin,site.castPoint,site.boatId))fail('The cast is blocked. Move to a clear pier edge or the other side of the boat.');
   if(state.creel.length>=(state.gear.includes('fishing-tackle-box')?30:10))fail('Your creel is full. Sell your fish at the market first.');
@@ -173,9 +180,9 @@ export function fishingCommand(sim,player,environment,command,now,{integer=rando
   if(!weighted.length)fail('There are no fish in this water.');
   const species=weighted[integer(weighted.length)],grams=integer(Math.round(species.weight[0]*1000),Math.round(species.weight[1]*1000)+1),weightKg=grams/1000;
   const fish={id:species.id,name:species.name,rarity:species.rarity,weightKg,valueMzk:fishPrice(species,weightKg),catchId:randomUUID()};
-  const biteAt=now+integer(baitId==='fishing-lure'?2500:4000,baitId==='fishing-lure'?6001:8501),boat=sim.actors[site.boatId];
-  if(boat){stopBoat(boat);player.position={...site.position};player.floor=site.position.y;player.grounded=true;player.velocityY=0;player.movementRevision=(player.movementRevision||0)+1;}
-  state.session={id:randomUUID(),status:'waiting',environmentId:environment.id,side,boatId:site.boatId,zoneId:site.zoneId,rodId,baitId,position:{...site.position},castPoint:site.castPoint,startedAt:now,biteAt,biteEndsAt:biteAt+3500,tension:.24,progress:0,reeling:false,fish,difficulty:.7+(Number(species.difficulty)||.3),fightPhase:integer(628)/100,movementRevision:player.movementRevision||0,tournamentId:sim.fishing.tournament?.status==='active'?sim.fishing.tournament.id:null,message:'Line cast. Wait for the float to dip, then tap Hook.'};
+  const wait=baitId==='fishing-lure'?FISHING_RULES.lureWaitMs:FISHING_RULES.baitWaitMs,biteAt=now+integer(wait[0],wait[1]+1),boat=sim.actors[site.boatId];
+  if(boat){stopBoat(boat,{preserveNavigation:true});player.position={...site.position};player.floor=site.position.y;player.grounded=true;player.velocityY=0;player.movementRevision=(player.movementRevision||0)+1;}
+  state.session={id:randomUUID(),status:'waiting',environmentId:environment.id,side,boatId:site.boatId,zoneId:site.zoneId,rodId,baitId,position:{...site.position},castPoint:site.castPoint,startedAt:now,biteAt,biteEndsAt:biteAt+FISHING_RULES.biteWindowMs,tension:.24,progress:0,reeling:false,dragEasing:false,fish,difficulty:.82+(Number(species.difficulty)||.3)*.45,fightPhase:integer(628)/100,movementRevision:player.movementRevision||0,tournamentId:sim.fishing.tournament?.status==='active'?sim.fishing.tournament.id:null,message:'Line cast. Wait for the float to dip, then tap Hook.'};
   player.input={};state.message=state.session.message;return {message:state.message};
  }
  const session=state.session;
@@ -187,13 +194,14 @@ export function fishingCommand(sim,player,environment,command,now,{integer=rando
  if(['keep','release'].includes(operation)&&session.settled)return {message:'This catch is already saved.'};
  if(!live(session))fail('This cast has ended. Cast again.');
  if(operation==='hook'){
+  if(session.status==='reeling')return {message:session.message};
   if(session.status!=='bite'||now<session.biteAt||now>session.biteEndsAt)fail('Tap Hook while the bite indicator is live.');
-  session.status='reeling';session.hookedAt=now;session.lastStepAt=now;session.message='Hook set! Hold Reel and release during surges.';return {message:session.message};
+  session.status='reeling';session.hookedAt=now;session.lastStepAt=now;session.message='Hook set! Hold Reel to bring the fish in. Automatic drag protects your line.';return {message:session.message};
  }
  if(operation==='reel'){
   if(session.status!=='reeling')fail('Hook the fish before reeling.');
   if(typeof command.holding!=='boolean')fail('Reel input must be held or released.',422);
-  session.reeling=command.holding;session.reelUntil=command.holding?now+1000:now;return {message:session.message};
+  session.reeling=command.holding;session.reelUntil=command.holding?now+FISHING_RULES.reelLeaseMs:now;return {message:session.message};
  }
  if(operation==='keep'||operation==='release'){
   if(session.status!=='caught')fail('Land the fish before keeping or releasing it.');

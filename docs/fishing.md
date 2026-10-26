@@ -11,13 +11,24 @@ piers and guides.
 
 1. Use the free **Coastal Spinning Rod** and **Renewable Bait Tin** in Tools.
    Fishing needs no paid upgrade.
-2. Board an Angler boat using the normal vehicle action, stop, and anchor in a
-   marked fishing ground. Choose **Port** or **Starboard** in Fishing. Marked
-   shores also support fishing on foot.
-3. Cast and wait for the bite prompt. Tap **Hook**, then hold **Reel** in short
-   bursts. Release it when tension climbs; keeping the line under control lands
-   the fish. A missed bite, broken line or escaped fish ends that cast.
+2. Board an Angler boat using the normal vehicle action. Select a fishing
+   destination on the map and choose **Sail & fish**. The helm follows that
+   destination, stops in clear water, and anchors. Fishing opens when the
+   selected fishing area is ready. **Fish here** also opens fishing when you
+   are already at a valid spot. Selecting an inland lake uses an available
+   Angler on that lake; boats cannot sail across dry island ground. The map
+   shows the current passage and its selected destination. Marked shores
+   support fishing on foot.
+   At shared fishing grounds, occupied stops use a nearby clear position in
+   the same fishing area. Manual steering cancels the automatic route.
+3. Choose a clear **Port** or **Starboard** station and cast. A slow, stopped
+   Angler anchors automatically before casting; a moving boat or active route
+   must finish or be stopped first. Wait for the bite prompt, tap **Hook**, then
+   hold **Reel**. Automatic drag eases the line during strong surges. You can
+   release Reel at any time without losing your progress. Bites allow six
+   seconds to respond, and typical fights last about 8–20 seconds.
 4. Keep the catch in your saved creel or release it for conservation progress.
+   Closing the panel after landing a fish also saves it in your creel.
    Return to Captain Mara or Ranger Reed and sell kept catches through Fishing
    to receive MZK in the existing wallet.
 
@@ -55,8 +66,9 @@ shared-room store.
 Fishing uses contextual on-screen buttons and pointer holds. It adds no global
 keyboard shortcuts. Opening the fishing panel releases held game inputs; active
 fishing holds the helm neutral and blocks conflicting movement, combat and
-vehicle actions. Closing, cancelling, losing focus or changing maps releases
-reel input. Leave the fishing activity before returning to normal boat controls.
+vehicle actions. Browsing tackle during an automatic passage keeps the selected
+route running. Closing, cancelling, losing focus or changing maps releases reel
+input. Leave the fishing activity before returning to normal boat controls.
 
 The server checks the fishing location, water, boat state, equipment ownership,
 session identity, bite window, reel timing and catch disposition. Client values
@@ -67,6 +79,8 @@ for catch weight, score and payout are never authoritative.
 ```sh
 node --test test/fishing*.test.mjs
 python3 test/fishing-controls.browser.py
+python3 test/fishing-map-actions.browser.py
+python3 test/fishing-vessel.browser.py
 python3 test/fishing-live.browser.py
 npm run build
 npm run check

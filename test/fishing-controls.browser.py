@@ -38,6 +38,18 @@ try:
    dialog.get_by_role('button',name='Join next Fishing Cup',exact=True).click();page.wait_for_function("snapshot.fishing.tournament?.id==='next'")
    page.evaluate("ui.close();ui.open();delayCast=true");dialog.get_by_role('button',name='Cast line ↗',exact=True).click();page.wait_for_function('resolveCast!==null');dialog.get_by_role('button',name='Close Fishing · Neon Anglers',exact=True).click();page.evaluate('resolveCast()');page.wait_for_function("snapshot.players.self.fishing.session.status==='cancelled'")
    assert not page.evaluate('ui.active()')
+   # A selected fishing route opens only after the server confirms a matching,
+   # anchored arrival. Seeing nearby water cannot interrupt an ongoing passage.
+   page.evaluate('''()=>{ui.reset();snapshot.players.self.fishing.session=null;Object.assign(snapshot.players.self.fishing.availability,{canCast:true,zoneId:'beacon-reef',sides:{port:{canCast:true,zoneId:'beacon-reef'},starboard:{canCast:false,zoneId:'beacon-reef'}}});Object.assign(snapshot.actors.boat,{holderId:'self',active:true,boating:{assist:'navigate',navigationType:'fishing',navigationZoneId:'beacon-reef',navigationDestinationId:'beacon-reef',navigationRouteId:'trip1',navigationName:'Beacon Reef Fishing',anchor:false,speed:2,assistStage:'passage',remainingDistance:30}});snapshot.sequence++;ui.update(snapshot,'self',env);}''')
+   assert dialog.is_hidden()
+   page.evaluate('ui.open()');assert dialog.locator('[data-route-status]').is_visible();assert dialog.locator('[data-cast]').is_disabled();page.evaluate('ui.close()')
+   page.evaluate('''()=>{Object.assign(snapshot.actors.boat.boating,{assist:null,anchor:true,speed:0,assistStage:'arrived',arrival:{id:'old-route',destinationId:'marina-fishing',kind:'fishing',at:Date.now()}});snapshot.sequence++;ui.update(snapshot,'self',env);}''');assert dialog.is_hidden()
+   page.evaluate('''()=>{snapshot.serverTime=Date.now();snapshot.actors.boat.boating.arrival={id:'trip1',destinationId:'beacon-reef',kind:'fishing',at:snapshot.serverTime};snapshot.sequence++;ui.update(snapshot,'self',env);}''');dialog.wait_for(state='visible')
+   assert dialog.get_by_role('combobox',name='Fishing side',exact=True).input_value()=='port'
+   page.evaluate('delayCast=false');dialog.locator('[data-cast]').click();page.wait_for_function("commands.at(-1).operation==='cast'");assert page.evaluate('commands.at(-1).zoneId')=='beacon-reef'
+   # Closing a landed catch saves it rather than throwing it away.
+   page.evaluate("phase('caught');ui.close()");page.wait_for_function("snapshot.players.self.fishing.session.status==='kept'");assert page.evaluate("commands.at(-1).operation")=='keep'
+   page.evaluate("snapshot.sequence++;ui.update(snapshot,'self',env)");assert dialog.is_hidden(),'the same arrival reopened after dismissal'
    # Reset on travel hides the trigger and clears the old world UI.
    page.evaluate('ui.reset()');assert page.get_by_role('button',name='Fishing, tackle and tournaments',exact=True).is_hidden();assert not errors,errors;page.close()
   browser.close()

@@ -1,4 +1,11 @@
 // One shared catalog and water-zone contract for the server, maps and tackle shop.
+// Forgiving mobile pacing. The server owns these timings and the reel lease;
+// client animation and local timers cannot advance a catch.
+export const FISHING_RULES=Object.freeze({
+ biteWindowMs:6000,reelLeaseMs:1500,castSpeedLimit:.6,sessionLimitMs:90000,
+ baitWaitMs:Object.freeze([2000,4500]),lureWaitMs:Object.freeze([1500,3000]),
+ dragEaseAt:.78,dragRecoverAt:.52
+});
 export const FISHING_GEAR=Object.freeze([
  {id:'fishing-rod',name:'Coastal Spinning Rod',kind:'rod',priceMzk:0,basic:true,icon:'🎣',color:'#79dfd2',description:'Starter spinning rod with working reel, guides and line. Cast from a fishing station or a marked shore.'},
  {id:'fishing-pro-rod',name:'Deepwater Carbon Rod',kind:'rod',priceMzk:120,icon:'🎣',color:'#ffc46b',description:'Carbon rod for difficult fish and longer controlled fights.'},
@@ -26,7 +33,7 @@ export const FISHING_ZONES=Object.freeze([
  {id:'silver-lake-fishing',name:'Silver Lake Fishing',x:430,z:-280,radius:47,water:'fresh',description:'Cool freshwater with trout and bass.'}
 ].map(Object.freeze));
 export const FISHING_GUIDES=Object.freeze([
- {id:'captain-mara',name:'Captain Mara',role:'Fishing coach & tournament host',position:{x:124,y:0,z:-35},dialogue:'Welcome, angler! Equip the free Coastal Spinning Rod and Renewable Bait Tin in Tools. Board the Angler boat, stop and anchor, then choose port or starboard in Fishing. Cast, wait for the bite, hook, and pulse Reel while watching line tension. Keep a catch to sell it, or release it for conservation progress. Join the server fishing tournament before casting to compete with other anglers and AI rivals.'},
+ {id:'captain-mara',name:'Captain Mara',role:'Fishing coach & tournament host',position:{x:124,y:0,z:-35},dialogue:'Welcome, angler! Use the free Coastal Spinning Rod and Renewable Bait Tin in Tools. Choose a fishing destination and sail there in the Angler. Once stopped, choose port or starboard and Cast; the boat anchors for you. Wait for a bite, tap Hook, then hold Reel. Automatic drag protects the line; releasing Reel lowers tension faster and keeps your progress. Keep a catch to sell it, or release it for conservation progress. Join the server fishing tournament before casting to compete with other anglers and AI rivals.'},
  {id:'ranger-reed',name:'Ranger Reed',role:'Freshwater fishing guide',position:{x:-446,y:0,z:276},dialogue:'Crescent Lake has perch, bass, trout and golden carp. Fish from the pier or take the lake Angler boat into the marked freshwater zone. Release trophy fish to build conservation progress.'}
 ].map(guide=>Object.freeze({...guide,position:Object.freeze(guide.position)})));
 export const isFishingBoat=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-fishing-boat';
@@ -34,9 +41,9 @@ export function fishingZones(environment){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;
  return harbor?(Array.isArray(harbor.fishingZones)?harbor.fishingZones:FISHING_ZONES):[];
 }
-export function fishingZoneAt(environment,point){
+export function fishingZoneAt(environment,point,zoneId=null){
  if(!Number.isFinite(point?.x)||!Number.isFinite(point?.z))return null;
- return fishingZones(environment).find(zone=>Math.hypot(point.x-zone.x,point.z-zone.z)<=(zone.radius||0))||null;
+ return fishingZones(environment).find(zone=>(!zoneId||zone.id===zoneId)&&Math.hypot(point.x-zone.x,point.z-zone.z)<=(zone.radius||0))||null;
 }
 export function fishingStationPosition(boat,side='port'){
  const yaw=boat?.rotation?.y||0,x=side==='starboard'?1.15:-1.15,z=.8,position=boat?.position||{x:0,y:0,z:0};

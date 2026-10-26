@@ -1,5 +1,5 @@
-import {harborWaterAt,watercraftFootprint,watercraftOverlap,isWatercraft} from './harbor-water.js';
-import {fishingZones} from './fishing-config.js';
+import {harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftSize,isWatercraft} from './harbor-water.js';
+import {fishingZones,fishingStationPosition,isFishingBoat} from './fishing-config.js';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
@@ -8,7 +8,7 @@ export function harborApproach(environment,id,boat=null){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return null;
  const lake=(harbor.lakes||[]).find(lake=>boat?.position&&Math.abs(boat.position.x-lake.x)<lake.width/2&&Math.abs(boat.position.z-lake.z)<lake.depth/2);
  if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:{id,name:'Open-water passage',x:184,z:80};
- const fishing=fishingZones(environment).find(zone=>zone.id===id);if(fishing&&((lake&&fishing.water==='fresh'&&Math.abs(fishing.x-lake.x)<lake.width/2)||(!lake&&fishing.water==='salt')))return {id,name:fishing.name,x:fishing.x,z:fishing.z};
+ const fishing=fishingZones(environment).find(zone=>zone.id===id);if(fishing&&((lake&&fishing.water==='fresh'&&Math.abs(fishing.x-lake.x)<lake.width/2&&Math.abs(fishing.z-lake.z)<lake.depth/2)||(!lake&&fishing.water==='salt')))return {id,name:fishing.name,x:fishing.x,z:fishing.z,kind:'fishing',zoneId:fishing.id,arrivalRadius:1.6};
  if(lake&&id===lake.id)return {id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5};
  if(id==='marina'&&boat?.modelId==='harbor-yacht')return {id,name:'Superyacht Marina Approach',x:170,z:99,entry:{x:225,z:99}};
  if(id==='marina')return {id,name:'Neon Marina approach',x:153,z:64};
@@ -19,14 +19,32 @@ export function harborApproach(environment,id,boat=null){
 function hullClear(environment,boat,point,yaw,actors,margin=.35){
  return watercraftFootprint(point,yaw,boat).every(vertex=>harborWaterAt(environment,vertex,margin))&&!Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(point,yaw,other.position,other.rotation?.y||0,.18,boat,other));
 }
+function fishingStopClear(environment,boat,point,actors,zoneId){
+ if(!Array.from({length:8},(_,index)=>index*Math.PI/4).every(yaw=>hullClear(environment,boat,point,yaw,actors)))return false;
+ // Planning is serialized by the room. The first route reserves its stop so
+ // simultaneous anglers receive different casting berths before either arrives.
+ return !Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&(other.holderId||other.trafficAI)&&other.boating?.assist&&other.boating.navigationType==='fishing'&&other.boating.navigationZoneId===zoneId&&other.boating.navigationTarget&&distance(point,other.boating.navigationTarget)<Math.hypot(...watercraftSize(boat))+Math.hypot(...watercraftSize(other))+3.2);
+}
 function legClear(environment,boat,from,to,actors,blocked,margin){
  const span=distance(from,to),yaw=Math.atan2(from.x-to.x,from.z-to.z),steps=Math.max(1,Math.ceil(span/2));
  for(let index=0;index<=steps;index++){const ratio=index/steps,point={x:from.x+(to.x-from.x)*ratio,z:from.z+(to.z-from.z)*ratio};if(!harborWaterAt(environment,point,margin)||!hullClear(environment,boat,point,yaw,actors))return false;}
  return !blocked({...from,y:0},{...to,y:0},yaw);
 }
+// Fishing markers name areas shared by many anglers. Reserve the center first,
+// then try clear nearby stops inside that same area when another hull is there.
+export function planBoatNavigation(boat,environment,options={}){
+ const {destinationId='open-water',actors={}}=options,goal=harborApproach(environment,destinationId,boat);if(!goal)return null;
+ if(goal.kind!=='fishing')return planPassage(boat,environment,options,goal);
+ const zone=fishingZones(environment).find(value=>value.id===goal.zoneId),candidates=[goal];
+ for(const radius of [8,14,22,32])if(radius+7<zone.radius)for(let index=0;index<8;index++){const angle=index*Math.PI/4;candidates.push({...goal,x:goal.x+Math.cos(angle)*radius,z:goal.z+Math.sin(angle)*radius});}
+ for(const candidate of candidates){
+  if(!fishingStopClear(environment,boat,candidate,actors,goal.zoneId))continue;
+  const plan=planPassage(boat,environment,options,candidate);if(plan)return plan;
+ }
+ return null;
+}
 // Plan once along the coastline; physical sweeps reject piers and placed pieces.
-export function planBoatNavigation(boat,environment,{destinationId='open-water',actors={},blocked=()=>false,depart=false}={}){
- const goal=harborApproach(environment,destinationId,boat);if(!goal)return null;
+function planPassage(boat,environment,{actors={},blocked=()=>false,depart=false},goal){
  const harbor=environment.builderScene.layoutMeta.harbor,prefix=[],point={x:finite(boat.position?.x),z:finite(boat.position?.z)};
  const yacht=boat.modelId==='harbor-yacht',departureDock=(harbor.docks||[]).find(dock=>distance(point,yacht?dock.yachtApproach:dock.approach)<5);
  const berth=(environment.builderScene.objects||[]).filter(isWatercraft).map(value=>({value,span:distance(value.position,point)})).sort((a,b)=>a.span-b.span)[0];
@@ -59,11 +77,23 @@ export function planBoatNavigation(boat,environment,{destinationId='open-water',
  if(!Number.isFinite(costs[1]))return null;
  const route=[];for(let index=1;index>0;index=previous[index]){if(index<0)return null;route.unshift({x:nodes[index].x,z:nodes[index].z,radius:3.3,gear:1});}
  if(goal.entry){if(!legClear(environment,boat,goal.entry,goal,actors,blocked,.35))return null;route.push({x:goal.x,z:goal.z,radius:2.3,gear:1});}
- const points=[...prefix,...route];if(points.length)points[points.length-1].radius=2.3;
- return {points,destinationId:goal.id,name:goal.name};
+ const points=[...prefix,...route];if(points.length)points[points.length-1].radius=goal.arrivalRadius||2.3;
+ if(goal.kind==='fishing'){
+  const zone=fishingZones(environment).find(value=>value.id===goal.zoneId),from=points.length>1?points[points.length-2]:point,yaw=Math.atan2(from.x-goal.x,from.z-goal.z),vessel={...boat,position:{x:goal.x,y:0,z:goal.z},rotation:{y:yaw}};
+  // A fishing destination is an actual castable stop, not merely a map label.
+  if(!['port','starboard'].some(side=>{const station=fishingStationPosition(vessel,side),sign=side==='port'?-1:1,cast={x:station.x+Math.cos(yaw)*sign*5,z:station.z-Math.sin(yaw)*sign*5};return distance(cast,zone)<=zone.radius&&harborWaterAt(environment,cast,.1);}))return null;
+ }
+ return {points,destinationId:goal.id,name:goal.name,...(goal.kind==='fishing'?{kind:'fishing',zoneId:goal.zoneId,arrivalRadius:goal.arrivalRadius}:{})};
 }
-export function navigationControls(boat,input,environment,actors,blocked){
- const state=boat.boating,route=state.assistRoute||[];let index=Math.max(0,state.routeIndex||0),point=route[index];
+export function navigationControls(boat,input,environment,actors,blocked,now=0){
+ const state=boat.boating,final=state.assistRoute?.at(-1);
+ if(state.navigationType==='fishing'&&final&&now>=(state.navigationReplanAt||0)&&!fishingStopClear(environment,boat,final,actors,state.navigationZoneId)){
+  state.navigationReplanAt=now+1500;
+  const plan=planBoatNavigation(boat,environment,{destinationId:state.navigationDestinationId,actors,blocked});
+  if(plan){state.assistRoute=plan.points;state.routeIndex=0;state.routeLength=plan.points.length;state.navigationTarget={x:plan.points.at(-1).x,z:plan.points.at(-1).z};}
+  else{state.assistStage='waiting';state.navigationWarning='Fishing area occupied — waiting for a clear casting stop';return {...input,forward:0,side:0,rudder:0,anchor:false,throttle:0,brake:true};}
+ }
+ const route=state.assistRoute||[];let index=Math.max(0,state.routeIndex||0),point=route[index];
  if(!point)return null;
  while(index<route.length-1&&distance(boat.position,point)<(point.radius||3.3)){point=route[++index];}
  state.routeIndex=index;state.routeLength=route.length;state.remainingDistance=distance(boat.position,point);for(let next=index+1;next<route.length;next++)state.remainingDistance+=distance(route[next-1],route[next]);
@@ -72,8 +102,8 @@ export function navigationControls(boat,input,environment,actors,blocked){
  state.assistStage=index<2&&state.assist==='launch'?'departure':'passage';
  const common={...input,forward:0,side:0,rudder:0,anchor:false,brake:false};
  if((state.speed||0)*gear<-.15)return {...common,throttle:0,brake:true};
- if(last&&span<2.3){state.assistStage=speed<.15?'arrived':'arrival';return {...common,throttle:0,brake:true,anchor:speed<.15};}
- if(boat.modelId==='harbor-yacht'&&!point.departureArc&&Math.abs(error)>.12){state.assistStage='maneuvering';return {...common,throttle:0,brake:speed>.12,side:-clamp(error*2,-1,1),bowThruster:speed<=.12};}
+ if(last&&span<(point.radius||2.3)){state.assistStage=speed<.15?'arrived':'arrival';return {...common,throttle:0,brake:true,anchor:speed<.15};}
+ if((boat.modelId==='harbor-yacht'||isFishingBoat(boat))&&!point.departureArc&&Math.abs(error)>.12){state.assistStage='maneuvering';return {...common,throttle:0,brake:speed>.12,side:-clamp(error*2,-1,1),bowThruster:speed<=.12};}
  const desired=Math.min(last?3.4:2.5,Math.abs(error)>.5?1.8:4,last?Math.max(0,(span-1)*.6):10),drag=1.8*desired+.023*desired*desired,force=(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat'?8:18;
  const throttle=gear*clamp((drag+(desired-speed)*3)/force,0,.5),rudder=-clamp(error*1.7,-1,1)*gear;
  // Follow a short turning arc; occupied traffic retains the route and waits.

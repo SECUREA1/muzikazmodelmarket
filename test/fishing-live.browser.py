@@ -1,4 +1,4 @@
-"""Play a real boat catch through the mobile UI and persist/sell it via the API."""
+"""Route to a selected fishing ground, play a mobile catch, then save and sell it."""
 import json
 import os
 from pathlib import Path
@@ -63,30 +63,41 @@ with tempfile.TemporaryDirectory(prefix='fishing-live-') as directory:
 
                 boat = next(actor for actor in state['actors'].values() if actor.get('modelId') == 'harbor-fishing-boat' and actor['position']['x'] > 100 and actor['position']['z'] < 0)
                 command('map-access', entityId=boat['id'])
-                command('input', input={'anchor': True, 'throttle': 0})
-                open_fishing()
+                page.wait_for_function('(id)=>MuzikazHouseExplorer.snapshot().vehicleId===id', arg=boat['id'])
+                page.locator('.district-map-toggle').evaluate('(button)=>button.click()')
+                destination = page.locator('.district-map-dialog [data-fishing-destination="marina-fishing"]').first
+                destination.wait_for(state='attached')
+                destination.evaluate('(button)=>{for(let node=button.parentElement;node;node=node.parentElement)if(node.tagName==="DETAILS")node.open=true;}')
+                destination.click()
                 panel = page.locator('.fishing-dialog')
-                panel.wait_for(state='visible')
+                panel.wait_for(state='visible', timeout=60000)
+                arrived = room()['actors'][boat['id']]
+                assert arrived['boating']['navigationDestinationId'] == 'marina-fishing'
+                assert arrived['boating']['arrival']['destinationId'] == 'marina-fishing'
+                assert arrived['boating']['anchor'] and abs(arrived['boating']['speed']) < .15
+                assert abs(arrived['position']['x'] - 151) < 2.5 and abs(arrived['position']['z'] + 37) < 2.5
+                assert page.locator('.district-map-dialog').is_hidden(), 'Route map blocked the arrival handoff'
+                print('Selected marina route arrived, anchored, and opened Fishing.', flush=True)
                 assert panel.evaluate('(el)=>el.scrollWidth<=el.clientWidth'), 'Fishing overflows mobile viewport'
                 panel.locator('[data-side]').select_option('starboard')
                 panel.locator('[data-cast]').click()
                 page.wait_for_function('document.querySelector("[data-hook]")?.hidden === false', timeout=18000)
                 session = room()['players'][self_id]['fishing']['session']
-                assert session['side'] == 'starboard' and session['boatId'] == boat['id']
+                assert session['side'] == 'starboard' and session['boatId'] == boat['id'] and session['zoneId'] == 'marina-fishing'
                 panel.locator('[data-hook]').click()
                 page.wait_for_function('document.querySelector("[data-reel]")?.hidden === false')
-                print('Starboard cast hooked; controlling line tension.', flush=True)
+                print('Starboard cast hooked; holding Reel with automatic drag.', flush=True)
                 # Control the real rendered Reel button while reading authoritative
                 # tension. No fish, score, time or catch result is injected.
                 started = time.monotonic()
                 held = False
                 reel = panel.locator('[data-reel]')
-                while time.monotonic() - started < 75:
+                while time.monotonic() - started < 40:
                     current = page.evaluate('''()=>({status:document.querySelector('[data-water]').dataset.phase,tension:document.querySelector('[data-tension]').value})''')
                     if current['status'] == 'caught':
                         break
                     assert current['status'] == 'reeling', json.dumps(current)
-                    wanted = current['tension'] < (.25 if not held else .55)
+                    wanted = True
                     if wanted != held:
                         reel.dispatch_event('pointerdown' if wanted else 'pointerup', {'pointerId': 51, 'button': 0, 'pointerType': 'touch'})
                         held = wanted
@@ -117,7 +128,7 @@ with tempfile.TemporaryDirectory(prefix='fishing-live-') as directory:
                 assert not invalid.ok, 'A fishing rod was accepted as a firearm'
                 assert not errors, errors
                 browser.close()
-                print('PASS: real mobile starboard cast, bite, hook, controlled fight, saved catch, fish-market sale, reconnect and gear combat rejection')
+                print('PASS: exact map destination, real route/anchor/arrival handoff, mobile cast/hook/hold-Reel catch, saved sale, reconnect and gear combat rejection')
         finally:
             server.terminate()
             server.wait(timeout=15)

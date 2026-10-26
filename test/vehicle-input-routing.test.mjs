@@ -67,3 +67,9 @@ test('fishing panels and live casts neutralize held helm overrides without readi
   state[mode]=false;assert.equal(input().throttle,.9,'ordinary helm routing resumes when fishing closes');
  }
 });
+
+test('browsing fishing during a selected route preserves automatic helm and suppresses manual inputs',()=>{
+ const {context,state,calls,input}=fixture('boat');state.fishingVisible=true;state.boat={throttle:1,anchor:true};context.serverActors.boat.boating={assist:'navigate',navigationType:'fishing'};context.harborOps.ahead=1;context.keys.add(' ');context.toxicBubbleSystem.flameTrigger=()=>{};
+ const controls=input();assert.equal(controls.throttle,undefined,'an open fishing panel cannot cancel the selected destination');assert.equal(controls.anchor,undefined);assert.equal(controls.forward,0);assert.equal(controls.side,0);assert.equal(controls.rudder,0);assert.equal(controls.firing,false);assert.equal(controls.jump,false);assert.equal(calls.boat.length,0);
+ state.fishingActive=true;assert.equal(input().throttle,0,'a live cast always holds the helm neutral');
+});

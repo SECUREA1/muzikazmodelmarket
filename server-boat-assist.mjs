@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto';
 import {isWatercraft,watercraftOverlap,watercraftSize} from './public/js/harbor-water.js';
 import {boatWaterwayClear} from './public/js/vehicle-actions.js';
 import {planBoatNavigation} from './public/js/boat-navigation.js';
@@ -35,7 +36,7 @@ export function startBoatAssist(sim,player,environment,operation,now,{destinatio
   if(!plan)fail('No clear water passage is available. Wait for traffic or take the manual helm.');
  }else if((operation==='launch'||operation==='cruise')&&!boatWaterwayClear(environment,boat,sim.actors))fail('Turn toward open water before departing.');
  clearAssist(boat);boat.boating||={};
- Object.assign(boat.boating,{assist:operation,assistSince:now,assistOrigin:{...boat.position},anchor:false,...(plan?{assistRoute:plan.points,routeIndex:0,routeLength:plan.points.length,assistStage:'departure',navigationDestinationId:plan.destinationId,navigationName:plan.name,remainingDistance:0}:{})});
+ Object.assign(boat.boating,{assist:operation,assistSince:now,assistOrigin:{...boat.position},anchor:false,...(plan?{assistRoute:plan.points,routeIndex:0,routeLength:plan.points.length,assistStage:'departure',navigationDestinationId:plan.destinationId,navigationName:plan.name,navigationRouteId:randomUUID(),...(plan.kind==='fishing'?{navigationType:'fishing',navigationZoneId:plan.zoneId,navigationTarget:{x:plan.points.at(-1).x,z:plan.points.at(-1).z}}:{}),remainingDistance:0}:{})});
  player.input={};
  return plan?'Helm: following the marked water passage to '+plan.name+'. Steer or use power to take control.':operation==='slow'?'Helm: reducing power and slowing to a stop.':operation==='launch'?'Helm: anchor raised. Departing at a gentle pace. Steer to take control.':'Helm: steady cruise. Assistance slows for shore and other boats.';
 }

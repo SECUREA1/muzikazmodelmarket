@@ -2,6 +2,7 @@ import {isWatercraft} from './harbor-water.js';
 import {sportIcon} from './sports-action-bar.js';
 import {resolveVehicleAction} from './vehicle-actions.js';
 import {harborDestinations} from './harbor-destinations.js';
+import {fishingZones,isFishingBoat} from './fishing-config.js';
 import {gameplayOverlayOpen} from './game-menu-controls.js';
 import {requestGameInputRelease} from './game-input-release.js';
 let harborControlCount=0;
@@ -26,20 +27,20 @@ export function mountHarborOperations({stage,command,onView=()=>{},announce=()=>
  let renderedCollapse=null;
  const instrumentRows=new Map();
  const routeDialog=document.createElement('dialog');routeDialog.className='harbor-route-dialog';routeDialog.setAttribute('aria-label','Sailing destinations');routeDialog.innerHTML='<header><h2>Sail the harbor</h2><button type="button" data-route-close>Close</button></header><p>Choose a water-side approach. Everyone stays in this live room.</p><div data-route-map></div><div class="harbor-route-options" data-route-options></div><p class="harbor-route-help">Steer, change power, or choose Manual to take the helm.</p>';document.body.append(routeDialog);
- const routeButtons=new Map(),routeMarkers=new Map();let playerMarker=null;
+ const routeButtons=new Map(),routeMarkers=new Map();let playerMarker=null,routeLine=null;
  const routeChoice=()=>harborDestinations(environment,latest).find(place=>place.id===latest?.boating?.navigationDestinationId);
  function renderNavigation(){
   const state=latest?.boating||{},destination=routeChoice(),tracking=active()&&destination&&(state.assist==='launch'||state.assist==='navigate'||state.assistStage==='arrived');
   setHidden(navigationMarker,!tracking);
   if(tracking){
    const dx=destination.x-latest.position.x,dz=destination.z-latest.position.z,bearing=(Math.atan2(dx,-dz)*180/Math.PI+360)%360,heading=Number(state.heading)||0,relative=(bearing-heading+360)%360,arrow=['↑','↗','→','↘','↓','↙','←','↖'][Math.round(relative/45)%8],distance=Number.isFinite(state.remainingDistance)?state.remainingDistance:Math.hypot(dx,dz);
-   const stage=state.assistStage==='waiting'?'Waiting for a clear channel':state.assistStage==='arrived'?'At the approach':state.assistStage==='departure'?'Leaving marina':state.assistStage==='arrival'?'Approaching landing':'Under way';
+   const stage=state.assistStage==='waiting'?'Waiting for a clear channel':state.assistStage==='arrived'?(state.navigationType==='fishing'?'Ready to fish':'At the approach'):state.assistStage==='departure'?'Leaving marina':state.assistStage==='arrival'?'Approaching landing':'Under way';
    setText(navigationMarker,arrow+' '+(state.navigationName||destination.name)+' · '+Math.ceil(Math.max(0,distance))+' m · '+stage);
    setAttribute(navigationMarker,'title',state.navigationWarning||'');
   }
   for(const [id,button]of routeButtons){setDisabled(button,!active()||pendingAction||!!cancelPending);setAttribute(button,'aria-pressed',id===state.navigationDestinationId);}
   for(const [id,marker]of routeMarkers){setAttribute(marker,'fill',id===state.navigationDestinationId?'#ffd37d':'#8ce7df');setAttribute(marker,'r',id===state.navigationDestinationId?26:20);}
-  if(playerMarker&&active()){setAttribute(playerMarker,'cx',latest.position.x);setAttribute(playerMarker,'cy',latest.position.z);}
+  if(playerMarker&&active()){setAttribute(playerMarker,'cx',latest.position.x);setAttribute(playerMarker,'cy',latest.position.z);}if(routeLine){const points=active()&&state.assistRoute?.length?[latest.position,...state.assistRoute.slice(state.routeIndex||0)]:[];setAttribute(routeLine,'points',points.map(point=>point.x+','+point.z).join(' '));}
  }
  function renderRoutes(){
   const map=routeDialog.querySelector('[data-route-map]'),options=routeDialog.querySelector('[data-route-options]'),destinations=harborDestinations(environment,latest),ns='http://www.w3.org/2000/svg',extent=environment?.builderScene?.layoutMeta?.harbor?.extent||256;
@@ -50,11 +51,11 @@ export function mountHarborOperations({stage,command,onView=()=>{},announce=()=>
   shape('rect',{x:-128,y:-128,width:256,height:256,rx:6,fill:'#405f48'});
   for(const island of environment?.builderScene?.layoutMeta?.harbor?.islands||[])shape('rect',{x:island.x-island.width/2,y:island.z-island.depth/2,width:island.width,height:island.depth,rx:4,fill:'#6d8c60'});
   for(const lake of environment?.builderScene?.layoutMeta?.harbor?.lakes||[])shape('rect',{x:lake.x-lake.width/2,y:lake.z-lake.depth/2,width:lake.width,height:lake.depth,fill:'#174f65'});
-  for(const [index,destination]of destinations.entries()){
+  routeLine=shape('polyline',{points:'',fill:'none',stroke:'#ffe29a','stroke-width':4,'stroke-dasharray':'12 8','pointer-events':'none'});for(const [index,destination]of destinations.entries()){
    const marker=shape('circle',{cx:destination.x,cy:destination.z,r:20,fill:'#8ce7df',stroke:'#091e29','stroke-width':2});routeMarkers.set(destination.id,marker);
    const title=document.createElementNS(ns,'title');title.textContent=destination.name;marker.append(title);
    const text=shape('text',{x:destination.x,y:destination.z+10,'text-anchor':'middle',fill:'#0b2531','font-size':32,'font-weight':900});text.textContent=index+1;
-   const button=document.createElement('button');button.type='button';button.textContent=(index+1)+' · '+destination.name;button.setAttribute('aria-label','Sail to '+destination.name);button.setAttribute('aria-pressed','false');button.onclick=()=>{routeDialog.close();void runAction('navigate',{destinationId:destination.id});};options.append(button);routeButtons.set(destination.id,button);
+   const fishing=isFishingBoat(latest)&&fishingZones(environment).some(zone=>zone.id===destination.id),label=(fishing?'Sail & fish at ':'Sail to ')+destination.name,select=()=>{routeDialog.close();void runAction('navigate',{destinationId:destination.id});};const button=document.createElement('button');button.type='button';button.textContent=(index+1)+' · '+destination.name;button.setAttribute('aria-label',label);button.setAttribute('aria-pressed','false');button.dataset.vehicleDestination=destination.id;if(fishing)button.dataset.fishingDestination=destination.id;button.onclick=select;options.append(button);routeButtons.set(destination.id,button);marker.setAttribute('role','button');marker.setAttribute('tabindex','0');marker.setAttribute('aria-label',label);marker.style.cursor='pointer';marker.onclick=select;marker.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select();}};text.style.pointerEvents='none';
   }
   playerMarker=shape('circle',{cx:latest?.position.x||0,cy:latest?.position.z||0,r:9,fill:'#ff9db7',stroke:'#fff','stroke-width':2});map.append(svg);renderNavigation();
  }
