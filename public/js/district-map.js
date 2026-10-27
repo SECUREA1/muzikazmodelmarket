@@ -16,7 +16,7 @@ import {localMapLocations} from './local-map-locations.js';
 import {fishingZones} from './fishing-config.js';
 import {fishingMapAction} from './fishing-map-actions.js';
 // Keep the fullscreen mobile layout and its controller on the same revision.
-const mapStylesRevision='selected-map-views-6';
+const mapStylesRevision='fixed-map-screen-7';
 const mobileMapQuery='(max-width:600px), (max-width:1024px) and (pointer:coarse)';
 function loadMapStylesheet(path){
  const link=document.createElement('link');link.rel='stylesheet';
@@ -225,7 +225,7 @@ export function mountDistrictMap({stage,command=null,getRoots=null,onFishing=()=
   renderVehicleRoutes();refreshLive();
  }
  button.onclick=async()=>{
-  if(!mapReady())return;mini.close?.();if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;mapView=window.matchMedia(mobileMapQuery).matches?'3d':'plan';title.textContent=environment.name;search.value='';atlasLoading=true;deedsGroup.details.hidden=true;deedsGroup.body.replaceChildren();selectSection('map');renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open)dialog.show();dialog.scrollTop=0;fitCompanionMap();switchView(mapView);requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();fitPlan();});
+  if(!mapReady())return;mini.close?.();if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;mapView=window.matchMedia(mobileMapQuery).matches?'3d':'plan';title.textContent=environment.name;search.value='';atlasLoading=true;deedsGroup.details.hidden=true;deedsGroup.body.replaceChildren();selectSection('map');renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open){if(window.matchMedia(mobileMapQuery).matches)dialog.showModal();else dialog.show();}dialog.scrollTop=0;fitCompanionMap();switchView(mapView);requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();fitPlan();});
   try{const atlas=await fetchAtlas();if(current!==generation)return;const places=districtDestinations(environment,atlas.locations||[]);status.textContent=places.filter(place=>place.deedId).length+' recorded deeds · '+places.length+' connected destinations';deedsGroup.details.hidden=!places.length;atlasLoading=false;
 
    for(const place of places){const card=node('article',null,deedsGroup.body);card.dataset.mapSearchItem='';node('h4',place.name,card);node('p',(place.deedId?'Deed '+place.deedId:'World destination')+' · '+(place.ownerName||'Community'),card);const link=node('a','Enter '+place.name,card);link.href='model-explorer.html?environment='+encodeURIComponent(place.mapId)+'&autoplay=1';link.addEventListener('click',()=>actionLoading.begin('Loading '+place.name+'…'));}filterDirectory();

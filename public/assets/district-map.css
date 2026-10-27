@@ -73,24 +73,25 @@
  .local-map-directory-list{overflow:visible;min-height:0;padding-bottom:12px}
 }
 
-/* The mobile map is a full-screen view with one scroll path to every option.
-   Use the visible viewport so browser bars and the search keyboard still fit. */
+/* The mobile map fills the visible screen. The header never scrolls; only the
+   selected directory scrolls, and the map uses all remaining space. */
 @media(max-width:600px), (max-width:1024px) and (pointer:coarse){
- .district-map-dialog[open]{display:block;inset:var(--companion-map-top,0px) auto auto var(--mobile-map-left,0px);width:var(--mobile-map-width,100vw);max-width:none;height:var(--companion-map-room,100dvh);max-height:var(--companion-map-room,100dvh);margin:0;border:0;border-radius:0;padding:8px max(10px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scroll-padding-top:64px}
- .district-map-dialog>header{position:sticky;top:-8px;z-index:5;background:#0c1b17;padding:max(6px,env(safe-area-inset-top)) 0 6px;margin-bottom:6px;min-height:44px}
+ .district-map-dialog[open]{display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:6px;inset:var(--companion-map-top,0px) auto auto var(--mobile-map-left,0px);width:var(--mobile-map-width,100vw);max-width:none;height:var(--companion-map-room,100dvh);max-height:var(--companion-map-room,100dvh);margin:0;border:0;border-radius:0;padding:8px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));overflow:hidden;overscroll-behavior:contain}
+ .district-map-dialog>header{position:static;z-index:5;background:#0c1b17;padding:max(6px,env(safe-area-inset-top)) 0 6px;margin:0;min-height:44px}
  .district-map-dialog>header button,.local-map-view-toggle button,.local-map-plan-controls button,.local-map-3d-controls button{min-height:44px}
- .local-map-status{margin:0 0 6px}
- .district-map-layout{display:flex;flex-direction:column;height:auto;overflow:visible;gap:12px}
- .local-map-visual{flex:none;align-self:stretch;height:auto;min-height:0;grid-template-rows:auto auto auto;overflow:visible}
- [data-local-map-plan]{height:max(300px,calc(var(--companion-map-room,100dvh) - 180px))}
- [data-local-map-3d]>div{height:auto}
- .local-map-3d-viewport{flex:none;height:max(260px,calc(var(--companion-map-room,100dvh) - 180px));min-height:260px;box-sizing:border-box}
+ .local-map-status{margin:0;max-height:28px;overflow:hidden}
+ .district-map-layout{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:100%;min-height:0;overflow:hidden;gap:0}
+ .local-map-visual{height:100%;min-height:0;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+ [data-local-map-plan]{height:100%;min-height:0}
+ [data-local-map-3d]>div{height:100%;min-height:0}
+ .local-map-3d-viewport{flex:1;min-height:0;height:auto;box-sizing:border-box}
  .local-map-3d-controls{order:1}
  .local-map-3d-viewport~p{order:2}
- [data-map-directory]{display:block;overflow:visible;min-height:0}
- .local-map-directory-tools{margin-bottom:8px}
- .local-map-directory-list{overflow:visible;min-height:0;padding:0 0 16px}
- .local-map-directory-group,.local-map-quests{scroll-margin-top:64px}
+ .local-map-3d-viewport~p:not(.local-map-legend){display:none}
+ [data-map-directory]{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;overflow:hidden;min-height:0}
+ .local-map-directory-tools{margin:0}
+ .local-map-directory-list{overflow:auto;min-height:0;padding:0 0 16px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ .local-map-selected{max-height:64px}
 }
 
 /* Keep every map section one tap away, above the map and while browsing below. */
@@ -109,3 +110,15 @@
 .district-map-dialog:not([data-map-section=quests]) .local-map-directory-list>[data-map-section=quests],
 .district-map-dialog:not([data-map-section=destinations]) .local-map-directory-list>[data-map-section=destinations]{display:none!important}
 .district-map-dialog .local-map-section-controls>button[aria-pressed=true]{background:#3c5b39;color:#ffe39d;border-color:#d3b56d;box-shadow:inset 0 -3px #d3b56d}
+
+/* On a short phone screen keep the section selectors and Close on one row. */
+@media(max-height:500px) and (max-width:600px), (max-height:500px) and (max-width:1024px) and (pointer:coarse){
+ .district-map-dialog[open]{grid-template-rows:auto minmax(0,1fr)}
+ .district-map-dialog>header h2,.district-map-dialog>.local-map-status{display:none}
+ .district-map-dialog>header>.local-map-section-controls{grid-column:1;grid-row:1;width:100%}
+ .district-map-dialog>header>button{grid-column:2;grid-row:1}
+ .district-map-dialog .district-map-layout{grid-row:2}
+ .local-map-3d-controls{gap:4px}
+ .local-map-3d-controls button,.local-map-3d-controls label{min-height:32px;width:auto;margin:0;font-size:11px}
+ .local-map-3d-viewport~.local-map-legend{font-size:9px}
+}

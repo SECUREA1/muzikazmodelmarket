@@ -2,7 +2,8 @@
 
 Hold each actual stylesheet independently, then exercise the actual 2D/3D map
 against a small shared THREE mesh. Mobile maps fill the viewport even when
-vehicle controls grow. No server room or generated world is needed.
+vehicle controls grow, with modal mobile input and independently scrolling
+directory views. No server room or generated world is needed.
 """
 import asyncio
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -210,23 +211,24 @@ async def run(base):
         assert x <= 15 <= x + width and z <= 15 <= z + height, (x, z, width, height)
         await resolve_atlas(page, pending)
 
-        # Fullscreen mobile browsing leaves keyboard handling nonmodal while
-        # covering the gameplay controls with the complete map and directory.
-        assert not await page.locator('.district-map-dialog').evaluate('node=>node.matches(":modal")')
-        assert not await page.evaluate('gameplayOverlayOpen()')
+        # The full mobile map owns the top layer and blocks gameplay input
+        # while browsing, even inside an isolated fullscreen game host.
+        assert await page.locator('.district-map-dialog').evaluate('node=>node.matches(":modal")')
+        assert await page.evaluate('gameplayOverlayOpen()')
         await page.locator('.district-map-dialog>header').get_by_role('button', name='Close', exact=True).focus()
         await page.keyboard.press('w')
-        assert await page.evaluate('mapKeys.splice(0)') == ['w'], 'Focused map buttons still allow walking keys.'
+        assert await page.evaluate('mapKeys.splice(0)') == [], 'Mobile map browsing must not move the player.'
         assert await page.evaluate('mapBlurEvents') == 0
         await assert_full_viewport_map(page)
 
         # Expanding the live aircraft panel must no longer shrink the mobile
-        # map into a small companion window. Close remains reachable after
-        # scrolling to all directory options.
+        # map into a small companion window. Its fitted outer frame keeps Close
+        # reachable while each selected directory owns its own scrolling.
         await page.locator('.airport-flight-controls').evaluate('node=>node.hidden=false')
         await page.wait_for_timeout(100)
         await assert_full_viewport_map(page)
         await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop=node.scrollHeight')
+        assert await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop===0'), 'The fitted outer map frame must not scroll.'
         await assert_full_viewport_map(page)
         await page.locator('.airport-flight-controls').evaluate('node=>node.hidden=true')
         await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop=0')
@@ -339,6 +341,9 @@ async def run(base):
         await page.get_by_role('navigation', name='Browse map sections', exact=True).get_by_role('button', name='Destinations', exact=True).click()
         assert await page.locator('.district-map-dialog').get_attribute('data-map-section') == 'destinations'
         assert await page.locator('.district-map-dialog').get_by_text('Current world deed', exact=True).is_visible()
+        assert await page.locator('.local-map-directory-list').evaluate("node=>getComputedStyle(node).overflowY==='auto'")
+        assert await page.locator('.district-map-dialog').evaluate("node=>getComputedStyle(node).overflowY==='hidden'")
+        await assert_full_viewport_map(page)
         assert await page.locator('.local-map-visual').is_hidden()
         assert await page.evaluate('mapCommands.map(command=>command.action)') == ['map-access', 'map-access', 'vehicle-navigate', 'vehicle-navigate']
         assert not errors, errors
