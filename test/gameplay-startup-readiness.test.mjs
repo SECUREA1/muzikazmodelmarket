@@ -337,12 +337,12 @@ test('fishing sessions and modal panels suppress primary actions, and every tack
 });
 
 
-test('prison primary action opens only a ready, unobstructed nearby activity and never fires weapons',()=>{
+test('prison firing cannot open an activity or block movement',()=>{
  const calls=[];let overlay=false;
  const {context}=fixture({activeEnvironment:{id:'ironwood-prison',game:'prison'},gameplayOverlayOpen:()=>overlay,prisonUI:{near:()=>({id:'intake'}),open:id=>{calls.push(id);return true;}}});
  const start=source.indexOf('  function shootAtReticle()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
  assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
  context.gameplayStarted=true;context.serverPlayerInitialized=true;context.authoritativeClient={ready:true};
- assert.equal(context.shootAtReticle(),true);assert.deepEqual(calls,['intake']);
- overlay=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,['intake']);
+ assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
+ overlay=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
 });
