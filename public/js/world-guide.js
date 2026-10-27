@@ -17,12 +17,12 @@ export function worldGuideIntroduction(environment={}, {solo=false}={}){
  else if(game==='basketball'||id==='basketball-arena'||environment.basketball)guidance='Use the court controls to join a team or watch the game. Follow your team objectives and the live score.';
  else if(game==='hockey'||id==='hockey-arena')guidance='Use the match controls to join a team or watch. Follow the puck, your team objectives and the live score.';
  else if(game==='arcade'||id==='neon-junction')guidance='Choose an arcade machine and open its controls to play. Supported games let you join another player or watch their round.';
- else if(game==='tropical-island'||id==='tropical-island')guidance='Explore the resort and use its map to find the beaches, activities and places to visit.';
+ else if(game==='tropical-island'||id==='tropical-island')guidance='Explore the beaches and resort activities with the standard world controls. Meet the AI residents, accept Quests, or board a boat from the map. Beach-bar drinks have independent two-minute buzz effects.';
  else if(game==='funhouse'||id==='muzikaz-clown-funhouse')guidance='Walk to an attraction to see its controls. Choose a ride, skill challenge or adventure and follow its on-screen objectives.';
  else if(/firing|range/.test(game)||environment.firingRange||['firing-range','force-training-range'].includes(id))guidance='Open the range controls to join a firing lane, choose a practice session or enter an available competition.';
  else if(meta.harbor)guidance='Use the local map to find a free boat and nearby docks. Crew Dispatch offers supply, escort and rescue assignments.';
  else guidance='Use the local map to find nearby places and Quests to choose a walking route or activity.';
- const native=['hockey','arcade','tropical-island'].includes(game)||['hockey-arena','neon-junction','tropical-island'].includes(id);
+ const native=['hockey','arcade'].includes(game)||['hockey-arena','neon-junction'].includes(id);
  const help=native?'Open the game controls whenever you need help getting started.':solo?'Open Quests for local practice objectives. Your guide will announce objective changes as you explore.':'Open World radio for new jobs and players calling for help. Choose a call to travel, accept a job or join a team when ready.';
  return 'Welcome to '+name+'. '+guidance+' '+help;
 }

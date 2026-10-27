@@ -30,7 +30,7 @@ test('specialist guides explain the destination activity and a next action',()=>
 });
 
 test('native maps receive their own controls without explorer-only menus',()=>{
- for(const game of ['hockey','arcade','tropical-island']){
+ for(const game of ['hockey','arcade']){
   const guide=worldGuideIntroduction({name:game,game});
   assert.match(guide,/game controls/);assert.doesNotMatch(guide,/World radio|Crew Dispatch|Quests/);
  }
@@ -41,4 +41,9 @@ test('solo practice guides avoid offering remote player calls, including sparse 
  assert.match(guide,/Welcome to My space/);assert.match(guide,/local practice objectives/);
  assert.doesNotMatch(guide,/World radio|join a team|players calling/);
  assert.match(worldGuideIntroduction(),/Welcome to this world/);
+});
+
+test('the shared resort guide offers native AI quests and world radio',()=>{
+ const guide=worldGuideIntroduction({id:'tropical-island',name:'Palm Coast',game:'tropical-island'});
+ assert.match(guide,/standard world controls/);assert.match(guide,/AI residents/);assert.match(guide,/Quests/);assert.match(guide,/World radio/);assert.match(guide,/two-minute buzz/);
 });

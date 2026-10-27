@@ -38,7 +38,7 @@ def available(locator):
 def run_checks(browser, base, directory, *, mobile=False):
     context = browser.new_context(
         service_workers='block', viewport={'width':390 if mobile else 1280,'height':844 if mobile else 900},
-        is_mobile=mobile, has_touch=True, device_scale_factor=.8, reduced_motion='reduce',
+        is_mobile=mobile, has_touch=True, device_scale_factor=.8, reduced_motion='reduce' if mobile else 'no-preference',
     )
     page = context.new_page()
     page.set_default_timeout(20000)
