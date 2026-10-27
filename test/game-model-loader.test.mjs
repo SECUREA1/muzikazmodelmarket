@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGameModelLoader,loadGameModel} from '../public/js/game-model-loader.js';
 import {resolveModelAssetUrl} from '../public/js/model-asset-url.js';
+import {meshoptTriangleGlb} from './fixtures/meshopt-triangle.mjs';
 
 const vertices = new Float32Array([0,0,0,1,0,0,0,1,0]);
 function triangle(uri) {
@@ -101,6 +102,39 @@ test('scene preparation failures reach the loader error callback', {timeout:1000
   });
 });
 
+test('a real Meshopt-compressed GLB decodes through the member model transport',async()=>{
+  await browser(async win=>{
+    const calls=[];
+    win.MUZIKAZ_API={base:'https://api.test',ready:Promise.resolve(),fetch:async url=>{calls.push(url);return new Response(meshoptTriangleGlb(),{headers:{'Content-Type':'model/gltf-binary'}});}};
+    win.fetch=()=>{throw Error('Compressed upload bypassed the member transport');};
+    const gltf=await createGameModelLoader().loadAsync('/uploads/assets/compressed.glb');
+    const vertices=gltf.scene.children[0].geometry.attributes.position;
+    assert.deepEqual([...vertices.array],[0,0,0,1,0,0,0,1,0]);
+    assert.deepEqual(calls,['https://api.test/uploads/assets/compressed.glb']);
+  });
+});
+
+test('loaded skinned avatars retain animated visibility while static model culling stays enabled',async()=>{
+  await browser(async win=>{
+    const buffer=new Uint8Array(96);buffer.set(new Uint8Array(vertices.buffer));
+    new Float32Array(buffer.buffer,48,12).set([1,0,0,0,1,0,0,0,1,0,0,0]);
+    const document=triangle();
+    document.buffers=[{byteLength:96,uri:'data:application/octet-stream;base64,'+Buffer.from(buffer).toString('base64')}];
+    document.bufferViews.push({buffer:0,byteOffset:36,byteLength:12},{buffer:0,byteOffset:48,byteLength:48});
+    document.accessors.push({bufferView:1,componentType:5121,count:3,type:'VEC4'},{bufferView:2,componentType:5126,count:3,type:'VEC4'});
+    document.meshes.push(structuredClone(document.meshes[0]));
+    document.meshes[0].primitives[0].attributes={POSITION:0,JOINTS_0:1,WEIGHTS_0:2};
+    document.nodes=[{mesh:0,skin:0,children:[1]},{name:'animated-bone'},{mesh:1}];
+    document.skins=[{joints:[1]}];document.scenes=[{nodes:[0,2]}];
+    win.fetch=async()=>Response.json(document);
+    const gltf=await createGameModelLoader().loadAsync('/public/models/animated-avatar.gltf');
+    const meshes=[];gltf.scene.traverse(node=>{if(node.isMesh)meshes.push(node);});
+    const animated=meshes.find(node=>node.isSkinnedMesh),staticMesh=meshes.find(node=>!node.isSkinnedMesh);
+    assert.ok(animated.skeleton.bones.length>0,'parse an actual glTF skin, not a mock type flag');
+    assert.equal(animated.frustumCulled,false);assert.equal(staticMesh.frustumCulled,true);
+  });
+});
+
 test('private relative glTF buffers use account transport without exposing credentials to Three resources',async()=>{
   const apiCalls=[],nativeCalls=[],nativeFetch=globalThis.fetch;
   await browser(async win=>{
@@ -140,5 +174,20 @@ test('HTML/model HTTP errors and cancellation are reported before exposing a bro
     win.fetch=async()=>binaryResponse();const late=new AbortController();let disposed=0;
     await assert.rejects(()=>loadGameModel({parseAsync:async()=>{late.abort();return {scene:{traverse:visit=>visit({geometry:{dispose(){disposed++;}},material:{dispose(){disposed++;}}})}};}},'/public/models/a.glb',{signal:late.signal}),{name:'AbortError'});
     assert.equal(disposed,2,'a scene completed after cancellation is disposed');
+  });
+});
+
+test('a stalled decoder cannot hold a cancelled world open and late scenes are disposed', {timeout:1000}, async()=>{
+  await browser(async win=>{
+    win.fetch=async()=>binaryResponse();
+    let finish,started,disposed=0;
+    const began=new Promise(resolve=>{started=resolve;}),controller=new AbortController();
+    const parsing=new Promise(resolve=>{finish=resolve;});
+    const pending=loadGameModel({parseAsync(){started();return parsing;}},'/public/models/slow-compressed.glb',{signal:controller.signal});
+    await began;controller.abort();
+    await assert.rejects(pending,{name:'AbortError'});
+    finish({scene:{traverse:visit=>visit({geometry:{dispose(){disposed++;}},material:{dispose(){disposed++;}}})}});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(disposed,2,'an obsolete decoder result cannot remain allocated or enter the replacement world');
   });
 });

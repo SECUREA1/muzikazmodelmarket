@@ -4,7 +4,7 @@ MUZIKAZ WORLD experience served by its persistent Node.js API and static fronten
 
 ## Render deployment
 
-Deploy this repository from the committed `render.yaml` blueprint. It runs the Node.js service that owns the admin, account, Loadout Pass, payment, wallet, and marketplace APIs; deploying only the static files or the legacy Rust binary leaves those operational routes unavailable.
+Deploy this repository from the committed `render.yaml` blueprint. It runs the Node.js service that owns the admin, account, Loadout Pass, payment, wallet, and marketplace APIs. A static-only deployment cannot provide those routes; older Rust-configured services use the compatibility launcher described below to start the same Node service.
 
 Use these Render settings:
 
@@ -21,6 +21,8 @@ Health Check Path: /api/health
 The blueprint auto-deploys commits and mounts `/var/data`. All mutable JSON databases and uploaded avatars, assets, and environments are explicitly placed below `/var/data/muzikaz`, so an API restart or a new deployment does not reset the admin totals or generated Loadout Passes. Set `MUZIKAZ_ADMIN_USERNAME`, `MUZIKAZ_ADMIN_PASSWORD`, and `MUZIKAZ_ADMIN_SESSION_SECRET` to secret production values in Render; do not add their values to this file.
 
 The Node service serves files from `dist/` when a static build exists and falls back to the checked-in site files during local development.
+
+`npm run build` reuses a verified neural voice model or makes one bounded attempt to download it. If the optional voice host is unavailable, the build logs a warning and still publishes the game and graphics files; generated speech remains unavailable until the model is installed. Run `npm run build:voices` to retry voice installation with full error reporting and the longer download retry policy.
 
 ## Local checks
 
@@ -84,7 +86,7 @@ npm run build:land-data
 npm run check:land-data
 ```
 
-Older Render services may still start `./target/release/muzikazmodelmarket`. That executable now replaces itself with `node server.mjs` from the repository root, so member login, sessions, inventory, and trading use the same backend. Node must be installed in that service runtime. For Render services created manually, apply the Node runtime, build command, and start command shown above; editing the blueprint alone does not change a manually configured service.
+Older Render services may still build with `cargo build --release` and start `./target/release/muzikazmodelmarket`. That executable replaces itself with `node scripts/start-hosted.mjs`, which validates the checked-out browser module graph and starts the same member API using the repository's current graphics files. This compatibility path ignores an older cached `dist/` directory and does not download packages or optional voice models at startup. Node must be installed in that service runtime, and manually configured services still need the persistent disk and storage environment variables listed above. For Render services created manually, apply the Node runtime, build command, and start command shown above; editing the blueprint alone does not change a manually configured service.
 
 Build and run the compatibility launcher locally (requires Rust to build and Node to run):
 
@@ -302,7 +304,7 @@ game remains available.
 
 ## Server-backed live model publishing
 
-The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
+The canonical Node service in `server.mjs` serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. The Rust compatibility launcher starts this same service. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render's persistent disk and storage variables are configured. `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
 
 ### API routes
 

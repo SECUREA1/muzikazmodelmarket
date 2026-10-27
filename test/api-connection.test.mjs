@@ -4,9 +4,9 @@ import vm from 'node:vm';
 import test from 'node:test';
 
 const source = await readFile(new URL('../public/js/api-connection.js', import.meta.url), 'utf8');
-function loadConnection(fetch, configured = '', storage = new Map()) {
+function loadConnection(fetch, configured = '', storage = new Map(), timers = {}) {
   const attributes = configured ? { 'data-api-base': configured } : {};
-  const window = { URL, Promise, fetch, setTimeout, clearTimeout,
+  const window = { URL, Promise, AbortController, fetch, setTimeout, clearTimeout, ...timers,
     localStorage: { getItem: k => storage.get('l:' + k) || null, setItem: (k,v) => storage.set('l:' + k,String(v)), removeItem: k => storage.delete('l:' + k) },
     sessionStorage: { getItem: k => storage.get('s:' + k) || null, setItem: (k,v) => storage.set('s:' + k,String(v)), removeItem: k => storage.delete('s:' + k) },
     location: { href: 'https://static.example/members.html', origin: 'https://static.example', hostname: 'static.example', protocol: 'https:' }
@@ -16,6 +16,53 @@ function loadConnection(fetch, configured = '', storage = new Map()) {
   return { window, attributes };
 }
 const health = () => new Response(JSON.stringify({ success: true, service: 'muzikaz-member-market' }), { status: 200, headers: { 'content-type': 'application/json' } });
+
+const fastRecovery = {setTimeout:(fn,delay)=>setTimeout(fn,delay===10000?10000:0)};
+test('hosted startup retries temporary deployment pages before sending a single credential',async()=>{
+  const requests=[];let probes=0;
+  const {window,attributes}=loadConnection(async(url,options)=>{
+    requests.push({url,options});
+    if(url.endsWith('/api/health'))return ++probes<3?new Response('<html>Starting</html>',{status:503,headers:{'content-type':'text/html'}}):health();
+    return Response.json({success:true});
+  },'https://muzikazmodelmarket.onrender.com',new Map(),fastRecovery);
+  window.MUZIKAZ_API.setSessionToken('retained-member');
+  await window.MUZIKAZ_API.fetch('/api/access/free-play',{method:'POST',body:'password-fixture'});
+  assert.equal(probes,3);assert.equal(attributes['data-api-connected'],'true');
+  assert.equal(requests.filter(request=>request.options.method==='POST').length,1);
+  assert.equal(requests.at(-1).options.headers.Authorization,'Bearer retained-member');
+});
+
+test('permanent deployment failure is bounded and preserves the member without submitting credentials',async()=>{
+  let probes=0,posts=0;
+  const {window,attributes}=loadConnection(async(url,options)=>{
+    if(options.method==='POST')posts++;
+    probes++;return new Response('<html>Unavailable</html>',{status:502});
+  },'https://muzikazmodelmarket.onrender.com',new Map(),fastRecovery);
+  window.MUZIKAZ_API.setSessionToken('retained-member');
+  await assert.rejects(window.MUZIKAZ_API.fetch('/api/access/free-play',{method:'POST'}),/starting or temporarily unavailable/);
+  assert.equal(probes,3);assert.equal(posts,0);assert.equal(attributes['data-api-connected'],'false');
+  assert.equal(window.MUZIKAZ_API.getSessionToken(),'retained-member');
+});
+
+test('cancelled model discovery leaves the shared connection usable and never sends the stale asset request',async()=>{
+  let complete;const requests=[],probe=new Promise(resolve=>{complete=resolve;});
+  const {window}=loadConnection(async(url,options)=>{requests.push({url,options});return url.endsWith('/api/health')?probe:Response.json({success:true});},'https://muzikazmodelmarket.onrender.com');
+  const controller=new AbortController(),cancelled=window.MUZIKAZ_API.fetch('/uploads/assets/stale.glb',{signal:controller.signal});
+  controller.abort();await assert.rejects(cancelled,{name:'AbortError'});
+  complete(health());await window.MUZIKAZ_API.fetch('/api/models');
+  assert.deepEqual(requests.map(request=>new URL(request.url).pathname),['/api/health','/api/models']);
+  assert.equal(requests[0].options.signal.aborted,false,'one abandoned model must not cancel shared startup discovery');
+});
+
+test('timed-out health probes abort their transport before recovery starts another probe',async()=>{
+  let active=0,maximum=0,aborted=0;
+  const {window}=loadConnection((url,options)=>new Promise((resolve,reject)=>{
+    active++;maximum=Math.max(maximum,active);
+    options.signal.addEventListener('abort',()=>{active--;aborted++;reject(options.signal.reason);},{once:true});
+  }),'https://muzikazmodelmarket.onrender.com',new Map(),{setTimeout:(fn,delay)=>setTimeout(fn,delay===10000?5:0)});
+  await assert.rejects(window.MUZIKAZ_API.ready,/taking too long/);
+  assert.equal(aborted,3);assert.equal(active,0);assert.equal(maximum,1);
+});
 
 test('browser confirms Render before submitting a credential to a static host', async () => {
   const requests = [];

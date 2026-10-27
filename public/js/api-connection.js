@@ -136,17 +136,45 @@
   /* Resolve the API host before any login POST can leave the browser. */
   root.setAttribute('data-api-connected', 'pending');
   root.setAttribute('data-api-base', base);
-  function confirm(candidate) {
+  function probeHealth(candidate) {
     var timer;
+    var controller = window.AbortController ? new window.AbortController() : null;
     var expired = new window.Promise(function (_, reject) {
-      timer = window.setTimeout(function () { reject(new Error('The member service is taking too long to respond. Please try signing in again.')); }, 10000);
+      timer = window.setTimeout(function () {
+        var error = new Error('The game service is taking too long to respond. Please try again.');
+        error.retryable = true;
+        reject(error);
+        if (controller) controller.abort();
+      }, 10000);
     });
-    return window.Promise.race([window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
+    var request = { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' };
+    if (controller) request.signal = controller.signal;
+    return window.Promise.race([window.Promise.resolve().then(function () {
+      return window.fetch(new window.URL('/api/health', candidate + '/').href, request);
+    }).then(function (response) {
+      if (response.status >= 500) {
+        var error = new Error('The game service is starting or temporarily unavailable. Please try again.');
+        error.status = response.status; error.retryable = true;
+        throw error;
+      }
       return response.json().then(function (payload) {
         if (!response.ok || !payload || payload.success !== true || payload.service !== 'muzikaz-member-market') throw new Error('The member API is unavailable. Please try signing in again.');
         return true;
       }, function () { throw new Error('The member API returned an invalid response. Check your connection and try again.'); });
     }), expired]).then(function (value) { window.clearTimeout(timer); return value; }, function (error) { window.clearTimeout(timer); throw error; });
+  }
+  function confirm(candidate) {
+    var attempts = 0;
+    function probe() {
+      return probeHealth(candidate).catch(function (error) {
+        // Deployment warm-up may briefly return an HTML 502/503. Retry only
+        // this safe health check; passwords and gameplay writes are untouched.
+        if (!error.retryable || attempts >= 2) throw error;
+        var delay = ++attempts * 500;
+        return new window.Promise(function (resolve) { window.setTimeout(resolve, delay); }).then(probe);
+      });
+    }
+    return probe();
   }
   var connecting = null;
   function connect() {
@@ -171,7 +199,22 @@
   /* Initial discovery may fail before any panel has subscribed. A later login
    * starts discovery again instead of retaining a permanently rejected promise. */
   ready.catch(function () {});
-  function fetchApi(path, options) { return connect().then(function () { return requestApi(path, options); }); }
+  function fetchApi(path, options) {
+    var signal = options && options.signal;
+    function cancelled() { var error = new Error('The API request was cancelled.'); error.name = 'AbortError'; return signal.reason || error; }
+    if (signal && signal.aborted) return window.Promise.reject(cancelled());
+    var waiting = connect();
+    if (signal) waiting = new window.Promise(function (resolve, reject) {
+      function cleanup() { signal.removeEventListener('abort', abort); }
+      function abort() { cleanup(); reject(cancelled()); }
+      signal.addEventListener('abort', abort, { once: true });
+      waiting.then(function (value) { cleanup(); resolve(value); }, function (error) { cleanup(); reject(error); });
+    });
+    return waiting.then(function () {
+      if (signal && signal.aborted) throw cancelled();
+      return requestApi(path, options);
+    });
+  }
 
   function readJson(response, options) {
     var label = options && options.label || 'The member API';
