@@ -1,6 +1,7 @@
 import {randomInt,randomUUID} from 'node:crypto';
 import {FUNHOUSE_STATIONS,funhouseStations} from './public/js/clown-funhouse-config.js';
 import {FUNHOUSE_EXPERIENCE_RULES as RULES,funhouseRideCue,funhouseRidePose,funhouseMazeCheckpoints,funhouseAimedTarget} from './public/js/funhouse-experience-rules.js';
+import {FUNHOUSE_ADVENTURE_RULES,FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './public/js/funhouse-adventure-rules.js';
 
 export const FUNHOUSE_ROUND_MS=30000;
 export const FUNHOUSE_SHOT_MS=300;
@@ -42,10 +43,57 @@ function finishRide(player,now,{cancel=false,message}={}){
  if(!cancel){player.score=(player.score||0)+ride.score;state.bestScores||={};state.bestScores[ride.kind]=Math.max(state.bestScores[ride.kind]||0,ride.score);stamp(state,{kind:ride.kind,id:ride.canonicalStationId});}
  ride.message=message||(cancel?'You stepped safely back onto the midway.':(ride.kind==='car'?'Clown-car horn ride':'Dizzy spinner ride')+' complete · '+ride.score+' points!');state.message=ride.message;
 }
+function finishAdventure(player,now,{cancel=false,message}={}){
+ const state=player?.funhouse,adventure=state?.adventure;if(adventure?.status!=='active')return;
+ adventure.status=cancel?'cancelled':'complete';adventure.finishedAt=now;
+ if(cancel){adventure.score=0;adventure.bonus=0;adventure.settled=false;}
+ else{
+  adventure.bonus=Math.min(FUNHOUSE_ADVENTURE_RULES.maximumBonus,Math.max(0,Math.floor((adventure.endsAt-now)/1000)));
+  adventure.score=FUNHOUSE_ADVENTURE_CLUES.length*FUNHOUSE_ADVENTURE_RULES.cluePoints+adventure.bonus;
+  adventure.settled=true;player.score=(player.score||0)+adventure.score;
+  state.bestScores||={};state.bestScores.adventure=Math.max(state.bestScores.adventure||0,adventure.score);
+ }
+ adventure.hint=cancel?'Return to the welcome board to start a new trail.':'All six lost laughs found. Return to the welcome board to replay.';
+ adventure.message=message||(cancel?'The Lost Laugh Trail ended without awarding points.':'The Lost Laugh Trail complete · '+adventure.score+' points! All six secrets discovered.');
+ state.message=adventure.message;
+}
+function requireAdventureFloor(player){
+ if(player.health<=0||player.vehicleId||player.seatedId||player.grounded===false||player.funhouse?.ride?.status==='active')fail('Step off the ride and stand on the funhouse floor before searching.');
+}
+function adventureCommand(player,environment,command,now){
+ const state=progress(player),adventure=state.adventure,operation=command.operation;
+ if(!['start','inspect','stop'].includes(operation))fail('Choose whether to start, inspect or stop the adventure.',422);
+ if(command.adventureId&&command.adventureId!==adventure?.id)fail('That adventure trail is no longer available.');
+ if(operation==='stop'){
+  finishAdventure(player,now,{cancel:true});
+  return {message:adventure?.message||'No adventure trail is active.',funhouse:state};
+ }
+ if(!funhouseAdventureAvailable(environment))fail('Visit the complete Midnight Laughs map to follow the Lost Laugh Trail.');
+ requireAdventureFloor(player);
+ if(operation==='start'){
+  if(adventure?.status==='active')fail('Finish or stop the current adventure trail before starting again.');
+  if(!funhouseAdventureNear(player.position,FUNHOUSE_ADVENTURE_START))fail('Walk to the Midnight Laughs welcome board to start the adventure.');
+  state.adventure={id:randomUUID(),name:FUNHOUSE_ADVENTURE_START.name,status:'active',startedAt:now,endsAt:now+FUNHOUSE_ADVENTURE_RULES.durationMs,durationMs:FUNHOUSE_ADVENTURE_RULES.durationMs,clueIndex:0,found:[],score:0,bonus:0,settled:false,hint:FUNHOUSE_ADVENTURE_CLUES[0].hint,message:'The ringmaster lost six laughs. Follow the clues, inspect each secret and light the final lantern!'};
+  state.message=state.adventure.message;return {message:state.message,funhouse:state};
+ }
+ if(adventure?.status!=='active')fail('Start the Lost Laugh Trail at the welcome board before searching.');
+ const clue=funhouseAdventureNextClue(adventure);
+ if(!clue||command.clueId!==clue.id)fail('Follow the next adventure clue in order.');
+ if(!funhouseAdventureNear(player.position,clue))fail('Walk closer to '+clue.name+' before inspecting it.');
+ adventure.found.push(clue.id);adventure.clueIndex++;adventure.score=adventure.found.length*FUNHOUSE_ADVENTURE_RULES.cluePoints;
+ adventure.lastClueId=clue.id;adventure.lastFoundAt=now;adventure.discoveredAt=now;adventure.message=clue.discovery;
+ const next=funhouseAdventureNextClue(adventure);adventure.hint=next?.hint||'All six secrets found!';
+ if(adventure.clueIndex===FUNHOUSE_ADVENTURE_CLUES.length)finishAdventure(player,now);
+ state.message=adventure.message;
+ const effect={stationId:FUNHOUSE_ADVENTURE_START.id,canonicalStationId:FUNHOUSE_ADVENTURE_START.id,objectId:null,kind:'adventure',clueId:clue.id,scare:clue.scare,position:{...clue.position},at:now,until:now+3500};
+ state.effects['adventure:'+clue.id]=effect;
+ return {message:adventure.message,funhouse:state,funhouseEffect:effect};
+}
 /** Travel and explicit exit always release the virtual ride seat. */
-export function cancelFunhouseActivities(player,now,reason='Changing activity ended this carnival game.'){
+export function cancelFunhouseActivities(player,now,reason='Changing activity ended this carnival game.',{preserveAdventure=false}={}){
  if(!player?.funhouse)return;
  finish(player,now,{cancel:true});finishChallenge(player,now,{cancel:true,message:reason});finishRide(player,now,{cancel:true,message:reason});
+ if(!preserveAdventure)finishAdventure(player,now,{cancel:true,message:reason});
 }
 function updateRideCue(ride,now){Object.assign(ride,funhouseRideCue(ride,now));}
 function aimedTarget(player,station,command,kind){
@@ -69,6 +117,11 @@ function activeChallenge(sim,player,environment,command,now){
  * or relocated visitor cannot leave a scoring round behind in the gallery. */
 export function stepFunhouse(sim,environment,now){
  for(const player of Object.values(sim.players||{})){
+  const adventure=player.funhouse?.adventure;
+  if(adventure?.status==='active'){
+   if(!funhouseAdventureAvailable(environment)||player.health<=0||player.replacedByRoom||now-player.lastSeen>15000)finishAdventure(player,now,{cancel:true,message:'The adventure stopped. Return to the welcome board when you are ready.'});
+   else if(now>=adventure.endsAt)finishAdventure(player,now,{cancel:true,message:'The trail lantern went dark. Return to the welcome board to try again.'});
+  }
   const round=player.funhouse?.round;
   if(round?.status==='active'){
    const station=stationFor(sim,environment,round.stationId);
@@ -96,12 +149,13 @@ export function stepFunhouse(sim,environment,now){
 }
 export function funhouseCommand(sim,player,environment,command,now,{integer=randomInt}={}){
  if(!Number.isFinite(now))fail('The attraction clock is unavailable.');
- const supported=['funhouse-start','funhouse-squirt','funhouse-use','funhouse-dress','funhouse-stop','funhouse-ride','funhouse-ride-exit','funhouse-challenge','funhouse-action'];
+ const supported=['funhouse-start','funhouse-squirt','funhouse-use','funhouse-dress','funhouse-stop','funhouse-ride','funhouse-ride-exit','funhouse-challenge','funhouse-action','funhouse-adventure'];
  if(!supported.includes(command.action))fail('Choose a supported funhouse activity.',422);
  stepFunhouse(sim,environment,now);
  const state=progress(player);
- const exitCommand=['funhouse-ride-exit','funhouse-stop'].includes(command.action)||command.action==='funhouse-action'&&command.operation==='stop';
+ const exitCommand=['funhouse-ride-exit','funhouse-stop'].includes(command.action)||['funhouse-action','funhouse-adventure'].includes(command.action)&&command.operation==='stop';
  if(!exitCommand&&!funhouseStations(environment,{actors:sim.actors}).length)fail('Visit Midnight Laughs Funhouse or place a carnival attraction before playing.');
+ if(command.action==='funhouse-adventure')return adventureCommand(player,environment,command,now);
  if(state.ride?.status==='active'&&!['funhouse-action','funhouse-ride-exit','funhouse-ride'].includes(command.action))fail('Use the ride controls or step off before choosing another attraction.');
  if(command.action==='funhouse-ride-exit'){
   if(!state.ride||command.rideId&&command.rideId!==state.ride.id)fail('That ride seat is no longer available.');
@@ -111,7 +165,7 @@ export function funhouseCommand(sim,player,environment,command,now,{integer=rand
   const station=requireNear(player,stationFor(sim,environment,command.stationId));if(!['car','spinner'].includes(station.kind))fail('Choose the clown car or dizzy spinner to board.',422);
   if(state.ride?.status==='active')fail('Leave your current ride before boarding another.');
   if(Object.values(sim.players||{}).some(other=>other!==player&&other.funhouse?.ride?.status==='active'&&other.funhouse.ride.stationId===station.id))fail('Another guest is riding. Wait for this ride to finish.');
-  cancelFunhouseActivities(player,now,'Boarding ended the previous carnival challenge.');
+  cancelFunhouseActivities(player,now,'Boarding ended the previous carnival challenge.',{preserveAdventure:true});
   const durationMs=station.kind==='car'?RULES.carMs:RULES.spinnerMs;
   state.ride={id:randomUUID(),kind:station.kind,stationId:station.id,canonicalStationId:station.canonicalStationId||station.id,objectId:station.objectId||null,stationRevision:station.stationRevision||null,status:'active',startedAt:now,endsAt:now+durationMs,durationMs,progress:0,score:0,hits:0,gentle:true,lastCueHit:-1,message:station.kind==='car'?'Seated in the clown car. Honk when the horn cue lights up!':'Seated in the spinner. Balance toward the lit side!'};
   state.ride.pose=funhouseRidePose(state.ride,station,now);updateRideCue(state.ride,now);player.position={...state.ride.pose.position};player.floor=player.position.y;player.input={};player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
@@ -120,7 +174,7 @@ export function funhouseCommand(sim,player,environment,command,now,{integer=rand
  if(command.action==='funhouse-challenge'){
   const station=requireNear(player,stationFor(sim,environment,command.stationId));if(!['jackbox','ballpit','mirrors'].includes(station.kind))fail('Choose the fright box, ball pit or mirror maze for this challenge.',422);
   if(state.challenge?.status==='active')fail('Finish or stop your current attraction challenge first.');
-  cancelFunhouseActivities(player,now,'Starting a challenge ended the previous carnival game.');
+  cancelFunhouseActivities(player,now,'Starting a challenge ended the previous carnival game.',{preserveAdventure:true});
   const durationMs=station.kind==='jackbox'?RULES.jackBoxMs:station.kind==='ballpit'?RULES.ballPitMs:RULES.mazeMs;
   state.challenge={id:randomUUID(),kind:station.kind,stationId:station.id,canonicalStationId:station.canonicalStationId||station.id,objectId:station.objectId||null,stationRevision:station.stationRevision||null,mazeGroup:station.mazeGroup||null,status:'active',phase:station.kind==='jackbox'?'winding':station.kind==='mirrors'?'walking':'playing',startedAt:now,endsAt:now+durationMs,durationMs,hits:0,shots:0,score:0,windCount:0,targetId:station.kind==='ballpit'?integer(4):null,checkpointIndex:0,message:station.kind==='jackbox'?'Wind three times, then catch the clown when it pops!':station.kind==='ballpit'?'Toss at the glowing color target!':'Follow the marked mirror passages, then ring the exit bell.'};
   if(station.kind==='mirrors'){state.challenge.checkpoints=funhouseMazeCheckpoints(station);state.mazeStartedAt=now;state.mazeGroup=station.mazeGroup;state.mazeStartStationId=station.id;}
@@ -164,7 +218,7 @@ export function funhouseCommand(sim,player,environment,command,now,{integer=rand
  if(command.action==='funhouse-start'){
   const station=requireNear(player,stationFor(sim,environment,command.stationId));if(station.kind!=='water')fail('Start a water round at the water-gun gallery.',422);
   if(state.round?.status==='active')fail('Finish your current water round first.');
-  cancelFunhouseActivities(player,now,'Starting the water gallery ended the previous attraction challenge.');
+  cancelFunhouseActivities(player,now,'Starting the water gallery ended the previous attraction challenge.',{preserveAdventure:true});
   state.round={id:randomUUID(),stationId:station.id,canonicalStationId:station.canonicalStationId||station.id,stationRevision:station.stationRevision||null,objectId:station.objectId||null,status:'active',startedAt:now,endsAt:now+FUNHOUSE_ROUND_MS,targetId:integer(6),hits:0,shots:0,score:0,message:'Splash the glowing clown target. Thirty seconds on the clock!'};
   state.message=state.round.message;return {message:state.message,funhouse:state};
  }
@@ -215,5 +269,5 @@ export function funhouseCommand(sim,player,environment,command,now,{integer=rand
 /** Keep projection explicit so private room fields cannot leak into snapshots. */
 export function playerFunhouseView(player){
  const state=player?.funhouse;if(!state)return null;
- return {stamps:[...state.stamps],costume:{...state.costume},tool:state.tool||null,equipment:{...state.equipment},bestScore:state.bestScore,bestScores:{...state.bestScores},rounds:state.rounds,round:state.round?{...state.round}:null,ride:state.ride?structuredClone(state.ride):null,challenge:state.challenge?structuredClone(state.challenge):null,effects:structuredClone(state.effects),message:state.message};
+ return {stamps:[...state.stamps],costume:{...state.costume},tool:state.tool||null,equipment:{...state.equipment},bestScore:state.bestScore,bestScores:{...state.bestScores},rounds:state.rounds,round:state.round?{...state.round}:null,ride:state.ride?structuredClone(state.ride):null,challenge:state.challenge?structuredClone(state.challenge):null,adventure:state.adventure?structuredClone(state.adventure):null,effects:structuredClone(state.effects),message:state.message};
 }

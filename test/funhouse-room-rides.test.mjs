@@ -40,3 +40,19 @@ for(const kind of ['car','spinner'])test(`${kind} ride stays seated under walkin
  assert.deepEqual((await runtime.player(FUNHOUSE_ID,self)).input,{});
  await store.flush();
 });
+
+test('ground teleport cancels a trail or ride after validation and never snaps a visitor back into an abandoned seat',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'funhouse-ground-travel-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ let now=100000,request=0;const store=new SharedRoomStore(join(directory,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now}),identity={accountId:'traveller',username:'Traveller'};
+ const send=(action,fields={})=>runtime.command(FUNHOUSE_ID,world,identity,{action,requestId:'travel-'+ ++request,...fields});
+ let snapshot=await send('join');const self=snapshot.selfId;
+ await send('map-access',{position:station('welcome').position});await send('funhouse-adventure',{operation:'start'});
+ snapshot=await send('teleport-floor',{position:{x:3,y:.02,z:40}});assert.equal(snapshot.players[self].funhouse.adventure.status,'cancelled');
+ await send('map-access',{position:station('car').position});await send('funhouse-ride',{stationId:station('car').id});
+ await assert.rejects(send('teleport-floor',{position:{x:NaN,y:.02,z:31}}));
+ snapshot=await runtime.snapshot(FUNHOUSE_ID,world);assert.equal(snapshot.players[self].funhouse.ride.status,'active','invalid travel leaves the current ride intact');
+ snapshot=await send('teleport-floor',{position:{x:24,y:.02,z:31}});assert.equal(snapshot.players[self].funhouse.ride.status,'cancelled');
+ const arrival=snapshot.players[self].position;assert.ok(Math.hypot(arrival.x-24,arrival.z-31)<.05);
+ now+=200;snapshot=await runtime.snapshot(FUNHOUSE_ID,world);assert.ok(Math.hypot(snapshot.players[self].position.x-arrival.x,snapshot.players[self].position.z-arrival.z)<.05);
+ assert.deepEqual((await runtime.player(FUNHOUSE_ID,self)).input,{});await store.flush();
+});

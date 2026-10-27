@@ -499,7 +499,8 @@ export class AuthoritativeRooms {
    else if(command.action==='teleport-floor'){if(player.skiLift)fail('Wait for automatic summit exit before travelling.',409);if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Travel resets a competitive run.';}
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);
     if(player.basketballRole==='spectator'&&sim.basketball?.state==='live'){if(!command.position||!['x','y','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid spectator floor position.',422);const accepted=constrainBasketballSpectator(player.position,command.position,sim,player);if(basketballSpectatorRestricted(command.position,sim)||distance(accepted,command.position)>.01)fail('Spectators can teleport between the stands and benches outside the active court.',409);}
-    player.position=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects,{earthworks:sim.construction?.earthworks});
+    const arrival=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects,{earthworks:sim.construction?.earthworks});
+    cancelFunhouseActivities(player,now,'Ground travel ended this attraction.');player.position=arrival;
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
     result.message='Teleported to the selected floor.';
    }
