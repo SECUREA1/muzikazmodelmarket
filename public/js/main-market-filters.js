@@ -9,5 +9,5 @@ export function mainMarketOptions(entries,{source='',category=''}={}){
  return {categories:MARKET_CATEGORIES.filter(value=>categoryCounts.has(value.id)).map(value=>({...value,count:categoryCounts.get(value.id)})),subcategories:[...subtypes.values()].sort((a,b)=>a.label.localeCompare(b.label))};
 }
 export function filterMainMarket(entries,{source='',category='',subcategory='',uses=[],query=''}={}){
- const text=query.trim().toLowerCase();return entries.filter(({item,facts})=>matchesMarketSource(item,source)&&(!category||category===facts.category)&&(!subcategory||subcategory===facts.subcategory)&&(!uses.length||uses.some(use=>facts.uses.includes(use)))&&(!text||`${facts.search} ${item.seller||''} ${item.description||''} ${item.nativeFunction||''} ${(item.nativeMaps||[]).map(map=>map.name).join(' ')}`.toLowerCase().includes(text)));
+ const text=query.trim().toLowerCase();return entries.filter(({item,facts})=>matchesMarketSource(item,source)&&(!category||category===facts.category)&&(!subcategory||subcategory===facts.subcategory)&&(!uses.length||uses.some(use=>facts.uses.includes(use)))&&(!text||`${facts.search} ${item.seller||''} ${item.description||''} ${item.nativeFunction||''} ${(item.nativeMaps||[]).flatMap(map=>[map.name,...(map.aliases||[])]).join(' ')}`.toLowerCase().includes(text)));
 }

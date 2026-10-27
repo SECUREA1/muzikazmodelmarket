@@ -26,8 +26,8 @@ export class GameMarketClient {
   async builderBuy(listingId){const owner=this.member(),key=owner+':builder:'+listingId;if(!this.requests.has(key))this.requests.set(key,this.id());const result=await this.api('/api/builder/listings/'+encodeURIComponent(listingId)+'/purchase',{method:'POST',body:JSON.stringify({request_id:this.requests.get(key)})});this.requests.delete(key);return result;}
 }
 
-export function createGameMarketplace({onOpen=()=>{},onUse=async item=>{const destination=new URL('model-explorer.html',location.href);destination.searchParams.set('useItem',item.sourceId||item.id);destination.searchParams.set('autoplay','1');location.assign(destination.href);},canUse=()=>false,onCare=()=>{},onClose=()=>{},telemetry=()=>null}={}){
- const inventory=new SharedGameInventory();let supplies=[];
+export function createGameMarketplace({onOpen=()=>{},onUse=async item=>{const destination=new URL('model-explorer.html',location.href);destination.searchParams.set('useItem',item.sourceId||item.id);destination.searchParams.set('autoplay','1');location.assign(destination.href);},canUse=()=>false,onCare=()=>{},onClose=()=>{},telemetry=()=>null,inventory:providedInventory=null}={}){
+ const inventory=providedInventory||new SharedGameInventory({getMapId:()=>telemetry()?.world});let supplies=[];
  let canonicalOwner='';
  const owner=()=>canonicalOwner||String(window.MZKWallet?.connectedAddress?.()||window.MZKWallet?.walletId?.()||'').trim().toLowerCase();
  const client=new GameMarketClient({owner,authorize:async()=>({'X-CSRF-Token':(await inventory.session()).csrfToken}),request:(...args)=>window.MUZIKAZ_API?.fetch?window.MUZIKAZ_API.fetch(...args):window.fetch(...args)});

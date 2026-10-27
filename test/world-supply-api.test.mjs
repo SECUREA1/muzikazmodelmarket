@@ -46,7 +46,9 @@ test('world supply API protects paid production, validates destinations, and exp
   // Advance only the trusted persisted job timestamp; no public endpoint can
   // assert completion. The following GET runs the normal production scheduler.
   const persisted=JSON.parse(await readFile(join(dir,'users.json'),'utf8'));
-  persisted.worldSupply.production[production.body.data.id].readyAt=Date.now()-1;
+  const completedJob=persisted.worldSupply.production[production.body.data.id],shift=completedJob.readyAt-(Date.now()-1);
+  completedJob.startedAt-=shift;completedJob.readyAt-=shift;
+  for(const stage of completedJob.stages||[]){stage.startedAt-=shift;stage.readyAt-=shift;}
   await writeFile(join(dir,'users.json'),JSON.stringify(persisted));
   state=(await call('/api/world-supply',headers)).body.data;
   assert.equal(state.factoryStock[item.id],10);assert.equal(state.worldStock[item.id],1000);

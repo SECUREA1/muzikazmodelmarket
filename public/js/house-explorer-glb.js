@@ -1082,7 +1082,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.updateVisualEffects(delta,elapsed);
   }
   let requestedBackpackDeployment=false;
-  const shippingUI=mountShippingUI({stage,command:serverCommand,announce:setStatus,onOpen:()=>{closeFishingCompanions();topDownAimTarget=null;harborOps.acceptAutomaticRoute();lockMenuInput();},onClose:lockMenuInput,onInputRelease:lockMenuInput,onHelm:()=>{shippingUI.close();stage.querySelector('.harbor-ops-toggle')?.click();},onManual:()=>shippingBridgeAction('manual'),onAnchor:()=>shippingBridgeAction('anchor'),onExit:()=>shippingBridgeAction('exit'),onNavigate:destinationId=>serverCommand('vehicle-navigate',{destinationId}),onMarket:()=>gameMarketplace.open('upgrades',{search:'shipping'})});
+  const shippingUI=mountShippingUI({stage,command:serverCommand,announce:setStatus,onOpen:()=>{closeFishingCompanions();topDownAimTarget=null;harborOps.acceptAutomaticRoute();lockMenuInput();},onClose:lockMenuInput,onInputRelease:lockMenuInput,onHelm:()=>{shippingUI.close();stage.querySelector('.harbor-ops-toggle')?.click();},onManual:()=>shippingBridgeAction('manual'),onAnchor:()=>shippingBridgeAction('anchor'),onExit:()=>shippingBridgeAction('exit'),onNavigate:destinationId=>serverCommand('vehicle-navigate',{destinationId}),onMarket:()=>gameMarketplace.open('upgrades',{search:'shipping'}),onSupply:()=>worldSupplyUI.open({section:'shipments'})});
   async function shippingBridgeAction(operation){
     if(!isShippingEnvironment(activeEnvironment)||!isWatercraft(displayVehicle()))return false;
     shippingUI.close();harborOps.acceptAutomaticRoute();lockMenuInput();
@@ -1120,7 +1120,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   const fitnessUI=mountFitnessUI(stage,serverCommand,{onOpen:()=>stage.classList.add('fitness-training-overlay'),onClose:()=>stage.classList.remove('fitness-training-overlay'),announce:setStatus});
   const factoryUI=mountMissileFactoryUI(stage,serverCommand,{announce:setStatus,getPosition:()=>playerRig.position});
-  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:()=>shippingUI.open(),announce:setStatus});
+  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:options=>shippingUI.open(options),onNavigate:destinationId=>loadById(destinationId),announce:setStatus});
   worldSupplyUI.update(null,null,activeEnvironment);
   const factoryTestingUI=mountFactoryTestingUI(stage,serverCommand,{announce:setStatus,getPosition:()=>playerRig.position});
   const factoryTestingVR=createFactoryTestingVR({THREE,scene,camera,getCamera:()=>renderer.xr.getCamera(camera),getEnvironment:()=>activeEnvironment,getPosition:()=>playerRig.position,getActors:()=>serverActors,getPresenting:()=>renderer.xr.isPresenting,getServerTime:()=>funhouseServerNow(),getReducedMotion:()=>reducedMotion||playerPreferences.reducedMotion,send:serverCommand,onStatus:setStatus,onInputRelease:lockMenuInput});
@@ -1324,7 +1324,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const syncCareEffects=async()=>careEffects.accept(await sharedInventory.state());
   let lastTelemetry='',telemetrySaving=false;
   setInterval(async()=>{if(serverHostedRoom||telemetrySaving||!toxicBubbleSystem.active)return;telemetrySaving=true;try{await syncCareEffects();const sample=JSON.stringify([toxicBubbleSystem.health,activeEnvironment?.id]);if(sample!==lastTelemetry){await sharedInventory.recordTelemetry(100*toxicBubbleSystem.health/TOXIC_BUBBLE_CONFIG.maxHealth,activeEnvironment?.id);lastTelemetry=sample;}}catch{}finally{telemetrySaving=false;}},15000);
-  const gameMarketplace=createGameMarketplace({onOpen:()=>{lockMenuInput();toxicBubbleSystem.toggleInventory(false);toggleBuildMenu(false);buildingPopup.hidden=true;},
+  const gameMarketplace=createGameMarketplace({inventory:sharedInventory,onOpen:()=>{lockMenuInput();toxicBubbleSystem.toggleInventory(false);toggleBuildMenu(false);buildingPopup.hidden=true;},
     telemetry:()=>toxicBubbleSystem.active?({health:toxicBubbleSystem.health,maxHealth:TOXIC_BUBBLE_CONFIG.maxHealth,world:activeEnvironment?.id}):null,
     onCare:result=>careEffects.accept(result),
     canUse:item=>Boolean(item.shippingSupplyId||item.type==='land-entitlement'||item.type==='land-deed'||item.economySku||backpackAssets.find(asset=>asset.id===item.id||asset.name===item.name)||item.modelUrl||item.glb_url||item.buildAssetId),
