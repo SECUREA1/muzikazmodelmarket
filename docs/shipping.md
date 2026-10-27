@@ -38,6 +38,8 @@ AI crews yield to player vessels, use their own commercial loading berths, and c
 
 ## Connected rewards and inventory
 
+The **World item factory** adds finite, item-by-item native and GLB supply to these routes. Build discounted batches, dispatch a counted manifest, then complete the normal sea passage to restock any map warehouse or the central world inventory. Exact item quantities accompany the shipping job; stock credits only after full unloading. See [World supply](world-supply.md) for production, depletion, map stores, and simulated onward transfers.
+
 MZK rewards are capped at 400 per account per UTC day. Delivery and exchange receipts are idempotent, and progression and stock live outside editable account memory. Port handling, route progress, vessel unlocks and rewards are calculated on the server. Leaving the vessel, defeat, relocation, travel or an expired connection cancels an active contract.
 
 Delivered provisions exchange for a Medkit unlock or ten prepaid wood pieces. Machine parts exchange for five prepaid metal pieces or one 20 MZK factory production credit. Tool stock exchanges for a Scanner or professional fishing rod. These are the existing Tools, fishing, factory and Builder systems, with their usual ownership and usage rules. Stock appears in Marketplace and the Tools pouch as **Exchange at shipping port**. Raw stock is exchanged at docks; unlocked items follow the normal marketplace rules.
