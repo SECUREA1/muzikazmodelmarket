@@ -180,7 +180,7 @@ with tempfile.TemporaryDirectory(prefix='prison-expansion-browser-') as director
                         }});
                         window.expansionMove=id=>{expansionPos={...PRISON_STATIONS.find(s=>s.id===id).position};expansionSync();expansionUI.open(id);};
                         window.expansionContract=()=>prisonContractView(expansionState.players.me,{day:expansionState.day});
-                        expansionSync();expansionUI.open('intake');
+                        expansionSync();expansionUI.open('intake');const tick=()=>{expansionUI.tick();requestAnimationFrame(tick);};requestAnimationFrame(tick);
                     }""")
                     panel = page.locator('#ironwood-prison-panel')
                     panel.locator('[data-tab="challenges"]').click()
@@ -194,6 +194,8 @@ with tempfile.TemporaryDirectory(prefix='prison-expansion-browser-') as director
                     assert panel.locator('.prison-contract-active').is_visible()
                     panel.locator('[data-tab="packs"]').click()
                     assert panel.locator('[data-prison-claim="prison-radio"]').is_disabled()
+                    page.locator('[data-packet-buy="canteen"]').wait_for(state='visible')
+                    page.wait_for_function("""!document.querySelector('[data-packet-buy="canteen"]').disabled""")
                     assert page.evaluate("""()=>{
                         const button=document.querySelector('[data-packet-buy="canteen"]');button.focus();
                         for(let i=0;i<30;i++)expansionSync();
@@ -205,6 +207,7 @@ with tempfile.TemporaryDirectory(prefix='prison-expansion-browser-') as director
                     assert page.evaluate('expansionState.players.me.supplies.water') == 1
                     page.evaluate('expansionPos={x:0,y:.02,z:70};expansionSync()')
                     assert panel.locator('[data-packet-buy="canteen"]').is_disabled(), 'Purchases require a physical shop.'
+                    page.wait_for_function("""!document.querySelector('[data-supply-use="snack"]').disabled""")
                     assert panel.locator('[data-supply-use="snack"]').is_enabled(), 'Carried supplies can be consumed away from stations.'
                     panel.locator('[data-supply-use="snack"]').click()
                     page.wait_for_function('expansionState.players.me.supplies.snack===0')
@@ -238,6 +241,7 @@ with tempfile.TemporaryDirectory(prefix='prison-expansion-browser-') as director
                         page.set_viewport_size({'width': width, 'height': height})
                         panel.locator('[data-tab="packs"]').click()
                         assert panel.locator('[data-packs]').is_visible()
+                        page.wait_for_function("""!document.querySelector('[data-prison-claim="prison-radio"]').disabled""")
                         assert panel.locator('[data-prison-claim="prison-radio"]').is_enabled()
                         rect = page.locator('.prison-dialog').bounding_box()
                         assert 0 <= rect['x'] and rect['x'] + rect['width'] <= width + 1, rect
