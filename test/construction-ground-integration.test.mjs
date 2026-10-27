@@ -57,3 +57,17 @@ test('the actual client scene geometry supports local walking in the same pit an
  const floor=new THREE.Raycaster(new THREE.Vector3(1,1,1),new THREE.Vector3(0,-1,0)).intersectObjects(render.groundMeshes)[0];close(floor.point.y,-5,'deposited material raises the actual rendered triangle');
  render.dispose();base.traverse(node=>{node.geometry?.dispose();for(const material of Array.isArray(node.material)?node.material:[node.material])material?.dispose();});
 });
+
+test('expanded construction land keeps loader normalization at one and walking beside the dozer at server grade',async()=>{
+ const {constructionWorld}=await import('../construction-world.mjs'),{replaceServerStreets}=await import('../public/js/environments/server-streets.js'),{buildCollision}=await import('../public/js/environments/environment-collision.js');
+ const environment=constructionWorld(),root=createBuilderLand(environment);replaceServerStreets(root,environment.streets,{labels:false});root.updateMatrixWorld(true);
+ // Reproduce the browser loader's footprint normalization, including streets.
+ // A former 512 m clamp scaled the new cutouts away from the shared terrain.
+ const size=new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()),normalization=environment.playableSize/Math.max(size.x,size.z);
+ close(normalization,1,'authored land already has the full requested map footprint');root.scale.multiplyScalar(normalization);root.updateMatrixWorld(true);
+ const {octree}=buildCollision(root),view=new LocalWalkingView();view.reconcile({x:45.8,y:.02,z:61.5},{serverTime:1000,receivedAt:1000,grounded:true});
+ let result={};for(let index=1;index<=180;index++)view.sample(1000+index*1000/60,1/60,{side:index<10?-1:0,yaw:0},{octree,speed:4},result);
+ close(result.y,.02,'walking toward the cab cannot fall through a shifted spoil cutout');
+ const collision=new ServerBuilderCollision(),server=collision.groundAt(environment,result,{earthworks:createEarthworks(environment.construction)});close(result.y,server.y,'local cab access remains at authoritative ground height');
+ const floor=root.getObjectByName('BUILDER_WALKABLE_FLOOR_grand-floor');floor.geometry.computeBoundingBox();close(floor.geometry.boundingBox.max.x,384,'expanded city and roads have real ground to their full extent');
+});
