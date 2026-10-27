@@ -133,6 +133,57 @@ with tempfile.TemporaryDirectory(prefix='login-control-isolation-') as directory
                                 panel = page.locator('#ironwood-prison-panel')
                                 panel.wait_for(state='visible')
                                 assert 'intake' in panel.locator('[data-station-title]').inner_text().casefold()
+                                # Gameplay keys stay inside the open prison
+                                # panel, without moving or repeating Use behind it.
+                                modal_position = state(page)['player']['position']
+                                start = len(commands)
+                                page.keyboard.down('w')
+                                page.keyboard.press('e')
+                                page.wait_for_timeout(400)
+                                page.keyboard.up('w')
+                                assert panel.is_visible()
+                                assert displacement(modal_position, state(page)['player']['position']) < .08, (world, 'Modal allowed movement')
+                                assert not any(row.get('action') in ['fire', 'prison-action', 'interact'] for row in commands[start:]), commands[start:]
+
+                                # Browsing is available anywhere, but remote
+                                # activities explain why participation is locked.
+                                panel.locator('[data-station="meal"]').click()
+                                remote_meal = panel.locator('[data-operation="meal"]')
+                                assert remote_meal.is_disabled(), 'A remote meal must not be collected from intake.'
+                                help_text = panel.locator('[data-action-help]').inner_text()
+                                assert help_text.strip() and any(word in help_text.casefold() for word in ['walk', 'closer', 'away']), help_text
+                                panel.locator('[data-action-help]').scroll_into_view_if_needed()
+                                page.screenshot(path=str(ARTIFACTS / 'prison-controls-refined.png'))
+                                panel.locator('[data-walk-to]').click()
+                                panel.wait_for(state='hidden')
+                                assert not state(page)['player']['inputBlocked'], state(page)
+                                assert page.locator('dialog[open]').count() == 0
+                                # No teleport or API fixture: E still resolves
+                                # the station physically nearby after navigation.
+                                page.keyboard.press('e')
+                                panel.wait_for(state='visible')
+                                assert 'intake' in panel.locator('[data-station-title]').inner_text().casefold()
+                                assert not any(row.get('action') == 'prison-action' and row.get('packet', {}).get('operation') == 'meal' for row in commands[start:]), commands[start:]
+
+                                # Enter the guard shift, then switch back using
+                                # the same real authenticated room connection.
+                                # A second activation while the first is pending
+                                # must never issue a second prison action.
+                                for operation, role in [('role-guard', 'GUARD'), ('role-prisoner', 'PRISONER')]:
+                                    if operation == 'role-prisoner':
+                                        page.wait_for_timeout(300)
+                                    start = len(commands)
+                                    action_button = panel.locator('[data-operation="' + operation + '"]')
+                                    action_button.wait_for(state='visible')
+                                    with page.expect_response(lambda response, operation=operation: response.url.endswith('/gameplay') and response.request.method == 'POST' and (response.request.post_data_json or {}).get('action') == 'prison-action' and (response.request.post_data_json or {}).get('packet', {}).get('operation') == operation) as shift_response:
+                                        action_button.evaluate('(button)=>{button.click();button.click();}')
+                                    response = shift_response.value
+                                    assert response.ok, response.text()
+                                    payload = response.json()['data']
+                                    assert payload['result']['message'], payload['result']
+                                    page.wait_for_function('(role)=>document.querySelector("#ironwood-prison-panel [data-role]").textContent===role', arg=role)
+                                    sent = [row for row in commands[start:] if row.get('action') == 'prison-action' and row.get('packet', {}).get('operation') == operation]
+                                    assert len(sent) == 1, ('Repeated shift activation dispatched more than once', sent)
                                 panel.locator('[data-close]').click()
                                 panel.wait_for(state='hidden')
 
@@ -185,11 +236,24 @@ with tempfile.TemporaryDirectory(prefix='login-control-isolation-') as directory
                                 trigger = page.get_by_role('button', name='Open Ironwood prison activities', exact=True)
                                 if not trigger.is_visible():
                                     page.get_by_role('button', name='More view controls', exact=True).click()
-                                trigger.click()
+                                # Enter remains the accessible activation of
+                                # explicit buttons outside the movement controls.
+                                start = len(commands)
+                                trigger.focus()
+                                page.keyboard.press('Enter')
                                 panel = page.locator('#ironwood-prison-panel')
                                 panel.wait_for(state='visible')
-                                panel.locator('[data-close]').click()
+                                assert not any(row.get('action') == 'input' and row.get('input', {}).get('jump') for row in commands[start:]), (world, 'Enter on Prison also jumped', commands[start:])
+                                page.keyboard.press('Escape')
                                 panel.wait_for(state='hidden')
+                                # Closing restores HUD focus; Space must resume
+                                # gameplay jumping without reopening that button.
+                                page.wait_for_function('MuzikazHouseExplorer.snapshot().player.serverGrounded', timeout=20000)
+                                start = len(commands)
+                                page.keyboard.press('Space')
+                                page.wait_for_timeout(500)
+                                assert page.locator('dialog[open]').count() == 0, 'Space reopened the just-closed Prison button.'
+                                assert any(row.get('action') == 'input' and row.get('input', {}).get('jump') for row in commands[start:]), ('Space did not resume gameplay jump', commands[start:])
                                 before = state(page)['player']['position']
                                 page.keyboard.down('w')
                                 page.wait_for_timeout(750)
@@ -197,7 +261,7 @@ with tempfile.TemporaryDirectory(prefix='login-control-isolation-') as directory
                                 assert page.locator('dialog[open]').count() == 0
                                 assert displacement(before, state(page)['player']['position']) > .1, (world, 'Movement stayed blocked after closing menu')
                             assert not errors, errors
-                            reports.append({'world': world, 'passed': True, 'realMemberLogin': True, 'mouseForward': True, 'touchMovement': True, 'centerNeutral': True, 'lookWithoutJump': True, 'explicitJumpTouchAndEnter': True})
+                            reports.append({'world': world, 'passed': True, 'realMemberLogin': True, 'mouseForward': True, 'touchMovement': True, 'centerNeutral': True, 'lookWithoutJump': True, 'explicitJumpTouchAndEnter': True, 'prisonEngagement': world == 'ironwood-prison'})
                             print(json.dumps(reports[-1]), flush=True)
                         except Exception:
                             page.screenshot(path=str(ARTIFACTS / ('login-control-isolation-' + world + '.png')))
