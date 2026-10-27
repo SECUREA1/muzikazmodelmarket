@@ -2725,7 +2725,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if((multiplayerWorldLoading||serverHostedRoom&&!gameplayStarted)&&!renderer.xr.isPresenting){clock.getDelta();return;}
     // Give timed attraction controls the frame budget while their modal covers
     // the world. Network snapshots keep the shared room live behind the panel.
-    if((fitnessUI.visible()||factoryUI.visible()||factoryTestingUI.visible()||factoryLogisticsUI.visible()||funhouseUI.visible())&&!renderer.xr.isPresenting){clock.getDelta();return;}
+    if((worldSupplyUI.visible()||fitnessUI.visible()||factoryUI.visible()||factoryTestingUI.visible()||factoryLogisticsUI.visible()||funhouseUI.visible())&&!renderer.xr.isPresenting){clock.getDelta();return;}
     prisonUI.tick();islandUI.tick();
     const frameDelta = Math.min(.25, clock.getDelta()), delta = Math.min(.05, frameDelta);
     envLoader.world?.userData.updateFitnessEffects?.(time/1000,serverViewSnapshot?.players||{});
