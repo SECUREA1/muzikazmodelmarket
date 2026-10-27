@@ -30,7 +30,7 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 ## Catalog coverage and verification
 
-Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,288 placed instances: all 605 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,299 placed instances: all 607 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
 
 `public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
 
@@ -48,6 +48,6 @@ Builder cards and the standalone map editor preserve the server supply identity 
 
 ## Recent integration review
 
-Reviewed the latest five first-parent commits through `a16af59d`, including factory staging, finite supply and Ironwood earned-item merges, against the existing shipping and market paths. Certified Atlas model handling remains a reusable personal-item transfer; bulk manufacturing is the path that creates paid stock for distribution. Quest-only licenses keep their earned ownership rules.
+Reviewed the latest five first-parent commits through `a16af59d`, including factory staging, finite supply and Ironwood earned-item merges, against the existing shipping and market paths. Subsequent shared-radio, boat-control and native-resort merges were also checked against factory freight and warehouse inventories. Certified Atlas model handling remains a reusable personal-item transfer; bulk manufacturing is the path that creates paid stock for distribution. Quest-only licenses keep their earned ownership rules.
 
 The review fixed wallet connection migration for paid production, shipment ownership/reservations, factory proof ownership, credits and saved reward caps; connecting an Ethereum wallet no longer strands those records or permits replayed charges. It also fixed same-SKU display collisions between independent rocket owners at proving grounds. Existing scenery, catalog browsing and AI demonstration activity do not create global stock.
