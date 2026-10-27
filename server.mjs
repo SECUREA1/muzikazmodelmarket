@@ -905,12 +905,13 @@ const server = createServer(async (req, res) => {
       const context=await memberContext(req,res,true);if(!context)return;
       const input=await bodyJson(req,4096),vendor=url.pathname.endsWith('/vendor'),kind=vendor?'vendor':input.game;
       const player=await authoritativeRooms.player(CASINO_WORLD_ID,'account:'+context.account.accountId);
-      const nearby=player&&Date.now()-player.lastSeen<15000&&!player.vehicleId&&CASINO_STATIONS.some(station=>station.kind===kind&&Math.hypot(player.position.x-station.position.x,player.position.z-station.position.z)<=7&&Math.abs(player.position.y-station.position.y)<=4);
+      const explicitStation=input.stationId!==undefined,eligibleStations=CASINO_STATIONS.filter(station=>station.kind===kind&&(explicitStation?station.id===input.stationId:vendor||!station.tier));
+      const nearby=player&&player.health>0&&!player.replacedByRoom&&Date.now()-player.lastSeen<15000&&!player.vehicleId&&eligibleStations.sort((a,b)=>Math.hypot(player.position.x-a.position.x,player.position.z-a.position.z)-Math.hypot(player.position.x-b.position.x,player.position.z-b.position.z)).find(station=>Math.hypot(player.position.x-station.position.x,player.position.z-station.position.z)<=7&&Math.abs(player.position.y-station.position.y)<=4);
       if(!nearby)return authorizationError(res,409,'CASINO_STATION_REQUIRED','Walk to the '+(vendor?'casino vendor':kind+' table or machine')+' inside the casino before using MZK.','casino');
       const result=vendor?await casinoService.vendor(context.walletId,context.account.accountId,input):await casinoService.play(context.walletId,context.account.accountId,input);
       if(vendor)await authoritativeRooms.care('account:'+context.account.accountId,result.receipt);
       else if(result.round?.phase==='complete'){
-        const station=CASINO_STATIONS.filter(item=>item.kind===kind).sort((a,b)=>Math.hypot(a.position.x-player.position.x,a.position.z-player.position.z)-Math.hypot(b.position.x-player.position.x,b.position.z-player.position.z))[0];
+        const station=nearby;
         try{await authoritativeRooms.casinoActivity('account:'+context.account.accountId,{...result.round,stationId:station?.id});}catch(error){console.error('[Casino activity]',error.message);}
       }
       return sendJson(res,200,assetResponse(result));

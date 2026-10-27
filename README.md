@@ -126,10 +126,12 @@ across maps, and local favors earn saved reputation, skills and badges. Arcade,
 hockey and solo play include a **People & favors** link to their shared map
 walkthrough. See [residents and saved progress](docs/world-residents.md).
 
-The permanent **Starlight Grand Casino** destination includes animated dealers,
-guests, five MZK casino games, refreshments, cashier, ATM, two guards and a locked
-bank vault. Its characters have individual personalities, skills, remembered
-conversations, service routines and AI-to-AI interactions. Meet staff for walking
+The permanent **Starlight Grand Casino** destination includes seven MZK games,
+an Aurelia high-limit baccarat salon, Royal three-card poker room, furnished
+guest lounges, a working staff service room, refreshments, cashier, ATM,
+two guards and a locked bank vault. Characters have individual personalities,
+skills, remembered conversations, rotating dealer duties, restocking and break
+routines, and AI-to-AI interactions. Meet staff for walking
 favors that earn reputation and service badges. Enter it from the world directory or open
 `model-explorer.html?environment=muzikaz-casino&autoplay=1&mode=multiplayer`.
 See [casino controls and settlement](docs/casino.md).

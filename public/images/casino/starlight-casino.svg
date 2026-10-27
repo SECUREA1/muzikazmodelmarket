@@ -1,1 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#10131d"/><stop offset="1" stop-color="#4b1c42"/></linearGradient></defs><rect width="960" height="540" fill="url(#g)"/><rect x="26" y="26" width="908" height="488" rx="18" fill="none" stroke="#ccab6a" stroke-width="3"/><text x="480" y="94" fill="#d9bd7b" text-anchor="middle" font-family="Georgia,serif" font-size="22" letter-spacing="10">MUZIKAZ</text><text x="480" y="158" fill="#fff1ce" text-anchor="middle" font-family="Georgia,serif" font-size="50">Starlight Grand Casino</text><path d="M455 480V212H505V480" fill="#b18950" opacity=".36"/><g fill="#125646" stroke="#c6a160" stroke-width="5"><ellipse cx="278" cy="278" rx="100" ry="48"/><ellipse cx="278" cy="403" rx="100" ry="48"/><ellipse cx="680" cy="278" rx="100" ry="48"/><ellipse cx="680" cy="403" rx="100" ry="48"/></g><g fill="#f4e6bc" text-anchor="middle" font-family="sans-serif" font-size="18"><text x="278" y="285">POKER</text><text x="278" y="410">ROULETTE</text><text x="680" y="285">BLACKJACK</text><text x="680" y="410">HOSTED DICE</text></g><g fill="#141c2f" stroke="#bb85d5" stroke-width="3"><rect x="74" y="230" width="42" height="48" rx="5"/><rect x="844" y="230" width="42" height="48" rx="5"/><rect x="74" y="295" width="42" height="48" rx="5"/><rect x="844" y="295" width="42" height="48" rx="5"/><rect x="74" y="360" width="42" height="48" rx="5"/><rect x="844" y="360" width="42" height="48" rx="5"/><rect x="74" y="425" width="42" height="48" rx="5"/><rect x="844" y="425" width="42" height="48" rx="5"/></g><text x="480" y="500" fill="#dfd0af" text-anchor="middle" font-family="sans-serif" font-size="16" letter-spacing="3">GAMES · LOUNGE · CASHIER · SECURED VAULT</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title description">
+ <title id="title">Starlight Grand Casino · Premium salons</title>
+ <desc id="description">A furnished casino with Aurelia high-limit baccarat, the Royal three-card poker room, staff services, table games, slots, lounges, cashier and a secured bank vault.</desc>
+ <defs>
+  <linearGradient id="backdrop" x2="1" y2="1"><stop stop-color="#101f28"/><stop offset="1" stop-color="#4b2140"/></linearGradient>
+  <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#f1d8a2"/><stop offset="1" stop-color="#9e7147"/></linearGradient>
+  <linearGradient id="felt" x2="0" y2="1"><stop stop-color="#205c4d"/><stop offset="1" stop-color="#123c35"/></linearGradient>
+  <pattern id="carpet" width="28" height="28" patternUnits="userSpaceOnUse"><path d="m14 2 12 12-12 12L2 14Z" fill="none" stroke="#b38a6340" stroke-width=".7"/></pattern>
+ </defs>
+ <rect width="960" height="540" fill="url(#backdrop)"/>
+ <rect x="24" y="24" width="912" height="492" rx="18" fill="none" stroke="url(#gold)" stroke-width="2"/>
+ <text x="480" y="68" fill="#c5ad80" text-anchor="middle" font-family="sans-serif" font-size="15" letter-spacing="8">MUZIKAZ · PREMIUM CASINO</text>
+ <text x="480" y="124" fill="#fff0cd" text-anchor="middle" font-family="Georgia,serif" font-size="47">Starlight Grand Casino</text>
+ <path d="M354 148h252" stroke="#be945e" stroke-width="1"/>
+ <text x="480" y="174" fill="#c9beb0" text-anchor="middle" font-family="sans-serif" font-size="14" letter-spacing="2">HIGH-LIMIT SALONS · LIVING LOUNGES · SHARED MZK GAMES</text>
+ <g stroke="#b18b59" stroke-width="2">
+  <rect x="62" y="199" width="836" height="275" rx="7" fill="#311c33"/>
+  <rect x="62" y="199" width="836" height="275" rx="7" fill="url(#carpet)" stroke="none"/>
+  <path d="M458 474V280h44v194M118 317h726M118 400h726" fill="none" stroke="#dac7a4" stroke-width="18"/>
+  <rect x="79" y="212" width="119" height="74" rx="3" fill="#37454b"/>
+  <rect x="211" y="212" width="204" height="74" rx="3" fill="#463149"/>
+  <rect x="443" y="212" width="74" height="64" rx="3" fill="#747a78"/>
+  <rect x="545" y="212" width="337" height="85" rx="3" fill="#193e37"/>
+ </g>
+ <g font-family="sans-serif" text-anchor="middle" fill="#ead8b4">
+  <text x="138" y="235" font-size="12">STAFF SERVICE</text><text x="138" y="252" font-size="12">ROOM</text>
+  <text x="312" y="232" font-size="14" letter-spacing="1">ROYAL CARD ROOM</text><text x="312" y="275" font-size="10">THREE-CARD POKER</text>
+  <text x="713" y="232" font-size="15" letter-spacing="1">AURELIA HIGH-LIMIT SALON</text><text x="713" y="285" font-size="10">BACCARAT · PLAYER / BANKER / TIE</text>
+ </g>
+ <g fill="url(#felt)" stroke="url(#gold)" stroke-width="4">
+  <ellipse cx="312" cy="252" rx="55" ry="12"/>
+  <ellipse cx="748" cy="258" rx="72" ry="15"/>
+  <ellipse cx="270" cy="355" rx="83" ry="32"/>
+  <ellipse cx="690" cy="355" rx="83" ry="32"/>
+  <ellipse cx="270" cy="436" rx="83" ry="25"/>
+  <ellipse cx="690" cy="436" rx="83" ry="25"/>
+ </g>
+ <g fill="#eee0bc" text-anchor="middle" font-family="Georgia,serif" font-size="15"><text x="270" y="360">POKER</text><text x="690" y="360">BLACKJACK</text><text x="270" y="441">ROULETTE</text><text x="690" y="441">HOSTED DICE</text></g>
+ <g fill="#263139" stroke="#cba65f" stroke-width="2">
+  <circle cx="480" cy="244" r="19" fill="#a8aaa0"/><circle cx="480" cy="244" r="10"/>
+  <path d="M470 244h20m-10-10v20"/>
+  <rect x="93" y="262" width="9" height="13"/><rect x="107" y="262" width="9" height="13"/><rect x="121" y="262" width="9" height="13"/>
+ </g>
+ <g fill="#17343d" stroke="#85b9ae" stroke-width="2">
+  <path d="M564 251h49v10h-49Zm0 0v24h9v-24m40 0v24h-9v-24"/>
+  <path d="M359 344h37v13h-37Zm0 0v25h8v-25m29 0v25h-8v-25"/>
+  <path d="M564 344h37v13h-37Zm0 0v25h8v-25m29 0v25h-8v-25"/>
+ </g>
+ <g fill="#151e2d" stroke="#b98acc" stroke-width="2">
+  <rect x="83" y="331" width="25" height="35" rx="3"/><rect x="83" y="376" width="25" height="35" rx="3"/><rect x="83" y="421" width="25" height="35" rx="3"/>
+  <rect x="852" y="331" width="25" height="35" rx="3"/><rect x="852" y="376" width="25" height="35" rx="3"/><rect x="852" y="421" width="25" height="35" rx="3"/>
+ </g>
+ <g fill="#a7d7c6" font-family="sans-serif" font-size="10" text-anchor="middle"><text x="95" y="352">777</text><text x="95" y="397">777</text><text x="95" y="442">777</text><text x="864" y="352">777</text><text x="864" y="397">777</text><text x="864" y="442">777</text></g>
+ <text x="480" y="498" fill="#d7c6a8" text-anchor="middle" font-family="sans-serif" font-size="13" letter-spacing="2">TABLE GAMES · SLOTS · CASHIER · LOUNGES · SECURED VAULT</text>
+</svg>

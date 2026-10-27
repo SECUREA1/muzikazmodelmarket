@@ -56109,8 +56109,8 @@
   {
     "id": "muzikaz-casino",
     "name": "Starlight Grand Casino",
-    "label": "A living casino · tables, slots & lounge",
-    "description": "Explore a complete animated casino with five-card draw poker, blackjack, roulette, hosted dice, twelve slot machines, AI dealers and guests, welcome and floor hosts, a refreshments vendor, cashier, ATM, two security guards and a secured bank vault. Games and refreshments use your MZK wallet.",
+    "label": "Premium casino · high-limit salon, card rooms & living lounges",
+    "description": "Explore furnished high-limit and card salons with baccarat, three-card poker, five-card draw, blackjack, roulette, hosted dice and twelve slot machines. AI guests and rotating dealers use social lounges and staff service rooms. Includes hosts, refreshments, cashier, ATM, two guards and a locked bank vault. Games and refreshments settle in MZK.",
     "category": "Casino & social games",
     "game": "casino",
     "indoor": true,
@@ -56118,9 +56118,63 @@
     "worldId": "skyline-deck",
     "casino": {
       "enabled": true,
+      "version": 2,
       "currency": "MZK",
       "width": 80,
       "depth": 80,
+      "rooms": [
+        {
+          "id": "aurelia-salon",
+          "name": "Aurelia High-Limit Salon",
+          "access": "public",
+          "entry": {
+            "x": 20,
+            "y": 0,
+            "z": -18
+          },
+          "bounds": {
+            "minX": 12,
+            "maxX": 38,
+            "minZ": -38,
+            "maxZ": -18
+          },
+          "description": "Baccarat, hosted dice and a furnished high-limit guest salon."
+        },
+        {
+          "id": "royal-card-room",
+          "name": "Royal Card Room",
+          "access": "public",
+          "entry": {
+            "x": -18,
+            "y": 0,
+            "z": -27
+          },
+          "bounds": {
+            "minX": -25,
+            "maxX": -9,
+            "minZ": -38,
+            "maxZ": -27
+          },
+          "description": "Three-card poker with an ante, a Play or Fold decision, and ante bonuses."
+        },
+        {
+          "id": "staff-service-room",
+          "name": "Staff Service Room",
+          "access": "staff",
+          "entry": {
+            "x": -32,
+            "y": 0,
+            "z": -25
+          },
+          "bounds": {
+            "minX": -37,
+            "maxX": -27,
+            "minZ": -38,
+            "maxZ": -25
+          },
+          "description": "Staff preparation, restocking, lockers and a working break area."
+        }
+      ],
       "vault": {
         "locked": true,
         "doorId": "casino-vault-door",
@@ -56196,6 +56250,36 @@
             "z": -24
           },
           "prompt": "Play Hosted Dice · E / Use"
+        },
+        {
+          "id": "casino-baccarat-vip",
+          "kind": "baccarat",
+          "name": "Aurelia High-Limit Baccarat",
+          "position": {
+            "x": 29,
+            "y": 0,
+            "z": -31
+          },
+          "prompt": "Play Aurelia High-Limit Baccarat · E / Use",
+          "tier": "high-limit",
+          "minBetMzk": 100,
+          "maxBetMzk": 2500,
+          "roomId": "aurelia-salon"
+        },
+        {
+          "id": "casino-threecard-salon",
+          "kind": "threecard",
+          "name": "Royal Three-Card Poker",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -33
+          },
+          "prompt": "Play Royal Three-Card Poker · E / Use",
+          "tier": "premier",
+          "minBetMzk": 10,
+          "maxBetMzk": 500,
+          "roomId": "royal-card-room"
         },
         {
           "id": "casino-slot-1",
@@ -56406,6 +56490,7 @@
       "z": 32,
       "rotationY": 0
     },
+    "contentUpdatedAt": "starlight-casino-layout-2",
     "streets": [],
     "builderScene": {
       "version": 3,
@@ -56614,6 +56699,74 @@
           },
           "dialogueSettings": {
             "text": "Use the casino panel to hosted dice."
+          }
+        },
+        {
+          "id": "casino-baccarat-vip",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Aurelia High-Limit Baccarat",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 29,
+            "y": 0,
+            "z": -31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "baccarat",
+            "casinoStationId": "casino-baccarat-vip",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Aurelia High-Limit Baccarat · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to aurelia high-limit baccarat."
+          }
+        },
+        {
+          "id": "casino-threecard-salon",
+          "modelId": "street-sign",
+          "casinoStation": true,
+          "name": "Royal Three-Card Poker",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -33
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "casinoStation": "threecard",
+            "casinoStationId": "casino-threecard-salon",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Play Royal Three-Card Poker · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the casino panel to royal three-card poker."
           }
         },
         {
@@ -57199,9 +57352,63 @@
         "color": 2233126,
         "casino": {
           "enabled": true,
+          "version": 2,
           "currency": "MZK",
           "width": 80,
           "depth": 80,
+          "rooms": [
+            {
+              "id": "aurelia-salon",
+              "name": "Aurelia High-Limit Salon",
+              "access": "public",
+              "entry": {
+                "x": 20,
+                "y": 0,
+                "z": -18
+              },
+              "bounds": {
+                "minX": 12,
+                "maxX": 38,
+                "minZ": -38,
+                "maxZ": -18
+              },
+              "description": "Baccarat, hosted dice and a furnished high-limit guest salon."
+            },
+            {
+              "id": "royal-card-room",
+              "name": "Royal Card Room",
+              "access": "public",
+              "entry": {
+                "x": -18,
+                "y": 0,
+                "z": -27
+              },
+              "bounds": {
+                "minX": -25,
+                "maxX": -9,
+                "minZ": -38,
+                "maxZ": -27
+              },
+              "description": "Three-card poker with an ante, a Play or Fold decision, and ante bonuses."
+            },
+            {
+              "id": "staff-service-room",
+              "name": "Staff Service Room",
+              "access": "staff",
+              "entry": {
+                "x": -32,
+                "y": 0,
+                "z": -25
+              },
+              "bounds": {
+                "minX": -37,
+                "maxX": -27,
+                "minZ": -38,
+                "maxZ": -25
+              },
+              "description": "Staff preparation, restocking, lockers and a working break area."
+            }
+          ],
           "vault": {
             "locked": true,
             "doorId": "casino-vault-door",
@@ -57277,6 +57484,36 @@
                 "z": -24
               },
               "prompt": "Play Hosted Dice · E / Use"
+            },
+            {
+              "id": "casino-baccarat-vip",
+              "kind": "baccarat",
+              "name": "Aurelia High-Limit Baccarat",
+              "position": {
+                "x": 29,
+                "y": 0,
+                "z": -31
+              },
+              "prompt": "Play Aurelia High-Limit Baccarat · E / Use",
+              "tier": "high-limit",
+              "minBetMzk": 100,
+              "maxBetMzk": 2500,
+              "roomId": "aurelia-salon"
+            },
+            {
+              "id": "casino-threecard-salon",
+              "kind": "threecard",
+              "name": "Royal Three-Card Poker",
+              "position": {
+                "x": -18,
+                "y": 0,
+                "z": -33
+              },
+              "prompt": "Play Royal Three-Card Poker · E / Use",
+              "tier": "premier",
+              "minBetMzk": 10,
+              "maxBetMzk": 500,
+              "roomId": "royal-card-room"
             },
             {
               "id": "casino-slot-1",
@@ -57557,6 +57794,33 @@
             "width": 14,
             "depth": 8,
             "description": "View the large locked safe door from the public security corridor. Two guards protect the casino."
+          },
+          {
+            "id": "aurelia-salon",
+            "name": "Aurelia High-Limit Salon",
+            "x": 29,
+            "z": -31,
+            "width": 18,
+            "depth": 16,
+            "description": "High-limit baccarat: 100–2,500 MZK per wager. Player, Banker or Tie with full drawing rules."
+          },
+          {
+            "id": "royal-card-room",
+            "name": "Royal Card Room",
+            "x": -18,
+            "z": -33,
+            "width": 16,
+            "depth": 11,
+            "description": "Three-card poker: 10–500 MZK ante, followed by Play or Fold. Playing adds another equal ante."
+          },
+          {
+            "id": "staff-service-room",
+            "name": "Staff Service Room",
+            "x": -32,
+            "z": -28,
+            "width": 10,
+            "depth": 13,
+            "description": "Staff preparation and break facilities beside a clear public gallery approach."
           }
         ],
         "residents": [
@@ -57716,6 +57980,9 @@
             },
             "duty": "dealer",
             "stationId": "casino-poker-1",
+            "stationIds": [
+              "casino-poker-1"
+            ],
             "game": "poker",
             "prop": "cards",
             "color": "#384d43"
@@ -57731,6 +57998,10 @@
             },
             "duty": "dealer",
             "stationId": "casino-poker-2",
+            "stationIds": [
+              "casino-poker-2",
+              "casino-threecard-salon"
+            ],
             "game": "poker",
             "prop": "cards",
             "color": "#384d43"
@@ -57746,6 +58017,9 @@
             },
             "duty": "dealer",
             "stationId": "casino-blackjack-1",
+            "stationIds": [
+              "casino-blackjack-1"
+            ],
             "game": "blackjack",
             "prop": "cards",
             "color": "#384d43"
@@ -57761,6 +58035,10 @@
             },
             "duty": "dealer",
             "stationId": "casino-blackjack-2",
+            "stationIds": [
+              "casino-blackjack-2",
+              "casino-baccarat-vip"
+            ],
             "game": "blackjack",
             "prop": "cards",
             "color": "#384d43"
@@ -57776,6 +58054,9 @@
             },
             "duty": "dealer",
             "stationId": "casino-roulette-1",
+            "stationIds": [
+              "casino-roulette-1"
+            ],
             "game": "roulette",
             "prop": "cards",
             "color": "#384d43"
@@ -57791,6 +58072,9 @@
             },
             "duty": "dealer",
             "stationId": "casino-dice-1",
+            "stationIds": [
+              "casino-dice-1"
+            ],
             "game": "dice",
             "prop": "dice",
             "color": "#384d43"

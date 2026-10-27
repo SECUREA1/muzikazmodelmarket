@@ -63,6 +63,7 @@ export function createCasinoLand(environment={}) {
  const cardFace=canvasTexture(128,192,(ctx,W,H)=>{ctx.fillStyle='#f8efe1';ctx.fillRect(0,0,W,H);ctx.fillStyle='#b62f4f';ctx.font='bold 40px Georgia';ctx.fillText('A',10,43);ctx.font='65px Georgia';ctx.fillText('♥',35,118);});
  const cardMat=mat('#f5e9d2',{map:cardFace,roughness:.7});
  function card(parent,x,z,angle=0){const m=box(parent,'CASINO_CARD',x,1.224,z,.26,.012,.39,cardMat,false);m.rotation.y=angle;return m;}
+ function paintCardSet(cards,values){if(!cards||!Array.isArray(values))return;cards.forEach((m,index)=>{m.visible=index<values.length;if(!m.visible)return;const candidate=values[index],value=Number.isInteger(candidate)&&candidate>=0&&candidate<52?candidate:null,hidden=value===null;m.userData.casinoCardValue=value;m.userData.casinoCardFaceDown=hidden;const texture=canvasTexture(128,192,(ctx,W,H)=>{ctx.fillStyle=hidden?'#452443':'#fff2db';ctx.fillRect(0,0,W,H);if(hidden){ctx.strokeStyle='#d3ae69';ctx.lineWidth=5;ctx.strokeRect(9,9,W-18,H-18);ctx.lineWidth=2;for(let n=-128;n<256;n+=26){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n+128,H);ctx.stroke();}return;}const rank=['2','3','4','5','6','7','8','9','10','J','Q','K','A'][value%13],suit=['♠','♥','♦','♣'][Math.floor(value/13)];ctx.fillStyle=[1,2].includes(Math.floor(value/13))?'#bd304d':'#142b33';ctx.font='bold 38px Georgia';ctx.fillText(rank,8,42);ctx.font='68px Georgia';ctx.textAlign='center';ctx.fillText(suit,W/2,126);});if(m.material!==cardMat){m.material.map?.dispose();m.material.dispose();}m.material=mat('#ffffff',{map:texture});});}
  function oval(parent,w=5.8,d=3.4,segments=64,tableFelt=felt){const base=cylinder(parent,'CASINO_TABLE_BASE',0,.5,0,1,.95,wood,32);base.scale.set(1.6,1,1);const rail=cylinder(parent,'CASINO_TABLE_RAIL',0,1.08,0,1,.2,wood,segments);rail.scale.set(w/2,1,d/2);const trim=cylinder(parent,'CASINO_TABLE_BRASS',0,1.176,0,1,.045,gold,segments);trim.scale.set(w/2-.08,1,d/2-.08);const top=cylinder(parent,'CASINO_TABLE_FELT',0,1.205,0,1,.024,tableFelt,segments);top.scale.set(w/2-.18,1,d/2-.18);return top;}
  function playingTable(id,kind,x,z){const g=group(id,x,z);stations.set(id,g);const tableFelt=mat(id.endsWith('2')?(kind==='POKER'?'#253f6b':'#384f64'):palette.felt);oval(g,5.8,3.4,kind==='POKER'?8:64,tableFelt);for(let i=0;i<4;i++){const a=Math.PI*.18+i*Math.PI*.21;chair(g,Math.cos(a)*3.25,Math.sin(a)*2.1,-a+Math.PI/2);chips(g,Math.cos(a)*2,Math.sin(a)*1.05,4+i,i);card(g,Math.cos(a)*1.8,Math.sin(a)*.8,a);card(g,Math.cos(a)*1.8+.3,Math.sin(a)*.8,a+.12);}
   const shoe=box(g,'CASINO_DEALER_SHOE',1.7,1.32,-.7,.45,.2,.6,dark,false);chips(g,-1.6,-.65,12,0);g.userData.casinoHandCards=[];for(let i=0;i<7;i++){const m=card(g,-1+i*.33,0,(i-2)*.03);m.visible=i<5;g.userData.casinoHandCards.push(m);}
@@ -124,17 +125,79 @@ export function createCasinoLand(environment={}) {
  const loungeFabric=mat('#274752'),plumFabric=mat('#56334c'),creamFabric=mat('#c9bda2');
  function sofa(parent,x,z,rotation=0,fabric=loungeFabric){const g=new T.Group();g.name='CASINO_SOCIAL_SOFA';g.position.set(x,0,z);g.rotation.y=rotation;parent.add(g);box(g,'CASINO_LOUNGE_SOFA_BASE',0,.3,0,2.7,.44,.92,wood);for(let cushion=0;cushion<3;cushion++){box(g,'CASINO_LOUNGE_SOFA_CUSHION',(cushion-1)*.8,.56,-.08,.77,.25,.83,fabric);box(g,'CASINO_LOUNGE_SOFA_BACK_CUSHION',(cushion-1)*.83,.98,.36,.8,.76,.24,fabric);}box(g,'CASINO_LOUNGE_SOFA_BACK',0,.78,.47,2.7,.8,.1,wood);for(const side of [-1,1]){box(g,'CASINO_LOUNGE_SOFA_ARM',side*1.3,.75,0,.22,.5,.95,fabric);box(g,'CASINO_LOUNGE_SOFA_FOOT',side*1.05,.09,.28,.12,.18,.12,gold);}return g;}
  function coffeeTable(x,z){cylinder(root,'CASINO_SOCIAL_COFFEE_TABLE',x,.56,z,.85,.1,marble,24);cylinder(root,'CASINO_SOCIAL_COFFEE_BASE',x,.27,z,.25,.54,gold,12);for(const dx of [-.25,.25])cylinder(root,'CASINO_SOCIAL_COFFEE_CUP',x+dx,.68,z,.075,.15,creamFabric,10,false);}
- for(const side of [-1,1]){
-  const cx=side*30;
-  sofa(root,cx,-35.2,Math.PI,side<0?plumFabric:loungeFabric);sofa(root,cx+side*3.15,-32.25,side<0?-Math.PI/2:Math.PI/2,side<0?plumFabric:loungeFabric);coffeeTable(cx,-32.3);
-  const tableLamp=cylinder(root,'CASINO_LOUNGE_LAMP_STEM',cx-side*3,.9,-35.6,.035,1.7,gold,10);mesh(root,new T.ConeGeometry(.42,.65,16,1,true),glow,'CASINO_LOUNGE_LAMP_SHADE',cx-side*3,1.8,-35.6,false);
-  sign(root,side<0?'VELVET CONVERSATION SALON':'SKYLINE SOCIAL SALON',cx,3.4,-38.9,9,.8,'#e3c694',0,'RELAX  •  MEET A GUEST  •  SHARE A STORY');
-  for(let j=0;j<3;j++){const artwork=mesh(root,new T.TorusGeometry(.48+j*.11,.035,5,24),j%2?steel:gold,'CASINO_SALON_WALL_ART',cx+(j-1)*2.15,5,-39.1,false);artwork.rotation.z=j*.35;}
+ // The premium northern wing has actual rooms and open doors. Its furniture
+ // is authored around the shared AI approach points, rather than across them.
+ const copper=mat('#bb8260',{metalness:.72,roughness:.3}),emerald=mat('#123f39'),plaster=mat('#42464c'),serviceSteel=mat('#67777d',{metalness:.35,roughness:.6});
+ function roomFloor(name,x,z,w,d,color){const texture=canvasTexture(384,384,(ctx,W,H)=>{ctx.fillStyle=color;ctx.fillRect(0,0,W,H);ctx.strokeStyle='#d1b27c45';ctx.lineWidth=2;for(let n=-W;n<W*2;n+=96){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n+W,H);ctx.stroke();ctx.beginPath();ctx.moveTo(n,H);ctx.lineTo(n+W,0);ctx.stroke();}});if(texture){texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(w/4,d/4);}box(root,name,x,.011,z,w,.02,d,mat('#ffffff',{map:texture,roughness:.95}),false);for(const side of [-1,1]){box(root,name+'_INLAY',x+side*(w/2-.2),.028,z,.07,.012,d-.4,copper,false);box(root,name+'_INLAY',x,.028,z+side*(d/2-.2),w-.4,.012,.07,copper,false);}}
+ function roomWall(name,x,z,w,d,height=4.5,finish=wood){box(root,name,x,height/2,z,w,height,d,finish);box(root,name+'_DADO',x,.67,z,w+.015,1.34,d+.015,dark,false);box(root,name+'_CORNICE',x,height-.1,z,w+.08,.15,d+.08,copper,false);box(root,name+'_LOW_TRIM',x,1.37,z,w+.04,.055,d+.04,copper,false);}
+ function roomPendant(x,z,r=1.15){const hoop=mesh(root,new T.TorusGeometry(r,.045,6,36),copper,'CASINO_PREMIUM_LIGHT_RING',x,4.35,z,false);hoop.rotation.x=Math.PI/2;for(let n=0;n<10;n++){const a=n/10*Math.PI*2;cylinder(root,'CASINO_PREMIUM_LIGHT_PRISM',x+Math.cos(a)*r,4.2,z+Math.sin(a)*r,.035,.3,glow,5,false);}cylinder(root,'CASINO_PREMIUM_LIGHT_STEM',x,4.65,z,.025,.65,copper,6,false);const light=new T.PointLight('#ffe4bd',18,18,2);light.position.set(x,4,z);root.add(light);}
+ function premiumTable(id,title,x,z,{width=6.4,depth=3.8,segments=64,color='#145b4b',threecard=false}={}){
+  const g=group(id,x,z);stations.set(id,g);oval(g,width,depth,segments,mat(color));g.getObjectByName('CASINO_TABLE_BRASS').material=copper;
+  const art=canvasTexture(1024,512,(ctx,W,H)=>{ctx.clearRect(0,0,W,H);ctx.strokeStyle='#ecd4a1';ctx.lineWidth=4;ctx.strokeRect(25,30,W-50,H-60);ctx.textAlign='center';ctx.fillStyle='#f2d8a4';ctx.font='50px Georgia';ctx.fillText(threecard?'THREE CARD POKER':'BACCARAT',W/2,100);ctx.font='32px Georgia';if(threecard){ctx.fillText('ANTE',W*.3,H*.8);ctx.fillText('PLAY',W*.7,H*.8);for(const x of [W*.3,W*.7]){ctx.beginPath();ctx.ellipse(x,H*.65,75,47,0,0,Math.PI*2);ctx.stroke();}}else{ctx.fillText('PLAYER',W*.23,H*.48);ctx.fillText('BANKER',W*.77,H*.48);ctx.font='24px system-ui';ctx.fillText('TIE  •  8 : 1',W*.5,H*.83);ctx.beginPath();ctx.moveTo(W/2,135);ctx.lineTo(W/2,H*.7);ctx.stroke();}});
+  const inlay=mesh(g,new T.PlaneGeometry(width-.8,depth-.7),new T.MeshBasicMaterial({map:art,color:'#ffffff',transparent:true,depthWrite:false}),'CASINO_PREMIUM_FELT_INLAY',0,1.229,0,false);inlay.rotation.x=-Math.PI/2;
+  g.userData.casinoHandCards=[];g.userData.casinoDealerCards=[];
+  for(let i=0;i<3;i++){const a=card(g,threecard?-.55+i*.55:-1.55+i*.36,.48,(i-1)*.035),b=card(g,threecard?-.55+i*.55:.65+i*.36,threecard?-.62:.48,(i-1)*-.035);a.position.y=b.position.y=1.247;g.userData.casinoHandCards.push(a);g.userData.casinoDealerCards.push(b);}paintCardSet(g.userData.casinoDealerCards,[null,null,null]);
+  for(const dx of [-2.1,2.1]){chair(g,dx,3.3,0);for(let j=0;j<2;j++)chips(g,dx*.8,.95+j*.27,4+j,j+(dx<0?1:3));}
+  box(g,'CASINO_PREMIUM_DEALER_SHOE',2.2,1.32,-.9,.42,.19,.65,dark,false);box(g,'CASINO_PREMIUM_CHIP_TRAY',-1.9,1.27,-1.1,.9,.1,.4,copper,false);
+  sign(g,title,0,2.85,-2.1,5.7,.8,'#f0d5a3',0,threecard?'ANTE / PLAY  •  ANTE BONUSES':'PLAYER / BANKER / TIE  •  HIGH LIMIT');
+  const dealingCard=card(g,0,-.5);dealingCard.position.y=1.25;g.userData.casinoDealingCard=dealingCard;animations.push(t=>{dealingCard.position.x=Math.sin(t*.65)*.45;dealingCard.rotation.y=Math.sin(t*.65)*.12;});
+  return g;
  }
+ // High-limit club, 26 × 20 m. Front entrance is eight metres wide; the west
+ // opening remains seven metres wide for the shared public security corridor.
+ roomFloor('CASINO_VIP_FLOOR',25,-28,26,20,'#143b34');
+ roomWall('CASINO_VIP_NORTH_WALL',25,-38,26,.28,4.7,emerald);
+ roomWall('CASINO_VIP_EAST_WALL',38,-28,.28,20,4.7,emerald);
+ roomWall('CASINO_VIP_WEST_NORTH_WALL',12,-32,.28,12,4.7,emerald);
+ roomWall('CASINO_VIP_WEST_FRONT_PIER',12,-18.5,.28,1,4.7,emerald);
+ roomWall('CASINO_VIP_FRONT_WEST_WALL',14,-18,4,.28,4.7,emerald);
+ roomWall('CASINO_VIP_FRONT_EAST_WALL',31,-18,14,.28,4.7,emerald);
+ box(root,'CASINO_VIP_ENTRY_HEADER',20,4.45,-18,8,.5,.4,copper);for(const x of [16,24])box(root,'CASINO_VIP_ENTRY_REVEAL',x,2.1,-18,.13,4.2,.45,copper,false);
+ sign(root,'AURELIA HIGH-LIMIT SALON',20,4.05,-17.75,8.6,.9,'#f4dba7',0,'HIGH LIMIT  •  BACCARAT & HOSTED DICE');
+ sign(root,'OPEN TO ALL GUESTS',20,3.35,-17.74,6,.4,'#b1d8c7');
+ premiumTable('casino-baccarat-vip','AURELIA BACCARAT',29,-31);
+ sofa(root,18.3,-35.8,Math.PI,creamFabric);coffeeTable(18.3,-33.9);
+ chair(root,21,-35.6,Math.PI);box(root,'CASINO_VIP_SERVICE_TABLE',14.3,.6,-30.7,1.9,1.2,.9,wood);box(root,'CASINO_VIP_SERVICE_MARBLE',14.3,1.24,-30.7,2.05,.1,1.05,marble);
+ box(root,'CASINO_VIP_CONCIERGE_DISPLAY',14.3,1.7,-30.85,.9,.6,.12,dark);box(root,'CASINO_VIP_CONCIERGE_SCREEN',14.3,1.7,-30.775,.8,.5,.02,cyan,false);
+ sign(root,'PRIVATE SALON SERVICE',18.2,3.3,-37.8,8,.65,'#e5c797');
+ for(const x of [15,19,23,27,31,35]){box(root,'CASINO_VIP_FLUTED_PANEL',x,2.5,-37.78,.06,2.8,.04,copper,false);}
+ for(const x of [17.5,21]){const art=mesh(root,new T.TorusGeometry(.54,.035,6,28),copper,'CASINO_VIP_WALL_ART',x,3.65,-37.76,false);art.scale.x=.65;}
+ roomPendant(29,-30.5,1.25);roomPendant(18.3,-33.6,.85);
+ // Three-card salon, with its entire south frontage open to roulette guests.
+ roomFloor('CASINO_THREECARD_FLOOR',-17,-32.5,16,11,'#462b46');
+ roomWall('CASINO_THREECARD_NORTH_WALL',-17,-38,16,.28,4.4,plumFabric);
+ roomWall('CASINO_THREECARD_WEST_WALL',-25,-32.5,.28,11,4.4,plumFabric);
+ roomWall('CASINO_THREECARD_EAST_WALL',-9,-32.5,.28,11,4.4,plumFabric);
+ box(root,'CASINO_THREECARD_OPEN_HEADER',-17,4.23,-27,16,.34,.38,copper);
+ for(const x of [-24.8,-9.2]){cylinder(root,'CASINO_THREECARD_PORTAL_COLUMN',x,2.1,-27,.18,4.2,copper,12);}
+ sign(root,'ROYAL CARD ROOM',-17,3.88,-26.76,10,.85,'#ecd5a5',0,'THREE-CARD POKER  •  ANTE / PLAY / FOLD');
+ premiumTable('casino-threecard-salon','ROYAL THREE-CARD POKER',-18,-33,{width:6.2,depth:3.8,segments:12,color:'#29485c',threecard:true});
+ box(root,'CASINO_ORION_CONCIERGE_DESK',-11, .6,-35.2,1.6,1.2,1.05,wood);box(root,'CASINO_ORION_DESK_TOP',-11,1.26,-35.2,1.8,.12,1.2,marble);sign(root,'HOUSE PAYTABLE',-11,2.15,-35.65,1.75,.5,'#d9c699');
+ roomPendant(-18,-33,1.05);
+ // Staff services is deliberately unlocked. The door and central work points
+ // stay free while physical lockers, shelves and restock supplies fill its edge.
+ roomFloor('CASINO_STAFF_SERVICE_FLOOR',-32,-31.5,10,13,'#394349');
+ roomWall('CASINO_STAFF_NORTH_WALL',-32,-38,10,.28,3.65,plaster);
+ roomWall('CASINO_STAFF_WEST_WALL',-37,-31.5,.28,13,3.65,plaster);
+ roomWall('CASINO_STAFF_EAST_WALL',-27,-31.5,.28,13,3.65,plaster);
+ roomWall('CASINO_STAFF_FRONT_WEST_WALL',-35.45,-25,3.1,.28,3.65,plaster);
+ roomWall('CASINO_STAFF_FRONT_EAST_WALL',-28.55,-25,3.1,.28,3.65,plaster);
+ box(root,'CASINO_STAFF_OPEN_DOOR_HEADER',-32,3.47,-25,3.8,.36,.35,serviceSteel);for(const x of [-33.9,-30.1])box(root,'CASINO_STAFF_OPEN_DOOR_REVEAL',x,1.58,-25,.08,3.16,.35,serviceSteel,false);
+ sign(root,'STAFF SERVICE ROOM',-32,3.1,-24.78,5.2,.75,'#cde0d8',0,'RESTOCK  •  PREPARATION  •  BREAK ROOM');
+ sign(root,'DOOR OPEN  ·  KEEP AISLE CLEAR',-32,2.5,-24.77,3.65,.32,'#b6d8c9');
+ for(let i=0;i<5;i++){const x=-35.7+i*1.5;box(root,'CASINO_STAFF_LOCKER',x,1.12,-37.3,1.15,2.24,.65,serviceSteel);box(root,'CASINO_STAFF_LOCKER_HANDLE',x+.35,1.15,-36.94,.035,.25,.035,copper,false);for(const y of [1.8,1.91])box(root,'CASINO_STAFF_LOCKER_VENT',x,y,-36.955,.65,.022,.018,dark,false);}
+ box(root,'CASINO_STAFF_PREP_COUNTER',-28.2,.57,-33.3,.95,1.14,3.6,wood);box(root,'CASINO_STAFF_PREP_TOP',-28.2,1.18,-33.3,1.1,.12,3.8,steel);
+ for(let i=0;i<4;i++){box(root,'CASINO_STAFF_CARD_STOCK',-28.2,1.31,-34.6+i*.7,.45,.14,.38,i%2?creamFabric:plumFabric,false);box(root,'CASINO_STAFF_RESTOCK_CRATE',-35.4,.43+(i%2)*.8,-33.7+Math.floor(i/2)*1.2,1.2,.8,.9,wood);}
+ sofa(root,-35.2,-28.6,-Math.PI/2,loungeFabric);cylinder(root,'CASINO_STAFF_BREAK_TABLE',-35.1,.6,-26.8,.55,.08,marble,18);cylinder(root,'CASINO_STAFF_BREAK_TABLE_BASE',-35.1,.3,-26.8,.12,.6,steel,8);
+ box(root,'CASINO_STAFF_SCHEDULE_BOARD',-36.8,2.3,-31.6,.06,1.2,2.4,dark,false);sign(root,'SHIFT BOARD',-36.75,2.4,-31.6,2.1,.6,'#c1d8d0',Math.PI/2);
+ box(root,'CASINO_STAFF_CEILING_LIGHT',-32,3.48,-32,3.2,.06,.8,glow,false);
+ root.userData.casinoRooms={vip:{x:12,z:-38,width:26,depth:20,entry:{x:20,z:-18,width:8},westEntry:{x:12,z:-22.5,width:7}},threecard:{x:-25,z:-38,width:16,depth:11,entry:{x:-17,z:-27,width:15.2}},staff:{x:-37,z:-38,width:10,depth:13,entry:{x:-32,z:-25,width:3.8},locked:false}};
+
  // Two compact conversation nooks face the central walkway, away from the
  // guest circulation lanes at x=±7 and the gaming tables at x=±20.
  for(const side of [-1,1]){
   sofa(root,side*11.7,-5,side<0?-Math.PI/2:Math.PI/2,side<0?plumFabric:loungeFabric);coffeeTable(side*10,-5);
+  sofa(root,side*12,8,side<0?-Math.PI/2:Math.PI/2,side<0?plumFabric:loungeFabric);coffeeTable(side*10.2,8);box(root,'CASINO_SOCIAL_BOOTH_SCREEN',side*14,1.1,8,.12,2.2,3.5,wood);for(const z of [6.6,7.3,8,8.7,9.4])box(root,'CASINO_SOCIAL_BOOTH_BRASS',side*14,1.5,z,.15,1.2,.045,gold,false);
  }
  // A genuine hospitality back bar: stocked shelves, coffee preparation,
  // glass storage and a menu guests can read from the public counter.
@@ -147,10 +210,10 @@ export function createCasinoLand(environment={}) {
  // not compete with dialogue or the player's view of the casino floor.
  const information=group('CASINO_INFORMATION_BOARD',-12,31);
  box(information,'CASINO_INFO_BOARD_BASE',0,.08,0,1.8,.16,.8,gold);box(information,'CASINO_INFO_BOARD_SUPPORT',0,1.3,0,.12,2.6,.12,gold);box(information,'CASINO_INFO_BOARD_FRAME',0,2.1,0,2.8,2.2,.16,wood);
- const boardTexture=canvasTexture(768,768,(ctx,W,H)=>{ctx.fillStyle='#142730';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#cba562';ctx.lineWidth=8;ctx.strokeRect(12,12,W-24,H-24);ctx.textAlign='center';ctx.fillStyle='#efd6a2';ctx.font='600 57px Georgia';ctx.fillText('FIND YOUR EVENING',W/2,95);ctx.textAlign='left';ctx.font='38px system-ui';['←  POKER & ROULETTE','→  BLACKJACK & HOSTED DICE','←  VELVET LOUNGE','→  CASHIER & MZK ATM','↑  LOCKED VAULT CORRIDOR'].forEach((line,i)=>ctx.fillText(line,46,204+i*90));ctx.font='28px system-ui';ctx.fillStyle='#b7d1c5';ctx.fillText('Walk up to a resident to start a conversation.',40,710);});
+ const boardTexture=canvasTexture(768,768,(ctx,W,H)=>{ctx.fillStyle='#142730';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#cba562';ctx.lineWidth=8;ctx.strokeRect(12,12,W-24,H-24);ctx.textAlign='center';ctx.fillStyle='#efd6a2';ctx.font='600 57px Georgia';ctx.fillText('FIND YOUR EVENING',W/2,95);ctx.textAlign='left';ctx.font='38px system-ui';['←  ROYAL · THREE-CARD POKER','→  AURELIA · BACCARAT','←  POKER / ROULETTE / LOUNGE','→  BLACKJACK / DICE / CASHIER','↑  LOCKED VAULT CORRIDOR'].forEach((line,i)=>ctx.fillText(line,46,204+i*90));ctx.font='28px system-ui';ctx.fillStyle='#b7d1c5';ctx.fillText('Walk up to a resident to start a conversation.',40,710);});
  const board=mesh(information,new T.PlaneGeometry(2.64,2.04),new T.MeshBasicMaterial({map:boardTexture,color:boardTexture?'#ffffff':'#cba562'}),'CASINO_INFORMATION_BOARD_FACE',0,2.1,.09,false);
  function zoneInlay(text,x,z,w=6,h=1.1){const texture=canvasTexture(1024,160,(ctx,W,H)=>{ctx.clearRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#dec89b';ctx.font='500 62px Georgia';ctx.fillText(text,W/2,112);});const plane=mesh(root,new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:texture,color:texture?'#ffffff':'#dec89b',transparent:true,depthWrite:false}),'CASINO_ZONE_INLAY_'+text,x,.045,z,false);plane.rotation.x=-Math.PI/2;}
- zoneInlay('POKER SALON',-20,16,7);zoneInlay('BLACKJACK SALON',19,16,8);zoneInlay('ROULETTE',-20,-18.4,5);zoneInlay('HOSTED DICE',20,-18.4,6);zoneInlay('VELVET LOUNGE',-22,25.4,7);zoneInlay('CASHIER  ·  ATM',24,25.4,7);zoneInlay('STARLIGHT',0,22,5.8,1.15);
+ zoneInlay('POKER SALON',-20,16,7);zoneInlay('BLACKJACK SALON',19,16,8);zoneInlay('ROULETTE',-20,-18.4,5);zoneInlay('HOSTED DICE',20,-18.4,6);zoneInlay('VELVET LOUNGE',-22,25.4,7);zoneInlay('CASHIER  ·  ATM',24,25.4,7);zoneInlay('STARLIGHT',0,22,5.8,1.15);zoneInlay('AURELIA HIGH LIMIT',20,-19.2,6);zoneInlay('ROYAL CARD ROOM',-14.5,-28.1,5);zoneInlay('STAFF SERVICE ROOM',-32,-23,5);
  // Table-top finishes distinguish the salons without altering their rules.
  for(const [id,table]of stations){if(!id.startsWith('casino-poker')&&!id.startsWith('casino-blackjack'))continue;const kind=id.includes('poker')?'DRAW POKER':'BLACKJACK';const texture=canvasTexture(768,256,(ctx,W,H)=>{ctx.clearRect(0,0,W,H);ctx.strokeStyle='#d7c18a';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(W/2,H/2,W*.46,H*.4,0,0,Math.PI*2);ctx.stroke();ctx.textAlign='center';ctx.fillStyle='#e0c995';ctx.font='42px Georgia';ctx.fillText(kind,W/2,H*.52);ctx.font='21px system-ui';ctx.fillText(id.includes('poker')?'FIVE-CARD DRAW  •  HOUSE PAYTABLE':'DEALER STANDS ON 17',W/2,H*.73);});const plane=mesh(table,new T.PlaneGeometry(3.7,1.25),new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,color:'#ffffff'}),'CASINO_TABLE_FELT_INLAY',0,1.225,-.48,false);plane.rotation.x=-Math.PI/2;for(const side of [-1,1])cylinder(table,'CASINO_TABLE_CUP_HOLDER',side*2.45,1.195,.1,.11,.025,steel,12,false);}
  root.userData.casinoStations=stations;
@@ -169,9 +232,9 @@ export function createCasinoLand(environment={}) {
   const light=new T.PointLight(won?'#f8d580':'#79ddd4',7,7,2);light.position.set(0,2.8,0);station.add(light);recentPlays.set(id,{station,light,at:station.userData.casinoPlayedAt});
   if(id==='casino-roulette-1'&&Number.isInteger(receipt?.number)){wheel.userData.resultNumber=receipt.number;wheel.userData.resultAt=station.userData.casinoPlayedAt;wheel.rotation.y=0;const a=(rouletteNumbers.indexOf(receipt.number)+.5)/37*Math.PI*2-Math.PI/2;ball.position.set(-1.7+Math.cos(a)*.73,1.53,Math.sin(a)*.73);}
   if(id==='casino-dice-1'&&Array.isArray(receipt?.dice)){diceMeshes.forEach((die,i)=>{const face=Math.max(0,Math.min(5,Number(receipt.dice[i])-1));die.material=[diceFaces[1],diceFaces[4],diceFaces[face],diceFaces[5],diceFaces[2],diceFaces[3]];die.userData.settled=true;});}
-  if(Array.isArray(receipt?.hand)&&station.userData.casinoHandCards){
-   station.userData.casinoHandCards.forEach((m,i)=>{m.visible=i<receipt.hand.length;if(!m.visible)return;const value=receipt.hand[i],rank=['2','3','4','5','6','7','8','9','10','J','Q','K','A'][value%13],suit=['♠','♥','♦','♣'][Math.floor(value/13)];const texture=canvasTexture(128,192,(ctx,W,H)=>{ctx.fillStyle='#fff2db';ctx.fillRect(0,0,W,H);ctx.fillStyle=[1,2].includes(Math.floor(value/13))?'#bd304d':'#142b33';ctx.font='bold 38px Georgia';ctx.fillText(rank,8,42);ctx.font='68px Georgia';ctx.textAlign='center';ctx.fillText(suit,W/2,126);});if(m.material!==cardMat){m.material.map?.dispose();m.material.dispose();}m.material=mat('#ffffff',{map:texture});});
-  }
+  paintCardSet(station.userData.casinoHandCards,receipt?.hand||receipt?.playerHand);
+  paintCardSet(station.userData.casinoDealerCards,receipt?.dealerHand||receipt?.bankerHand);
+  if(station.userData.casinoDealingCard)station.userData.casinoDealingCard.visible=receipt?.phase!=='complete';
   const slot=slotScreens.get(id);if(slot&&Array.isArray(receipt?.reels)){
    const symbols=['CHERRY','DIAMOND','7','SPADE','STAR','CROWN'];
    const texture=canvasTexture(512,512,(ctx,W,H)=>{ctx.fillStyle='#0e2230';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#f3d696';ctx.font='bold 58px Georgia';ctx.fillText('STARLIGHT',W/2,82);ctx.font='25px system-ui';ctx.fillText('LUCKY SEVENS',W/2,128);for(let i=0;i<3;i++){ctx.fillStyle='#e3eadc';ctx.fillRect(22+i*164,172,148,222);ctx.fillStyle='#174538';ctx.font='bold '+(symbols[receipt.reels[i]].length>3?24:40)+'px Georgia';ctx.fillText(symbols[receipt.reels[i]],96+i*164,295);}ctx.fillStyle='#9ee9ce';ctx.font='28px system-ui';ctx.fillText('PAYOUT  '+Number(receipt.payoutMzk||0)+' MZK',W/2,456);});

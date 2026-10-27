@@ -49,7 +49,7 @@ export function sampleCasinoTaskMovement(sim,player,now){
 }
 export function stepCasinoTasks(sim,now){for(const player of Object.values(sim.players||{}))sampleCasinoTaskMovement(sim,player,now);}
 export function recordCasinoPlayerGame(sim,player,round,now){
- if(!round?.id||round.phase!=='complete'||!['poker','blackjack','roulette','dice','slots'].includes(round.game))return false;
+ if(!round?.id||round.phase!=='complete'||!['poker','blackjack','roulette','dice','slots','baccarat','threecard'].includes(round.game))return false;
  const completedAt=Date.parse(round.completedAt);
  if(!Number.isFinite(completedAt)||completedAt<=Number(player.casinoGameReplayFloor||0))return false;
  player.casinoGameRounds=(player.casinoGameRounds||[]).map(entry=>typeof entry==='string'?{id:entry,at:0}:entry);
