@@ -110,6 +110,9 @@ The optional Lost Laugh Trail adds six discoveries across the detailed midway
 and haunted house, with story hints, theatrical surprises and a timed score.
 Compact controls keep the scenery visible, and seated rides retain free look
 with calibrated headset height and safe standing-view restoration.
+Original clown voices, captioned jokes, attraction sound effects and the
+**Midnight Motor Waltz** car soundtrack add carnival audio, with separate
+voice, music and effects controls in first person and VR.
 
 Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
 fishing grounds, tackle in the existing tools and markets, saved catches, MZK

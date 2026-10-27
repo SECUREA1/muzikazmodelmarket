@@ -7,16 +7,61 @@ import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES} from '../public/js/fu
 import {funhouseRidePose} from '../public/js/funhouse-experience-rules.js';
 
 const turns=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-function fixture(kind='water',{state={},defer=false,reducedMotion=false,roots=[]}={}){
+function fixture(kind='water',{state={},defer=false,reducedMotion=false,roots=[],audioSettings={},audioPreferences={},audioCaption=null}={}){
  const station=FUNHOUSE_STATIONS.find(station=>station.kind===kind),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
  let presenting=true,sequence=1,resolve;
- const position={...station.position},commands=[],statuses=[];camera.position.set(position.x,position.y+1.6,position.z);scene.add(camera);
+ const position={...station.position},commands=[],statuses=[],audioChanges=[],audioCalls={replay:0,preview:0};camera.position.set(position.x,position.y+1.6,position.z);scene.add(camera);
  const snapshot=(data=state)=>({sequence:sequence++,selfId:'me',serverTime:Date.now(),players:{me:{position:{...position},funhouse:{stamps:[],costume:{hat:false,shoes:false},...data}}}});
- const vr=createFunhouseVR({scene,camera,getEnvironment:()=>({id:'muzikaz-clown-funhouse'}),getPosition:()=>position,getRoots:()=>roots,getPresenting:()=>presenting,getReducedMotion:()=>reducedMotion,createCanvas:()=>null,onStatus:message=>statuses.push(message),send:(action,fields)=>{commands.push({action,...fields});return defer?new Promise(done=>resolve=done):Promise.resolve(snapshot(state));}});
+ const vr=createFunhouseVR({getAudioSettings:()=>audioSettings,getAudioPreferences:()=>audioPreferences,getAudioCaption:()=>audioCaption,onAudioSettings:patch=>{audioChanges.push(patch);Object.assign(audioSettings,patch);},onReplayClown:()=>audioCalls.replay++,onPreviewMusic:()=>audioCalls.preview++,scene,camera,getEnvironment:()=>({id:'muzikaz-clown-funhouse'}),getPosition:()=>position,getRoots:()=>roots,getPresenting:()=>presenting,getReducedMotion:()=>reducedMotion,createCanvas:()=>null,onStatus:message=>statuses.push(message),send:(action,fields)=>{commands.push({action,...fields});return defer?new Promise(done=>resolve=done):Promise.resolve(snapshot(state));}});
  vr.update(snapshot(state),'me');
  const rayToButton=id=>{const button=vr.snapshot().buttons.find(button=>button.id===id);assert.ok(button,id+' exists');const point=vr.root.localToWorld(new THREE.Vector3(...button.position)),origin=camera.getWorldPosition(new THREE.Vector3());return {origin,direction:point.sub(origin).normalize()};};
- return {vr,station,scene,camera,position,commands,statuses,snapshot,rayToButton,resolve:value=>resolve(value),setPresenting:value=>presenting=value};
+ return {vr,station,scene,camera,position,commands,statuses,snapshot,rayToButton,audioSettings,audioPreferences,audioChanges,audioCalls,setAudioCaption:value=>audioCaption=value,resolve:value=>resolve(value),setPresenting:value=>presenting=value};
 }
+
+async function audioButton(f,id){
+ for(let page=0;page<4;page++){
+  const button=f.vr.snapshot().buttons.find(button=>button.id===id);
+  if(button){const ray=f.rayToButton(id);f.vr.pointerUp('audio');assert.equal(f.vr.pointerDown(ray,'audio'),true);await turns();return button;}
+  assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='next-actions'),id+' is available on an audio page');
+  f.vr.pointerUp('audio');f.vr.pointerDown(f.rayToButton('next-actions'),'audio');await turns();
+ }
+ assert.fail(id+' was not reachable');
+}
+
+test('headset sound settings are real paginated controls and held triggers never repeat a mix change',async()=>{
+ const f=fixture('welcome');f.vr.menuItems().find(item=>item.label==='Clown voices, sounds & music').run();
+ assert.equal(f.vr.snapshot().mode,'audio');assert.equal(f.vr.snapshot().audioSettings.musicVolume,35);
+ const ray=f.rayToButton('audio-music-mute');f.vr.pointerDown(ray,'audio');f.vr.pointerDown(ray,'audio');await turns();
+ assert.equal(f.audioChanges.length,1);assert.deepEqual(f.audioChanges[0],{musicMuted:true});
+ await audioButton(f,'audio-music-up');assert.equal(f.audioSettings.musicVolume,45);
+ await audioButton(f,'audio-effects-down');assert.equal(f.audioSettings.effectsVolume,55);
+ assert.equal(f.commands.length,0,'sound controls never issue gameplay or wallet commands');
+ assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='close'));f.vr.dispose();
+});
+
+test('headset replay and music previews obey category mutes while expired captions leave replay available',async()=>{
+ const f=fixture('welcome',{audioCaption:{text:'Your shadow arrived early.',speaker:'The Ringmaster',expiresAt:Date.now()+5000}});
+ f.vr.showAudio();assert.equal(f.vr.snapshot().audioCaption.speaker,'The Ringmaster');
+ await audioButton(f,'audio-replay');assert.equal(f.audioCalls.replay,1);
+ await audioButton(f,'audio-preview');assert.equal(f.audioCalls.preview,1);
+ f.audioPreferences.masterMuted=true;f.vr.showAudio();
+ assert.equal((await audioButton(f,'audio-replay')).enabled,false);assert.equal(f.audioCalls.replay,1);
+ assert.equal((await audioButton(f,'audio-preview')).enabled,false);assert.equal(f.audioCalls.preview,1);
+ f.audioPreferences.masterMuted=false;f.audioPreferences.dialogueMuted=true;f.vr.showAudio();
+ assert.equal((await audioButton(f,'audio-replay')).enabled,false);
+ assert.equal((await audioButton(f,'audio-preview')).enabled,true);assert.equal(f.audioCalls.preview,2);
+ f.audioPreferences.dialogueMuted=false;f.setAudioCaption({text:'An old joke.',speaker:'Driver',expiresAt:Date.now()-1});f.vr.showAudio();
+ assert.equal(f.vr.snapshot().audioCaption,null);assert.equal((await audioButton(f,'audio-replay')).enabled,true);assert.equal(f.audioCalls.replay,2);f.vr.dispose();
+});
+
+test('the real scene-board drawing includes the clown speaker and line even when voices are muted',()=>{
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),drawn=[];
+ const ink={clearRect(){},fillRect(){},strokeRect(){},fillText:value=>drawn.push(value),measureText:value=>({width:String(value).length*10})};
+ const canvas={width:0,height:0,getContext:()=>ink},caption={speaker:'The Ringmaster',text:'Your shadow arrived early. It saved you a seat.',expiresAt:Date.now()+6000};
+ scene.add(camera);camera.position.set(0,1.65,40);
+ const vr=createFunhouseVR({scene,camera,createCanvas:()=>canvas,getEnvironment:()=>({id:'muzikaz-clown-funhouse'}),getPosition:()=>({x:0,y:.02,z:40}),getAudioCaption:()=>caption,getAudioPreferences:()=>({masterMuted:true})});
+ vr.showAudio();assert.ok(drawn.includes(caption.speaker));assert.ok(drawn.includes(caption.text));vr.dispose();
+});
 
 test('the immersive board selects real controls by either controller ray and consumes a held trigger once',async()=>{
  const f=fixture('water',{defer:true}),controller={hand:'right'};f.vr.setVisible(true);

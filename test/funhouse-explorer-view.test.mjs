@@ -14,7 +14,7 @@ function fixture(presenting=false){
  camera.position.set(0,presenting?0:1.65,0);
  const station=FUNHOUSE_STATIONS.find(value=>value.kind==='car'),calls=[];
  let ride={id:'car-seat',kind:'car',startedAt:1000,endsAt:21000,durationMs:20000,status:'active',gentle:true,stationId:station.id};
- const context=vm.createContext({THREE,funhouseRide:()=>ride,funhouseStations:()=>[station],funhouseRidePose,
+ const context=vm.createContext({createFunhouseAudio:()=>({}),THREE,funhouseRide:()=>ride,funhouseStations:()=>[station],funhouseRidePose,
   funhouseServerNow:()=>2000,funhouseSeatView:createFunhouseRideView(),funhouseRideView:null,funhouseRideCamera:false,
   player:{yaw:0,pitch:0,eyeHeight:1.65},playerRig,camera,activeEnvironment:{},serverActors:{},topDownAimTarget:null,
   reducedMotion:false,playerPreferences:{reducedMotion:false},lockMenuInput:()=>calls.push('release'),syncCameraToggle:()=>calls.push('toggle'),updateGameCamera:()=>calls.push('camera'),
