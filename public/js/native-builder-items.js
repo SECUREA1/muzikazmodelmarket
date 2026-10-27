@@ -10,6 +10,8 @@ import {LAYOUT_SCENES} from './builder-layout-scenes.js';
 import {nativeItemGameplay} from './editable-map-import.js';
 import {FISHING_GEAR} from './fishing-config.js';
 import {FUNHOUSE_ITEMS,funhouseNativeItem} from './clown-funhouse-items.js';
+import {PORTAL_ITEMS} from './portal-models.js';
+import {COMMON_PROP_ITEMS} from './common-prop-models.js';
 
 // Shared authored metadata for the editor, authoritative economy and owned-item
 // placement. Rendering factories stay in their existing native runtime modules.
@@ -67,7 +69,7 @@ export const EXPANDED_BUILDER_ITEMS=[
 // The resident factory also exists outside the editor's original starter lists.
 // Make its reusable character model available without copying live residents.
 export const RUNTIME_BUILDER_ITEMS=[...Object.keys(PRISON_ITEMS).map(id=>prisonNativeItem(id)),...Object.keys(FUNHOUSE_ITEMS).map(id=>({id,...funhouseNativeItem(id)})),{id:'world-resident',name:'World Resident',description:'A reusable resident character with configurable dialogue for your map.',type:'avatar',category:'characters',behavior:'talk',animation:'idle',targetHeight:1.8,dimensions:[.7,1.9,.5],procedural:true,assetKind:'premade',function_data:{prompt:'Talk to resident'}}];
-const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS].map(item=>[item.id,item]));
+const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS,...PORTAL_ITEMS,...COMMON_PROP_ITEMS].map(item=>[item.id,item]));
 const definitions=[];
 for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])){
  const [name,description,dimensions]=BUILDER_MODEL_INFO[id]||[],device=INTERACTIVE_DEVICES[id],building=ENTERABLE_BUILDINGS[id],source=authored.get(id)||{};

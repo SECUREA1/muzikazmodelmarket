@@ -2,8 +2,8 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 479 definitions;
-the economy has 605 SKUs, including 540 native item, material, tool, and layout
+items and their runtime settings. The current library has 487 definitions;
+the economy has 613 SKUs, including 548 native item, material, tool, and layout
 offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
@@ -78,6 +78,30 @@ response without rewriting stored inventory, issuing items, or changing an
 owner's balance, listing, or authored configuration. The server resolves owned
 assets before spawning; the client cannot supply replacement native code or
 claim ownership through these fields.
+
+## Upgraded portals and everyday props
+
+Existing `portal-door` and `teleport-pad` copies now use authored metal frames,
+emissive channels and animated energy fields. `portal-arch` adds a stone-and-rune
+gateway; `portal-ring` adds a circular solar gateway. New gateways expose the
+editor's Portal Tuner and need a configured destination before travel is enabled.
+The original portal door retains its closed-door collision surface; cosmetic
+energy fields do not add collision geometry.
+
+Quest scrolls, energy crystals, healing potions, supply crates, treasure chests
+and lever switches have new detailed geometry and materials. Four additional
+items expand the same placement library: Azure Healing Elixir (`mana-potion`,
+using the existing healing behavior), Amethyst Crystal Cluster, Reinforced Supply
+Crate and Astral Relic Chest. New items use the standard native economy SKUs;
+existing item identities, purchase prices and authored gameplay settings persist.
+
+`public/js/portal-models.js` and `public/js/common-prop-models.js` provide these
+shared factories and metadata. Their effects use deterministic local animation,
+respect animation enable/speed settings, and add no per-item lights. Editor
+copies own their animated materials so changing one copy does not affect another.
+The editor, in-game library and market share dedicated SVG thumbnails under
+`public/images/native-upgrades/`. Regression coverage lives in
+`test/native-asset-designs.test.mjs` and `test/native-asset-designs.browser.py`.
 
 ## Extending the library
 

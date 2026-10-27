@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-labelledby="title desc"><title id="title">Runic Portal Arch</title><desc id="desc">An ancient stone arch set with carved runes, brass corner details and a glowing cyan magical opening.</desc><defs>
+<radialGradient id="bg"><stop stop-color="#243653"/><stop offset="1" stop-color="#090f1d"/></radialGradient>
+<linearGradient id="steel" x2=".8" y2="1"><stop stop-color="#a3b7c5"/><stop offset=".28" stop-color="#52687b"/><stop offset=".55" stop-color="#273746"/><stop offset="1" stop-color="#14202d"/></linearGradient>
+<linearGradient id="edge" x2="0" y2="1"><stop stop-color="#d5e1eb"/><stop offset=".38" stop-color="#657e90"/><stop offset="1" stop-color="#354455"/></linearGradient>
+<linearGradient id="gold" x2=".7" y2="1"><stop stop-color="#fff1b4"/><stop offset=".3" stop-color="#d9b461"/><stop offset=".63" stop-color="#a16a30"/><stop offset="1" stop-color="#5d3d22"/></linearGradient>
+<linearGradient id="wood" x2="0" y2="1"><stop stop-color="#b57e4e"/><stop offset=".5" stop-color="#85502c"/><stop offset="1" stop-color="#482a22"/></linearGradient>
+<linearGradient id="stone" x2=".9" y2="1"><stop stop-color="#7b8b95"/><stop offset=".45" stop-color="#465561"/><stop offset="1" stop-color="#253644"/></linearGradient>
+<linearGradient id="parchment" x2=".6" y2="1"><stop stop-color="#fff0c4"/><stop offset=".45" stop-color="#e8cc8f"/><stop offset="1" stop-color="#aa7f48"/></linearGradient>
+<linearGradient id="violet" x2=".8" y2="1"><stop stop-color="#efccff"/><stop offset=".25" stop-color="#a58bff"/><stop offset=".7" stop-color="#5f42be"/><stop offset="1" stop-color="#23265d"/></linearGradient>
+<linearGradient id="cyan" x2=".8" y2="1"><stop stop-color="#efffff"/><stop offset=".25" stop-color="#80efff"/><stop offset=".65" stop-color="#2895bb"/><stop offset="1" stop-color="#184769"/></linearGradient>
+<linearGradient id="pink" x2=".6" y2="1"><stop stop-color="#ffcadc"/><stop offset=".35" stop-color="#fd679e"/><stop offset="1" stop-color="#971c61"/></linearGradient>
+<linearGradient id="blue" x2=".6" y2="1"><stop stop-color="#b9f9ff"/><stop offset=".35" stop-color="#448cfa"/><stop offset="1" stop-color="#2f347e"/></linearGradient>
+<radialGradient id="field"><stop stop-color="#080d22"/><stop offset=".48" stop-color="#25194c"/><stop offset=".8" stop-color="#6b43ac"/><stop offset="1" stop-color="#c5a3ff"/></radialGradient>
+<filter id="glow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="5"/></filter>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#020611" flood-opacity=".8"/></filter>
+</defs>
+<rect width="360" height="300" rx="24" fill="url(#bg)"/>
+<path d="M20 236H340M42 262H318M88 282H272" stroke="#83eee5" stroke-opacity=".065"/>
+<ellipse cx="180" cy="252" rx="113" ry="18" fill="#030811" opacity=".65"/>
+
+<g filter="url(#shadow)">
+<path d="M84 251V141C84 82 125 46 180 46S276 82 276 141V251H240V143C240 104 214 79 180 79S120 104 120 143V251Z" fill="url(#stone)" stroke="#91a4a9" stroke-width="2"/>
+<path d="M122 245V143C122 108 147 82 180 82S238 108 238 143V245Z" fill="#123042" stroke="#72f2ef" stroke-width="3"/>
+<path d="M122 245V143C122 108 147 82 180 82S238 108 238 143V245" fill="none" stroke="#4edddc" stroke-width="12" opacity=".6" filter="url(#glow)"/>
+<path d="M138 234C150 188 216 192 223 149C230 105 167 93 147 131C129 167 180 184 199 154C211 135 182 121 172 141" fill="none" stroke="#63cfd6" stroke-width="2"/>
+<path d="M84 166H119M84 205H119M241 166H276M241 205H276M99 96L128 115M127 63L147 90M160 47L166 81M201 48L195 81M235 65L214 91M263 98L233 117" stroke="#142934" stroke-width="4"/>
+<path d="M98 145V127L107 134L98 140M98 187L107 178L107 194M256 128V145M250 135H262M254 177L262 187L254 197M170 62L180 54L190 62L180 70Z" fill="none" stroke="#91fff2" stroke-width="2.5"/>
+<path d="M78 239H126V255H78ZM234 239H282V255H234Z" fill="url(#gold)" stroke="#b3a177"/>
+<path d="M153 171h3m52 45h3m-9-102h3m-50 91h3" stroke="#cffffb" stroke-width="3"/>
+</g>
+<path d="M24 40V24H40M320 24H336V40M24 260V276H40M320 276H336V260" fill="none" stroke="#83eee5" stroke-opacity=".3" stroke-width="2"/>
+</svg>
