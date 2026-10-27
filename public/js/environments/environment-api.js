@@ -1,5 +1,6 @@
 
 import {readJsonResponse} from '../json-response.js';
+import {apiUrl,parseResponse} from '../model-api.js';
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
@@ -38,6 +39,7 @@ export async function fetchEnvironmentList() {
 export async function uploadEnvironment(formData, onProgress = () => {}) {
   const landHeaders = window.MUZIKAZLandAccess?.uploadHeaders();
   if (!landHeaders) throw new Error('Backpack access is still loading. Wait a moment and try again.');
+  if(window.MUZIKAZ_API?.ready)await window.MUZIKAZ_API.ready;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', apiUrl('/api/environments/upload'));
@@ -45,14 +47,21 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
     const sessionToken = window.MUZIKAZ_API?.getSessionToken?.();
     if (sessionToken) xhr.setRequestHeader('Authorization', `Bearer ${sessionToken}`);
     Object.entries(landHeaders).forEach(([name, value]) => xhr.setRequestHeader(name, value));
+    let adminToken='';
+    try{adminToken=window.localStorage.getItem('muzikazAdminToken')||'';}catch{}
+    if(!adminToken)try{adminToken=window.sessionStorage.getItem('muzikazAdminToken')||'';}catch{}
+    if(adminToken)xhr.setRequestHeader('x-admin-token',adminToken);
     xhr.responseType = 'json';
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
     };
     xhr.onload = () => {
-      const payload = xhr.response || {};
-      if (xhr.status >= 200 && xhr.status < 300) resolve(payload.data || payload);
-      else reject(new Error(payload.message || payload.error || `Upload failed (${xhr.status})`));
+      const payload=xhr.response;
+      if(!payload||typeof payload!=='object'||Array.isArray(payload)){
+        reject(Object.assign(new Error('The upload server returned invalid map data. Please try again.'),{status:xhr.status,code:'INVALID_JSON_RESPONSE'}));return;
+      }
+      if(xhr.status>=200&&xhr.status<300&&payload.success!==false)resolve(payload.data??payload);
+      else reject(Object.assign(new Error(payload.message||payload.error||`Upload failed (${xhr.status})`),{status:xhr.status,code:payload.code}));
     };
     xhr.onerror = () => reject(new Error('Network interruption while uploading the environment.'));
     xhr.send(formData);
@@ -61,9 +70,7 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
 
 export async function deleteEnvironment(id) {
   const response = await apiFetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept:'application/json' }, retries:0 });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to delete environment.');
-  return payload.data || payload;
+  return parseResponse(response);
 }
 
 export function logEnvironment(message, detail) {

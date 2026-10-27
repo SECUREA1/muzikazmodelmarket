@@ -7,6 +7,10 @@
   var base;
   var hostedApi = new window.URL('https://muzikazmodelmarket.onrender.com');
   var compatibleRoutes = { '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'] };
+  var accountTokenMemory = '';
+  var accountTokenVolatile = false;
+  var gameTokenMemory = '';
+  var gameTokenVolatile = false;
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
     if (!/^https?:$/.test(base.protocol) || !base.hostname) base = new window.URL(window.location.origin);
@@ -61,7 +65,10 @@
     for (key in options) if (Object.prototype.hasOwnProperty.call(options, key)) request[key] = options[key];
     request.headers = {};
     var headerName;
-    for (headerName in (options.headers || {})) if (Object.prototype.hasOwnProperty.call(options.headers, headerName)) request.headers[headerName] = options.headers[headerName];
+    var suppliedHeaders = options.headers || {};
+    if (Array.isArray(suppliedHeaders)) suppliedHeaders.forEach(function (pair) { request.headers[pair[0]] = pair[1]; });
+    else if (typeof suppliedHeaders.forEach === 'function') suppliedHeaders.forEach(function (value, name) { request.headers[name] = value; });
+    else for (headerName in suppliedHeaders) if (Object.prototype.hasOwnProperty.call(suppliedHeaders, headerName)) request.headers[headerName] = suppliedHeaders[headerName];
     /* Third-party cookies are blocked by several browsers and embedded webviews.
      * Carry the same short-lived account session explicitly when the member site
      * and persistent API are on different origins. */
@@ -166,35 +173,80 @@
   ready.catch(function () {});
   function fetchApi(path, options) { return connect().then(function () { return requestApi(path, options); }); }
 
-  function getSessionToken() {
+  function readJson(response, options) {
+    var label = options && options.label || 'The member API';
+    function invalid(cause) {
+      var error = new Error(label + (response.status >= 500 ? ' is temporarily unavailable' : ' returned an invalid response') + '. Please try again.');
+      error.code = 'INVALID_JSON_RESPONSE'; error.status = response.status; if (cause) error.cause = cause;
+      return error;
+    }
+    var contentType = response.headers && response.headers.get ? response.headers.get('content-type') || '' : '';
+    if (/(?:text\/html|application\/xhtml\+xml)/i.test(contentType)) return window.Promise.reject(invalid());
+    return window.Promise.resolve().then(function () { return response.json(); }).then(function (payload) {
+      if (payload === null || typeof payload !== 'object') throw invalid();
+      return payload;
+    }, function (error) { if (error && error.name === 'AbortError') throw error; throw invalid(error); });
+  }
+
+  function tokenStorage(name) { try { return window[name] || null; } catch (ignore) { return null; } }
+  function storedToken(name, key) {
+    var storage = tokenStorage(name);
     try {
-      var token = window.localStorage.getItem('muzikazAccountSessionToken') || window.sessionStorage.getItem('muzikazAccountSessionToken') || '';
-      if (token && !/^[\x21-\x7e]+$/.test(token)) { window.localStorage.removeItem('muzikazAccountSessionToken'); window.sessionStorage.removeItem('muzikazAccountSessionToken'); return ''; }
-      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
-      window.sessionStorage.removeItem('muzikazAccountSessionToken');
+      if (!storage) return { available: false, value: '' };
+      var value = storage.getItem(key) || '';
+      if (value && !/^[\x21-\x7e]+$/.test(value)) { storage.removeItem(key); value = ''; }
+      return { available: true, value: value };
+    } catch (ignore) { return { available: false, value: '' }; }
+  }
+  function saveToken(name, key, value) {
+    var storage = tokenStorage(name);
+    try { if (!storage) return false; if (value) storage.setItem(key, value); else storage.removeItem(key); return true; } catch (ignore) { return false; }
+  }
+
+  function getSessionToken() {
+    // A newer login (or logout) must win over a readable value that the browser
+    // refused to replace or remove, even when storage failed only on writes.
+    if (accountTokenVolatile) return accountTokenMemory;
+    var local = storedToken('localStorage', 'muzikazAccountSessionToken'), session = storedToken('sessionStorage', 'muzikazAccountSessionToken');
+    var token = local.value || session.value;
+    if (token) {
+      accountTokenMemory = token;
+      if (saveToken('localStorage', 'muzikazAccountSessionToken', token)) saveToken('sessionStorage', 'muzikazAccountSessionToken', '');
+      accountTokenVolatile = false;
       return token;
-    } catch (ignore) { return ''; }
+    }
+    if (accountTokenVolatile || !local.available && !session.available) return accountTokenMemory;
+    accountTokenMemory = ''; return '';
   }
 
   function setSessionToken(token) {
-    try {
-      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
-      else window.localStorage.removeItem('muzikazAccountSessionToken');
-      window.sessionStorage.removeItem('muzikazAccountSessionToken');
-    } catch (ignore) {}
+    accountTokenMemory = typeof token === 'string' && /^[\x21-\x7e]+$/.test(token) ? token : '';
+    var saved = saveToken('localStorage', 'muzikazAccountSessionToken', accountTokenMemory);
+    var temporary = saveToken('sessionStorage', 'muzikazAccountSessionToken', saved ? '' : accountTokenMemory);
+    // A quota failure can leave an older local token behind. Remove it once
+    // the replacement is safely held in the temporary store, including for
+    // the next page, which cannot see this page's memory fallback.
+    if (!saved && temporary) saveToken('localStorage', 'muzikazAccountSessionToken', '');
+    var local = storedToken('localStorage', 'muzikazAccountSessionToken'), session = storedToken('sessionStorage', 'muzikazAccountSessionToken');
+    accountTokenVolatile = Boolean(!saved && !temporary || local.value && local.value !== accountTokenMemory || !accountTokenMemory && (session.value || !saved || !temporary));
   }
 
   function getGameSessionToken() {
-    try { var token = window.sessionStorage.getItem('muzikazGameSessionToken') || ''; if (token && !/^[\x21-\x7e]+$/.test(token)) { window.sessionStorage.removeItem('muzikazGameSessionToken'); return ''; } return token; } catch (ignore) { return ''; }
+    if (gameTokenVolatile) return gameTokenMemory;
+    var session = storedToken('sessionStorage', 'muzikazGameSessionToken');
+    if (session.value) { gameTokenMemory = session.value; gameTokenVolatile = false; return session.value; }
+    if (gameTokenVolatile || !session.available) return gameTokenMemory;
+    gameTokenMemory = ''; return '';
   }
 
   function setGameSessionToken(token) {
-    try { if (token) window.sessionStorage.setItem('muzikazGameSessionToken', token); else window.sessionStorage.removeItem('muzikazGameSessionToken'); } catch (ignore) {}
+    gameTokenMemory = typeof token === 'string' && /^[\x21-\x7e]+$/.test(token) ? token : '';
+    gameTokenVolatile = !saveToken('sessionStorage', 'muzikazGameSessionToken', gameTokenMemory);
   }
 
   function logout(csrfToken) {
     return fetchApi('/api/session', { method: 'DELETE', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
-      if (response.ok || response.status === 401) { setSessionToken(''); try { window.sessionStorage.removeItem('muzikazGameSessionToken'); } catch (ignore) {} }
+      if (response.ok || response.status === 401) { setSessionToken(''); setGameSessionToken(''); }
       return response;
     }, function (error) {
       throw error;
@@ -203,5 +255,5 @@
 
   window.MUZIKAZ_API_BASE = base;
   window.MUZIKAZ_SHARED_AVATAR_API = base;
-  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, getGameSessionToken: getGameSessionToken, setGameSessionToken: setGameSessionToken, logout: logout };
+  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, readJson: readJson, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, getGameSessionToken: getGameSessionToken, setGameSessionToken: setGameSessionToken, logout: logout };
 }(window, document));

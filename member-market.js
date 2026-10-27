@@ -16,8 +16,8 @@
   const api = async (path, options = {}) => {
     const authHeaders={};if(options.method&&options.method!=='GET'){const session=await (await inventory).session();sessionOwner=session.owner_id;authHeaders['X-CSRF-Token']=session.csrfToken;}
     const response = await window.MUZIKAZ_API.fetch(path, { ...options, headers: { ...headers(), ...authHeaders, ...(options.headers || {}) } });
-    const payload = await response.json();
-    if (!response.ok || payload.success === false) throw new Error(payload.message || payload.error || 'The member market request failed.');
+    const payload = await window.MUZIKAZ_API.readJson(response, {label:'The member market'});
+    if (!response.ok || payload.success === false) throw Object.assign(new Error(payload.message || payload.error || 'The member market request failed.'), {status:response.status,code:payload.code});
     return payload.data;
   };
   const itemId = (name, index) => `pack-${index}-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 80)}`;

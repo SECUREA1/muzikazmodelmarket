@@ -60,6 +60,8 @@ try:
    const worldVoice=createQuestConversationVoice();
    worldVoice.unlock();worldVoice.announce('Welcome to this world.',{worldId:'room-a',category:'introduction'});
    await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/public/js/crib-multiplayer.js';script.onload=resolve;script.onerror=reject;document.body.append(script);});
+   window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-room-ready',{detail:{roomId:'room-a'}}));
+   await settle();
    const toggle=document.querySelector('#crib-tts-toggle');
    let id=0;
    const emit=(message,roomId=window.MUZIKAZ_HOUSE_TRACKING.roomId)=>stream.emit({id:'chat-'+ ++id,message,roomId,username:'Taylor',sessionId:'other',createdAt:new Date().toISOString()});
@@ -92,6 +94,8 @@ try:
    assert(!speech.current,'Map travel retained an active chat utterance');
    emit('Late old-room message.','room-a');await settle();
    assert(!speech.current,'A late old-room message started after travel');
+   window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-room-ready',{detail:{roomId:'room-b'}}));
+   await settle();
    emit('This async message must not cross maps.');
    window.MUZIKAZ_HOUSE_TRACKING={roomId:'room-c'};
    window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-world-change',{detail:{roomId:'room-c'}}));

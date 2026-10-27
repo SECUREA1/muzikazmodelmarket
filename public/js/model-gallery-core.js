@@ -1,5 +1,5 @@
 import './ar-camera-preview.js';
-import {API_BASE,apiUrl,absoluteUrl,fetchPublishedModels,fetchPublishedModel} from './model-api.js';
+import {apiUrl,absoluteUrl,fetchPublishedModels,fetchPublishedModel,requestModelApi,parseResponse} from './model-api.js';
 import {createEl,formatPublishDate,normalizeLiveModelsHash,modelsSignature} from './model-utils.js';
 const LIVE_MODEL_CACHE_KEY='muzikaz:lastPublishedAvatars';
 const wait=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -7,7 +7,7 @@ let liveModelPoll;
 let liveModelAbort;
 const renderedSignatures=new Map();
 
-async function fetchPublicAssets(){try{const r=await fetch(apiUrl('/api/assets/public'),{cache:'no-store'});const j=await r.json();return j.success?j.data:[]}catch{return []}}
+async function fetchPublicAssets(){try{const assets=await parseResponse(await requestModelApi('/api/assets/public',{cache:'no-store'}));return Array.isArray(assets)?assets:[];}catch{return []}}
 async function fetchOwnerGlbCatalog(){try{const r=await fetch(new URL('public/models/glb-models.json',window.location.origin),{cache:'no-store'});if(!r.ok)return[];const j=await r.json();const records=Array.isArray(j)?j:Array.isArray(j.models)?j.models:[];return records.filter(model=>model.visibility!=='private').map(model=>({...model,category:model.category||'Owner GLB Library',owner:model.owner||'MUZIKAZ Owner',source:'owner-glb-catalog'}));}catch(error){console.warn('[Live Models] Owner GLB catalog unavailable',error);return []}}
 function setLiveModelStatus(el,message){if(el)el.textContent=message;}
 function saveAvatarCache(avatars){try{localStorage.setItem(LIVE_MODEL_CACHE_KEY,JSON.stringify({savedAt:Date.now(),avatars}));}catch{}}

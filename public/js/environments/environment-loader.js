@@ -14,10 +14,7 @@ import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import { replaceServerStreets } from './server-streets.js';
 import { createBuilderLand } from './builder-land.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
-import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../../vendor/three/addons/loaders/DRACOLoader.js';
-import { KTX2Loader } from '../../vendor/three/addons/loaders/KTX2Loader.js';
-import { MeshoptDecoder } from '../../vendor/three/addons/libs/meshopt_decoder.module.js';
+import {createGameModelLoader} from '../game-model-loader.js';
 import { Octree } from '../../vendor/three/addons/math/Octree.js';
 import { applyWorldQuality } from './environment-quality.js';
 import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
@@ -26,10 +23,7 @@ export class EnvironmentLoader {
   constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false, localCollision = false }) {
     this.serverAuthoritative=serverAuthoritative;this.localCollision=localCollision;this.camera=camera;
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
-    this.loader = new GLTFLoader();
-    const draco = new DRACOLoader(); draco.setDecoderPath('/public/vendor/three/addons/libs/draco/gltf/'); this.loader.setDRACOLoader(draco);
-    const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('/public/vendor/three/addons/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
-    this.loader.setMeshoptDecoder(MeshoptDecoder);
+    this.loader = createGameModelLoader(renderer);
   }
   disposeMaterial(material,materials=new Set(),textures=new Set()) { if(!material||materials.has(material))return;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose?.(); }
 
