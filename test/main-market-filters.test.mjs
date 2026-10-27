@@ -21,3 +21,12 @@ test('main market pages mount the complete catalogue and its detailed controls',
  for(const file of ['model-market.html','builder-market.html','index.html','members.html']){const html=await readFile(file,'utf8');assert.match(html,/data-shared-market-catalog/);assert.match(html,/public\/js\/shared-market-catalog.js/);}
  const source=await readFile('public/js/shared-market-catalog.js','utf8');for(const control of ['data-catalog-source','data-catalog-subcategory','data-catalog-use','data-catalog-category-toggle','data-catalog-reset'])assert.ok(source.includes(control),control);assert.match(source,/\/api\/market\/catalog/);
 });
+
+
+test('world placement names find the existing SKU without publishing another item',()=>{
+ const item={...upgrade('blackjack-cabinet'),nativeMaps:[{id:'world-casino',name:'Harbor Casino',count:3,aliases:['Captain Table Seven']}]};
+ const entries=mainMarketEntries([item]);
+ assert.equal(filterMainMarket(entries,{query:'harbor casino'})[0].item,item);
+ assert.equal(filterMainMarket(entries,{query:'captain table seven'})[0].item,item);
+ assert.equal(filterMainMarket(entries,{query:'unrelated'}).length,0);
+});

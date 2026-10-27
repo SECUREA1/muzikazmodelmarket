@@ -30,13 +30,13 @@ test('factory item shipment reserves and binds at accept, then settles only afte
  const actions=[],deliveries=[];let boundJob;
  const f=await setup(t,{supplyAction:async(_identity,_sim,player,_environment,command)=>{
   actions.push(command.operation);
-  if(command.operation==='reserve')return {shipmentId:'factory-batch',supplyManifest:[{itemId:'native:chair',quantity:100}],destinationMapId:'public-commons'};
+  if(command.operation==='reserve')return {shipmentId:'factory-batch',supplyManifest:[{itemId:'native:chair',quantity:100}],destinationMapId:'public-commons',packing:{recipeId:'furniture',unitsPerContainer:25,containersRequired:4,containerSlots:4,maxShipmentQuantity:100,sealed:true}};
   if(command.operation==='bind'){boundJob=command.jobId;assert.equal(command.contractId,'gulf-gateway');assert.equal(player.shipping.job.shipmentId,'factory-batch');}
  },supplyDelivery:async(identity,result,environment)=>{
   assert.equal(identity.walletId,'account:captain');assert.equal(environment.id,'copied-shipping-world');assert.equal(result.worldId,'hormuz-shipping');assert.equal(result.environmentId,environment.id);assert.equal(result.shipmentId,'factory-batch');assert.equal(result.jobId,boundJob);deliveries.push(result);return {id:'supply-delivery-receipt'};
  }});
  let view=await f.send('accept',{shipmentId:'factory-batch',contractId:'gulf-gateway'});
- assert.deepEqual(actions,['reserve','bind']);assert.equal(view.players[view.selfId].shipping.job.destinationMapId,'public-commons');assert.equal(deliveries.length,0);
+ assert.deepEqual(actions,['reserve','bind']);assert.equal(view.players[view.selfId].shipping.job.destinationMapId,'public-commons');assert.equal(view.players[view.selfId].shipping.job.supplyPacking.containersRequired,4);assert.equal(view.players[view.selfId].shipping.job.supplyPacking.sealed,true);assert.equal(deliveries.length,0);
  await assert.rejects(f.send('unload'),/Dock/);assert.equal(deliveries.length,0);
  for(let index=0;index<4;index++){await f.send('load',{side:index%2?'starboard':'port'});f.advance(2000);}
  await f.send('secure');await f.send('depart');assert.equal(deliveries.length,0);

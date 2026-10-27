@@ -1,4 +1,6 @@
 import {randomUUID} from 'node:crypto';
+import {nativeMarketCatalog} from './native-market-catalog.mjs';
+import {worldFactoryRecipe,worldFactoryPlan} from './public/js/world-factory-recipes.js';
 import {cleanWallet} from './user-json-database.mjs';
 import {ensureWorldSupply,supplyItem} from './world-supply.mjs';
 import {SHIPPING_ID,SHIPPING_ROUTES,SHIPPING_RULES,isShippingEnvironment} from './public/js/shipping-config.js';
@@ -10,12 +12,23 @@ const activePhases=new Set(['loading','secured','sailing','unloading']);
 const routes=SHIPPING_ROUTES.filter(route=>route.from!==route.to&&!route.factoryExport);
 function quantity(value){if(!Number.isSafeInteger(value)||value<1||value>WORLD_SUPPLY_RULES.maxQuantity)fail('Choose 1 to 10,000 whole items.',422);return value;}
 function quoteFor(item,count){
- const subtotalMzk=Math.max(1,Math.round(Number(item.priceMzk??Number(item.priceUsd??item.price)*100)||1))*quantity(count),discountPercent=count>=WORLD_SUPPLY_RULES.bulkMinimum?WORLD_SUPPLY_RULES.bulkDiscountPercent:0;
- return {itemId:item.supplyId,quantity:count,subtotalMzk,discountPercent,priceMzk:Math.max(1,Math.floor(subtotalMzk*(100-discountPercent)/100)),buildMs:Math.min(WORLD_SUPPLY_RULES.maximumBuildMs,Math.max(WORLD_SUPPLY_RULES.minimumBuildMs,count*1000))};
+ const amount=quantity(count),rawPrice=Number(item.priceMzk??Number(item.priceUsd??item.price)*100),unitPriceMzk=Math.max(1,Math.round(rawPrice||1)),subtotalMzk=unitPriceMzk*amount,discountPercent=amount>=WORLD_SUPPLY_RULES.bulkMinimum?WORLD_SUPPLY_RULES.bulkDiscountPercent:0;
+ if(!Number.isSafeInteger(subtotalMzk))fail('The catalog price cannot be used for this production batch.',422);
+ return {itemId:item.supplyId,quantity:amount,unitPriceMzk,subtotalMzk,discountPercent,priceMzk:Math.max(1,Math.floor(subtotalMzk*(100-discountPercent)/100)),...worldFactoryPlan(item,amount,WORLD_SUPPLY_RULES)};
 }
 function advance(ledger,now){
- for(const job of Object.values(ledger.production))if(job.phase==='building'&&now>=job.readyAt){
-  ledger.factoryStock[job.itemId]=(ledger.factoryStock[job.itemId]||0)+job.quantity;job.phase='ready';job.completedAt=job.readyAt;
+ for(const job of Object.values(ledger.production))if(job.phase==='building'){
+  if(job.schemaVersion>=2&&Array.isArray(job.stages)&&job.stages.length){
+   for(const stage of job.stages)stage.phase=now>=stage.readyAt?'complete':now>=stage.startedAt?'processing':'waiting';
+   const pending=job.stages.findIndex(stage=>stage.phase!=='complete');
+   job.stageIndex=pending<0?job.stages.length-1:pending;
+   const stage=job.stages[job.stageIndex];
+   Object.assign(job,{stageId:stage.id,stageName:stage.name,stageReadyAt:stage.readyAt,progress:Math.max(0,Math.min(100,Math.floor((now-job.startedAt)/(job.readyAt-job.startedAt)*100)))});
+   if(pending>=0)continue;
+  }
+  if(now<job.readyAt)continue;
+  ledger.factoryStock[job.itemId]=(ledger.factoryStock[job.itemId]||0)+job.quantity;
+  Object.assign(job,{phase:'ready',completedAt:job.readyAt,progress:100,shippingRequired:true});
  }
  for(const shipment of Object.values(ledger.shipments))if(shipment.phase==='reserved'&&now>=shipment.leaseUntil){
   shipment.releasedReservations ||= {};shipment.releasedReservations[shipment.captainId+':'+(shipment.jobId||'')]=true;
@@ -42,7 +55,8 @@ export class WorldSupplyService {
   return this.database.transaction(data=>{
    const ledger=ensureWorldSupply(data,directory);advance(ledger,now);
    if(mapId&&mapId!=='world'&&!directory.maps.some(map=>map.id===mapId))fail('Choose an available map.',404);
-   return {serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:Object.values(ledger.catalog).map(item=>({...item,id:item.supplyId})),worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),shipments:Object.values(ledger.shipments),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))};
+   const catalog=nativeMarketCatalog(Object.values(ledger.catalog),directory.maps).items;
+   return {serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,recipe:worldFactoryRecipe(item)})),worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),shipments:Object.values(ledger.shipments),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))};
   });
  }
  async action(walletId,operation,input={}){
@@ -60,12 +74,14 @@ export class WorldSupplyService {
     if(Number(user.tokens.MZK||0)<quote.priceMzk)fail('Not enough MZK for this production batch.');
     if(Object.values(ledger.production).filter(job=>job.ownerId===wallet&&job.phase==='building').length>=20)fail('Finish an existing production batch before starting another.');
     user.tokens.MZK-=quote.priceMzk;
-    result={id:randomUUID(),ownerId:wallet,...quote,phase:'building',startedAt:now,readyAt:now+quote.buildMs};ledger.production[result.id]=result;
+    result={id:randomUUID(),schemaVersion:2,ownerId:wallet,...quote,stages:quote.stages.map((stage,index)=>({...stage,startedAt:now+stage.startedOffsetMs,readyAt:now+stage.startedOffsetMs+stage.durationMs,phase:index===0?'processing':'waiting'})),phase:'building',startedAt:now,readyAt:now+quote.buildMs,stageIndex:0,stageId:quote.stages[0].id,stageName:quote.stages[0].name,stageReadyAt:now+quote.stages[0].durationMs,progress:0,shippingRequired:true};ledger.production[result.id]=result;
     data.transactions.push({id:'factory:'+result.id,type:'WORLD_FACTORY_PRODUCTION',walletId:wallet,requestId:input.requestId,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,itemId:item.supplyId,quantity:quote.quantity,createdAt:new Date(now).toISOString()});
    }else if(operation==='dispatch'){
     const item=supplyItem(data,input.itemId),count=quantity(input.quantity),destinationMapId=input.destinationMapId,sourceMapId=input.sourceMapId||'factory',shippingMapId=input.shippingMapId||SHIPPING_ID,contractId=input.contractId||'gulf-gateway',route=routes.find(route=>route.id===contractId);
     if(!route)fail('Choose a shipping lane with a destination port.',422);
-    if(count>(route.units||4)*WORLD_SUPPLY_RULES.itemsPerContainer)fail('This batch exceeds the selected manifest. Split it into smaller shipments.',422);
+    const recipe=worldFactoryRecipe(item),containerSlots=route.units||4,maxShipmentQuantity=containerSlots*recipe.unitsPerContainer;
+    if(count>maxShipmentQuantity)fail('This manifest carries up to '+maxShipmentQuantity+' '+item.name+' units ('+recipe.unitsPerContainer+' per container). Split the batch or choose a larger manifest.',422);
+    const packing={recipeId:recipe.id,unitsPerContainer:recipe.unitsPerContainer,containersRequired:Math.ceil(count/recipe.unitsPerContainer),containerSlots,maxShipmentQuantity,sealed:true};
     if(destinationMapId!=='world'&&!directory.maps.some(map=>map.id===destinationMapId))fail('Choose an available destination map.',404);
     if(!directory.maps.some(map=>map.id===shippingMapId&&isShippingEnvironment(map)))fail('Choose an available shipping map.',404);
     if(sourceMapId!=='factory'&&sourceMapId!=='world'&&!directory.maps.some(map=>map.id===sourceMapId))fail('Choose an available source inventory.',404);
@@ -73,7 +89,7 @@ export class WorldSupplyService {
     const sourceStock=sourceMapId==='factory'?ledger.factoryStock:sourceMapId==='world'?ledger.worldStock:ledger.maps[sourceMapId].stock;
     if((sourceStock[item.supplyId]||0)<count)fail(sourceMapId==='factory'?'Complete enough factory production before dispatching this item.':'The source warehouse has insufficient stock for this transfer.');
     sourceStock[item.supplyId]-=count;
-    result={id:randomUUID(),ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,phase:'queued',sourceMapId,destinationMapId,shippingMapId,contractId,createdAt:now,transferMode:'simulated-onward-freight'};result.transferTask={id:'transfer:'+result.id,phase:'awaiting-sea-delivery',fromPortId:route.to,destinationMapId,mode:'simulated-onward-freight',quantity:count};ledger.shipments[result.id]=result;
+    result={id:randomUUID(),ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing,phase:'queued',sourceMapId,destinationMapId,shippingMapId,contractId,createdAt:now,transferMode:'simulated-onward-freight'};result.transferTask={id:'transfer:'+result.id,phase:'awaiting-sea-delivery',fromPortId:route.to,destinationMapId,mode:'simulated-onward-freight',quantity:count};ledger.shipments[result.id]=result;
    }else if(operation==='cancel'){
     if(input.productionId){
      const job=own(ledger.production,input.productionId)&&ledger.production[input.productionId];if(!job||job.ownerId!==wallet)fail('This production batch is not yours.',403);
@@ -105,7 +121,7 @@ export class WorldSupplyService {
     if(shipment.phase!=='queued')fail('Another captain has reserved this shipment or it has already finished.');
     if(command.contractId!==shipment.contractId)fail('Choose the shipping route assigned to these factory goods.',422);
     shipment.phase='reserved';shipment.captainId=wallet;shipment.leaseUntil=now+SHIPPING_RULES.contractLimitMs+60000;
-    return {shipmentId:shipment.id,supplyManifest:[{itemId:shipment.itemId,name:shipment.itemName,quantity:shipment.quantity}],destinationMapId:shipment.destinationMapId};
+    return {shipmentId:shipment.id,supplyManifest:[{itemId:shipment.itemId,name:shipment.itemName,quantity:shipment.quantity}],destinationMapId:shipment.destinationMapId,packing:shipment.packing};
    }
    if(command.operation==='release'&&(shipment.releasedReservations?.[wallet+':'+(command.jobId||'')]||shipment.phase==='delivered'&&shipment.captainId===wallet&&shipment.jobId===command.jobId))return {shipmentId:shipment.id};
    if(shipment.phase!=='reserved'||shipment.captainId!==wallet)fail('This shipment reservation belongs to another voyage.');

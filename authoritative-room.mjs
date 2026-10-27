@@ -359,8 +359,8 @@ export class AuthoritativeRooms {
   }arrivingPlayer.lastSeen=this.now();}
   const {sim,manifest}=this.step(room,environment),now=this.now();
   if(freshInput&&sim.players[actorId]&&!sim.players[actorId].replacedByRoom)sim.players[actorId].lastSeen=now;
-  const prisonSignature=prisonCommandSignature(command);
-  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){const prior=sim.receipts[receiptKey];if(prior.action!==requestedAction)fail('Request ID already used.',409);if(prisonSignature&&prior.prisonSignature!==prisonSignature)fail(prior.prisonSignature?'Request ID already used for another prison packet.':'This saved prison request has no packet signature. Retry with a new request id.',409);return {...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:prior.result};}
+  const spawnSignature=requestedAction==='spawn'?JSON.stringify([command.itemId||null,command.sku||null,command.modelId||null]):null,prisonSignature=prisonCommandSignature(command);
+  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){const prior=sim.receipts[receiptKey];if(prior.action!==requestedAction||spawnSignature&&prior.spawnSignature&&prior.spawnSignature!==spawnSignature)fail('Request ID already used for another item or action.',409);if(prisonSignature&&prior.prisonSignature!==prisonSignature)fail(prior.prisonSignature?'Request ID already used for another prison packet.':'This saved prison request has no packet signature. Retry with a new request id.',409);return {...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:prior.result};}
   let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   const rangeWasActive=Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000);
   await this.releaseCancelledSupply(identity,sim,player,environment,now);
@@ -452,7 +452,7 @@ export class AuthoritativeRooms {
      if(command.operation==='accept'&&player.shipping?.job?.contractId==='atlas-export'){try{await this.shippingBind(identity,player,command,now);}catch(error){cancelShipping(player,sim,now,'Atlas cargo binding failed. The staged model remains at the export desk.');throw error;}}
      if(supply){
       const job=player.shipping.job;
-      Object.assign(job,{shipmentId:supply.shipmentId,supplyManifest:copy(supply.supplyManifest||[]),destinationMapId:supply.destinationMapId});
+      Object.assign(job,{shipmentId:supply.shipmentId,supplyManifest:copy(supply.supplyManifest||[]),destinationMapId:supply.destinationMapId,...(supply.packing?{supplyPacking:copy(supply.packing)}:{})});
       await this.supplyAction(identity,sim,player,environment,{...command,operation:'bind',shipmentId:supply.shipmentId,jobId:job.id,contractId:job.contractId},now);
      }
     }catch(error){
@@ -801,7 +801,7 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
   if(prisonSignature){sim.prison.revision=(Number.isSafeInteger(sim.prison.revision)?sim.prison.revision:0)+1;result.prisonPacket={protocol:PRISON_PROTOCOL,version:PRISON_PROTOCOL_VERSION,revision:sim.prison.revision,requestId};if(result.prison)result.prison.revision=sim.prison.revision;}
   if(!transientCommand){const publicResult={...result,...(result.factory?{factory:publicFactoryState(result.factory)}:{}),...(result.testing?{testing:publicTestingState(result.testing)}:{}),...(result.logistics?{logistics:publicLogisticsState(result.logistics)}:{})};sim.events.push({id:requestId,actorId,action:requestedAction,...publicResult,at:now});sim.events=sim.events.slice(-100);}
-  sim.receipts[receiptKey]={action:requestedAction,result,...(prisonSignature?{prisonSignature}:{})};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
+  sim.receipts[receiptKey]={action:requestedAction,result,...(spawnSignature?{spawnSignature}:{}),...(prisonSignature?{prisonSignature}:{})};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   if(result.spawnedId){stepFactory(sim,environment,now);stepFactoryTesting(sim,environment,now);stepFactoryLogistics(sim,environment,now);}
   if(['join','npc-social'].includes(requestedAction)||result.residentId)saveResidentContinuity(player,id,now,actorId);
   return {...this.view(room),selfId:actorId,inputEpoch:player.inputEpoch,result};
