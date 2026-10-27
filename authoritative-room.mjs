@@ -26,7 +26,7 @@ import {stepFactoryTesting,factoryTestingView,publicTestingState} from './server
 import {stepFactory,factoryView,publicFactoryState} from './server-missile-factory.mjs';
 import {isFactoryLogisticsEnvironment} from './public/js/factory-logistics-config.js';
 import {stepFactoryLogistics,factoryLogisticsView,publicLogisticsState} from './server-factory-logistics.mjs';
-import {CASINO_ID,isCasinoEnvironment} from './public/js/casino-config.js';
+import {CASINO_ID,CASINO_LAYOUT_VERSION,isCasinoEnvironment} from './public/js/casino-config.js';
 import {casinoLifeView} from './server-casino-residents.mjs';
 import {residentLifeView} from './server-resident-life.mjs';
 import {residentArrivalPosition} from './server-resident-arrival.mjs';
@@ -224,6 +224,18 @@ export class AuthoritativeRooms {
 
   if(sim.construction){sim.radTox=null;sim.match=null;sim.projectiles={};for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox||actor.loot||actor.runtimeMachine){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));}
   if(!isPrisonEnvironment(environment))ensureResidentFurnishings(sim,environment,this.collision,room.objects,this.now());
+  if(isCasinoEnvironment(environment)&&sim.casinoLayoutVersion!==CASINO_LAYOUT_VERSION){
+   for(const player of Object.values(sim.players)){
+    if(!player.position)continue;
+    const point=player.position,floor=this.collision.groundAt(environment,point,{entry:true,actors:sim.actors,objects:room.objects}),inVault=Math.abs(point.x)<7.4&&point.z<-22.5&&point.z>-37.5;
+    if(!inVault&&floor&&Math.abs(floor.y-point.y)<.4&&this.collision.hasBodyClearance(environment,floor,.4,{actors:sim.actors,objects:room.objects}))continue;
+    const spawn=this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:32});
+    player.position={...spawn};player.floor=spawn.y;player.floorVersion=4;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
+    for(const key of ['heldId','seatedId','vehicleId']){const attached=sim.actors[player[key]];if(attached?.holderId===player.actorId)attached.holderId=null;player[key]=null;}
+    if(player.casinoTask?.status==='active'){player.casinoTask.status='cancelled';player.casinoTask.message='The renovated room moved this favor to a safe starting point. Ask your contact to start again.';}
+   }
+   sim.casinoLayoutVersion=CASINO_LAYOUT_VERSION;
+  }
   if(this.aiDefinitionVersions.get(sim)!==contentUpdatedAt){registerAIWorldDefinitions(sim,manifest);this.aiDefinitionVersions.set(sim,contentUpdatedAt);}
   if(!Object.values(sim.actors).some(actor=>actor.resident))this.collision.withActorCandidates(sim.actors,()=>stepWorldResidents(sim,environment,this.now(),0,{collision:this.collision,objects:room.objects}));
   if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment)){ensureRoadFleet(sim,environment,this.collision,room.objects);ensureFreight(sim,environment,this.collision,room.objects);}

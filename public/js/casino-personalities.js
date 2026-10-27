@@ -1,5 +1,5 @@
 import {CASINO_RESIDENTS} from './casino-config.js';
-export const CASINO_SKILLS=['poker','blackjack','roulette','dice','slots','hospitality','security','social'];
+export const CASINO_SKILLS=['poker','blackjack','roulette','dice','slots','baccarat','threecard','hospitality','security','social'];
 export const casinoClamp=(value,min=0,max=100)=>Math.max(min,Math.min(max,Number(value)||0));
 export function casinoHash(value){let result=2166136261;for(const character of String(value))result=Math.imul(result^character.charCodeAt(0),16777619);return result>>>0;}
 // Avalanche each deterministic practice draw before reducing it to a range.
@@ -32,12 +32,14 @@ const stories=[
  ['Upbeat socializer','Riley runs a walking group and came to catch up with friends before trying a few games.','friends and weekend plans','slots','citrus water',.95,.65,.65,.3],
  ['Patient enthusiast','Sky is a florist with an eye for colour who enjoys a relaxed game and a friendly conversation.','creative hobbies','slots','mint tea',.8,.9,.75,.35]
 ];
-const outfits=['#263b58','#263b58','#b79449','#9d7148','#476c62','#8e4c63','#294e49','#3b5369','#35594d','#4c475e','#485d63','#664b68','#9466a0','#4c8f96','#b47a63','#577db0','#8d6c99','#598677','#aa745e','#4c7894','#9c617a','#747e51'];
+const outfits=['#263b58','#263b58','#b79449','#9d7148','#476c62','#8e4c63','#294e49','#3b5369','#35594d','#4c475e','#485d63','#664b68','#9466a0','#4c8f96','#b47a63','#577db0','#8d6c99','#598677','#496d82','#4c7894','#9c617a','#747e51'];
 export const CASINO_PERSONALITIES=Object.fromEntries(CASINO_RESIDENTS.map((source,index)=>{
  const [temperament,backstory,conversation,favourite,drink,sociability,patience,curiosity,competitiveness]=stories[index];
  const skills=Object.fromEntries(CASINO_SKILLS.map(skill=>[skill,12+casinoHash(source.id+skill)%24]));skills.social=Math.round(30+sociability*50);skills.hospitality=source.duty==='host'||source.duty==='vendor'||source.duty==='cashier'?76+index%12:25+index%16;skills.security=source.duty==='guard'?88+index:10+index%12;if(source.game)skills[source.game]=source.duty==='dealer'?82+index%10:24+index*3%38;
  const appearance={outfit:outfits[index],accent:['#d8b56b','#a2d0c6','#c2a3dd'][index%3],hair:['#32241e','#332a29','#5b3928','#746452','#161e27'][index%5],skin:['#b78361','#e5ba98','#76503d','#c99275','#946343'][index%5],hairstyle:['short','swept','curly','bob','bald','bun'][index%6],accessory:source.duty==='guard'?'watch':['glasses','earrings','necklace','watch','none'][index%5],height:.95+index%6*.025,build:.94+index%5*.035};
- return [source.id,{id:source.id,name:source.name,temperament,backstory,preferences:{games:[favourite,...['poker','blackjack','roulette','dice','slots'].filter(game=>game!==favourite).slice(index%3,index%3+2)],conversation,drink},traits:{sociability,patience,curiosity,competitiveness},appearance,skills}];
+ const advanced=source.id.endsWith('guest-3')?'threecard':source.id.endsWith('guest-7')?'baccarat':null;
+ if(source.id.endsWith('dealer-poker-2'))skills.threecard=86;if(source.id.endsWith('dealer-blackjack-2'))skills.baccarat=88;
+ return [source.id,{id:source.id,name:source.name,temperament,backstory,preferences:{games:[...(advanced?[advanced]:[]),favourite,...['poker','blackjack','roulette','dice','slots'].filter(game=>game!==favourite).slice(index%3,index%3+2)],conversation,drink,room:advanced==='baccarat'?'high-limit salon':advanced==='threecard'?'three-card salon':index%2?'social lounge':'main floor'},traits:{sociability,patience,curiosity,competitiveness},appearance,skills}];
 }));
 export function casinoPersonality(id){return CASINO_PERSONALITIES[id]||CASINO_PERSONALITIES[CASINO_RESIDENTS[0].id];}
 export function growCasinoSkill(skills,key,amount=.35){if(!CASINO_SKILLS.includes(key))return 0;const previous=casinoClamp(skills[key]),gain=casinoClamp(amount,0,1)*(1-previous/125);skills[key]=Math.round(casinoClamp(previous+gain)*100)/100;return skills[key]-previous;}

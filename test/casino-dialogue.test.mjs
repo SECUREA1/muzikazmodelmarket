@@ -28,6 +28,16 @@ test('casino conversations answer actual questions, explain games and remember e
  assert.equal(player.tokens.MZK,1234);assert.equal(player.score,0);
 });
 
+test('hosts explain premium rooms, station limits and advanced decisions with the actual available actions',()=>{
+ const f=fixture(),{player,host}=f;
+ f.say(host,'casino-rooms');let reply=player.npcConversation.conversation.at(-1).text;assert.match(reply,/Aurelia High-Limit Salon/);assert.match(reply,/Royal Card Room/);assert.match(reply,/100–2500 MZK/);assert.match(reply,/10–500 MZK/);assert.match(reply,/equal additional wager/);
+ f.say(host,'question','Explain baccarat');reply=player.npcConversation.conversation.at(-1).text;assert.match(reply,/fixed rules|fixed.*rules/);assert.match(reply,/95% profit/);assert.match(reply,/push on a tie/);
+ f.say(host,'question','How do I play three-card poker?');reply=player.npcConversation.conversation.at(-1).text;assert.match(reply,/Play with an equal extra wager or Fold/);assert.match(reply,/Queen-high/);assert.match(reply,/no Pair Plus/i);
+ f.say(host,'question','Can I double in blackjack?');reply=player.npcConversation.conversation.at(-1).text;assert.match(reply,/Double adds an equal MZK wager/);assert.doesNotMatch(reply,/no.*doubling/i);
+ f.say(host,'question','Where is the staff service room?');reply=player.npcConversation.conversation.at(-1).text;assert.match(reply,/physically collect clean service supplies/);assert.match(reply,/return to the floor/);
+ f.say(host,'question','I enjoy three-card poker');f.say(host,'question','Do you remember my favourite game?');assert.match(player.npcConversation.conversation.at(-1).text,/enjoy three-card poker/);assert.equal(player.tokens.MZK,1234);
+});
+
 test('role skills, personality, live plans and observations produce contextual follow-ups',()=>{
  const f=fixture(),{sim,player,host,guard}=f;
  host.resident.task='helping guests find the poker salon';host.resident.goal={kind:'meet-guest',targetId:f.guest.id};host.resident.memory=[{kind:'game',text:'Nora just helped a new guest understand the draw',at:99000}];

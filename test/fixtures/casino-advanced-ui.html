@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Advanced casino interface fixture</title><style>body{margin:0;background:#14251d;color:#eff5df;font:14px system-ui}main{height:100dvh;position:relative}</style></head><body><main></main><script type="module">
+import {mountCasinoUI} from '../../public/js/casino-ui.js';
+import {CASINO_STATIONS} from '../../public/js/casino-config.js';
+const games=[{id:'baccarat',minBetMzk:100,maxBetMzk:2500,betStepMzk:1,rules:'Player and Banker draw automatically under Punto Banco rules.',payouts:'Banker wins return your stake plus 95% profit, rounded down to whole MZK. Tie returns 9×.'},{id:'threecard',minBetMzk:10,maxBetMzk:500,betStepMzk:1,rules:'Ante, then Play with an equal wager or Fold. Dealer needs Q-high. No Pair Plus side bet.',payouts:'Ante and Play win 1:1. Ante bonus: straight 1:1, trips 4:1, straight flush 5:1.'},{id:'blackjack',minBetMzk:1,maxBetMzk:100,betStepMzk:1,rules:'Double on your first two cards: add an equal stake, draw one card, and stand.',payouts:'Wins return 2× the total stake.'}];
+window.bank={balance:5000,activeRounds:{},history:[],games,vendors:[]};window.calls=[];window.requests=[];window.sessionCount=0;window.loseNextResponse=false;let counter=0;const replies=new Map();let position={x:29,y:0,z:-27.5};
+function settle(round){bank.balance+=round.payoutMzk;delete bank.activeRounds[round.game];bank.history.unshift(structuredClone(round));}
+async function request(path,options={}){
+ calls.push(path);if(path==='/api/market/session')return {csrfToken:'proof-'+ ++sessionCount};if(path==='/api/casino/state')return structuredClone(bank);
+ const body=JSON.parse(options.body);requests.push(body);if(replies.has(body.requestId))return structuredClone(replies.get(body.requestId));
+ let round=bank.activeRounds[body.game],debit=0;
+ if(body.operation==='bet'){
+  const station=CASINO_STATIONS.find(item=>item.id===body.stationId);debit=body.betMzk;bank.balance-=debit;round={id:'round-'+ ++counter,game:body.game,stationId:body.stationId,phase:'playing',revision:1,betMzk:body.betMzk,totalStakeMzk:body.betMzk,payoutMzk:0,limits:{tier:station.tier||'regular',minBetMzk:station.minBetMzk||1,maxBetMzk:station.maxBetMzk||100,betStepMzk:1}};
+  if(body.game==='baccarat'){Object.assign(round,{phase:'complete',selection:body.selection,hand:[0,3],dealerHand:[4,13],playerTotal:7,dealerTotal:8,winner:'banker',natural:true,payoutMzk:body.selection==='banker'?body.betMzk+Math.floor(body.betMzk*.95):0,commissionMzk:body.selection==='banker'?body.betMzk-Math.floor(body.betMzk*.95):0,outcome:body.selection==='banker'?'win':'loss'});settle(round);}
+  else if(body.game==='threecard'){Object.assign(round,{anteMzk:body.betMzk,playMzk:0,hand:[12,0,1],dealerHand:[null,null,null],handRank:{label:'Straight flush',rank:5},outcome:'Choose Play or Fold'});bank.activeRounds.threecard=round;}
+  else{Object.assign(round,{hand:[2,5],dealerHand:[8,null],playerTotal:11,dealerTotal:null,canDouble:true});bank.activeRounds.blackjack=round;}
+ }else if(body.game==='threecard'){
+  round.revision++;round.phase='complete';round.dealerHand=[3,16,25];round.dealerRank={label:'Pair'};round.dealerQualified=true;
+  if(body.operation==='play'){debit=round.anteMzk;bank.balance-=debit;round.playMzk=debit;round.totalStakeMzk+=debit;round.anteReturnMzk=round.anteMzk*2;round.playReturnMzk=debit*2;round.anteBonusMzk=round.anteMzk*5;round.payoutMzk=round.anteReturnMzk+round.playReturnMzk+round.anteBonusMzk;round.outcome='win';}
+  else{Object.assign(round,{anteReturnMzk:0,playReturnMzk:0,anteBonusMzk:0,payoutMzk:0,outcome:'fold'});}
+  settle(round);
+ }else{debit=round.betMzk;bank.balance-=debit;Object.assign(round,{phase:'complete',revision:2,totalStakeMzk:round.betMzk*2,hand:[2,5,8],dealerHand:[8,20],playerTotal:21,dealerTotal:19,canDouble:false,payoutMzk:round.betMzk*4,outcome:'win'});settle(round);}
+ const result={balance:bank.balance,round:structuredClone(round),receipt:{betMzk:round.betMzk,totalStakeMzk:round.totalStakeMzk,debitedMzk:debit,payoutMzk:round.payoutMzk,netMzk:round.payoutMzk-round.totalStakeMzk},message:round.phase==='complete'?'Round settled.':'Choose your next action.'};replies.set(body.requestId,result);if(loseNextResponse){loseNextResponse=false;throw Error('Receipt lost');}return structuredClone(result);
+}
+function mount(){window.ui=mountCasinoUI({stage:document.querySelector('main'),getEnvironment:()=>({id:'muzikaz-casino'}),getPosition:()=>position,request});}
+window.goStation=id=>{ui.reset();const station=CASINO_STATIONS.find(item=>item.id===id);position={...station.position,z:station.position.z+3.5};ui.open();};
+window.reloadInterface=()=>{ui.dispose();mount();ui.open();};
+mount();ui.open();window.ready=true;
+</script></body></html>

@@ -7,23 +7,45 @@ presence, native walking controls and MZK wallet.
 
 Walk with the normal controls and press **E / Use** beside a station. The
 central promenade and cross aisles connect two poker tables, two blackjack
-tables, European roulette, hosted dice, twelve slot machines, a refreshments
-vendor, cashier, ATM, welcome host and the secured vault. The vault has a solid,
+tables, European roulette, hosted dice, twelve slot machines, the Aurelia
+High-Limit Salon, Royal Card Room, staff service room, refreshments vendor,
+cashier, ATM, welcome host and the secured vault. The vault has a solid,
 locked safe door; it is not a player withdrawal facility. Exactly two security
 guards patrol the public floor and vault corridor.
 
-All five games accept whole-number wagers of **1–100 MZK**. Poker is five-card
-draw with a jacks-or-better paytable: deal, choose holds and draw once. Blackjack
-supports hit and stand; the dealer stands on all 17s. Roulette supports a
+Main-floor games accept whole-number wagers of **1–100 MZK**. Aurelia baccarat
+accepts **100–2,500 MZK**; Royal three-card poker accepts a **10–500 MZK ante**.
+The table panel shows its actual limits before a wager is placed.
+
+Poker is five-card draw with a jacks-or-better paytable: deal, choose holds and
+draw once. Blackjack supports hit, stand and an initial two-card **Double**:
+add an equal wager, draw exactly one card, then stand. The dealer stands on all
+17s. Roulette supports a
 single number, red/black and odd/even. Hosted dice offers low, high and seven.
 Each table displays its rules and returns, including returned stakes.
+
+Baccarat automatically follows Punto Banco drawing rules after a Player, Banker
+or Tie selection. Player wins return twice the stake; Banker wins return the
+stake plus 95% profit rounded down to whole MZK. The receipt shows commission
+and rounding withheld. A winning Tie bet returns nine times the stake; Player
+and Banker bets push on a tie. Each hand uses a fresh server-shuffled deck.
+
+Three-card poker deals three player cards and hides the dealer's three cards.
+**Play** adds a second wager equal to the ante; **Fold** loses the ante. The
+dealer qualifies with queen-high or better. A qualified dealer pays winning
+Ante and Play bets at 1:1, with ties pushing. When the dealer does not qualify,
+the Ante wins and Play pushes. After Play, a straight earns a 1× ante bonus,
+three of a kind 4×, and a straight flush 5×, independently of the dealer result.
+There is no Pair Plus wager. The panel separates Ante, Play and bonus returns.
 
 Wagers, random outcomes and payouts are handled by the server. MZK debits,
 payouts, saved rounds and receipts commit together in the canonical user
 database. A request ID can settle an action only once, and follow-up card
 actions require the current round revision. Hidden cards and undealt decks
-are not sent to the browser. Active blackjack and poker hands survive closing
-the table or reloading; return to the matching table to finish them.
+are not sent to the browser. Active blackjack, draw-poker and three-card hands
+survive closing the table or reloading; return to the exact table to finish
+them. Older saved hands without a table identity remain playable at a matching
+main-floor table. Retried actions retain their original settlement identity.
 
 The cashier and ATM show the same authoritative MZK balance and recent
 receipts. There is no separate chip balance. Refreshments cost MZK and restore
@@ -34,6 +56,14 @@ The casino's twenty-two animated residents include two security guards, two
 hosts, a cashier, a vendor, six dealers/game hosts and ten guests. Their visible
 play, conversations and movement are ambient simulations; they do not place
 wagers against player wallets. The map runs without RAD-TOX encounters.
+
+Ellis and Leo physically rotate between their main-floor tables and the Royal
+and Aurelia salons. Advanced practice waits for a dealer to arrive and finishes
+an active round before rotating. Staff restock supplies, take a break in the
+service room, and return to duty. Guests use furnished booths and conversation
+lounges between games. Room doors and aisles remain walkable. A saved visitor
+whose old position intersects a renovated wall returns to clear public ground;
+their wallet, hands, memories and earned progress are retained.
 
 ## People, conversations and skills
 
@@ -83,4 +113,5 @@ Implementation lives in `casino-world.mjs`, `server-casino.mjs`,
 `public/js/environments/casino-land.js`. Character decisions and profiles live
 in `server-casino-residents.mjs` and `public/js/casino-personalities.js`;
 `server-casino-dialogue.mjs` and `server-casino-tasks.mjs` handle conversations
-and staff favors.
+and staff favors. Shared baccarat and three-card rules live in
+`public/js/casino-advanced-rules.js`.
