@@ -1,5 +1,6 @@
 import {FUNHOUSE_MODEL_INFO,createFunhouseModel,updateFunhouseModel} from './clown-funhouse-models.js';
 import {createFreightModel,updateFreightVisual} from './freight-models.js';
+import {TESTING_MODEL_INFO,createTestingModel,updateTestingModel} from './factory-testing-props.js';
 import {FACTORY_MODEL_INFO,createFactoryModel,updateFactoryModel} from './missile-factory-model.js';
 import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness-equipment.js';
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
@@ -39,6 +40,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...TESTING_MODEL_INFO,
   ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,[spec.name,'Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.',[spec.beam,spec.height,spec.length]]])),
   'shipping-container-box':['Intermodal Cargo Container','Corrugated steel container with locking bars and corner castings.',[2.4,2.6,6]],
   'shipping-port-crane':['Ship-to-Shore Gantry Crane','Container terminal gantry with boom, lift cables, trolley and spreader.',[14,26,40]],
@@ -325,7 +327,8 @@ export function createBuilderModel(id,options={}) {
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
 
   let root;
-  if(FACTORY_MODEL_INFO[id])root=createFactoryModel(id);
+  if(TESTING_MODEL_INFO[id])root=createTestingModel(id);
+  else if(FACTORY_MODEL_INFO[id])root=createFactoryModel(id);
   else if(FITNESS_ITEMS[id])root=createFitnessEquipment(id);
   else if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
   else if(id==='alpine-mountain')root=createAlpineMountain(THREE);

@@ -56292,7 +56292,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-24T01:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T01:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
     "thumbnailUrl": "/public/images/factory/missile-factory.svg",
@@ -56708,6 +56708,44 @@
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
+          }
+        },
+        {
+          "id": "factory-proving-gate",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "East gate · Factory Proving Grounds",
+          "position": {
+            "x": 74,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "testingStation": false,
+            "destructible": false,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Enter Factory Proving Grounds · E / Use",
+            "action": "teleport",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-factory-proving-grounds"
+            }
           }
         }
       ],
@@ -57135,6 +57173,15 @@
             "width": 16,
             "depth": 64,
             "description": "Keep the truck route clear between loading and dispatch."
+          },
+          {
+            "id": "factory-proving-gate",
+            "name": "East gate · Factory Proving Grounds",
+            "x": 70,
+            "z": 35,
+            "width": 14,
+            "depth": 12,
+            "description": "Walk through the neighboring test range gate with your completed factory model."
           },
           {
             "id": "factory-steel-yard",
@@ -64950,5 +64997,1123 @@
       }
     },
     "playUrl": "model-explorer.html?environment=muzikaz-clown-funhouse&house=muzikaz-clown-funhouse&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "muzikaz-factory-proving-grounds",
+    "name": "Atlas Factory Proving Grounds",
+    "category": "Factory & engineering",
+    "game": "factory-proving",
+    "mapColor": "#ef8b45",
+    "mapTheme": "industrial",
+    "worldId": "skyline-deck",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-27T00:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playUrl": "model-explorer.html?environment=muzikaz-factory-proving-grounds&house=muzikaz-factory-proving-grounds&autoplay=1&mode=multiplayer",
+    "adjacentTo": "muzikaz-missile-factory",
+    "label": "Crafted-model tests · live launches · mountain access",
+    "description": "The neighboring factory test range connects your crafted training missiles and cargo rockets to shared launch-pad challenges. Prepare a saved model, deploy it on the pad, arm a countdown from the control bunker, and watch a synchronized scripted flight, target pulse or cargo touchdown. Telemetry records the score and grants mountain-facility clearance. The locked hatch leads into an underground power-containment game compound.",
+    "indoor": false,
+    "outdoor": true,
+    "testing": {
+      "enabled": true,
+      "kind": "proving",
+      "stations": [
+        {
+          "id": "proving-setup",
+          "kind": "setup",
+          "name": "Test preparation & telemetry",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-pad",
+          "kind": "pad",
+          "name": "Shared launch pad",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -10
+          },
+          "interactionDistance": 8
+        },
+        {
+          "id": "proving-control",
+          "kind": "control",
+          "name": "Arm & launch control",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 18
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-hatch",
+          "kind": "hatch",
+          "name": "Mountain facility access hatch",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 25
+          },
+          "interactionDistance": 6
+        }
+      ],
+      "targets": [
+        {
+          "id": "target-alpha",
+          "kind": "accuracy",
+          "profileId": "accuracy",
+          "name": "Alpha practice target",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -70
+          },
+          "radius": 8
+        },
+        {
+          "id": "cargo-zone",
+          "kind": "cargo",
+          "profileId": "cargo",
+          "name": "Cargo touchdown platform",
+          "position": {
+            "x": 35,
+            "y": 0.02,
+            "z": -60
+          },
+          "radius": 10
+        }
+      ]
+    },
+    "factoryTesting": {
+      "enabled": true,
+      "kind": "proving",
+      "stations": [
+        {
+          "id": "proving-setup",
+          "kind": "setup",
+          "name": "Test preparation & telemetry",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-pad",
+          "kind": "pad",
+          "name": "Shared launch pad",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -10
+          },
+          "interactionDistance": 8
+        },
+        {
+          "id": "proving-control",
+          "kind": "control",
+          "name": "Arm & launch control",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 18
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-hatch",
+          "kind": "hatch",
+          "name": "Mountain facility access hatch",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 25
+          },
+          "interactionDistance": 6
+        }
+      ],
+      "targets": [
+        {
+          "id": "target-alpha",
+          "kind": "accuracy",
+          "profileId": "accuracy",
+          "name": "Alpha practice target",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -70
+          },
+          "radius": 8
+        },
+        {
+          "id": "cargo-zone",
+          "kind": "cargo",
+          "profileId": "cargo",
+          "name": "Cargo touchdown platform",
+          "position": {
+            "x": 35,
+            "y": 0.02,
+            "z": -60
+          },
+          "radius": 10
+        }
+      ]
+    },
+    "thumbnailUrl": "/public/images/factory/proving-grounds.svg",
+    "spawn": {
+      "x": -65,
+      "y": 0.02,
+      "z": 35,
+      "rotationY": -1.5707963267948966
+    },
+    "streets": [
+      {
+        "id": "proving-service-road",
+        "name": "Atlas Test Range Service Road",
+        "from": {
+          "x": -105,
+          "z": 96
+        },
+        "to": {
+          "x": 105,
+          "z": 96
+        },
+        "width": 10
+      }
+    ],
+    "builderScene": {
+      "version": 3,
+      "layout": "factory-proving-grounds",
+      "mapSize": 220,
+      "objects": [
+        {
+          "id": "proving-setup",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Test preparation & telemetry",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -42,
+            "y": 0,
+            "z": 31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "setup",
+            "testingStationId": "proving-setup",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Test preparation & telemetry · E / Use"
+          }
+        },
+        {
+          "id": "proving-pad",
+          "modelId": "testing-launch-pad",
+          "asset": {
+            "buildAssetId": "testing-launch-pad"
+          },
+          "name": "Shared launch pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 8,
+            "testingStation": "pad",
+            "testingStationId": "proving-pad",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Open Shared launch pad · E / Use"
+          }
+        },
+        {
+          "id": "proving-control",
+          "modelId": "testing-launch-console",
+          "asset": {
+            "buildAssetId": "testing-launch-console"
+          },
+          "name": "Arm & launch control",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 14.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-control",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Arm & launch control · E / Use"
+          }
+        },
+        {
+          "id": "proving-hatch",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Mountain facility access hatch",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 50,
+            "y": 0,
+            "z": 21.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "hatch",
+            "testingStationId": "proving-hatch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Mountain facility access hatch · E / Use"
+          }
+        },
+        {
+          "id": "target-alpha",
+          "modelId": "testing-range-target",
+          "asset": {
+            "buildAssetId": "testing-range-target"
+          },
+          "name": "Alpha practice target",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "testingTarget": "accuracy",
+            "testingTargetApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Alpha practice target"
+          }
+        },
+        {
+          "id": "cargo-zone",
+          "modelId": "testing-cargo-platform",
+          "asset": {
+            "buildAssetId": "testing-cargo-platform"
+          },
+          "name": "Cargo touchdown platform",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 35,
+            "y": 0,
+            "z": -60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "testingTarget": "cargo",
+            "testingTargetApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Cargo touchdown platform"
+          }
+        },
+        {
+          "id": "proving-factory-return",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Return to Atlas Factory",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -74,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "action": "teleport",
+            "prompt": "Return to Atlas Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-missile-factory"
+            }
+          }
+        }
+      ],
+      "streets": [
+        {
+          "id": "proving-service-road",
+          "name": "Atlas Test Range Service Road",
+          "from": {
+            "x": -105,
+            "z": 96
+          },
+          "to": {
+            "x": 105,
+            "z": 96
+          },
+          "width": 10
+        }
+      ],
+      "layoutMeta": {
+        "color": 5398882,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "proving",
+          "stations": [
+            {
+              "id": "proving-setup",
+              "kind": "setup",
+              "name": "Test preparation & telemetry",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": 35
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "proving-pad",
+              "kind": "pad",
+              "name": "Shared launch pad",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -10
+              },
+              "interactionDistance": 8
+            },
+            {
+              "id": "proving-control",
+              "kind": "control",
+              "name": "Arm & launch control",
+              "position": {
+                "x": -24,
+                "y": 0.02,
+                "z": 18
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "proving-hatch",
+              "kind": "hatch",
+              "name": "Mountain facility access hatch",
+              "position": {
+                "x": 50,
+                "y": 0.02,
+                "z": 25
+              },
+              "interactionDistance": 6
+            }
+          ],
+          "targets": [
+            {
+              "id": "target-alpha",
+              "kind": "accuracy",
+              "profileId": "accuracy",
+              "name": "Alpha practice target",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -70
+              },
+              "radius": 8
+            },
+            {
+              "id": "cargo-zone",
+              "kind": "cargo",
+              "profileId": "cargo",
+              "name": "Cargo touchdown platform",
+              "position": {
+                "x": 35,
+                "y": 0.02,
+                "z": -60
+              },
+              "radius": 10
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "proving-setup",
+            "name": "Test preparation & telemetry",
+            "x": -42,
+            "z": 35,
+            "width": 14,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-pad",
+            "name": "Shared launch pad",
+            "x": 0,
+            "z": -10,
+            "width": 18,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-control",
+            "name": "Arm & launch control",
+            "x": -24,
+            "z": 18,
+            "width": 14,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-hatch",
+            "name": "Mountain facility access hatch",
+            "x": 50,
+            "z": 25,
+            "width": 14,
+            "depth": 14,
+            "description": "Locked mountain-facility entrance. Complete both accuracy and cargo tests to earn access."
+          },
+          {
+            "id": "target-alpha",
+            "name": "Alpha practice target",
+            "x": 0,
+            "z": -70,
+            "width": 16,
+            "depth": 16,
+            "description": "Visible practice target for the training accuracy challenge."
+          },
+          {
+            "id": "cargo-zone",
+            "name": "Cargo touchdown platform",
+            "x": 35,
+            "z": -60,
+            "width": 20,
+            "depth": 20,
+            "description": "Scripted cargo landing target with a marked touchdown apron."
+          },
+          {
+            "id": "proving-factory-gate",
+            "name": "Factory west gate",
+            "x": -74,
+            "z": 35,
+            "width": 12,
+            "depth": 12,
+            "description": "Walk back through the neighboring factory gate at any time."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "proving"
+        }
+      }
+    }
+  },
+  {
+    "id": "muzikaz-mountain-compound",
+    "name": "Mountain Nuclear Research Compound",
+    "category": "Factory & engineering",
+    "game": "mountain-compound",
+    "mapColor": "#8f9bdf",
+    "mapTheme": "industrial",
+    "worldId": "skyline-deck",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-27T00:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playUrl": "model-explorer.html?environment=muzikaz-mountain-compound&house=muzikaz-mountain-compound&autoplay=1&mode=multiplayer",
+    "adjacentTo": "muzikaz-factory-proving-grounds",
+    "label": "Locked underground facility · containment puzzle · deep bunker",
+    "description": "Enter an underground mountain game facility with an entry checkpoint, reinforced blast doors, illuminated access corridors, observation gallery, control room and a nuclear-themed containment power-core hall. Factory proving-ground clearance unlocks the surface hatch; a symbolic three-channel power puzzle unlocks the deep bunker. All systems are fictional game interactions. Return to the proving grounds from the surface lift at any time.",
+    "indoor": true,
+    "outdoor": false,
+    "testing": {
+      "enabled": true,
+      "kind": "compound",
+      "stations": [
+        {
+          "id": "compound-return",
+          "kind": "return",
+          "name": "Surface return lift",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-containment",
+          "kind": "containment",
+          "name": "Power containment puzzle",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 8
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-deep-hatch",
+          "kind": "deep-hatch",
+          "name": "Deep bunker access",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -20
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "factoryTesting": {
+      "enabled": true,
+      "kind": "compound",
+      "stations": [
+        {
+          "id": "compound-return",
+          "kind": "return",
+          "name": "Surface return lift",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-containment",
+          "kind": "containment",
+          "name": "Power containment puzzle",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 8
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-deep-hatch",
+          "kind": "deep-hatch",
+          "name": "Deep bunker access",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -20
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "compound": {
+      "enabled": true,
+      "locked": true,
+      "deepBoundaryZ": -26
+    },
+    "thumbnailUrl": "/public/images/factory/mountain-compound.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 35,
+      "rotationY": 0
+    },
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "mountain-compound",
+      "mapSize": 160,
+      "objects": [
+        {
+          "id": "compound-return",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Surface return lift",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "return",
+            "testingStationId": "compound-return",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Return to the proving grounds · E / Use",
+            "action": "teleport",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-factory-proving-grounds"
+            }
+          }
+        },
+        {
+          "id": "compound-containment",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Power containment puzzle",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 4.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "containment",
+            "testingStationId": "compound-containment",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Power containment puzzle · E / Use"
+          }
+        },
+        {
+          "id": "compound-deep-hatch",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Deep bunker access",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -23.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "deep-hatch",
+            "testingStationId": "compound-deep-hatch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Deep bunker access · E / Use"
+          }
+        },
+        {
+          "id": "compound-core",
+          "modelId": "testing-containment-core",
+          "asset": {
+            "buildAssetId": "testing-containment-core"
+          },
+          "name": "Mountain containment power core",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        },
+        {
+          "id": "compound-vault-door",
+          "modelId": "testing-blast-door",
+          "asset": {
+            "buildAssetId": "testing-blast-door"
+          },
+          "name": "Containment checkpoint blast door",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        },
+        {
+          "id": "compound-deep-door",
+          "modelId": "testing-blast-door",
+          "asset": {
+            "buildAssetId": "testing-blast-door"
+          },
+          "name": "Deep bunker blast door",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        }
+      ],
+      "streets": [],
+      "layoutMeta": {
+        "color": 2111044,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "compound",
+          "stations": [
+            {
+              "id": "compound-return",
+              "kind": "return",
+              "name": "Surface return lift",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 35
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "compound-containment",
+              "kind": "containment",
+              "name": "Power containment puzzle",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 8
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "compound-deep-hatch",
+              "kind": "deep-hatch",
+              "name": "Deep bunker access",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -20
+              },
+              "interactionDistance": 6
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "compound-arrival",
+            "name": "Mountain entry checkpoint & return lift",
+            "x": 0,
+            "z": 35,
+            "width": 18,
+            "depth": 16,
+            "description": "Authenticated entry checkpoint. The surface return lift remains available throughout your visit."
+          },
+          {
+            "id": "compound-containment",
+            "name": "Containment control console",
+            "x": 0,
+            "z": 8,
+            "width": 18,
+            "depth": 14,
+            "description": "Solve the fictional blue, violet and gold power-circuit puzzle to earn deep-bunker clearance."
+          },
+          {
+            "id": "compound-observation",
+            "name": "Observation & telemetry gallery",
+            "x": 24,
+            "z": -20,
+            "width": 22,
+            "depth": 28,
+            "description": "Explore the observation gallery and its illuminated SVG telemetry displays."
+          },
+          {
+            "id": "compound-deep-hatch",
+            "name": "Deep bunker security hatch",
+            "x": 0,
+            "z": -20,
+            "width": 16,
+            "depth": 12,
+            "description": "A second clearance gate separates the main corridor from the deep power hall."
+          },
+          {
+            "id": "compound-core-hall",
+            "name": "Underground power-core hall",
+            "x": -18,
+            "z": -35,
+            "width": 28,
+            "depth": 24,
+            "description": "A luminous symbolic containment core, coolant pipes, service platforms and independent power channels."
+          },
+          {
+            "id": "compound-deep-lift",
+            "name": "Deep access landing",
+            "x": 0,
+            "z": -42,
+            "width": 14,
+            "depth": 12,
+            "description": "Deep-bunker arrival point. Return through the main corridor to the surface lift."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "compound"
+        }
+      }
+    }
   }
 ]

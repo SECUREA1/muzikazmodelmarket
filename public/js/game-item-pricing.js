@@ -5,7 +5,7 @@ export function catalogItemPrice(item){
  if(item.basic)return 0;
  if(String(item.buildAssetId||'').startsWith('funhouse-'))return Math.max(10,Math.min(1000,Number(item.priceMzk)||100));
  if(String(item.buildAssetId||'').startsWith('fitness-'))return Math.max(10,Math.min(1000,Number(item.priceMzk)||50));
- if(String(item.buildAssetId||'').startsWith('factory-'))return Math.max(10,Math.min(1000,Number(item.priceMzk)||50));
+ if(/^(?:factory|testing)-/.test(String(item.buildAssetId||'')))return Math.max(10,Math.min(1000,Number(item.priceMzk)||50));
  if(item.productTier==='luxury')return Math.max(10,Math.min(1000,Number(item.priceMzk)||100));
  const name=(item.buildAssetId||item.name||item.id||'').toLowerCase(),type=item.assetType||item.type;
  if(item.kind==='material'){const id=item.materialId||'';return /wall/.test(id)?5:/gold|crystal/.test(id)?50:/metal|copper|marble|granite|steps/.test(id)?20:/glass|ice|door|window/.test(id)?15:10;}

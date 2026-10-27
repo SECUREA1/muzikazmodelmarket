@@ -6196,6 +6196,267 @@
       "priceMzk": 100,
       "useCostMzk": 1,
       "image": "/public/images/shipping/hormuz-shipping.svg"
+    },
+    {
+      "id": "builder-testing-launch-pad",
+      "name": "Atlas Test Launch Pad",
+      "description": "Place a drive-over launch platform for factory testing jobs in your own map.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-launch-pad",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        14,
+        0.12,
+        18
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 450,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "pad",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "interactionKey": "e",
+        "interactionDistance": 8,
+        "prompt": "Use Atlas Test Launch Pad \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-launch-console",
+      "name": "Range Launch Console",
+      "description": "Operate fictional test launches from a detailed three-screen control desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-launch-console",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        2.5,
+        2.4
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "control",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Launch Console \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-range-target",
+      "name": "Segmented Range Target",
+      "description": "An accuracy objective with layered scoring sectors and a moving tracking line.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-range-target",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        7,
+        7,
+        2.5
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 120,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "accuracy",
+        "testingTargetId": "target-alpha",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-telemetry-terminal",
+      "name": "Range Telemetry Terminal",
+      "description": "Set up a test run and review game telemetry from this systems desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-telemetry-terminal",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        2.6,
+        2.5
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 160,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "setup",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Telemetry Terminal \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-blast-door",
+      "name": "Compound Blast Door",
+      "description": "An eight-metre clear doorway with decorative sliding panels and an underground-compound entry interaction.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-blast-door",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        12,
+        7,
+        1.4
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 350,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "hatch",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Compound Blast Door \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-containment-core",
+      "name": "Luminous Containment Core",
+      "description": "A fictional underground power-core puzzle station with luminous rings, an observation sphere and service pipes.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-containment-core",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        8,
+        6,
+        8
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 650,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "containment",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 6
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Luminous Containment Core \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-cargo-platform",
+      "name": "Cargo Test Platform",
+      "description": "A drive-over receiving platform defining the cargo test destination in a custom range.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-cargo-platform",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        10,
+        0.12,
+        12
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "cargo",
+        "testingTargetId": "cargo-zone",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
     }
   ]
 }

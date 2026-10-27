@@ -7,6 +7,7 @@ import {EXTRA_WEAPONS,RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 import {FISHING_GEAR} from './public/js/fishing-config.js';
 import {SHIPPING_STOCK_ITEMS,shippingStockQuantity} from './public/js/shipping-market.js';
+import {FACTORY_TESTING_ITEMS,factoryTestingItemSettings} from './public/js/factory-testing-items.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './public/js/missile-factory-items.js';
 import {NATIVE_BUILDER_ITEMS,nativeBuilderItem} from './public/js/native-builder-items.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
@@ -44,7 +45,7 @@ for(const definition of Object.values(NATIVE_BUILDER_ITEMS))if(!registered.has(d
  registered.add(definition.id);
 }
 export const GAME_ECONOMY=raw.map(record=>{
- const factory=FACTORY_ITEMS[record.buildAssetId],item=factory?{...record,...factory,kind:record.kind,category:'Factory & engineering',builderCategory:'factory',function_data:factoryItemSettings(record.buildAssetId)}:record;
+ const testing=FACTORY_TESTING_ITEMS[record.buildAssetId],factory=testing||FACTORY_ITEMS[record.buildAssetId],item=factory?{...record,...factory,kind:record.kind,category:testing?'Factory testing & containment':'Factory & engineering',builderCategory:testing?'factory-testing':'factory',function_data:testing?factoryTestingItemSettings(record.buildAssetId):factoryItemSettings(record.buildAssetId)}:record;
  const priceMzk=catalogItemPrice(item),native=nativeBuilderItem(item.buildAssetId || (item.materialId?'material:'+item.materialId:null));
  const metadata=native?{...native,...item,buildAssetId:native.buildAssetId,behavior:native.behavior,assetType:['avatar','enemy','vehicle','wearable'].includes(native.type)?native.type:item.assetType,builderCategory:item.builderCategory||native.category,description:native.description||item.description,format:'procedural-3d',function_data:factory?item.function_data:{...native.function_data,...item.function_data,behavior:native.behavior},...Object.fromEntries(['vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState'].filter(key=>native[key]||item[key]).map(key=>[key,{...native[key],...item[key]}]))}:item;
  return {...metadata,native:Boolean(native||item.kind==='tool'||item.builderLayoutId),nativeFunction:native?.behavior||(item.kind==='tool'?item.toolId:item.builderLayoutId?'map-template':null),priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};
