@@ -1,14 +1,14 @@
 import {randomUUID,randomInt} from 'node:crypto';
 import {cleanWallet} from './user-json-database.mjs';
 import {GAME_ECONOMY} from './game-economy.mjs';
-import {FACTORY_RECIPES} from './public/js/missile-factory-config.js';
+import {ownedFactoryModel} from './factory-item-provenance.mjs';
+import {itemLocked} from './public/js/factory-logistics-config.js';
 import {PROVING_ID,COMPOUND_ID,PROVING_STATIONS,COMPOUND_GATE,PROVING_PROFILES,PROVING_COUNTDOWN_MS,PROVING_FLIGHT_MS,PROVING_IMPACT_MS,CONTAINMENT_CHANNELS,isProvingEnvironment,isCompoundEnvironment,testingStations,testingTargets} from './public/js/factory-test-config.js';
 
 const fail=(message,statusCode=409,code='FACTORY_TEST_INVALID')=>{throw Object.assign(Error(message),{statusCode,code});};
 const copy=value=>structuredClone(value);
 const near=(a,b,radius=6)=>a&&b&&Math.hypot(a.x-b.x,(a.y||0)-(b.y||0),a.z-b.z)<=radius;
 const profileFor=id=>PROVING_PROFILES.find(profile=>profile.id===id);
-const profileForModel=id=>PROVING_PROFILES.find(profile=>profile.buildAssetId===id);
 const stamp=(user,now)=>{user.revision=Number(user.revision||0)+1;user.updatedAt=new Date(now).toISOString();};
 function testingStore(data){data.factoryTesting||={accounts:{},padLocks:{},itemLocks:{}};data.factoryTesting.accounts||={};data.factoryTesting.padLocks||={};data.factoryTesting.itemLocks||={};return data.factoryTesting;}
 function account(data,wallet){return testingStore(data).accounts[wallet]||={session:null,containment:null,completedTests:0,totalScore:0,bestScores:{},skills:{},badges:[]};}
@@ -18,22 +18,9 @@ function clearance(data,wallet){
  const compound=PROVING_PROFILES.every(profile=>profiles.has(profile.id)),deep=compound&&receipts.some(row=>row.type==='FACTORY_CONTAINMENT_COMPLETE'&&row.environmentId===COMPOUND_ID);
  return {compound,deep};
 }
-function proofOwner(data,receipt,itemId){let owner=receipt.walletId;for(const trade of data.trades||[])if(trade.itemId===itemId&&trade.sellerId===owner&&String(trade.createdAt)>=String(receipt.createdAt)){owner=trade.buyerId;}return owner;}
 /** Mutable Backpack fields never prove model type or purchase. Derive identity
  * from immutable crafting/purchase receipts and the corresponding owned id. */
-export function ownedTestingItem(data,wallet,itemId){
- if(typeof itemId!=='string'||!data.users[wallet]?.items?.some(item=>item.id===itemId))return null;
- for(const receipt of data.transactions||[]){
-  let model=null,sku=null;
-  if(receipt.type==='FACTORY_ITEM_CREATED'&&receipt.itemId===itemId)model=FACTORY_RECIPES.find(recipe=>recipe.id===receipt.recipeId)?.buildAssetId;
-  else if(receipt.type==='GAME_ITEM_PURCHASE'&&itemId==='economy:'+receipt.sku){sku=receipt.sku;model=GAME_ECONOMY.find(item=>item.sku===sku)?.buildAssetId;}
-  else if(receipt.type==='GAME_BUNDLE_PURCHASE'){const line=(receipt.items||[]).find(item=>item.kind==='upgrade'&&itemId==='economy:'+item.sku);if(line){sku=line.sku;model=GAME_ECONOMY.find(item=>item.sku===sku)?.buildAssetId;}}
-  else if(['STORE_PURCHASE','VERIFIED_STORE_PURCHASE'].includes(receipt.type)){const line=(receipt.items||[]).find(item=>item.id===itemId);if(line)model=line.buildAssetId;}
-  const profile=profileForModel(model);if(!profile||proofOwner(data,receipt,itemId)!==wallet)continue;
-  return {id:itemId,name:profile.id==='accuracy'?'Aster Training Missile':'Orbit Cargo Rocket',buildAssetId:model,profileId:profile.id,sku,proofId:receipt.id,lockKey:receipt.id+':'+itemId};
- }
- return null;
-}
+export const ownedTestingItem=ownedFactoryModel;
 function eligibleItems(data,wallet){return (data.users[wallet]?.items||[]).flatMap(item=>{const proof=ownedTestingItem(data,wallet,item.id);return proof?[{id:proof.id,name:proof.name,buildAssetId:proof.buildAssetId,profileId:proof.profileId}]:[];});}
 function progress(state,data,wallet){return {completedTests:state.completedTests,totalScore:state.totalScore,bestScores:{...state.bestScores},skills:{...state.skills},badges:[...state.badges],canonicalProfiles:PROVING_PROFILES.filter(profile=>(data.transactions||[]).some(row=>row.type==='FACTORY_TEST_COMPLETE'&&row.walletId===wallet&&row.environmentId===PROVING_ID&&row.profileId===profile.id&&row.qualified)).map(profile=>profile.id)};}
 function privateState(data,wallet,state){return {session:publicSession(state.session),containment:copy(state.containment),progress:progress(state,data,wallet),clearance:clearance(data,wallet),eligibleItems:eligibleItems(data,wallet)};}
@@ -57,7 +44,7 @@ function advance(data,wallet,state,environment,now,stations){
  session.result={score,grade,qualified,rewardMzk:0,completedAt:session.endsAt};session.message=profileFor(session.profileId).name+' complete · '+score+'/100 · '+grade+'. Your model remains in Backpack.';
  state.completedTests++;state.totalScore+=score;state.bestScores[session.profileId]=Math.max(state.bestScores[session.profileId]||0,score);state.skills[session.profileId]=(state.skills[session.profileId]||0)+1;
  if(!state.badges.includes('Proving Ground Operator'))state.badges.push('Proving Ground Operator');
- ledger(data,wallet,'FACTORY_TEST_COMPLETE',now,{sessionId:session.id,environmentId:session.environmentId,profileId:session.profileId,itemId:session.itemId,buildAssetId:session.buildAssetId,score,qualified,rewardMzk:0});
+ ledger(data,wallet,'FACTORY_TEST_COMPLETE',now,{sessionId:session.id,environmentId:session.environmentId,profileId:session.profileId,itemId:session.itemId,proofId:session.proofId,buildAssetId:session.buildAssetId,score,qualified,rewardMzk:0});
  if(clearance(data,wallet).compound&&!state.badges.includes('Mountain Facility Clearance'))state.badges.push('Mountain Facility Clearance');release(data,session);
 }
 function onFoot(player,{allowHeld=false}={}){if(player.health<=0||player.replacedByRoom||player.vehicleId||player.seatedId||!allowHeld&&player.heldId)fail('Stand on foot with your hands free before using this control.');}
@@ -92,7 +79,7 @@ export async function testingCommand(sim,player,environment,input,now,{database,
   if(environment.id===COMPOUND_ID&&!clearance(data,wallet).compound)fail('Complete one training accuracy test and one cargo test at the public proving grounds to earn facility clearance.',403,'COMPOUND_LOCKED');
   if(action==='proving-recall'){
    const station=input.stationId?stations.find(station=>station.id===input.stationId&&['setup','pad'].includes(station.kind)):stations.find(station=>['setup','pad'].includes(station.kind)&&near(player.position,station.position,station.interactionDistance));if(!station||!near(player.position,station.position,station.interactionDistance))fail('Return to preparation or the launch pad to recall a display copy.');
-   const proof=ownedTestingItem(data,wallet,input.itemId);if(!proof)fail('Choose an owned, receipt-verified model to recall.',403);const lock=store.itemLocks[proof.lockKey];if(lock&&lock.expiresAt>now)fail('Cancel or finish the active test before recalling this item.');
+   const proof=ownedTestingItem(data,wallet,input.itemId);if(!proof)fail('Choose an owned, receipt-verified model to recall.',403);if(itemLocked(data,wallet,proof.id,now))fail('Finish or cancel this model’s freight manifest before recalling it.');const lock=store.itemLocks[proof.lockKey];if(lock&&lock.expiresAt>now)fail('Cancel or finish the active test before recalling this item.');
    const copies=Object.values(sim.actors||{}).filter(actor=>actor.active!==false&&matchesItem(actor,player,proof)&&!actor.testingSessionId);
    if(copies.some(actor=>actor.holderId&&actor.holderId!==player.actorId))fail('Another player is holding this copy. Ask them to release it first.');
    if(copies.some(actor=>!actor.spawned||actor.ownerId!==player.actorId))fail('Only your own deployed display copies can be recalled.');
@@ -100,6 +87,7 @@ export async function testingCommand(sim,player,environment,input,now,{database,
   }else if(action==='proving-setup'){
    stationAt(player,stations,'setup',input.stationId);if(running(state.session))fail('Finish or cancel the current test before configuring another.');
    const item=ownedTestingItem(data,wallet,input.itemId),profile=profileFor(input.profileId);if(!item||!profile||item.profileId!==profile.id)fail('Choose an owned, receipt-verified model and its matching test profile.',403);
+   if(itemLocked(data,wallet,item.id,now))fail('Finish or cancel this model’s freight manifest before configuring a test.');
    if(itemInWorld(sim,player,item))fail('Recall the deployed or held copy of this item before testing it.');const target=targets.find(target=>target.id===input.targetId&&target.profileId===profile.id);if(!target)fail('Choose an active matching practice target or cargo platform.',422);
    state.session={id:randomUUID(),environmentId:environment.id,status:'configured',itemId:item.id,itemName:item.name,buildAssetId:item.buildAssetId,proofId:item.proofId,itemLockKey:item.lockKey,profileId:profile.id,targetId:target.id,target:copy(target),configuredAt:now,padId:null,launchAt:null,flightEndsAt:null,endsAt:null,result:null,message:'Test configured. Walk to the launch pad to deploy your reusable model.'};message=state.session.message;
   }else if(['proving-deploy','proving-arm','proving-launch','proving-cancel'].includes(action)){
@@ -107,6 +95,7 @@ export async function testingCommand(sim,player,environment,input,now,{database,
    if(action==='proving-cancel'){
     if(!stations.some(station=>['setup','pad','control'].includes(station.kind)&&near(player.position,station.position,station.interactionDistance)))fail('Return to a test station to cancel this session.');if(session.status==='complete')fail('Completed test results are already saved.');stop(data,session,now,'Test cancelled. Your reusable model remains in Backpack.');message=session.message;
    }else if(action==='proving-deploy'){
+    if(itemLocked(data,wallet,proof.id,now))fail('Finish or cancel this model’s freight manifest before deployment.');
     if(session.status!=='configured')fail('Configure a test before deployment.');const pad=stationAt(player,stations,'pad',input.padId);if(itemInWorld(sim,player,proof))fail('Recall the deployed or held copy of this item before using the pad.');
     const padKey=environment.id+':'+pad.id,occupied=store.padLocks[padKey],itemLock=store.itemLocks[proof.lockKey];if(occupied&&occupied.expiresAt>now&&occupied.sessionId!==session.id)fail('This pad is reserved by another test.');if(itemLock&&itemLock.expiresAt>now&&itemLock.sessionId!==session.id)fail('This item is already deployed in another test.');
     const expiry=now+300000;store.padLocks[padKey]={sessionId:session.id,expiresAt:expiry};store.itemLocks[proof.lockKey]={sessionId:session.id,expiresAt:expiry};session.status='deployed';session.padId=pad.id;session.padPosition=copy(pad.position);session.padRevision=pad.revision;session.message='Model deployed. Move to launch control to arm the test.';message=session.message;

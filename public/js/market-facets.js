@@ -27,7 +27,7 @@ export function marketFacets(record={}){
   else assign('funhouse-scenery','decorate','build');
  }else if(building)assign(({Hospitality:'hospitality',Commerce:'commerce',Industrial:'industrial',Community:'community',Entertainment:'community',Services:'services'})[building.category]||'structures','build','decorate','quest');
  else if(category==='factory'&&id.startsWith('testing-'))assign(/blast-door|containment/.test(id)?'factory-containment':'factory-testing','build','play','quest');
- else if(category==='factory')assign(/training-missile|cargo-rocket/.test(id)?'factory-collectibles':/loading-bay|dispatch|conveyor/.test(id)?'factory-logistics':'factory-production','build','craft',...(/training-missile|cargo-rocket|conveyor/.test(id)?['decorate']:['quest']),...(/procurement/.test(id)?['trade']:[]));
+ else if(category==='factory')assign(/training-missile|cargo-rocket/.test(id)?'factory-collectibles':/loading-bay|dispatch|conveyor|export-terminal|certification-kiosk|freight-crate/.test(id)?'factory-logistics':'factory-production','build','craft',...(/training-missile|cargo-rocket|conveyor/.test(id)?['decorate']:['quest']),...(/procurement|export-terminal|certification-kiosk/.test(id)?['trade']:[]));
  else if(category==='shipping')assign('shipping-stock','shipping','trade','quest');
  else if(/teleport|portal|gateway/.test(text))assign('portals','travel','build');
  else if(/quest|dialogue|npc|patrol/.test(text)&&!['vehicles','flight'].includes(category))assign('quests','quest','build');

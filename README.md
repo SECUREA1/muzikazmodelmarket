@@ -236,6 +236,13 @@ the **Mountain Nuclear Research Compound**; its symbolic containment puzzle open
 bunker. Seven reusable testing assets and two editable templates are available
 in markets and Map Builder. See [testing and compound access](docs/factory-proving-grounds.md).
 
+The connected [factory supply chain](docs/factory-supply-chain.md) adds transferable
+test certificates, MZK listings for finished production, sealed deliveries to
+the range and compound, and an Atlas Export voyage from Jebel Ali to Fujairah.
+Delivered shipping parts exchange for 20 MZK credits toward new production.
+Export terminals, certification kiosks and freight crates are sold through the
+same MZK markets and remain editable in Builder.
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases

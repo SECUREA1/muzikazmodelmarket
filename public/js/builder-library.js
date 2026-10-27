@@ -1,3 +1,4 @@
+import {FACTORY_LOGISTICS_ITEMS} from './factory-logistics-items.js';
 import {FACTORY_TESTING_ITEMS} from './factory-testing-items.js';
 import {FACTORY_ITEMS} from './missile-factory-items.js';
 import {FITNESS_ITEMS} from './fitness-equipment.js';
@@ -12,6 +13,7 @@ export function builderSections(model){
  if(FUNHOUSE_ITEMS[id])tags.add('funhouse');
  if(FITNESS_ITEMS[id])tags.add('fitness');
  if(FACTORY_ITEMS[id]||model.function_data?.factoryCrewId)tags.add('factory');
+ if(FACTORY_LOGISTICS_ITEMS[id]||model.function_data?.logisticsStation){tags.add('factory');if(FACTORY_LOGISTICS_ITEMS[id]?.role||model.function_data?.logisticsStation)tags.add('interactive');}
  if(FACTORY_TESTING_ITEMS[id]||model.function_data?.testingStation||model.function_data?.testingTarget){tags.add('factory');tags.add('factory-testing');tags.add('interactive');}
  const camp=CAMP_ITEMS[id];if(camp){tags.add('summer-camp');tags.add(camp.category);}if(id==='campfire')tags.add('summer-camp');
  if(LAYOUT_SCENES[id])tags.add('scene-layouts');
