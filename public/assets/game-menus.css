@@ -446,3 +446,13 @@ dialog.game-fullscreen-dialog.game-companion-dialog{inset:max(64px,env(safe-area
 .game-companion-dialog .world-lobby .world-map-wheel{max-width:240px;}
 .game-companion-dialog .world-lobby .world-map-detail .world-preview-viewport{height:140px;}
 @media(max-height:520px){dialog.game-fullscreen-dialog.game-companion-dialog{inset:56px 8px auto auto!important;width:min(440px,calc(100vw - 130px))!important;max-width:calc(100vw - 130px)!important;max-height:calc(100dvh - 240px)!important;}}
+
+/* Ironwood uses the same warm security accent in the directory and wheel. */
+.world-map-picker g.world-map-sector-svg[data-kind=prison]{color:#f3d3a2}
+.world-map-sector-svg[data-kind=prison] .world-sector-wedge{stroke:#e9a34b88}
+.world-map-sector-svg[data-kind=prison][aria-pressed=true] .world-sector-wedge{stroke:#ffdc9c}
+.world-lobby .world-lobby-card[data-kind=prison]{border-color:#a77e48;background:linear-gradient(115deg,#3a3229,#1b2425)}
+.world-lobby-card[data-kind=prison] .world-lobby-card-icon{background:#4a3b29;color:#f3d3a2;border-color:#b28b56}
+.world-lobby .world-lobby-detail[data-kind=prison]{border-color:#a77e48;background:linear-gradient(145deg,#39352c,#162425)}
+.world-lobby-detail[data-kind=prison] .world-lobby-join{background:#e9a34b;border-color:#ffdc9c;color:#201c13}
+.world-lobby .world-lobby-filters button[data-world-filter=prison]{border-color:#a77e48;color:#f3d3a2}

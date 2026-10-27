@@ -15,6 +15,7 @@ export function destinationColor(place={},fallback='#9cffba'){
 export function destinationIcon(place) {
   const label = `${place.mapId || place.id || ''} ${place.name || ''} ${place.category || ''} ${place.game || ''}`;
   if (place.memberPlot || place.deedId || /deed|plot|land parcel/i.test(label)) return '⚑';
+  if (/prison|ironwood/i.test(label)) return '▥';
   if (isFactoryDestination(place)||/factory|missile|rocket/i.test(label)) return '🏭';
   if (place.basketball || /basketball/i.test(label)) return '🏀';
   if (/fitness|gym/i.test(label)) return '🏋';

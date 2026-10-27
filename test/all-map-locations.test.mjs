@@ -16,8 +16,9 @@ test('every listed public explorer location accepts travel onto clear supported 
  t.after(()=>rm(directory,{recursive:true,force:true}));
  const repository=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
  const {environments}=await synchronizeWorldDirectory(new WorldAtlas(join(directory,'atlas.json')),repository.map(world=>({...world,source:'repository'})));
- // These two native games load their own simulations rather than map-access.
- const worlds=environments.filter(world=>!['hockey','arcade'].includes(world.game));
+ // Native games own their relocation rules. Prison intentionally requires
+ // walking between challenge stations, so generic map-access would bypass locks.
+ const worlds=environments.filter(world=>!['hockey','arcade','prison'].includes(world.game));
  assert.ok(worlds.some(world=>world.id==='skyscraper-construction'));
  assert.ok(worlds.some(world=>world.modelUrl||world.modelUrls?.length));
  let locationCount=0;

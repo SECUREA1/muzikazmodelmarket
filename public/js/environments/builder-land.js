@@ -1,3 +1,4 @@
+import {createPrisonLand} from '../prison-world.js';
 import {createMissileFactoryLand} from '../missile-factory-model.js';
 import {createFitnessLand} from './fitness-land.js';
 import {createClownFunhouseLand} from './clown-funhouse-land.js';
@@ -25,6 +26,7 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
+    if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);
     if(environment.id==='muzikaz-missile-factory'||(environment.builderScene?.sourceLayout||environment.builderScene?.layout||environment.layout)==='missile-factory')return createMissileFactoryLand(environment);
     if(environment.builderScene?.sourceLayout&&environment.builderScene.sourceLayout!==environment.builderScene.layout)environment={...environment,builderScene:{...environment.builderScene,layout:environment.builderScene.sourceLayout}};
     if(environment.builderScene?.layout==='fitness-centre'||environment.game==='fitness')return createFitnessLand(environment);

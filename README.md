@@ -206,6 +206,16 @@ in the existing wallet. Enter from the world menu's **Fitness** category or open
 `model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&mode=multiplayer&autoplay=1`.
 See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. Builder includes a **Gold Fitness Centre** template with 58 editable equipment assemblies, and all 26 gym item types are available in **ITEMS → Fitness & gym** and **Marketplace → All game items → Fitness & gym upgrades**.
 
+## Ironwood Prison
+
+The permanent **Ironwood Prison** is a large walkable secure facility with two
+cell blocks, a cafeteria and kitchen, recreation room, exercise yard, guard
+control and work areas. Meals, lockable cells, guards and prisoners, non-lethal
+fights, theft, entertainment and escape challenges connect through the prison
+activities menu. Enter from the world menu’s **Prison & escape** category or open
+`model-explorer.html?environment=ironwood-prison&house=ironwood-prison&mode=multiplayer&autoplay=1`.
+See [prison controls and challenges](docs/prison-world.md). Six role-specific daily contracts add saved ranks and token rewards. Four supply packets stock a portable prison pouch, and milestone rewards can be collected into the account Backpack and placed in other worlds. Versioned room messages and durable earned-item receipts protect purchases, ownership and reconnects.
+
 ## Map travel and vehicle loading
 
 The permanent **MUZIKAZ Missile & Rocket Factory** shares the existing server,

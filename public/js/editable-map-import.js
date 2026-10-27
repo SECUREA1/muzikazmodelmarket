@@ -1,3 +1,4 @@
+import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
 import {editableFunhouseScene} from './clown-funhouse-builder.js';
 import {editableFactoryScene} from './missile-factory-builder.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './missile-factory-items.js';
@@ -17,6 +18,7 @@ export function editableMapScene(map,{id='custom-'+map.id,layout='repository-'+m
 }
 export function editableMapChoices(...sources){const found=new Map();for(const source of sources){const rows=Array.isArray(source)?source:Array.isArray(source?.data)?source.data:Array.isArray(source?.environments)?source.environments:[];for(const map of rows)if(map?.id&&map.playable!==false&&map.visibility!=='private')found.set(map.id,map);}return [...found.values()];}
 export function nativeItemGameplay(id){
+ if(PRISON_ITEMS[id])return prisonNativeItem(id);
  if(FUNHOUSE_ITEMS[id])return funhouseNativeItem(id);
  if(SHIPPING_VESSELS[id]){const spec=SHIPPING_VESSELS[id];return {image:'/public/images/shipping/'+id+'.svg',type:'vehicle',category:'vehicles',behavior:'vehicle',action:'boat',vehicleSettings:{mode:'boat',seat:[...spec.seat],speed:spec.speed,turnSpeed:spec.turnRate},function_data:{behavior:'vehicle',health:900,destructible:true,interactionDistance:16,prompt:'Board '+spec.name}};}
  if(FACTORY_ITEMS[id]){const item=FACTORY_ITEMS[id];return {type:'props',category:'factory',image:item.thumbnailUrl,behavior:item.kind?'interact':'decor',priceMzk:item.priceMzk,function_data:factoryItemSettings(id)};}
