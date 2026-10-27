@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import {CAMP_ITEMS} from './summer-camp.js';
 
 export function createCampModel(THREE,id){
@@ -83,5 +84,5 @@ export function createCampModel(THREE,id){
   const shore=part(new THREE.TorusGeometry(1,.035,6,48),mat(0xd8c59a),[0,.03,0],'CAMP_WATER_SHORE');shore.rotation.x=Math.PI/2;shore.scale.set(9,6,1);shore.userData.collisionDisabled=true;
  }
  root.name=item.name;Object.assign(root.userData,{builderObject:true,modelId:id,label:item.name,description:item.description,dimensions:item.dimensions,pack:'summer-camp',behavior:item.behavior,interactive:item.behavior!=='decor'});
- return root;
+ return finishVehicleDesign(THREE,root,id);
 }

@@ -4,7 +4,7 @@
     "catalog": 492,
     "rendered": 492,
     "materials": 130,
-    "baselineCompared": 492,
+    "baselineCompared": 0,
     "families": {
       "crafted-collection": 66,
       "world-props": 89,
@@ -265,30 +265,30 @@
       "id": "shipping-feeder",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 137,
-      "triangles": 9260,
-      "details": 8,
-      "texturedSurfaces": 127,
+      "meshes": 159,
+      "triangles": 16112,
+      "details": 30,
+      "texturedSurfaces": 149,
       "colouredSurfaces": 0
     },
     {
       "id": "shipping-container",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 191,
-      "triangles": 12972,
-      "details": 8,
-      "texturedSurfaces": 181,
+      "meshes": 217,
+      "triangles": 20664,
+      "details": 34,
+      "texturedSurfaces": 207,
       "colouredSurfaces": 0
     },
     {
       "id": "shipping-tanker",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 113,
-      "triangles": 6628,
-      "details": 6,
-      "texturedSurfaces": 103,
+      "meshes": 137,
+      "triangles": 17600,
+      "details": 30,
+      "texturedSurfaces": 127,
       "colouredSurfaces": 0
     },
     {
@@ -415,10 +415,10 @@
       "id": "funhouse-clown-car",
       "family": "world-props",
       "version": "crafted-native-v3",
-      "meshes": 184,
-      "triangles": 52082,
-      "details": 18,
-      "texturedSurfaces": 177,
+      "meshes": 188,
+      "triangles": 55082,
+      "details": 20,
+      "texturedSurfaces": 183,
       "colouredSurfaces": 5
     },
     {
@@ -635,20 +635,20 @@
       "id": "factory-training-missile",
       "family": "world-props",
       "version": "crafted-native-v3",
-      "meshes": 31,
-      "triangles": 2120,
-      "details": 12,
-      "texturedSurfaces": 31,
+      "meshes": 36,
+      "triangles": 4008,
+      "details": 17,
+      "texturedSurfaces": 36,
       "colouredSurfaces": 8
     },
     {
       "id": "factory-cargo-rocket",
       "family": "world-props",
       "version": "crafted-native-v3",
-      "meshes": 35,
-      "triangles": 2344,
-      "details": 12,
-      "texturedSurfaces": 35,
+      "meshes": 40,
+      "triangles": 4232,
+      "details": 17,
+      "texturedSurfaces": 40,
       "colouredSurfaces": 8
     },
     {
@@ -665,10 +665,10 @@
       "id": "factory-assembly-jig",
       "family": "world-props",
       "version": "crafted-native-v3",
-      "meshes": 51,
-      "triangles": 2896,
-      "details": 18,
-      "texturedSurfaces": 51,
+      "meshes": 56,
+      "triangles": 4784,
+      "details": 23,
+      "texturedSurfaces": 56,
       "colouredSurfaces": 8
     },
     {
@@ -1295,50 +1295,50 @@
       "id": "diamond-da40",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 94,
-      "triangles": 7944,
-      "details": 12,
-      "texturedSurfaces": 91,
+      "meshes": 130,
+      "triangles": 14080,
+      "details": 48,
+      "texturedSurfaces": 127,
       "colouredSurfaces": 0
     },
     {
       "id": "piper-cub",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 192,
-      "triangles": 7872,
-      "details": 11,
-      "texturedSurfaces": 188,
+      "meshes": 228,
+      "triangles": 14028,
+      "details": 47,
+      "texturedSurfaces": 224,
       "colouredSurfaces": 0
     },
     {
       "id": "harbor-yacht",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 235,
-      "triangles": 32866,
-      "details": 3,
-      "texturedSurfaces": 164,
+      "meshes": 270,
+      "triangles": 36414,
+      "details": 38,
+      "texturedSurfaces": 199,
       "colouredSurfaces": 0
     },
     {
       "id": "harbor-patrol",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 166,
-      "triangles": 15155,
-      "details": 10,
-      "texturedSurfaces": 151,
+      "meshes": 196,
+      "triangles": 22289,
+      "details": 40,
+      "texturedSurfaces": 181,
       "colouredSurfaces": 0
     },
     {
       "id": "harbor-fishing-boat",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 275,
-      "triangles": 20005,
-      "details": 9,
-      "texturedSurfaces": 242,
+      "meshes": 306,
+      "triangles": 27155,
+      "details": 40,
+      "texturedSurfaces": 273,
       "colouredSurfaces": 0
     },
     {
@@ -1415,10 +1415,10 @@
       "id": "utility-cargo-trailer",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 37,
-      "triangles": 2352,
-      "details": 5,
-      "texturedSurfaces": 37,
+      "meshes": 48,
+      "triangles": 6480,
+      "details": 16,
+      "texturedSurfaces": 48,
       "colouredSurfaces": 0
     },
     {
@@ -1435,80 +1435,80 @@
       "id": "frontier-pickup",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 127,
-      "triangles": 9176,
-      "details": 25,
-      "texturedSurfaces": 127,
+      "meshes": 185,
+      "triangles": 31372,
+      "details": 83,
+      "texturedSurfaces": 176,
       "colouredSurfaces": 0
     },
     {
       "id": "alpine-quad",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 124,
-      "triangles": 8064,
-      "details": 21,
-      "texturedSurfaces": 124,
+      "meshes": 166,
+      "triangles": 29416,
+      "details": 63,
+      "texturedSurfaces": 166,
       "colouredSurfaces": 0
     },
     {
       "id": "grand-tourer",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 123,
-      "triangles": 9072,
-      "details": 25,
-      "texturedSurfaces": 123,
+      "meshes": 182,
+      "triangles": 30940,
+      "details": 84,
+      "texturedSurfaces": 174,
       "colouredSurfaces": 0
     },
     {
       "id": "touring-motorcycle",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 79,
-      "triangles": 5008,
-      "details": 14,
-      "texturedSurfaces": 79,
+      "meshes": 107,
+      "triangles": 16608,
+      "details": 42,
+      "texturedSurfaces": 102,
       "colouredSurfaces": 0
     },
     {
       "id": "tower-crane",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 657,
-      "triangles": 30700,
-      "details": 5,
-      "texturedSurfaces": 647,
+      "meshes": 667,
+      "triangles": 33076,
+      "details": 15,
+      "texturedSurfaces": 657,
       "colouredSurfaces": 0
     },
     {
       "id": "site-dumptruck",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 400,
-      "triangles": 22972,
-      "details": 28,
-      "texturedSurfaces": 383,
+      "meshes": 428,
+      "triangles": 33776,
+      "details": 56,
+      "texturedSurfaces": 411,
       "colouredSurfaces": 0
     },
     {
       "id": "site-bulldozer",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 214,
-      "triangles": 8880,
-      "details": 5,
-      "texturedSurfaces": 205,
+      "meshes": 239,
+      "triangles": 14244,
+      "details": 30,
+      "texturedSurfaces": 230,
       "colouredSurfaces": 0
     },
     {
       "id": "site-excavator",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 232,
-      "triangles": 9920,
-      "details": 5,
-      "texturedSurfaces": 221,
+      "meshes": 258,
+      "triangles": 15040,
+      "details": 31,
+      "texturedSurfaces": 247,
       "colouredSurfaces": 0
     },
     {
@@ -1525,40 +1525,40 @@
       "id": "harbor-skiff",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 150,
-      "triangles": 14303,
-      "details": 10,
-      "texturedSurfaces": 136,
+      "meshes": 163,
+      "triangles": 17438,
+      "details": 23,
+      "texturedSurfaces": 149,
       "colouredSurfaces": 0
     },
     {
       "id": "resort-paddle-boat",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 29,
-      "triangles": 1822,
-      "details": 2,
-      "texturedSurfaces": 22,
+      "meshes": 42,
+      "triangles": 5074,
+      "details": 15,
+      "texturedSurfaces": 35,
       "colouredSurfaces": 0
     },
     {
       "id": "resort-pontoon",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 65,
-      "triangles": 4098,
-      "details": 6,
-      "texturedSurfaces": 58,
+      "meshes": 81,
+      "triangles": 8018,
+      "details": 22,
+      "texturedSurfaces": 74,
       "colouredSurfaces": 0
     },
     {
       "id": "harbor-sailboat",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 159,
-      "triangles": 17613,
-      "details": 7,
-      "texturedSurfaces": 150,
+      "meshes": 173,
+      "triangles": 20540,
+      "details": 21,
+      "texturedSurfaces": 164,
       "colouredSurfaces": 0
     },
     {
@@ -1626,7 +1626,7 @@
       "family": "world-props",
       "version": "crafted-native-v3",
       "meshes": 30,
-      "triangles": 888,
+      "triangles": 2316,
       "details": 18,
       "texturedSurfaces": 30,
       "colouredSurfaces": 8
@@ -2505,20 +2505,20 @@
       "id": "corsair-aircraft",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 242,
-      "triangles": 16746,
-      "details": 11,
-      "texturedSurfaces": 227,
+      "meshes": 278,
+      "triangles": 22598,
+      "details": 47,
+      "texturedSurfaces": 263,
       "colouredSurfaces": 0
     },
     {
       "id": "dune-quad",
       "family": "transport",
       "version": "crafted-native-v3",
-      "meshes": 28,
-      "triangles": 4376,
-      "details": 5,
-      "texturedSurfaces": 28,
+      "meshes": 59,
+      "triangles": 19624,
+      "details": 34,
+      "texturedSurfaces": 59,
       "colouredSurfaces": 0
     },
     {
@@ -2875,10 +2875,10 @@
       "id": "wooden-cart",
       "family": "crafted-collection",
       "version": "crafted-native-v3",
-      "meshes": 67,
-      "triangles": 5224,
-      "details": 0,
-      "texturedSurfaces": 67,
+      "meshes": 72,
+      "triangles": 7288,
+      "details": 5,
+      "texturedSurfaces": 72,
       "colouredSurfaces": 0
     },
     {
@@ -3275,20 +3275,20 @@
       "id": "arcade-part-train",
       "family": "devices-sports",
       "version": "crafted-native-v3",
-      "meshes": 187,
-      "triangles": 17448,
-      "details": 3,
-      "texturedSurfaces": 187,
+      "meshes": 239,
+      "triangles": 31646,
+      "details": 55,
+      "texturedSurfaces": 239,
       "colouredSurfaces": 0
     },
     {
       "id": "arcade-part-coaster",
       "family": "devices-sports",
       "version": "crafted-native-v3",
-      "meshes": 147,
-      "triangles": 10760,
-      "details": 3,
-      "texturedSurfaces": 147,
+      "meshes": 156,
+      "triangles": 11496,
+      "details": 12,
+      "texturedSurfaces": 156,
       "colouredSurfaces": 0
     },
     {
@@ -3425,20 +3425,20 @@
       "id": "arcade-part-train-carriage",
       "family": "devices-sports",
       "version": "crafted-native-v3",
-      "meshes": 11,
-      "triangles": 3168,
-      "details": 3,
-      "texturedSurfaces": 11,
+      "meshes": 23,
+      "triangles": 6642,
+      "details": 15,
+      "texturedSurfaces": 23,
       "colouredSurfaces": 0
     },
     {
       "id": "arcade-part-coaster-car",
       "family": "devices-sports",
       "version": "crafted-native-v3",
-      "meshes": 8,
-      "triangles": 1804,
-      "details": 3,
-      "texturedSurfaces": 8,
+      "meshes": 17,
+      "triangles": 2540,
+      "details": 12,
+      "texturedSurfaces": 17,
       "colouredSurfaces": 0
     },
     {
@@ -3525,10 +3525,10 @@
       "id": "arcade-part-train-engine",
       "family": "devices-sports",
       "version": "crafted-native-v3",
-      "meshes": 10,
-      "triangles": 2596,
-      "details": 3,
-      "texturedSurfaces": 10,
+      "meshes": 26,
+      "triangles": 6372,
+      "details": 19,
+      "texturedSurfaces": 26,
       "colouredSurfaces": 0
     },
     {
@@ -5389,10 +5389,10 @@
       {
         "id": "layout:arcade-park",
         "version": "crafted-native-v3",
-        "meshes": 527,
-        "triangles": 25850,
-        "texturedSurfaces": 527,
-        "details": 0
+        "meshes": 588,
+        "triangles": 34640,
+        "texturedSurfaces": 588,
+        "details": 61
       }
     ]
   },
@@ -6550,12 +6550,12 @@
     {
       "sku": "backpack:builder-corsair-aircraft",
       "designId": "corsair-aircraft",
-      "thumbnailUrl": "/public/images/native-designs/corsair-aircraft.svg"
+      "thumbnailUrl": "/public/images/native-designs/corsair-aircraft-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-dune-quad",
       "designId": "dune-quad",
-      "thumbnailUrl": "/public/images/native-designs/dune-quad.svg"
+      "thumbnailUrl": "/public/images/native-designs/dune-quad-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-hero-spawn",
@@ -6720,7 +6720,7 @@
     {
       "sku": "backpack:builder-wooden-cart",
       "designId": "wooden-cart",
-      "thumbnailUrl": "/public/images/native-designs/wooden-cart.svg"
+      "thumbnailUrl": "/public/images/native-designs/wooden-cart-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-iron-anvil",
@@ -6835,12 +6835,12 @@
     {
       "sku": "backpack:builder-arcade-part-train",
       "designId": "arcade-part-train",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train.svg"
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-arcade-part-coaster",
       "designId": "arcade-part-coaster",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster.svg"
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-arcade-part-ground",
@@ -6910,12 +6910,12 @@
     {
       "sku": "backpack:builder-arcade-part-train-carriage",
       "designId": "arcade-part-train-carriage",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage.svg"
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-arcade-part-coaster-car",
       "designId": "arcade-part-coaster-car",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car.svg"
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-arcade-part-basketball-hoop",
@@ -6960,7 +6960,7 @@
     {
       "sku": "backpack:builder-arcade-part-train-engine",
       "designId": "arcade-part-train-engine",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine.svg"
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-arcade-part-rail-segment",
@@ -7350,17 +7350,17 @@
     {
       "sku": "backpack:builder-harbor-yacht",
       "designId": "harbor-yacht",
-      "thumbnailUrl": "/public/images/native-designs/harbor-yacht.svg"
+      "thumbnailUrl": "/public/images/native-designs/harbor-yacht-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-harbor-skiff",
       "designId": "harbor-skiff",
-      "thumbnailUrl": "/public/images/native-designs/harbor-skiff.svg"
+      "thumbnailUrl": "/public/images/native-designs/harbor-skiff-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-harbor-sailboat",
       "designId": "harbor-sailboat",
-      "thumbnailUrl": "/public/images/native-designs/harbor-sailboat.svg"
+      "thumbnailUrl": "/public/images/native-designs/harbor-sailboat-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-camp-tent",
@@ -7395,7 +7395,7 @@
     {
       "sku": "backpack:builder-camp-canoe-rack",
       "designId": "camp-canoe-rack",
-      "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack.svg"
+      "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-camp-dock",
@@ -7530,12 +7530,12 @@
     {
       "sku": "backpack:builder-diamond-da40",
       "designId": "diamond-da40",
-      "thumbnailUrl": "/public/images/native-designs/diamond-da40.svg"
+      "thumbnailUrl": "/public/images/native-designs/diamond-da40-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-piper-cub",
       "designId": "piper-cub",
-      "thumbnailUrl": "/public/images/native-designs/piper-cub.svg"
+      "thumbnailUrl": "/public/images/native-designs/piper-cub-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-lot-owned-sign",
@@ -7580,42 +7580,42 @@
     {
       "sku": "backpack:builder-harbor-patrol",
       "designId": "harbor-patrol",
-      "thumbnailUrl": "/public/images/native-designs/harbor-patrol.svg"
+      "thumbnailUrl": "/public/images/native-designs/harbor-patrol-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-alpine-quad",
       "designId": "alpine-quad",
-      "thumbnailUrl": "/public/images/native-designs/alpine-quad.svg"
+      "thumbnailUrl": "/public/images/native-designs/alpine-quad-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-grand-tourer",
       "designId": "grand-tourer",
-      "thumbnailUrl": "/public/images/native-designs/grand-tourer.svg"
+      "thumbnailUrl": "/public/images/native-designs/grand-tourer-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-touring-motorcycle",
       "designId": "touring-motorcycle",
-      "thumbnailUrl": "/public/images/native-designs/touring-motorcycle.svg"
+      "thumbnailUrl": "/public/images/native-designs/touring-motorcycle-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-tower-crane",
       "designId": "tower-crane",
-      "thumbnailUrl": "/public/images/native-designs/tower-crane.svg"
+      "thumbnailUrl": "/public/images/native-designs/tower-crane-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-site-dumptruck",
       "designId": "site-dumptruck",
-      "thumbnailUrl": "/public/images/native-designs/site-dumptruck.svg"
+      "thumbnailUrl": "/public/images/native-designs/site-dumptruck-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-site-bulldozer",
       "designId": "site-bulldozer",
-      "thumbnailUrl": "/public/images/native-designs/site-bulldozer.svg"
+      "thumbnailUrl": "/public/images/native-designs/site-bulldozer-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-site-excavator",
       "designId": "site-excavator",
-      "thumbnailUrl": "/public/images/native-designs/site-excavator.svg"
+      "thumbnailUrl": "/public/images/native-designs/site-excavator-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-construction-steel-beam",
@@ -7780,12 +7780,12 @@
     {
       "sku": "backpack:builder-factory-training-missile",
       "designId": "factory-training-missile",
-      "thumbnailUrl": "/public/images/native-designs/factory-training-missile.svg"
+      "thumbnailUrl": "/public/images/native-designs/factory-training-missile-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-factory-cargo-rocket",
       "designId": "factory-cargo-rocket",
-      "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket.svg"
+      "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-factory-fabricator",
@@ -7825,17 +7825,17 @@
     {
       "sku": "backpack:builder-harbor-fishing-boat",
       "designId": "harbor-fishing-boat",
-      "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat.svg"
+      "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-frontier-pickup",
       "designId": "frontier-pickup",
-      "thumbnailUrl": "/public/images/native-designs/frontier-pickup.svg"
+      "thumbnailUrl": "/public/images/native-designs/frontier-pickup-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-utility-cargo-trailer",
       "designId": "utility-cargo-trailer",
-      "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer.svg"
+      "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-freight-loading-bay",
@@ -7845,17 +7845,17 @@
     {
       "sku": "backpack:builder-shipping-feeder",
       "designId": "shipping-feeder",
-      "thumbnailUrl": "/public/images/native-designs/shipping-feeder.svg"
+      "thumbnailUrl": "/public/images/native-designs/shipping-feeder-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-shipping-container",
       "designId": "shipping-container",
-      "thumbnailUrl": "/public/images/native-designs/shipping-container.svg"
+      "thumbnailUrl": "/public/images/native-designs/shipping-container-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-shipping-tanker",
       "designId": "shipping-tanker",
-      "thumbnailUrl": "/public/images/native-designs/shipping-tanker.svg"
+      "thumbnailUrl": "/public/images/native-designs/shipping-tanker-vehicle-v1.svg"
     },
     {
       "sku": "backpack:builder-shipping-container-box",
@@ -8000,7 +8000,7 @@
     {
       "sku": "native:funhouse-clown-car",
       "designId": "funhouse-clown-car",
-      "thumbnailUrl": "/public/images/native-designs/funhouse-clown-car.svg"
+      "thumbnailUrl": "/public/images/native-designs/funhouse-clown-car-vehicle-v1.svg"
     },
     {
       "sku": "native:funhouse-dizzy-spinner",
@@ -8110,12 +8110,12 @@
     {
       "sku": "native:resort-paddle-boat",
       "designId": "resort-paddle-boat",
-      "thumbnailUrl": "/public/images/native-designs/resort-paddle-boat.svg"
+      "thumbnailUrl": "/public/images/native-designs/resort-paddle-boat-vehicle-v1.svg"
     },
     {
       "sku": "native:resort-pontoon",
       "designId": "resort-pontoon",
-      "thumbnailUrl": "/public/images/native-designs/resort-pontoon.svg"
+      "thumbnailUrl": "/public/images/native-designs/resort-pontoon-vehicle-v1.svg"
     },
     {
       "sku": "native:hockey-stick",

@@ -75,12 +75,14 @@ try:
           const {createBuilderLand}=await import('/public/js/environments/builder-land.js');
           const {applySportsSurfaces}=await import('/public/js/sports-surfaces.js');
           const {nativeDesignThumbnail}=await import('/public/js/native-design-profile.js');
+          const {VEHICLE_DESIGN_IDS}=await import('/public/js/vehicle-design-profile.js');
           const {RANGED_WEAPONS}=await import('/public/js/game-weapons.js');
           const {UTILITY_TOOLS}=await import('/public/js/game-utilities.js');
           const {LAYOUT_SCENES}=await import('/public/js/builder-layout-scenes.js');
           const basicToolNames={laser:'Starter Laser',bat:'Basic Bat',spray:'Paint Gun',brick:'Building Kit',flamethrower:'Flash Igniter',taser:'Taser',toxin:'Toxins Thrower',dynamite:'Dynamite',jetpack:'Jetpack'};
           const readable=id=>id.replaceAll('-',' ').replace(/\\b\\w/g,value=>value.toUpperCase());
           const allItems=new Map(Object.values(NATIVE_BUILDER_ITEMS).map(item=>[item.id,{...item,thumbnailUrl:item.visualDesign?.thumbnailUrl}]));
+          const vehicleIds=new Set(VEHICLE_DESIGN_IDS);
           for(const id of HELD_TOOL_DESIGN_IDS){const config=RANGED_WEAPONS[id]||UTILITY_TOOLS[id]||{};allItems.set('tool:'+id,{id:'tool:'+id,name:config.label||basicToolNames[id]||readable(id),description:config.description||'Detailed native '+(basicToolNames[id]||readable(id))+' with crafted casing, grip and fittings.',category:'held-tools',thumbnailUrl:nativeDesignThumbnail('tool:'+id)});}
           for(const layout of NATIVE_TEMPLATE_LAYOUT_IDS){const spec=LAYOUT_SCENES['scene-'+layout];allItems.set('layout:'+layout,{id:'layout:'+layout,name:spec?.name||readable(layout),description:spec?.description||'Native '+readable(layout)+' map template with crafted architectural and material surfaces.',category:'map-templates',thumbnailUrl:nativeDesignThumbnail('layout:'+layout)});}
           const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
@@ -97,7 +99,17 @@ try:
             let meshCount=0;root.traverse(node=>{if(node.isMesh&&node.visible!==false)meshCount++;});
             if(!meshCount)throw Error('Native model has no drawable meshes: '+id);
             updateBuilderModels(root,1.75);root.updateMatrixWorld(true);
-            const bounds=new T.Box3().setFromObject(root,true),spanVector=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),span=Math.max(...spanVector);
+            const runtimeBounds=new T.Box3().setFromObject(root,true),runtimeSpan=Math.max(...runtimeBounds.getSize(new T.Vector3()));
+            // The native clown-car assembly includes its interaction court and
+            // tall attraction sign. Preview the actual car in that same factory
+            // hierarchy, preserving the full assembly's stats and cleanup.
+            const previewSubject=id==='funhouse-clown-car'?(root.getObjectByName('FUNHOUSE_TINY_CLOWN_CAR')||root):root;
+            if(previewSubject!==root){
+              const shown=new Set();previewSubject.traverse(node=>shown.add(node));
+              for(let node=previewSubject;node;node=node.parent)shown.add(node);
+              root.traverse(node=>{if(!shown.has(node))node.visible=false;});
+            }
+            const bounds=previewSubject===root?runtimeBounds:new T.Box3().setFromObject(previewSubject,true),spanVector=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),span=Math.max(...spanVector);
             if(!Number.isFinite(span)||span<=0)throw Error('Invalid native model bounds: '+id);
             const scene=new T.Scene();scene.background=new T.Color(0x0b1725);scene.add(root);
             scene.add(new T.HemisphereLight(0xe0f3ff,0x384f57,2.35));
@@ -113,7 +125,7 @@ try:
             camera.position.copy(center).add(new T.Vector3(.9,.8,-1.4).normalize().multiplyScalar(span*2.25));camera.lookAt(center);
             renderer.render(scene,camera);
             const data=renderer.domElement.toDataURL('image/png');
-            const stats={id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,meshCount,span,finish:root.userData.nativeDesign||root.userData.heldToolDesign||root.userData.nativeWorldDesign};
+            const stats={id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,meshCount,span:runtimeSpan,finish:root.userData.nativeDesign||root.userData.heldToolDesign||root.userData.nativeWorldDesign,...(root.userData.vehicleDesign?{vehicleDesign:root.userData.vehicleDesign}:{}),...(previewSubject!==root?{previewSubject:previewSubject.name,previewSpan:span}:{})};
             const resources=new Set();scene.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const m of [].concat(node.material||[])){resources.add(m);for(const v of Object.values(m))if(v?.isTexture)resources.add(v);}node.shadow?.map?.dispose();});
             if(!floor.parent){floor.geometry.dispose();floor.material.dispose();}
             for(const resource of resources)resource.dispose();renderer.renderLists.dispose();scene.clear();
@@ -127,7 +139,7 @@ try:
             await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
             window.scrollTo(0,0);
           };
-          return [...allItems.values()].map(item=>({id:item.id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl}));
+          return [...allItems.values()].map(item=>({id:item.id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,vehicleOrder:vehicleIds.has(item.id)?VEHICLE_DESIGN_IDS.indexOf(item.id):null}));
         }''', args.size)
         if selected:
             unknown = selected - {item['id'] for item in catalog}
@@ -189,12 +201,19 @@ try:
         page.set_viewport_size({'width': 1440, 'height': page.evaluate('document.documentElement.scrollHeight')})
         page.evaluate('window.scrollTo(0,0)')
         page.screenshot(path=str(args.output / 'native-design-overview.png'))
+        fleet = sorted((item for item in available if item['vehicleOrder'] is not None), key=lambda item: item['vehicleOrder'])
+        if fleet:
+            page.set_viewport_size({'width': 1440, 'height': 104 + math.ceil(len(fleet) / 4) * 330})
+            page.evaluate('([title,items])=>showNativeSheet(title,items)', [f'Vehicles / {len(fleet)} crafted native designs', fleet])
+            page.set_viewport_size({'width': 1440, 'height': page.evaluate('document.documentElement.scrollHeight')})
+            page.evaluate('window.scrollTo(0,0)')
+            page.screenshot(path=str(args.output / 'vehicle-design-overview.png'))
         shader_errors = page.evaluate('nativeShaderErrors')
         report_path = args.output / 'native-design-render-report.json'
         previous = json.loads(report_path.read_text()) if report_path.exists() else {}
         verified = {item['id']: item for item in previous.get('items', [])}
         verified.update({item['id']: item for item in rendered})
-        report = {'catalogCount': len(catalog), 'renderedCount': len(rendered), 'verifiedCount': len(verified), 'availableThumbnails': len(available), 'selectedIds': sorted(selected) if selected else None, 'items': list(verified.values()), 'failures': failures, 'shaderErrors': shader_errors, 'browserErrors': errors}
+        report = {'catalogCount': len(catalog), 'renderedCount': len(rendered), 'verifiedCount': len(verified), 'availableThumbnails': len(available), 'vehicleDesignCount': sum(bool(item.get('vehicleDesign')) for item in verified.values()), 'selectedIds': sorted(selected) if selected else None, 'items': list(verified.values()), 'failures': failures, 'shaderErrors': shader_errors, 'browserErrors': errors}
         report_path.write_text(json.dumps(report, indent=2) + '\n')
         browser.close()
         print(f'Native export: {len(rendered)} rendered, {len(available)}/{len(catalog)} thumbnails, {len(failures)} failures, {len(shader_errors)} shader errors, {len(errors)} browser errors.', flush=True)

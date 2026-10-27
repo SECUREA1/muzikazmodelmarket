@@ -9067,7 +9067,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/alpine-quad.svg",
+      "thumbnail": "/public/images/native-designs/alpine-quad-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9997,7 +9997,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/arcade-part-coaster.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-coaster-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10066,7 +10066,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/arcade-part-coaster-car.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-coaster-car-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11114,7 +11114,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/arcade-part-train.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11183,7 +11183,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/arcade-part-train-carriage.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-carriage-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11248,7 +11248,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/arcade-part-train-engine.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-engine-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12076,7 +12076,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/camp-canoe-rack.svg",
+      "thumbnail": "/public/images/native-designs/camp-canoe-rack-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13487,7 +13487,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/corsair-aircraft.svg",
+      "thumbnail": "/public/images/native-designs/corsair-aircraft-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13759,7 +13759,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/diamond-da40.svg",
+      "thumbnail": "/public/images/native-designs/diamond-da40-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13969,7 +13969,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/dune-quad.svg",
+      "thumbnail": "/public/images/native-designs/dune-quad-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14553,7 +14553,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/factory-cargo-rocket.svg",
+      "thumbnail": "/public/images/native-designs/factory-cargo-rocket-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15293,7 +15293,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/factory-training-missile.svg",
+      "thumbnail": "/public/images/native-designs/factory-training-missile-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18730,7 +18730,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/frontier-pickup.svg",
+      "thumbnail": "/public/images/native-designs/frontier-pickup-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19135,7 +19135,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/grand-tourer.svg",
+      "thumbnail": "/public/images/native-designs/grand-tourer-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19269,7 +19269,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/harbor-fishing-boat.svg",
+      "thumbnail": "/public/images/native-designs/harbor-fishing-boat-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19346,7 +19346,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/harbor-patrol.svg",
+      "thumbnail": "/public/images/native-designs/harbor-patrol-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19421,7 +19421,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/harbor-sailboat.svg",
+      "thumbnail": "/public/images/native-designs/harbor-sailboat-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19494,7 +19494,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/harbor-skiff.svg",
+      "thumbnail": "/public/images/native-designs/harbor-skiff-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19567,7 +19567,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/harbor-yacht.svg",
+      "thumbnail": "/public/images/native-designs/harbor-yacht-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23098,7 +23098,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/piper-cub.svg",
+      "thumbnail": "/public/images/native-designs/piper-cub-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25158,7 +25158,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/shipping-container.svg",
+      "thumbnail": "/public/images/native-designs/shipping-container-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25311,7 +25311,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/shipping-feeder.svg",
+      "thumbnail": "/public/images/native-designs/shipping-feeder-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25464,7 +25464,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/shipping-tanker.svg",
+      "thumbnail": "/public/images/native-designs/shipping-tanker-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25542,7 +25542,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/site-bulldozer.svg",
+      "thumbnail": "/public/images/native-designs/site-bulldozer-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25607,7 +25607,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/site-dumptruck.svg",
+      "thumbnail": "/public/images/native-designs/site-dumptruck-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25672,7 +25672,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/site-excavator.svg",
+      "thumbnail": "/public/images/native-designs/site-excavator-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27281,7 +27281,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/touring-motorcycle.svg",
+      "thumbnail": "/public/images/native-designs/touring-motorcycle-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27346,7 +27346,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/tower-crane.svg",
+      "thumbnail": "/public/images/native-designs/tower-crane-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27549,7 +27549,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/utility-cargo-trailer.svg",
+      "thumbnail": "/public/images/native-designs/utility-cargo-trailer-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27885,7 +27885,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/wooden-cart.svg",
+      "thumbnail": "/public/images/native-designs/wooden-cart-vehicle-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [

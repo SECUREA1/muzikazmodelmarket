@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {AIRCRAFT_TYPES} from './aircraft-types.js';
 const material=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.44,metalness:.12,...extra});
@@ -39,5 +40,5 @@ export function createCivilAircraft(id){
  for(const side of [-1,1]){const x=side*(cub?.43:.62);box([.045,.33,cub?1.5:1.75],[x,1.05,cub?.1:.25],white,root,'LOWER_CABIN_DOOR');tube([x,1.23,-.6],[x,1.23,cub?.8:1.15],.012,metal,root,'DOOR_SEAM');box([.018,.025,.16],[x+side*.025,1.19,.4],metal,root,'EXTERIOR_DOOR_HANDLE');for(let i=0;i<5;i++)box([.018,.095,.045],[side*(cub?.36:.49),.97,(cub?-2.65:-3.05)+i*.085],dark,root,'COWL_COOLING_VENT');const hub=mesh(new THREE.CylinderGeometry(cub?.12:.105,cub?.12:.105,.20,16),metal,[side*.94,.26,cub?-1:.5],root,'WHEEL_HUB');hub.rotation.z=Math.PI/2;const reg=new THREE.Group();reg.position.set(side*(cub?.22:.32),1.13,2.0);reg.rotation.y=side*Math.PI/2;root.add(reg);text(cub?'N-MZCUB':'N-MZDA40',[0,0,0],1.25,.18,reg,cub?'#202323':'#176a91',cub?'#ffd12c':'#f1f5f7');}
  const beacon=mesh(new THREE.SphereGeometry(.055,8,6),material(0xff5544,{emissive:0xff3322,emissiveIntensity:.7}),[0,cub?2.2:2.42,cub?2.85:3.3],root,'TAIL_BEACON');
  text(cub?'N-MZCUB':'N-MZDA40',[0,tailY+.10,cub?2.9:3.3],1.5,.25);
- root.userData={builderObject:true,modelId:id,aircraftModel:true,dimensions:spec.dimensions,vehicle:{mode:'fly',seat:spec.seat,cockpit:spec.eye,speed:spec.maxSpeed,turnSpeed:1},cockpitPose:{position:spec.eye,fov:74,near:.025},aircraftRig:{propeller,blur,ailerons,flaps,gear,elevator,rudder,stick,needles,attitudes,windowHinge,fixedGear:true}};root.traverse(node=>{if(node.isMesh){node.castShadow=!node.material.transparent;node.receiveShadow=true;}});return root;
+ root.userData={builderObject:true,modelId:id,aircraftModel:true,dimensions:spec.dimensions,vehicle:{mode:'fly',seat:spec.seat,cockpit:spec.eye,speed:spec.maxSpeed,turnSpeed:1},cockpitPose:{position:spec.eye,fov:74,near:.025},aircraftRig:{propeller,blur,ailerons,flaps,gear,elevator,rudder,stick,needles,attitudes,windowHinge,fixedGear:true}};root.traverse(node=>{if(node.isMesh){node.castShadow=!node.material.transparent;node.receiveShadow=true;}});return finishVehicleDesign(THREE,root,id);
 }

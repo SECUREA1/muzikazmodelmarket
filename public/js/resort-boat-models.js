@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as T from '../vendor/three/three.module.min.js';
 
 /** Metre-scale resort hulls use the same helm, wake and actor projection as
@@ -44,5 +45,5 @@ export function createResortBoat(id,helmPose){
  }
  wake.userData.collisionDisabled=true;wake.visible=false;
  root.userData={builderObject:true,modelId:id,watercraft:true,boatModel:true,dimensions:pontoon?[3.7,3.25,6.5]:[1.9,1.5,3.4],helmPose,vehicle:{mode:'boat',seat:[...helmPose.position],speed:pontoon?6:3.4,turnSpeed:pontoon?.6:1.15},wakeDesign:{stern:pontoon?3.3:1.75,length:pontoon?3:1.8,width:pontoon?1.25:.65},boatRig:{wheel,throttle,flag,wake,foam,needles,paddleWheel}};
- return root;
+ return finishVehicleDesign(T,root,id);
 }

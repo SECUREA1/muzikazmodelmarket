@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as T from '../vendor/three/three.module.min.js';
 const wood=new T.MeshStandardMaterial({color:0xa67b4c,roughness:.85}),steel=new T.MeshStandardMaterial({color:0x526572,metalness:.8,roughness:.3}),rubber=new T.MeshStandardMaterial({color:0x171b20,roughness:.9}),amber=new T.MeshStandardMaterial({color:0xf1c35e,emissive:0x795019});
 function box(root,size,pos,mat=steel){const mesh=new T.Mesh(new T.BoxGeometry(...size),mat);mesh.position.set(...pos);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);return mesh;}
@@ -19,7 +20,7 @@ export function createFreightModel(id){
   for(const z of [-.25,.8])for(const x of [-1.02,1.02]){const wheel=new T.Mesh(new T.CylinderGeometry(.34,.34,.22,24),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.36,z);root.add(wheel);const hub=new T.Mesh(new T.CylinderGeometry(.19,.19,.24,16),steel);hub.rotation.z=Math.PI/2;hub.position.copy(wheel.position);root.add(hub);box(root,[.32,.08,1.7],[x,.8,.28]);}
   for(const x of [-.78,.78])box(root,[.23,.1,.04],[x,.7,2.26],new T.MeshStandardMaterial({color:0xf45c4a,emissive:0xb12d20}));
  }
- root.traverse(mesh=>{if(mesh.isMesh)mesh.userData.builderRoot=root;});return root;
+ root.traverse(mesh=>{if(mesh.isMesh)mesh.userData.builderRoot=root;});return finishVehicleDesign(T,root,id);
 }
 function cargoCrate(root,pos){const crate=new T.Group();crate.position.set(...pos);box(crate,[.68,.54,.72],[0,0,0],wood);for(const x of [-.25,.25])box(crate,[.06,.57,.76],[x,0,0],steel);box(crate,[.25,.2,.015],[0,0,-.37],amber);root.add(crate);return crate;}
 export function updateFreightVisual(root){
