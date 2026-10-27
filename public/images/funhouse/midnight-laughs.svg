@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+ <title id="title">Midnight Laughs Funhouse</title><desc id="desc">A grinning clown horror house under a violet midnight sky, with carnival tents, a clown car and glowing midway lights.</desc>
+ <defs>
+  <linearGradient id="night" x2="0" y2="1"><stop stop-color="#0d0b24"/><stop offset="1" stop-color="#40163e"/></linearGradient>
+  <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#40203f"/><stop offset="1" stop-color="#110c22"/></linearGradient>
+  <linearGradient id="face" x2="0" y2="1"><stop stop-color="#fff0cf"/><stop offset="1" stop-color="#a88ea3"/></linearGradient>
+  <linearGradient id="mouth" x2="0" y2="1"><stop stop-color="#44113d"/><stop offset="1" stop-color="#09091b"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#f5449f" stop-opacity=".4"/><stop offset="1" stop-color="#f5449f" stop-opacity="0"/></radialGradient>
+  <pattern id="checks" width="80" height="80" patternUnits="userSpaceOnUse"><rect width="80" height="80" fill="#b9a5b3"/><path d="M0 0h40v40H0zm40 40h40v40H40z" fill="#33213c"/></pattern>
+ </defs>
+ <rect width="960" height="600" fill="url(#night)"/>
+ <circle cx="787" cy="102" r="51" fill="#c6b4d4" opacity=".8"/><circle cx="805" cy="88" r="48" fill="#100c28"/>
+ <g fill="#e4c7fc" opacity=".7"><circle cx="80" cy="95" r="2"/><circle cx="172" cy="49" r="2"/><circle cx="298" cy="83" r="2"/><circle cx="670" cy="48" r="2"/><circle cx="909" cy="151" r="2"/><circle cx="884" cy="42" r="2"/><circle cx="59" cy="204" r="2"/></g>
+ <ellipse cx="480" cy="340" rx="365" ry="284" fill="url(#glow)"/>
+ <path d="M0 406q240-70 480-26t480-1v221H0z" fill="url(#floor)"/>
+ <path d="m435 403-172 197h434L526 403z" fill="url(#checks)" opacity=".26"/>
+ <g stroke="#331536" stroke-width="4"><path d="M47 289h184v126H47z" fill="#7a295b"/><path d="m28 289 111-105 111 105z" fill="#cc3c75"/><path d="m139 184-40 105h80z" fill="#dca751"/><path d="M729 289h184v126H729z" fill="#742956"/><path d="m710 289 111-105 111 105z" fill="#cc3c75"/><path d="m821 184-40 105h80z" fill="#dca751"/></g>
+ <path d="M266 195h428v252H266z" fill="#2b1536" stroke="#743965" stroke-width="6"/>
+ <path d="m254 195 56-70 56 70 58-70 56 70 56-70 58 70 56-70 56 70" fill="#b43a72" stroke="#eea74d" stroke-width="5"/>
+ <g fill="#7b327a" stroke="#d65d99" stroke-width="3"><ellipse cx="326" cy="256" rx="53" ry="80"/><ellipse cx="634" cy="256" rx="53" ry="80"/></g>
+ <path d="M341 246q0-118 139-118t139 118v73q-5 128-139 128T341 319z" fill="url(#face)" stroke="#ec6da0" stroke-width="5"/>
+ <path d="m374 241 41-64 20 74zm153 10 19-74 41 64z" fill="#391740"/>
+ <path d="m384 234 41 8m110 0 41-8" stroke="#bafa8f" stroke-width="9" stroke-linecap="round"/>
+ <ellipse cx="375" cy="302" rx="23" ry="19" fill="#b32b64"/><ellipse cx="585" cy="302" rx="23" ry="19" fill="#b32b64"/>
+ <circle cx="480" cy="278" r="32" fill="#d9326a" stroke="#8c1e57" stroke-width="4"/><ellipse cx="470" cy="268" rx="9" ry="6" fill="#ff8f9c"/>
+ <path d="M383 330q97 54 194 0l-8 117H391z" fill="url(#mouth)" stroke="#b42d66" stroke-width="14"/>
+ <path d="m395 339 9 27 17-17 13 28 17-20 15 27 15-22 15 22 15-27 17 20 13-28 17 17 9-27" fill="#ecd5b1"/>
+ <path d="m425 150 55-82 55 82" fill="#ad2a6a" stroke="#e8aa5b" stroke-width="4"/><circle cx="480" cy="64" r="12" fill="#e4bb65"/>
+ <g stroke="#665084" stroke-width="3"><path d="M23 239q210 111 367-32M570 207q176 136 367 32" fill="none"/></g>
+ <g fill="#f5c879"><circle cx="56" cy="254" r="6"/><circle cx="97" cy="270" r="6"/><circle cx="145" cy="281" r="6"/><circle cx="195" cy="284" r="6"/><circle cx="246" cy="275" r="6"/><circle cx="297" cy="258" r="6"/><circle cx="343" cy="231" r="6"/><circle cx="616" cy="233" r="6"/><circle cx="663" cy="259" r="6"/><circle cx="714" cy="277" r="6"/><circle cx="766" cy="285" r="6"/><circle cx="815" cy="281" r="6"/><circle cx="864" cy="270" r="6"/><circle cx="905" cy="254" r="6"/></g>
+ <g transform="translate(722 382)"><ellipse cx="71" cy="76" rx="109" ry="19" fill="#08091b" opacity=".6"/><path d="M-18 31 2 1h68l27 32 44 9v30H-24V44z" fill="#dc368a" stroke="#702b65" stroke-width="4"/><path d="M12 8h27v25H-2zm35 0h17l24 25H47z" fill="#76d1df"/><circle cx="10" cy="67" r="20" fill="#161528" stroke="#f2ba4e" stroke-width="7"/><circle cx="109" cy="67" r="20" fill="#161528" stroke="#f2ba4e" stroke-width="7"/><circle cx="133" cy="46" r="9" fill="#f9d86a"/><path d="M-17 43H8" stroke="#f6bd55" stroke-width="7"/><circle cx="62" cy="49" r="9" fill="#79e2b3"/></g>
+ <g transform="translate(145 368)"><path d="m0 15 47-26 34 27v39H-1z" fill="#2b193d"/><circle cx="37" cy="-24" r="24" fill="#ddd0c1"/><circle cx="37" cy="-19" r="8" fill="#dc366e"/><path d="m10-43 27-42 27 42" fill="#b93a83"/><path d="M27 19 6 55m41-36 25 36" stroke="#6ae1c0" stroke-width="13"/><path d="M-3 55h27m35 0h27" stroke="#e5aa53" stroke-width="14" stroke-linecap="round"/></g>
+ <rect x="216" y="463" width="528" height="100" rx="10" fill="#0f0d23" stroke="#b45586" stroke-width="2"/>
+ <text x="480" y="491" fill="#dcaf65" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="13" letter-spacing="6">A MUZIKAZ WORLD DESTINATION</text>
+ <text x="480" y="527" fill="#ffdaea" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="36">MIDNIGHT LAUGHS</text>
+ <text x="480" y="550" fill="#b1e4d6" text-anchor="middle" font-family="sans-serif" font-size="13" letter-spacing="4">FUNHOUSE · CLOWNS · CARNIVAL</text>
+</svg>

@@ -64518,5 +64518,437 @@
       }
     },
     "playUrl": "model-explorer.html?environment=hormuz-shipping&house=hormuz-shipping&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "muzikaz-clown-funhouse",
+    "name": "Midnight Laughs Funhouse",
+    "label": "Horror house · clown carnival & splash games",
+    "description": "A complete spooky clown carnival with a giant grinning horror house, crooked mirror maze, monster ball pit, surprise jack-in-the-box, impossible clown car, dizzy hat spinner, propeller hats, giant clown shoes and a playable water-gun gallery. Explore the neon midway with friends and meet the clown hosts.",
+    "category": "Funhouse & carnival",
+    "game": "funhouse",
+    "indoor": true,
+    "outdoor": false,
+    "worldId": "crew-plaza",
+    "mapColor": "#e56ca8",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 120,
+    "thumbnailUrl": "/public/images/funhouse/midnight-laughs.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 48,
+      "rotationY": 0
+    },
+    "streets": [],
+    "funhouse": {
+      "enabled": true,
+      "stations": [
+        {
+          "id": "funhouse-welcome",
+          "kind": "welcome",
+          "name": "Midnight Laughs Welcome",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 40
+          },
+          "prompt": "Explore the funhouse · E / Use"
+        },
+        {
+          "id": "funhouse-water-gallery",
+          "kind": "water",
+          "name": "Splash the Clowns",
+          "position": {
+            "x": -30,
+            "y": 0.02,
+            "z": 12
+          },
+          "prompt": "Play the water-gun gallery · E / Use"
+        },
+        {
+          "id": "funhouse-clown-car",
+          "kind": "car",
+          "name": "Impossible Clown Car",
+          "position": {
+            "x": 24,
+            "y": 0.02,
+            "z": 28
+          },
+          "prompt": "Honk the clown car · E / Use"
+        },
+        {
+          "id": "funhouse-spinner",
+          "kind": "spinner",
+          "name": "Dizzy Hat Spinner",
+          "position": {
+            "x": 24,
+            "y": 0.02,
+            "z": 2
+          },
+          "prompt": "Start the dizzy spinner · E / Use"
+        },
+        {
+          "id": "funhouse-dressup",
+          "kind": "dressup",
+          "name": "Clown Dressing Room",
+          "position": {
+            "x": -28,
+            "y": 0.02,
+            "z": 34
+          },
+          "prompt": "Try spinner hats & giant shoes · E / Use"
+        },
+        {
+          "id": "funhouse-mirror-maze",
+          "kind": "mirrors",
+          "name": "Crooked Mirror Maze",
+          "position": {
+            "x": -8,
+            "y": 0.02,
+            "z": -19
+          },
+          "prompt": "Start the mirror maze · E / Use"
+        },
+        {
+          "id": "funhouse-maze-finish",
+          "kind": "maze-finish",
+          "name": "Mirror Maze Exit Bell",
+          "position": {
+            "x": -18,
+            "y": 0.02,
+            "z": -38
+          },
+          "prompt": "Ring the maze exit bell · E / Use"
+        },
+        {
+          "id": "funhouse-ball-pit",
+          "kind": "ballpit",
+          "name": "Monster Ball Pit",
+          "position": {
+            "x": 10,
+            "y": 0.02,
+            "z": -21
+          },
+          "prompt": "Play in the monster ball pit · E / Use"
+        },
+        {
+          "id": "funhouse-jack-box",
+          "kind": "jackbox",
+          "name": "Jack in the Fright Box",
+          "position": {
+            "x": 14,
+            "y": 0.02,
+            "z": -33
+          },
+          "prompt": "Wind up the surprise box · E / Use"
+        }
+      ]
+    },
+    "builderScene": {
+      "version": 3,
+      "name": "Midnight Laughs Funhouse",
+      "layout": "clown-funhouse",
+      "mapSize": 120,
+      "objects": [],
+      "nativeComponents": [
+        {
+          "modelId": "funhouse-midway-floor",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-horror-house",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-mirror-wall",
+          "count": 3,
+          "placedCount": 3,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-maze-bell",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-water-gallery",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-clown-car",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-dizzy-spinner",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-dressing-room",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-ball-pit",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-jack-box",
+          "count": 2,
+          "placedCount": 2,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-popcorn-stall",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-ticket-booth",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-candy-stall",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-circus-tent",
+          "count": 4,
+          "placedCount": 4,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-fence",
+          "count": 111,
+          "placedCount": 111,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-balloon-bunch",
+          "count": 8,
+          "placedCount": 8,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-bunting",
+          "count": 3,
+          "placedCount": 3,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-lamp",
+          "count": 8,
+          "placedCount": 8,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-welcome-board",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-greeter-avatar",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-juggler-avatar",
+          "count": 1,
+          "placedCount": 1,
+          "includedIn": []
+        },
+        {
+          "modelId": "funhouse-ringmaster-avatar",
+          "count": 1,
+          "placedCount": 0,
+          "includedIn": [
+            {
+              "modelId": "funhouse-dressing-room",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-driver-avatar",
+          "count": 6,
+          "placedCount": 1,
+          "includedIn": [
+            {
+              "modelId": "funhouse-clown-car",
+              "count": 5
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-scare-clown-avatar",
+          "count": 3,
+          "placedCount": 1,
+          "includedIn": [
+            {
+              "modelId": "funhouse-jack-box",
+              "count": 2
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-water-gun",
+          "count": 3,
+          "placedCount": 0,
+          "includedIn": [
+            {
+              "modelId": "funhouse-water-gallery",
+              "count": 3
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-clown-target",
+          "count": 6,
+          "placedCount": 0,
+          "includedIn": [
+            {
+              "modelId": "funhouse-water-gallery",
+              "count": 6
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-propeller-hat",
+          "count": 3,
+          "placedCount": 0,
+          "includedIn": [
+            {
+              "modelId": "funhouse-dressing-room",
+              "count": 3
+            }
+          ]
+        },
+        {
+          "modelId": "funhouse-clown-shoes",
+          "count": 1,
+          "placedCount": 0,
+          "includedIn": [
+            {
+              "modelId": "funhouse-dressing-room",
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "weather": "clear",
+      "layoutMeta": {
+        "color": 2364718,
+        "sky": 1051681,
+        "locations": [
+          {
+            "id": "funhouse-house",
+            "name": "Horror Funhouse",
+            "x": 0,
+            "z": -28,
+            "width": 48,
+            "depth": 32,
+            "description": "An enormous grinning clown doorway leads to crooked mirrors, a ball pit and a jack-in-the-box."
+          },
+          {
+            "id": "funhouse-maze",
+            "name": "Crooked Mirror Maze",
+            "x": -14,
+            "z": -29,
+            "width": 20,
+            "depth": 28,
+            "description": "Follow the alternating passages and ring the exit bell."
+          },
+          {
+            "id": "funhouse-gallery",
+            "name": "Water-Gun Gallery",
+            "x": -30,
+            "z": 6,
+            "width": 20,
+            "depth": 16,
+            "description": "Splash the clown targets in a timed water-gun round."
+          },
+          {
+            "id": "funhouse-car",
+            "name": "Clown Car Court",
+            "x": 28,
+            "z": 25,
+            "width": 16,
+            "depth": 14,
+            "description": "Honk a tiny carnival car and watch its ridiculous clown surprise show."
+          },
+          {
+            "id": "funhouse-spinner",
+            "name": "Dizzy Hat Spinner",
+            "x": 28,
+            "z": -4,
+            "width": 18,
+            "depth": 18,
+            "description": "A spinning carnival platform under a giant propeller hat."
+          },
+          {
+            "id": "funhouse-dressup",
+            "name": "Clown Dressing Room",
+            "x": -28,
+            "z": 30,
+            "width": 20,
+            "depth": 12,
+            "description": "Try a spinning propeller hat and enormous clown shoes."
+          },
+          {
+            "id": "funhouse-midway",
+            "name": "Midnight Midway",
+            "x": 0,
+            "z": 22,
+            "width": 24,
+            "depth": 40,
+            "description": "Striped tents, balloons, carnival lights and clown hosts."
+          }
+        ],
+        "funhouse": {
+          "enabled": true
+        }
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "funhouse": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=muzikaz-clown-funhouse&house=muzikaz-clown-funhouse&mode=multiplayer&autoplay=1"
   }
 ]

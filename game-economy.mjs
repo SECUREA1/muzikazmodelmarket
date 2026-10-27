@@ -39,7 +39,8 @@ const raw=[
 // New native definitions automatically enter the same server purchase flow.
 const registered = new Set(raw.map(item=>item.buildAssetId || (item.materialId?'material:'+item.materialId:null)).filter(Boolean));
 for(const definition of Object.values(NATIVE_BUILDER_ITEMS))if(!registered.has(definition.id)){
- raw.push({...definition,id:'native-'+definition.id,sku:'native:'+definition.id,kind:'asset',assetType:definition.type,priceMzk:100,useCostMzk:1});
+ const funhouse=definition.id.startsWith('funhouse-');
+ raw.push({...definition,id:'native-'+definition.id,sku:'native:'+definition.id,kind:'asset',assetType:definition.type,priceMzk:funhouse?definition.priceMzk:100,useCostMzk:funhouse?0:1});
  registered.add(definition.id);
 }
 export const GAME_ECONOMY=raw.map(record=>{

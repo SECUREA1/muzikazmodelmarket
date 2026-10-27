@@ -43,6 +43,21 @@ test('avatar changes discard late models, animate the confirmed model, and retai
  disposeProjection(root);
 });
 
+test('native avatar selection replaces GLBs, rejects late loads and retains the body if a native factory is unavailable',()=>{
+ const root=new THREE.Group(),body=new THREE.Group();root.add(body);root.userData.serverBody=body;
+ const pending=[],loader={load(url,success){pending.push({url,success});}},factoryIds=[];
+ const createNative=id=>{factoryIds.push(id);return id==='missing'?null:new THREE.Group();};
+ const sync=peer=>syncServerAvatar({THREE,root,peer,loader,prepare:model=>model,createNative,isCurrent:()=>true,now:100});
+ sync({modelUrl:'/legacy.glb'});assert.equal(pending.length,1);
+ sync({avatarBuildAssetId:'funhouse-ringmaster-avatar',modelUrl:'/unapproved.glb'});
+ assert.equal(body.visible,false);assert.equal(root.userData.serverAvatarModel.userData.nativeAvatar,true);
+ const native=root.userData.serverAvatarModel;sync({avatarBuildAssetId:'funhouse-ringmaster-avatar'});assert.equal(factoryIds.length,1,'same native selection is reused');
+ const late=new THREE.Group();pending[0].success({scene:late});assert.equal(late.parent,null);assert.equal(root.userData.serverAvatarModel,native);
+ sync({avatarBuildAssetId:'missing'});assert.equal(native.parent,null);assert.equal(body.visible,true);
+ sync({modelUrl:'/restored.glb'});pending[1].success({scene:new THREE.Group()});assert.equal(body.visible,false);
+ disposeProjection(root);
+});
+
 test('server enemy projection interpolates positions and turns, and snaps teleports',async()=>{
  const {targetServerEnemy,interpolateServerEnemy}=await import('../public/js/server-scene-projection.js');
  const root=new THREE.Group(),actor={position:{x:1,y:0,z:2},rotation:{y:3.1}};

@@ -2,13 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {nativeBuilderItem} from '../public/js/native-builder-items.js';
 
 const source=readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+const avatarHelpers=source.slice(source.indexOf('const isNativeAvatar='),source.indexOf('async function clearAvatarProfile('));
 const start=source.indexOf('async function designatedAvatar('),end=source.indexOf('\nfunction assetType(',start);
 function fixture({profiles=[],selected=null,account={accountId:'player',selectedAvatarId:'starter-avatar'},avatars=[]}={}){
  const calls=[],starter={id:'starter-avatar',modelUrl:'/public/models/starter.glb',eligible:true};
- const context=vm.createContext({STARTER_AVATAR:starter,readAvatarProfiles:async()=>profiles,validatedAvatar:async(actor,id)=>{calls.push(['validate',actor.id,id]);return selected;},loadoutCodeStore:{getAccount:async id=>{calls.push(['account',id]);return account;}},backpackFor:async value=>{calls.push(['backpack',value.accountId]);return {avatars,selectedAvatarId:value.selectedAvatarId};},approvedAvatarUrl:value=>value?.startsWith('/public/models/')});
- vm.runInContext(source.slice(start,end),context);
+ const context=vm.createContext({nativeBuilderItem,STARTER_AVATAR:starter,readAvatarProfiles:async()=>profiles,validatedAvatar:async(actor,id)=>{calls.push(['validate',actor.id,id]);return selected;},loadoutCodeStore:{getAccount:async id=>{calls.push(['account',id]);return account;}},backpackFor:async value=>{calls.push(['backpack',value.accountId]);return {avatars,selectedAvatarId:value.selectedAvatarId};},approvedAvatarUrl:value=>value?.startsWith('/public/models/')});
+ vm.runInContext(avatarHelpers+source.slice(start,end),context);
  return {calls,starter,resolve:(proof={session:{accountId:'player'}},known=null)=>context.designatedAvatar({}, {id:'wallet'},proof,known)};
 }
 
@@ -45,13 +47,13 @@ function composedFixture({profileId=null,selectedAvatarId='paid-avatar'}={}){
  const state={walletId:'wallet',memory:{account:{accountId:'player'}},tokens:{MZK:12000},items:[{id:'paid-avatar',name:'Paid avatar',assetType:'avatar',modelUrl:'/public/models/owned.glb'}]};
  const starter={id:'starter-avatar',name:'Starter Avatar',modelUrl:'/public/models/starter.glb',eligible:true};
  const models=[{id:'owned',name:'Owned model',assetType:'avatar',modelUrl:'/public/models/owned.glb'},{id:'unowned',name:'Unowned model',assetType:'avatar',modelUrl:'/public/models/unowned.glb'},{id:'private',assetType:'avatar',modelUrl:'/public/models/private.glb',visibility:'private'}];
- const context=vm.createContext({STARTER_AVATAR:starter,JSON,createHash:()=>({update(){return this;},digest(){return 'test-hash';}}),plotSpaceId:()=>'',plotPlayUrl:()=>'',
+ const context=vm.createContext({nativeBuilderItem,STARTER_AVATAR:starter,JSON,createHash:()=>({update(){return this;},digest(){return 'test-hash';}}),plotSpaceId:()=>'',plotPlayUrl:()=>'',
   repositoryModelManifest:'models',publicAvatarManifest:'fallback',readFile:async path=>{assert.equal(path,'models');return JSON.stringify({models});},combinedEnvironments:async()=>{calls.worlds++;return [{id:'world',name:'Public world',modelUrl:'/public/models/world.glb'}];},
   userDatabase:{ensureAccount:async()=>{calls.ensure++;return state;},get:async()=>{calls.get++;return state;}},paymentOrderStore:{records:async()=>{calls.orders++;return [{orderId:'paid-order',memberAccountId:'player',purchaseType:'MARKETPLACE',paymentStatus:'PAID'}];}},deliverVerifiedStoreOrder:async order=>calls.deliveries.push(order.orderId),
   readAvatarProfiles:async()=>profileId?[{userId:'wallet',assetId:profileId}]:[],readAssets:async()=>[{id:'uploaded',title:'Owned upload',ownerId:'wallet',category:'avatar',publicUrl:'/uploads/assets/owned.glb'},{id:'foreign-upload',title:'Foreign upload',ownerId:'other',category:'avatar',publicUrl:'/uploads/assets/foreign.glb'}],readModels:async()=>[],
   isGlbAvatar:asset=>asset.category==='avatar'&&asset.publicUrl.endsWith('.glb'),loadoutCodeStore:{getAccount:async id=>{calls.accounts++;assert.equal(id,'player');return account;}},cleanText:(value,fallback)=>String(value||fallback)});
  const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
- vm.runInContext(section('function publicModelUrl(','async function deliverVerifiedStoreOrder(')+section('async function backpackFor(','\nfunction throttleAccess(')+section('async function readPublicAvatars(','\nfunction assetType('),context);
+ vm.runInContext(avatarHelpers+section('function publicModelUrl(','async function deliverVerifiedStoreOrder(')+section('async function backpackFor(','\nfunction throttleAccess(')+section('async function readPublicAvatars(','\nfunction assetType('),context);
  return {context,calls,account,state,starter,resolve:(known=account,materialized=state)=>context.designatedAvatar({}, {id:'wallet'},{session:{accountId:'player'}},known,materialized)};
 }
 

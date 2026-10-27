@@ -4,9 +4,11 @@ import {deviceDefinition} from './interactive-devices.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {CAMP_ITEMS} from './summer-camp.js';
 import {LAYOUT_SCENES} from './builder-layout-scenes.js';
-export const BUILDER_SECTIONS=[['all','All items'],['scene-layouts','In-map scenes'],['factory','Factory & rockets'],['fitness','Fitness & gym'],['summer-camp','Summer camp'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['audio','Music & audio'],['video','Screens & media'],['services','Shops & services'],['seating','Seating'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
+import {FUNHOUSE_ITEMS} from './clown-funhouse-items.js';
+export const BUILDER_SECTIONS=[['all','All items'],['scene-layouts','In-map scenes'],['funhouse','Clown funhouse'],['factory','Factory & rockets'],['fitness','Fitness & gym'],['summer-camp','Summer camp'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['audio','Music & audio'],['video','Screens & media'],['services','Shops & services'],['seating','Seating'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
 export function builderSections(model){
  const tags=new Set([model.category,model.type].filter(Boolean)),id=model.buildAssetId||model.id,device=deviceDefinition(id,model.function_data||{});
+ if(FUNHOUSE_ITEMS[id])tags.add('funhouse');
  if(FITNESS_ITEMS[id])tags.add('fitness');
  if(FACTORY_ITEMS[id]||model.function_data?.factoryCrewId)tags.add('factory');
  const camp=CAMP_ITEMS[id];if(camp){tags.add('summer-camp');tags.add(camp.category);}if(id==='campfire')tags.add('summer-camp');

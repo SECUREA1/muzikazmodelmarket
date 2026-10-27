@@ -95,6 +95,14 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 ## Residents and local favors
 
+The permanent **Midnight Laughs Funhouse** adds a 120-metre scary clown carnival,
+a horror house and mirror maze, clown car, dizzy spinner, propeller hats,
+oversized shoes, surprise box, ball pit and water-gun gallery. Open it from
+Explorer options or the world directory. Its Game Market and Builder Market
+listing includes an editable template and 28 individual props, attractions,
+costumes, tools and playable clown characters with canonical MZK purchases and
+Backpack delivery. See [funhouse controls and market items](docs/clown-funhouse.md).
+
 Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
 fishing grounds, tackle in the existing tools and markets, saved catches, MZK
 sales and shared fishing tournaments with AI rivals. See [fishing controls,
