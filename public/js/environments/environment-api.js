@@ -1,10 +1,11 @@
 
+import {readJsonResponse} from '../json-response.js';
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
 export async function fetchEnvironment(id) {
   const response=await apiFetch('/api/environments/'+encodeURIComponent(id),{headers:{Accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(15000)});
-  const payload=await response.json();
+  const payload=await readJsonResponse(response,{label:'The map server'});
   if(!response.ok)throw new Error(payload.message||`Map lookup failed (${response.status})`);
   const record=payload.data||payload;
   if(!record?.id)throw new Error('The map server returned an invalid map.');
@@ -16,7 +17,7 @@ export async function fetchEnvironmentList() {
   try {
     const response = await apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
-    const payload = await response.json();
+    const payload = await readJsonResponse(response,{label:'The map server'});
     records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
   } catch (error) {
     logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
@@ -25,7 +26,7 @@ export async function fetchEnvironmentList() {
   if (!records.length) {
     const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
-    const payload = await fallback.json();
+    const payload = await readJsonResponse(fallback,{label:'The saved map directory'});
     records = Array.isArray(payload) ? payload : [];
   }
 

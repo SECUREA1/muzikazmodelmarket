@@ -1,3 +1,4 @@
+import {verifyBrowserModuleGraph} from './check-browser-modules.mjs';
 import { access, readFile } from 'node:fs/promises';
 
 const htmlPages = ['index.html', 'model-market.html', 'builder-market.html', 'environment-builder.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
@@ -231,13 +232,13 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
     throw new Error(`RAD-TOX launcher must not populate the removed 2D game: ${removed2dFeature}`);
   }
 }
-if (!launcher.includes('if (requested) return') || !launcher.includes("{ once: true }")) throw new Error('RAD-TOX launcher must guard against duplicate initialization and listeners.');
+if (!launcher.includes('if (requested || restarting) return') || !launcher.includes("{ once: true }")) throw new Error('RAD-TOX launcher must guard against duplicate initialization and listeners.');
 if (launcher.includes('data-radtox-retry') || launcher.includes('supportsModern')) throw new Error('RAD-TOX launcher must not add recovery or compatibility gates.');
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-if (!/function begin\(\)[\s\S]*import\('\.\/house-explorer-glb\.js(?:\?[^']*)?'\)\.catch/.test(launcher)) {
+if (!/function begin\(\)[\s\S]*var enginePath = '\.\/house-explorer-glb\.js\?v=[^']+'[\s\S]*import\(enginePath\)\.catch/.test(launcher)) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 
@@ -416,7 +417,8 @@ if (!css.includes("url('reference.png')")) {
   throw new Error('styles.css does not reference the hero artwork.');
 }
 
-console.log('Static build output contains all public and member pages with required references.');
+const browserModules=await verifyBrowserModuleGraph();
+console.log('Static build output contains all public and member pages with required references; '+browserModules.files.length+' browser modules have complete deployed dependency graphs.');
 
 for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', 'name="password"', 'data-asset-dashboard hidden']) {
   if (!membersHtml.includes(requiredAdminMarkup)) {

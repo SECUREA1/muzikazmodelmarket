@@ -11,7 +11,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(launcher, /engineReady/, 'retries reuse an engine that has already loaded');
   assert.match(launcher, /button\.disabled = false/, 'a failed start restores the launch control');
   assert.doesNotMatch(launcher, /addEventListener\('click',[\s\S]{0,100}\{ once: true \}/, 'the launch control remains usable for retries');
-  assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
+  assert.match(launcher, /setTimeout\([\s\S]{0,100}30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
   assert.match(launcher, /new URLSearchParams\(window\.location\.search\)\.get\('autoplay'\) === '1'\) begin\(\)/, 'autoplay routes load the deferred engine without waiting for a second click');
   assert.match(game, /signal: AbortSignal.timeout\(5000\)/, 'bundled startup maps have a bounded request');
   assert.match(game, /let startEnvironment = selectedWorldId\(registry,params\)/, 'normal launches start in the house');

@@ -1,19 +1,28 @@
-// Browser caches are optional display/game preferences, never ownership records.
-// A stale, truncated, or wrongly shaped value must not prevent the engine loading.
-function readStoredValue(key) {
-  try {
-    return JSON.parse(globalThis.localStorage.getItem(key) || 'null');
-  } catch {
-    return null;
-  }
+// Local presentation data is optional. Old or damaged values must never stop
+// a world from loading, and recovering one key must not clear other progress.
+const browserStorage=()=>{try{return globalThis.localStorage||null;}catch{return null;}};
+const fresh=value=>value&&typeof value==='object'?JSON.parse(JSON.stringify(value)):value;
+export const isGameRecord=value=>Boolean(value&&typeof value==='object'&&!Array.isArray(value));
+
+export function writeGameStorage(key,value,{storage=browserStorage()}={}){
+ try{if(!storage)return false;storage.setItem(key,JSON.stringify(value));return true;}catch{return false;}
 }
 
-export function readStoredGameArray(key) {
-  const value = readStoredValue(key);
-  return Array.isArray(value) ? value : [];
+export function readGameJson(key,fallback,{validate=()=>true,storage=browserStorage()}={}){
+ let raw;
+ try{if(!storage)return fresh(fallback);raw=storage.getItem(key);}catch{return fresh(fallback);}
+ if(raw===null||raw===undefined)return fresh(fallback);
+ try{const value=JSON.parse(raw);if(validate(value))return value;}catch{}
+ const value=fresh(fallback);writeGameStorage(key,value,{storage});return value;
 }
 
-export function readStoredGameObject(key, fallback = {}) {
-  const value = readStoredValue(key);
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : fallback;
+export function readGameArray(key,{item=()=>true,storage=browserStorage()}={}){
+ const values=readGameJson(key,[],{validate:Array.isArray,storage});
+ const clean=values.filter(value=>{try{return item(value);}catch{return false;}});
+ if(clean.length!==values.length)writeGameStorage(key,clean,{storage});
+ return clean;
+}
+
+export function readGameObject(key,{nullable=false,storage=browserStorage()}={}){
+ return readGameJson(key,nullable?null:{},{validate:value=>isGameRecord(value)||nullable&&value===null,storage});
 }
