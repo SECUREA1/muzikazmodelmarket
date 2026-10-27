@@ -69,6 +69,16 @@ export function createFactoryProvingGroundsLand(environment={}){
  sign('LAUNCH CONTROL',-24,5.5,25.5,21,2,'ARM THE TEST  /  WATCH SHARED TELEMETRY');
  sign('ATLAS / PROVING GROUNDS',-43,6,52,38,4,'CRAFT  ·  DEPLOY  ·  TEST  ·  UNLOCK');
  sign('FACTORY WEST GATE',-76,4.5,43,25,2.4,'RETURN TO THE NEIGHBORING FACTORY');
+ // Certification and receiving share a level apron west of the control
+ // bunker, with a direct walking lane back to preparation and the factory.
+ box('CERTIFICATION_APRON',-56,.012,5,26,.024,20,'road',false);box('RECEIVING_APRON',-64,.012,24,21,.024,18,'road',false);
+ box('LOGISTICS_PEDESTRIAN_LANE',-56,.012,22,7,.024,37,'road',false);
+ for(const x of [-69,-43]){box('CERTIFICATION_CANOPY_POST',x,2.5,-4,.28,5,.28,'steel');box('CERTIFICATION_CANOPY_POST',x,2.5,13,.28,5,.28,'steel');}
+ for(const z of [-4,13]){box('CERTIFICATION_CANOPY_RAFTER',-56,5,z,26.5,.3,.4,'steel',false);box('CERTIFICATION_LED',-56,4.8,z,23,.06,.1,mat('teal',true),false);}
+ for(const x of [-73,-55])box('RECEIVING_APRON_MARK',x,.035,24,.1,.02,17,'yellow',false);
+ sign('TEST CERTIFICATION & MZK',-56,6.1,13,29,2.2,'VERIFY A TESTED MODEL BEFORE TRADE');
+ sign('RANGE FREIGHT RECEIVING',-64,3.8,30.5,23,1.6,'ACCEPT THE FACTORY DELIVERY AT THIS DESK');
+ illustratedPanel('/public/images/factory/proving-range-panel.svg',-56,3.1,-3.6,16,5);
  sign('TRAINING COURSE',0,5.5,-33,22,2,'SCRIPTED PRACTICE FLIGHT');
  sign('CARGO TOUCHDOWN',35,4.5,-48,22,2,'MARKED LANDING APRON');
  // Angular mountain shells leave an open forecourt in front of the locked

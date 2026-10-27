@@ -53,6 +53,8 @@ test('public native market links map components to canonical purchases and prese
   assert.equal(upgrades.filter(item => item.native).length,GAME_ECONOMY.filter(item => item.native).length);
   assert.deepEqual(new Set(upgrades.map(item => item.sku)),new Set(GAME_ECONOMY.map(item => item.sku)),'all canonical SKUs appear in the public market');
   const bySku = new Map(upgrades.map(item => [item.sku,item]));
+  const modelPath=value=>decodeURIComponent(String(value||'').split(/[?#]/)[0]).replace(/^\/+/,'');
+  const marketModelPaths=new Set(upgrades.map(item=>modelPath(item.modelUrl)).filter(Boolean));
   for (const definition of Object.values(NATIVE_BUILDER_ITEMS)) {
     assert.ok(upgrades.some(item => item.buildAssetId === definition.id && item.native),'native definition is market integrated: '+definition.id);
   }
@@ -66,7 +68,9 @@ test('public native market links map components to canonical purchases and prese
     const map = environments.find(map => map.id === template.worldId);
     assert.ok(map,'each template identifies its live public environment');
     const scene=map.builderScene || map.placementScene || {};
-    assert.equal(template.itemCount,scene.objects?.length || (scene.nativeComponents || []).reduce((sum,part)=>sum+(Number(part.count)||1),0));
+    const baseModels=new Set([...(map.modelUrls||[]),map.modelUrl].filter(Boolean).map(modelPath).filter(path=>marketModelPaths.has(path)));
+    const sceneInstances=scene.objects?.length || (scene.nativeComponents || []).reduce((sum,part)=>sum+(Number(part.count)||1),0);
+    assert.equal(template.itemCount,sceneInstances+baseModels.size,'components include placed objects and each whole authored base GLB once');
     assert.equal(template.components.reduce((sum,item) => sum+item.count,0),template.itemCount,'component quantities cover every object in '+template.worldId);
     for (const component of template.components) {
       if (!component.sku) {

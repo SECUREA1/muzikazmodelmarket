@@ -21,9 +21,9 @@ import {marketFacets} from '../public/js/market-facets.js';
 const environment=scene=>({id:scene.id,factoryTesting:scene.sourceFactoryTesting,builderScene:scene});
 test('proving and compound templates expose their playable stations and targets as separate Builder selections',()=>{
  const range=createFactoryTestingBuilderScene({id:'my-test-range'}),compound=createFactoryTestingBuilderScene({kind:'compound',id:'my-compound'});
- assert.equal(range.objects.length,PROVING_STATIONS.length+2);assert.equal(testingStations(environment(range)).length,PROVING_STATIONS.length);assert.equal(testingTargets(environment(range)).length,2);
+ assert.equal(range.objects.length,PROVING_STATIONS.length+7);assert.equal(testingStations(environment(range)).length,PROVING_STATIONS.length);assert.equal(testingTargets(environment(range)).length,2);
  for(const dashboard of PROVING_DASHBOARD_STATIONS){const placed=range.objects.find(object=>object.id===dashboard.id);assert.equal(placed.functionalSettings.testingDashboard,dashboard.testingDashboard);const station=testingStations(environment(range)).find(value=>value.objectId===dashboard.id);assert.equal(station.testingDashboard,dashboard.testingDashboard);}
- assert.equal(compound.objects.length,3);assert.deepEqual(testingStations(environment(compound)).map(value=>value.kind),['return','containment','deep-hatch']);
+ assert.equal(compound.objects.length,6);assert.deepEqual(testingStations(environment(compound)).map(value=>value.kind),['return','containment','deep-hatch']);
  for(const scene of [range,compound]){assert.ok(scene.sourceFactoryTesting.editableEquipment);assert.ok(scene.sourceFactoryTesting.editableTargets);assert.ok(scene.sourceFactoryTesting.editableStations);const compiled=compileBuilderScene(scene);assert.equal(compiled.actors.filter(actor=>actor.gameplay.testingStation).length,scene===range?PROVING_STATIONS.length:3);}
 });
 

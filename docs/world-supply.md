@@ -1,0 +1,37 @@
+# World item factory and stock supply
+
+Open **World item factory** in the game controls. Search the native, repository GLB/GLTF, published model, or care catalog and inspect each item's world, factory, and destination warehouse count.
+
+Each canonical item starts with **1,000 units across the world**, once. Aliases for the same native item or model share one count. Catalog refreshes, server restarts, and visiting a new map never reset depleted stock. Existing owned items and authored map scenery are preserved.
+
+## Build and ship
+
+1. Choose an item and whole-unit quantity. Request a server quote. Production costs the catalog unit price, with **20% off batches of 10 or more**. Free catalog items have a base manufacturing cost of 1 MZK per unit before the bulk discount. Every catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.
+2. Start production. The server charges MZK once and runs four timed stages: input preparation, fabrication/assembly, quality checks, and packing. The board shows each stage and its progress. All four must complete before the packed batch enters shared factory stock; no stage replenishes stores immediately. An unfinished batch can be cancelled for its original cost; finished goods cannot be refunded.
+3. Select a destination map warehouse or **World stock · central stores**, a shipping map, and a shipping contract. Dispatch reserves actual factory units. To redistribute existing goods, choose a world or map warehouse as the source instead; transfers debit its stock and never manufacture extra units. Packing capacity depends on the item recipe: materials, tools and care supplies fit up to 1,000 per container; furniture 50; general props and character assets 100; electronics 250; ground vehicles 4; aircraft, boats, structures and world modules 1. The board shows the selected route capacity and a shipment-size control. Larger batches need a larger manifest or several shipments. Dock induction cannot transport world stock.
+4. On the assigned shipping map, board an eligible vessel at the contract's origin port. Open World item factory and accept the shipment task. Its item manifest appears in the shipping loading panel.
+5. Load and balance every container, secure the cargo, sail the marked route, dock, and unload completely. Only the verified final unload credits the selected inventory. Ordinary freight rewards still apply. The shipping chart links back to factory tasks, with directions to the correct shipping world, origin port and eligible vessel.
+
+The sea leg is playable in Hormuz and copied shipping maps. Warehouse transfers to and from the shipping ports are **simulated in-game freight**, recorded on the shipment's transfer task. This does not arrange real-world production, trade, or shipping. Maps with stores share their map warehouse; maps without stores still receive inventory.
+
+## Consumption and restocking
+
+Market sales remove the purchased quantity from stock. Buying a reusable upgrade consumes one unit for ownership; placing another physical asset consumes another unit. Repeated tool use retains the owned tool. Bulk building purchases reserve every piece once; using prepaid pieces does not debit world stock again. Buying care supplies removes units from supply, and using them consumes the owned Backpack supply.
+
+In-game purchases and deployments use the current map inventory. Until an item first receives a local shipment, the map draws from the initial central reserve. After receiving that item, the local count governs availability: a local zero blocks further purchases and deployments until another shipment arrives. Global stores use the central count. The in-game Marketplace uses the same current-map inventory client as the factory and Backpack, including after travel. Room aliases resolve to the canonical world, so alternate URLs cannot create a second free deployment. Player resale transfers existing ownership and does not manufacture more stock.
+
+Cancellation or map travel releases a bound shipment for another attempt. Disconnected or abandoned reservations expire after the freight window plus a one-minute grace period. Unassigned shipments can return their goods to their original source inventory. Retried production, purchases, cancellations, dispatch, and deliveries preserve quantities and payment receipts.
+
+## Implementation
+
+`world-supply.mjs` maintains the canonical ledger in the existing durable user database. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
+
+`GET /api/world-supply` exposes the counts, jobs, destinations, and eligible shipping maps. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,dispatch,cancel}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
+
+## Catalog coverage and verification
+
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,288 placed instances: all 605 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+
+`public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
+
+Earned-only quest collectibles keep their existing ownership rules. The four Ironwood Prison keepsakes remain earned and account-bound; factory production cannot mint replacement quest licenses. They remain visible in the market with their earning instructions.

@@ -6457,6 +6457,271 @@
         "factoryTestingEquipment": true,
         "upgradeable": true
       }
+    },
+    {
+      "id": "builder-factory-export-terminal",
+      "name": "Factory Export Terminal",
+      "description": "Trade and export certified game items from a freight desk with shipment screens and an MZK payment panel.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-export-terminal",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        6,
+        2.6,
+        3
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "logisticsStation": "export",
+        "logisticsApproach": {
+          "x": 0,
+          "y": 0.02,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Export Terminal \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-certification-kiosk",
+      "name": "Factory Certification Kiosk",
+      "description": "Review production-test certification at a configurable kiosk with a test matrix, status display and operator desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-certification-kiosk",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        4,
+        3,
+        2
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "logisticsStation": "certify",
+        "logisticsApproach": {
+          "x": 0,
+          "y": 0.02,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Certification Kiosk \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-freight-crate",
+      "name": "Factory Freight Crate",
+      "description": "A reusable cargo prop with reinforced corners, locking straps and a marked shipping label.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-freight-crate",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        2,
+        1.8,
+        2
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 70,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "logisticsStation": false,
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "name": "Ironwood Portable Radio",
+      "description": "An earned portable radio with a folding handle, tuning dial and telescopic aerial. Place it in another world to share a direct audio stream.",
+      "dimensions": [
+        0.94,
+        1.15,
+        0.39
+      ],
+      "goal": "radio",
+      "type": "props",
+      "assetType": "props",
+      "category": "prison",
+      "collection": "Ironwood earned collection",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/prison/items/prison-radio.svg",
+      "id": "builder-prison-radio",
+      "owner": "MUZIKAZ",
+      "visibility": "public",
+      "buildAssetId": "prison-radio",
+      "builderCategory": "prison",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-radio",
+        "device": "radio-console",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "prompt": "Use Ironwood Portable Radio \u00b7 E / Use"
+      },
+      "metadata": {
+        "prisonCollectible": true,
+        "earnedIn": "ironwood-prison",
+        "accountBound": true
+      }
+    },
+    {
+      "name": "Ironwood Chess Set",
+      "description": "A workshop-made folding chessboard with thirty-two individual pieces, a brass clasp and timber edging. An earned display collectible for your home or custom map.",
+      "dimensions": [
+        0.92,
+        0.43,
+        0.95
+      ],
+      "goal": "arcade",
+      "type": "props",
+      "assetType": "props",
+      "category": "prison",
+      "collection": "Ironwood earned collection",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/prison/items/prison-chess-set.svg",
+      "id": "builder-prison-chess-set",
+      "owner": "MUZIKAZ",
+      "visibility": "public",
+      "buildAssetId": "prison-chess-set",
+      "builderCategory": "prison",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-chess-set"
+      },
+      "metadata": {
+        "prisonCollectible": true,
+        "earnedIn": "ironwood-prison",
+        "accountBound": true
+      }
+    },
+    {
+      "name": "Ironwood Escape Cup",
+      "description": "A polished brass escape-challenge trophy on an engraved dark plinth. Earn it by completing the prison escape, then display it in any of your worlds.",
+      "dimensions": [
+        0.71,
+        1.22,
+        0.54
+      ],
+      "goal": "escape",
+      "type": "props",
+      "assetType": "props",
+      "category": "prison",
+      "collection": "Ironwood earned collection",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/prison/items/prison-earned-trophy.svg",
+      "id": "builder-prison-earned-trophy",
+      "owner": "MUZIKAZ",
+      "visibility": "public",
+      "buildAssetId": "prison-earned-trophy",
+      "builderCategory": "prison",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-earned-trophy"
+      },
+      "metadata": {
+        "prisonCollectible": true,
+        "earnedIn": "ironwood-prison",
+        "accountBound": true
+      }
+    },
+    {
+      "name": "Ironwood Workshop Crate",
+      "description": "A reusable workshop-crafted keepsake crate with timber slats, steel corners, handles and a stamped inventory panel. This display collectible does not grant consumable supplies.",
+      "dimensions": [
+        1.19,
+        0.9,
+        0.92
+      ],
+      "goal": "work",
+      "type": "props",
+      "assetType": "props",
+      "category": "prison",
+      "collection": "Ironwood earned collection",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/prison/items/prison-supply-crate.svg",
+      "id": "builder-prison-supply-crate",
+      "owner": "MUZIKAZ",
+      "visibility": "public",
+      "buildAssetId": "prison-supply-crate",
+      "builderCategory": "prison",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-supply-crate"
+      },
+      "metadata": {
+        "prisonCollectible": true,
+        "earnedIn": "ironwood-prison",
+        "accountBound": true
+      }
     }
   ]
 }

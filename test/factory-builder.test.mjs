@@ -15,7 +15,7 @@ function dispose(root){const resources=new Set();root.traverse(node=>{if(node.ge
 test('factory template exposes every item, production station, crew member and vehicle as a separate object',()=>{
  const scene=createFactoryBuilderScene({id:'my-factory'}),world=environment(scene),models=new Set(scene.objects.map(object=>object.modelId));
  for(const id of Object.keys(FACTORY_ITEMS))assert.ok(models.has(id),id+' is independently selectable');
- assert.equal(scene.objects.length,18);assert.equal(new Set(scene.objects.map(object=>object.id)).size,18);
+ assert.equal(scene.objects.length,22);assert.equal(new Set(scene.objects.map(object=>object.id)).size,22);
  assert.ok(scene.sourceFactory.editableStations&&scene.sourceFactory.editableEquipment&&scene.sourceFactory.editableCrew);
  assert.equal(factoryCrew(world).length,4);const stations=factoryStations(world);assert.equal(stations.length,6);
  for(const station of stations){const canonical=FACTORY_STATIONS.find(value=>value.kind===station.kind);assert.equal(station.position.x,canonical.position.x);assert.equal(station.position.z,canonical.position.z);}

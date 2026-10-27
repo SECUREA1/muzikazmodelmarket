@@ -1,3 +1,4 @@
+import {createPrisonLand} from '../prison-world.js';
 import {createFactoryProvingGroundsLand,createMountainCompoundLand} from '../factory-testing-model.js';
 import {createMissileFactoryLand} from '../missile-factory-model.js';
 import {createFitnessLand} from './fitness-land.js';
@@ -26,6 +27,7 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
+    if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);
     const testingLayout=environment.builderScene?.sourceLayout||environment.builderScene?.layout||environment.layout;
     if(environment.id==='muzikaz-factory-proving-grounds'||testingLayout==='factory-proving-grounds')return createFactoryProvingGroundsLand(environment);
     if(environment.id==='muzikaz-mountain-compound'||testingLayout==='mountain-compound')return createMountainCompoundLand(environment);

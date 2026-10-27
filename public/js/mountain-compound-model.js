@@ -37,7 +37,7 @@ export function createMountainCompoundLand(environment={}){
   box(root,name+'_LINTEL',0,height+.2,z,width+1.4,.8,1.4,color);
   for(const side of [-1,1])for(let y=.6;y<height-.3;y+=.7){const mark=box(root,name+'_HAZARD',side*(width/2+.36),y,z+.72,.55,.15,.025,'amber',false);mark.rotation.z=side*.35;}
  }
- function wallRibs(x,start,end){for(let z=start;z<=end;z+=8){box(root,'BULKHEAD_RIB',x,3.6,z,.35,7.2,.55,'trim');box(root,'WALL_LAMP',x-Math.sign(x)*.23,4.4,z,.08,1.5,.25,mat('teal',true),false);}}
+ function wallRibs(x,start,end,skip=[]){for(let z=start;z<=end;z+=8){if(skip.includes(z))continue;box(root,'BULKHEAD_RIB',x,3.6,z,.35,7.2,.55,'trim');box(root,'WALL_LAMP',x-Math.sign(x)*.23,4.4,z,.08,1.5,.25,mat('teal',true),false);}}
  // The complete atlas footprint is a flat physical floor; the architecture
  // bounds the usable corridor and chambers, with no opaque ceiling in overview.
  box(root,'WALKABLE_FLOOR',0,-.15,0,160,.3,160,'floor').userData.walkableFloor=true;
@@ -46,7 +46,32 @@ export function createMountainCompoundLand(environment={}){
  box(root,'CORE_BACK_WALL',0,4,-50,74,8,.7,'wall');
  // East and west chamber shoulders leave a six metre checkpoint entrance.
  for(const side of [-1,1])box(root,'ENTRY_BULKHEAD',side*20.75,4,3,31.5,8,.7,'wall');
- for(const x of [-8,8]){box(root,'ENTRY_CORRIDOR_WALL',x,3.5,25,.6,7,44,'wall');wallRibs(x,7,43);}
+ for(const x of [-8,8]){
+  // The east service doorway is a real opening through the corridor wall.
+  // Its ends keep the checkpoint corridor and the surface-lift enclosure solid.
+  if(x===8){for(const [from,to]of [[3,26],[36,47]])box(root,'ENTRY_CORRIDOR_WALL',x,3.5,(from+to)/2,.6,7,to-from,'wall');wallRibs(x,7,43,[31]);}
+  else{box(root,'ENTRY_CORRIDOR_WALL',x,3.5,25,.6,7,44,'wall');wallRibs(x,7,43);}
+ }
+ // Facility receiving stays on the entry level, before the deep-access gate.
+ // The ordinary placed-item pipeline supplies its terminal and freight crates.
+ box(root,'SERVICE_HALL_FLOOR',22,.006,31,28,.012,24,'#314b54',false);
+ box(root,'SERVICE_HALL_EAST_WALL',36,3.5,31,.6,7,24,'wall');
+ for(const z of [19,43]){box(root,'SERVICE_HALL_END_WALL',22,3.5,z,28,7,.6,'wall');box(root,'SERVICE_HALL_ROOF_EDGE',22,7.1,z,28,.3,.35,'steel',false);}
+ for(const z of [26,36]){box(root,'SERVICE_DOOR_JAMB',8,3.4,z,.75,6.8,.4,'steel');box(root,'SERVICE_DOOR_LIGHT',7.58,3.4,z,.05,5.5,.12,mat('teal',true),false);}
+ box(root,'SERVICE_DOOR_LINTEL',8,6.7,31,.8,.65,10.4,'steel');
+ for(const z of [22,31,40]){box(root,'SERVICE_HALL_COLUMN',35.5,3.5,z,.4,7,.4,'trim');box(root,'SERVICE_HALL_RAFTER',22,7,z,27,.22,.25,'steel',false);box(root,'SERVICE_HALL_LIGHT',22,6.7,z,21,.045,.1,mat('white',true),false);}
+ panel('SERVICE / FACILITY RECEIVING','CERTIFIED SUPPLIES · MANIFESTS · SURFACE FREIGHT',22,5.3,19.4,24,2,'amber');
+ panel('RECEIVING →', 'WALK THROUGH THE EAST SERVICE DOOR',7.5,5,31,8,1.4,'teal',-Math.PI/2);
+ panel('← SURFACE RETURN LIFT','MAIN CORRIDOR · RETURN TO THE PROVING GROUNDS',22,5.2,42.6,23,1.8,'teal',Math.PI);
+ for(const z of [28,34])stripe('SERVICE_WALKWAY_EDGE',16,z,25,.08,'teal');
+ for(const x of [11,16,21]){const arrow=box(root,'SERVICE_ROUTE_ARROW',x,.022,31,.65,.012,.65,'teal',false);arrow.rotation.y=Math.PI/4;}
+ for(const z of [22,39]){
+  // Shallow outer-wall racks leave the receiving apron and crate lanes clear.
+  for(const x of [33.35,35.05])for(const end of [-2.3,2.3])box(root,'SERVICE_STORAGE_UPRIGHT',x,1.8,z+end,.12,3.6,.12,'steel');
+  for(const y of [.3,1.55,2.8]){box(root,'SERVICE_STORAGE_SHELF',34.2,y,z,1.8,.12,5,'trim');for(const offset of [-1.5,0,1.5]){box(root,'SERVICE_SUPPLY_BIN',34.2,y+.35,z+offset,1.3,.58,1.15,'dark');box(root,'SERVICE_BIN_LABEL',33.54,y+.39,z+offset,.025,.21,.56,'amber',false);}}
+  panel('STORES / SEALED SUPPLIES','KEEP THE CENTRAL RECEIVING LANE CLEAR',35.6,4.8,z,7,1.2,'teal',-Math.PI/2);
+ }
+
  box(root,'LIFT_BACK_WALL',0,3.5,47,16,7,.65,'wall');
  for(const z of [7,19,31,44]){box(root,'CORRIDOR_ROOF_RIB',0,7,z,16.7,.3,.45,'steel',false);box(root,'CORRIDOR_LED',0,6.75,z,13,.06,.12,mat('white',true),false);}
  for(const z of [-46,-32,-15,1]){box(root,'HALL_CROSSBEAM',0,8.15,z,74,.3,.6,'steel',false);for(const x of [-26,26]){const brace=box(root,'HALL_BEAM_BRACE',x,7.75,z,20,.13,.2,'trim',false);brace.rotation.z=x<0?.06:-.06;}}

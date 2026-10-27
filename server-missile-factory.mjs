@@ -2,6 +2,8 @@ import {randomUUID} from 'node:crypto';
 import {cleanWallet} from './user-json-database.mjs';
 import {FACTORY_ID,FACTORY_STATIONS,FACTORY_RECIPES,isFactoryEnvironment,factoryStations,factoryCrew,factoryRecipeSteps,canonicalFactoryStation} from './public/js/missile-factory-config.js';
 import {preemptFactoryCrewStation,factoryCrewWorkView} from './server-factory-crew-work.mjs';
+import {ownedFactoryModel,factoryModelTestLocked} from './factory-item-provenance.mjs';
+import {itemLocked} from './public/js/factory-logistics-config.js';
 
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
 const stationFor=(id,stations=FACTORY_STATIONS)=>stations.find(station=>station.id===id);
@@ -76,8 +78,9 @@ export async function factoryCommand(sim,player,environment,command,now,{databas
    assertOnFoot(player);const procurement=stationProximity(player,command.stationId,{stations,kind:'procurement'}),steps=factoryRecipeSteps(recipe,stations);
    const missing=['fabrication','assembly','calibration','loading','dispatch'].find(kind=>!stations.some(station=>station.kind===kind));if(missing)fail('Place an active '+canonicalFactoryStation(missing).name+' before funding a production order.');
    if(job&&job.status!=='collected')fail('Finish and collect your current production order first.');
-   job={id:randomUUID(),environmentId:environment.id,recipeId:recipe.id,name:recipe.name,costMzk:recipe.costMzk,buildAssetId:recipe.buildAssetId,status:'awaiting',stepIndex:0,steps,procurementStationId:procurement.id,loadingStationId:stations.find(station=>station.kind==='loading').id,dispatchStationId:stations.find(station=>station.kind==='dispatch').id,startedAt:now,readyAt:null,assisted:false,completedSteps:[],message:'Order funded. Walk to Component fabrication to begin.'};
-   ledger(data,wallet,user,'FACTORY_ORDER',-recipe.costMzk,requestId,job,now,{reason:recipe.name+' production order'});state.totalSpentMzk+=recipe.costMzk;state.job=job;
+   const credits=data.factoryLogistics?.productionCredits,available=Number(credits?.[wallet]||0),supplyCreditMzk=Number.isSafeInteger(available)&&available>0?Math.min(20,recipe.costMzk):0,costMzk=recipe.costMzk-supplyCreditMzk;
+   job={id:randomUUID(),environmentId:environment.id,recipeId:recipe.id,name:recipe.name,costMzk,baseCostMzk:recipe.costMzk,supplyCreditMzk,buildAssetId:recipe.buildAssetId,status:'awaiting',stepIndex:0,steps,procurementStationId:procurement.id,loadingStationId:stations.find(station=>station.kind==='loading').id,dispatchStationId:stations.find(station=>station.kind==='dispatch').id,startedAt:now,readyAt:null,assisted:false,completedSteps:[],message:'Order funded.'+(supplyCreditMzk?' Shipping parts saved '+supplyCreditMzk+' MZK.':'')+' Walk to Component fabrication to begin.'};
+   ledger(data,wallet,user,'FACTORY_ORDER',-costMzk,requestId,job,now,{reason:recipe.name+' production order',supplyCreditMzk});if(supplyCreditMzk)credits[wallet]--;state.totalSpentMzk+=costMzk;state.job=job;
   }else{
    if(!job||command.jobId!==job.id)fail('This factory job is no longer current. Refresh the production board.');
    if(job.environmentId!==environment.id)fail('Return to the map where you started this production order.');
@@ -136,9 +139,14 @@ export async function factoryAccountState(database,walletId,{now=Date.now(),envi
 export async function resolveFactoryAsset(database,walletId,itemId){
  const wallet=cleanWallet(walletId);await database.initialize();const data=await database.read(),user=data.users[wallet];
  if(!user?.items?.some(item=>item.id===itemId))return null;
- const receipt=(data.transactions||[]).find(row=>row.type==='FACTORY_ITEM_CREATED'&&row.walletId===wallet&&row.itemId===itemId),recipe=recipeFor(receipt?.recipeId);
- if(!recipe)return null;
- return {id:itemId,name:recipe.name,buildAssetId:recipe.buildAssetId,assetType:'props',type:'factory-model',behavior:'decor',format:'procedural-3d',source:'missile-factory',targetHeight:recipe.id==='cargo-rocket'?7:4.5};
+ const proof=ownedFactoryModel(data,wallet,itemId);if(!proof)return null;
+ if(itemLocked(data,wallet,itemId,Date.now())||factoryModelTestLocked(data,proof))fail('Finish or cancel this model’s launch or freight manifest before placing a display copy.');
+ return {id:itemId,name:proof.name,buildAssetId:proof.buildAssetId,assetType:'props',type:'factory-model',behavior:'decor',format:'procedural-3d',source:'missile-factory',targetHeight:proof.profileId==='cargo'?7:4.5};
+}
+export async function assertFactoryDeploymentAvailable(database,walletId,command){
+ const wallet=cleanWallet(walletId);await database.initialize();const data=await database.read();
+ const ids=new Set([command.itemId,command.sku?'economy:'+command.sku:null]);
+ for(const itemId of ids){const proof=ownedFactoryModel(data,wallet,itemId);if(proof&&(itemLocked(data,wallet,itemId,Date.now())||factoryModelTestLocked(data,proof)))fail('Finish or cancel this model’s launch or freight manifest before placing a display copy.');}
 }
 export function stepFactory(sim,environment,now){sim.factoryStations=factoryStations(environment,{actors:sim.actors});sim.factoryCrew=factoryCrew(environment,{actors:sim.actors});sim.factoryEnabled=isFactoryEnvironment(environment)||sim.factoryStations.length>0;if(!sim.factoryEnabled)return;for(const player of Object.values(sim.players||{})){const job=player.factory?.job;if(job?.status==='processing')job.remainingMs=Math.max(0,job.readyAt-now);}}
 export function factoryView(sim,now){

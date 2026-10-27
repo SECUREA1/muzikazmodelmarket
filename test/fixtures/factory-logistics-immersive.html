@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Factory freight native XR fixture</title></head><body><main></main><script type="module">
+import * as T from '../../public/vendor/three/three.module.min.js';
+import {mountFactoryLogisticsUI} from '../../public/js/factory-logistics-ui.js';
+import {mountXRGameControls} from '../../public/js/xr-game-controls.js';
+import {FACTORY_ID} from '../../public/js/missile-factory-config.js';
+import {PROVING_ID} from '../../public/js/factory-test-config.js';
+import {FACTORY_SHIPPING_ID,LOGISTICS_DESTINATIONS,logisticsStations} from '../../public/js/factory-logistics-config.js';
+
+const assert=(condition,message)=>{if(!condition)throw Error(message);},settle=async()=>{for(let n=0;n<4;n++)await new Promise(resolve=>setTimeout(resolve,0));};
+const scene=new T.Scene(),rig=new T.Group(),camera=new T.PerspectiveCamera();scene.add(rig);rig.add(camera);camera.position.set(.12,1.72,-.08);camera.rotation.set(.06,.2,.02);
+const controllers=[new T.Group(),new T.Group()],sources=['left','right'].map(handedness=>({handedness,gamepad:{axes:[0,0,0,0],buttons:Array.from({length:6},()=>({pressed:false,value:0}))}}));
+const xr=new T.EventDispatcher(),session=new T.EventDispatcher();session.visibilityState='visible';session.inputSources=sources;xr.isPresenting=true;xr.getCamera=()=>camera;xr.getController=index=>controllers[index];xr.getSession=()=>session;xr.setReferenceSpaceType=()=>{};session.end=async()=>{xr.isPresenting=false;xr.dispatchEvent({type:'sessionend'});};Object.defineProperty(navigator,'xr',{configurable:true,value:{isSessionSupported:async()=>true}});
+const commands=[],listings=[],notices=[],shippingCalls=[];let environment={id:PROVING_ID},position={...logisticsStations(environment).find(station=>station.kind==='certify').position},sequence=0,clock=1000000,weaponCalls=0;
+const own={eligibleItems:[{id:'xr-owned-model',name:'Owned training model',buildAssetId:'factory-training-missile',profileId:'accuracy',qualified:true,certificate:null,reservation:null,listing:{active:false,priceMzk:180}}],manifest:null,history:[],certificates:[],stats:{certified:0,deliveries:0},certifiedCount:0,activeCount:0};
+const model=()=>own.eligibleItems[0];
+function snapshot(privateReply=true){return {selfId:'me',sequence:++sequence,serverTime:clock,actors:{},players:{me:{health:100,position:{...position},logistics:{stats:{...own.stats},certifiedCount:own.certifiedCount,activeCount:own.activeCount},shipping:{canTrade:true,supplies:{'shipping-parts-stock':1}}}},logistics:{stations:logisticsStations(environment),destinations:LOGISTICS_DESTINATIONS},...(privateReply?{result:{logistics:structuredClone(own)}}:{})};}
+async function command(action,fields={}){
+ commands.push({action,...fields});
+ if(action==='logistics-certify'){model().certificate={id:'xr-certificate',score:96,grade:'Gold'};own.certificates=[model().certificate];own.certifiedCount=own.stats.certified=1;}
+ if(action==='logistics-book'){const destination=LOGISTICS_DESTINATIONS.find(value=>value.id===fields.destinationId);own.manifest={id:'xr-manifest-'+commands.length,itemId:model().id,itemName:model().name,status:'booked',destinationId:destination.id,destination:structuredClone(destination),bookedAt:clock,minimumTransitMs:5000};model().reservation={manifestId:own.manifest.id};own.activeCount=1;}
+ if(action==='logistics-stage')own.manifest.status='staged';
+ if(['logistics-deliver','logistics-cancel','logistics-return'].includes(action)){own.manifest.status=action==='logistics-deliver'?'delivered':action==='logistics-return'?'returned':'cancelled';own.history.unshift(structuredClone(own.manifest));own.manifest=null;model().reservation=null;own.activeCount=0;if(action==='logistics-deliver')own.stats.deliveries++;}
+ return snapshot();
+}
+async function request(path,options={}){
+ if(path==='/api/market/session')return {csrfToken:'xr-market-csrf'};
+ if(path==='/api/market/listings'){const body=JSON.parse(options.body);assert(options.headers['X-CSRF-Token']==='xr-market-csrf','native market listing lost CSRF protection');assert(body.itemId===model().id,'native market listed an unselected item');listings.push(body);model().listing={active:body.active,priceMzk:body.priceMzk};return {saved:true};}
+ throw Error('Unexpected request '+path);
+}
+const ui=mountFactoryLogisticsUI(document.querySelector('main'),command,{getPosition:()=>position,request,announce:message=>notices.push(message),onShipping:options=>{shippingCalls.push(options);return true;}});
+ui.update(snapshot(),'me',environment);
+const controls=mountXRGameControls({renderer:{xr},scene,camera,rig,parent:document.querySelector('main'),menuOnEnter:()=>false,menuItems:()=>ui.menuItems(),onTrigger:()=>{weaponCalls++;},status:message=>notices.push(message)});
+controllers.forEach((controller,index)=>controller.dispatchEvent({type:'connected',data:sources[index]}));xr.dispatchEvent({type:'sessionstart'});controls.openMenu();
+const menu=scene.getObjectByName('MUZIKAZ_VR_GAME_MENU');
+function aim(point,index){const origin=camera.getWorldPosition(new T.Vector3());controllers[index].position.copy(origin);controllers[index].quaternion.setFromUnitVectors(new T.Vector3(0,0,-1),point.clone().sub(origin).normalize());scene.updateMatrixWorld(true);}
+async function release(index=1){sources[index].gamepad.buttons[0]={pressed:false,value:0};controllers[index].dispatchEvent({type:'selectend'});await settle();}
+async function visiblePress(index,hand=1){const tile=menu.children.find(child=>child.userData.xrMenuItem===index);assert(tile,'Missing native menu tile '+index);aim(tile.getWorldPosition(new T.Vector3()),hand);sources[hand].gamepad.buttons[0]={pressed:true,value:1};controllers[hand].dispatchEvent({type:'selectstart'});await settle();}
+async function press(match,hand=1){if(!controls.menuOpen)controls.openMenu();controls.refreshMenu(true);await settle();controls.refreshMenu(true);let guard=0;while(guard++<8){const state=controls.snapshot(),index=state.visibleMenuItems.findIndex(label=>typeof match==='string'?label.includes(match):match(label));if(index>=0){await visiblePress(index,hand);await release(hand);controls.refreshMenu(true);return;}const allIndex=state.menuItems.findIndex(label=>typeof match==='string'?label.includes(match):match(label));assert(allIndex>=0,'Missing action '+match+' '+state.menuItems.join('|'));const desired=Math.floor(allIndex/7),page=state.menuPage,label=desired>page?'Next menu page':'Previous menu page',next=state.visibleMenuItems.indexOf(label);assert(next>=0,'Missing native pagination');await visiblePress(next,hand);await release(hand);}throw Error('Menu pagination did not reach '+match);}
+function move(mapId,kind){environment={id:mapId};position={...logisticsStations(environment).find(station=>station.kind===kind).position};ui.update(snapshot(),'me',environment);controls.openMenu();}
+window.runChecks=async()=>{
+ const pose=camera.position.clone(),orientation=camera.quaternion.clone(),floor=rig.position.clone();
+ // An unavailable freight operation remains consumed by the native menu.
+ await press('Unavailable · Book selected destination');assert(!commands.some(row=>row.action==='logistics-book'),'disabled book dispatched');
+ await press('Issue exact-model test certificate',0);assert(model().certificate?.id==='xr-certificate','left controller did not certify');
+ move(FACTORY_ID,'export');await press('MZK listing & stock exchange');await press('List owned model');await press('Remove player-market listing');assert(listings.length===2&&listings[0].active===true&&listings[1].active===false,'native listing/unlisting did not reach the protected market API');
+ await press('Return to freight actions');await press('Book selected destination');assert(own.manifest?.destinationId===PROVING_ID,'native booking lost selected destination');
+ move(PROVING_ID,'receiving');clock+=6000;ui.update(snapshot(),'me',environment);await press('Confirm receiving delivery',0);assert(own.stats.deliveries===1&&!own.manifest,'native receiving did not complete delivery');
+ move(FACTORY_ID,'export');await press(label=>label.startsWith('Destination:'));await press(label=>label.startsWith('Destination:'));await press('Book selected destination');assert(own.manifest?.destinationId==='atlas-export','native destination selector did not choose Atlas export');
+ clock+=6000;move(FACTORY_SHIPPING_ID,'shipping');await press('Stage sealed model at Jebel Ali');assert(own.manifest.status==='staged','native export desk did not stage sealed freight');await press('Cargo bridge, export voyage & stock');assert(shippingCalls[0]?.native===true&&shippingCalls[0]?.manifest?.id===own.manifest.id,'shipping bridge lost the actual staged manifest');
+ await press('Cancel booked manifest');assert(!own.manifest,'native cancel did not release booked freight');
+ assert(!document.querySelector('dialog[open]'),'logistics opened an HTML modal in XR');assert(weaponCalls===0,'native menu press reached a weapon');assert(camera.position.equals(pose)&&camera.quaternion.equals(orientation)&&rig.position.equals(floor),'native menu changed tracked head or floor pose');
+ controls.releaseInputs('map-travel');ui.update(null,null,{id:'unrelated-world'});controls.closeMenu();assert(ui.menuItems().length===0,'travel retained private freight actions');controls.dispose();ui.dispose();
+ return {commands:commands.filter(row=>row.action!=='logistics-status').map(row=>row.action),listings:listings.map(row=>row.active),weaponCalls,shippingCalls:shippingCalls.length};
+};window.ready=true;
+</script></body></html>

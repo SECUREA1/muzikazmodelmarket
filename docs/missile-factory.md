@@ -1,5 +1,8 @@
 # Missile & Rocket Factory
 
+For certification, finished-model MZK sales, compound deliveries and sea exports,
+see the [connected factory supply chain](factory-supply-chain.md).
+
 Enter the permanent public factory from **World menu → Factory**, the explorer
 options, or `model-explorer.html?environment=muzikaz-missile-factory&house=muzikaz-missile-factory&mode=multiplayer&autoplay=1`.
 It uses the existing multiplayer room, account wallet, Backpack, resident AI,

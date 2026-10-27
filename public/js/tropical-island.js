@@ -4,6 +4,8 @@ import {createTropicalIslandWorld, animateTropicalIslandWorld} from './tropical-
 import {createIslandSession,startIslandSession,stepIslandSession,finishIslandSession,consumeIslandDrink,visitIslandExperience,islandEffects} from './tropical-island-rules.js';
 import {readGameCameraMode,writeGameCameraMode} from './game-camera.js';
 import {mountRadToxController} from './rad-tox-controller.js';
+import {mountWorldSupplyUI} from './world-supply-ui.js';
+import {SharedGameInventory} from './shared-game-inventory.js';
 
 const $=selector=>document.querySelector(selector);
 const nativeGuide=mountNativeWorldGuide({parent:document.querySelector('.island-header nav')});
@@ -242,6 +244,9 @@ function bindControls(){
   for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>{drag=null;});
   renderer.domElement.addEventListener('wheel',event=>{event.preventDefault();zoom=Math.max(18,Math.min(48,zoom+event.deltaY*.015));},{passive:false});
   controller=mountRadToxController({enabled:canControl,visible:()=>showController&&running(),onMove:axes=>{stick={...axes};},onLook:(axes,dt)=>{if(view==='first-person'){yaw-=axes.x*dt*2;pitch=Math.max(-1.1,Math.min(.85,pitch-axes.y*dt));}else zoom=Math.max(18,Math.min(48,zoom+axes.y*dt*15));},onView:setCameraMode,onShoot:()=>{},onSettings:()=>$('#settings-button').click(),onMatch:()=>$('#passport-toggle').click(),onStats:()=>$('#settings-button').click(),onExit:()=>location.assign('index.html#world-map'),buttons:[{label:'Interact · E',tap:interact}]});
+  const supplyMapId=new URLSearchParams(location.search).get('environment')||'tropical-island';
+  const worldSupplyUI=mountWorldSupplyUI({stage:$('#settings-dialog'),inventory:new SharedGameInventory({getMapId:()=>supplyMapId}),showLabel:true,onOpen:clearInput,onClose:clearInput,announce:notify});
+  worldSupplyUI.update(null,null,{id:supplyMapId,name:'Palm Coast Resort'});
   const labels=controller.root.querySelectorAll('.thumbstick-label');labels[0].textContent='MOVE / PADDLE';labels[1].textContent='LOOK / VIEW';
   window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);target.setSize(innerWidth,innerHeight);postMaterial.uniforms.resolution.value.set(innerWidth,innerHeight);});
 }
