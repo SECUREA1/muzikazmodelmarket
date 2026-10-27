@@ -22,7 +22,7 @@ try:
    page.set_viewport_size({'width':width,'height':height})
    assert page.locator('.game-display-flow-views .transport-radio-toggle').count()==1
    tb=toggle.bounding_box();icon=toggle.locator('svg').bounding_box()
-   assert tb['width']==44 and tb['height']==44,tb
+   assert abs(tb['width']-44)<.01 and abs(tb['height']-44)<.01,tb
    assert abs(icon['x']+icon['width']/2-tb['x']-22)<1
    assert abs(icon['y']+icon['height']/2-tb['y']-22)<1
    toggle.click()

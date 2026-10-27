@@ -1,9 +1,10 @@
 import {questConversationVoice} from './quest-conversation-voice.js';
+import {worldGuideIntroduction} from './world-guide.js';
 
 // Snapshots establish a baseline. Only changes observed while visiting a map
-// become announcements; returning to a map never replays its introduction.
+// become announcements. Each new visit receives a short orientation guide.
 export function createGameplayAnnouncements({voice=questConversationVoice()}={}){
- let scope=null,radio=0,ready=false;const states=new Map(),introduced=new Set();
+ let scope=null,radio=0,ready=false,visit=0;const states=new Map();
  const say=(text,key,options={})=>voice.announce(text,{key,worldId:scope,category:'announcements',...options});
  function changed(key,signature){const previous=states.get(key);states.set(key,signature);return {previous,changed:previous!==signature};}
  function task(task,label){
@@ -15,15 +16,17 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
  return {update(snapshot,selfId,environment){
   if(!snapshot||!selfId)return;const self=snapshot.players?.[selfId];if(!self)return;
   const worldId=environment?.id||snapshot.worldId||'world';
-  if(scope!==worldId){scope=worldId;radio=0;ready=false;states.clear();if(!introduced.has(scope)){introduced.add(scope);say('Welcome to '+(environment?.name||'this world')+'. Explore the map, choose a vehicle, and discover new jobs.','arrival',{category:'introduction',voice:'World narrator',role:'narrator'});}}
+  if(scope!==worldId){scope=worldId;radio=0;ready=false;states.clear();say(worldGuideIntroduction(environment||{id:worldId},{solo:snapshot.localQuests===true||snapshot.authoritative===false}),'arrival:'+ ++visit,{category:'introduction',voice:'World narrator',role:'narrator'});}
   task(self.vehicleMission,'Vehicle job');task(self.urbanMission,'Local job');task(self.residentTask,'Resident favor');task(self.casinoTask,'Local objective');
   const dispatch=snapshot.liveDispatch,dispatchState=changed('live-dispatch',dispatch?.id||null);
-  if(ready&&dispatchState.changed&&dispatch?.id&&(!dispatch.expires||dispatch.expires>snapshot.serverTime))say('New local job. '+dispatch.title+'. Open the local map to volunteer.','dispatch:'+dispatch.id);
+  if(ready&&dispatchState.changed&&dispatch?.id&&(!dispatch.expires||dispatch.expires>snapshot.serverTime))say('New local job. '+dispatch.title+'. Open Crew Dispatch to volunteer.','dispatch:'+dispatch.id);
   // Periodic traffic reports remain captions in Crew Dispatch. Only a direct
-  // call or a requested interaction can interrupt gameplay with spoken radio.
+  // call, an open help request or a requested interaction is spoken.
   for(const call of snapshot.transportRadio||[]){
    if(call.id<=radio)continue;radio=call.id;
-   if(!ready||call.conversation||call.recipients&&!call.recipients.includes(selfId)||!call.interaction&&!call.recipients?.includes(selfId)||snapshot.serverTime-call.at>12000)continue;
+   if(!ready||call.conversation||call.recipients&&!call.recipients.includes(selfId)||snapshot.serverTime-call.at>12000)continue;
+   const openHelp=call.helpRequest&&call.speakerId!==selfId&&call.expires>snapshot.serverTime&&snapshot.questTeams?.some(team=>team.id===call.teamId);
+   if(!call.interaction&&!openHelp&&!call.recipients?.includes(selfId))continue;
    say((call.speaker?call.speaker+'. ':'')+call.text,'radio:'+call.id,{source:call.source,entityId:call.speakerId,voice:call.voice||call.speaker||'Dispatch',role:call.role||'dispatcher'});
   }
   for(const job of snapshot.construction?.crew?.jobs||[]){
@@ -39,7 +42,7 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
    if(board)say((board.name||board.functionalSettings.quest.title)+'. '+(status==='complete'?'Objective complete.':board.dialogueSettings?.text||'Objective accepted. Follow the marked collection route.'),key+':'+status,{source:board.position});
   }
   ready=true;if(states.size>160)for(const key of [...states.keys()].slice(0,40))states.delete(key);
- },say:(text,key=text,options={})=>say(text,'action:'+key,options),unlock:()=>voice.unlock(),setMuted:value=>voice.setMuted(value),replay:()=>voice.replay()};
+ },reset(){scope=null;radio=0;ready=false;states.clear();},say:(text,key=text,options={})=>say(text,'action:'+key,options),unlock:()=>voice.unlock(),setMuted:value=>voice.setMuted(value),replay:()=>voice.replay()};
 }
 
 // An NPC reply is already spoken by the conversation player. Keep the generic

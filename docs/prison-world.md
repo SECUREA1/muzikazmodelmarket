@@ -8,6 +8,10 @@ The 240-metre map includes 24 furnished cells across two cell blocks, a cafeteri
 
 Walk with WASD / arrow keys or the touch movement controls. **V** changes between first person and top down. Approach an activity and press **E / Use**, or open the prison activities control. Actions require your character to be near the station. The activity directory provides the purpose and location of each station.
 
+The left stick only moves and the right stick only looks; **Jump** is a separate button. Movement never opens an activity. **E / Use** checks the station within reach when pressed. Open **Prison**, choose an activity and select **Walk to activity** to close the menu and follow its live distance and compass direction. **View on map** previews the location. When you arrive, the nearby Use button names that station. **Enter** activates a focused button; after closing a menu, fresh movement keys and **Space** return to walking and jumping.
+
+Unavailable activity buttons explain the missing location, role, item or security condition. Requests disable repeat actions while awaiting confirmation. Successful meals, rest, work and fights show their refill delay; arcade and boxing show the next move and remaining round time. Radio frequency and security code entries stay intact during live updates.
+
 At intake, choose a **prisoner** or **guard** shift. Prisoners can follow the routine, complete activities, earn recreation tokens and attempt an escape. Guards can patrol, settle disturbances and operate security controls. Health, energy, morale and suspicion show how the current shift is going. Recreation tokens are prison scores; they do not spend the MZK wallet.
 
 ## Life inside
@@ -58,4 +62,4 @@ Return to intake and choose **Collect** on the unlocked keepsake. Collection is 
 
 Prison commands use the existing authenticated room transport with versioned `ironwood-prison` action packets. The server validates canonical operations, IDs and bounded input, supplies its own position, inventory, prices and clock, and acknowledges accepted commands with a revision. Request IDs identify one exact intent: retrying it does not repeat purchases or rewards, and changing an already used request's payload is rejected. Legacy flat action messages remain supported. Clients ignore prison snapshots older than an acknowledged revision.
 
-The framework separates shared rules, navigation, contracts, supply packets, transport validation, collectible definitions, account receipts and UI rendering into reusable modules. Targeted tests are in `test/prison-*.test.mjs` and `test/authoritative-prison.test.mjs`; `test/prison-world.browser.py` and `test/prison-expansion.browser.py` cover browser and cross-world Backpack use.
+The framework separates shared rules, navigation, contracts, supply packets, transport validation, collectible definitions, account receipts and UI rendering into reusable modules. Targeted tests are in `test/prison-*.test.mjs`, `test/nearby-action-activation.test.mjs` and `test/authoritative-prison.test.mjs`; `test/prison-world.browser.py` and `test/prison-expansion.browser.py` cover browser and cross-world Backpack use. `test/login-control-isolation.browser.py` verifies real sign-in, mouse/touch movement, explicit prison engagement and recovery after closing menus.

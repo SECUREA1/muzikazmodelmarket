@@ -123,9 +123,10 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
   assert.match(game, /radToxStickMarkup/, 'firing range uses the shared RAD-TOX controller');
-  assert.match(await readFile(new URL('../public/js/rad-tox-controller.js',import.meta.url),'utf8'), /Move \/ shoot/, 'shared movement stick retains tap-to-shoot');
-  assert.match(game, /name==='left'\?shootAtReticle\(\):jump\(\)/, 'the walking movement stick fires at the range reticle while the look stick jumps');
-  assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
+  assert.match(game, /movementOnly:true/, 'explorer thumbsticks request movement-only shared markup');
+  const stickSetup=game.slice(game.indexOf('  function setupThumbstick('),game.indexOf("  setupThumbstick('left')"));
+  assert.doesNotMatch(stickSetup, /shootAtReticle\(|jump\(/, 'movement and look gestures must not dispatch gameplay actions');
+  assert.match(game, /function jump\(\)/, 'jump remains available through an explicit action control');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
   for (const control of ['house-world-button','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library and begin/reset remain available in the main controls');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');

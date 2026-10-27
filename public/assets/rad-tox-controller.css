@@ -24,3 +24,5 @@ body:not(.playing):not(.riding):has(.muzikaz-controller) #walkhud{bottom:195px}
 .xr-enter-button[hidden],.xr-controls-help[hidden]{display:none!important}
 
 .rad-controller-quick-actions{grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;pointer-events:auto}.rad-controller-quick-actions[hidden]{display:none!important}.rad-controller-quick-actions button{min-width:44px;min-height:44px;padding:6px 10px}.muzikaz-controller{grid-template-areas:'toolbar toolbar' 'actions actions' 'left right'}.rad-controller-quick-actions{grid-area:actions}
+
+.thumbstick-actions{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px}.thumbstick-actions small{min-height:0}.thumbstick-actions .thumbstick-jump{min-width:56px;min-height:30px;padding:4px 10px;border:1px solid #b5dc75;border-radius:7px;background:#263c1e;color:#efffd7;font-size:11px;font-weight:800;touch-action:none}.thumbstick-actions .thumbstick-jump.is-active{background:#a6e94d;color:#17240f}

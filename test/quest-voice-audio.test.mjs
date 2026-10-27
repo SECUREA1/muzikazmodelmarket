@@ -45,7 +45,7 @@ test('NPC speech attenuates with distance and stops outside its audible range',(
 
 test('expired queued announcements are discarded after gesture delay and while waiting for speech',()=>{
  const {voice,spoken,advance}=fixture();
- announce(voice,'Expired welcome','introduction');advance(30001);voice.unlock();assert.equal(spoken.length,0);
+ announce(voice,'Expired job');advance(30001);voice.unlock();assert.equal(spoken.length,0);
  announce(voice,'Current job');announce(voice,'Stale next job');advance(30001);spoken[0].onend();assert.equal(spoken.length,1);
 });
 
@@ -141,4 +141,32 @@ test('long speech receives its full playback budget after generation finishes',(
  const {voice,spoken,delays,timers}=fixture();voice.unlock();
  const long='Training guidance and safe navigation. '.repeat(25);announce(voice,long,'dialogue');
  assert.equal(delays.at(-1),65000);spoken[0].onstart();assert.ok(delays.at(-1)>65000,'long playback is measured after audio begins');assert.equal(timers.size,1);voice.dispose();
+});
+
+
+test('a current-map welcome survives a slow login before the first audio gesture',()=>{
+ const {voice,spoken,advance}=fixture();
+ announce(voice,'Welcome after login.','introduction');announce(voice,'A stale job.');
+ advance(300000);voice.unlock();
+ assert.equal(spoken.length,1);assert.equal(spoken[0].text,'Welcome after login.');
+ spoken[0].onend();assert.equal(spoken.length,1,'old radio announcements still expire');voice.dispose();
+});
+
+test('a delayed welcome never crosses into a replacement map',()=>{
+ const {voice,spoken,advance}=fixture();
+ announce(voice,'Welcome to the old map.','introduction');advance(60000);
+ voice.announce('Welcome to the current map.',{worldId:'replacement',category:'introduction'});
+ advance(60000);voice.unlock();
+ assert.equal(spoken.length,1);assert.equal(spoken[0].text,'Welcome to the current map.');voice.dispose();
+});
+
+
+test('radio traffic while login is pending cannot evict the map guide',()=>{
+ const {voice,spoken,advance}=fixture();
+ announce(voice,'Welcome and map guidance.','introduction');
+ for(let index=0;index<12;index++)announce(voice,'Job update '+index);
+ assert.equal(voice.state.pending,8,'the speech backlog stays bounded');
+ advance(60000);voice.unlock();
+ assert.equal(spoken.length,1);assert.equal(spoken[0].text,'Welcome and map guidance.');
+ spoken[0].onend();assert.equal(spoken.length,1);voice.dispose();
 });

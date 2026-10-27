@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {isWatercraft,watercraftOverlap,watercraftSize} from './public/js/harbor-water.js';
+import {isWatercraft,watercraftOverlap,watercraftSize,harborForEnvironment,RESORT_BOATS} from './public/js/harbor-water.js';
 import {isShippingVessel} from './public/js/shipping-vessel-specs.js';
 import {boatWaterwayClear} from './public/js/vehicle-actions.js';
 import {planBoatNavigation} from './public/js/boat-navigation.js';
@@ -13,7 +13,7 @@ export function boatMovementBlocked(environment,boat,actors,collision,objects={}
   if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,boat,other)))return true;
   const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;
   const direction=[dx/span,0,dz/span];
-  const [beam,length]=isShippingVessel(boat)||['harbor-yacht','harbor-patrol','harbor-fishing-boat'].includes(boat.modelId||boat.asset?.buildAssetId)?watercraftSize(boat):[.85,2];
+  const [beam,length]=isShippingVessel(boat)||['harbor-yacht','harbor-patrol','harbor-fishing-boat',...RESORT_BOATS].includes(boat.modelId||boat.asset?.buildAssetId)?watercraftSize(boat):[.85,2];
   return [-beam,0,beam].some(side=>{
    const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*length,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*length};
    if(collision?.blocksShot(environment,origin,direction,span+.12,Object.fromEntries(Object.entries(actors).filter(([id])=>id!==boat.id))))return true;
@@ -29,8 +29,8 @@ export function startBoatAssist(sim,player,environment,operation,now,{destinatio
  if(operation==='cancel'){clearAssist(boat);return 'Manual helm active. Your controls override assistance.';}
  if(operation==='continue')return boat.boating?.assist?'Helm assistance continues. Steer to take manual control.':'Choose Auto again for the next helm action.';
  if(operation==='moor'){const message=harborRadio(sim,player,environment,'moor');clearAssist(boat);return message;}
- if(!environment?.builderScene?.layoutMeta?.harbor)fail('This map has no navigable harbor.');
- const routed=operation==='navigate'||operation==='launch'&&(environment.builderScene.layoutMeta.harbor.islands||[]).length>0;
+ const harbor=harborForEnvironment(environment);if(!harbor)fail('This map has no navigable harbor.');
+ const routed=operation==='navigate'||operation==='launch'&&(harbor.islands||[]).length>0;
  let plan=null;
  if(routed){
   plan=planBoatNavigation(boat,environment,{destinationId:operation==='launch'?'open-water':destinationId,actors:sim.actors,blocked:boatMovementBlocked(environment,boat,sim.actors,collision,objects),depart:operation==='launch'});

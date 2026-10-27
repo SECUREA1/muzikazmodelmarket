@@ -1,4 +1,4 @@
-import {harborWaterAt,harborLandPatches,watercraftFootprint,watercraftOverlap,watercraftSize,isWatercraft} from './harbor-water.js';
+import {harborWaterAt,harborLandPatches,watercraftFootprint,watercraftOverlap,watercraftSize,isWatercraft,harborForEnvironment} from './harbor-water.js';
 import {shippingVesselType} from './shipping-vessel-specs.js';
 import {fishingZones,fishingStationPosition,isFishingBoat} from './fishing-config.js';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -6,9 +6,9 @@ const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export function harborApproach(environment,id,boat=null){
- const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return null;
+ const harbor=harborForEnvironment(environment);if(!harbor)return null;
  const lake=(harbor.lakes||[]).find(lake=>boat?.position&&Math.abs(boat.position.x-lake.x)<lake.width/2&&Math.abs(boat.position.z-lake.z)<lake.depth/2);
- if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:harbor.mainIsland===false?{id,name:'Strait traffic channel',...(harbor.openWater||{x:0,z:0})}:{id,name:'Open-water passage',x:184,z:80};
+ if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:harbor.mainIsland===false?{id,name:harbor.name?harbor.name+' open water':'Strait traffic channel',...(harbor.openWater||{x:0,z:0})}:{id,name:'Open-water passage',x:184,z:80};
  const fishing=fishingZones(environment).find(zone=>zone.id===id);if(fishing&&((lake&&fishing.water==='fresh'&&Math.abs(fishing.x-lake.x)<lake.width/2&&Math.abs(fishing.z-lake.z)<lake.depth/2)||(!lake&&fishing.water==='salt')))return {id,name:fishing.name,x:fishing.x,z:fishing.z,kind:'fishing',zoneId:fishing.id,arrivalRadius:1.6};
  if(lake&&id===lake.id)return {id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5};
  if(id==='marina'&&boat?.modelId==='harbor-yacht')return {id,name:'Superyacht Marina Approach',x:170,z:99,entry:{x:225,z:99}};
@@ -46,7 +46,7 @@ export function planBoatNavigation(boat,environment,options={}){
 }
 // Plan once along the coastline; physical sweeps reject piers and placed pieces.
 function planPassage(boat,environment,{actors={},blocked=()=>false,depart=false},goal){
- const harbor=environment.builderScene.layoutMeta.harbor,prefix=[],point={x:finite(boat.position?.x),z:finite(boat.position?.z)};
+ const harbor=harborForEnvironment(environment),prefix=[],point={x:finite(boat.position?.x),z:finite(boat.position?.z)};
  const yacht=boat.modelId==='harbor-yacht',cargo=shippingVesselType(boat),departureDock=(harbor.docks||[]).find(dock=>distance(point,yacht?dock.yachtApproach:dock.approach)<5);
  const berth=(environment.builderScene.objects||[]).filter(isWatercraft).map(value=>({value,span:distance(value.position,point)})).sort((a,b)=>a.span-b.span)[0];
  if(depart||berth?.span<3||departureDock){
