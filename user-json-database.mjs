@@ -11,6 +11,7 @@ import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
 import {migrateGameplayWallet} from './gameplay-wallet-migration.mjs';
+import {marketplaceFactoryCatalog} from './world-factory-catalog.mjs';
 import {ownedFactoryModel,transferFactoryModel,factoryModelCertification,factoryModelTestLocked} from './factory-item-provenance.mjs';
 import {itemLocked} from './public/js/factory-logistics-config.js';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
@@ -230,9 +231,9 @@ export class UserJsonDatabase {
     return { walletId: wallet, displayName: String(user.memory?.profile?.displayName || user.memory?.profile?.username || wallet), items: user.items || [], updatedAt: user.updatedAt };
   }
 
-  async marketListings() {
+  async marketListings(snapshot) {
     await this.initialize();
-    const data = await this.read();
+    const data = snapshot || await this.read();
     const proofs=new Map(),proofFor=(wallet,itemId)=>{const key=wallet+'\n'+itemId;if(!proofs.has(key))proofs.set(key,ownedFactoryModel(data,wallet,itemId));return proofs.get(key);};
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
@@ -712,8 +713,14 @@ export class UserJsonDatabase {
     return { owner_id: owner, assets, placements: Object.values(data.builderPlacements || {}).filter((placement) => placement.owner_id === owner && placement.status === 'placed') };
   }
 
-  async builderMarket(category = '') {
-    await this.initialize(); const data = await this.read(); const wanted = String(category || '').toUpperCase();
+  async factoryCatalog() {
+    await this.initialize();const data=await this.read();
+    const [builderListings,playerListings]=await Promise.all([this.builderMarket('',data),this.marketListings(data)]);
+    return marketplaceFactoryCatalog({builderListings,playerListings:playerListings.map(listing=>({...listing,item:data.users[listing.sellerId]?.items.find(item=>item.id===listing.itemId)}))});
+  }
+
+  async builderMarket(category = '', snapshot) {
+    await this.initialize(); const data = snapshot || await this.read(); const wanted = String(category || '').toUpperCase();
     return Object.values(data.builderListings || {}).filter((listing) => listing.listing_status === 'active').map((listing) => ({ ...listing, asset: data.builderAssets[listing.asset_id] ? { ...data.builderAssets[listing.asset_id], owner: data.builderOwnership?.[listing.asset_id]?.owner_id } : null })).filter((listing) => listing.asset?.asset_usage === 'game_builder' && (!wanted || listing.asset.builder_category === wanted)).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
   }
 

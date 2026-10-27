@@ -148,7 +148,7 @@ The 2026-10-27 audit found:
 | Coverage | Count |
 | --- | ---: |
 | Public worlds: 38 bundled/current authored worlds plus Commons and eight districts | 47 |
-| Placed native and whole GLB model instances | 5,435 |
+| Placed native and whole GLB model instances | 5,437 |
 | Distinct market items used by those worlds | 210 |
 | Renderer metadata model IDs | 281 |
 | Shared native definitions, including materials and gameplay items | 492 |

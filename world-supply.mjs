@@ -5,16 +5,16 @@ export const INITIAL_WORLD_STOCK=1000;
 const fail=(message,statusCode=422)=>{throw Object.assign(new Error(message),{statusCode});};
 const own=(value,key)=>Object.hasOwn(value,key);
 const safeKey=value=>typeof value==='string'&&value.length>0&&value.length<=300&&!['__proto__','prototype','constructor'].includes(value);
-const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\/+/, '');}catch{return String(value||'').replace(/^\/+/, '');}};
+const modelPath=value=>{try{const url=new URL(String(value||''),'https://catalog.invalid/');return decodeURIComponent((url.origin==='https://catalog.invalid'?'':url.origin)+url.pathname).replace(/^\/+/, '');}catch{return String(value||'').split(/[?#]/)[0].replace(/^\/+/, '');}};
 const storeId=value=>String(value||'').replace(/^(?:repository-|store-model-)/,'');
-const physical=item=>item&&!item.earnedOnly&&item.kind!=='stock';
+const physical=item=>item&&!item.earnedOnly&&item.visibility!=='private'&&item.kind!=='stock';
 const aliasesFor=item=>[
  item.supplyId,item.sku,item.economySku,
- item.modelUrl&&'model:'+modelPath(item.modelUrl),
- item.buildAssetId&&'native:'+item.buildAssetId,
- item.materialId&&'material:'+item.materialId,
- item.toolId&&'tool:'+item.toolId,
- item.catalogId,item.id,item.catalogId&&'store:'+storeId(item.catalogId),item.id&&'store:'+storeId(item.id)
+ !item.factoryVariant&&item.modelUrl&&'model:'+modelPath(item.modelUrl),
+ !item.factoryVariant&&item.buildAssetId&&'native:'+item.buildAssetId,
+ !item.factoryVariant&&item.materialId&&'material:'+item.materialId,
+ !item.factoryVariant&&item.toolId&&'tool:'+item.toolId,
+ item.catalogId,item.id,item.catalogId&&'store:'+storeId(item.catalogId),item.id&&'store:'+storeId(item.id),...(item.marketAliases||[])
 ].filter(safeKey);
 
 // A model appearing in the Backpack and repository is one physical item.
@@ -39,6 +39,7 @@ const STATIC_REVISION=createHash('sha256').update(JSON.stringify([...staticItems
 export function canonicalSupplyId(item){
  if(typeof item==='string')return staticAliases.get(item)||item;
  if(!item||typeof item!=='object')return null;
+ if(item.factoryVariant&&safeKey(item.supplyId))return item.supplyId;
  for(const alias of aliasesFor(item))if(staticAliases.has(alias))return staticAliases.get(alias);
  if(safeKey(item.supplyId))return item.supplyId;
  const id=storeId(item.catalogId||item.id);
@@ -50,14 +51,15 @@ export function canonicalSupplyId(item){
 function register(ledger,item){
  if(!physical(item))return;
  const aliases=aliasesFor(item),known=aliases.map(alias=>own(ledger.aliases,alias)?ledger.aliases[alias]:null).find(Boolean);
- const canonical=canonicalSupplyId(item),id=staticItems.has(canonical)?canonical:known||canonical;
+ const canonical=canonicalSupplyId(item),id=item.factoryVariant?canonical:staticItems.has(canonical)?canonical:known||canonical;
  if(!safeKey(id))fail('A supply item requires a valid catalog identifier.');
  const definition=staticItems.get(id)||{...ledger.catalog[id],...item};
  ledger.catalog[id]={...definition,supplyId:id,sku:definition.sku||id};
  // Stock presence, rather than truthiness, is the durable initialization marker.
  // A depleted zero remains zero across restarts and catalog reconciliation.
  if(!own(ledger.worldStock,id))ledger.worldStock[id]=INITIAL_WORLD_STOCK;
- for(const alias of [id,...aliases])if(!own(ledger.aliases,alias))ledger.aliases[alias]=id;
+ for(const alias of [id,...aliases])if(!own(ledger.aliases,alias)||item.factoryVariant&&!staticAliases.has(alias))ledger.aliases[alias]=id;
+ return id;
 }
 
 export function ensureWorldSupply(data,{items=[],maps=[]}={}){
@@ -71,7 +73,7 @@ export function ensureWorldSupply(data,{items=[],maps=[]}={}){
  for(const item of items){
   // Extra catalog entries must refer to an authored native item or model.
   // Arbitrary request objects are never allowed to become factory recipes.
-  if(item?.modelUrl||item?.buildAssetId||staticAliases.has(item?.sku))register(ledger,item);
+  if(item?.modelUrl||item?.buildAssetId||item?.factoryVariant&&item.renderKind==='image'||staticAliases.has(item?.sku))register(ledger,item);
  }
  for(const map of maps){
   const id=typeof map==='string'?map:map?.id;
@@ -85,11 +87,29 @@ export function ensureWorldSupply(data,{items=[],maps=[]}={}){
 
 export function supplyItem(data,item){
  const ledger=ensureWorldSupply(data),aliases=typeof item==='string'?[item,canonicalSupplyId(item)]:aliasesFor(item||{}).concat(canonicalSupplyId(item)||[]);
+ // A saved configured creation keeps its own stock identity even when it uses
+ // the same GLB or native geometry as a base catalog item.
+ const exact=typeof item==='object'&&item?.id&&ledger.aliases[item.id];
+ if(exact&&ledger.catalog[exact]?.factoryVariant)return ledger.catalog[exact];
  for(const alias of aliases){
   const id=own(ledger.aliases,alias)?ledger.aliases[alias]:alias;
   if(own(ledger.catalog,id))return ledger.catalog[id];
  }
  fail('This item is not registered in the world supply catalog.',404);
+}
+
+export function factoryLineupItems(data,items=[]){
+ const ledger=ensureWorldSupply(data),ids=new Set(staticItems.keys());
+ for(const item of items)if(physical(item)){
+  try{ids.add(supplyItem(data,item).supplyId);}catch(error){if(error.statusCode!==404)throw error;}
+ }
+ return [...ids].map(id=>ledger.catalog[id]).filter(Boolean);
+}
+
+export function factoryProductionItem(data,id,items=[]){
+ const item=supplyItem(data,id);
+ if(!factoryLineupItems(data,items).some(entry=>entry.supplyId===item.supplyId))fail('This blueprint is no longer publicly listed for new production.',409);
+ return item;
 }
 
 /** Must be called inside the same database transaction as the purchase or use. */

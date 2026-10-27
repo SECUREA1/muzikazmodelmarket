@@ -67,6 +67,22 @@ test('published GLB dollar prices receive the same MZK wholesale discount',async
  assert.equal((await repriced.state()).worldStock['store:published-dollar-model'],1000,'repricing does not reseed stock');
 });
 
+test('factory prices preserve explicit zero, convert USD once and reject malformed prices without charging',async t=>{
+ const f=await fixture(t);
+ for(const [index,prices] of [{priceMzk:0},{priceUsd:0},{price:0},{priceUsd:2.5},{priceMzk:125,priceUsd:999}].entries()){
+  const id='price-valid-'+index,service=new WorldSupplyService(f.db,{...f.options,catalog:async()=>[{id,name:'Priced GLB',modelUrl:'/uploads/'+id+'.glb',...prices}]});
+  const quote=await service.action(ALICE,'quote',{itemId:'store:'+id,quantity:10});
+  const expected=index<3?1:index===3?250:125;
+  assert.equal(quote.unitPriceMzk,expected);assert.equal(quote.subtotalMzk,expected*10);assert.equal(quote.priceMzk,expected*8);
+ }
+ for(const [index,prices] of [{},{priceMzk:-1},{priceMzk:1.5},{priceMzk:NaN},{priceMzk:Infinity},{priceMzk:''},{priceMzk:null},{priceMzk:false},{priceUsd:-1},{priceUsd:'invalid'},{priceUsd:Infinity},{priceUsd:''}].entries()){
+  const id='price-invalid-'+index,service=new WorldSupplyService(f.db,{...f.options,catalog:async()=>[{id,name:'Invalid price GLB',modelUrl:'/uploads/'+id+'.glb',...prices}]});
+  const before=await snapshot(f.db);
+  await assert.rejects(service.action(ALICE,'produce',{itemId:'store:'+id,quantity:10,requestId:id}),{statusCode:422});
+  assert.equal(await snapshot(f.db),before,'invalid pricing cannot charge, seed stock or save a batch');
+ }
+});
+
 test('production becomes ready by server time once and survives a new service/database instance',async t=>{
  const f=await fixture(t),production=await f.produce();
  f.now=production.readyAt-1;let state=await f.service.state();
@@ -85,13 +101,26 @@ test('dispatch reserves factory goods without stocking world/map inventories and
  for(const invalid of [{contractId:'dock-induction'},{destinationMapId:'missing-map'},{destinationMapId:'private-map'},{destinationMapId:'unplayable'},{shippingMapId:'city-market'},{quantity:4001}]){
   const before=await snapshot(f.db);await assert.rejects(f.dispatch(invalid));assert.equal(await snapshot(f.db),before);
  }
- const shipment=await f.dispatch(),retry=await f.dispatch();
+ const shipment=await f.dispatch({originPortId:'forged-origin',destinationPortId:'forged-destination',portTransferTask:{toPortId:'forged-port',phase:'delivered',quantity:100000}}),retry=await f.dispatch();
  assert.deepEqual(shipment,retry);assert.equal(shipment.phase,'queued');
+ const route=SHIPPING_ROUTES.find(route=>route.id===shipment.contractId);
+ assert.equal(shipment.originPortId,route.from);assert.equal(shipment.destinationPortId,route.to);
+ assert.deepEqual(shipment.portTransferTask,{id:'port-stage:'+shipment.id,sourceMapId:'factory',shippingMapId:'hormuz-shipping',toPortId:route.from,itemId:ITEM,quantity:10,phase:'staged',mode:'simulated-warehouse-transfer',stagedAt:f.now});
  const state=await f.service.state();assert.equal(state.factoryStock[ITEM],0);assert.equal(state.worldStock[ITEM],1000);
  assert.equal(state.maps.find(map=>map.id==='city-market').stock[ITEM],undefined);
  assert.deepEqual(state.maps.find(map=>map.id==='city-market').stores,[{id:'shop-a',name:'City Store'}]);
  assert.equal(state.shippingMaps.some(map=>map.id==='custom-shipping'),true);
  assert.equal(state.maps.some(map=>map.id==='private-map'),false);
+});
+
+test('legacy queued freight gains route-derived port staging without minting or reserving its goods again',async t=>{
+ const f=await fixture(t);await f.ready();const shipment=await f.dispatch();
+ await f.db.transaction(data=>{const old=data.worldSupply.shipments[shipment.id];delete old.originPortId;delete old.destinationPortId;delete old.portTransferTask;return {};});
+ const balance=(await f.db.get(ALICE)).tokens.MZK,initial=(await f.db.read()).worldSupply;
+ f.now+=1000;let state=await f.service.state();const restored=state.shipments.find(row=>row.id===shipment.id),route=SHIPPING_ROUTES.find(route=>route.id===shipment.contractId);
+ assert.equal(restored.originPortId,route.from);assert.equal(restored.destinationPortId,route.to);assert.equal(restored.portTransferTask.phase,'staged');assert.equal(restored.portTransferTask.stagedAt,shipment.createdAt);
+ assert.equal(restored.portTransferTask.quantity,shipment.quantity);assert.deepEqual(state.factoryStock,initial.factoryStock);assert.deepEqual(state.worldStock,initial.worldStock);assert.deepEqual(state.allocations,Object.values(initial.factoryLotAllocations));
+ state=await f.service.state();assert.deepEqual(state.shipments.find(row=>row.id===shipment.id).portTransferTask,restored.portTransferTask);assert.equal((await f.db.get(ALICE)).tokens.MZK,balance);
 });
 
 test('cancellation refunds only unfinished production once and returns queued cargo without refunding its production',async t=>{
@@ -107,7 +136,8 @@ test('cancellation refunds only unfinished production once and returns queued ca
  await assert.rejects(f.service.action(ALICE,'cancel',{productionId:next.id,requestId:'refund-ready'}),/Only a batch/);
  await assert.rejects(f.service.action(BOB,'cancel',{shipmentId:shipment.id,requestId:'steal-cargo'}),{statusCode:403});
  const shipmentCancel={shipmentId:shipment.id,requestId:'cancel-shipment'};
- await f.service.action(ALICE,'cancel',shipmentCancel);await f.service.action(ALICE,'cancel',shipmentCancel);
+ const returned=await f.service.action(ALICE,'cancel',shipmentCancel);await f.service.action(ALICE,'cancel',shipmentCancel);
+ assert.equal(returned.portTransferTask.phase,'returned');assert.equal(returned.portTransferTask.returnedAt,f.now);
  assert.equal((await f.db.get(ALICE)).tokens.MZK,afterProduction);
  assert.equal((await f.service.state()).factoryStock[ITEM],10);
  await assert.rejects(f.service.action(ALICE,'cancel',{...shipmentCancel,requestId:'duplicate-cargo'}),/Only an unassigned/);
@@ -120,14 +150,18 @@ test('one captain reserves cargo, binds a verified job, releases safely and can 
  assert.equal(contenders.filter(row=>row.status==='fulfilled').length,1);
  const winner=contenders[0].status==='fulfilled'?ALICE:BOB,identity={walletId:winner},loser=winner===ALICE?BOB:ALICE;
  assert.deepEqual(contenders.find(row=>row.status==='fulfilled').value.supplyManifest,[{itemId:ITEM,name:shipment.itemName,quantity:10}]);
+ const staged=contenders.find(row=>row.status==='fulfilled').value;
+ assert.equal(staged.originPortId,shipment.originPortId);assert.equal(staged.destinationPortId,shipment.destinationPortId);assert.deepEqual(staged.portTransferTask,shipment.portTransferTask);
  await assert.rejects(f.service.shippingAction({walletId:loser},{},{shipping:{}},environment,{operation:'release',shipmentId:shipment.id}),/another voyage/);
  await assert.rejects(f.service.shippingAction(identity,{},{shipping:{}},environment,{operation:'bind',shipmentId:shipment.id,jobId:'fake'}),/verified loading/);
  const job={id:'first-voyage',contractId:shipment.contractId,environmentId:environment.id,phase:'loading',startedAt:f.now,deadline:f.now+SHIPPING_RULES.contractLimitMs},player={shipping:{job}};
  await f.service.shippingAction(identity,{},player,environment,{operation:'bind',shipmentId:shipment.id,jobId:job.id});
+ assert.equal((await f.service.state()).shipments[0].portTransferTask.phase,'loading');
  await assert.rejects(f.service.action(ALICE,'cancel',{shipmentId:shipment.id,requestId:'cancel-reserved'}),/Only an unassigned/);
  const release={operation:'release',shipmentId:shipment.id,jobId:job.id};
  await f.service.shippingAction(identity,{},player,environment,release);
  await f.service.shippingAction(identity,{},player,environment,release);
+ assert.equal((await f.service.state()).shipments[0].portTransferTask.phase,'staged');
  assert.equal((await f.service.state()).factoryStock[ITEM],0);
  player.shipping.job=null;await f.service.shippingAction(identity,{},player,environment,command);
  player.shipping.job={...job,id:'replacement-voyage'};
@@ -143,6 +177,9 @@ test('a verified completed sea voyage stocks the selected map or world inventory
   f.now=v.result.deliveredAt;
   const delivered=await f.service.deliver(v.identity,v.result,v.environment),replay=await f.service.deliver(v.identity,v.result,v.environment);
   assert.deepEqual(delivered,replay);assert.equal(delivered.phase,'delivered');assert.equal(delivered.transferTask.phase,'delivered');
+  assert.equal(delivered.portTransferTask.phase,'delivered');assert.equal(delivered.portTransferTask.deliveredAt,f.now);
+  assert.equal(delivered.portTransferTask.stagedAt,shipment.createdAt,'the staged cargo identity survives the voyage');
+  assert.deepEqual(await f.service.action(ALICE,'dispatch',{itemId:ITEM,quantity:10,destinationMapId,shippingMapId:'hormuz-shipping',contractId:'gulf-gateway',requestId:'dispatch-'+index}),shipment,'a dispatch replay keeps its immutable staged response after delivery');
  }
  const state=await f.service.state();
  assert.equal(state.maps.find(map=>map.id==='city-market').stock[ITEM],10);
@@ -159,6 +196,7 @@ test('malformed or expired sea settlements cannot mint stock, and expired reserv
  let state=await f.service.state(),lease=state.shipments[0].leaseUntil;
  f.now=lease;await assert.rejects(f.service.deliver(v.identity,v.result,v.environment),/expired/);
  state=await f.service.state();assert.equal(state.shipments[0].phase,'queued');assert.equal(state.maps.find(map=>map.id==='city-market').stock[ITEM],undefined);
+ assert.equal(state.shipments[0].portTransferTask.phase,'staged');
  await f.service.shippingAction(v.identity,{},v.player,v.environment,{operation:'release',shipmentId:shipment.id,jobId:v.result.jobId});
  await f.service.shippingAction({walletId:BOB},{},{shipping:{}},v.environment,{operation:'reserve',shipmentId:shipment.id,contractId:shipment.contractId});
  await f.service.shippingAction(v.identity,{},v.player,v.environment,{operation:'release',shipmentId:shipment.id,jobId:v.result.jobId});
