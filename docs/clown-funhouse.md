@@ -79,6 +79,29 @@ Attractions use the existing shared-room connection. The destination disables
 ambient RAD-TOX encounters and does not charge or award MZK for carnival
 activities. Regular world travel remains available from the toolbar.
 
+## Clown voices, sounds and music
+
+The carnival has 24 original voiced clown lines, with matching captions. The
+hosts welcome visitors, tease missed shots, celebrate catches and discoveries,
+and offer suspiciously cheerful advice. Honks, squeaky shoes, winding cranks,
+water splashes, ball tosses, bells and short scare stings accompany the real
+attraction actions.
+
+The clown car plays **Midnight Motor Waltz**, an original minor-key carnival
+tune with calliope-like melody and a swaying bass. Nearby attraction sounds use
+the existing spatial audio setting, so their direction and volume follow your
+position in first person and VR.
+
+Use **Clown audio settings** at the lower right, or expand **Clown voices,
+sounds & music** in an attraction menu. Voices, music and effects each have a
+mute button and volume control. You can replay the last clown line or preview
+the car tune. Player settings still control all audio, NPC conversations and
+game effects; a funhouse toggle does not override those mutes.
+
+In VR, the same settings, replay and preview actions appear in the floating
+board and the game menu. The latest clown caption appears on that board. Audio
+starts after a game gesture; leaving the world stops its music and sound cues.
+
 ## Map list, market and Builder
 
 **Midnight Laughs Funhouse** appears in the world list, the **Clown funhouse**

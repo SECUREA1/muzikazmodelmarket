@@ -11,8 +11,9 @@ window.environment={id:FUNHOUSE_ID};
 window.actors={};
 window.position={x:-30,y:.02,z:12};
 window.immersive=false;window.worldPlays=[];
+window.audioSettings={musicMuted:false,voiceMuted:false,effectsMuted:false,musicVolume:35,voiceVolume:75,effectsVolume:65};window.audioPreferences={};window.audioChanges=[];window.audioReplays=0;window.musicPreviews=0;
 window.stateTimes=[];window.commands=[];window.pending=[];window.receivedStates=[];window.effects=[];window.announcements=[];
-window.ui=mountClownFunhouseUI({stage:document.querySelector('main'),getEnvironment:()=>environment,getPosition:()=>position,getActors:()=>actors,getImmersive:()=>immersive,onPlayInWorld:station=>worldPlays.push(station.id),
+window.ui=mountClownFunhouseUI({getAudioSettings:()=>audioSettings,getAudioPreferences:()=>audioPreferences,onAudioSettings:patch=>{audioChanges.push(patch);Object.assign(audioSettings,patch);},onReplayClown:()=>audioReplays++,onPreviewMusic:()=>musicPreviews++,stage:document.querySelector('main'),getEnvironment:()=>environment,getPosition:()=>position,getActors:()=>actors,getImmersive:()=>immersive,onPlayInWorld:station=>worldPlays.push(station.id),
  send:(action,fields)=>{commands.push({action,...fields});return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
  onState:(state,serverTime)=>{receivedStates.push(structuredClone(state));stateTimes.push(serverTime);},onEffect:(station,effect)=>effects.push({station:station.id,...effect}),announce:text=>announcements.push(text)});
 window.round=(patch={})=>({id:'water-round',status:'active',startedAt:90000,endsAt:130000,targetId:0,hits:0,shots:0,score:0,...patch});

@@ -53,6 +53,13 @@ test('room-scored fitness rounds settle once into the wallet and restore progres
  const receipt=state.result.fitnessReceipt;
  assert.equal(receipt.amountMzk,FITNESS_GAMES[station.kind].rewardMzk);assert.equal(receipt.score,1200);assert.equal(state.players[selfId].fitness.settled,true);
  assert.equal(state.players[selfId].fitness.rewardReceipt,undefined,'shared workout snapshots omit the private wallet receipt');
+ for(const event of state.events){assert.equal(event.fitnessReceipt,undefined,'public room events omit private wallet receipts');assert.equal(event.fitness?.rewardReceipt,undefined,'public event rounds omit nested wallet receipts');}
+ assert.ok(!JSON.stringify(state.events).includes('"balanceAfterMzk"'),'public event history omits the private wallet balance');
+ const historicalRoom=await f.runtime.store.get(FITNESS_ID);
+ historicalRoom.simulation.events.push({id:'legacy-fitness-event',actorId:selfId,action:'fitness-finish',fitnessReceipt:receipt,fitness:{...state.players[selfId].fitness,rewardReceipt:receipt}});
+ const historical=f.runtime.view(historicalRoom).events.at(-1);
+ assert.equal(historical.fitnessReceipt,undefined,'old persisted events are redacted when projected');assert.equal(historical.fitness.rewardReceipt,undefined);
+ assert.equal(historicalRoom.simulation.events.at(-1).fitnessReceipt.id,receipt.id,'public projection does not mutate durable private receipts');
  assert.equal(state.players[selfId].fitnessProgress.completedSets,1);assert.equal(state.players[selfId].fitnessProgress.skills.strength,12);
  const replay=await f.send('fitness-finish',{roundId:round.id});assert.equal(replay.result.fitnessReceipt.id,receipt.id);
  const saved=await fitnessAccountState(f.database,f.wallet);assert.equal(saved.balance,100+receipt.amountMzk);assert.equal(saved.history.length,1);assert.equal(saved.progress.completedSets,1);

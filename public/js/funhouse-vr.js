@@ -1,3 +1,4 @@
+import {normalizeFunhouseAudioSettings,funhouseAudioNotice,funhouseAudioAllowed} from './funhouse-audio-settings.js';
 import {funhouseRideCue,funhouseRidePose} from './funhouse-experience-rules.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './funhouse-adventure-rules.js';
 import * as T from '../vendor/three/three.module.min.js';
@@ -13,7 +14,7 @@ const ballNames=['Crimson','Gold','Cyan','Violet'];
 
 /** The same attraction commands are available on a real scene panel and through
  * controller rays. This module never changes a tracked camera or grants items. */
-export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getEnvironment=()=>null,getPosition=()=>null,getActors=()=>({}),getRoots=()=>[],getPresenting=()=>true,getServerTime=null,getState=()=>null,send=async()=>null,onStatus=()=>{},onInputRelease=()=>{},onStartRide=()=>{},onExitRide=()=>{},getReducedMotion=()=>false,createCanvas=()=>typeof document==='undefined'?null:document.createElement('canvas')}={}){
+export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getEnvironment=()=>null,getPosition=()=>null,getActors=()=>({}),getRoots=()=>[],getPresenting=()=>true,getServerTime=null,getState=()=>null,send=async()=>null,onStatus=()=>{},onInputRelease=()=>{},onStartRide=()=>{},onExitRide=()=>{},getAudioSettings=()=>null,getAudioPreferences=()=>({}),getAudioCaption=()=>null,onAudioSettings=()=>{},onReplayClown=()=>{},onPreviewMusic=()=>{},getReducedMotion=()=>false,createCanvas=()=>typeof document==='undefined'?null:document.createElement('canvas')}={}){
  const root=new THREE.Group();root.name='MIDNIGHT_LAUGHS_IMMERSIVE_CONTROLS';root.visible=false;root.userData.collisionDisabled=true;scene.add(root);
  const width=1024,height=768,panelWidth=1.02,panelHeight=.765,canvas=createCanvas();
  if(canvas){canvas.width=width;canvas.height=height;}
@@ -23,6 +24,9 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  const inverse=new THREE.Matrix4(),localRay=new THREE.Ray(),localPoint=new THREE.Vector3(),head=new THREE.Vector3(),orientation=new THREE.Quaternion(),forward=new THREE.Vector3(),right=new THREE.Vector3();
  const held=new Set();
  let state={},latestActors=null,selfId=null,sequence=-1,offset=0,pending=false,disposed=false,visible=false,available=false,generation=0,selectedId=null,message='',lastSignature='',buttons=[],hovered=null,drawCount=0,worldId=null,lastTickAt=-Infinity,boardMode='attraction',actionPage=0,observedRideId=null,pendingRideAnchor=null,boardRideFollow=null;
+ let localAudioSettings=normalizeFunhouseAudioSettings();
+ const audioSettings=()=>normalizeFunhouseAudioSettings({...localAudioSettings,...(getAudioSettings()||{})});
+ const audioCaption=()=>{const caption=getAudioCaption();return caption?.text&&(!Number.isFinite(caption.expiresAt)||caption.expiresAt>Date.now())?caption:null;};
  const now=()=>getServerTime?getServerTime():Date.now()+offset;
  const allStations=()=>funhouseStations(getEnvironment(),{actors:latestActors||getActors()});
  function nearest(){let result=null,limit=6.5;for(const station of allStations()){const gap=distance(getPosition(),station.position);if(gap<Math.min(limit,station.interactionDistance||6.5)){limit=gap;result=station;}}return result;}
@@ -85,7 +89,19 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   if(active(adventure))return [entry('adventure-inspect','Inspect '+(clue?.name||'the next clue'),()=>run('funhouse-adventure',{operation:'inspect',adventureId:adventure.id,clueId:clue?.id}),!riding&&funhouseAdventureNear(getPosition(),clue)),entry('adventure-stop','Stop the adventure trail',()=>run('funhouse-adventure',{operation:'stop',adventureId:adventure.id}))];
   return [entry('adventure-start',adventure?'Start the trail again':'Start the adventure trail',()=>run('funhouse-adventure',{operation:'start'}),!riding&&funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START))];
  }
+ function changeAudio(patch){localAudioSettings=normalizeFunhouseAudioSettings({...audioSettings(),...patch});onAudioSettings(patch);redraw();}
+ function showAudio(){setVisible(true);boardMode='audio';actionPage=0;redraw();}
+ function audioActions(){
+  const settings=audioSettings(),preferences=getAudioPreferences()||{},labels={music:'Car music',voice:'Clown voices',effects:'Attraction effects'},items=[];
+  for(const channel of ['music','voice','effects']){
+   items.push(entry('audio-'+channel+'-mute',labels[channel]+' · '+(settings[channel+'Muted']?'muted':'on'),()=>changeAudio({[channel+'Muted']:!audioSettings()[channel+'Muted']})));
+   for(const direction of [-1,1])items.push(entry('audio-'+channel+'-'+(direction<0?'down':'up'),(direction<0?'Lower ':'Raise ')+labels[channel].toLowerCase()+' · '+settings[channel+'Volume']+'%',()=>changeAudio({[channel+'Volume']:Math.max(0,Math.min(100,audioSettings()[channel+'Volume']+direction*10))}),direction<0?settings[channel+'Volume']>0:settings[channel+'Volume']<100));
+  }
+  items.push(entry('audio-replay','Replay last clown line',()=>onReplayClown(),funhouseAudioAllowed('voice',settings,preferences)),entry('audio-preview','Preview scary car music',()=>onPreviewMusic(),funhouseAudioAllowed('music',settings,preferences)),entry('audio-back','Back to attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();}));
+  return items;
+ }
  function summary(station){
+  if(boardMode==='audio')return {title:'Midnight sound booth',headline:'Funny voices · eerie carnival music',detail:funhouseAudioNotice(getAudioPreferences()||{}),cue:'VOLUME '+audioSettings().musicVolume+'% MUSIC · '+audioSettings().voiceVolume+'% VOICES'};
   if(boardMode==='adventure'){
    const adventure=state.adventure,clue=funhouseAdventureNextClue(adventure);
    if(active(adventure))return {title:'The Lost Laugh Trail',headline:(adventure.found?.length||0)+' / '+FUNHOUSE_ADVENTURE_CLUES.length+' clues · '+Math.max(0,Math.ceil((adventure.endsAt-now())/1000))+'s',detail:clue?.hint||adventure.hint||'Explore the midway.',cue:clue?.name||'Find the next discovery'};
@@ -101,15 +117,16 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function redraw(){
   if(disposed||!visible){lastSignature='';return;}
-  const station=currentStation(),info=summary(station),actions=boardMode==='adventure'?[...adventureActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:attractionActions(station);
-  if(boardMode!=='adventure'&&funhouseAdventureAvailable(getEnvironment()))actions.push(entry('adventure-board',active(state.adventure)?'Adventure trail · '+(state.adventure.found?.length||0)+' / 6':'Explore the adventure trail',()=>{boardMode='adventure';actionPage=0;redraw();}));
+  const station=currentStation(),info=summary(station),actions=boardMode==='audio'?audioActions():boardMode==='adventure'?[...adventureActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:attractionActions(station);
+  if(boardMode!=='audio')actions.push(entry('audio-board','Clown voices, sounds & music',showAudio));
+  if(boardMode!=='audio'&&boardMode!=='adventure'&&funhouseAdventureAvailable(getEnvironment()))actions.push(entry('adventure-board',active(state.adventure)?'Adventure trail · '+(state.adventure.found?.length||0)+' / 6':'Explore the adventure trail',()=>{boardMode='adventure';actionPage=0;redraw();}));
   const pages=Math.max(1,Math.ceil(actions.length/5));actionPage=Math.min(actionPage,pages-1);
   const pageActions=actions.slice(actionPage*5,actionPage*5+5);
   if(actionPage>0)pageActions.push(entry('previous-actions','Previous actions',()=>{actionPage--;redraw();}));
   if(actionPage+1<pages)pageActions.push(entry('next-actions','Next actions',()=>{actionPage++;redraw();}));
   pageActions.push(entry('close','Hide this board',()=>setVisible(false)));
-  buttons=pageActions.map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||['close','next-actions','previous-actions','adventure-board','attraction-board'].includes(item.id)),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
-  const signature=JSON.stringify([station?.id,info,pending,message,hovered,buttons.map(button=>[button.id,button.label,button.enabled])]);
+  buttons=pageActions.map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||['close','next-actions','previous-actions','adventure-board','attraction-board','audio-board','audio-back'].includes(item.id)),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
+  const caption=audioCaption(),signature=JSON.stringify([station?.id,info,pending,message,caption,hovered,buttons.map(button=>[button.id,button.label,button.enabled])]);
   if(signature===lastSignature)return;lastSignature=signature;drawCount++;
   if(!ink)return;
   ink.clearRect(0,0,width,height);ink.fillStyle='rgba(25,13,40,.96)';ink.fillRect(0,0,width,height);ink.strokeStyle='#edb666';ink.lineWidth=6;ink.strokeRect(3,3,width-6,height-6);
@@ -119,7 +136,12 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   ink.fillStyle='#e9c6dc';ink.font='25px system-ui';const detailLines=[];let detailLine='';for(const word of text(info.detail).split(' ')){const next=detailLine?detailLine+' '+word:word;if(ink.measureText(next).width>968&&detailLine){detailLines.push(detailLine);detailLine=word;}else detailLine=next;}if(detailLine)detailLines.push(detailLine);detailLines.slice(0,2).forEach((line,index)=>ink.fillText(line,28,192+index*31,968));
   ink.fillStyle='#ffd487';ink.font='bold 31px system-ui';ink.fillText(text(info.cue),28,267,968);
   for(const button of buttons){ink.fillStyle=button.enabled?(hovered===button.id?'#684164':'#32203f'):'#261b30';ink.fillRect(button.x,button.y,button.w,button.h);ink.strokeStyle=button.enabled?(hovered===button.id?'#91fff0':'#bc8d64'):'#514454';ink.lineWidth=hovered===button.id?6:3;ink.strokeRect(button.x+2,button.y+2,button.w-4,button.h-4);ink.fillStyle=button.enabled?'#fff1d0':'#8c7c96';ink.textAlign='center';ink.font='bold 27px system-ui';ink.fillText(text(button.label),button.x+button.w/2,button.y+button.h/2,button.w-24);}
-  ink.textAlign='left';ink.font='23px system-ui';ink.fillStyle='#9be6df';ink.fillText(text(pending?'Attraction is responding…':message||state.message||'Either trigger selects · X/B opens the game menu'),28,719,968);texture.needsUpdate=true;
+  ink.textAlign='left';ink.font='23px system-ui';ink.fillStyle='#9be6df';
+  if(caption&&!pending){
+   ink.font='bold 22px system-ui';ink.fillText(text(caption.speaker||'Midnight clown'),28,686,968);ink.font='23px system-ui';
+   const lines=[];let line='';for(const word of String(caption.text).slice(0,350).split(/\s+/)){const next=line?line+' '+word:word;if(ink.measureText(next).width>968&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,2).forEach((value,index)=>ink.fillText(value,28,714+index*27,968));
+  }else ink.fillText(text(pending?'Attraction is responding…':message||state.message||'Either trigger selects · X/B opens the game menu'),28,719,968);
+  texture.needsUpdate=true;
  }
  function anchor(){
   const tracked=getCamera();tracked?.updateWorldMatrix?.(true,false);tracked?.getWorldPosition?.(head);tracked?.getWorldQuaternion?.(orientation);
@@ -141,7 +163,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   const next=snapshot?.players?.[selfId]?.funhouse||getState();if(next){if(next.message!==state.message)message='';state=next;}
   if(state.ride?.id){const key=state.ride.id+':'+state.ride.status;if(key!==observedRideId){observedRideId=key;pendingRideAnchor={key,position:active(state.ride)?state.ride.pose?.position:state.ride.pose?.exitPosition||allStations().find(station=>station.id===state.ride.stationId)?.position};if(active(state.ride)){boardMode='attraction';actionPage=0;}}}
   available=isFunhouseEnvironment(getEnvironment())||allStations().length>0;
-  if(visible){const station=currentStation(),trail=boardMode==='adventure'&&funhouseAdventureAvailable(getEnvironment()),running=active(state.ride)||active(state.round)||active(state.challenge);if(!trail&&(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7))setVisible(false);}
+  if(visible){const station=currentStation(),trail=boardMode==='adventure'&&funhouseAdventureAvailable(getEnvironment())||boardMode==='audio'&&isAvailable(),running=active(state.ride)||active(state.round)||active(state.challenge);if(!trail&&(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7))setVisible(false);}
   if(!getPresenting()&&visible)setVisible(false);redraw();return true;
  }
  function hitPanel(ray){
@@ -199,11 +221,11 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  function trigger(ray,controller='primary'){if(pointerDown(ray,controller))return true;if(held.has(controller))return true;const handled=worldTrigger(ray,controller);if(handled)held.add(controller);return handled;}
  function menuItems(){
   const station=currentStation(),items=[...attractionActions(station),...adventureActions()].map(action=>({id:'funhouse:'+action.id,label:action.label,disabled:!action.enabled,run:()=>action.enabled?action.run():onStatus(action.id.startsWith('adventure')?'Follow the trail hint and move close to the correct discovery.':'Wait for the next attraction cue.')}));
-  if(isAvailable())items.push({label:visible?'Hide attraction controls':'Show attraction controls',run:()=>setVisible(!visible)},{label:'Recenter attraction board',run:()=>{setVisible(true);anchor();}});
+  if(isAvailable())items.push({id:'funhouse:audio-board',label:'Clown voices, sounds & music',run:showAudio},{label:visible?'Hide attraction controls':'Show attraction controls',run:()=>setVisible(!visible)},{label:'Recenter attraction board',run:()=>{setVisible(true);anchor();}});
   return items;
  }
  function release(){held.clear();hovered=null;redraw();}
  function tick(){if(disposed||!visible)return;if(!getPresenting())setVisible(false);if(pendingRideAnchor){const tracked=getCamera(),pose=pendingRideAnchor.position;tracked?.updateWorldMatrix?.(true,false);tracked?.getWorldPosition?.(head);if(pose&&Math.hypot(head.x-pose.x,head.z-pose.z)<2.5){anchor();pendingRideAnchor=null;}}const ridePosition=liveRidePosition();if(ridePosition&&boardRideFollow?.id===state.ride.id&&!pendingRideAnchor){root.position.x+=ridePosition.x-boardRideFollow.position.x;root.position.y+=ridePosition.y-boardRideFollow.position.y;root.position.z+=ridePosition.z-boardRideFollow.position.z;boardRideFollow.position={...ridePosition};}if(!ridePosition)boardRideFollow=null;if(now()-lastTickAt<80)return;lastTickAt=now();redraw();}
  function reset(){generation++;pending=false;state={};latestActors=null;sequence=-1;selfId=null;selectedId=null;message='';lastSignature='';worldId=null;lastTickAt=-Infinity;boardMode='attraction';actionPage=0;observedRideId=pendingRideAnchor=boardRideFollow=null;held.clear();visible=available=false;root.visible=false;buttons=[];}
- return {root,update:receive,receive,tick,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,mode:boardMode,page:actionPage,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null,adventure:state.adventure?{...state.adventure}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
+ return {root,update:receive,receive,tick,showAudio,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,mode:boardMode,page:actionPage,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,audioSettings:audioSettings(),audioCaption:audioCaption(),message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null,adventure:state.adventure?{...state.adventure}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
 }

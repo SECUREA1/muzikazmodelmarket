@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Funhouse audio verification</title>
+<button id="run">Run funhouse audio check</button>
+<button id="run-controller">Run world audio lifecycle check</button>
+<output id="result" aria-live="polite"></output>
+<script type="module">
+import {createFunhouseAudioEngine} from '/public/js/funhouse-audio-engine.js';
+import {FUNHOUSE_CLOWN_LINES} from '/public/js/funhouse-audio-dialogue.js';
+import {createFunhouseAudio} from '/public/js/funhouse-audio.js';
+import {claimGameSpeech,releaseGameSpeech} from '/public/js/game-speech-owner.js';
+
+const assert=(condition,message)=>{if(!condition)throw Error(message);};
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+window.ready=true;
+document.querySelector('#run').onclick=async()=>{
+ const report={checks:[],captions:[]};let context,engine;
+ try{
+  context=new AudioContext();
+  const analyser=context.createAnalyser();analyser.fftSize=2048;analyser.connect(context.destination);
+  const preferences={masterMuted:false,effectsMuted:false,dialogueMuted:false,effectsVolume:100,spatialAudio:true};
+  const settings={musicMuted:false,voiceMuted:false,effectsMuted:false,musicVolume:40,voiceVolume:80,effectsVolume:75};
+  const created={oscillators:0,buffers:0};
+  const oscillator=context.createOscillator.bind(context),source=context.createBufferSource.bind(context);
+  context.createOscillator=()=>{created.oscillators++;return oscillator();};
+  context.createBufferSource=()=>{created.buffers++;return source();};
+  engine=createFunhouseAudioEngine({getContext:()=>context,destination:analyser,getPreferences:()=>preferences,getSettings:()=>settings,getPosition:()=>({x:0,y:1.6,z:0}),getCameraDirection:()=>({x:0,y:0,z:-1}),getSpatialAudio:()=>true});
+  const position={x:0,y:1.6,z:0};
+  const peak=()=>{const values=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(values);return Math.max(...values.map(Math.abs));};
+  const pump=async(ms=300)=>{let maximum=0;const end=performance.now()+ms;while(performance.now()<end){engine.update(.04);await sleep(40);maximum=Math.max(maximum,peak());}return maximum;};
+  const quiet=async(label)=>{engine.update(0);await sleep(160);const value=await pump(120);assert(value<.00001,label+' leaked sound: '+value);report.checks.push(label);};
+
+  assert(engine.effect('honk',{position,key:'locked'})===false,'effects must wait for the user audio unlock');
+  assert(created.oscillators===0,'locked effects allocated oscillators');
+  await engine.unlock();assert(context.state==='running','gesture did not resume the shared AudioContext');
+  assert(engine.effect('honk',{position,key:'horn-once'})!==false,'the horn was rejected after unlock');
+  assert(engine.effect('honk',{position,key:'horn-once'})===false,'the same confirmed horn event replayed');
+  report.effectPeak=await pump(400);assert(report.effectPeak>.00001,'the horn produced no real audio samples');
+  assert(report.effectPeak<1,'horn samples clipped');report.checks.push('gesture, real horn samples and event deduplication');
+  engine.stop();await quiet('effect stop');
+
+  engine.setMusic(true,{position,rideId:'browser-car'});
+  report.musicPeak=await pump(900);assert(report.musicPeak>.00001,'the original car waltz produced no real audio samples');
+  assert(report.musicPeak<1,'car music samples clipped');assert(created.oscillators>4,'car music did not schedule its original notes');report.checks.push('original car music generates bounded audio');
+  settings.musicMuted=true;await quiet('live music mute');
+  settings.musicMuted=false;assert(await pump(1700)>.00001,'music did not resume after its own mute cleared');
+  preferences.effectsMuted=true;await quiet('global game-effects mute also silences car music');
+  preferences.effectsMuted=false;preferences.masterMuted=true;await quiet('master mute');
+  preferences.masterMuted=false;engine.setMusic(false);engine.stop();await quiet('leaving the car stops music');
+
+  const line=FUNHOUSE_CLOWN_LINES[0];assert(line?.url&&line.text&&line.caption,'the original clown line has no voiced asset/caption');
+  const response=await fetch(line.url);assert(response.ok,'the generated clown voice asset is missing: '+line.url);
+  const clip=await context.decodeAudioData(await response.arrayBuffer());assert(clip.duration>.5,'clown line audio is empty');
+  report.voiceDuration=clip.duration;report.voiceId=line.id;
+  assert(engine.voice(clip,{position,key:'clown-once',text:line.caption,speaker:line.speaker,onStarted:()=>report.captions.push({text:line.caption,speaker:line.speaker})})!==false,'the recorded clown line was rejected');
+  assert(engine.voice(clip,{position,key:'clown-once',text:line.caption,speaker:line.speaker})===false,'the same clown line event replayed');
+  report.voicePeak=await pump(500);assert(report.voicePeak>.00001,'the real recorded clown line was silent');
+  assert(report.captions.some(value=>(typeof value==='string'?value:value.text)===line.caption),'the spoken line and visible caption disagree');
+  report.checks.push('actual generated clown WAV decodes, speaks once and matches its caption');
+  preferences.dialogueMuted=true;await quiet('NPC dialogue mute silences clown speech');
+  preferences.dialogueMuted=false;
+  engine.voice(clip,{position,key:'clown-local-mute',text:line.caption,speaker:line.speaker});await pump(200);
+  settings.voiceMuted=true;await quiet('funhouse voice mute');
+  settings.voiceMuted=false;engine.stop();
+
+  settings.musicMuted=true;settings.effectsMuted=false;
+  assert(engine.effect('squeak',{position,key:'separate-effects'})!==false,'muting only music incorrectly disabled effects');
+  assert(await pump(350)>.00001,'effects were not independently audible');
+  settings.effectsMuted=true;await quiet('funhouse effects mute');settings.effectsMuted=false;
+  engine.stop();settings.musicMuted=false;engine.setMusic(true,{position,rideId:'before-travel'});await pump(200);
+  engine.reset();await quiet('world travel reset');
+  const count=created.oscillators;await pump(350);assert(created.oscillators===count,'reset scheduled more music after leaving the world');
+  engine.dispose();assert(context.state==='running','disposing one world closed the game shared audio context');
+  report.checks.push('travel cleanup leaves no scheduled world music and preserves shared audio');
+  report.created=created;report.contextState=context.state;report.engine=engine.snapshot();
+  await context.close();window.audioReport=report;document.querySelector('#result').textContent=JSON.stringify(report);
+ }catch(error){window.audioError=error.stack||error.message;document.querySelector('#result').textContent=window.audioError;try{engine?.dispose();await context?.close();}catch{}}
+};
+document.querySelector('#run-controller').onclick=async()=>{
+ const report={checks:[],captions:[]};let context,audio;
+ try{
+  context=new AudioContext();const analyser=context.createAnalyser();analyser.fftSize=2048;analyser.connect(context.destination);
+  let environment={id:'muzikaz-clown-funhouse',game:'funhouse'},position={x:0,y:.02,z:40},sequence=0,state={stamps:[],costume:{hat:false,shoes:false}};
+  const preferences={masterMuted:false,effectsMuted:false,dialogueMuted:false,effectsVolume:100,spatialAudio:true};
+  const saved=new Map([['muzikaz:funhouse-audio:v1',JSON.stringify({voiceMuted:true})]]),storage={getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)};
+  const speech={speak(){},cancel(){this.cancels++;},cancels:0};
+  const engine=createFunhouseAudioEngine({getContext:()=>context,destination:analyser,getPreferences:()=>preferences,getSettings:()=>audio?.settings()||{},getPosition:()=>position,getCameraDirection:()=>({x:0,y:0,z:-1})});
+  audio=createFunhouseAudio({getContext:()=>context,getEnvironment:()=>environment,getActors:()=>({}),getPosition:()=>position,getCameraDirection:()=>({x:0,y:0,z:-1}),getPreferences:()=>preferences,storage,speech,engine,onCaption:value=>report.captions.push(value)});
+  const snapshot=(events=[])=>({sequence:++sequence,serverTime:Date.now(),selfId:'me',players:{me:{health:100,position:{...position},funhouse:structuredClone(state)}},events});
+  const peak=()=>{const values=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(values);return Math.max(...values.map(Math.abs));};
+  const pump=async(ms=300)=>{let maximum=0;const end=performance.now()+ms;while(performance.now()<end){audio.update(.04);await sleep(40);maximum=Math.max(maximum,peak());}return maximum;};
+  const until=async(predicate,message)=>{const end=performance.now()+8000;while(!predicate()&&performance.now()<end)await pump(40);assert(predicate(),message);};
+  const quiet=async(message)=>{await pump(160);assert(await pump(120)<.00001,message);};
+  await audio.unlock();audio.receive(snapshot(),'me');await pump(100);
+  assert(audio.snapshot().caption?.text===FUNHOUSE_CLOWN_LINES[0].caption,'muting voices removed the matching welcome caption');
+  assert(!audio.snapshot().voicePlaying,'local voice mute still played a welcome');
+  report.checks.push('captions remain available with voices muted');
+  audio.setSettings({voiceMuted:false});assert(audio.replay(),'replay was rejected after unmuting voices');
+  await until(()=>audio.snapshot().voicePlaying,'the replayed recorded clown voice never started');
+  report.replayPeak=await pump(400);assert(report.replayPeak>.00001,'controller replay produced no actual voice samples');
+  const conversation=Symbol('conversation');claimGameSpeech(speech,conversation,()=>{});
+  assert(!audio.snapshot().voicePlaying,'NPC conversation did not stop the clown voice');await quiet('the interrupted clown voice kept playing');
+  const voicesBefore=engine.snapshot().counts.voices;audio.replay();await pump(200);
+  assert(engine.snapshot().counts.voices===voicesBefore,'clown speech interrupted a claimed NPC conversation');
+  releaseGameSpeech(speech,conversation);await until(()=>engine.snapshot().counts.voices>voicesBefore,'clown replay did not resume after the conversation released its voice lane');
+  report.checks.push('recorded replay cooperates with the shared NPC speech lane');
+  audio.pause();await quiet('pause left a recorded voice playing');
+  audio.setSettings({voiceMuted:true});await audio.unlock();
+
+  position={x:24,y:.02,z:28};const startedAt=Date.now();
+  state={...state,ride:{id:'car-browser',kind:'car',stationId:'funhouse-clown-car',status:'active',startedAt,endsAt:startedAt+20000,durationMs:20000,hits:0,score:0,pose:{position:{x:27.35,y:.6,z:25.55}}}};
+  const boarded=snapshot();audio.receive(boarded,'me');report.carPeak=await pump(700);
+  assert(audio.snapshot().musicActive&&report.carPeak>.00001,'boarding the authoritative car did not start its soundtrack');
+  const effectsBefore=engine.snapshot().counts.effects;audio.receive(boarded,'me');await pump(100);
+  assert(engine.snapshot().counts.effects===effectsBefore,'repeated room snapshots replayed an attraction sound');
+  const hornAt=Date.now();state.ride={...state.ride,lastActionAt:hornAt,hits:1,score:10};
+  const ownHorn={id:'own-horn',actorId:'me',at:hornAt,funhouseEffect:{kind:'honk',stationId:'funhouse-clown-car',at:hornAt}};
+  audio.receive(snapshot([ownHorn]),'me');
+  assert(engine.snapshot().counts.effects===effectsBefore+1,'one owned horn was lost or played twice through state and event paths');
+  const remoteHorn={id:'friend-horn',actorId:'friend',at:Date.now(),funhouseEffect:{kind:'car',stationId:'funhouse-clown-car'}};
+  audio.receive(snapshot([remoteHorn]),'me');const afterRemote=engine.snapshot().counts.effects;
+  audio.receive(snapshot([remoteHorn]),'me');assert(engine.snapshot().counts.effects===afterRemote,'a repeated nearby friend event replayed its horn');
+  report.checks.push('authoritative ride music and local/remote event deduplication');
+  state.ride={...state.ride,status:'cancelled'};audio.receive(snapshot(),'me');await pump(900);
+  assert(!audio.snapshot().musicActive,'ride exit left car music active');await quiet('ride exit left attraction audio playing');
+  audio.previewMusic();assert(await pump(350)>.00001,'explicit car music preview was silent');
+  audio.pause();await quiet('hidden/session pause did not immediately silence the funhouse');
+  assert(audio.snapshot().paused&&!audio.snapshot().voicePlaying&&!audio.snapshot().musicActive,'paused world still advertises active audio');
+  report.checks.push('ride exit and hidden/session pause silence the world');
+  await audio.unlock();audio.update(0);assert(!audio.snapshot().musicActive,'resuming the game replayed an old preview');
+  audio.setSettings({musicVolume:142,effectsVolume:-10});assert(audio.settings().musicVolume===100&&audio.settings().effectsVolume===0,'saved world volumes were not bounded');
+  assert(JSON.parse(saved.get('muzikaz:funhouse-audio:v1')).musicVolume===100,'audio settings were not persisted');
+  environment={id:'another-world'};audio.update(0);await quiet('map travel left old funhouse audio playing');
+  assert(audio.snapshot().lastLine===null&&!audio.snapshot().voicePlaying&&!audio.snapshot().musicActive,'map travel retained a stale clown line or music');
+  report.checks.push('world travel clears music, pending dialogue and old captions');
+  report.engine=engine.snapshot();report.state=audio.snapshot();audio.dispose();assert(context.state==='running','world cleanup closed the shared game context');
+  await context.close();window.controllerReport=report;
+ }catch(error){window.controllerError=error.stack||error.message;try{audio?.dispose();await context?.close();}catch{}}
+};
+</script>
+</html>

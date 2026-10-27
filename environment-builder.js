@@ -653,7 +653,7 @@ async function showRepositoryMap(layout){
   root.scale.setScalar(procedural?1:(Number(base.scale)||1)*(Number(base.spaceScale)||1));root.rotation.set(base.rotation?.x||0,base.rotation?.y||0,base.rotation?.z||0);root.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),span=Math.max(size.x,size.z);
   if(!Number.isFinite(span)||span<=0)throw Error('Selected map has no buildable geometry.');
-  if(base.playableSize>0){root.scale.multiplyScalar(THREE.MathUtils.clamp(base.playableSize/span,.01,100));root.updateMatrixWorld(true);}
+  if(base.playableSize>0&&!isFitnessEnvironment(base)){root.scale.multiplyScalar(THREE.MathUtils.clamp(base.playableSize/span,.01,100));root.updateMatrixWorld(true);}
   const restoring=sceneData.sourceEnvironmentId===base.id;
   if(restoring&&(isFitnessEnvironment(base)||isFactoryEnvironment(base)||isFunhouseEnvironment(base)||isProvingEnvironment(base)||isCompoundEnvironment(base))){sceneData=editableFactoryLogisticsScene(editableFactoryTestingScene(editableFunhouseScene(editableFactoryScene(editableFitnessScene(sceneData)))));sceneData.objects=sceneData.objects.map(migrateObject);}
   if(!restoring){const draft=fitnessDraft||editableMapScene(base,{id:'custom-map-'+uid(),layout});for(const raw of [...(draft.catalogModels||[]),...(draft.placedModels||[])])if(raw?.id&&!modelFor(raw.id))catalogModels.push(cloneData(raw));for(const object of draft.objects){if(modelFor(object.modelId))continue;const asset=object.asset||{},record=normalizeCatalogModel({...asset,id:object.modelId,name:object.name||object.modelId});if(record){record.id=object.modelId;catalogModels.push(record);}else throw Error('Missing model '+object.modelId+'. Refresh the catalog before copying this map.');}localStorage.setItem(STORAGE_KEY+':before-map-import',JSON.stringify(sceneData));sceneData={...draft,editorSettings:sceneData.editorSettings};sceneData.objects=draft.objects.map(migrateObject);$('#scene-name').value=sceneData.name;}
@@ -691,8 +691,8 @@ function generateFitnessWorld(){
  if(sceneData.objects.length&&!confirm('Replace this draft with an editable Gold Fitness Centre? Placed inlay maps will be kept.')){$('#layout-select').value=sceneData.layout;return;}
  const inlays=retainedInlayMaps(sceneData),editorSettings={...sceneData.editorSettings};closeRepositoryMap();clearBaseWorld();
  sceneData={...createFitnessBuilderScene({id:'fitness-'+uid()}),editorSettings};sceneData.objects=[...inlays,...sceneData.objects.map(migrateObject)];
- selectedId=null;$('#scene-name').value=sceneData.name;$('#weather-select').value='clear';$('#generator-theme').value='fitness-centre';$('#generator-size').value='80';
- applyMapSize(80);updateLayout('fitness-centre');rebuildAll();renderLibrary('fitness');persist('Gold Fitness Centre ready · '+sceneData.objects.length+' editable gym items · source map preserved');resetBuildView();
+ selectedId=null;$('#scene-name').value=sceneData.name;$('#weather-select').value='clear';$('#generator-theme').value='fitness-centre';$('#generator-size').value=String(FITNESS_BUILDER_LAYOUT.mapSize);
+ applyMapSize(FITNESS_BUILDER_LAYOUT.mapSize);updateLayout('fitness-centre');rebuildAll();renderLibrary('fitness');persist('Gold Fitness Centre ready · '+sceneData.objects.length+' editable gym items · source map preserved');resetBuildView();
 }
 function generateFactoryTestingWorld(layout){
  if(sceneData.objects.length&&!confirm('Replace this draft with '+layouts[layout].name+'?')){$('#layout-select').value=sceneData.layout;return;}

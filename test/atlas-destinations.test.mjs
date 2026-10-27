@@ -13,3 +13,12 @@ test('destinations are searchable by address, owner and category', () => {
   for(const query of ['court-1','alex','basketball','512, -256']) assert.equal(destinationMatches(place,query),true);
   assert.equal(destinationMatches(place,'unknown'),false);
 });
+
+
+test('the shared Strait destination has a shipping marker and supply search without changing its room id',async()=>{
+ const {destinationColor,destinationTheme}=await import('../public/js/atlas-destinations.js');
+ const place={mapId:'hormuz-shipping',name:'Strait of Hormuz',roomId:'hormuz-shipping'};
+ assert.equal(destinationIcon(place),'🚢');assert.equal(destinationTheme(place),'shipping');
+ assert.equal(destinationColor(place),'#218ba5');assert.equal(destinationMatches(place,'supply'),true);
+ assert.equal(destinationIcon({...place,memberPlot:true}),'⚑');assert.equal(place.roomId,'hormuz-shipping');
+});

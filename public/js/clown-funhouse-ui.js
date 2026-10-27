@@ -1,3 +1,4 @@
+import {normalizeFunhouseAudioSettings,funhouseAudioNotice,funhouseAudioAllowed} from './funhouse-audio-settings.js';
 import {funhouseRideCue} from './funhouse-experience-rules.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './funhouse-adventure-rules.js';
 import {fullscreenPanel} from './fullscreen-panels.js';
@@ -14,16 +15,23 @@ export function nearestFunhouseStation(environment,position,{actors}={}){
  return found;
 }
 
-export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors=()=>({}),getImmersive=()=>false,getReducedMotion=()=>false,getServerTime=null,send,announce=()=>{},onOpen=()=>{},onPlayInWorld=()=>{},onState=()=>{},onEffect=()=>{}}){
+export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors=()=>({}),getImmersive=()=>false,getReducedMotion=()=>false,getServerTime=null,send,announce=()=>{},onOpen=()=>{},onPlayInWorld=()=>{},onState=()=>{},onEffect=()=>{},getAudioSettings=()=>null,getAudioPreferences=()=>({}),onAudioSettings=()=>{},onReplayClown=()=>{},onPreviewMusic=()=>{}}){
  loadGameMenuStyles();
  if(!document.querySelector('#funhouse-ui-styles')){const link=document.createElement('link');link.id='funhouse-ui-styles';link.rel='stylesheet';link.href='/public/css/clown-funhouse.css';document.head.append(link);}
  const trigger=document.createElement('button');trigger.type='button';trigger.className='funhouse-use';trigger.hidden=true;trigger.setAttribute('aria-controls','clown-funhouse-panel');trigger.setAttribute('aria-expanded','false');stage.append(trigger);
  const passport=document.createElement('div');passport.className='funhouse-passport-hud';passport.hidden=true;passport.setAttribute('aria-label','Funhouse attraction passport');stage.append(passport);
+ const audioToggle=document.createElement('button');audioToggle.type='button';audioToggle.className='funhouse-audio-toggle';audioToggle.hidden=true;audioToggle.dataset.funhouseAudioOpen='';audioToggle.setAttribute('aria-label','Clown audio settings');audioToggle.setAttribute('aria-expanded','false');audioToggle.textContent='♫';stage.append(audioToggle);
  const experienceHUD=document.createElement('section');experienceHUD.className='funhouse-experience-hud';experienceHUD.hidden=true;experienceHUD.setAttribute('aria-label','Funhouse first-person controls');experienceHUD.innerHTML='<header><strong data-funhouse-experience-title></strong><span data-funhouse-experience-time></span><button type="button" data-funhouse-hud-toggle aria-expanded="false" aria-controls="funhouse-world-actions">Actions</button></header><div class="funhouse-experience-metrics"><span>Score <b data-funhouse-experience-score>0</b></span><span>Best <b data-funhouse-experience-best>0</b></span><span data-funhouse-experience-progress></span></div><p data-funhouse-experience-message></p><div id="funhouse-world-actions" data-funhouse-experience-actions></div><p class="funhouse-experience-help" data-funhouse-experience-help></p>';stage.append(experienceHUD);
  const adventureHUD=document.createElement('section');adventureHUD.className='funhouse-adventure-hud';adventureHUD.hidden=true;adventureHUD.setAttribute('aria-label','Funhouse adventure trail');adventureHUD.innerHTML='<header><strong>The Lost Laugh Trail</strong><span data-funhouse-adventure-time></span><button type="button" data-funhouse-adventure-toggle aria-expanded="false" aria-controls="funhouse-adventure-details">Trail</button></header><p data-funhouse-adventure-next></p><div id="funhouse-adventure-details" data-funhouse-adventure-details><p data-funhouse-adventure-hint></p><p data-funhouse-adventure-progress></p><div><button type="button" data-funhouse-adventure-inspect>Inspect clue · F</button><button type="button" data-funhouse-adventure-stop>Stop trail</button><button type="button" data-funhouse-adventure-replay>Start again</button><button type="button" data-funhouse-adventure-dismiss>Back to exploring</button></div></div>';stage.append(adventureHUD);
  const panel=document.createElement('section');panel.id='clown-funhouse-panel';panel.hidden=true;panel.className='funhouse-panel';panel.setAttribute('aria-label','Midnight Laughs Funhouse');
- panel.innerHTML='<div class="funhouse-heading"><span class="funhouse-eyebrow">MUZIKAZ · OPEN ALL NIGHT</span><h3 data-funhouse-title></h3><p data-funhouse-description></p></div><div data-funhouse-content></div><p class="funhouse-message" data-funhouse-message role="status" aria-live="polite"></p><div class="funhouse-passport" data-funhouse-passport></div><footer><span>Free carnival play · collect all six passport stamps</span><button type="button" data-funhouse-close>Back to the midway</button></footer>';
+ panel.innerHTML='<div class="funhouse-heading"><span class="funhouse-eyebrow">MUZIKAZ · OPEN ALL NIGHT</span><h3 data-funhouse-title></h3><p data-funhouse-description></p></div><div data-funhouse-content></div><p class="funhouse-message" data-funhouse-message role="status" aria-live="polite"></p><div class="funhouse-passport" data-funhouse-passport></div><details class="funhouse-audio-settings" data-funhouse-audio-details><summary>Clown voices, sounds &amp; music</summary><div data-funhouse-audio-controls></div></details><footer><span>Free carnival play · collect all six passport stamps</span><button type="button" data-funhouse-close>Back to the midway</button></footer>';
  stage.append(panel);
+ const audioPanel=document.createElement('section');audioPanel.className='funhouse-audio-popover';audioPanel.id='funhouse-audio-settings';audioToggle.setAttribute('aria-controls',audioPanel.id);audioPanel.hidden=true;audioPanel.dataset.gameplayBlocking='false';audioPanel.setAttribute('aria-label','Clown voices, sounds and music');audioPanel.innerHTML='<header><strong>Midnight sound booth</strong><button type="button" data-funhouse-audio-close aria-label="Close funhouse sound settings">Close</button></header><div data-funhouse-audio-controls></div>';stage.append(audioPanel);
+ const audioCaption=document.createElement('aside');audioCaption.className='funhouse-audio-caption';audioCaption.hidden=true;audioCaption.setAttribute('aria-label','Clown speech caption');audioCaption.setAttribute('aria-live','polite');audioCaption.setAttribute('aria-atomic','true');audioCaption.innerHTML='<strong data-funhouse-caption-speaker></strong><span data-funhouse-caption-text></span>';stage.append(audioCaption);
+ let localAudioSettings=normalizeFunhouseAudioSettings(),audioCaptionValue=null;
+ const audioSettings=()=>normalizeFunhouseAudioSettings({...localAudioSettings,...(getAudioSettings()||{})});
+ const audioControls=()=>'<p class="funhouse-audio-note" data-funhouse-audio-notice></p><p class="funhouse-audio-last-line" data-funhouse-audio-last-line hidden></p><div class="funhouse-audio-grid">'+[['music','Clown-car music'],['voice','Clown voices'],['effects','Attraction effects']].map(([channel,label])=>'<section><button type="button" data-funhouse-audio-mute="'+channel+'" aria-pressed="false">'+label+'</button><label>'+label+' volume <output data-funhouse-audio-output="'+channel+'"></output><input type="range" min="0" max="100" step="5" data-funhouse-audio-volume="'+channel+'" aria-label="'+label+' volume"></label></section>').join('')+'</div><div class="funhouse-audio-actions"><button type="button" data-funhouse-audio-replay>Replay last clown line</button><button type="button" data-funhouse-audio-preview>Preview scary car music</button></div>';
+ for(const controls of [panel.querySelector('[data-funhouse-audio-controls]'),audioPanel.querySelector('[data-funhouse-audio-controls]')])controls.innerHTML=audioControls();
  let nearby=null,current=null,worldStation=null,state={},selfId=null,pending=false,generation=0,disposed=false,message='',signature='',passportSignature=null,serverOffset=0,lastSequence=-1,hudSignature='',hudExpanded=false,hudActivityId=null,adventureExpanded=false,adventureDismissed=null;
  const seenEffects=new Set();
  const $=selector=>panel.querySelector(selector),content=$('[data-funhouse-content]');
@@ -35,6 +43,37 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  const liveFor=id=>stations().find(station=>station.id===id);
  const isActive=value=>value?.status==='active'&&(!Number.isFinite(value.endsAt)||value.endsAt>now());
  const gap=(position,station)=>Math.hypot(position.x-station.position.x,(Number(position.y)||0)-station.position.y,position.z-station.position.z);
+ function renderAudio(){
+  const settings=audioSettings(),preferences=getAudioPreferences()||{},labels={music:'Clown-car music',voice:'Clown voices',effects:'Attraction effects'};
+  for(const host of [panel,audioPanel]){
+   host.querySelector('[data-funhouse-audio-notice]').textContent=funhouseAudioNotice(preferences);const lastLine=host.querySelector('[data-funhouse-audio-last-line]');lastLine.hidden=!audioCaptionValue;lastLine.textContent=audioCaptionValue?audioCaptionValue.speaker+': '+audioCaptionValue.text:'';
+   for(const channel of ['music','voice','effects']){
+    const button=host.querySelector('[data-funhouse-audio-mute="'+channel+'"]');button.setAttribute('aria-pressed',String(settings[channel+'Muted']));button.textContent=labels[channel]+' · '+(settings[channel+'Muted']?'Muted':'On');
+    host.querySelector('[data-funhouse-audio-volume="'+channel+'"]').value=String(settings[channel+'Volume']);host.querySelector('[data-funhouse-audio-output="'+channel+'"]').textContent=settings[channel+'Volume']+'%';
+   }
+   host.querySelector('[data-funhouse-audio-replay]').disabled=!funhouseAudioAllowed('voice',settings,preferences);
+   host.querySelector('[data-funhouse-audio-preview]').disabled=!funhouseAudioAllowed('music',settings,preferences);
+  }
+  const immersive=getImmersive(),captionVisible=audioCaptionValue&&audioCaptionValue.expiresAt>Date.now();
+  audioCaption.hidden=!captionVisible||immersive||!stations().length;
+  if(captionVisible){audioCaption.querySelector('[data-funhouse-caption-speaker]').textContent=audioCaptionValue.speaker;audioCaption.querySelector('[data-funhouse-caption-text]').textContent=audioCaptionValue.text;}
+  if(immersive||screen.dialog.open||!stations().length)audioPanel.hidden=true;
+  audioToggle.setAttribute('aria-expanded',String(!audioPanel.hidden));
+ }
+ function receiveAudioCaption(value){
+  if(disposed)return false;
+  if(!value?.text){audioCaptionValue=null;renderAudio();return false;}
+  audioCaptionValue={...value,text:String(value.text).slice(0,350),speaker:String(value.speaker||'Midnight clown').slice(0,80),expiresAt:Number.isFinite(value.expiresAt)?value.expiresAt:Date.now()+6000};renderAudio();return true;
+ }
+ function changeAudio(patch){localAudioSettings=normalizeFunhouseAudioSettings({...audioSettings(),...patch});onAudioSettings(patch);renderAudio();}
+ function audioClick(event){
+  const mute=event.target.closest('[data-funhouse-audio-mute]');if(mute){const channel=mute.dataset.funhouseAudioMute;changeAudio({[channel+'Muted']:!audioSettings()[channel+'Muted']});}
+  if(event.target.closest('[data-funhouse-audio-replay]')&&funhouseAudioAllowed('voice',audioSettings(),getAudioPreferences()))onReplayClown();
+  if(event.target.closest('[data-funhouse-audio-preview]')&&funhouseAudioAllowed('music',audioSettings(),getAudioPreferences()))onPreviewMusic();
+  if(event.target.closest('[data-funhouse-audio-close]')){audioPanel.hidden=true;renderAudio();}
+ }
+ for(const host of [panel,audioPanel]){host.addEventListener('click',audioClick);host.addEventListener('input',event=>{const volume=event.target.closest('[data-funhouse-audio-volume]');if(volume)changeAudio({[volume.dataset.funhouseAudioVolume+'Volume']:Number(volume.value)});});}
+ audioToggle.addEventListener('click',event=>{if(event.target.closest('[data-funhouse-audio-open]')){audioPanel.hidden=!audioPanel.hidden;if(!audioPanel.hidden)onOpen();renderAudio();}});
  function render(){
   if(!current||disposed)return;
   const round=!state.round?.stationId||state.round.stationId===current.id?state.round:null,active=round?.status==='active'&&round.endsAt>now(),kind=current.kind;
@@ -65,7 +104,7 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   }
   $('[data-funhouse-message]').textContent=pending?'One moment…':message||state.message||'';
   panel.setAttribute('aria-busy',String(pending));
-  renderPassport();renderExperienceHUD();
+  renderPassport();renderExperienceHUD();renderAudio();
  }
  function renderPassport(){
   const stamps=state.stamps||[],next=stamps.join(':');
@@ -256,19 +295,20 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   current=nearby;signature='';message='';panel.setAttribute('aria-label',current.name+' · Midnight Laughs');render();screen.open();trigger.setAttribute('aria-expanded','true');return true;
  }
  function update(){
-  if(disposed)return;const immersive=getImmersive();if(immersive&&screen.dialog.open)screen.close();const available=stations();
-  if(!available.length){nearby=null;if(current)screen.close();trigger.hidden=passport.hidden=experienceHUD.hidden=adventureHUD.hidden=true;worldStation=null;return;}
+  if(disposed)return;renderAudio();const immersive=getImmersive();if(immersive&&screen.dialog.open)screen.close();const available=stations();
+  if(!available.length){nearby=null;if(current)screen.close();trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=true;worldStation=null;return;}
   nearby=near();
   trigger.hidden=immersive||!nearby||screen.dialog.open||gameplayOverlayOpen()||isActive(state.ride);
-  passport.hidden=immersive||screen.dialog.open||gameplayOverlayOpen();renderPassport();renderExperienceHUD();
+  passport.hidden=immersive||screen.dialog.open||gameplayOverlayOpen();audioToggle.hidden=passport.hidden;renderPassport();renderExperienceHUD();
   if(nearby&&trigger.dataset.station!==nearby.id){trigger.dataset.station=nearby.id;trigger.innerHTML='<kbd>E</kbd><span><small>MIDNIGHT LAUGHS</small>'+escape(nearby.name)+'</span><b aria-hidden="true">↗</b>';trigger.setAttribute('aria-label',nearby.prompt);}
   if(current){const live=available.find(station=>station.id===current.id);if(!live||gap(getPosition(),live)>7)screen.close();else current=live;}
   if(current?.kind==='water')render();
   if(worldStation&&!isActive(state.ride)&&state.challenge?.kind!=='mirrors'){const live=available.find(station=>station.id===worldStation.id);if(!live||gap(getPosition(),live)>8)worldStation=null;}
   renderExperienceHUD();renderAdventureHUD();
  }
- function reset(){generation++;pending=false;state={};selfId=null;message='';signature='';passportSignature=null;lastSequence=-1;nearby=null;worldStation=null;hudSignature='';hudActivityId=null;hudExpanded=adventureExpanded=false;adventureDismissed=null;seenEffects.clear();screen.close();current=null;trigger.hidden=passport.hidden=experienceHUD.hidden=adventureHUD.hidden=true;onState(state);}
+ function reset(){audioCaptionValue=null;audioCaption.hidden=audioPanel.hidden=true;generation++;pending=false;state={};selfId=null;message='';signature='';passportSignature=null;lastSequence=-1;nearby=null;worldStation=null;hudSignature='';hudActivityId=null;hudExpanded=adventureExpanded=false;adventureDismissed=null;seenEffects.clear();screen.close();current=null;trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=true;onState(state);}
  function keydown(event){
+  if(event.key==='Escape'&&!audioPanel.hidden){audioPanel.hidden=true;event.preventDefault();event.stopImmediatePropagation();renderAudio();return;}
   if(getImmersive()||event.defaultPrevented||event.repeat||event.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
   if(!screen.dialog.open&&worldStation&&handleExperienceKey(event)){event.preventDefault();event.stopImmediatePropagation();return;}
   if(!screen.dialog.open&&!gameplayOverlayOpen()&&event.key.toLowerCase()==='f'&&isActive(state.adventure)){event.preventDefault();event.stopImmediatePropagation();void inspectAdventure();return;}
@@ -285,8 +325,8 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   if(event.target.closest('[data-funhouse-use]'))void command('funhouse-use',{stationId:current.id});
   const dress=event.target.closest('[data-funhouse-dress]');if(dress){const costume={hat:Boolean(state.costume?.hat),shoes:Boolean(state.costume?.shoes)};costume[dress.dataset.funhouseDress]=!costume[dress.dataset.funhouseDress];void command('funhouse-dress',{...costume,stationId:current.id});}
  });
- for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,adventureHUD])element.addEventListener(type,event=>event.stopPropagation());
+ for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,adventureHUD,audioPanel])element.addEventListener(type,event=>event.stopPropagation());
  window.addEventListener('keydown',keydown,true);
  const timer=setInterval(update,100);
- return {open,close:()=>screen.close(),update,receive,reset,playInWorld,setExpanded:expanded=>{hudExpanded=!!expanded;renderExperienceHUD();},currentStation:()=>current||worldStation||near(),snapshot:()=>state,available:()=>!getImmersive()&&!isActive(state.ride)&&Boolean(near()),visible:()=>screen.dialog.open,dispose(){if(disposed)return;reset();disposed=true;clearInterval(timer);window.removeEventListener('keydown',keydown,true);screen.disconnect();screen.dialog.remove();trigger.remove();passport.remove();experienceHUD.remove();adventureHUD.remove();}};
+ return {open,close:()=>screen.close(),update,receive,receiveAudioCaption,reset,playInWorld,setExpanded:expanded=>{hudExpanded=!!expanded;renderExperienceHUD();},currentStation:()=>current||worldStation||near(),snapshot:()=>state,available:()=>!getImmersive()&&!isActive(state.ride)&&Boolean(near()),visible:()=>screen.dialog.open,dispose(){if(disposed)return;reset();disposed=true;clearInterval(timer);window.removeEventListener('keydown',keydown,true);screen.disconnect();screen.dialog.remove();trigger.remove();passport.remove();audioToggle.remove();experienceHUD.remove();adventureHUD.remove();audioPanel.remove();audioCaption.remove();}};
 }
