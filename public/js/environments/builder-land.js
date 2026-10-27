@@ -11,7 +11,7 @@ import {createHarborLand} from './harbor-land.js';
 import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
-import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
+import {layoutHeight,layoutSize,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
 import {isCleanSportsEnvironment} from '../sports-worlds.js';
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
@@ -49,7 +49,7 @@ export function createBuilderLand(environment) {
     if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
-    const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,Math.max(40,Math.min(512,Number(built.mapSize)||40)),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
+    const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,layoutSize(built.mapSize),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
     const terrain=new THREE.Mesh(geometry,layout==='firing-range'?createFiringRangeFloorMaterial(built.mapSize):createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;
