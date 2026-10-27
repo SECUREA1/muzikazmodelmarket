@@ -138,7 +138,7 @@
       return response.json().then(function (payload) {
         if (!response.ok || !payload || payload.success !== true || payload.service !== 'muzikaz-member-market') throw new Error('The member API is unavailable. Please try signing in again.');
         return true;
-      });
+      }, function () { throw new Error('The member API returned an invalid response. Check your connection and try again.'); });
     }), expired]).then(function (value) { window.clearTimeout(timer); return value; }, function (error) { window.clearTimeout(timer); throw error; });
   }
   var connecting = null;

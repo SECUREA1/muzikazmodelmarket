@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.4.5-shipping-map-list';
+const CACHE = 'muzikaz-world-v2.4.6-startup-recovery';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
@@ -24,11 +24,17 @@ self.addEventListener('fetch', (event) => {
   // Revalidate stable entry points and modules even if an older deployment gave
   // the browser an hour-long freshness lifetime. Keep cached offline fallbacks.
   const revalidate=event.request.mode==='navigate'||/\.(?:html|js|mjs|css|json|webmanifest)$/i.test(requestedUrl.pathname);
+  const expectedContent = (response) => {
+    const type=response?.headers.get('Content-Type')||'';
+    if(/\.(?:js|mjs)$/i.test(requestedUrl.pathname))return /(?:javascript|ecmascript)/i.test(type);
+    if(/\.json$/i.test(requestedUrl.pathname))return /(?:application|text)\/(?:[\w.-]+\+)?json\b/i.test(type);
+    return true;
+  };
   event.respondWith(fetch(event.request,revalidate?{cache:'no-cache'}:undefined).then((response) => {
-    if (response.ok && !/(?:no-store|private)/i.test(response.headers.get('Cache-Control')||'')) {
+    if (response.ok && expectedContent(response) && !/(?:no-store|private)/i.test(response.headers.get('Cache-Control')||'')) {
       const copy=response.clone();
       event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));
     }
     return response;
-  }).catch(() => caches.match(event.request).then((cached) => cached || (event.request.mode === 'navigate' ? caches.match('/index.html') : Response.error()))));
+  }).catch(() => caches.match(event.request).then((cached) => (cached && expectedContent(cached) ? cached : null) || (event.request.mode === 'navigate' ? caches.match('/index.html') : Response.error()))));
 });
