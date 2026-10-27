@@ -9,6 +9,8 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
+import {ownedFactoryModel,transferFactoryModel,factoryModelCertification,factoryModelTestLocked} from './factory-item-provenance.mjs';
+import {itemLocked} from './public/js/factory-logistics-config.js';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
 const RPG_CATALOG=JSON.parse(await readFile(new URL('./public/models/ioncore-rpg-items.json',import.meta.url),'utf8')).items;
 
@@ -55,6 +57,22 @@ function appendTransaction(data, transaction) {
   const record = { id: `mzk-${Date.now()}-${data.transactions.length + 1}`, ...transaction, createdAt: new Date().toISOString() };
   data.transactions.push(record);
   return record;
+}
+const factoryModelLike=item=>item?.type==='factory-model'||['factory-training-missile','factory-cargo-rocket'].includes(item?.buildAssetId);
+function marketFactoryProof(data,wallet,item){
+ const proof=ownedFactoryModel(data,wallet,item?.id);
+ if(factoryModelLike(item)&&!proof)throw Object.assign(Error('A factory model requires a verified production or purchase receipt.'),{statusCode:403});
+ return proof;
+}
+function assertFactoryTradeAvailable(data,wallet,item,now=Date.now()){
+ const proof=marketFactoryProof(data,wallet,item);
+ if(itemLocked(data,wallet,item.id,now)||factoryModelTestLocked(data,proof,now))throw Object.assign(Error('Finish or cancel this item’s active launch or freight manifest before trading it.'),{statusCode:409});
+ return proof;
+}
+function modelMarketMetadata(data,proof){
+ if(!proof)return {};
+ const certificate=factoryModelCertification(data,proof);
+ return {buildAssetId:proof.buildAssetId,factoryModel:true,profileId:proof.profileId,certified:Boolean(certificate),certification:certificate?{id:certificate.id,score:certificate.score,grade:certificate.grade,issuedAt:certificate.issuedAt,sourceEnvironmentId:certificate.sourceEnvironmentId,transferable:true}:null};
 }
 
 export class UserJsonDatabase {
@@ -211,17 +229,18 @@ export class UserJsonDatabase {
   async marketListings() {
     await this.initialize();
     const data = await this.read();
+    const proofs=new Map(),proofFor=(wallet,itemId)=>{const key=wallet+'\n'+itemId;if(!proofs.has(key))proofs.set(key,ownedFactoryModel(data,wallet,itemId));return proofs.get(key);};
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)).map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
         thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
-        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item'
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...modelMarketMetadata(data,proofFor(sellerId,item.id))
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }
@@ -237,6 +256,7 @@ export class UserJsonDatabase {
       if(item.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if(prisonBoundItem(data,wallet,item))throw Object.assign(Error('Earned prison collectibles are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(item.shippingSupplyId||item.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403});
+      if(active)assertFactoryTradeAvailable(data,wallet,item);
       item.listing = { active: Boolean(active), priceMzk: amount, updatedAt: new Date().toISOString() };
       user.updatedAt = item.listing.updatedAt;
       return item;
@@ -257,6 +277,8 @@ export class UserJsonDatabase {
       const item = sellerUser.items[index];if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
       if(item?.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
+      const factoryProof=assertFactoryTradeAvailable(data,seller,item);
+      if(buyerUser.items.some(owned=>owned.id===item.id))throw Object.assign(Error('You already own an item with this inventory identity.'),{statusCode:409});
       if (expectedPriceMzk !== undefined && Number(expectedPriceMzk) !== price) throw new Error('The listing price changed. Refresh the market before buying.');
       if(item.economySku&&buyerUser.items.some(owned=>owned.economySku===item.economySku))throw new Error('You already own this upgrade.');
       const balance = Number(buyerUser.tokens?.MZK || 0);
@@ -268,6 +290,7 @@ export class UserJsonDatabase {
       sellerUser.items.splice(index, 1); item.listing = { ...item.listing, active: false };
       buyerUser.items.push(item);
       const now = new Date().toISOString(); buyerUser.updatedAt = now; sellerUser.updatedAt = now;
+      transferFactoryModel(data,factoryProof,seller,buyer,now);
       if(item.type==='land-deed'){const deed=data.landDeeds?.[item.worldId];if(!deed||deed.ownerId!==seller||deed.status!=='active')throw new Error('The seller does not hold this land deed.');deed.ownerId=buyer;deed.updatedAt=now;}
       buyerUser.revision = Number(buyerUser.revision || 0) + 1; sellerUser.revision = Number(sellerUser.revision || 0) + 1;
       const trade = { id: `trade-${data.trades.length + 1}`, requestId: id, buyerId: buyer, sellerId: seller, itemId, itemName: String(item.name || item.title || item.id), priceMzk: price, createdAt: now };
@@ -297,8 +320,10 @@ export class UserJsonDatabase {
   }
 
   async economy(walletId){
-    const state=await this.get(walletId);
+    const wallet=cleanWallet(walletId);await this.initialize();const data=await this.read(),state=data.users[wallet]||{tokens:{},items:[]};
     const ownedAssets=state.items.map(item=>{
+      const proof=ownedFactoryModel(data,wallet,item.id);
+      if(proof)return {...item,name:proof.name,...modelMarketMetadata(data,proof),freightReserved:itemLocked(data,wallet,item.id,Date.now()),testingReserved:factoryModelTestLocked(data,proof)};
       if(item.type==='land-entitlement')return {...item,assetType:'lands',requiresReveal:true};
       if(item.type==='land-deed')return {...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)};
       const catalog=economyItem(item.economySku||item.sku);

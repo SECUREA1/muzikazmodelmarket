@@ -11,3 +11,6 @@ dist/
 
 # Python preview/export tooling caches.
 __pycache__/
+
+# Downloaded neural speech model; prepared with a pinned checksum during build.
+/.speech-models/

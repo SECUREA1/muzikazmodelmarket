@@ -13,7 +13,7 @@ export function marketCategory(item={},section='upgrades'){
  const reference=item.function_data?.device||item.asset?.function_data?.device||item.buildAssetId||item.asset?.buildAssetId,skuReference=String(item.sku||item.economySku||item.itemId||item.id||''),nativeId=reference||[...Object.keys(INTERACTIVE_DEVICES),...Object.keys(ENTERABLE_BUILDINGS)].find(id=>skuReference.endsWith(id));
  if(String(nativeId||'').startsWith('funhouse-')||/^(?:economy:)?native:funhouse-/.test(skuReference)||item.worldId==='muzikaz-clown-funhouse'||String(item.category||item.collection||'').toLowerCase().includes('funhouse'))return 'funhouse';
  if(String(nativeId||'').startsWith('fitness-')||String(item.category||item.collection||'').toLowerCase().includes('fitness'))return 'fitness';
- if(String(nativeId||'').startsWith('factory-')||String(item.category||item.collection||'').toLowerCase().includes('factory'))return 'factory';
+ if(/^(?:factory|testing)-/.test(String(nativeId||''))||String(item.category||item.collection||'').toLowerCase().includes('factory'))return 'factory';
  const device=INTERACTIVE_DEVICES[nativeId];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';
  if(device&&['video','audio','image','board'].includes(device.kind))return 'media';
  if(ENTERABLE_BUILDINGS[nativeId])return 'buildings';

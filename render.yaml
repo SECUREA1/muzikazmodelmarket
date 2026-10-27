@@ -4,7 +4,7 @@ services:
     branch: main
     runtime: node
     plan: starter
-    buildCommand: npm ci && npm run build
+    buildCommand: ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
     startCommand: node server.mjs
     healthCheckPath: /api/health
     autoDeployTrigger: commit

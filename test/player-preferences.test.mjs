@@ -16,3 +16,13 @@ test('audio preferences retain independent mute states and default spatial playb
  assert.equal(normalizePlayerPreferences({spatialAudio:'false'}).spatialAudio,true);
  assert.equal(normalizePlayerPreferences({effectsMuted:true,effectsVolume:82}).effectsVolume,82);
 });
+
+test('voice choices accept supported genders and bounded installed voice identifiers',()=>{
+ for(const gender of ['auto','female','male'])assert.equal(normalizePlayerPreferences({speechVoiceGender:gender}).speechVoiceGender,gender);
+ for(const gender of ['robot',null,{},true])assert.equal(normalizePlayerPreferences({speechVoiceGender:gender}).speechVoiceGender,'auto');
+ const voiceURI='Microsoft Aria Online (Natural) - English (United States)';
+ assert.equal(normalizePlayerPreferences({speechVoiceURI:voiceURI}).speechVoiceURI,voiceURI);
+ assert.equal(normalizePlayerPreferences({speechVoiceURI:'v'.repeat(512)}).speechVoiceURI.length,512);
+ for(const uri of ['v'.repeat(513),null,123,'voice\u0000secret','voice\nname'])assert.equal(normalizePlayerPreferences({speechVoiceURI:uri}).speechVoiceURI,'');
+ assert.equal(PLAYER_DEFAULTS.speechVoiceGender,'auto');assert.equal(PLAYER_DEFAULTS.speechVoiceURI,'');
+});

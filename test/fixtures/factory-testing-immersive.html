@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Factory testing XR controls fixture</title></head><body><main></main><script type="module">
+import * as T from '../../public/vendor/three/three.module.min.js';
+import {createFactoryTestingVR} from '../../public/js/factory-testing-vr.js';
+import {mountXRGameControls} from '../../public/js/xr-game-controls.js';
+import {requestGameInputRelease} from '../../public/js/game-input-release.js';
+import {PROVING_ID,PROVING_STATIONS,PROVING_TARGETS,PROVING_PROFILES} from '../../public/js/factory-test-config.js';
+
+const scene=new T.Scene(),rig=new T.Group(),camera=new T.PerspectiveCamera();scene.add(rig);rig.add(camera);
+const controllers=[new T.Group(),new T.Group()],sources=['left','right'].map(handedness=>({handedness,gamepad:{axes:[0,0,0,0],buttons:Array.from({length:6},()=>({pressed:false,value:0}))}}));
+const session=new T.EventDispatcher(),xr=new T.EventDispatcher();session.visibilityState='visible';session.inputSources=sources;
+xr.isPresenting=true;xr.getController=index=>controllers[index];xr.getCamera=()=>camera;xr.getSession=()=>session;xr.setReferenceSpaceType=()=>{};
+session.end=async()=>{xr.isPresenting=false;xr.dispatchEvent({type:'sessionend'});};
+Object.defineProperty(navigator,'xr',{configurable:true,value:{isSessionSupported:async()=>true}});
+const environment={id:PROVING_ID},commands=[],notices=[],items=[{id:'owned-model',name:'Owned training model',profileId:'accuracy'}];
+let position={...PROVING_STATIONS.find(station=>station.kind==='setup').position},state={session:null,clearance:{compound:false,deep:false},progress:{canonicalProfiles:[]}},sequence=0,clock=1000000,weaponCalls=0;
+const snapshot=privateReply=>({selfId:'me',sequence:++sequence,serverTime:clock,testing:{kind:'proving',stations:PROVING_STATIONS,targets:PROVING_TARGETS,profiles:PROVING_PROFILES,sessions:state.session?[{playerId:'me',name:'Tester',session:structuredClone(state.session)}]:[]},players:{me:{health:100,position:{...position},testing:structuredClone(state)}},actors:{},...(privateReply?{result:{testing:{...structuredClone(state),eligibleItems:items},message:'Saved '+privateReply}}:{})});
+function send(action,fields){
+ commands.push({action,...fields});
+ if(action==='proving-setup')state.session={id:'xr-test',itemId:fields.itemId,profileId:fields.profileId,targetId:fields.targetId,status:'configured'};
+ if(action==='proving-deploy')Object.assign(state.session,{padId:fields.padId,status:'deployed'});
+ if(action==='proving-arm')state.session.status='armed';
+ if(action==='proving-launch')Object.assign(state.session,{status:'countdown',launchAt:clock+4000,flightEndsAt:clock+12000,endsAt:clock+14000});
+ if(action==='proving-status'&&state.session?.endsAt<=clock)Object.assign(state.session,{status:'complete',result:{score:100,grade:'Qualified'}});
+ return Promise.resolve(snapshot(action));
+}
+const vr=createFactoryTestingVR({scene,camera,getCamera:()=>camera,getEnvironment:()=>environment,getPosition:()=>position,getPresenting:()=>xr.isPresenting,getServerTime:()=>clock,send,onStatus:value=>notices.push(value)});
+const controls=mountXRGameControls({renderer:{xr},scene,camera,rig,parent:document.querySelector('main'),menuOnEnter:()=>false,menuItems:()=>vr.menuItems(),onTrigger:(_hand,ray,controller)=>{if(vr.pointerDown(ray,controller)||vr.visible())return true;weaponCalls++;return false;},onTriggerEnd:(_hand,_ray,controller)=>vr.pointerUp(controller),onInputRelease:()=>vr.pointerUp(),onExit:()=>vr.setVisible(false)});
+controllers.forEach((controller,index)=>controller.dispatchEvent({type:'connected',data:sources[index]}));xr.dispatchEvent({type:'sessionstart'});
+const settle=async()=>{await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));};
+const assert=(condition,message)=>{if(!condition)throw Error(message);};
+function aim(point,index){const origin=camera.getWorldPosition(new T.Vector3());controllers[index].position.copy(origin);controllers[index].quaternion.setFromUnitVectors(new T.Vector3(0,0,-1),point.clone().sub(origin).normalize());scene.updateMatrixWorld(true);}
+async function release(index=1){sources[index].gamepad.buttons[0]={pressed:false,value:0};controllers[index].dispatchEvent({type:'selectend'});await settle();}
+async function press(id,index=1){const button=vr.snapshot().buttons.find(button=>button.id===id);if(!button)throw Error('Missing spatial button '+id);aim(vr.root.localToWorld(new T.Vector3(...button.position)),index);sources[index].gamepad.buttons[0]={pressed:true,value:1};controllers[index].dispatchEvent({type:'selectstart'});await settle();return vr.snapshot();}
+async function atRole(kind,page){position={...PROVING_STATIONS.find(station=>station.kind===kind).position};camera.position.set(position.x+.1,position.y+1.7,position.z-.05);camera.rotation.set(.03,.15,.02);scene.updateMatrixWorld(true);vr.receive(snapshot(),'me');vr.setVisible(false);vr.setDashboard(page);const before=[camera.position.clone(),camera.quaternion.clone(),rig.position.clone()];vr.setVisible(true);await settle();assert(camera.position.equals(before[0])&&camera.quaternion.equals(before[1])&&rig.position.equals(before[2]),'opening the dashboard changed the tracked camera or floor rig');}
+window.runChecks=async()=>{
+ await atRole('setup','setup');assert(vr.root.isGroup&&vr.root.getObjectByName('FACTORY_TESTING_VR_DASHBOARD').isMesh,'dashboard is not native scene geometry');assert(!document.querySelector('dialog'),'XR controls opened a DOM dialog');
+ await press('deploy');assert(!commands.some(command=>command.action==='proving-deploy'),'disabled deploy dispatched a command');await release();
+ await press('configure');assert(commands.filter(command=>command.action==='proving-setup').length===1,'configuration did not use the shared command');
+ controllers[1].dispatchEvent({type:'selectstart'});await settle();assert(commands.filter(command=>command.action==='proving-setup').length===1,'held trigger replayed configuration');await release();
+ await atRole('pad','setup');await press('deploy',0);assert(state.session.status==='deployed','left-controller ray did not deploy');await release(0);
+ await atRole('control','launch');await press('arm');await release();assert(state.session.status==='armed','launch control did not arm');
+ await press('aim-x-plus');await release();await press('launch');assert(state.session.status==='countdown','launch button did not start countdown');assert(commands.find(command=>command.action==='proving-launch').aim.x===.1,'alignment did not reach the server command');
+ controls.openMenu();await settle();controls.closeMenu();controllers[1].dispatchEvent({type:'selectstart'});await settle();assert(commands.filter(command=>command.action==='proving-launch').length===1,'menu release replayed held launch');await release();
+ clock+=15000;vr.tick();await settle();assert(vr.snapshot().session.status==='complete','telemetry polling did not settle elapsed flight');vr.setDashboard('telemetry');assert(vr.snapshot().page==='telemetry','telemetry dashboard unavailable');
+ vr.setDashboard('setup');await press('refresh');await release();window.dispatchEvent(new Event('blur'));await settle();requestGameInputRelease('map-travel');await settle();assert(weaponCalls===0,'dashboard interaction fell through to a weapon');
+ vr.reset();assert(!vr.visible()&&!vr.snapshot().session,'map reset retained stale VR controls');vr.receive(snapshot(),'me');vr.setVisible(true);await settle();await session.end();assert(!vr.visible(),'session end left the native dashboard visible');
+ const drawCount=vr.snapshot().drawCount;controls.dispose();vr.dispose();assert(vr.snapshot().disposed&&!scene.getObjectByName('ATLAS_FACTORY_TESTING_VR'),'VR teardown leaked the dashboard');
+ return {commands:commands.filter(command=>command.action!=='proving-status').map(command=>command.action),drawCount,weaponCalls};
+};window.ready=true;
+</script></body></html>

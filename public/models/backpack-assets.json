@@ -6198,6 +6198,376 @@
       "image": "/public/images/shipping/hormuz-shipping.svg"
     },
     {
+      "id": "builder-testing-launch-pad",
+      "name": "Atlas Test Launch Pad",
+      "description": "Place a drive-over launch platform for factory testing jobs in your own map.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-launch-pad",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        14,
+        0.12,
+        18
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 450,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "pad",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "interactionKey": "e",
+        "interactionDistance": 8,
+        "prompt": "Use Atlas Test Launch Pad \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-launch-console",
+      "name": "Range Launch Console",
+      "description": "Operate fictional test launches from a detailed three-screen control desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-launch-console",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        2.5,
+        2.4
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "control",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Launch Console \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-range-target",
+      "name": "Segmented Range Target",
+      "description": "An accuracy objective with layered scoring sectors and a moving tracking line.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-range-target",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        7,
+        7,
+        2.5
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 120,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "accuracy",
+        "testingTargetId": "target-alpha",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-telemetry-terminal",
+      "name": "Range Telemetry Terminal",
+      "description": "Set up a test run and review game telemetry from this systems desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-telemetry-terminal",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        2.6,
+        2.5
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 160,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "setup",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Telemetry Terminal \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-blast-door",
+      "name": "Compound Blast Door",
+      "description": "An eight-metre clear doorway with decorative sliding panels and an underground-compound entry interaction.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-blast-door",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        12,
+        7,
+        1.4
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 350,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "hatch",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Compound Blast Door \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-containment-core",
+      "name": "Luminous Containment Core",
+      "description": "A fictional underground power-core puzzle station with luminous rings, an observation sphere and service pipes.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-containment-core",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        8,
+        6,
+        8
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 650,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "containment",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 6
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Luminous Containment Core \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-testing-cargo-platform",
+      "name": "Cargo Test Platform",
+      "description": "A drive-over receiving platform defining the cargo test destination in a custom range.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "testing-cargo-platform",
+      "builderCategory": "factory-testing",
+      "format": "procedural-3d",
+      "dimensions": [
+        10,
+        0.12,
+        12
+      ],
+      "thumbnailUrl": "/public/images/factory-testing/equipment.svg",
+      "collection": "Factory testing & containment",
+      "productTier": "factory-testing",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "cargo",
+        "testingTargetId": "cargo-zone",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryTestingEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-export-terminal",
+      "name": "Factory Export Terminal",
+      "description": "Trade and export certified game items from a freight desk with shipment screens and an MZK payment panel.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-export-terminal",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        6,
+        2.6,
+        3
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "logisticsStation": "export",
+        "logisticsApproach": {
+          "x": 0,
+          "y": 0.02,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Export Terminal \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-certification-kiosk",
+      "name": "Factory Certification Kiosk",
+      "description": "Review production-test certification at a configurable kiosk with a test matrix, status display and operator desk.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-certification-kiosk",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        4,
+        3,
+        2
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 180,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "logisticsStation": "certify",
+        "logisticsApproach": {
+          "x": 0,
+          "y": 0.02,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Open Factory Certification Kiosk \u00b7 E / Use",
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-factory-freight-crate",
+      "name": "Factory Freight Crate",
+      "description": "A reusable cargo prop with reinforced corners, locking straps and a marked shipping label.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "factory-freight-crate",
+      "builderCategory": "factory",
+      "format": "procedural-3d",
+      "dimensions": [
+        2,
+        1.8,
+        2
+      ],
+      "thumbnailUrl": "/public/images/factory/missile-factory.svg",
+      "collection": "Factory logistics & exports",
+      "productTier": "factory-logistics",
+      "priceMzk": 70,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "logisticsStation": false,
+        "destructible": false,
+        "damage": 0
+      },
+      "metadata": {
+        "factoryLogisticsEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
       "name": "Ironwood Portable Radio",
       "description": "An earned portable radio with a folding handle, tuning dial and telescopic aerial. Place it in another world to share a direct audio stream.",
       "dimensions": [

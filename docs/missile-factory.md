@@ -1,5 +1,8 @@
 # Missile & Rocket Factory
 
+For certification, finished-model MZK sales, compound deliveries and sea exports,
+see the [connected factory supply chain](factory-supply-chain.md).
+
 Enter the permanent public factory from **World menu → Factory**, the explorer
 options, or `model-explorer.html?environment=muzikaz-missile-factory&house=muzikaz-missile-factory&mode=multiplayer&autoplay=1`.
 It uses the existing multiplayer room, account wallet, Backpack, resident AI,
@@ -29,6 +32,10 @@ components and timed fabrication interactions. Existing cranes and earthmoving
 machines remain available in the plant yard through their shared controls.
 
 ## Markets and Map Builder
+
+Take completed items through the east gate to the neighboring proving grounds
+for reusable launch and cargo landing tests. Successful tests unlock the
+underground mountain facility. See [proving grounds and compound access](factory-proving-grounds.md).
 
 All nine factory item types are available in **Marketplace → All game items →
 Factory & engineering** and **Map Builder → ITEMS → Factory & engineering**:

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {isFishingTool,FISHING_TOOL_IDS} from '../public/js/game-tool-rules.js';
+import {isTropicalIslandMap,tropicalIslandPlayUrl} from '../public/js/tropical-island-destination.js';
 
 const source=readFileSync(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
@@ -19,12 +20,12 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,isFishingTool,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
-  gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
+  gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
-  currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
+  factoryTestingVR:{reset,receive:reset,visible:()=>false,isActive:()=>false},funhouseVR:{reset,update:reset},resetFunhouseRideView:reset,funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
@@ -69,6 +70,28 @@ test('a failed obsolete action cannot replace the current status or resident pan
  }
 });
 
+test('private proving replies reach the native dashboard only while their issuing room remains current',async()=>{
+ for(const stale of [false,true]){
+  const reply=deferred(),received=[],{context}=commandFixture(reply,{factoryTestingVR:{receive:(...args)=>received.push(args)}});
+  const pending=context.serverCommand('proving-status');if(stale)context.worldLoadGeneration++;
+  const state={selfId:'testing-owner',result:{testing:{eligibleItems:[{id:'private-model',profileId:'accuracy'}]}}};reply.resolve(state);
+  assert.equal(await pending,stale?false:state);assert.equal(received.length,stale?0:1);
+  if(!stale){assert.equal(received[0][0],state);assert.equal(received[0][1],'testing-owner');assert.equal(received[0][2].id,'muzikaz-airport');}
+ }
+});
+
+test('private freight replies hydrate only the current account room and stale failures stay silent',async()=>{
+ for(const replacement of [null,'world','client']){
+  const reply=deferred(),received=[],{context}=commandFixture(reply,{factoryLogisticsUI:{update:(...args)=>received.push(args)}});
+  const pending=context.serverCommand('logistics-status');
+  if(replacement==='world')context.worldLoadGeneration++;if(replacement==='client')context.authoritativeClient={ready:true};
+  const state={selfId:'freight-owner',result:{logistics:{eligibleItems:[{id:'sealed-model'}],manifest:{id:'private-freight'}}}};reply.resolve(state);
+  assert.equal(await pending,replacement?false:state);assert.equal(received.length,replacement?0:1);
+  if(!replacement){assert.equal(received[0][0],state);assert.equal(received[0][1],'freight-owner');}
+ }
+ const reply=deferred(),{context}=commandFixture(reply);const pending=context.serverCommand('logistics-book');reply.reject(Error('Certification required.'));await assert.rejects(pending,/Certification required/);
+});
+
 test('a destination reply rechecks its issuing world after asynchronous directory refresh',async()=>{
  const reply=deferred(),refresh=deferred(),refreshEntered=deferred(),{context,effects}=commandFixture(reply,{registry:{find:()=>null,refresh:()=>{refreshEntered.resolve();return refresh.promise;}}});
  const pending=context.serverCommand('interact');reply.resolve({result:{destination:'old-destination'}});await refreshEntered.promise;
@@ -94,10 +117,10 @@ test('world navigation stays disabled through joining and restores only for a co
 });
 
 test('resetting a room clears facility gates and machine controls before a retry',()=>{
- const panels=new Set(['prison','factory','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0,costumeClears=0;
+ const panels=new Set(['prison','factory','testing','logistics','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0,costumeClears=0;
  const facility=name=>({visible:()=>panels.has(name),update(snapshot){if(!snapshot)panels.delete(name);}});
  const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true,stop(){stops++;}},
-  fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},prisonUI:facility('prison'),factoryUI:facility('factory'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
+  fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},prisonUI:facility('prison'),factoryUI:facility('factory'),factoryTestingUI:facility('testing'),factoryLogisticsUI:facility('logistics'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
   skiResortControls:{update:()=>panels.delete('ski')},deviceUI:{reset:()=>panels.delete('device')},landSaleUI:{reset:()=>panels.delete('land')},casinoUI:{reset:()=>panels.delete('casino')},funhouseUI:{reset:()=>panels.delete('funhouse')},clearFunhouseCostume:()=>{costumeClears++;},yachtGames:{reset:()=>panels.delete('yacht')}
  });
  context.resetRoomConnection();
@@ -169,6 +192,23 @@ test('jump and shoot ignore early touches and begin dispatching after gameplay r
  context.gameplayStarted=true;context.shootAtReticle();await context.jump();assert.deepEqual(calls,['fire','input','refresh']);
 });
 
+test('a boarded funhouse ride suppresses walking, jumping, sprinting and firing inputs',()=>{
+ const calls=[],{context}=fixture({funhouseRide:()=>({status:'active'}),player:{yaw:1.25},serverCommand:()=>calls.push('command'),localWalkingActive:true,localWalkingView:{jump:()=>calls.push('jump')}});
+ for(const name of ['serverInput','jump']){
+  const start=source.indexOf('  '+(name==='jump'?'function jump()':'function serverInput()'));
+  vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ }
+ assert.deepEqual(JSON.parse(JSON.stringify(context.serverInput())),{side:0,forward:0,lift:0,rudder:0,yaw:1.25,jump:false,sprint:false,firing:false});
+ assert.equal(context.jump(),false);assert.deepEqual(calls,[]);
+});
+
+test('reticle attraction actions consume the primary action before vehicle or weapon firing',()=>{
+ const calls=[],ray={controller:false};
+ const {context}=fixture({funhouseAimRay:()=>ray,useFunhouseWorld:actual=>{assert.equal(actual,ray);calls.push('attraction');return true;},fireAircraft:()=>calls.push('fire')});
+ const start=source.indexOf('  function shootAtReticle()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ assert.equal(context.shootAtReticle(),true);assert.deepEqual(calls,['attraction']);
+});
+
 test('failed destination discovery restores current-world readiness without replacing its room',async()=>{
  const discovery=deferred();let stops=0;
  const client={ready:true,stop(){stops++;}}, {context,controls}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:client,registry:{find:()=>null,resolve:()=>discovery.promise},canonicalWorldId:id=>id});
@@ -193,6 +233,17 @@ test('native game redirects retain a selected atlas meeting point and play mode'
   assert.equal(destination.searchParams.get('mode'),'solo');
   assert.equal(destination.searchParams.get('meet'),'meet-4-2');
  }
+});
+
+test('the island explorer entry opens the native solo resort before loading a shared room',async()=>{
+ let destination;
+ const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id,game:'tropical-island'})},canonicalWorldId:id=>id,location:{href:'http://localhost/model-explorer.html?mode=multiplayer',assign:url=>{destination=new URL(url);}}});
+ vm.runInContext(loadWorld,context);
+ await context.loadById('tropical-island');
+ assert.equal(destination.pathname,'/tropical-island.html');
+ assert.equal(destination.searchParams.get('environment'),'tropical-island');
+ assert.equal(destination.searchParams.get('mode'),'solo');
+ assert.equal(context.multiplayerWorldLoading,false);
 });
 
 test('choosing multiplayer from a ready solo map validates the current room before changing transport mode',async()=>{

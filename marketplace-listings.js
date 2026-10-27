@@ -23,7 +23,7 @@
   };
   const card = (listing) => `<article class="user-market-card">
     ${marketItemPreview(listing)}
-    <div><span class="pill">${escape(listing.itemType)}</span><h4>${escape(listing.itemName)}</h4><small>Seller: ${escape(listing.sellerName)}</small><strong>${Number(listing.priceMzk).toLocaleString()} MZK</strong></div>
+    <div><span class="pill">${escape(listing.itemType)}</span>${listing.factoryModel&&listing.certified&&listing.certification?'<span class="pill">Range certified · '+escape(listing.certification.grade)+' · '+Number(listing.certification.score)+'/100</span>':''}<h4>${escape(listing.itemName)}</h4><small>Seller: ${escape(listing.sellerName)}</small>${listing.factoryModel?'<small>Reusable factory model · test, launch or dispatch after purchase.</small>':''}<strong>${Number(listing.priceMzk).toLocaleString()} MZK</strong></div>
     <button type="button" data-buy-user-listing="${escape(listing.itemId)}" data-seller-id="${escape(listing.sellerId)}" ${listing.sellerId === owner() ? 'disabled' : ''}>${listing.sellerId === owner() ? 'Your listing' : 'Buy with MZK'}</button>
   </article>`;
   async function load() {

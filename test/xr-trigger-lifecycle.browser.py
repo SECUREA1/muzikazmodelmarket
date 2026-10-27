@@ -55,12 +55,13 @@ try:
           const xr=new THREE.EventDispatcher();xr.isPresenting=true;xr.setReferenceSpaceType=()=>{};xr.getController=index=>controllers[index];xr.getCamera=()=>camera;xr.getSession=()=>session;xr.setSession=async()=>{};
           session.end=async()=>{xr.isPresenting=false;xr.dispatchEvent({type:'sessionend'});};
           const calls={start:[],end:[],release:[],grip:[],exit:0,menu:0,moves:[],status:[]};let pendingPrimary=false,rejectPrimary=null;
+          let menuRows=[{label:'Keep fish',run:()=>calls.menu++}];
           const controls=mountXRGameControls({renderer:{xr},scene,camera,rig,parent:document.querySelector('main'),
             onTrigger:(hand,ray,controller)=>{calls.start.push({hand,controller,ray});if(pendingPrimary){pendingPrimary=false;return new Promise((_resolve,reject)=>rejectPrimary=reject);}},
             onTriggerEnd:(hand,ray,controller,reason)=>calls.end.push({hand,controller,ray,reason}),
             onInputRelease:reason=>calls.release.push(reason),onGrip:hand=>calls.grip.push(hand),
             onMove:value=>calls.moves.push(value),onExit:()=>calls.exit++,menuOnEnter:()=>false,status:value=>calls.status.push(value),
-            menuItems:()=>[{label:'Keep fish',run:()=>calls.menu++}]});
+            menuItems:()=>menuRows});
           for(let index=0;index<2;index++)controllers[index].dispatchEvent({type:'connected',data:sources[index]});
           xr.dispatchEvent({type:'sessionstart'});
           const down=async(index=1)=>{sources[index].gamepad.buttons[0].pressed=true;sources[index].gamepad.buttons[0].value=1;controllers[index].dispatchEvent({type:'selectstart'});await settle();};
@@ -121,6 +122,20 @@ try:
           controls.openMenu();const beforeMenuStarts=calls.start.length;await up();await down();
           assert(calls.menu===1&&calls.start.length===beforeMenuStarts,'menu activation leaked into a primary gameplay hold');
           assert(!controls.menuOpen,'menu action did not return to the game');
+
+          // Live game panels change labels and available controls as rounds
+          // progress. Preserve the selected control, and safely select Resume
+          // when it disappears rather than moving selection onto another action.
+          let toggles=0,unexpected=0;
+          const liveToggle=()=>({id:'comfort',label:toggles?'Comfort on':'Comfort off',keepOpen:true,run:()=>toggles++});
+          menuRows=[liveToggle(),{id:'other',label:'Another action',run:()=>unexpected++}];
+          controls.openMenu();await fresh();
+          assert(toggles===1&&controls.menuOpen,'keep-open panel action failed');
+          menuRows=[liveToggle(),menuRows[1]];controls.refreshMenu();
+          assert(controls.snapshot().menuItems[0]==='Comfort on','live control label did not refresh');
+          await fresh();assert(toggles===2&&unexpected===0,'label refresh lost the selected control identity');
+          menuRows=[menuRows[1]];controls.refreshMenu();await fresh();
+          assert(unexpected===0&&!controls.menuOpen,'removed control shifted selection onto a different action');
 
           // A slow cast request can reject after travel has already released
           // all controls. Its obsolete failure must not resurrect the XR menu.
