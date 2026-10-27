@@ -58,6 +58,24 @@ test('recall safely returns only owned display copies and held models before tes
  await f.launch();f.move('setup');await assert.rejects(f.send('proving-recall',{itemId:'crafted-missile'}),/Cancel or finish/);await f.send('proving-cancel',{sessionId:f.player.testing.session.id});await f.send('proving-recall',{itemId:'crafted-missile'});
 });
 
+test('independent purchased models sharing a catalog SKU do not block another owner or get recalled together',async t=>{
+ const f=await fixture(t),catalog=GAME_ECONOMY.find(item=>item.buildAssetId==='factory-training-missile'),itemId='economy:'+catalog.sku,other='account:independent-tester';
+ await f.database.economyAction(f.wallet,'buy',catalog.sku,'personal-model-purchase');
+ await f.database.transaction(data=>{data.users[other]={walletId:other,tokens:{MZK:1000},items:[],memory:{},revision:0};return {};});
+ await f.database.economyAction(other,'buy',catalog.sku,'independent-model-purchase');
+ const foreign={id:'independent-display',spawned:true,ownerId:other,active:true,health:100,asset:{id:itemId,sku:catalog.sku,buildAssetId:catalog.buildAssetId}};
+ const authored={id:'public-display',active:true,health:100,asset:{id:catalog.id,sku:catalog.sku,buildAssetId:catalog.buildAssetId}};
+ f.sim.actors[foreign.id]=foreign;f.sim.actors[authored.id]=authored;f.move('setup');
+ await f.send('proving-setup',{itemId,profileId:'accuracy',targetId:'target-alpha'});
+ assert.equal(f.player.testing.session.status,'configured','another wallet or the public showcase does not reserve this model');
+ const mine={id:'personal-display',spawned:true,ownerId:f.player.actorId,active:true,health:100,asset:{id:catalog.id,sku:catalog.sku,buildAssetId:catalog.buildAssetId}};f.sim.actors[mine.id]=mine;
+ await assert.rejects(f.send('proving-setup',{itemId,profileId:'accuracy',targetId:'target-alpha'}),/Recall the deployed or held/);
+ const recalled=await f.send('proving-recall',{itemId});assert.deepEqual(recalled.recalledActorIds,[mine.id]);
+ assert.equal(f.sim.actors[foreign.id],foreign);assert.equal(f.sim.actors[authored.id],authored);
+ f.move('pad');await f.send('proving-deploy',{sessionId:f.player.testing.session.id,padId:'proving-pad'});
+ assert.equal(f.player.testing.session.status,'deployed');assert.equal(f.sim.actors[foreign.id],foreign);
+});
+
 test('server timing drives visible phases, persists through restarts and settles every result exactly once',async t=>{
  const f=await fixture(t),first=await f.launch();const sessionId=f.player.testing.session.id,launchAt=f.player.testing.session.launchAt;
  assert.equal(first.testing.session.status,'countdown');f.tick(3999);await f.send('proving-status');assert.equal(f.player.testing.session.status,'countdown');f.tick(1);await f.send('proving-status');assert.equal(f.player.testing.session.status,'flight');

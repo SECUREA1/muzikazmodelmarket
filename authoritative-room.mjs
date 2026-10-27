@@ -457,7 +457,7 @@ export class AuthoritativeRooms {
      if(command.operation==='accept'&&player.shipping?.job?.contractId==='atlas-export'){try{await this.shippingBind(identity,player,command,now);}catch(error){cancelShipping(player,sim,now,'Atlas cargo binding failed. The staged model remains at the export desk.');throw error;}}
      if(supply){
       const job=player.shipping.job;
-      Object.assign(job,{shipmentId:supply.shipmentId,supplyManifest:copy(supply.supplyManifest||[]),destinationMapId:supply.destinationMapId,...(supply.packing?{supplyPacking:copy(supply.packing)}:{})});
+      Object.assign(job,{shipmentId:supply.shipmentId,supplyManifest:copy(supply.supplyManifest||[]),destinationMapId:supply.destinationMapId,...(supply.packing?{supplyPacking:copy(supply.packing)}:{}),...(supply.challenge?{supplyChallenge:copy(supply.challenge)}:{})});
       await this.supplyAction(identity,sim,player,environment,{...command,operation:'bind',shipmentId:supply.shipmentId,jobId:job.id,contractId:job.contractId},now);
      }
     }catch(error){

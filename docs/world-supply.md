@@ -30,8 +30,24 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 ## Catalog coverage and verification
 
-Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,288 placed instances: all 605 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,299 placed instances: all 607 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
 
 `public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
 
 Earned-only quest collectibles keep their existing ownership rules. The four Ironwood Prison keepsakes remain earned and account-bound; factory production cannot mint replacement quest licenses. They remain visible in the market with their earning instructions.
+
+## Strait distribution challenges
+
+The World item factory board now offers six prepared deliveries: cargo rockets, inert training collectibles, Builder metal, port repair tools, community care supplies and factory freight terminals. Each challenge selects its canonical item, batch quantity, destination warehouse and actual Strait sea route. Produce the missing units, dispatch them, and complete the normal loading, passage and unloading controls. Editing any selection clears the challenge binding; the server independently verifies every requirement.
+
+Rocket and training collectibles pack individually, one per container. Four sealed units fit a feeder manifest. A challenge records completion only after the authoritative delivery reaches its destination with the required 85% or 90% cargo quality. Lower-quality delivered goods still reach stock, while the challenge remains incomplete. Completion never adds another currency reward; normal capped freight rewards continue. Counts and completion history survive reloads and duplicate requests.
+
+When any central catalog stock falls below 250 units, the board also offers a restocking task for that item. Depletion remains in the shared ledger; generating or refreshing a task never creates stock. Generic factory shipments continue to support every registered item and available map, including copied shipping worlds.
+
+Builder cards and the standalone map editor preserve the server supply identity and current available/world counts for native and authored models. An explicit zero at a supplied map remains zero even when central stores have stock; personal prepaid material pieces stay a separate balance.
+
+## Recent integration review
+
+Reviewed the latest five first-parent commits through `a16af59d`, including factory staging, finite supply and Ironwood earned-item merges, against the existing shipping and market paths. Subsequent shared-radio, boat-control and native-resort merges were also checked against factory freight and warehouse inventories. Certified Atlas model handling remains a reusable personal-item transfer; bulk manufacturing is the path that creates paid stock for distribution. Quest-only licenses keep their earned ownership rules.
+
+The review fixed wallet connection migration for paid production, shipment ownership/reservations, factory proof ownership, credits and saved reward caps; connecting an Ethereum wallet no longer strands those records or permits replayed charges. It also fixed same-SKU display collisions between independent rocket owners at proving grounds. Existing scenery, catalog browsing and AI demonstration activity do not create global stock.

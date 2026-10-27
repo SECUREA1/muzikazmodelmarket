@@ -24,3 +24,4 @@
 
 /* Companion panels leave the game and its lower movement controls available. */
 .construction-dialog[open]{position:fixed;inset:64px 10px auto auto;margin:0;max-width:calc(100vw - 20px);max-height:calc(100dvh - 300px);z-index:25}
+.construction-site-operations h3{margin:4px 0;font-size:15px;color:#ffe0a1}.construction-site-operations article{min-width:0}.construction-site-operations p{margin:3px 0;color:#d5e1d8;font:12px/1.5 system-ui;overflow-wrap:anywhere}

@@ -11,23 +11,25 @@ import {shippingWorld} from '../shipping-world.mjs';
 import {stepShipping,shippingAccountState,grantShippingReward} from '../server-shipping.mjs';
 import {boatAssistedInput} from '../server-boat-assist.mjs';
 import {stepBoatSimulation} from '../public/js/boat-simulation.js';
+import {GAME_ECONOMY} from '../game-economy.mjs';
 import {SHIPPING_RULES} from '../public/js/shipping-config.js';
 
-test('paid factory production travels the actual authoritative shipping passage, restocks a map, and purchases deplete that delivered stock exactly once',async t=>{
+for(const scenario of [{sku:'tool:scanner',quantity:10},{sku:GAME_ECONOMY.find(item=>item.buildAssetId==='factory-cargo-rocket').sku,quantity:4,challengeId:'rocket-convoy'}])test(''+scenario.sku+' paid factory production travels the actual authoritative shipping passage, restocks a map, and purchases deplete that delivered stock exactly once',async t=>{
+ const {sku,quantity,challengeId}=scenario;
  const dir=await mkdtemp(join(tmpdir(),'world-supply-flow-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const database=new UserJsonDatabase(join(dir,'users.json')),wallet='account:captain',identity={accountId:'captain',walletId:wallet,username:'Captain'};
  await database.put(wallet,{tokens:{MZK:1000000},items:[]});
- const environment=shippingWorld(),destination={id:'factory-destination-market',name:'Destination Market',builderScene:{objects:[{id:'destination-store',name:'Destination Store'}]}};
+ const environment=shippingWorld(),destination={id:'factory-testing-range',name:'Destination Market',builderScene:{objects:[{id:'destination-store',name:'Destination Store'}]}};
  let now=100000,sequence=0;
  const service=new WorldSupplyService(database,{now:()=>now,maps:async()=>[environment,destination]});
- const quote=await service.action(wallet,'quote',{itemId:'tool:scanner',quantity:10});
- const production=await service.action(wallet,'produce',{itemId:'tool:scanner',quantity:10,expectedPriceMzk:quote.priceMzk,requestId:'factory-flow-production'});
+ const quote=await service.action(wallet,'quote',{itemId:sku,quantity});
+ const production=await service.action(wallet,'produce',{itemId:sku,quantity,expectedPriceMzk:quote.priceMzk,requestId:'factory-flow-production'});
  assert.equal((await database.get(wallet)).tokens.MZK,1000000-quote.priceMzk);
- assert.equal((await service.state()).factoryStock['tool:scanner']||0,0);
+ assert.equal((await service.state()).factoryStock[sku]||0,0);
  now=production.readyAt;await service.state();
- const shipment=await service.action(wallet,'dispatch',{itemId:'tool:scanner',quantity:10,destinationMapId:destination.id,shippingMapId:environment.id,contractId:'gulf-gateway',requestId:'factory-flow-dispatch'});
- let state=await service.state();assert.equal(state.worldStock['tool:scanner'],1000);assert.equal(state.factoryStock['tool:scanner'],0);
- assert.equal(state.maps.find(map=>map.id===destination.id).stock['tool:scanner'],undefined);
+ const shipment=await service.action(wallet,'dispatch',{itemId:sku,quantity,destinationMapId:destination.id,shippingMapId:environment.id,contractId:'gulf-gateway',requestId:'factory-flow-dispatch',...(challengeId?{challengeId}:{})});
+ let state=await service.state();assert.equal(state.worldStock[sku],1000);assert.equal(state.factoryStock[sku],0);
+ assert.equal(state.maps.find(map=>map.id===destination.id).stock[sku],undefined);
  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now,
   shippingState:id=>shippingAccountState(database,id.walletId),shippingReward:(id,result)=>grantShippingReward(database,id.walletId,result,{now}),
   supplyAction:(...args)=>service.shippingAction(...args),supplyDelivery:(...args)=>service.deliver(...args)});
@@ -53,18 +55,19 @@ test('paid factory production travels the actual authoritative shipping passage,
  await send('dock');
  for(let index=0;index<3;index++){
   await send('unload');now+=SHIPPING_RULES.loadingSeconds*1000;
-  assert.equal((await service.state()).maps.find(map=>map.id===destination.id).stock['tool:scanner'],undefined,'partial unloading does not create map stock');
+  assert.equal((await service.state()).maps.find(map=>map.id===destination.id).stock[sku],undefined,'partial unloading does not create map stock');
  }
  const finalRequest='factory-flow-final-unload';now+=250;
  const delivered=await runtime.command(environment.id,environment,identity,{action:'shipping',operation:'unload',requestId:finalRequest});
+ if(challengeId){assert.equal(delivered.players[self].shipping.job.supplyChallenge.id,challengeId);assert.equal(delivered.result.supplyReceipt.challengeResult.completed,true);assert.equal((await service.state()).challenges.find(row=>row.id===challengeId).completionCount,1);}
  assert.equal(delivered.players[self].shipping.job.phase,'delivered');assert.equal(delivered.result.supplyReceipt.phase,'delivered');
  assert.equal(delivered.result.supplyReceipt.transferTask.destinationMapId,destination.id);assert.ok(delivered.result.shippingReceipt.amountMzk>0);
  await runtime.command(environment.id,environment,identity,{action:'shipping',operation:'unload',requestId:finalRequest});
- state=await service.state();assert.equal(state.maps.find(map=>map.id===destination.id).stock['tool:scanner'],10);assert.equal(state.worldStock['tool:scanner'],1000);
- const purchase=await database.economyAction(wallet,'buy','tool:scanner','factory-flow-market-sale',destination.id);
- const retry=await database.economyAction(wallet,'buy','tool:scanner','factory-flow-market-sale',destination.id);
+ state=await service.state();assert.equal(state.maps.find(map=>map.id===destination.id).stock[sku],quantity);assert.equal(state.worldStock[sku],1000);
+ const purchase=await database.economyAction(wallet,'buy',sku,'factory-flow-market-sale',destination.id);
+ const retry=await database.economyAction(wallet,'buy',sku,'factory-flow-market-sale',destination.id);
  assert.equal(purchase.id,retry.id);
  const reopened=new WorldSupplyService(new UserJsonDatabase(database.file),{now:()=>now,maps:async()=>[environment,destination]});state=await reopened.state();
- assert.equal(state.maps.find(map=>map.id===destination.id).stock['tool:scanner'],9);
- assert.equal(state.worldStock['tool:scanner'],1000);assert.equal(state.shipments[0].phase,'delivered');
+ assert.equal(state.maps.find(map=>map.id===destination.id).stock[sku],quantity-1);
+ assert.equal(state.worldStock[sku],1000);assert.equal(state.shipments[0].phase,'delivered');
 });

@@ -34,6 +34,9 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       s=state()
       if check(s):return s
       page.wait_for_timeout(100)
+     print('Wait failure diagnostic',json.dumps(page.evaluate('(()=>{const s=MuzikazHouseExplorer.snapshot();return {player:s.player,serverReady:s.serverReady,controlsReady:s.controlsReady,vehicleId:s.vehicleId}})()')),flush=True)
+     print('Wait authoritative player',json.dumps(s['players']),flush=True)
+     print('Wait authoritative machine',json.dumps(s['actors'].get('construction-dozer')),flush=True)
      raise AssertionError(label)
     def response(res):
      if '/gameplay' in res.url and res.request.method=='POST' and res.ok:
@@ -51,6 +54,7 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
      command('construction-crew',operation='pause')
      assert page.locator('.game-viewport-toggle,#house-fullscreen').count()==0
      for index,(machine,field,point) in enumerate([('excavator','boom',{'x':22.1,'z':17}),('crane','hoist',{'x':-12.4,'z':.8}),('truck','bed',{'x':18.2,'z':28}),('dozer','blade',{'x':45.8,'z':61.5})]):
+      if os.environ.get('MACHINE') and machine!=os.environ['MACHINE']:continue
       machine_id='construction-'+machine
       command('map-access',position=point)
       page.wait_for_function('p=>{const s=MuzikazHouseExplorer.snapshot();return Math.hypot(s.player.position[0]-p.x,s.player.position[2]-p.z)<1.5}',arg=point)
@@ -59,7 +63,12 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       page.locator('#house-explorer-canvas').focus()
       page.keyboard.down('a');page.wait_for_timeout(140);page.keyboard.up('a')
       button=page.locator('.builder-nearby-action:not(.builder-portal-action)')
-      button.wait_for(state='visible',timeout=15000)
+      try:button.wait_for(state='visible',timeout=15000)
+      except Exception:
+       print('Boarding diagnostic '+machine,json.dumps(page.evaluate('(()=>{const s=MuzikazHouseExplorer.snapshot();return {player:s.player,serverReady:s.serverReady,controlsReady:s.controlsReady,vehicleId:s.vehicleId}})()')),flush=True)
+       print('Authoritative player',json.dumps(state()['players']),flush=True)
+       page.screenshot(path='/tmp/construction-boarding-failure.png')
+       raise
       assert 'Operate' in button.get_attribute('aria-label'),button.get_attribute('aria-label')
       if index<2:button.tap()
       else:page.keyboard.press('f')
@@ -97,6 +106,17 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       panel.locator('[data-operation=exit]').click()
       wait(lambda s:not s['players'][next(iter(s['players']))].get('vehicleId'),'exit failed '+machine)
       print(machine+': walk-up, '+('touch' if index<2 else 'F key')+', hydraulic control, neutral and exit passed',flush=True)
+     if not page.locator('.construction-crew-toggle').is_visible():page.get_by_role('button',name='More view controls',exact=True).click()
+     page.get_by_role('button',name='Construction crew and jobs',exact=True).click()
+     plan=page.get_by_role('region',name='Site operations plan')
+     assert plan.locator('[data-operation-id]').count()==7
+     assert '20 cm road base' in plan.inner_text()
+     assert plan.locator('[data-operation-id=new-road] progress').evaluate('node=>node.value')==0
+     assert plan.locator('[data-operation-id=pavement-reclamation]').is_visible()
+     assert not plan.evaluate('node=>node.scrollWidth>node.clientWidth+1'),'Site plan overflows on a phone'
+     page.screenshot(path='/tmp/construction-operations-plan.png')
+     page.get_by_role('button',name='Close crew',exact=True).click()
+     print('Expanded site: seven operations, live road progress and mobile site plan passed',flush=True)
      s=state();worker=s['construction']['crew']['workers'][0];command('map-access',position={'x':worker['position']['x']-1,'z':worker['position']['z']})
      nearby=page.get_by_role('button',name='Talk to Maya Chen',exact=True)
      nearby.wait_for(state='visible',timeout=15000);nearby.tap()

@@ -4,6 +4,7 @@ import {builderSections} from './builder-library.js';
 import {deviceDefinition} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {RANGED_WEAPONS} from './game-weapons.js';
+import {catalogSupplyMetadata} from './catalog-supply.js';
 
 const TOOL_DESCRIPTIONS={
  laser:'Fire a focused energy beam at aimed targets.',
@@ -77,7 +78,8 @@ export function createBuildingCatalog(economyItems=[]){
   const upgrade=matches.find(record=>record.owned===true||record.basic===true)||matches[0];
   if(!upgrade)return item;
   return describeItem({...item,economySku:upgrade.sku||upgrade.economySku,owned:upgrade.owned===true,basic:upgrade.basic===true,
-   ...Object.fromEntries(['priceMzk','useCostMzk','unitPriceMzk','stock'].filter(key=>upgrade[key]!==undefined).map(key=>[key,upgrade[key]]))});
+   ...Object.fromEntries(['priceMzk','useCostMzk','unitPriceMzk','stock','nativeMaps'].filter(key=>upgrade[key]!==undefined).map(key=>[key,upgrade[key]])),
+   ...catalogSupplyMetadata(upgrade)});
  });
  const seen=new Set(),glb=[];
  for(const raw of economyItems){

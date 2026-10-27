@@ -34133,7 +34133,7 @@
     "id": "skyscraper-construction",
     "name": "Skyline Construction · Crane & Earthworks",
     "label": "Build, dig and run the crew",
-    "description": "A 248 × 216 metre construction yard in a city skyline. Erect a 16-floor skyscraper with a 78-metre tower crane, dig deep foundation bays, push real dirt and gravel, load an articulated truck, haul material and grade a new fill platform. A worker crew, shared jobs, large stockpiles, six plant bays, clear lift guides and live machinery dashboards support synchronized multiplayer building.",
+    "description": "A 336 × 304 metre construction yard in a city skyline. Erect a 16-floor skyscraper with a 78-metre tower crane, dig deep foundation bays, push real dirt and gravel, load an articulated truck, haul material and grade a new fill platform. Rip and recycle pavement, create a gravel road, excavate utility trenches and a basement, and level a large earth platform. A worker crew, shared jobs, large stockpiles, six plant bays, clear lift guides and live machinery dashboards support synchronized multiplayer building.",
     "category": "Construction & machinery",
     "game": "construction",
     "worldId": "skyline-deck",
@@ -34167,9 +34167,9 @@
       },
       "yard": {
         "minX": -94,
-        "maxX": 154,
+        "maxX": 242,
         "minZ": -70,
-        "maxZ": 146
+        "maxZ": 234
       },
       "earthworks": {
         "cellSize": 2,
@@ -34226,6 +34226,74 @@
             "maxDepth": 0,
             "height": 1.6,
             "material": "gravel"
+          },
+          {
+            "id": "pavement-reclamation",
+            "name": "08 · Pavement reclamation",
+            "kind": "excavation",
+            "x": 198,
+            "z": 12,
+            "width": 60,
+            "depth": 18,
+            "maxDepth": 1,
+            "surface": "asphalt",
+            "surfaceThickness": 0.24,
+            "material": "gravel"
+          },
+          {
+            "id": "new-road",
+            "name": "09 · Build a gravel road",
+            "kind": "fill",
+            "x": 198,
+            "z": 92,
+            "width": 60,
+            "depth": 18,
+            "maxDepth": 0,
+            "material": "gravel"
+          },
+          {
+            "id": "utility-trench",
+            "name": "10 · Utility trench",
+            "kind": "excavation",
+            "x": 126,
+            "z": -44,
+            "width": 64,
+            "depth": 8,
+            "maxDepth": 3,
+            "material": "soil"
+          },
+          {
+            "id": "basement-cut",
+            "name": "11 · Basement excavation",
+            "kind": "excavation",
+            "x": 76,
+            "z": -40,
+            "width": 32,
+            "depth": 28,
+            "maxDepth": 6,
+            "material": "soil"
+          },
+          {
+            "id": "recycled-aggregate",
+            "name": "12 · Recycled aggregate receiving",
+            "kind": "stockpile",
+            "x": 198,
+            "z": 166,
+            "width": 28,
+            "depth": 28,
+            "maxDepth": 0,
+            "material": "gravel"
+          },
+          {
+            "id": "earth-platform",
+            "name": "13 · Earth platform and leveling",
+            "kind": "fill",
+            "x": 94,
+            "z": 192,
+            "width": 80,
+            "depth": 28,
+            "maxDepth": 0,
+            "material": "soil"
           }
         ]
       },
@@ -34355,10 +34423,10 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-23T01:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T18:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
-    "playableSize": 512,
+    "playableSize": 768,
     "thumbnailUrl": "/public/images/construction/skyscraper-construction.svg",
     "spawn": {
       "x": -20,
@@ -34376,7 +34444,7 @@
         },
         "to": {
           "x": -108,
-          "z": 220
+          "z": 308
         },
         "width": 12
       },
@@ -34384,12 +34452,12 @@
         "id": "construction-east-avenue",
         "name": "Civic Avenue",
         "from": {
-          "x": 168,
+          "x": 256,
           "z": -200
         },
         "to": {
-          "x": 168,
-          "z": 220
+          "x": 256,
+          "z": 308
         },
         "width": 12
       },
@@ -34401,7 +34469,7 @@
           "z": -84
         },
         "to": {
-          "x": 224,
+          "x": 312,
           "z": -84
         },
         "width": 12
@@ -34411,11 +34479,11 @@
         "name": "Builders Boulevard",
         "from": {
           "x": -200,
-          "z": 160
+          "z": 248
         },
         "to": {
-          "x": 224,
-          "z": 160
+          "x": 312,
+          "z": 248
         },
         "width": 12
       }
@@ -34423,7 +34491,7 @@
     "builderScene": {
       "version": 3,
       "layout": "grand-floor",
-      "mapSize": 512,
+      "mapSize": 768,
       "objects": [
         {
           "id": "construction-crane",
@@ -37275,6 +37343,1578 @@
           }
         },
         {
+          "id": "construction-pavement-reclamation-edge-x--1",
+          "modelId": "material:cube",
+          "name": "pavement reclamation edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.55,
+            "y": 0.003,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 15.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-edge-z--1",
+          "modelId": "material:cube",
+          "name": "pavement reclamation edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 2.5500000000000007
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 50.666666666666664,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-edge-x-1",
+          "modelId": "material:cube",
+          "name": "pavement reclamation edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.45,
+            "y": 0.003,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 15.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-edge-z-1",
+          "modelId": "material:cube",
+          "name": "pavement reclamation edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 21.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 50.666666666666664,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-survey--30.5--9.5",
+          "modelId": "material:cube",
+          "name": "pavement reclamation survey  30.5  9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.5,
+            "y": 0,
+            "z": 2.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-survey--30.5-9.5",
+          "modelId": "material:cube",
+          "name": "pavement reclamation survey  30.5 9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.5,
+            "y": 0,
+            "z": 21.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-survey-30.5--9.5",
+          "modelId": "material:cube",
+          "name": "pavement reclamation survey 30.5  9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.5,
+            "y": 0,
+            "z": 2.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-survey-30.5-9.5",
+          "modelId": "material:cube",
+          "name": "pavement reclamation survey 30.5 9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.5,
+            "y": 0,
+            "z": 21.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-pavement-reclamation-board",
+          "modelId": "street-sign",
+          "name": "08 · Pavement reclamation",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 166,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 08 · Pavement reclamation",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Rip the dark 24 cm pavement with the bucket or blade. Reclaimed pavement enters the gravel cargo stream: load, haul and reuse it on the new road. Beneath it is a one metre subgrade that can also be excavated."
+          }
+        },
+        {
+          "id": "construction-new-road-edge-x--1",
+          "modelId": "material:cube",
+          "name": "new road edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.55,
+            "y": 0.003,
+            "z": 92
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 15.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-edge-z--1",
+          "modelId": "material:cube",
+          "name": "new road edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 82.55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 50.666666666666664,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-edge-x-1",
+          "modelId": "material:cube",
+          "name": "new road edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.45,
+            "y": 0.003,
+            "z": 92
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 15.666666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-edge-z-1",
+          "modelId": "material:cube",
+          "name": "new road edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 101.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 50.666666666666664,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-survey--30.5--9.5",
+          "modelId": "material:cube",
+          "name": "new road survey  30.5  9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.5,
+            "y": 0,
+            "z": 82.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-survey--30.5-9.5",
+          "modelId": "material:cube",
+          "name": "new road survey  30.5 9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 167.5,
+            "y": 0,
+            "z": 101.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-survey-30.5--9.5",
+          "modelId": "material:cube",
+          "name": "new road survey 30.5  9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.5,
+            "y": 0,
+            "z": 82.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-survey-30.5-9.5",
+          "modelId": "material:cube",
+          "name": "new road survey 30.5 9.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 228.5,
+            "y": 0,
+            "z": 101.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-new-road-board",
+          "modelId": "street-sign",
+          "name": "09 · Build a gravel road",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 166,
+            "y": 0,
+            "z": 80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 09 · Build a gravel road",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Deliver soil or gravel, lower the bulldozer blade and spread a level lift across this platform. Terrain changes and delivered material are shared with everyone."
+          }
+        },
+        {
+          "id": "construction-utility-trench-edge-x--1",
+          "modelId": "material:cube",
+          "name": "utility trench edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 93.55,
+            "y": 0.003,
+            "z": -44
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 7.333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-edge-z--1",
+          "modelId": "material:cube",
+          "name": "utility trench edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 126,
+            "y": 0.003,
+            "z": -48.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 54,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-edge-x-1",
+          "modelId": "material:cube",
+          "name": "utility trench edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158.45,
+            "y": 0.003,
+            "z": -44
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 7.333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-edge-z-1",
+          "modelId": "material:cube",
+          "name": "utility trench edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 126,
+            "y": 0.003,
+            "z": -39.55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 54,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-survey--32.5--4.5",
+          "modelId": "material:cube",
+          "name": "utility trench survey  32.5  4.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 93.5,
+            "y": 0,
+            "z": -48.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-survey--32.5-4.5",
+          "modelId": "material:cube",
+          "name": "utility trench survey  32.5 4.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 93.5,
+            "y": 0,
+            "z": -39.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-survey-32.5--4.5",
+          "modelId": "material:cube",
+          "name": "utility trench survey 32.5  4.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158.5,
+            "y": 0,
+            "z": -48.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-survey-32.5-4.5",
+          "modelId": "material:cube",
+          "name": "utility trench survey 32.5 4.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158.5,
+            "y": 0,
+            "z": -39.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-utility-trench-board",
+          "modelId": "street-sign",
+          "name": "10 · Utility trench",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 92,
+            "y": 0,
+            "z": -51
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 10 · Utility trench",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Excavate a continuous utility trench up to three metres deep. Keep machines on the shoulders; scoop from the side and haul spoil to a stockpile."
+          }
+        },
+        {
+          "id": "construction-basement-cut-edge-x--1",
+          "modelId": "material:cube",
+          "name": "basement cut edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 59.55,
+            "y": 0.003,
+            "z": -40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-edge-z--1",
+          "modelId": "material:cube",
+          "name": "basement cut edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 76,
+            "y": 0.003,
+            "z": -54.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 27.333333333333332,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-edge-x-1",
+          "modelId": "material:cube",
+          "name": "basement cut edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 92.45,
+            "y": 0.003,
+            "z": -40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-edge-z-1",
+          "modelId": "material:cube",
+          "name": "basement cut edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 76,
+            "y": 0.003,
+            "z": -25.55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 27.333333333333332,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-survey--16.5--14.5",
+          "modelId": "material:cube",
+          "name": "basement cut survey  16.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 59.5,
+            "y": 0,
+            "z": -54.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-survey--16.5-14.5",
+          "modelId": "material:cube",
+          "name": "basement cut survey  16.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 59.5,
+            "y": 0,
+            "z": -25.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-survey-16.5--14.5",
+          "modelId": "material:cube",
+          "name": "basement cut survey 16.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 92.5,
+            "y": 0,
+            "z": -54.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-survey-16.5-14.5",
+          "modelId": "material:cube",
+          "name": "basement cut survey 16.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 92.5,
+            "y": 0,
+            "z": -25.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-basement-cut-board",
+          "modelId": "street-sign",
+          "name": "11 · Basement excavation",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 58,
+            "y": 0,
+            "z": -57
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 11 · Basement excavation",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Excavate this six metre basement in reachable lifts. Keep plant back from the edge, lower into the cut only on supported ground and haul spoil to the receiving bays."
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-edge-x--1",
+          "modelId": "material:cube",
+          "name": "recycled aggregate edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 183.55,
+            "y": 0.003,
+            "z": 166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-edge-z--1",
+          "modelId": "material:cube",
+          "name": "recycled aggregate edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 151.55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 24,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-edge-x-1",
+          "modelId": "material:cube",
+          "name": "recycled aggregate edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 212.45,
+            "y": 0.003,
+            "z": 166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-edge-z-1",
+          "modelId": "material:cube",
+          "name": "recycled aggregate edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0.003,
+            "z": 180.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 24,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-survey--14.5--14.5",
+          "modelId": "material:cube",
+          "name": "recycled aggregate survey  14.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 183.5,
+            "y": 0,
+            "z": 151.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-survey--14.5-14.5",
+          "modelId": "material:cube",
+          "name": "recycled aggregate survey  14.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 183.5,
+            "y": 0,
+            "z": 180.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-survey-14.5--14.5",
+          "modelId": "material:cube",
+          "name": "recycled aggregate survey 14.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 212.5,
+            "y": 0,
+            "z": 151.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-survey-14.5-14.5",
+          "modelId": "material:cube",
+          "name": "recycled aggregate survey 14.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 212.5,
+            "y": 0,
+            "z": 180.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#c3d1d4"
+          }
+        },
+        {
+          "id": "construction-recycled-aggregate-board",
+          "modelId": "street-sign",
+          "name": "12 · Recycled aggregate receiving",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 182,
+            "y": 0,
+            "z": 149
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 12 · Recycled aggregate receiving",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "This gravel is loose material. Dig it with the excavator, load the truck, then haul or push it into the fill platform. The visible pile changes as you work."
+          }
+        },
+        {
+          "id": "construction-earth-platform-edge-x--1",
+          "modelId": "material:cube",
+          "name": "earth platform edge x  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 53.55,
+            "y": 0.003,
+            "z": 192
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-edge-z--1",
+          "modelId": "material:cube",
+          "name": "earth platform edge z  1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 94,
+            "y": 0.003,
+            "z": 177.55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 67.33333333333333,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-edge-x-1",
+          "modelId": "material:cube",
+          "name": "earth platform edge x 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 134.45,
+            "y": 0.003,
+            "z": 192
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.005,
+            "z": 24
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-edge-z-1",
+          "modelId": "material:cube",
+          "name": "earth platform edge z 1",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 94,
+            "y": 0.003,
+            "z": 206.45
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 67.33333333333333,
+            "y": 0.005,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-survey--40.5--14.5",
+          "modelId": "material:cube",
+          "name": "earth platform survey  40.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 53.5,
+            "y": 0,
+            "z": 177.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-survey--40.5-14.5",
+          "modelId": "material:cube",
+          "name": "earth platform survey  40.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 53.5,
+            "y": 0,
+            "z": 206.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-survey-40.5--14.5",
+          "modelId": "material:cube",
+          "name": "earth platform survey 40.5  14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 134.5,
+            "y": 0,
+            "z": 177.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-survey-40.5-14.5",
+          "modelId": "material:cube",
+          "name": "earth platform survey 40.5 14.5",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 134.5,
+            "y": 0,
+            "z": 206.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.08333333333333334,
+            "y": 0.625,
+            "z": 0.08333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e4b968"
+          }
+        },
+        {
+          "id": "construction-earth-platform-board",
+          "modelId": "street-sign",
+          "name": "13 · Earth platform and leveling",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 52,
+            "y": 0,
+            "z": 175
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read 13 · Earth platform and leveling",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Deliver soil or gravel, lower the bulldozer blade and spread a level lift across this platform. Terrain changes and delivered material are shared with everyone."
+          }
+        },
+        {
           "id": "construction-east-haul",
           "modelId": "material:baseplate",
           "name": "east haul",
@@ -38287,6 +39927,327 @@
           "materialSettings": {
             "useAccent": true,
             "accent": "#f5d077"
+          }
+        },
+        {
+          "id": "construction-works-crosshaul",
+          "modelId": "material:baseplate",
+          "name": "works crosshaul",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 190,
+            "y": -0.07,
+            "z": 56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.75,
+            "y": 0.35999999999999993,
+            "z": 2.916666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-east",
+          "modelId": "material:baseplate",
+          "name": "works east",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 235,
+            "y": -0.07,
+            "z": 80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.0833333333333335,
+            "y": 0.35999999999999993,
+            "z": 44.16666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-north",
+          "modelId": "material:baseplate",
+          "name": "works north",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 164,
+            "y": -0.07,
+            "z": -21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 26.666666666666668,
+            "y": 0.35999999999999993,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-access",
+          "modelId": "material:baseplate",
+          "name": "works access",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 156,
+            "y": -0.07,
+            "z": 17.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.5,
+            "y": 0.35999999999999993,
+            "z": 16.041666666666668
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-south",
+          "modelId": "material:baseplate",
+          "name": "works south",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 190,
+            "y": -0.07,
+            "z": 214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.75,
+            "y": 0.35999999999999993,
+            "z": 2.916666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-south-link",
+          "modelId": "material:baseplate",
+          "name": "works south link",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 145,
+            "y": -0.07,
+            "z": 170
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.916666666666667,
+            "y": 0.35999999999999993,
+            "z": 21.25
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-works-return",
+          "modelId": "material:baseplate",
+          "name": "works return",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 40,
+            "y": -0.07,
+            "z": 170
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.5,
+            "y": 0.35999999999999993,
+            "z": 21.25
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-platform-access",
+          "modelId": "material:baseplate",
+          "name": "platform access",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 96,
+            "y": -0.07,
+            "z": 214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 23.333333333333336,
+            "y": 0.35999999999999993,
+            "z": 2.5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-south-yard-gate",
+          "modelId": "material:baseplate",
+          "name": "south yard gate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 36,
+            "y": -0.07,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.916666666666667,
+            "y": 0.35999999999999993,
+            "z": 8.333333333333334
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#9b927d"
+          }
+        },
+        {
+          "id": "construction-roadworks-dispatch",
+          "modelId": "street-sign",
+          "name": "ROADWORKS · Reclaim, haul, rebuild",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158,
+            "y": 0,
+            "z": 48
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read ROADWORKS · Reclaim, haul, rebuild",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "North-east: rip the old pavement and load its reclaimed aggregate. South-east: tip gravel onto the new road, then lower the blade to spread a 20 cm base course. Far south: recycling stockpile and earth platform. Open Crew / jobs for the site operations plan and live progress."
+          }
+        },
+        {
+          "id": "construction-trench-dispatch",
+          "modelId": "street-sign",
+          "name": "EXCAVATION · Utilities & basement",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 100,
+            "y": 0,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read EXCAVATION · Utilities & basement",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Work the utility trench from its shoulders. Excavate the basement in lifts and haul the spoil out. Raise and curl the bucket before driving. Existing soil, gravel and steel jobs remain available to the crew."
           }
         },
         {
@@ -41439,14 +43400,289 @@
           }
         },
         {
-          "id": "construction-fence--90-146",
+          "id": "construction-fence-158--70",
           "modelId": "material:crowd-barrier",
-          "name": "fence  90 146",
+          "name": "fence 158  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-166--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 166  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 166,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-174--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 174  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 174,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-182--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 182  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 182,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-190--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 190  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 190,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-198--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 198  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-206--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 206  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 206,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-214--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 214  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 214,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-222--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 222  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 222,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-230--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 230  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 230,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-238--70",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 238  70",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 238,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--90-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  90 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -90,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41464,14 +43700,14 @@
           }
         },
         {
-          "id": "construction-fence--82-146",
+          "id": "construction-fence--82-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  82 146",
+          "name": "fence  82 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -82,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41489,14 +43725,14 @@
           }
         },
         {
-          "id": "construction-fence--74-146",
+          "id": "construction-fence--74-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  74 146",
+          "name": "fence  74 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -74,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41514,14 +43750,14 @@
           }
         },
         {
-          "id": "construction-fence--50-146",
+          "id": "construction-fence--50-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  50 146",
+          "name": "fence  50 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -50,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41539,14 +43775,14 @@
           }
         },
         {
-          "id": "construction-fence--42-146",
+          "id": "construction-fence--42-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  42 146",
+          "name": "fence  42 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -42,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41564,14 +43800,14 @@
           }
         },
         {
-          "id": "construction-fence--34-146",
+          "id": "construction-fence--34-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  34 146",
+          "name": "fence  34 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -34,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41589,14 +43825,14 @@
           }
         },
         {
-          "id": "construction-fence--26-146",
+          "id": "construction-fence--26-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  26 146",
+          "name": "fence  26 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -26,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41614,14 +43850,14 @@
           }
         },
         {
-          "id": "construction-fence--18-146",
+          "id": "construction-fence--18-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  18 146",
+          "name": "fence  18 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -18,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41639,14 +43875,14 @@
           }
         },
         {
-          "id": "construction-fence--10-146",
+          "id": "construction-fence--10-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  10 146",
+          "name": "fence  10 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -10,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41664,14 +43900,14 @@
           }
         },
         {
-          "id": "construction-fence--2-146",
+          "id": "construction-fence--2-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence  2 146",
+          "name": "fence  2 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": -2,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41689,14 +43925,14 @@
           }
         },
         {
-          "id": "construction-fence-6-146",
+          "id": "construction-fence-6-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 6 146",
+          "name": "fence 6 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 6,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41714,14 +43950,14 @@
           }
         },
         {
-          "id": "construction-fence-14-146",
+          "id": "construction-fence-14-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 14 146",
+          "name": "fence 14 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 14,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41739,14 +43975,14 @@
           }
         },
         {
-          "id": "construction-fence-54-146",
+          "id": "construction-fence-54-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 54 146",
+          "name": "fence 54 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 54,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41764,14 +44000,14 @@
           }
         },
         {
-          "id": "construction-fence-62-146",
+          "id": "construction-fence-62-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 62 146",
+          "name": "fence 62 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 62,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41789,14 +44025,14 @@
           }
         },
         {
-          "id": "construction-fence-70-146",
+          "id": "construction-fence-70-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 70 146",
+          "name": "fence 70 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 70,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41814,14 +44050,14 @@
           }
         },
         {
-          "id": "construction-fence-78-146",
+          "id": "construction-fence-78-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 78 146",
+          "name": "fence 78 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 78,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41839,14 +44075,14 @@
           }
         },
         {
-          "id": "construction-fence-86-146",
+          "id": "construction-fence-86-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 86 146",
+          "name": "fence 86 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 86,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41864,14 +44100,14 @@
           }
         },
         {
-          "id": "construction-fence-94-146",
+          "id": "construction-fence-94-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 94 146",
+          "name": "fence 94 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 94,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41889,14 +44125,14 @@
           }
         },
         {
-          "id": "construction-fence-102-146",
+          "id": "construction-fence-102-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 102 146",
+          "name": "fence 102 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 102,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41914,14 +44150,14 @@
           }
         },
         {
-          "id": "construction-fence-110-146",
+          "id": "construction-fence-110-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 110 146",
+          "name": "fence 110 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 110,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41939,14 +44175,14 @@
           }
         },
         {
-          "id": "construction-fence-118-146",
+          "id": "construction-fence-118-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 118 146",
+          "name": "fence 118 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 118,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41964,14 +44200,14 @@
           }
         },
         {
-          "id": "construction-fence-126-146",
+          "id": "construction-fence-126-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 126 146",
+          "name": "fence 126 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 126,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -41989,14 +44225,14 @@
           }
         },
         {
-          "id": "construction-fence-134-146",
+          "id": "construction-fence-134-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 134 146",
+          "name": "fence 134 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 134,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -42014,14 +44250,14 @@
           }
         },
         {
-          "id": "construction-fence-142-146",
+          "id": "construction-fence-142-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 142 146",
+          "name": "fence 142 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 142,
             "y": 0,
-            "z": 146
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -42039,14 +44275,289 @@
           }
         },
         {
-          "id": "construction-fence-150-146",
+          "id": "construction-fence-150-234",
           "modelId": "material:crowd-barrier",
-          "name": "fence 150 146",
+          "name": "fence 150 234",
           "placementAnchor": "collider-base",
           "position": {
             "x": 150,
             "y": 0,
-            "z": 146
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-158-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 158 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 158,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-166-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 166 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 166,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-174-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 174 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 174,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-182-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 182 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 182,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-190-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 190 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 190,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-198-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 198 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 198,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-206-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 206 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 206,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-214-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 214 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 214,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-222-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 222 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 222,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-230-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 230 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 230,
+            "y": 0,
+            "z": 234
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-238-234",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 238 234",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 238,
+            "y": 0,
+            "z": 234
           },
           "rotation": {
             "x": 0,
@@ -42739,12 +45250,287 @@
           }
         },
         {
-          "id": "construction-fence-154--66",
+          "id": "construction-fence--94-150",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  66",
+          "name": "fence  94 150",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": -94,
+            "y": 0,
+            "z": 150
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-158",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 158",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 158
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-166",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 166",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-174",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 174",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 174
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-182",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 182",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 182
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-190",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 190",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 190
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-198",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 198",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 198
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-206",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 206",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 206
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-214",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 214",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-222",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 222",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence--94-230",
+          "modelId": "material:crowd-barrier",
+          "name": "fence  94 230",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 230
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242--66",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242  66",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
             "y": 0,
             "z": -66
           },
@@ -42764,12 +45550,12 @@
           }
         },
         {
-          "id": "construction-fence-154--58",
+          "id": "construction-fence-242--58",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  58",
+          "name": "fence 242  58",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -58
           },
@@ -42789,12 +45575,12 @@
           }
         },
         {
-          "id": "construction-fence-154--50",
+          "id": "construction-fence-242--50",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  50",
+          "name": "fence 242  50",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -50
           },
@@ -42814,12 +45600,12 @@
           }
         },
         {
-          "id": "construction-fence-154--42",
+          "id": "construction-fence-242--42",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  42",
+          "name": "fence 242  42",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -42
           },
@@ -42839,12 +45625,12 @@
           }
         },
         {
-          "id": "construction-fence-154--34",
+          "id": "construction-fence-242--34",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  34",
+          "name": "fence 242  34",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -34
           },
@@ -42864,12 +45650,12 @@
           }
         },
         {
-          "id": "construction-fence-154--26",
+          "id": "construction-fence-242--26",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  26",
+          "name": "fence 242  26",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -26
           },
@@ -42889,12 +45675,12 @@
           }
         },
         {
-          "id": "construction-fence-154--18",
+          "id": "construction-fence-242--18",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  18",
+          "name": "fence 242  18",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -18
           },
@@ -42914,12 +45700,12 @@
           }
         },
         {
-          "id": "construction-fence-154--10",
+          "id": "construction-fence-242--10",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  10",
+          "name": "fence 242  10",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -10
           },
@@ -42939,12 +45725,12 @@
           }
         },
         {
-          "id": "construction-fence-154--2",
+          "id": "construction-fence-242--2",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154  2",
+          "name": "fence 242  2",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": -2
           },
@@ -42964,12 +45750,12 @@
           }
         },
         {
-          "id": "construction-fence-154-6",
+          "id": "construction-fence-242-6",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 6",
+          "name": "fence 242 6",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 6
           },
@@ -42989,12 +45775,12 @@
           }
         },
         {
-          "id": "construction-fence-154-14",
+          "id": "construction-fence-242-14",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 14",
+          "name": "fence 242 14",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 14
           },
@@ -43014,12 +45800,12 @@
           }
         },
         {
-          "id": "construction-fence-154-22",
+          "id": "construction-fence-242-22",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 22",
+          "name": "fence 242 22",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 22
           },
@@ -43039,12 +45825,12 @@
           }
         },
         {
-          "id": "construction-fence-154-30",
+          "id": "construction-fence-242-30",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 30",
+          "name": "fence 242 30",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 30
           },
@@ -43064,12 +45850,12 @@
           }
         },
         {
-          "id": "construction-fence-154-38",
+          "id": "construction-fence-242-38",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 38",
+          "name": "fence 242 38",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 38
           },
@@ -43089,12 +45875,12 @@
           }
         },
         {
-          "id": "construction-fence-154-46",
+          "id": "construction-fence-242-46",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 46",
+          "name": "fence 242 46",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 46
           },
@@ -43114,12 +45900,12 @@
           }
         },
         {
-          "id": "construction-fence-154-54",
+          "id": "construction-fence-242-54",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 54",
+          "name": "fence 242 54",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 54
           },
@@ -43139,12 +45925,12 @@
           }
         },
         {
-          "id": "construction-fence-154-62",
+          "id": "construction-fence-242-62",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 62",
+          "name": "fence 242 62",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 62
           },
@@ -43164,12 +45950,12 @@
           }
         },
         {
-          "id": "construction-fence-154-70",
+          "id": "construction-fence-242-70",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 70",
+          "name": "fence 242 70",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 70
           },
@@ -43189,12 +45975,12 @@
           }
         },
         {
-          "id": "construction-fence-154-78",
+          "id": "construction-fence-242-78",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 78",
+          "name": "fence 242 78",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 78
           },
@@ -43214,12 +46000,12 @@
           }
         },
         {
-          "id": "construction-fence-154-86",
+          "id": "construction-fence-242-86",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 86",
+          "name": "fence 242 86",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 86
           },
@@ -43239,12 +46025,12 @@
           }
         },
         {
-          "id": "construction-fence-154-94",
+          "id": "construction-fence-242-94",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 94",
+          "name": "fence 242 94",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 94
           },
@@ -43264,12 +46050,12 @@
           }
         },
         {
-          "id": "construction-fence-154-102",
+          "id": "construction-fence-242-102",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 102",
+          "name": "fence 242 102",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 102
           },
@@ -43289,12 +46075,12 @@
           }
         },
         {
-          "id": "construction-fence-154-110",
+          "id": "construction-fence-242-110",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 110",
+          "name": "fence 242 110",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 110
           },
@@ -43314,12 +46100,12 @@
           }
         },
         {
-          "id": "construction-fence-154-118",
+          "id": "construction-fence-242-118",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 118",
+          "name": "fence 242 118",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 118
           },
@@ -43339,12 +46125,12 @@
           }
         },
         {
-          "id": "construction-fence-154-126",
+          "id": "construction-fence-242-126",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 126",
+          "name": "fence 242 126",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 126
           },
@@ -43364,12 +46150,12 @@
           }
         },
         {
-          "id": "construction-fence-154-134",
+          "id": "construction-fence-242-134",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 134",
+          "name": "fence 242 134",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 134
           },
@@ -43389,14 +46175,289 @@
           }
         },
         {
-          "id": "construction-fence-154-142",
+          "id": "construction-fence-242-142",
           "modelId": "material:crowd-barrier",
-          "name": "fence 154 142",
+          "name": "fence 242 142",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 154,
+            "x": 242,
             "y": 0,
             "z": 142
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-150",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 150",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 150
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-158",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 158",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 158
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-166",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 166",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 166
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-174",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 174",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 174
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-182",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 182",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 182
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-190",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 190",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 190
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-198",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 198",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 198
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-206",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 206",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 206
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-214",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 214",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 214
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-222",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 222",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 222
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1.5,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "construction-fence-242-230",
+          "modelId": "material:crowd-barrier",
+          "name": "fence 242 230",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 242,
+            "y": 0,
+            "z": 230
           },
           "rotation": {
             "x": 0,
@@ -43421,7 +46482,7 @@
           "position": {
             "x": 48,
             "y": 0,
-            "z": 140
+            "z": 228
           },
           "rotation": {
             "x": 0,
@@ -43541,7 +46602,7 @@
           "position": {
             "x": -98,
             "y": -0.02,
-            "z": 38
+            "z": 82
           },
           "rotation": {
             "x": 0,
@@ -43551,7 +46612,7 @@
           "scale": {
             "x": 0.625,
             "y": 0.6,
-            "z": 46.66666666666667
+            "z": 65
           },
           "functionalSettings": {
             "behavior": "decor",
@@ -43563,14 +46624,14 @@
           }
         },
         {
-          "id": "construction-city-sidewalk-x-158",
+          "id": "construction-city-sidewalk-x-246",
           "modelId": "material:baseplate",
-          "name": "city sidewalk x 158",
+          "name": "city sidewalk x 246",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 158,
+            "x": 246,
             "y": -0.02,
-            "z": 38
+            "z": 82
           },
           "rotation": {
             "x": 0,
@@ -43580,7 +46641,7 @@
           "scale": {
             "x": 0.625,
             "y": 0.6,
-            "z": 46.66666666666667
+            "z": 65
           },
           "functionalSettings": {
             "behavior": "decor",
@@ -43597,7 +46658,7 @@
           "name": "city sidewalk z  74",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 30,
+            "x": 74,
             "y": -0.02,
             "z": -74
           },
@@ -43607,7 +46668,7 @@
             "z": 0
           },
           "scale": {
-            "x": 54.16666666666667,
+            "x": 72.5,
             "y": 0.6,
             "z": 0.625
           },
@@ -43621,14 +46682,14 @@
           }
         },
         {
-          "id": "construction-city-sidewalk-z-150",
+          "id": "construction-city-sidewalk-z-238",
           "modelId": "material:baseplate",
-          "name": "city sidewalk z 150",
+          "name": "city sidewalk z 238",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 30,
+            "x": 74,
             "y": -0.02,
-            "z": 150
+            "z": 238
           },
           "rotation": {
             "x": 0,
@@ -43636,7 +46697,7 @@
             "z": 0
           },
           "scale": {
-            "x": 54.16666666666667,
+            "x": 72.5,
             "y": 0.6,
             "z": 0.625
           },
@@ -46352,7 +49413,7 @@
           "name": "city tower 4",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 0,
             "z": -121
           },
@@ -46381,7 +49442,7 @@
           "name": "city roof 4",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 80,
             "z": -121
           },
@@ -46410,7 +49471,7 @@
           "name": "city plant 4",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 80.3,
             "z": -121
           },
@@ -46439,7 +49500,7 @@
           "name": "city window n 4 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 5,
             "z": -133.02
           },
@@ -46468,7 +49529,7 @@
           "name": "city window s 4 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 5,
             "z": -108.98
           },
@@ -46497,7 +49558,7 @@
           "name": "city window e 4 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 5,
             "z": -121
           },
@@ -46526,7 +49587,7 @@
           "name": "city window n 4 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 17,
             "z": -133.02
           },
@@ -46555,7 +49616,7 @@
           "name": "city window s 4 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 17,
             "z": -108.98
           },
@@ -46584,7 +49645,7 @@
           "name": "city window e 4 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 17,
             "z": -121
           },
@@ -46613,7 +49674,7 @@
           "name": "city window n 4 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 29,
             "z": -133.02
           },
@@ -46642,7 +49703,7 @@
           "name": "city window s 4 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 29,
             "z": -108.98
           },
@@ -46671,7 +49732,7 @@
           "name": "city window e 4 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 29,
             "z": -121
           },
@@ -46700,7 +49761,7 @@
           "name": "city window n 4 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 41,
             "z": -133.02
           },
@@ -46729,7 +49790,7 @@
           "name": "city window s 4 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 41,
             "z": -108.98
           },
@@ -46758,7 +49819,7 @@
           "name": "city window e 4 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 41,
             "z": -121
           },
@@ -46787,7 +49848,7 @@
           "name": "city window n 4 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 53,
             "z": -133.02
           },
@@ -46816,7 +49877,7 @@
           "name": "city window s 4 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 53,
             "z": -108.98
           },
@@ -46845,7 +49906,7 @@
           "name": "city window e 4 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 53,
             "z": -121
           },
@@ -46874,7 +49935,7 @@
           "name": "city window n 4 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 65,
             "z": -133.02
           },
@@ -46903,7 +49964,7 @@
           "name": "city window s 4 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 65,
             "z": -108.98
           },
@@ -46932,7 +49993,7 @@
           "name": "city window e 4 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 65,
             "z": -121
           },
@@ -46961,7 +50022,7 @@
           "name": "city window n 4 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 77,
             "z": -133.02
           },
@@ -46990,7 +50051,7 @@
           "name": "city window s 4 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 194,
+            "x": 282,
             "y": 77,
             "z": -108.98
           },
@@ -47019,7 +50080,7 @@
           "name": "city window e 4 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 206.52,
+            "x": 294.52,
             "y": 77,
             "z": -121
           },
@@ -47483,7 +50544,7 @@
           "name": "city tower 6",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 0,
             "z": -33
           },
@@ -47512,7 +50573,7 @@
           "name": "city roof 6",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 72,
             "z": -33
           },
@@ -47541,7 +50602,7 @@
           "name": "city plant 6",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 72.3,
             "z": -33
           },
@@ -47570,7 +50631,7 @@
           "name": "city window n 6 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 5,
             "z": -45.52
           },
@@ -47599,7 +50660,7 @@
           "name": "city window s 6 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 5,
             "z": -20.48
           },
@@ -47628,7 +50689,7 @@
           "name": "city window e 6 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 5,
             "z": -33
           },
@@ -47657,7 +50718,7 @@
           "name": "city window n 6 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 17,
             "z": -45.52
           },
@@ -47686,7 +50747,7 @@
           "name": "city window s 6 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 17,
             "z": -20.48
           },
@@ -47715,7 +50776,7 @@
           "name": "city window e 6 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 17,
             "z": -33
           },
@@ -47744,7 +50805,7 @@
           "name": "city window n 6 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 29,
             "z": -45.52
           },
@@ -47773,7 +50834,7 @@
           "name": "city window s 6 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 29,
             "z": -20.48
           },
@@ -47802,7 +50863,7 @@
           "name": "city window e 6 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 29,
             "z": -33
           },
@@ -47831,7 +50892,7 @@
           "name": "city window n 6 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 41,
             "z": -45.52
           },
@@ -47860,7 +50921,7 @@
           "name": "city window s 6 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 41,
             "z": -20.48
           },
@@ -47889,7 +50950,7 @@
           "name": "city window e 6 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 41,
             "z": -33
           },
@@ -47918,7 +50979,7 @@
           "name": "city window n 6 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 53,
             "z": -45.52
           },
@@ -47947,7 +51008,7 @@
           "name": "city window s 6 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 53,
             "z": -20.48
           },
@@ -47976,7 +51037,7 @@
           "name": "city window e 6 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 53,
             "z": -33
           },
@@ -48005,7 +51066,7 @@
           "name": "city window n 6 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 65,
             "z": -45.52
           },
@@ -48034,7 +51095,7 @@
           "name": "city window s 6 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 65,
             "z": -20.48
           },
@@ -48063,7 +51124,7 @@
           "name": "city window e 6 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.02,
+            "x": 298.02,
             "y": 65,
             "z": -33
           },
@@ -48788,7 +51849,7 @@
           "name": "city tower 8",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 0,
             "z": 78
           },
@@ -48817,7 +51878,7 @@
           "name": "city roof 8",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 56,
             "z": 78
           },
@@ -48846,7 +51907,7 @@
           "name": "city plant 8",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 56.3,
             "z": 78
           },
@@ -48875,7 +51936,7 @@
           "name": "city window n 8 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 5,
             "z": 66.98
           },
@@ -48904,7 +51965,7 @@
           "name": "city window s 8 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 5,
             "z": 89.02
           },
@@ -48933,7 +51994,7 @@
           "name": "city window e 8 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.52,
+            "x": 298.52,
             "y": 5,
             "z": 78
           },
@@ -48962,7 +52023,7 @@
           "name": "city window n 8 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 17,
             "z": 66.98
           },
@@ -48991,7 +52052,7 @@
           "name": "city window s 8 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 17,
             "z": 89.02
           },
@@ -49020,7 +52081,7 @@
           "name": "city window e 8 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.52,
+            "x": 298.52,
             "y": 17,
             "z": 78
           },
@@ -49049,7 +52110,7 @@
           "name": "city window n 8 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 29,
             "z": 66.98
           },
@@ -49078,7 +52139,7 @@
           "name": "city window s 8 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 29,
             "z": 89.02
           },
@@ -49107,7 +52168,7 @@
           "name": "city window e 8 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.52,
+            "x": 298.52,
             "y": 29,
             "z": 78
           },
@@ -49136,7 +52197,7 @@
           "name": "city window n 8 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 41,
             "z": 66.98
           },
@@ -49165,7 +52226,7 @@
           "name": "city window s 8 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 41,
             "z": 89.02
           },
@@ -49194,7 +52255,7 @@
           "name": "city window e 8 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.52,
+            "x": 298.52,
             "y": 41,
             "z": 78
           },
@@ -49223,7 +52284,7 @@
           "name": "city window n 8 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 53,
             "z": 66.98
           },
@@ -49252,7 +52313,7 @@
           "name": "city window s 8 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 198,
+            "x": 286,
             "y": 53,
             "z": 89.02
           },
@@ -49281,7 +52342,7 @@
           "name": "city window e 8 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 210.52,
+            "x": 298.52,
             "y": 53,
             "z": 78
           },
@@ -49312,7 +52373,7 @@
           "position": {
             "x": -142,
             "y": 0,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49341,7 +52402,7 @@
           "position": {
             "x": -142,
             "y": 70,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49370,7 +52431,7 @@
           "position": {
             "x": -142,
             "y": 70.3,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49399,7 +52460,7 @@
           "position": {
             "x": -142,
             "y": 5,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49428,7 +52489,7 @@
           "position": {
             "x": -142,
             "y": 5,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49457,7 +52518,7 @@
           "position": {
             "x": -129.98,
             "y": 5,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49486,7 +52547,7 @@
           "position": {
             "x": -142,
             "y": 17,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49515,7 +52576,7 @@
           "position": {
             "x": -142,
             "y": 17,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49544,7 +52605,7 @@
           "position": {
             "x": -129.98,
             "y": 17,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49573,7 +52634,7 @@
           "position": {
             "x": -142,
             "y": 29,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49602,7 +52663,7 @@
           "position": {
             "x": -142,
             "y": 29,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49631,7 +52692,7 @@
           "position": {
             "x": -129.98,
             "y": 29,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49660,7 +52721,7 @@
           "position": {
             "x": -142,
             "y": 41,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49689,7 +52750,7 @@
           "position": {
             "x": -142,
             "y": 41,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49718,7 +52779,7 @@
           "position": {
             "x": -129.98,
             "y": 41,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49747,7 +52808,7 @@
           "position": {
             "x": -142,
             "y": 53,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49776,7 +52837,7 @@
           "position": {
             "x": -142,
             "y": 53,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49805,7 +52866,7 @@
           "position": {
             "x": -129.98,
             "y": 53,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49834,7 +52895,7 @@
           "position": {
             "x": -142,
             "y": 65,
-            "z": 182.98
+            "z": 270.98
           },
           "rotation": {
             "x": 0,
@@ -49863,7 +52924,7 @@
           "position": {
             "x": -142,
             "y": 65,
-            "z": 205.02
+            "z": 293.02
           },
           "rotation": {
             "x": 0,
@@ -49892,7 +52953,7 @@
           "position": {
             "x": -129.98,
             "y": 65,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -49921,7 +52982,7 @@
           "position": {
             "x": -75,
             "y": 0,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -49950,7 +53011,7 @@
           "position": {
             "x": -75,
             "y": 42,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -49979,7 +53040,7 @@
           "position": {
             "x": -75,
             "y": 42.3,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -50008,7 +53069,7 @@
           "position": {
             "x": -75,
             "y": 5,
-            "z": 185.98
+            "z": 273.98
           },
           "rotation": {
             "x": 0,
@@ -50037,7 +53098,7 @@
           "position": {
             "x": -75,
             "y": 5,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -50066,7 +53127,7 @@
           "position": {
             "x": -61.98,
             "y": 5,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -50095,7 +53156,7 @@
           "position": {
             "x": -75,
             "y": 17,
-            "z": 185.98
+            "z": 273.98
           },
           "rotation": {
             "x": 0,
@@ -50124,7 +53185,7 @@
           "position": {
             "x": -75,
             "y": 17,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -50153,7 +53214,7 @@
           "position": {
             "x": -61.98,
             "y": 17,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -50182,7 +53243,7 @@
           "position": {
             "x": -75,
             "y": 29,
-            "z": 185.98
+            "z": 273.98
           },
           "rotation": {
             "x": 0,
@@ -50211,7 +53272,7 @@
           "position": {
             "x": -75,
             "y": 29,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -50240,7 +53301,7 @@
           "position": {
             "x": -61.98,
             "y": 29,
-            "z": 198
+            "z": 286
           },
           "rotation": {
             "x": 0,
@@ -50269,7 +53330,7 @@
           "position": {
             "x": -4,
             "y": 0,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50298,7 +53359,7 @@
           "position": {
             "x": -4,
             "y": 88,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50327,7 +53388,7 @@
           "position": {
             "x": -4,
             "y": 88.3,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50356,7 +53417,7 @@
           "position": {
             "x": -4,
             "y": 5,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50385,7 +53446,7 @@
           "position": {
             "x": -4,
             "y": 5,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50414,7 +53475,7 @@
           "position": {
             "x": 8.02,
             "y": 5,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50443,7 +53504,7 @@
           "position": {
             "x": -4,
             "y": 17,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50472,7 +53533,7 @@
           "position": {
             "x": -4,
             "y": 17,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50501,7 +53562,7 @@
           "position": {
             "x": 8.02,
             "y": 17,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50530,7 +53591,7 @@
           "position": {
             "x": -4,
             "y": 29,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50559,7 +53620,7 @@
           "position": {
             "x": -4,
             "y": 29,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50588,7 +53649,7 @@
           "position": {
             "x": 8.02,
             "y": 29,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50617,7 +53678,7 @@
           "position": {
             "x": -4,
             "y": 41,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50646,7 +53707,7 @@
           "position": {
             "x": -4,
             "y": 41,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50675,7 +53736,7 @@
           "position": {
             "x": 8.02,
             "y": 41,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50704,7 +53765,7 @@
           "position": {
             "x": -4,
             "y": 53,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50733,7 +53794,7 @@
           "position": {
             "x": -4,
             "y": 53,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50762,7 +53823,7 @@
           "position": {
             "x": 8.02,
             "y": 53,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50791,7 +53852,7 @@
           "position": {
             "x": -4,
             "y": 65,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50820,7 +53881,7 @@
           "position": {
             "x": -4,
             "y": 65,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50849,7 +53910,7 @@
           "position": {
             "x": 8.02,
             "y": 65,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50878,7 +53939,7 @@
           "position": {
             "x": -4,
             "y": 77,
-            "z": 185.48
+            "z": 273.48
           },
           "rotation": {
             "x": 0,
@@ -50907,7 +53968,7 @@
           "position": {
             "x": -4,
             "y": 77,
-            "z": 206.52
+            "z": 294.52
           },
           "rotation": {
             "x": 0,
@@ -50936,7 +53997,7 @@
           "position": {
             "x": 8.02,
             "y": 77,
-            "z": 196
+            "z": 284
           },
           "rotation": {
             "x": 0,
@@ -50965,7 +54026,7 @@
           "position": {
             "x": 72,
             "y": 0,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -50994,7 +54055,7 @@
           "position": {
             "x": 72,
             "y": 68,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51023,7 +54084,7 @@
           "position": {
             "x": 72,
             "y": 68.3,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51052,7 +54113,7 @@
           "position": {
             "x": 72,
             "y": 5,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51081,7 +54142,7 @@
           "position": {
             "x": 72,
             "y": 5,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51110,7 +54171,7 @@
           "position": {
             "x": 83.02,
             "y": 5,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51139,7 +54200,7 @@
           "position": {
             "x": 72,
             "y": 17,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51168,7 +54229,7 @@
           "position": {
             "x": 72,
             "y": 17,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51197,7 +54258,7 @@
           "position": {
             "x": 83.02,
             "y": 17,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51226,7 +54287,7 @@
           "position": {
             "x": 72,
             "y": 29,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51255,7 +54316,7 @@
           "position": {
             "x": 72,
             "y": 29,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51284,7 +54345,7 @@
           "position": {
             "x": 83.02,
             "y": 29,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51313,7 +54374,7 @@
           "position": {
             "x": 72,
             "y": 41,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51342,7 +54403,7 @@
           "position": {
             "x": 72,
             "y": 41,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51371,7 +54432,7 @@
           "position": {
             "x": 83.02,
             "y": 41,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51400,7 +54461,7 @@
           "position": {
             "x": 72,
             "y": 53,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51429,7 +54490,7 @@
           "position": {
             "x": 72,
             "y": 53,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51458,7 +54519,7 @@
           "position": {
             "x": 83.02,
             "y": 53,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51487,7 +54548,7 @@
           "position": {
             "x": 72,
             "y": 65,
-            "z": 187.98
+            "z": 275.98
           },
           "rotation": {
             "x": 0,
@@ -51516,7 +54577,7 @@
           "position": {
             "x": 72,
             "y": 65,
-            "z": 210.02
+            "z": 298.02
           },
           "rotation": {
             "x": 0,
@@ -51545,7 +54606,7 @@
           "position": {
             "x": 83.02,
             "y": 65,
-            "z": 199
+            "z": 287
           },
           "rotation": {
             "x": 0,
@@ -51572,9 +54633,9 @@
           "name": "city tower 13",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 0,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51601,9 +54662,9 @@
           "name": "city roof 13",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 95,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51630,9 +54691,9 @@
           "name": "city plant 13",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 95.3,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51659,9 +54720,9 @@
           "name": "city window n 13 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 5,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -51688,9 +54749,9 @@
           "name": "city window s 13 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 5,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -51717,9 +54778,9 @@
           "name": "city window e 13 5",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 5,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51746,9 +54807,9 @@
           "name": "city window n 13 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 17,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -51775,9 +54836,9 @@
           "name": "city window s 13 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 17,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -51804,9 +54865,9 @@
           "name": "city window e 13 17",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 17,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51833,9 +54894,9 @@
           "name": "city window n 13 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 29,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -51862,9 +54923,9 @@
           "name": "city window s 13 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 29,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -51891,9 +54952,9 @@
           "name": "city window e 13 29",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 29,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -51920,9 +54981,9 @@
           "name": "city window n 13 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 41,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -51949,9 +55010,9 @@
           "name": "city window s 13 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 41,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -51978,9 +55039,9 @@
           "name": "city window e 13 41",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 41,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -52007,9 +55068,9 @@
           "name": "city window n 13 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 53,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -52036,9 +55097,9 @@
           "name": "city window s 13 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 53,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -52065,9 +55126,9 @@
           "name": "city window e 13 53",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 53,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -52094,9 +55155,9 @@
           "name": "city window n 13 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 65,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -52123,9 +55184,9 @@
           "name": "city window s 13 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 65,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -52152,9 +55213,9 @@
           "name": "city window e 13 65",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 65,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -52181,9 +55242,9 @@
           "name": "city window n 13 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 77,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -52210,9 +55271,9 @@
           "name": "city window s 13 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 77,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -52239,9 +55300,9 @@
           "name": "city window e 13 77",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 77,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -52268,9 +55329,9 @@
           "name": "city window n 13 89",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 89,
-            "z": 182.48
+            "z": 270.48
           },
           "rotation": {
             "x": 0,
@@ -52297,9 +55358,9 @@
           "name": "city window s 13 89",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 196,
+            "x": 284,
             "y": 89,
-            "z": 205.52
+            "z": 293.52
           },
           "rotation": {
             "x": 0,
@@ -52326,9 +55387,9 @@
           "name": "city window e 13 89",
           "placementAnchor": "collider-base",
           "position": {
-            "x": 207.52,
+            "x": 295.52,
             "y": 89,
-            "z": 194
+            "z": 282
           },
           "rotation": {
             "x": 0,
@@ -52376,7 +55437,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Build the city skyline in a 248 by 216 metre working yard. Enter the crane with E / Use, choose steel assistance or control the joysticks, and secure beams on the highlighted frame. Earthworks extend east and south: deep soil, loose gravel, stockpiles, a fill platform and full-size haul lanes. Crew & jobs lets workers use the shared machinery while you supervise or take control."
+            "text": "Build the city skyline in a 336 by 304 metre working yard. Enter the crane with E / Use, choose steel assistance or control the joysticks, and secure beams on the highlighted frame. Earthworks extend east and south: deep soil, loose gravel, stockpiles, a fill platform and full-size haul lanes. Crew & jobs lets workers use the shared machinery while you supervise or take control."
           }
         },
         {
@@ -52472,9 +55533,9 @@
           },
           "yard": {
             "minX": -94,
-            "maxX": 154,
+            "maxX": 242,
             "minZ": -70,
-            "maxZ": 146
+            "maxZ": 234
           },
           "earthworks": {
             "cellSize": 2,
@@ -52531,6 +55592,74 @@
                 "maxDepth": 0,
                 "height": 1.6,
                 "material": "gravel"
+              },
+              {
+                "id": "pavement-reclamation",
+                "name": "08 · Pavement reclamation",
+                "kind": "excavation",
+                "x": 198,
+                "z": 12,
+                "width": 60,
+                "depth": 18,
+                "maxDepth": 1,
+                "surface": "asphalt",
+                "surfaceThickness": 0.24,
+                "material": "gravel"
+              },
+              {
+                "id": "new-road",
+                "name": "09 · Build a gravel road",
+                "kind": "fill",
+                "x": 198,
+                "z": 92,
+                "width": 60,
+                "depth": 18,
+                "maxDepth": 0,
+                "material": "gravel"
+              },
+              {
+                "id": "utility-trench",
+                "name": "10 · Utility trench",
+                "kind": "excavation",
+                "x": 126,
+                "z": -44,
+                "width": 64,
+                "depth": 8,
+                "maxDepth": 3,
+                "material": "soil"
+              },
+              {
+                "id": "basement-cut",
+                "name": "11 · Basement excavation",
+                "kind": "excavation",
+                "x": 76,
+                "z": -40,
+                "width": 32,
+                "depth": 28,
+                "maxDepth": 6,
+                "material": "soil"
+              },
+              {
+                "id": "recycled-aggregate",
+                "name": "12 · Recycled aggregate receiving",
+                "kind": "stockpile",
+                "x": 198,
+                "z": 166,
+                "width": 28,
+                "depth": 28,
+                "maxDepth": 0,
+                "material": "gravel"
+              },
+              {
+                "id": "earth-platform",
+                "name": "13 · Earth platform and leveling",
+                "kind": "fill",
+                "x": 94,
+                "z": 192,
+                "width": 80,
+                "depth": 28,
+                "maxDepth": 0,
+                "material": "soil"
               }
             ]
           },
@@ -52714,6 +55843,60 @@
             "description": "Interactive gravel earthworks. Excavation, loose material and grading synchronize with the room."
           },
           {
+            "id": "pavement-reclamation",
+            "name": "08 · Pavement reclamation",
+            "x": 198,
+            "z": 12,
+            "width": 60,
+            "depth": 18,
+            "description": "Interactive gravel earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
+            "id": "new-road",
+            "name": "09 · Build a gravel road",
+            "x": 198,
+            "z": 92,
+            "width": 60,
+            "depth": 18,
+            "description": "Interactive gravel earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
+            "id": "utility-trench",
+            "name": "10 · Utility trench",
+            "x": 126,
+            "z": -44,
+            "width": 64,
+            "depth": 8,
+            "description": "Interactive soil earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
+            "id": "basement-cut",
+            "name": "11 · Basement excavation",
+            "x": 76,
+            "z": -40,
+            "width": 32,
+            "depth": 28,
+            "description": "Interactive soil earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
+            "id": "recycled-aggregate",
+            "name": "12 · Recycled aggregate receiving",
+            "x": 198,
+            "z": 166,
+            "width": 28,
+            "depth": 28,
+            "description": "Interactive gravel earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
+            "id": "earth-platform",
+            "name": "13 · Earth platform and leveling",
+            "x": 94,
+            "z": 192,
+            "width": 80,
+            "depth": 28,
+            "description": "Interactive soil earthworks. Excavation, loose material and grading synchronize with the room."
+          },
+          {
             "id": "city-tower-0",
             "name": "City Tower 1",
             "x": -142,
@@ -52752,7 +55935,7 @@
           {
             "id": "city-tower-4",
             "name": "City Tower 5",
-            "x": 194,
+            "x": 282,
             "z": -121,
             "width": 25,
             "depth": 24,
@@ -52770,7 +55953,7 @@
           {
             "id": "city-tower-6",
             "name": "City Tower 7",
-            "x": 198,
+            "x": 286,
             "z": -33,
             "width": 24,
             "depth": 25,
@@ -52788,7 +55971,7 @@
           {
             "id": "city-tower-8",
             "name": "City Tower 9",
-            "x": 198,
+            "x": 286,
             "z": 78,
             "width": 25,
             "depth": 22,
@@ -52798,7 +55981,7 @@
             "id": "city-tower-9",
             "name": "City Tower 10",
             "x": -142,
-            "z": 194,
+            "z": 282,
             "width": 24,
             "depth": 22,
             "description": "Surrounding city skyline. All building pieces can be edited in a copied Builder map."
@@ -52807,7 +55990,7 @@
             "id": "city-tower-10",
             "name": "City Tower 11",
             "x": -75,
-            "z": 198,
+            "z": 286,
             "width": 26,
             "depth": 24,
             "description": "Surrounding city skyline. All building pieces can be edited in a copied Builder map."
@@ -52816,7 +55999,7 @@
             "id": "city-tower-11",
             "name": "City Tower 12",
             "x": -4,
-            "z": 196,
+            "z": 284,
             "width": 24,
             "depth": 21,
             "description": "Surrounding city skyline. All building pieces can be edited in a copied Builder map."
@@ -52825,7 +56008,7 @@
             "id": "city-tower-12",
             "name": "City Tower 13",
             "x": 72,
-            "z": 199,
+            "z": 287,
             "width": 22,
             "depth": 22,
             "description": "Surrounding city skyline. All building pieces can be edited in a copied Builder map."
@@ -52833,8 +56016,8 @@
           {
             "id": "city-tower-13",
             "name": "City Tower 14",
-            "x": 196,
-            "z": 194,
+            "x": 284,
+            "z": 282,
             "width": 23,
             "depth": 23,
             "description": "Surrounding city skyline. All building pieces can be edited in a copied Builder map."

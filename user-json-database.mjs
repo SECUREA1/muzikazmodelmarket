@@ -10,6 +10,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
+import {migrateGameplayWallet} from './gameplay-wallet-migration.mjs';
 import {ownedFactoryModel,transferFactoryModel,factoryModelCertification,factoryModelTestLocked} from './factory-item-provenance.mjs';
 import {itemLocked} from './public/js/factory-logistics-config.js';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
@@ -198,6 +199,7 @@ export class UserJsonDatabase {
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
       if (wallet !== accountKey && data.users[accountKey]) {
+        migrateGameplayWallet(data,accountKey,wallet);
         for(const deed of Object.values(data.landDeeds||{}))if(deed.ownerId===accountKey){deed.ownerId=wallet;deed.updatedAt=now;}
         const fields=['walletId','counterpartyId','buyerId','sellerId','from','to','owner_id','ownerId','seller_id','buyer_id','creator','user_id','creatorId'];
         const migrate=entry=>{for(const field of fields)if(entry[field]===accountKey)entry[field]=wallet;};
