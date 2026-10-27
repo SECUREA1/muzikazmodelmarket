@@ -25,6 +25,7 @@ export function destinationIcon(place) {
   if (isProvingDestination(place)) return '🚀';
   if (isFactoryDestination(place)||/factory|missile|rocket/i.test(label)) return '🏭';
   if (place.basketball || /basketball/i.test(label)) return '🏀';
+  if (/tropical-island|island.adventure|tropical.resort/i.test(label)) return '🏝';
   if (/fitness|gym/i.test(label)) return '🏋';
   if (/hockey/i.test(label)) return '🏒';
   if (/funhouse|clown|carnival/i.test(label)) return '🤡';

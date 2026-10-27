@@ -4,6 +4,7 @@ import {generatedExperience,GENERATED_EXPERIENCE_VERSION} from './generated-worl
 import {WORLD_DISTRICTS,DISTRICT_PAGE_SIZE,districtMapId,districtFor} from './world-districts.mjs';
 import {isHockeyMap} from './public/js/hockey-rules.js';
 import {isArcadeMap} from './public/js/arcade-rules.js';
+import {isTropicalIslandMap,tropicalIslandPlayUrl} from './public/js/tropical-island-destination.js';
 import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -12,6 +13,7 @@ const names=['Cedar','Willow','Harbor','Maple','Aurora','Garden','Orchard','Juni
 const hash=value=>createHash('sha256').update(String(value)).digest().readUInt32BE();
 const fail=(message,statusCode=400)=>{throw Object.assign(new Error(message),{statusCode});};
 function mapPlayUrl(map){
+ if(isTropicalIslandMap(map))return tropicalIslandPlayUrl(map);
  if(map.playUrl)return map.playUrl;
  const page=isHockeyMap(map)?'hockey.html':isArcadeMap(map)?'arcade.html':'model-explorer.html';
  const solo=map.source==='custom-builder'&&map.builderScene?.gameplay?.multiplayer===false;

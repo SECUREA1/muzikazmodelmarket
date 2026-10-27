@@ -66115,5 +66115,62 @@
         }
       }
     }
+  },
+  {
+    "id": "tropical-island",
+    "name": "Island Adventure · Tropical Resort",
+    "label": "Tropical resort · explore at your own pace",
+    "description": "A complete tropical resort island with cabanas, two beach bars, beach balls, a volleyball court, small paddle boats, a lagoon course and pontoon cruises. Explore on foot or by boat for as long as you like in this solo island adventure. Optional fictional drinks stack a temporary arcade buzz and beer-goggle effect. Each drink digests and fades independently within 120 seconds of consumption; a new drink adds its own effect without resetting earlier drinks.",
+    "category": "Island adventures",
+    "game": "tropical-island",
+    "worldId": "neon-docks",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": false,
+    "sharedWorld": false,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 180,
+    "mapColor": "#48d7ba",
+    "mapTheme": "tropical",
+    "thumbnailUrl": "/public/images/tropical-island.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 24,
+      "rotationY": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "buzzSeconds": 120,
+    "unlimitedExploration": true,
+    "roomId": "tropical-island",
+    "playUrl": "tropical-island.html?environment=tropical-island&mode=solo&autoplay=1",
+    "aliases": [
+      "island-adventure",
+      "tropical-resort"
+    ],
+    "builderScene": {
+      "layout": "tropical-island",
+      "mapSize": 180,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": false,
+        "buzzSeconds": 120
+      }
+    },
+    "contentUpdatedAt": "2026-10-27T13:00:00.000Z"
   }
 ]
