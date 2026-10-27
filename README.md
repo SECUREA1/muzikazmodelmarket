@@ -360,3 +360,8 @@ Game Market and Builder Market use the same public `/api/market/catalog` to list
 Native map templates now include component quantities linked to purchasable items. Native item searches also match their functions and source maps. The editor, markets and placement runtimes share native behavior, vehicle, AI, quest, dialogue and animation settings, including restored defaults for previously owned items. See [native market integration](docs/native-market-integration.md) for the item/function breakdown and extension workflow.
 
 The shared header stays one row, switches to labeled icons when width is constrained, and places navigation in the hamburger menu on narrow screens. Wordmark Print remains in the product catalog/designer and appears in the retail grid only when it shares a row with another product.
+
+
+## World item factory and shipping supply
+
+Open **World item factory** in the explorer, arcade or hockey controls to build native and GLB catalog stock with bulk discounts. Each item begins with 1,000 global units once; purchases and physical deployments deplete stock. Dispatch completed batches through Hormuz or copied shipping maps, then finish the server-verified cargo voyage to restock a destination map warehouse or central world stores. Map stores share their warehouse inventory. See [world supply](docs/world-supply.md) for production, restocking, cancellation, and simulated onward transfers.

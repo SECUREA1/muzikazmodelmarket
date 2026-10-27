@@ -101,7 +101,7 @@ test('new cargo ship entry tilts toward the deck once and preserves later delibe
 test('shipping default pointer actions cannot ghost fire while the cargo action bar is active',()=>{
  const system={tool:'laser',toolSelected:false};
  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[name]=()=>assert.fail('A cargo action must not fire a weapon.');
- const context=vm.createContext({toxicBubbleSystem:system,fishingUI:{active:()=>false,visible:()=>false},activeEnvironment:{id:'hormuz-shipping'}}),start=source.indexOf("  for(const name of ['handlePointerInteraction'");
+ const context=vm.createContext({currentFunhouseEquipment:()=>null,toxicBubbleSystem:system,fishingUI:{active:()=>false,visible:()=>false},activeEnvironment:{id:'hormuz-shipping'}}),start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  for(const method of Object.keys(system))if(typeof system[method]==='function')assert.equal(system[method](),false);
 });
