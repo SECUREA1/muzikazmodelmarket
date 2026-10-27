@@ -3,6 +3,7 @@
   'use strict';
   var requested = false;
   var engineReady = false;
+  var engineImportFailed = false;
   var loadTimer = 0;
   var button = document.querySelector('[data-house-start]');
   var overlay = document.getElementById('house-game-start');
@@ -22,6 +23,15 @@
   }
   function begin() {
     if (requested) return;
+    // A failed module evaluation is cached by the browser and may have already
+    // mounted part of the UI. Start a fresh document instead of importing it twice.
+    if (engineImportFailed) {
+      requested = true;
+      var restartUrl = new URL(window.location.href);
+      restartUrl.searchParams.set('autoplay', '1');
+      window.location.replace(restartUrl.href);
+      return;
+    }
     requested = true;
     document.body.dataset.gameControls='loading';
     if (overlay) overlay.classList.remove('has-error');
@@ -32,7 +42,8 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    import('./house-explorer-glb.js?v=freight-hauling-20261026').catch(function (error) {
+    import('./house-explorer-glb.js?v=game-startup-20261027').catch(function (error) {
+      engineImportFailed = true;
       showError('The game engine could not start: ' + (error && error.message || 'Please reload this page.'));
     });
     loadTimer = window.setTimeout(showStall, 30000);
