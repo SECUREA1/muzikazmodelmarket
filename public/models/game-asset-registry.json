@@ -9446,7 +9446,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/alpine-quad.svg"
+        "thumbnailUrl": "/public/images/native-designs/alpine-quad-vehicle-v1.svg"
       },
       "description": "All-terrain quad with luggage racks, exposed suspension, LED lights and digital instruments.",
       "behavior": "vehicle",
@@ -10432,7 +10432,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-vehicle-v1.svg"
       },
       "description": "Elevated closed track, supports, safety restraint and animated car.",
       "behavior": "interact",
@@ -10505,7 +10505,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car-vehicle-v1.svg"
       },
       "description": "Restrained coaster car prop; use Skyline coaster for the running ride.",
       "behavior": "decor",
@@ -11617,7 +11617,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-vehicle-v1.svg"
       },
       "description": "Closed perimeter track, locomotive and three passenger carriages.",
       "behavior": "interact",
@@ -11690,7 +11690,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage-vehicle-v1.svg"
       },
       "description": "Passenger carriage prop; use Park express for the running ride.",
       "behavior": "decor",
@@ -11759,7 +11759,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine-vehicle-v1.svg"
       },
       "description": "Locomotive equipment prop; use Park express for the running ride.",
       "behavior": "decor",
@@ -12639,7 +12639,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack.svg"
+        "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack-vehicle-v1.svg"
       },
       "description": "Stored canoes and paddles for scenic waterfront dressing.",
       "behavior": "decor",
@@ -14369,7 +14369,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/corsair-aircraft.svg"
+        "thumbnailUrl": "/public/images/native-designs/corsair-aircraft-vehicle-v1.svg"
       },
       "description": "Blackwing Corsair from the Environment Builder, ready to drop into the running game.",
       "behavior": "vehicle",
@@ -14657,7 +14657,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/diamond-da40.svg"
+        "thumbnailUrl": "/public/images/native-designs/diamond-da40-vehicle-v1.svg"
       },
       "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
       "behavior": "vehicle",
@@ -14879,7 +14879,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/dune-quad.svg"
+        "thumbnailUrl": "/public/images/native-designs/dune-quad-vehicle-v1.svg"
       },
       "description": "Nightcrawler Dune Quad from the Environment Builder, ready to drop into the running game.",
       "behavior": "vehicle",
@@ -15499,7 +15499,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket.svg"
+        "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket-vehicle-v1.svg"
       },
       "priceMzk": 320,
       "description": "Factory-crafted cargo rocket collectible with booster pods, payload fairing and a service cradle.",
@@ -16275,7 +16275,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/factory-training-missile.svg"
+        "thumbnailUrl": "/public/images/native-designs/factory-training-missile-vehicle-v1.svg"
       },
       "priceMzk": 180,
       "description": "Factory-crafted inert training collectible with segmented shell, stabilizer fins and a display cradle.",
@@ -19888,7 +19888,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/frontier-pickup.svg"
+        "thumbnailUrl": "/public/images/native-designs/frontier-pickup-vehicle-v1.svg"
       },
       "priceMzk": 800,
       "description": "Crew-cab pickup with glass cabin, dashboard, four cargo slots, trailer hitch and freight delivery contracts.",
@@ -20317,7 +20317,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/grand-tourer.svg"
+        "thumbnailUrl": "/public/images/native-designs/grand-tourer-vehicle-v1.svg"
       },
       "description": "Luxury four-seat touring car with panoramic glass, leather cabin and live digital dashboard.",
       "behavior": "vehicle",
@@ -20463,7 +20463,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat-vehicle-v1.svg"
       },
       "description": "Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.",
       "behavior": "vehicle",
@@ -20544,7 +20544,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-patrol.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-patrol-vehicle-v1.svg"
       },
       "description": "Armored coastal patrol boat with a deck cannon, rescue gear, live crew radio and cooperative smuggler missions.",
       "behavior": "vehicle",
@@ -20623,7 +20623,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-sailboat.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-sailboat-vehicle-v1.svg"
       },
       "description": "A steerable marina boat with a mast and sail.",
       "behavior": "vehicle",
@@ -20700,7 +20700,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-skiff.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-skiff-vehicle-v1.svg"
       },
       "description": "Board and steer a launch on harbor water.",
       "behavior": "vehicle",
@@ -20777,7 +20777,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-yacht.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-yacht-vehicle-v1.svg"
       },
       "description": "A massive drivable yacht with bedroom, lounge, billiards and aft terrace.",
       "behavior": "vehicle",
@@ -24412,7 +24412,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/piper-cub.svg"
+        "thumbnailUrl": "/public/images/native-designs/piper-cub-vehicle-v1.svg"
       },
       "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
       "behavior": "vehicle",
@@ -26592,7 +26592,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-container.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-container-vehicle-v1.svg"
       },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
@@ -26753,7 +26753,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-feeder.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-feeder-vehicle-v1.svg"
       },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
@@ -26914,7 +26914,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-tanker.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-tanker-vehicle-v1.svg"
       },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
@@ -26992,7 +26992,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-bulldozer.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-bulldozer-vehicle-v1.svg"
       },
       "description": "Tracked bulldozer with hydraulic grading blade and twin joystick controls.",
       "behavior": "vehicle",
@@ -27061,7 +27061,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-dumptruck.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-dumptruck-vehicle-v1.svg"
       },
       "description": "Six-wheel site hauler with hydraulic tipping bed, payload indicator and detailed operator cab.",
       "behavior": "vehicle",
@@ -27130,7 +27130,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-excavator.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-excavator-vehicle-v1.svg"
       },
       "description": "Tracked excavator with rotating house, boom, stick, bucket and moving hydraulic rams.",
       "behavior": "vehicle",
@@ -28827,7 +28827,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/touring-motorcycle.svg"
+        "thumbnailUrl": "/public/images/native-designs/touring-motorcycle-vehicle-v1.svg"
       },
       "description": "Touring motorcycle with detailed engine, mirrors, luggage cases and digital instruments.",
       "behavior": "vehicle",
@@ -28896,7 +28896,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/tower-crane.svg"
+        "thumbnailUrl": "/public/images/native-designs/tower-crane-vehicle-v1.svg"
       },
       "description": "Slewing lattice tower crane with trolley, wire rope, hook block and remote operator cab.",
       "behavior": "vehicle",
@@ -29111,7 +29111,7 @@
       "dimensions": null,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer.svg"
+        "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer-vehicle-v1.svg"
       },
       "priceMzk": 350,
       "description": "Hitchable tandem trailer. Eight crate slots, visible stacking and secured shipping manifests.",
@@ -29471,7 +29471,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/wooden-cart.svg"
+        "thumbnailUrl": "/public/images/native-designs/wooden-cart-vehicle-v1.svg"
       },
       "description": "A board-built handcart with iron tyres, open spoked wheels, cross-braced sides and fitted pull shafts.",
       "behavior": "decor",

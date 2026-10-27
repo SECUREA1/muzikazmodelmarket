@@ -50,7 +50,7 @@ try:
           try{
             for(const id of ['forest-ranger','harbor-patrol','palm-cluster','material:corner-wedge']){
               const root=createBuilderModel(id),fixed=[];root.updateMatrixWorld(true);
-              root.traverse(mesh=>{if(mesh.geometry?.userData.nativeSurfaceUV){fixed.push({mesh,uv:mesh.geometry.getAttribute('uv')});}});
+              root.traverse(mesh=>{if(mesh.geometry?.userData.nativeSurfaceUV||mesh.geometry?.userData.vehicleSurfaceUv){fixed.push({mesh,uv:mesh.geometry.getAttribute('uv')});}});
               // Frame the affected physical surface rather than tiny details
               // on a complete vehicle, whose authored finish is restrained.
               root.traverse(mesh=>{if(mesh.isMesh)mesh.visible=false;});

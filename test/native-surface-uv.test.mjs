@@ -34,7 +34,7 @@ test('authored UVs and texture images remain intact while protected surfaces rec
 test('advanced aircraft, ships, landscape, character and material packs have usable native texture coordinates',()=>{
  const ids=['shipping-feeder','shipping-container','shipping-tanker','diamond-da40','piper-cub','harbor-yacht','harbor-patrol','harbor-fishing-boat','harbor-skiff','harbor-sailboat','alpine-mountain','corsair-aircraft','terrain-cliff','terrain-crater','palm-cluster','forest-ranger','desert-merchant','spectral-ghost','friendly-ghost','material:corner-wedge'];
  let generated=0;
- for(const id of ids){const root=createBuilderModel(id);try{const stats=nativeRenderStats(root);assert.ok(stats.meshes&&stats.texturedSurfaces,id+' has actual textured geometry');assert.equal(stats.missingNativeUVs,0,id);assert.equal(stats.invalidNativeUVs,0,id);root.traverse(mesh=>{if(mesh.geometry?.userData.nativeSurfaceUV)generated++;});}finally{disposeNativeAuditModel(root);}}
+ for(const id of ids){const root=createBuilderModel(id);try{const stats=nativeRenderStats(root);assert.ok(stats.meshes&&stats.texturedSurfaces,id+' has actual textured geometry');assert.equal(stats.missingNativeUVs,0,id);assert.equal(stats.invalidNativeUVs,0,id);root.traverse(mesh=>{if(mesh.geometry?.userData.nativeSurfaceUV||mesh.geometry?.userData.vehicleSurfaceUv)generated++;});}finally{disposeNativeAuditModel(root);}}
  assert.ok(generated>=60,'all previously unmapped hull, wing, terrain, frond, robe and material surfaces are covered');
 });
 
