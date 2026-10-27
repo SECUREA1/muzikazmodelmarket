@@ -65017,13 +65017,13 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-27T00:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T03:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
     "playUrl": "model-explorer.html?environment=muzikaz-factory-proving-grounds&house=muzikaz-factory-proving-grounds&autoplay=1&mode=multiplayer",
     "adjacentTo": "muzikaz-missile-factory",
-    "label": "Crafted-model tests · live launches · mountain access",
-    "description": "The neighboring factory test range connects your crafted training missiles and cargo rockets to shared launch-pad challenges. Prepare a saved model, deploy it on the pad, arm a countdown from the control bunker, and watch a synchronized scripted flight, target pulse or cargo touchdown. Telemetry records the score and grants mountain-facility clearance. The locked hatch leads into an underground power-containment game compound.",
+    "label": "VR control decks · live launches · mountain access",
+    "description": "The neighboring factory test range connects your crafted training missiles and cargo rockets to shared launch-pad challenges. Three walkable VR dashboard bays provide a preparation deck, launch supervision desk and flight telemetry station with animated screens and range overview boards. Prepare a saved model, deploy it on the pad, arm a countdown from the control bunker or supervision desk, and watch a synchronized scripted flight, target pulse or cargo touchdown. Telemetry records the score and grants mountain-facility clearance. The locked hatch leads into an underground power-containment game compound.",
     "indoor": false,
     "outdoor": true,
     "testing": {
@@ -65073,6 +65073,57 @@
             "z": 25
           },
           "interactionDistance": 6
+        },
+        {
+          "id": "proving-vr-setup",
+          "kind": "setup",
+          "name": "VR preparation deck",
+          "position": {
+            "x": -52,
+            "y": 0.56,
+            "z": 65
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "setup",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "kind": "control",
+          "name": "VR launch supervision desk",
+          "position": {
+            "x": 20,
+            "y": 0.74,
+            "z": 55
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "launch",
+          "deck": {
+            "height": 0.72,
+            "width": 22,
+            "depth": 16
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "kind": "control",
+          "name": "VR flight telemetry desk",
+          "position": {
+            "x": 35,
+            "y": 0.56,
+            "z": -28
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "telemetry",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
         }
       ],
       "targets": [
@@ -65149,6 +65200,57 @@
             "z": 25
           },
           "interactionDistance": 6
+        },
+        {
+          "id": "proving-vr-setup",
+          "kind": "setup",
+          "name": "VR preparation deck",
+          "position": {
+            "x": -52,
+            "y": 0.56,
+            "z": 65
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "setup",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "kind": "control",
+          "name": "VR launch supervision desk",
+          "position": {
+            "x": 20,
+            "y": 0.74,
+            "z": 55
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "launch",
+          "deck": {
+            "height": 0.72,
+            "width": 22,
+            "depth": 16
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "kind": "control",
+          "name": "VR flight telemetry desk",
+          "position": {
+            "x": 35,
+            "y": 0.56,
+            "z": -28
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "telemetry",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
         }
       ],
       "targets": [
@@ -65366,6 +65468,129 @@
           }
         },
         {
+          "id": "proving-vr-setup",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "VR preparation deck",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -52,
+            "y": 0.54,
+            "z": 61.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "setup",
+            "testingStationId": "proving-vr-setup",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "setup",
+            "prompt": "Open VR preparation deck · E / Use"
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "modelId": "testing-launch-console",
+          "asset": {
+            "buildAssetId": "testing-launch-console"
+          },
+          "name": "VR launch supervision desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 20,
+            "y": 0.72,
+            "z": 51.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-vr-launch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "launch",
+            "prompt": "Open VR launch supervision desk · E / Use"
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "VR flight telemetry desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 35,
+            "y": 0.54,
+            "z": -31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-vr-telemetry",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "telemetry",
+            "prompt": "Open VR flight telemetry desk · E / Use"
+          }
+        },
+        {
           "id": "target-alpha",
           "modelId": "testing-range-target",
           "asset": {
@@ -65550,6 +65775,57 @@
                 "z": 25
               },
               "interactionDistance": 6
+            },
+            {
+              "id": "proving-vr-setup",
+              "kind": "setup",
+              "name": "VR preparation deck",
+              "position": {
+                "x": -52,
+                "y": 0.56,
+                "z": 65
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "setup",
+              "deck": {
+                "height": 0.54,
+                "width": 22,
+                "depth": 14
+              }
+            },
+            {
+              "id": "proving-vr-launch",
+              "kind": "control",
+              "name": "VR launch supervision desk",
+              "position": {
+                "x": 20,
+                "y": 0.74,
+                "z": 55
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "launch",
+              "deck": {
+                "height": 0.72,
+                "width": 22,
+                "depth": 16
+              }
+            },
+            {
+              "id": "proving-vr-telemetry",
+              "kind": "control",
+              "name": "VR flight telemetry desk",
+              "position": {
+                "x": 35,
+                "y": 0.56,
+                "z": -28
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "telemetry",
+              "deck": {
+                "height": 0.54,
+                "width": 22,
+                "depth": 14
+              }
             }
           ],
           "targets": [
@@ -65584,6 +65860,7 @@
             "id": "proving-setup",
             "name": "Test preparation & telemetry",
             "x": -42,
+            "y": 0.02,
             "z": 35,
             "width": 14,
             "depth": 14,
@@ -65593,6 +65870,7 @@
             "id": "proving-pad",
             "name": "Shared launch pad",
             "x": 0,
+            "y": 0.02,
             "z": -10,
             "width": 18,
             "depth": 14,
@@ -65602,6 +65880,7 @@
             "id": "proving-control",
             "name": "Arm & launch control",
             "x": -24,
+            "y": 0.02,
             "z": 18,
             "width": 14,
             "depth": 14,
@@ -65611,10 +65890,44 @@
             "id": "proving-hatch",
             "name": "Mountain facility access hatch",
             "x": 50,
+            "y": 0.02,
             "z": 25,
             "width": 14,
             "depth": 14,
             "description": "Locked mountain-facility entrance. Complete both accuracy and cargo tests to earn access."
+          },
+          {
+            "id": "proving-vr-setup",
+            "name": "VR preparation deck",
+            "x": -52,
+            "y": 0.56,
+            "z": 65,
+            "width": 22,
+            "depth": 14,
+            "testingDashboard": "setup",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
+          },
+          {
+            "id": "proving-vr-launch",
+            "name": "VR launch supervision desk",
+            "x": 20,
+            "y": 0.74,
+            "z": 55,
+            "width": 22,
+            "depth": 16,
+            "testingDashboard": "launch",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
+          },
+          {
+            "id": "proving-vr-telemetry",
+            "name": "VR flight telemetry desk",
+            "x": 35,
+            "y": 0.56,
+            "z": -28,
+            "width": 22,
+            "depth": 14,
+            "testingDashboard": "telemetry",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
           },
           {
             "id": "target-alpha",

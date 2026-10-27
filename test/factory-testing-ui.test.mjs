@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {nearestFactoryTestingStation,testingSessionPhase,testingFlightPoint,ownTestingItems} from '../public/js/factory-testing-ui.js';
-import {PROVING_ID,COMPOUND_ID,PROVING_STATIONS,COMPOUND_STATIONS} from '../public/js/factory-test-config.js';
+import {PROVING_ID,COMPOUND_ID,PROVING_STATIONS,COMPOUND_STATIONS,testingDeepAccess} from '../public/js/factory-test-config.js';
 
 test('testing prompts respect their active map, edited station position, elevation and working on foot',()=>{
  const station=PROVING_STATIONS[0];assert.equal(nearestFactoryTestingStation({id:PROVING_ID},station.position)?.id,station.id);
@@ -31,4 +31,14 @@ test('owned item selector uses only private eligible records and rejects duplica
  assert.deepEqual(ownTestingItems({eligibleItems:[owned,{...owned,name:'Duplicate'},{id:'unsupported',profileId:'untrusted'},null]}),[owned]);
  assert.deepEqual(ownTestingItems({items:[owned]}),[],'general editable inventory does not populate test selection');
  assert.deepEqual(ownTestingItems(null),[]);
+});
+
+test('deep controls require public clearance or the current custom compound puzzle',()=>{
+ const solved={containment:{status:'solved',environmentId:'custom-compound'},clearance:{deep:false}};
+ assert.equal(testingDeepAccess({id:'custom-compound'},solved),true);
+ assert.equal(testingDeepAccess({id:'another-compound'},solved),false);
+ assert.equal(testingDeepAccess({id:COMPOUND_ID},solved),false);
+ assert.equal(testingDeepAccess({id:COMPOUND_ID},{clearance:{deep:true}}),true);
+ assert.equal(testingDeepAccess({id:'custom-compound'},{...solved,containment:{...solved.containment,status:'active'},clearance:{deep:true}}),false);
+ assert.equal(testingDeepAccess(null,solved),false);
 });

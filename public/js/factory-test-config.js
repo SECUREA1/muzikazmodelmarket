@@ -6,8 +6,14 @@ export const PROVING_FLIGHT_MS=8000;
 export const PROVING_IMPACT_MS=2000;
 const point=(x,z,y=.02)=>({x,y,z});
 const station=(id,kind,name,x,z)=>({id,kind,name,position:point(x,z),interactionDistance:kind==='pad'?8:6});
+/** Raised, walkable control bays support the same authorized test actions. */
+export const PROVING_DASHBOARD_STATIONS=Object.freeze([
+ {...station('proving-vr-setup','setup','VR preparation deck',-52,65),position:point(-52,65,.56),testingDashboard:'setup',deck:{height:.54,width:22,depth:14}},
+ {...station('proving-vr-launch','control','VR launch supervision desk',20,55),position:point(20,55,.74),testingDashboard:'launch',deck:{height:.72,width:22,depth:16}},
+ {...station('proving-vr-telemetry','control','VR flight telemetry desk',35,-28),position:point(35,-28,.56),testingDashboard:'telemetry',deck:{height:.54,width:22,depth:14}}
+]);
 export const PROVING_STATIONS=Object.freeze([
- station('proving-setup','setup','Test preparation & telemetry',-42,35),station('proving-pad','pad','Shared launch pad',0,-10),station('proving-control','control','Arm & launch control',-24,18),station('proving-hatch','hatch','Mountain facility access hatch',50,25)
+ station('proving-setup','setup','Test preparation & telemetry',-42,35),station('proving-pad','pad','Shared launch pad',0,-10),station('proving-control','control','Arm & launch control',-24,18),station('proving-hatch','hatch','Mountain facility access hatch',50,25),...PROVING_DASHBOARD_STATIONS
 ]);
 export const COMPOUND_STATIONS=Object.freeze([
  station('compound-return','return','Surface return lift',0,35),station('compound-containment','containment','Power containment puzzle',0,8),station('compound-deep-hatch','deep-hatch','Deep bunker access',0,-20)
@@ -26,6 +32,8 @@ const settings=environment=>environment?.builderScene?.sourceFactoryTesting||env
 export const isProvingEnvironment=environment=>environment?.id===PROVING_ID||settings(environment)?.kind==='proving'||environment?.game==='factory-proving';
 export const isCompoundEnvironment=environment=>environment?.id===COMPOUND_ID||settings(environment)?.kind==='compound'||environment?.game==='mountain-compound';
 export const isFactoryTestingEnvironment=environment=>isProvingEnvironment(environment)||isCompoundEnvironment(environment)||Boolean(environment?.builderScene?.objects?.some(object=>object?.functionalSettings?.testingStation||object?.functionalSettings?.testingTarget||/^testing-/.test(object?.asset?.buildAssetId||object?.modelId||'')));
+/** Present the server's distinct public-clearance and custom-puzzle rules. */
+export const testingDeepAccess=(environment,state)=>environment?.id===COMPOUND_ID?state?.clearance?.deep===true:Boolean(environment?.id&&state?.containment?.status==='solved'&&state.containment.environmentId===environment.id);
 const active=value=>value&&value.active!==false&&value.enabled!==false&&value.visible!==false&&!value.disabled&&!value.deleted&&!['deleted','disabled','inactive'].includes(value.status);
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const vector=(value,fallback=0)=>({x:finite(value?.x??value?.[0],fallback),y:finite(value?.y??value?.[1],fallback),z:finite(value?.z??value?.[2],fallback)});
@@ -45,7 +53,7 @@ function placed(environment,actors,type){
  const used=new Set();return objectsFor(environment,actors).flatMap((object,index)=>{
   const f={...object.gameplay,...object.functionalSettings},raw=type==='station'?f.testingStation:f.testingTarget,kind=raw===false?null:typeof raw==='string'?raw:(type==='station'?modelRoles:modelTargets)[object.asset?.buildAssetId||object.modelId],canonical=(type==='station'?allStations:PROVING_TARGETS).find(value=>value.kind===kind),id=String(object.id||'object-'+index),actor=actors?.[id];
   if(!canonical||!active(object)||!active(f)||actor&&(!active(actor)||(actor.health!==undefined&&actor.health<=0)||actor.holderId)||used.has(id)||id.length>180||/[\x00-\x1f\x7f]/.test(id))return [];used.add(id);
-  const record={...canonical,id:(type==='station'?'testing-instance:':'testing-target:')+id,objectId:id,canonicalId:canonical.id,name:typeof object.name==='string'&&object.name.trim()?object.name.trim().slice(0,120):canonical.name,position:transformedApproach(object,type==='station'?f.testingApproach:f.testingTargetApproach),interactionDistance:Math.max(.5,Math.min(8,finite(f.interactionDistance,canonical.interactionDistance||6)))};
+  const record={...canonical,id:(type==='station'?'testing-instance:':'testing-target:')+id,objectId:id,canonicalId:canonical.id,name:typeof object.name==='string'&&object.name.trim()?object.name.trim().slice(0,120):canonical.name,position:transformedApproach(object,type==='station'?f.testingApproach:f.testingTargetApproach),interactionDistance:Math.max(.5,Math.min(8,finite(f.interactionDistance,canonical.interactionDistance||6))),...(['setup','launch','telemetry'].includes(f.testingDashboard)?{testingDashboard:f.testingDashboard,dashboard:f.testingDashboard}:{})};
   record.revision=JSON.stringify([record.id,record.kind,record.position,object.position,object.rotation,object.scale,record.interactionDistance]);return [record];
  });
 }

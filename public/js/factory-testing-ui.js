@@ -1,4 +1,4 @@
-import {testingStations,isProvingEnvironment,isCompoundEnvironment} from './factory-test-config.js';
+import {testingStations,isProvingEnvironment,isCompoundEnvironment,testingDeepAccess} from './factory-test-config.js';
 import {loadGameMenuStyles} from './game-menu-controls.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -84,10 +84,10 @@ export function mountFactoryTestingUI(stage,command,{getPosition=()=>null,onOpen
   $('[data-target]').innerHTML=targets.length?targets.map(target=>'<option value="'+esc(target.id)+'">'+esc(target.name)+'</option>').join(''):Array.isArray(view?.targets)?'<option value="">No active targets</option>':profile==='cargo'?'<option value="cargo-zone">Cargo landing zone</option>':'<option value="target-alpha">Target Alpha</option>';
  }
  function render(){
-  if(!dialog.open)return;const compound=context()==='compound',session=own?.session,clearance=own?.clearance||{},containment=own?.containment;
+  if(!dialog.open)return;const compound=context()==='compound',session=own?.session,clearance=own?.clearance||{},containment=own?.containment,deepAccess=testingDeepAccess(environment,own);
   $('[data-heading]').textContent=compound?'Mountain compound':'Proving grounds';$('[data-subheading]').textContent=compound?'A hidden facility beneath the mountain.':'Turn your factory creation into a test flight.';
   for(const section of dialog.querySelectorAll('[data-view]'))section.hidden=section.dataset.view!==(compound?'compound':'proving');
-  $('[data-clearance]').textContent=clearance.deep?'DEEP ACCESS GRANTED':clearance.compound?'COMPOUND ACCESS GRANTED':'COMPOUND LOCKED';
+  $('[data-clearance]').textContent=clearance.deep||deepAccess?'DEEP ACCESS GRANTED':clearance.compound?'COMPOUND ACCESS GRANTED':'COMPOUND LOCKED';
   $('[data-clearance-description]').textContent=clearance.compound?'Compound clearance earned. Visit the mountain hatch to enter.':'Complete accuracy and cargo tests to earn compound clearance.';
   $('[data-enter]').hidden=compound;$('[data-enter]').disabled=busy||!clearance.compound||!nearStation('hatch');
   $('[data-return]').hidden=!compound;$('[data-return]').disabled=busy||!nearStation('return');
@@ -100,7 +100,7 @@ export function mountFactoryTestingUI(stage,command,{getPosition=()=>null,onOpen
    for(const channel of ['coolant','shield','power']){const cell=$('[data-channel-cell="'+channel+'"]'),state=channels[channel];cell.querySelector('.ft-channel-value').textContent=state?.value??'—';cell.querySelector('[data-channel-target]').textContent='Target '+(state?.target??'—');for(const button of cell.querySelectorAll('button'))button.disabled=busy||!nearStation('containment')||containment?.status!=='active';}
    $('[data-core-start]').disabled=busy||!nearStation('containment')||containment?.status==='active';$('[data-core-confirm]').disabled=busy||!nearStation('containment')||containment?.status!=='active';
    $('[data-core-status]').textContent=containment?.status==='solved'?'Core stabilized. Deep clearance saved.':containment?.status==='active'?'Match the three target positions, then confirm. '+(containment.moves||0)+' adjustments made.':'Walk to the containment console to begin.';
-   $('[data-deep-state]').textContent=clearance.deep?'Unlocked · approach the deep hatch to enter.':'Locked · stabilize the containment core first.';$('[data-deep-enter]').disabled=busy||!clearance.deep||!nearStation('deep-hatch');return;
+   $('[data-deep-state]').textContent=deepAccess?'Unlocked · approach the deep hatch to enter.':'Locked · stabilize the containment core first.';$('[data-deep-enter]').disabled=busy||!deepAccess||!nearStation('deep-hatch');return;
   }
   refreshItems();$('[data-empty]').hidden=items.length>0;
   const inFlight=['countdown','flight','impact'].includes(session?.status),pending=session&&!['complete','cancelled'].includes(session.status);

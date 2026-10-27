@@ -6,7 +6,7 @@ const testingObject=object=>{const f=object?.functionalSettings||{},item=FACTORY
 const kindOf=scene=>scene.sourceFactoryTesting?.kind||scene.layoutMeta?.factoryTesting?.kind||(['mountain-compound'].includes(scene.sourceLayout||scene.layout)||(scene.objects||[]).some(object=>['containment','deep-hatch','return'].includes(object.functionalSettings?.testingStation))?'compound':'proving');
 const roleModels={setup:'testing-telemetry-terminal',pad:'testing-launch-pad',control:'testing-launch-console',hatch:'testing-blast-door',return:'testing-telemetry-terminal',containment:'testing-containment-core','deep-hatch':'testing-blast-door'};
 export const FACTORY_TESTING_BUILDER_LAYOUTS=Object.freeze({
- 'factory-proving-grounds':{name:'Factory Proving Grounds',icon:'🚀',description:'An editable test range with launch preparation, a shared pad, launch control, practice target and cargo touchdown platform.',color:0x243e4a,sky:0x172c3d,mapSize:240,mapColor:'#53c8d5'},
+ 'factory-proving-grounds':{name:'Factory Proving Grounds',icon:'🚀',description:'An editable test range with VR preparation, launch supervision and telemetry dashboards, a shared pad, practice target and cargo touchdown platform.',color:0x243e4a,sky:0x172c3d,mapSize:240,mapColor:'#53c8d5'},
  'mountain-compound':{name:'Mountain Containment Compound · Sandbox',icon:'🔒',description:'An editable mountain facility with a symbolic containment puzzle, access doors and return lift. This custom sandbox does not grant access to the permanent facility.',color:0x303746,sky:0x181d2b,mapSize:240,mapColor:'#ad91e4'}
 });
 function settings(source={},kind=source.kind||'proving'){
@@ -22,8 +22,8 @@ function object(id,modelId,position,functional={},name){
 export function testingBuilderObjects(kind='proving'){
  const stations=kind==='compound'?COMPOUND_STATIONS:PROVING_STATIONS;
  const objects=stations.map(station=>{
-  const modelId=roleModels[station.kind],defaults=factoryTestingItemSettings(modelId),approach=defaults.testingApproach||{x:0,y:0,z:0};
-  return object(station.id,modelId,{x:station.position.x-approach.x,y:Math.max(0,(station.position.y||0)-(approach.y||0)-.02),z:station.position.z-approach.z},{testingStation:station.kind,testingStationId:station.id},station.name);
+  const modelId=station.testingDashboard==='telemetry'?'testing-telemetry-terminal':roleModels[station.kind],defaults=factoryTestingItemSettings(modelId),approach=defaults.testingApproach||{x:0,y:0,z:0};
+  return object(station.id,modelId,{x:station.position.x-approach.x,y:Math.max(0,(station.position.y||0)-(approach.y||0)-.02),z:station.position.z-approach.z},{testingStation:station.kind,testingStationId:station.id,...(station.testingDashboard?{testingDashboard:station.testingDashboard}:{})},station.name);
  });
  if(kind!=='compound')for(const target of PROVING_TARGETS)objects.push(object(target.id,target.kind==='cargo'?'testing-cargo-platform':'testing-range-target',{...target.position,y:0},{testingStation:false,testingTarget:target.kind,testingTargetId:target.id},target.name));
  return objects;

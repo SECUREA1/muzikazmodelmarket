@@ -22,9 +22,9 @@ function fixture(extra={}){
   console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},factoryTestingUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
-  gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
+  gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
-  funhouseVR:{reset,update:reset},funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
+  factoryTestingVR:{reset,receive:reset,visible:()=>false,isActive:()=>false},funhouseVR:{reset,update:reset},funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
@@ -66,6 +66,16 @@ test('a failed obsolete action cannot replace the current status or resident pan
   const pending=context.serverCommand('npc-social');
   if(replacement==='world')context.worldLoadGeneration++;else context.authoritativeClient={ready:true};
   reply.reject(Error('Old request failed'));assert.equal(await pending,false);assert.deepEqual(effects,[]);assert.deepEqual(statuses,[]);
+ }
+});
+
+test('private proving replies reach the native dashboard only while their issuing room remains current',async()=>{
+ for(const stale of [false,true]){
+  const reply=deferred(),received=[],{context}=commandFixture(reply,{factoryTestingVR:{receive:(...args)=>received.push(args)}});
+  const pending=context.serverCommand('proving-status');if(stale)context.worldLoadGeneration++;
+  const state={selfId:'testing-owner',result:{testing:{eligibleItems:[{id:'private-model',profileId:'accuracy'}]}}};reply.resolve(state);
+  assert.equal(await pending,stale?false:state);assert.equal(received.length,stale?0:1);
+  if(!stale){assert.equal(received[0][0],state);assert.equal(received[0][1],'testing-owner');assert.equal(received[0][2].id,'muzikaz-airport');}
  }
 });
 

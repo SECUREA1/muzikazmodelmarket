@@ -30,6 +30,32 @@ neighboring lot is free; existing maps and deeds retain their positions.
 The training and cargo routes use fictional game presets and abstract alignment
 scoring. They are not real missile or nuclear engineering simulations.
 
+## VR control dashboards
+
+Three raised control bays extend the range, each reached by its south stairs:
+
+- **VR preparation deck** on the southwest side selects an owned model, matching
+  test profile and target, configures a test and recalls its display copy.
+- **VR launch supervision desk** southeast of the launch pad arms and launches
+  a deployed model, adjusts its game alignment and cancels a test.
+- **VR flight telemetry desk** east of the pad monitors the shared countdown,
+  flight progress, trajectory, pad activity and saved results.
+
+In VR, open **Show testing dashboards** from the headset menu or use the nearby
+station action. Point either controller at a dashboard button and squeeze the
+trigger. Switch between setup, launch, telemetry and compound pages without
+leaving the headset. Controls enable when your position and test state allow
+the action; deployment still requires visiting the shared pad. The left grip
+cycles dashboards; the right grip shows or hides the panel.
+
+The dashboard stays anchored in the world so head movement retains parallax.
+Use **Recenter testing dashboard** in the headset menu to place it in front of
+your current view, or use **Hide dashboard** to close
+it to return to the range. Live flight graphics use the shared server clock;
+reduced motion keeps the dashboard's decoration still. Desktop and touch users
+retain the top-shelf SVG controls. The compound page operates the existing
+access checks and colored-circuit puzzle from VR.
+
 ## Unlock the mountain facility
 
 Complete a qualifying **accuracy** test and **cargo** test at the public proving
@@ -52,6 +78,8 @@ telemetry terminal, blast door, containment core and cargo platform. Purchases
 retain their interactions in Backpack. The **Proving Grounds** and **Mountain
 Compound** Builder templates preserve editable stations and targets when copied,
 moved, rotated, disabled, deleted, saved or published.
+The proving-ground template also includes the three control bays' individual
+consoles and preserves their setup, launch or telemetry dashboard selection.
 
 Custom-map tests and puzzles work as sandbox activities. They do not grant access
 to the official compound. A template never copies an account's inventory,
@@ -62,4 +90,8 @@ clearance or saved progress.
 Run `node --test test/*factory*.test.mjs test/mountain-compound-geometry.test.mjs`
 for gameplay, access, geometry, catalog and Builder coverage. The browser checks
 are `test/factory-testing-ui.browser.py` and the existing factory browser tests.
+`test/factory-testing-vr.test.mjs` checks native dashboard controls, controller
+rays, shared telemetry and lifecycle handling. Run
+`python3 test/factory-testing-vr.browser.py` for production XR control events
+with emulated controllers in Chromium.
 Use `npm run build && npm run check` to verify the static build.

@@ -22,7 +22,7 @@ test('permanent destinations are registered together with reciprocal factory tra
 });
 
 test('all proving-ground stations have clear approaches and connect through the bunker doorway',()=>{
- const map=factoryProvingGroundsWorld(),collision=new ServerBuilderCollision(),stations=testingStations(map),targets=testingTargets(map);assert.equal(stations.length,4);assert.equal(targets.length,2);
+ const map=factoryProvingGroundsWorld(),collision=new ServerBuilderCollision(),stations=testingStations(map),targets=testingTargets(map);assert.equal(stations.length,7);assert.equal(targets.length,2);
  for(const station of stations){const floor=collision.groundAt(map,station.position,{entry:true});assert.ok(floor,station.kind+' has physical support');assert.ok(collision.hasBodyClearance(map,floor,.38),station.kind+' has a clear operator point');}
  const start=collision.safeSpawn(map,map.spawn);const setup=walk(collision,map,start,[[-42,35]],'preparation');
  const control=walk(collision,map,setup,[[-24,35],[-24,18]],'control bunker');
@@ -42,4 +42,13 @@ test('shared launch visuals use the server flight clock, target position and res
  clock(launchAt+PROVING_FLIGHT_MS/2);assert.ok(flight.position.y>30);assert.ok(Math.abs(flight.position.x-1)<.001);assert.ok(Math.abs(flight.position.z+39)<.001);assert.equal(root.getObjectByName('PROVING_EXHAUST').visible,true);
  clock(flightEndsAt+500);const pulse=root.getObjectByName('PROVING_TARGET_RESULT_PULSE');assert.equal(pulse.visible,true);assert.equal(pulse.position.x,2);assert.equal(pulse.position.z,-68);
  assert.equal(root.getObjectByName('PROVING_BUNKER_OPAQUE_ROOF'),undefined);dispose(root);
+});
+
+test('dashboard screens keep preparation separate from countdown and ignore another map session',()=>{
+ const map=factoryProvingGroundsWorld(),root=createFactoryProvingGroundsLand(map);
+ const show=session=>{root.userData.setTestingState({sessions:[{session}]},10000);root.userData.updateTestingEffects(1,false,10000);return root.userData.dashboardVisualState;};
+ for(const status of ['configured','deployed','armed'])assert.equal(show({environmentId:map.id,status,launchAt:null}).phase,'setup',status+' remains in preparation until a real countdown starts');
+ assert.equal(show({environmentId:map.id,status:'countdown',launchAt:14000,flightEndsAt:22000}).phase,'countdown');
+ assert.equal(show({environmentId:'another-builder-range',status:'complete',launchAt:1,flightEndsAt:8001}).phase,'setup','foreign-map results cannot light the current dashboard');
+ assert.equal(root.userData.dashboardVisualState.stations,3);dispose(root);
 });

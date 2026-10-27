@@ -223,7 +223,10 @@ See [factory controls and production](docs/missile-factory.md).
 
 The factory's east gate now connects to **Atlas Proving Grounds**, where players
 can set up, deploy and launch their owned training missiles and cargo rockets
-with shared animations and SVG telemetry. Passing both test profiles unlocks
+with shared animations and SVG telemetry.
+Three walkable control bays add headset dashboards for preparation, launch
+supervision and live telemetry, with controller-ray buttons and shared test state.
+Passing both test profiles unlocks
 the **Mountain Nuclear Research Compound**; its symbolic containment puzzle opens the deeper
 bunker. Seven reusable testing assets and two editable templates are available
 in markets and Map Builder. See [testing and compound access](docs/factory-proving-grounds.md).
