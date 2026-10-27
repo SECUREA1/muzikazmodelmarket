@@ -226,6 +226,13 @@ All nine factory item types are available in Marketplace and Builder's
 roles, crew, vehicle jobs and local maps connected after moving or removing items.
 See [factory controls and production](docs/missile-factory.md).
 
+The factory's east gate now connects to **Atlas Proving Grounds**, where players
+can set up, deploy and launch their owned training missiles and cargo rockets
+with shared animations and SVG telemetry. Passing both test profiles unlocks
+the **Mountain Nuclear Research Compound**; its symbolic containment puzzle opens the deeper
+bunker. Seven reusable testing assets and two editable templates are available
+in markets and Map Builder. See [testing and compound access](docs/factory-proving-grounds.md).
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases

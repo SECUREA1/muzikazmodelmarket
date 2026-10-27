@@ -25423,6 +25423,582 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-testing-blast-door",
+      "name": "Compound Blast Door",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-blast-door",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        12,
+        7,
+        1.4
+      ],
+      "priceMzk": 350,
+      "description": "An eight-metre clear doorway with decorative sliding panels and an underground-compound entry interaction.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "hatch",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Compound Blast Door · E / Use",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-cargo-platform",
+      "name": "Cargo Test Platform",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-cargo-platform",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        10,
+        0.12,
+        12
+      ],
+      "priceMzk": 180,
+      "description": "A drive-over receiving platform defining the cargo test destination in a custom range.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "cargo",
+        "testingTargetId": "cargo-zone",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-containment-core",
+      "name": "Luminous Containment Core",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-containment-core",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        8,
+        6,
+        8
+      ],
+      "priceMzk": 650,
+      "description": "A fictional underground power-core puzzle station with luminous rings, an observation sphere and service pipes.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "containment",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 6
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Luminous Containment Core · E / Use",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-launch-console",
+      "name": "Range Launch Console",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-launch-console",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        5,
+        2.5,
+        2.4
+      ],
+      "priceMzk": 240,
+      "description": "Operate fictional test launches from a detailed three-screen control desk.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "control",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Launch Console · E / Use",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-launch-pad",
+      "name": "Atlas Test Launch Pad",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-launch-pad",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        14,
+        0.12,
+        18
+      ],
+      "priceMzk": 450,
+      "description": "Place a drive-over launch platform for factory testing jobs in your own map.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "pad",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "interactionKey": "e",
+        "interactionDistance": 8,
+        "prompt": "Use Atlas Test Launch Pad · E / Use",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-range-target",
+      "name": "Segmented Range Target",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-range-target",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        7,
+        7,
+        2.5
+      ],
+      "priceMzk": 120,
+      "description": "An accuracy objective with layered scoring sectors and a moving tracking line.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "testingStation": false,
+        "testingTarget": "accuracy",
+        "testingTargetId": "target-alpha",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
+      "assetId": "builder-testing-telemetry-terminal",
+      "name": "Range Telemetry Terminal",
+      "category": "factory-testing",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "testing-telemetry-terminal",
+      "builderCategory": "factory-testing",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        5,
+        2.6,
+        2.5
+      ],
+      "priceMzk": 160,
+      "description": "Set up a test run and review game telemetry from this systems desk.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "testingStation": "setup",
+        "testingApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3.5
+        },
+        "interactionKey": "e",
+        "interactionDistance": 6,
+        "prompt": "Use Range Telemetry Terminal · E / Use",
+        "destructible": false,
+        "damage": 0
+      }
+    },
+    {
       "assetId": "builder-timber-cabin",
       "name": "Timber Cabin",
       "category": "buildings",
@@ -29046,7 +29622,7 @@
     }
   ],
   "audit": {
-    "assetCount": 448,
+    "assetCount": 455,
     "generatedCount": 44,
     "warnings": [
       {

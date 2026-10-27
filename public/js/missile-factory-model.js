@@ -124,7 +124,8 @@ export function createMissileFactoryLand(environment={}){
  box(root,'SHOWCASE_PAD',3,.025,-34,17,.04,10,'#25383e',false);sign(root,'CARGO ROCKET / MK II',3,5.5,-41,15,2,'#53d4d0','ASSEMBLE YOUR OWN CRAFTED COLLECTIBLE');}
  for(const [x,z]of [[-66,-57],[66,-57],[-66,62],[66,62]]){cylinder(root,'YARD_LIGHT_POLE',x,5,z,.12,10,'steel');box(root,'YARD_FLOODLIGHT',x,9.8,z,2,.4,.6,'white',false);}
  for(const z of [-70,70])for(const x of [-48,48])box(root,'YARD_FENCE',x,1,z,56,2,.15,'steel');
- for(const x of [-76,76])box(root,'YARD_FENCE',x,1,0,.15,2,140,'steel');
+ box(root,'YARD_FENCE',-76,1,0,.15,2,140,'steel');for(const [z,depth]of [[-20.5,99],[55.5,29]])box(root,'YARD_FENCE',76,1,z,.15,2,depth,'steel');
+ for(const z of [28,42])box(root,'PROVING_GATE_POST',76,2.5,z,.35,5,.35,'orange');box(root,'PROVING_GATE_HEADER',76,5,35,.4,.45,14,'steel');sign(root,'PROVING GROUNDS →',68,4.5,43,21,2,'#53d4d0','TEST YOUR CRAFTED MODEL AT THE EAST GATE');
  sign(root,'WELCOME / FACTORY JOBS',-19,3.1,48,17,3,'#ef8b45','MEET MARA  ·  SPEND MZK ON A BUILD ORDER');
  if(!editableEquipment)for(const [x,text]of [[-32,'01 / PROCUREMENT'],[-30,'02 / FABRICATION'],[0,'03 / ASSEMBLY'],[27,'04 / CALIBRATION'],[30,'06 / DISPATCH']]){const z=x===-32||x===30?28:0;sign(root,text,x,5.9,z-5.6,x===0?18:13,2,'#ef8b45');}
  for(const [x,z]of [[-60,40],[-60,48]]){box(root,'CREW_REST_BENCH',x,.55,z,5,.15,1.2,'#9b7c59');for(const dx of [-1.8,1.8])box(root,'BENCH_LEG',x+dx,.25,z,.14,.5,1,'steel');}

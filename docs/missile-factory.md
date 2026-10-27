@@ -30,6 +30,10 @@ machines remain available in the plant yard through their shared controls.
 
 ## Markets and Map Builder
 
+Take completed items through the east gate to the neighboring proving grounds
+for reusable launch and cargo landing tests. Successful tests unlock the
+underground mountain facility. See [proving grounds and compound access](factory-proving-grounds.md).
+
 All nine factory item types are available in **Marketplace → All game items →
 Factory & engineering** and **Map Builder → ITEMS → Factory & engineering**:
 the training missile, cargo rocket, shell fabricator, assembly jig, calibration
