@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {bevelledBoxGeometry,finishGameItem} from './game-item-finish.js';
 
@@ -230,7 +231,7 @@ export function createEquipmentPropModel(id){
  const behavior=settings[id][2];root.name=info[0];root.userData={builderObject:true,equipmentPropModel:true,modelId:id,label:info[0],description:info[1],dimensions:[...info[2]],behavior,interactive:behavior!=='decor',animated:true};
  const bounds=new THREE.Box3().setFromObject(root);if(Number.isFinite(bounds.min.y))for(const child of root.children)child.position.y-=bounds.min.y;
  root.traverse(node=>{if(node.isMesh){node.userData.builderRoot=root;node.castShadow=!node.userData.collisionDisabled;node.receiveShadow=true;}});
- return finishGameItem(THREE,root);
+ return finishVehicleDesign(THREE,finishGameItem(THREE,root),id);
 }
 
 export function updateEquipmentPropModel(root,elapsed){

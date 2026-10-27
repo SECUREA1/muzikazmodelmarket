@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {FACTORY_STATIONS,FACTORY_STATION_MODELS} from './missile-factory-config.js';
 import {constructionCutoutPatches,createConstructionBaseGeometry} from './construction-terrain.js';
@@ -73,7 +74,7 @@ export function createFactoryModel(id){
   box(root,'TERMINAL_BODY',0,.65,0,6,1.3,2.4);box(root,'TERMINAL_TOP',0,1.34,0,6.2,.18,2.6,'steel');consoleAt(root,'ORDER_CONSOLE',0,-.35);
   for(const x of [-2.1,2.1])box(root,'STOCK_BIN',x,1.62,0,1.1,.42,1.1,id==='factory-dispatch-terminal'?'teal':'orange');
  }
- return root;
+ return finishVehicleDesign(T,root,id);
 }
 
 export function updateFactoryModel(root,elapsed=0,reducedMotion=false){

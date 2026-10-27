@@ -155,7 +155,13 @@ const cylinder = (r1,r2,h,mat,position,segments=16) => mesh(new THREE.CylinderGe
 function vehicle(id){
  const root=new THREE.Group(),black=material(0x090b0d,.28,.82),rubber=material(0x080808,.94,.02),steel=material(0x596169,.25,.88),engine=material(0x34393d,.38,.72),tube=(a,b,r=.055)=>{const d=new THREE.Vector3().subVectors(b,a),part=cylinder(r,r,d.length(),black,a.clone().add(b).multiplyScalar(.5),10);part.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());root.add(part);return part;};
  if(id==='dune-quad'){
-  [[-1.05,.42,-.62],[-1.05,.42,.62],[1.05,.42,-.62],[1.05,.42,.62]].forEach(([x,y,z])=>{const tyre=mesh(new THREE.TorusGeometry(.34,.14,12,24),rubber,[x,y,z],[Math.PI/2,0,0]);tyre.userData.vehicleWheel=true;root.add(tyre,cylinder(.08,.08,.42,steel,[x,y,z],10));});
+  // Upright XY wheel planes roll around the existing local Z animation axis.
+  // Their .42 m outer radius preserves X/Z extrema and the original .21 m
+  // placement datum formerly set by the vertical cosmetic axle cylinders.
+  for(const x of [-1.11,1.11]){
+   for(const z of [-.96,.96]){const tyre=mesh(new THREE.TorusGeometry(.28,.14,12,24),rubber,[x,.63,z]);tyre.name='DUNE_QUAD_UPRIGHT_TYRE';tyre.userData.vehicleWheel=true;root.add(tyre);tube(new THREE.Vector3(Math.sign(x)*.92,.42,Math.sign(z)*.48),new THREE.Vector3(x,.63,z),.045);}
+   const axle=cylinder(.055,.055,1.92,steel,[x,.63,0],12);axle.name='DUNE_QUAD_TRANSVERSE_AXLE';axle.rotation.x=Math.PI/2;root.add(axle);
+  }
   const p=[new THREE.Vector3(-.92,.42,-.48),new THREE.Vector3(-.92,.42,.48),new THREE.Vector3(.92,.42,-.48),new THREE.Vector3(.92,.42,.48),new THREE.Vector3(-.62,1.08,-.42),new THREE.Vector3(-.62,1.08,.42),new THREE.Vector3(.65,.88,-.42),new THREE.Vector3(.65,.88,.42)];[[0,2],[1,3],[0,1],[2,3],[0,4],[1,5],[4,5],[4,6],[5,7],[6,7],[2,6],[3,7]].forEach(([a,b])=>tube(p[a],p[b],.06));root.add(box([.58,.48,.62],engine,[.48,.58,0]),cylinder(.18,.18,.58,engine,[.75,.72,0],12),box([.55,.1,.48],material(0x202326,.8),[-.25,.69,0]));
   root.userData.vehicle={mode:'drive',seat:[-.2,.82,0],speed:9,turnSpeed:1.75};
  }else{

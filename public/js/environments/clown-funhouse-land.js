@@ -1,4 +1,5 @@
 import {funhouseRideCue} from '../funhouse-experience-rules.js';
+import {finishVehicleDesign} from '../vehicle-design-system.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable} from '../funhouse-adventure-rules.js';
 import * as T from '../../vendor/three/three.module.min.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
@@ -368,6 +369,7 @@ export function createClownFunhouseLand(environment={}) {
  sign(root,'IMPOSSIBLE CLOWN CAR',28,4.6,19.1,14,1.5,'HOW MANY CLOWNS FIT INSIDE?');
  control(court,'FUNHOUSE_CAR_BOARD_BUTTON',-4,1.3,2.6,'TAKE A SEAT','funhouse-clown-car','car','ride',yellow);
  rideAnchors.car={stationId:'funhouse-clown-car',kind:'car',root:car,feetOffset:{x:-.65,y:.6,z:.55},eyeHeight:1.15,exit:{x:24,y:.02,z:28}};
+ finishVehicleDesign(T,car,'funhouse-clown-car');
  stations.set('funhouse-clown-car',court);
 
  }

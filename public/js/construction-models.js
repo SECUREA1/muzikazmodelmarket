@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
 import {finishGameItem} from './game-item-finish.js';
@@ -130,7 +131,7 @@ export function createConstructionModel(id){
  // the mast, cab or tracks into client-only passages.
  const colliderGeometry=new T.BoxGeometry(1,1,1),colliderMaterial=new T.MeshBasicMaterial({visible:false,side:T.DoubleSide});
  for(const box of constructionKinematics({modelId:id}).boxes){const collider=new T.Mesh(colliderGeometry,colliderMaterial);collider.name='CONSTRUCTION_COLLIDER_'+box.part;collider.matrixAutoUpdate=false;collider.userData={collider:true,collisionOnly:true,constructionCollider:true,constructionPart:box.part};collider.castShadow=collider.receiveShadow=false;root.add(collider);refs.colliders.push(collider);}
- root.traverse(part=>{if(part.isMesh)part.userData.builderRoot=root;});updateConstructionModel(root,0);return finishGameItem(T,root);
+ root.traverse(part=>{if(part.isMesh)part.userData.builderRoot=root;});updateConstructionModel(root,0);return finishVehicleDesign(T,finishGameItem(T,root),id);
 }
 
 export function updateConstructionModel(root,elapsed=0){
