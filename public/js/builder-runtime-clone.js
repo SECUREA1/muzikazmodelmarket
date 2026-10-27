@@ -12,5 +12,12 @@ export function cloneBuilderRuntime(source,clone=object=>object.clone(true)){
   if(value&&typeof value==='object'&&[Object.prototype,null].includes(Object.getPrototypeOf(value)))return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,rebind(item)]));
   return value;
  };
- for(const {node,data,keys}of rigs)for(const key of keys)nodes.get(node).userData[key]=rebind(data[key]);return root;
+ for(const {node,data,keys}of rigs)for(const key of keys)nodes.get(node).userData[key]=rebind(data[key]);
+ // Authored item effects own their shader clocks and material pulses. Sharing
+ // these between editor copies would make one item's speed affect its siblings.
+ if(original.some(node=>node.userData.portalModel||node.userData.commonPropModel)){
+  const materials=new Map(),copyMaterial=material=>{if(!materials.has(material))materials.set(material,material.clone());return materials.get(material);};
+  root.traverse(node=>{if(node.isMesh&&node.material)node.material=Array.isArray(node.material)?node.material.map(copyMaterial):copyMaterial(node.material);});
+ }
+ return root;
 }
