@@ -30,7 +30,7 @@ async def main():
     if name=='broken' and attempts[name]==1: await route.fulfill(status=503,body='Temporarily unavailable')
     else: await route.fulfill(json=asset)
    await page.route('**/test-*.gltf',delayed)
-   await page.add_init_script("const originalRAF=requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>callback.name==='animate'?setTimeout(()=>callback(performance.now()),150):originalRAF(callback)")
+   await page.add_init_script("const originalRAF=requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>callback.name==='animate'?setTimeout(()=>callback(performance.now()),1000):originalRAF(callback)")
    # The fixture deliberately holds model downloads across several UI pages.
    await page.add_init_script("const nativeTimeout=setTimeout;window.setTimeout=(fn,delay,...args)=>nativeTimeout(fn,delay===20000?180000:delay,...args)")
    await page.goto(base+'/environment-builder.html')

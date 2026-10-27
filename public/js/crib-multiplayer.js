@@ -59,6 +59,7 @@
   function closePeers(){for(const [id,peer]of peers){signal(id,'hangup').catch(()=>{});peer.close();stopMeter(id);}peers.clear();pendingCandidates.clear();remoteAudio.forEach(audio=>audio.remove());remoteAudio.clear();}
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, presenceRequest=null;
+  let readyRoomId=null,roomGeneration=0,roomRequests=null,events=null,eventsRoomId=null,openingEvents=null;
   let speechTools=null,activeChatSpeech=null,finishChatSpeech=null,chatSpeechGeneration=0,chatSpeechDisposed=false;
   const speechBase=document.currentScript?.src||location.href;
   const speechToolsReady=Promise.all([import(new URL('./game-speech-owner.js',speechBase).href),import(new URL('./neural-character-speech.js',speechBase).href)]).then(([owners,voices])=>speechTools={...owners,speech:voices.gameSpeech(),Utterance:voices.GameSpeechUtterance}).catch(()=>null);
@@ -71,10 +72,29 @@
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
-  async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
+  async function jsonResponse(response) { const result = window.MUZIKAZ_API?.readJson ? await window.MUZIKAZ_API.readJson(response,{label:'The multiplayer service'}) : await response.json(); if (!response.ok || result.success === false) throw Object.assign(new Error(result.error || result.message || 'The crib server did not respond.'),{status:response.status,code:result.code}); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
   const activeRoom = () => window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
   const inActiveRoom = (item) => !item?.roomId || item.roomId === activeRoom();
+  function roomReady(roomId=readyRoomId,generation=roomGeneration) {
+    if(!roomId||roomId!==readyRoomId||roomId!==activeRoom()||generation!==roomGeneration)return false;
+    const snapshot=window.MuzikazHouseExplorer?.snapshot?.();
+    return !snapshot||(snapshot.roomId===roomId&&snapshot.serverHostedRoom===true&&snapshot.serverReady===true);
+  }
+  async function roomFetch(path,options={}) {
+    const roomId=readyRoomId,generation=roomGeneration,signal=roomRequests?.signal;
+    await window.MUZIKAZ_API?.ready;
+    if(!roomReady(roomId,generation))throw new DOMException('The multiplayer room changed.','AbortError');
+    return apiFetch(path,{...options,signal});
+  }
+  function stopRoom() {
+    readyRoomId=null;roomGeneration++;joined=false;
+    roomRequests?.abort();roomRequests=null;presenceRequest=null;loadingChat=null;
+    events?.close();events=null;eventsRoomId=null;openingEvents=null;
+    cancelChatSpeech();disableMicrophone();closePeers();
+    currentUsers=[];messages.replaceChildren();players.replaceChildren();count.textContent='0 / 15';roomCount.textContent='0 online';
+    unread=0;unreadCount.hidden=true;
+  }
 
   function setTextToSpeech(on, announce = false) {
     textToSpeechOn = Boolean(on && (window.AudioContext||window.webkitAudioContext));
@@ -129,12 +149,14 @@
   }
   async function postMessage(message) {
     if (sendingMessage) return;
+    if(!roomReady())throw new Error('Join a multiplayer room to chat.');
     sendingMessage = true;
     try {
-      const roomId=activeRoom();await heartbeat();
-      if(roomId!==activeRoom())throw new Error('The room changed. Send your message again in the current room.');
-      const response = await apiFetch('/api/houses/ioncore-house/chat', { method:'POST', headers, body:JSON.stringify({ message:message.slice(0, 140) }) });
+      const roomId=readyRoomId,generation=roomGeneration;await heartbeat();
+      if(!roomReady(roomId,generation))throw new Error('The room changed. Send your message again in the current room.');
+      const response = await roomFetch('/api/houses/ioncore-house/chat', { method:'POST', headers, body:JSON.stringify({ message:message.slice(0, 140) }) });
       const data = await jsonResponse(response);
+      if(!roomReady(roomId,generation))return;
       window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message:data.message };
       window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail:data }));
       addMessage(data);
@@ -142,23 +164,24 @@
     } finally { sendingMessage = false; }
   }
   async function heartbeat() {
-    const roomId=activeRoom();
+    const roomId=readyRoomId,generation=roomGeneration;
+    if(!roomReady(roomId,generation))return;
     if(presenceRequest?.roomId===roomId){const pending=presenceRequest;await pending.promise;if(pending.voiceEnabled!==Boolean(localStream)||pending.captionAt!==captionAt){if(presenceRequest===pending)presenceRequest=null;return heartbeat();}return;}
     const promise=(async()=>{
       let avatar=window.MUZIKAZ_DESIGNATED_AVATAR;
       if(!avatar)try{avatar=JSON.parse(localStorage.getItem('muzikazDesignatedAvatar')||'null');}catch{localStorage.removeItem('muzikazDesignatedAvatar');}
       // The server confirms account, room membership and character. Text chat
       // must not depend on a cached browser avatar or microphone permission.
-      const response=await apiFetch('/api/houses/ioncore-house/presence',{method:'POST',headers,body:JSON.stringify({username,voiceEnabled:Boolean(localStream),voiceCaption:caption,voiceCaptionAt:captionAt,roomId,color,avatarUrl:avatar?.modelUrl,modelUrl:avatar?.modelUrl,avatarName:avatar?.displayName||avatar?.name,position:window.MUZIKAZ_HOUSE_TRACKING?.position,rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation,movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState||'idle',animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState||'auto'})});
+      const response=await roomFetch('/api/houses/ioncore-house/presence',{method:'POST',headers,body:JSON.stringify({username,voiceEnabled:Boolean(localStream),voiceCaption:caption,voiceCaptionAt:captionAt,roomId,color,avatarUrl:avatar?.modelUrl,modelUrl:avatar?.modelUrl,avatarName:avatar?.displayName||avatar?.name,position:window.MUZIKAZ_HOUSE_TRACKING?.position,rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation,movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState||'idle',animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState||'auto'})});
       const data=await jsonResponse(response);
-      if(roomId===activeRoom()){joined=true;renderPresence(data);status.textContent='';}
+      if(roomReady(roomId,generation)){joined=true;renderPresence(data);status.textContent='';}
     })();
     presenceRequest={roomId,promise,voiceEnabled:Boolean(localStream),captionAt};
     try{await promise;}finally{if(presenceRequest?.promise===promise)presenceRequest=null;}
   }
 
 
-  async function signal(to, kind, signalPayload = null) { if(!headers['X-CSRF-Token']&&!window.MuzikazAccountSession?.csrfToken){const member=await jsonResponse(await apiFetch('/api/market/session',{headers}));headers['X-CSRF-Token']=member.csrfToken;} headers['X-CSRF-Token'] = window.MuzikazAccountSession?.csrfToken || headers['X-CSRF-Token'] || ''; const response = await apiFetch('/api/houses/ioncore-house/voice/signal', { method:'POST', headers, body:JSON.stringify({ to, kind, payload:signalPayload }) }); await jsonResponse(response); }
+  async function signal(to, kind, signalPayload = null) { if(!joined||!roomReady())return;const roomId=readyRoomId,generation=roomGeneration;if(!headers['X-CSRF-Token']&&!window.MuzikazAccountSession?.csrfToken){const member=await jsonResponse(await roomFetch('/api/market/session',{headers}));headers['X-CSRF-Token']=member.csrfToken;}if(!roomReady(roomId,generation))return;headers['X-CSRF-Token'] = window.MuzikazAccountSession?.csrfToken || headers['X-CSRF-Token'] || ''; const response = await roomFetch('/api/houses/ioncore-house/voice/signal', { method:'POST', headers, body:JSON.stringify({ to, kind, payload:signalPayload }) }); await jsonResponse(response); }
   function createPeer(remoteId) {
     if (peers.has(remoteId)) return peers.get(remoteId);
     const peer = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }] });
@@ -169,9 +192,9 @@
     peers.set(remoteId, peer); return peer;
   }
   async function makeOffer(remoteId) { const peer = createPeer(remoteId); const offer = await peer.createOffer(); await peer.setLocalDescription(offer); await signal(remoteId, 'offer', peer.localDescription); }
-  function connectToRoom() { if (!localStream) return; currentUsers.filter((user) => user.sessionId !== sessionId && (sessionId < user.sessionId || !user.voiceEnabled) && !peers.has(user.sessionId)).forEach((user) => makeOffer(user.sessionId).catch(() => {peers.get(user.sessionId)?.close();peers.delete(user.sessionId);})); }
+  function connectToRoom() { if (!localStream||!joined||!roomReady()) return; currentUsers.filter((user) => user.sessionId !== sessionId && (sessionId < user.sessionId || !user.voiceEnabled) && !peers.has(user.sessionId)).forEach((user) => makeOffer(user.sessionId).catch(() => {peers.get(user.sessionId)?.close();peers.delete(user.sessionId);})); }
   async function handleVoiceSignal(data) {
-    if (!data?.from || data.to !== sessionId || data.roomId !== activeRoom()) return;
+    if (!roomReady() || !data?.from || data.to !== sessionId || data.roomId !== activeRoom()) return;
     if (data.kind === 'hangup') { peers.get(data.from)?.close(); peers.delete(data.from); remoteAudio.get(data.from)?.remove(); remoteAudio.delete(data.from); pendingCandidates.delete(data.from);stopMeter(data.from); return; }
     if(!currentUsers.some(user=>user.sessionId===data.from&&(localStream||user.voiceEnabled)))return;
     const peer = createPeer(data.from);
@@ -181,11 +204,12 @@
     if(peer.remoteDescription){const queue=pendingCandidates.get(data.from)||[];pendingCandidates.delete(data.from);for(const candidate of queue)await peer.addIceCandidate(candidate);}
   }
   async function enableMicrophone() {
+    if(!roomReady())throw new Error('Join a multiplayer room to use voice chat.');
     if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error('Voice chat is not supported by this browser.');
     const generation=++voiceGeneration,room=activeRoom();await prepareAudio();closePeers();
     const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
     if(generation!==voiceGeneration||room!==activeRoom()){stream.getTracks().forEach(track=>track.stop());return;}localStream=stream;
-    micToggle.classList.add('is-on'); micToggle.setAttribute('aria-pressed', 'true'); micToggle.querySelector('b').textContent = 'Mic on'; voiceStatus.textContent = 'Microphone live · joining this space…'; localStream.getAudioTracks().forEach(track=>track.addEventListener('ended',()=>{if(localStream)disableMicrophone();})); const member=await jsonResponse(await apiFetch('/api/market/session',{headers})); headers['X-CSRF-Token']=member.csrfToken; meterStream(sessionId,localStream);await heartbeat(); connectToRoom();if(generation===voiceGeneration&&localStream)startCaptions();
+    micToggle.classList.add('is-on'); micToggle.setAttribute('aria-pressed', 'true'); micToggle.querySelector('b').textContent = 'Mic on'; voiceStatus.textContent = 'Microphone live · joining this space…'; localStream.getAudioTracks().forEach(track=>track.addEventListener('ended',()=>{if(localStream)disableMicrophone();})); const member=await jsonResponse(await roomFetch('/api/market/session',{headers})); headers['X-CSRF-Token']=member.csrfToken; meterStream(sessionId,localStream);await heartbeat(); connectToRoom();if(generation===voiceGeneration&&localStream&&roomReady())startCaptions();
   }
   function disableMicrophone() { voiceGeneration++;stopCaptions();localStream?.getTracks().forEach(track=>track.stop());localStream=null;stopMeter(sessionId);for(const [id,peer]of peers){if(currentUsers.some(user=>user.sessionId===id&&user.voiceEnabled)){for(const sender of peer.getSenders())if(sender.track?.kind==='audio')sender.replaceTrack(null).catch(()=>{});}else{signal(id,'hangup').catch(()=>{});peer.close();peers.delete(id);stopMeter(id);remoteAudio.get(id)?.remove();remoteAudio.delete(id);}}if(joined)heartbeat().catch(()=>{});micToggle.classList.remove('is-on','is-speaking');micToggle.style.removeProperty('--voice-level');micToggle.setAttribute('aria-pressed','false');micToggle.querySelector('b').textContent='Mic off';voiceStatus.textContent='Mic off · listening to this room'; }
 
@@ -214,7 +238,8 @@
       syncChatViewport();
       input.focus({ preventScroll:true });
       window.scrollTo(0, gameScrollY);
-      heartbeat().then(loadChat).catch(error=>{status.textContent=error.message;});
+      if(roomReady())heartbeat().then(loadChat).catch(error=>{status.textContent=error.message;});
+      else status.textContent='Join a multiplayer room to chat.';
     } else {
       document.documentElement.classList.remove('crib-chat-composing');
       if(!document.querySelector('dialog[open]:not([data-gameplay-blocking="false"])'))document.documentElement.classList.remove('game-menu-open');
@@ -243,30 +268,58 @@
   setTextToSpeech(textToSpeechOn);
   ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { speechTools?.speech.resume();cancelChatSpeech(); setTextToSpeech(!textToSpeechOn, true); } });
   async function loadChat() {
-    const roomId = activeRoom();
+    const roomId=readyRoomId,generation=roomGeneration;
+    if(!roomReady(roomId,generation))return;
     if (loadingChat?.roomId === roomId) return loadingChat.promise;
     const request = (async () => {
-      const data = await jsonResponse(await apiFetch(`/api/houses/ioncore-house/chat?roomId=${encodeURIComponent(roomId)}`, { headers, cache:'no-store' }));
+      const data = await jsonResponse(await roomFetch(`/api/houses/ioncore-house/chat?roomId=${encodeURIComponent(roomId)}`, { headers, cache:'no-store' }));
+      if(!roomReady(roomId,generation))return;
       (Array.isArray(data.messages) ? data.messages : []).forEach((message) => addMessage(message, false));
     })();
     loadingChat = { roomId, promise:request };
     try { await request; } finally { if (loadingChat?.promise === request) loadingChat = null; }
   }
-  loadChat().catch(() => {});
-  let events;
   const eventData = (event) => { try { return JSON.parse(event.data); } catch { return null; } };
-  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => { const data = eventData(event); if (data) renderPresence(data); }); events.addEventListener('house-chat-message', (event) => addMessage(eventData(event)));for(const name of ['world-atlas-updated','custom-map-live','member-plot-updated'])events.addEventListener(name,event=>window.dispatchEvent(new CustomEvent('muzikaz:world-directory-updated',{detail:eventData(event)})));  }
+  async function openEvents() {
+    const roomId=readyRoomId,generation=roomGeneration;
+    if(!joined||!roomReady(roomId,generation)||!('EventSource' in window)||eventsRoomId===roomId)return;
+    if(openingEvents?.roomId===roomId)return openingEvents.promise;
+    const promise=(async()=>{
+      // API discovery can move the transport to a separate host. Resolve the
+      // stream URL only after that host and authoritative membership are ready.
+      await window.MUZIKAZ_API?.ready;
+      if(!joined||!roomReady(roomId,generation))return;
+      const stream=new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}&roomId=${encodeURIComponent(roomId)}`),{withCredentials:true});
+      events=stream;eventsRoomId=roomId;
+      stream.addEventListener('house-presence-updated',event=>{const data=eventData(event);if(data&&roomReady(roomId,generation))renderPresence(data);});
+      stream.addEventListener('house-chat-message',event=>{if(roomReady(roomId,generation))addMessage(eventData(event));});
+      for(const name of ['world-atlas-updated','custom-map-live','member-plot-updated'])stream.addEventListener(name,event=>{if(roomReady(roomId,generation))window.dispatchEvent(new CustomEvent('muzikaz:world-directory-updated',{detail:eventData(event)}));});
+    })();
+    openingEvents={roomId,promise};
+    try{await promise;}finally{if(openingEvents?.promise===promise)openingEvents=null;}
+  }
   const voiceTimer=setInterval(async()=>{
-    if(!joined||pollingVoice)return;
+    if(!joined||!roomReady()||pollingVoice)return;
+    const roomId=readyRoomId,generation=roomGeneration;
     pollingVoice=true;
-    try{const data=await jsonResponse(await apiFetch('/api/houses/ioncore-house/voice/signal',{headers,cache:'no-store'}));for(const item of data.signals||[])await handleVoiceSignal(item);}
-    catch(error){voiceStatus.textContent=error.message||'Voice connection interrupted';}
+    try{const data=await jsonResponse(await roomFetch('/api/houses/ioncore-house/voice/signal',{headers,cache:'no-store'}));if(roomReady(roomId,generation))for(const item of data.signals||[])await handleVoiceSignal(item);}
+    catch(error){if(roomReady(roomId,generation))voiceStatus.textContent=error.message||'Voice connection interrupted';}
     finally{pollingVoice=false;}
   },1000);
-  const beginPresence = () => heartbeat().catch((error) => { joined=false;status.textContent = error.message; });
+  const beginPresence = async(event) => {
+    const roomId=event?.detail?.roomId||activeRoom();
+    if(roomId!==activeRoom())return;
+    const snapshot=window.MuzikazHouseExplorer?.snapshot?.();
+    if(snapshot&&(snapshot.roomId!==roomId||snapshot.serverHostedRoom!==true||snapshot.serverReady!==true))return;
+    if(readyRoomId!==roomId){stopRoom();readyRoomId=roomId;roomRequests=new AbortController();}
+    const generation=roomGeneration;
+    try{await heartbeat();if(roomReady(roomId,generation))await Promise.all([loadChat(),openEvents()]);}
+    catch(error){if(roomReady(roomId,generation)){joined=false;status.textContent=error.message;}}
+  };
   window.addEventListener('muzikaz:multiplayer-room-ready',beginPresence);
-  window.addEventListener('muzikaz:multiplayer-world-change', () => { cancelChatSpeech();disableMicrophone();closePeers(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
-  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
-  const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
-  window.addEventListener('pagehide', event => { cancelChatSpeech();if(event.persisted)return;chatSpeechDisposed=true;clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined; joined=false; disableMicrophone();closePeers();audioContext?.close().catch(()=>{}); events?.close(); if (wasJoined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  window.addEventListener('muzikaz:multiplayer-world-change', () => {stopRoom();status.textContent='Join a multiplayer room to chat.';});
+  const initialRoom=window.MuzikazHouseExplorer?.snapshot?.();
+  if(initialRoom?.serverHostedRoom&&initialRoom.serverReady)beginPresence({detail:{roomId:initialRoom.roomId}});
+  const timer = setInterval(() => {if(!readyRoomId)return;if(!roomReady()){stopRoom();return;}beginPresence();}, 5_000);
+  window.addEventListener('pagehide', event => { cancelChatSpeech();if(event.persisted)return;chatSpeechDisposed=true;clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined;stopRoom();audioContext?.close().catch(()=>{});if(wasJoined)navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

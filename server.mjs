@@ -69,6 +69,7 @@ const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
+const modelUploadDir = process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
 const mediaUploadDir=join(dataDir,'uploads','media');
 const deviceMediaUploads=new DeviceMediaUploads(mediaUploadDir,join(dataDir,'shared-media.json'));
@@ -209,14 +210,14 @@ const serverBackups = new ServerBackups(process.env.MUZIKAZ_BACKUP_DIR || join(d
   payments: paymentOrderStore.file, accountSessions: accountSessionsFile, gameSessions: gameSessionsFile,
   environments: environmentDataFile, customMaps: customMapsFile,
   avatarUploads: uploadDir, assetUploads: assetUploadDir, environmentUploads: environmentUploadDir,
-  modelUploads: process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models')
+  modelUploads: modelUploadDir
 });
 const masterRuntimeFile=join(dataDir,'server-runtime.json');
 const masterState=new MasterServerState({
  data:{path:dataDir,type:'directory'},accounts:{path:loadoutCodeStore.file,type:'file'},users:{path:userDatabaseFile,type:'file'},payments:{path:paymentOrderStore.file,type:'file'},
  accountSessions:{path:accountSessionsFile,type:'file'},gameSessions:{path:gameSessionsFile,type:'file'},
  environments:{path:environmentDataFile,type:'file'},customMaps:{path:customMapsFile,type:'file'},atlas:{path:worldAtlas.file,type:'file'},rooms:{path:sharedRooms.file,type:'file'},runtime:{path:masterRuntimeFile,type:'file'},
- avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:process.env.UPLOAD_STORAGE_PATH||join(dataDir,'uploads','models'),type:'directory'}
+ avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:modelUploadDir,type:'directory'}
 },{backupDirectory:serverBackups.directory});
 let masterMaintenance=false,activeServerRequests=0;
 const backgroundJobs=new Set();
@@ -299,6 +300,7 @@ async function saveEnvironmentUpload(req) {
 
 async function readAssets() { await ensureStorage(); return JSON.parse(await readFile(assetsFile, 'utf8')); }
 async function readModels() { await ensureStorage(); return JSON.parse(await readFile(modelsFile, 'utf8')); }
+const isPublishedModel = model => model && model.visibility !== 'private' && (model.status === 'published' || model.visibility === 'public');
 async function writeModels(records) { await ensureStorage(); await writeFile(modelsFile, JSON.stringify(records, null, 2)); }
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) {
@@ -1120,7 +1122,15 @@ const server = createServer(async (req, res) => {
     if (environmentItem && req.method === 'PATCH') { if (!requireAdmin(req, res)) return; const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const index = records.findIndex((env) => env.id === id); if (index < 0) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); records[index] = { ...records[index], ...environmentRecord({ ...records[index], ...(await bodyJson(req)) }, records[index]), id: records[index].id, modelUrl: records[index].modelUrl, source: 'uploaded', updatedAt: new Date().toISOString() }; await writeUploadedEnvironments(records); return sendJson(res, 200, assetResponse(records[index])); }
     if (environmentItem && req.method === 'DELETE') { if (!requireAdmin(req, res)) return; const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const record = records.find((env) => env.id === id); if (!record) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); await writeUploadedEnvironments(records.filter((env) => env.id !== id)); if (record.storedFilename) await unlink(join(environmentUploadDir, record.storedFilename)).catch(() => {}); return sendJson(res, 200, assetResponse({ id })); }
 
-    if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'GET') { const models = (await readModels()).filter((m) => m.status === 'published' || m.visibility === 'public').sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))); return sendJson(res, 200, assetResponse(models)); }
+    if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'GET') { const models = (await readModels()).filter(isPublishedModel).sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))); return sendJson(res, 200, assetResponse(models)); }
+    const publishedModelItem = url.pathname.match(/^\/api\/models\/([^/]+)$/);
+    if (publishedModelItem && req.method === 'GET') {
+      let id;
+      try { id = decodeURIComponent(publishedModelItem[1]); }
+      catch { return sendJson(res, 400, { success: false, code: 'MODEL_ID_INVALID', message: 'Invalid model identifier.' }); }
+      const record = (await readModels()).find(model => isPublishedModel(model) && model.id === id);
+      return record ? sendJson(res, 200, assetResponse(record)) : sendJson(res, 404, { success: false, code: 'MODEL_NOT_FOUND', message: 'Published model not found.' });
+    }
     if(['/api/avatar-options','/api/profile/avatar'].includes(url.pathname)){await resolveAccountSession(req);if(req.method==='PUT'&&!await accountSession(req,res,true))return;}
     if (url.pathname === '/api/avatar-options' && req.method === 'GET') return sendJson(res, 200, assetResponse(await avatarCatalog(user(req))));
     if (url.pathname === '/api/profile/avatar' && req.method === 'GET') { const actor = user(req); const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id); if (!profile) { const account=req.muzikazAuthentication?.accountId&&await loadoutCodeStore.getAccount(req.muzikazAuthentication.accountId),asset=account?.selectedAvatarId&&account.selectedAvatarId!==STARTER_AVATAR.id?await designatedAvatar(req,actor,req.muzikazAuthentication,account):null;return sendJson(res,200,assetResponse(asset?{valid:true,profile:{userId:actor.id,assetId:asset.id,modelUrl:asset.modelUrl||null,buildAssetId:asset.buildAssetId||null,displayName:asset.name,accessType:'owned',selectedAt:account.updatedAt,scale:1,animation:'auto'}}:{valid:false,reason:'not-selected',profile:null}));} const asset = await validatedAvatar(actor, profile.assetId); return sendJson(res, 200, assetResponse(asset ? { valid: true, profile: { ...profile, modelUrl: asset.modelUrl||null, buildAssetId:asset.buildAssetId||null, displayName: asset.name, accessType: asset.accessType } } : { valid: false, reason: 'removed-or-revoked', profile: null })); }
@@ -1170,7 +1180,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/avatars' && req.method === 'POST') { const owner = session(req); const record = sanitizeRecord(await bodyJson(req), owner); const records = await readAvatars(); records.push(record); await writeAvatars(records); broadcast('avatar-created', record); return sendJson(res, 201, record); }
     const avatarDelete = url.pathname.match(/^\/api\/houses\/ioncore-house\/avatars\/([^/]+)$/);
     if (avatarDelete && req.method === 'DELETE') { const owner = session(req); const id = decodeURIComponent(avatarDelete[1]); const records = await readAvatars(); const record = records.find((item) => item.id === id); if (!record) return sendJson(res, 404, { error: 'Not found' }); if (record.ownerId !== owner && process.env.MUZIKAZ_ALLOW_MOD_DELETE !== 'true') return sendJson(res, 403, { error: 'Forbidden' }); await writeAvatars(records.filter((item) => item.id !== id)); broadcast('avatar-deleted', { id }); return sendJson(res, 200, { id }); }
-    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })); res.muzikazSessionId = session(req); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
+    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' }, res.muzikazRequestOrigin)); res.muzikazSessionId = session(req); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'GET') { if (!await accountSession(req, res)) return; activePresence(); return sendJson(res, 200, presencePayload()); }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const asset = await designatedAvatar(req, actor); activePresence(); const targetRoom=cleanText(body.roomId,''),voiceCapacity=(await roomEnvironment(targetRoom))?.publicDestination?128:maxHouseUsers;const roomMembers=new Set(activePresence().filter(member=>member.roomId===targetRoom&&member.accountId!==req.muzikazAuthentication.accountId).map(member=>member.accountId));if(roomMembers.size>=voiceCapacity)return sendJson(res,409,{error:'This room is full.',...presencePayload()}); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const authoritativePlayer=await authoritativeRooms.player(cleanText(body.roomId,''),'account:'+req.muzikazAuthentication.accountId);if(!authoritativePlayer||Date.now()-authoritativePlayer.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join the authoritative room before sending presence.','presence');body.position=authoritativePlayer.position;body.rotation={y:authoritativePlayer.yaw};actor.name=authoritativePlayer.username;const position = { x: clampNumber(body.position?.x, -100000, 100000, previous.position?.x || 0), y: clampNumber(body.position?.y, -10000, 10000, previous.position?.y || 0), z: clampNumber(body.position?.z, -100000, 100000, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, accountId: req.muzikazAuthentication.accountId, voiceEnabled: body.voiceEnabled === true, voiceCaption: body.voiceEnabled===true?cleanText(body.voiceCaption,'').slice(0,140):'', voiceCaptionAt: body.voiceEnabled===true&&body.voiceCaption?Math.min(Date.now(),Math.max(Date.now()-10000,Number(body.voiceCaptionAt)||0)):0, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl||authoritativePlayer.modelUrl||null, avatarBuildAssetId:asset?.buildAssetId||authoritativePlayer.avatarBuildAssetId||null, avatarName: asset?.name||authoritativePlayer.username, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
@@ -1211,7 +1221,7 @@ const server = createServer(async (req, res) => {
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
     if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
-    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media)\/([a-zA-Z0-9._-]+)$/);
+    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media|models)\/([a-zA-Z0-9._-]+)$/);
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
     let uploadedFile = '',privateUpload=false;
     if (uploadMatch) {
@@ -1227,13 +1237,30 @@ const server = createServer(async (req, res) => {
           if (!isAdmin(req) && owner !== asset.ownerId) return sendJson(res,404,{error:'Not found'});
         }
       }
+      if (kind === 'models') {
+        // Retain the persisted URLs produced by the original model service.
+        // Only a registered model file may be served from its legacy directory.
+        const allowedOrigins = new Set(['https://muzikaz.com','https://www.muzikaz.com','https://muzikazmodelmarket.onrender.com']);
+        try { if(process.env.PUBLIC_BASE_URL)allowedOrigins.add(new URL(process.env.PUBLIC_BASE_URL).origin); } catch {}
+        const refersToFile = value => {
+          if(typeof value !== 'string')return false;
+          if(/^\/?uploads\/models\//.test(value)) {
+            try { return new URL(value.replace(/^\//,''),'https://model-reference.invalid/').pathname==='/uploads/models/'+name; } catch { return false; }
+          }
+          try { const url = new URL(value);return allowedOrigins.has(url.origin)&&url.pathname==='/uploads/models/'+name; } catch { return false; }
+        };
+        const models = (await readModels()).filter(model => [model.modelUrl,model.iosModelUrl,model.thumbnailUrl].some(refersToFile));
+        const published = models.some(isPublishedModel);
+        if(!models.length || (!published && !isAdmin(req)))return sendJson(res,404,{error:'Not found'});
+        privateUpload=!published;
+      }
       if (kind === 'environments') {
         const environment = (await readUploadedEnvironments()).find(item => item.storedFilename === name || item.thumbnailUrl === '/uploads/environments/' + name);
         if (!environment || (environment.visibility === 'private' && !isAdmin(req))) return sendJson(res,404,{error:'Not found'});
         if(environment.visibility==='private')privateUpload=true;
       }
       if(kind==='media'&&!(await deviceMediaUploads.records()).some(record=>record.id===name))return sendJson(res,404,{error:'Not found'});
-      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir}[kind], name);
+      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir,models:modelUploadDir}[kind], name);
       const info = await lstat(uploadedFile).catch(()=>null);
       if (!info?.isFile() || info.isSymbolicLink()) return sendJson(res,404,{error:'Not found'});
     }
@@ -1252,7 +1279,7 @@ const server = createServer(async (req, res) => {
       if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
       res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
     }
-    res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
+    res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }, res.muzikazRequestOrigin));
     createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });

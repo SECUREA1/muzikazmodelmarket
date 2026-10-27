@@ -168,3 +168,99 @@ test('a non-HTTP saved API base resets to the current web origin',async()=>{
  const paths=[];const {window}=loadConnection(async url=>{paths.push(url);return health();},'data:text/plain,broken');
  await window.MUZIKAZ_API.fetch('/api/market/session');assert.ok(paths.every(url=>url.startsWith('https://static.example/')));
 });
+
+test('member bearer sessions use sessionStorage when localStorage is blocked', async()=>{
+ const storage=new Map();let sent;
+ const transport=async(url,options)=>{if(url.endsWith('/api/health'))return health();sent=new Headers(options.headers);return new Response('{}');};
+ const first=loadConnection(transport,'https://muzikazmodelmarket.onrender.com',storage);
+ Object.defineProperty(first.window,'localStorage',{get(){throw Error('Storage blocked');}});
+ first.window.MUZIKAZ_API.setSessionToken('member-portable');
+ first.window.MUZIKAZ_API.setGameSessionToken('game-portable');
+ await first.window.MUZIKAZ_API.fetch('/api/backpack');
+ assert.equal(sent.get('authorization'),'Bearer member-portable');
+ assert.equal(sent.get('x-game-session'),'game-portable');
+ assert.equal(storage.get('s:muzikazAccountSessionToken'),'member-portable');
+ const next=loadConnection(transport,'https://muzikazmodelmarket.onrender.com',storage);
+ Object.defineProperty(next.window,'localStorage',{get(){throw Error('Storage blocked');}});
+ assert.equal(next.window.MUZIKAZ_API.getSessionToken(),'member-portable','portable account remains available on another page');
+ await next.window.MUZIKAZ_API.logout('csrf');
+ assert.equal(next.window.MUZIKAZ_API.getSessionToken(),'');
+ assert.equal(next.window.MUZIKAZ_API.getGameSessionToken(),'');
+});
+
+test('quota failures do not discard login tokens or restore them after logout',async()=>{
+ let sent;const {window}=loadConnection(async(url,options)=>{if(url.endsWith('/api/health'))return health();sent=new Headers(options.headers);return new Response('{}');});
+ window.localStorage.setItem=()=>{throw Error('Quota exceeded');};
+ window.MUZIKAZ_API.setSessionToken('member-quota');
+ await window.MUZIKAZ_API.fetch('/api/wallet/state');
+ assert.equal(sent.get('authorization'),'Bearer member-quota');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'member-quota');
+ await window.MUZIKAZ_API.logout('csrf');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'');
+});
+
+test('a quota-blocked account replacement removes the old local token before the next page',async()=>{
+ const storage=new Map([['l:muzikazAccountSessionToken','old-account']]);let sent;
+ const transport=async(url,options)=>{if(url.endsWith('/api/health'))return health();sent=new Headers(options.headers);return new Response('{}');};
+ const first=loadConnection(transport,'https://muzikazmodelmarket.onrender.com',storage);
+ first.window.localStorage.setItem=()=>{throw Error('Quota exceeded');};
+ first.window.MUZIKAZ_API.setSessionToken('new-account');
+ await first.window.MUZIKAZ_API.fetch('/api/backpack');
+ assert.equal(sent.get('authorization'),'Bearer new-account');
+ assert.equal(storage.has('l:muzikazAccountSessionToken'),false,'the old persistent login cannot outrank the new temporary session');
+ const next=loadConnection(transport,'https://muzikazmodelmarket.onrender.com',storage);
+ assert.equal(next.window.MUZIKAZ_API.getSessionToken(),'new-account');
+});
+
+test('new credentials and logout tombstones take priority over read-only stale storage',async()=>{
+ const storage=new Map([['l:muzikazAccountSessionToken','old-account'],['s:muzikazAccountSessionToken','old-temporary'],['s:muzikazGameSessionToken','old-game']]);const sent=[];
+ const {window}=loadConnection(async(url,options)=>{if(url.endsWith('/api/health'))return health();sent.push(new Headers(options.headers));return new Response('{}');},'https://muzikazmodelmarket.onrender.com',storage);
+ for(const name of ['localStorage','sessionStorage'])for(const operation of ['setItem','removeItem'])window[name][operation]=()=>{throw Error('Storage is read only');};
+ window.MUZIKAZ_API.setSessionToken('new-account');window.MUZIKAZ_API.setGameSessionToken('new-game');
+ await window.MUZIKAZ_API.fetch('/api/backpack');
+ assert.equal(sent[0].get('authorization'),'Bearer new-account');assert.equal(sent[0].get('x-game-session'),'new-game');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'new-account');assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'new-game');
+ await window.MUZIKAZ_API.logout('csrf');await window.MUZIKAZ_API.fetch('/api/health-check');
+ assert.equal(storage.get('l:muzikazAccountSessionToken'),'old-account','the browser really retained its old value');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'');assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'');
+ assert.equal(sent.at(-1).has('authorization'),false);assert.equal(sent.at(-1).has('x-game-session'),false);
+});
+
+test('the current page remains authenticated when both browser storage areas are unavailable',async()=>{
+ const requests=[];const {window}=loadConnection(async(url,options)=>{if(url.endsWith('/api/health'))return health();requests.push(new Headers(options.headers));return new Response('{}');});
+ for(const name of ['localStorage','sessionStorage'])Object.defineProperty(window,name,{get(){throw Error('Denied');}});
+ window.MUZIKAZ_API.setSessionToken('memory-member');window.MUZIKAZ_API.setGameSessionToken('memory-game');
+ await window.MUZIKAZ_API.fetch('/api/backpack');
+ assert.equal(requests[0].get('authorization'),'Bearer memory-member');assert.equal(requests[0].get('x-game-session'),'memory-game');
+ await window.MUZIKAZ_API.logout('csrf');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'');assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'');
+});
+
+test('an invalid local token does not erase a valid temporary member session',async()=>{
+ const storage=new Map([['l:muzikazAccountSessionToken','bad\nheader'],['s:muzikazAccountSessionToken','valid-session']]);
+ const {window}=loadConnection(async()=>health(),'https://muzikazmodelmarket.onrender.com',storage);
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'valid-session');
+ assert.equal(storage.get('l:muzikazAccountSessionToken'),'valid-session');
+ assert.equal(storage.has('s:muzikazAccountSessionToken'),false);
+ storage.delete('l:muzikazAccountSessionToken');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'','cleared shared storage cannot resurrect a cached credential');
+});
+
+test('Headers and header tuples preserve caller authorization and CSRF values',async()=>{
+ const sent=[];const {window}=loadConnection(async(url,options)=>{if(url.endsWith('/api/health'))return health();sent.push(new Headers(options.headers));return new Response('{}');});
+ window.MUZIKAZ_API.setSessionToken('default-member');
+ for(const headers of [new Headers({'X-CSRF-Token':'csrf','Authorization':'Bearer explicit'}),[['X-CSRF-Token','csrf'],['Authorization','Bearer explicit']]])
+  await window.MUZIKAZ_API.fetch('/api/member-action',{method:'POST',headers});
+ for(const headers of sent){assert.equal(headers.get('authorization'),'Bearer explicit');assert.equal(headers.get('x-csrf-token'),'csrf');}
+});
+
+test('member API JSON decoding reports deployment failures without a raw parser exception',async()=>{
+ const {window}=loadConnection(async()=>health());
+ const api=window.MUZIKAZ_API;
+ for(const response of [new Response('<html>Updating</html>',{status:503,headers:{'content-type':'text/html'}}),new Response('{broken',{status:502}),new Response('null'),new Response('true')])
+  await assert.rejects(api.readJson(response),error=>error.code==='INVALID_JSON_RESPONSE'&&error.status===response.status&&/Please try again/.test(error.message));
+ const result={success:false,code:'SESSION_REQUIRED',message:'Sign in'};
+ assert.deepEqual(await api.readJson(new Response(JSON.stringify(result))),result,'valid API errors retain their canonical code and message');
+ const aborted=new Error('Cancelled');aborted.name='AbortError';
+ await assert.rejects(api.readJson({status:200,headers:new Headers(),json:()=>Promise.reject(aborted)}),error=>error===aborted);
+});
