@@ -42,6 +42,7 @@ import {CRAFTED_LANDSCAPE_MODEL_INFO,createCraftedLandscapeModel,updateCraftedLa
 import {CRAFTED_CHARACTER_MODEL_INFO,createCraftedCharacterModel,updateCraftedCharacterModel} from './crafted-character-models.js';
 import {CRAFTED_BUILDING_MODEL_INFO,createCraftedBuildingModel,updateCraftedBuildingModel} from './crafted-building-models.js';
 import {CRAFTED_FURNITURE_MODEL_INFO,createCraftedFurnitureModel,updateCraftedFurnitureModel} from './crafted-furniture-models.js';
+import {finishNativeDesign} from './native-design-system.js';
 
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createBasketballHoop} from './basketball-stadium.js';
@@ -328,6 +329,10 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+ return finishNativeDesign(THREE,buildNativeModel(id,options),id);
+}
+
+function buildNativeModel(id,options={}) {
   if(EQUIPMENT_PROP_MODEL_INFO[id])return createEquipmentPropModel(id);
   if(CRAFTED_LANDSCAPE_MODEL_INFO[id])return createCraftedLandscapeModel(id);
   if(CRAFTED_CHARACTER_MODEL_INFO[id])return createCraftedCharacterModel(id);

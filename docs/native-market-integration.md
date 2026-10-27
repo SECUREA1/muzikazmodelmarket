@@ -81,6 +81,39 @@ claim ownership through these fields.
 
 ## Upgraded portals and everyday props
 
+The complete native catalog now uses `crafted-native-v3`. All 492 canonical
+definitions receive the shared surface finish through `createBuilderModel`,
+including every early-return factory and all 130 construction materials.
+Previously authored geometry is retained, with semantic detailing for transport,
+architecture, devices/sports and the remaining world props. Media graphics,
+colliders, paint colours, animation palettes, placement and gameplay settings are
+preserved. Materials use small deterministic surface maps for timber, masonry,
+stone, metal, rubber, fabric, ceramic, glass and other supported surfaces.
+
+`public/js/native-design-system.js` dispatches the design families;
+`native-surface-finish.js` supplies the common material treatment. Catalog records
+declare `visualDesign.version` and a dedicated thumbnail in
+`public/images/native-designs/`. Run `python3 scripts/render-native-designs.py`
+to render every canonical model and regenerate its accessible SVG thumbnail,
+category contact sheets and a render report. `scripts/audit-native-designs.mjs`
+checks the entire library, including actual rendering changes, and can compare
+prices, aliases and functionality with a recorded `--baseline` snapshot.
+`public/models/native-design-coverage.json` records the current per-item audit.
+
+The same design system also covers all 24 held tools and 32 native map templates.
+Together with five historical purchase aliases, these 548 unique designs cover
+all 553 native economy offers. `held-tool-design-finish.js` supplies physical
+models for every tool, including ranged weapons and utility gear that previously
+had no held projection. Existing weapon statistics, aim rays, camera attachments
+and use costs remain unchanged. Markets can show the actual tool model as well
+as its rendered thumbnail.
+
+`environments/native-world-design-finish.js` applies the surface treatment to
+native procedural world constructors, editor previews, and the dedicated arcade
+and hockey renderers. Imported GLBs, private maps and member-created map assets
+retain their authored surface pipeline. Construction pieces keep their original
+collision and walkable geometry; cosmetic hardware does not create obstacles.
+
 Existing `portal-door` and `teleport-pad` copies now use authored metal frames,
 emissive channels and animated energy fields. `portal-arch` adds a stone-and-rune
 gateway; `portal-ring` adds a circular solar gateway. New gateways expose the

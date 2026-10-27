@@ -1,3 +1,5 @@
+import {applyMaterialDesignFinish} from './material-design-finish.js';
+
 // Metre-scaled native pieces use the same placement, paint and ownership path
 // as the original blocks. Their artwork is projected from their actual meshes.
 export const EXPANDED_BUILDING_PIECES = Object.freeze([
@@ -143,7 +145,7 @@ export function buildingMaterial(id) {
 
 export function createBuildingBlock(THREE, id, { width = 1.2, height = .4, depth = .6, tint = null } = {}) {
   const profile = buildingMaterial(id), root = new THREE.Group();
-  if (profile.shape) return createStructure(THREE, profile, tint);
+  if (profile.shape) return applyMaterialDesignFinish(THREE,createStructure(THREE, profile, tint),profile);
   const material = new THREE.MeshStandardMaterial({ color: tint ?? profile.color,
     roughness: profile.roughness, metalness: profile.metalness, emissive: profile.emissive ?? 0, emissiveIntensity: profile.emissiveIntensity ?? 0,
     transparent: profile.opacity !== undefined, opacity: profile.opacity ?? 1,
@@ -175,7 +177,7 @@ export function createBuildingBlock(THREE, id, { width = 1.2, height = .4, depth
     addDetail(new THREE.IcosahedronGeometry(.14, 0), 0x8a9196, .15, .12, 0);
   }
   root.traverse(object => { if (object.isMesh) { object.castShadow = profile.solid; object.receiveShadow = true; } });
-  return root;
+  return applyMaterialDesignFinish(THREE,root,profile);
 }
 
 export function buildingDimensions(id) {

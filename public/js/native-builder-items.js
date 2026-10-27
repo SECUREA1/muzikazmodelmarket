@@ -17,6 +17,7 @@ import {CRAFTED_LANDSCAPE_ITEMS} from './crafted-landscape-models.js';
 import {CRAFTED_CHARACTER_ITEMS} from './crafted-character-models.js';
 import {CRAFTED_BUILDING_ITEMS} from './crafted-building-models.js';
 import {CRAFTED_FURNITURE_ITEMS} from './crafted-furniture-models.js';
+import {NATIVE_DESIGN_VERSION,nativeDesignThumbnail} from './native-design-profile.js';
 
 // Shared authored metadata for the editor, authoritative economy and owned-item
 // placement. Rendering factories stay in their existing native runtime modules.
@@ -75,6 +76,7 @@ export const EXPANDED_BUILDER_ITEMS=[
 // Make its reusable character model available without copying live residents.
 export const RUNTIME_BUILDER_ITEMS=[...Object.keys(PRISON_ITEMS).map(id=>prisonNativeItem(id)),...Object.keys(FUNHOUSE_ITEMS).map(id=>({id,...funhouseNativeItem(id)})),{id:'world-resident',name:'World Resident',description:'A reusable resident character with configurable dialogue for your map.',type:'avatar',category:'characters',behavior:'talk',animation:'idle',targetHeight:1.8,dimensions:[.7,1.9,.5],procedural:true,assetKind:'premade',function_data:{prompt:'Talk to resident'}}];
 const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS,...PORTAL_ITEMS,...COMMON_PROP_ITEMS,...EQUIPMENT_PROP_ITEMS,...CRAFTED_LANDSCAPE_ITEMS,...CRAFTED_CHARACTER_ITEMS,...CRAFTED_BUILDING_ITEMS,...CRAFTED_FURNITURE_ITEMS].map(item=>[item.id,item]));
+const craftedIds=new Set([...PORTAL_ITEMS,...COMMON_PROP_ITEMS,...EQUIPMENT_PROP_ITEMS,...CRAFTED_LANDSCAPE_ITEMS,...CRAFTED_CHARACTER_ITEMS,...CRAFTED_BUILDING_ITEMS,...CRAFTED_FURNITURE_ITEMS].map(item=>item.id));
 const definitions=[];
 for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])){
  const [name,description,dimensions]=BUILDER_MODEL_INFO[id]||[],device=INTERACTIVE_DEVICES[id],building=ENTERABLE_BUILDINGS[id],source=authored.get(id)||{};
@@ -90,11 +92,14 @@ for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])
  if(['hostile','patrol'].includes(behavior))base.aiSettings={type:behavior,detectionRange:9};
  if(behavior==='quest')base.questSettings={id:'quest-'+id,title:base.name,reward:0,...base.function_data.quest};
  if(['talk','quest'].includes(behavior))base.dialogueSettings={text:base.name+' is ready to talk.',...base.dialogueSettings};
+ base.thumbnailUrl=nativeDesignThumbnail(id);
+ if(!craftedIds.has(id))base.image=base.thumbnailUrl;
+ base.visualDesign={version:NATIVE_DESIGN_VERSION,thumbnailUrl:base.thumbnailUrl};
  definitions.push(base);
 }
 for(const item of BUILDING_MATERIALS){
  const id='material:'+item.id;
- definitions.push({id,buildAssetId:id,name:item.name||item.id,description:item.description||'',keywords:item.keywords||[],type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',function_data:{behavior:'decor',action:'none'}});
+ definitions.push({id,buildAssetId:id,name:item.name||item.id,description:item.description||'',keywords:item.keywords||[],type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',image:nativeDesignThumbnail(id),thumbnailUrl:nativeDesignThumbnail(id),visualDesign:{version:NATIVE_DESIGN_VERSION,thumbnailUrl:nativeDesignThumbnail(id)},function_data:{behavior:'decor',action:'none'}});
 }
 export const NATIVE_BUILDER_ITEMS=Object.freeze(Object.fromEntries(definitions.map(item=>[item.id,Object.freeze(item)])));
 export function nativeBuilderItem(id){return NATIVE_BUILDER_ITEMS[id]||null;}

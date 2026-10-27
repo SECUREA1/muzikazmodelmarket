@@ -1,3 +1,5 @@
+import {createHeldToolModel} from './held-tool-design-finish.js';
+
 export const UTILITY_TOOLS = Object.freeze({
   medkit:{label:'Medkit',description:'Restore 30 health · 3 uses per run',cooldown:20,charges:3,color:0x72ffc0},
   'shield-kit':{label:'Shield kit',description:'Block damage for 6 seconds · 2 uses per run',cooldown:30,charges:2,color:0xff72d5},
@@ -7,6 +9,10 @@ export const UTILITY_TOOLS = Object.freeze({
   'supply-kit':{label:'Supply kit',description:'Refill 12 paint and igniter fuel · 3 uses per run',cooldown:25,charges:3,color:0xff9671},
   beacon:{label:'Waypoint beacon',description:'Mark the aimed surface for 20 seconds',cooldown:3,color:0xd79aff},
 });
+
+export function createUtilityToolModel(THREE,id){
+ const profile=UTILITY_TOOLS[id];return profile?createHeldToolModel(THREE,id,{color:profile.color}):null;
+}
 
 export class UtilityKit {
   constructor(){this.ready=new Map();this.used=new Map();}
