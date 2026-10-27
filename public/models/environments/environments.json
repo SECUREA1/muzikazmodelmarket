@@ -56766,6 +56766,43 @@
           }
         },
         {
+          "id": "factory-general-production-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "World Item Factory · all-item production",
+          "position": {
+            "x": 14,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Enter World Item Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-item-factory"
+            }
+          }
+        },
+        {
           "id": "factory-export",
           "modelId": "factory-export-terminal",
           "name": "Factory export & market desk",
@@ -63011,6 +63048,41 @@
           }
         },
         {
+          "id": "shipping-world-item-factory-gateway",
+          "modelId": "archway",
+          "name": "World Item Factory · production and stock",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -960,
+            "y": 0,
+            "z": 401
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "destructible": false,
+            "prompt": "Enter World Item Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-item-factory",
+              "ownerName": "MUZIKAZ",
+              "color": "#80d9c9"
+            }
+          }
+        },
+        {
           "id": "shipping-atlas-factory-gateway",
           "modelId": "archway",
           "name": "Atlas factory freight gateway",
@@ -65275,6 +65347,15 @@
             "depth": 10,
             "logisticsStationId": "shipping-east-receiving",
             "description": "Review verified factory export arrivals and the connected MZK supply exchange."
+          },
+          {
+            "id": "shipping-world-item-factory-gateway",
+            "name": "World Item Factory · production and stock",
+            "x": -960,
+            "z": 401,
+            "width": 8,
+            "depth": 8,
+            "description": "Visit the four-stage World Item Factory and dispatch counted stock for sea delivery."
           },
           {
             "id": "shipping-factory-gateway",
@@ -68477,5 +68558,894 @@
       }
     },
     "playUrl": "model-explorer.html?environment=ironwood-prison&house=ironwood-prison&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "world-item-factory",
+    "name": "World Item Factory",
+    "label": "Four-stage item production · sealed freight · world supply",
+    "description": "Manufacture native and GLB world items through blueprint preparation, assembly, quality checks and sealed packing. Inspect each operation and its batch record, pause or resume work, then reserve finished lots for verified shipping to any world inventory. Warehouse travel links are simulated; the Hormuz sea passage is playable.",
+    "category": "Factory & world supply",
+    "game": "world-item-factory",
+    "source": "repository",
+    "visibility": "public",
+    "permanent": true,
+    "publicDestination": true,
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "canDelete": false,
+    "canEdit": false,
+    "proceduralLand": true,
+    "worldId": "neon-docks",
+    "worldSupply": {
+      "enabled": true,
+      "stages": [
+        "sourcing",
+        "assembly",
+        "quality",
+        "packing"
+      ],
+      "stations": [
+        {
+          "id": "factory-intake",
+          "stageId": "sourcing",
+          "name": "01 · Blueprint & component intake",
+          "modelId": "factory-procurement-terminal",
+          "position": {
+            "x": -36,
+            "y": 0,
+            "z": -20
+          },
+          "approach": {
+            "x": -36,
+            "y": 0,
+            "z": -13
+          }
+        },
+        {
+          "id": "factory-production",
+          "stageId": "assembly",
+          "name": "02 · Item assembly cell",
+          "modelId": "factory-assembly-jig",
+          "position": {
+            "x": -12,
+            "y": 0,
+            "z": -20
+          },
+          "approach": {
+            "x": -12,
+            "y": 0,
+            "z": -13
+          }
+        },
+        {
+          "id": "factory-inspection",
+          "stageId": "quality",
+          "name": "03 · Quality & configuration checks",
+          "modelId": "factory-calibration-rig",
+          "position": {
+            "x": 12,
+            "y": 0,
+            "z": -20
+          },
+          "approach": {
+            "x": 12,
+            "y": 0,
+            "z": -13
+          }
+        },
+        {
+          "id": "factory-packing",
+          "stageId": "packing",
+          "name": "04 · Sealed packing & dispatch",
+          "modelId": "factory-dispatch-terminal",
+          "position": {
+            "x": 36,
+            "y": 0,
+            "z": -20
+          },
+          "approach": {
+            "x": 36,
+            "y": 0,
+            "z": -13
+          }
+        }
+      ]
+    },
+    "mapTheme": "industrial",
+    "mapColor": "#66dbc4",
+    "thumbnailUrl": "/public/images/factory/world-item-factory.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 47,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "world-item-factory",
+      "mapSize": 160,
+      "objects": [
+        {
+          "id": "factory-intake",
+          "modelId": "factory-procurement-terminal",
+          "asset": {
+            "buildAssetId": "factory-procurement-terminal"
+          },
+          "name": "01 · Blueprint & component intake",
+          "position": {
+            "x": -36,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "worldSupplyStation": "sourcing",
+            "prompt": "01 · Blueprint & component intake · E / Use",
+            "interactionDistance": 7
+          }
+        },
+        {
+          "id": "factory-production",
+          "modelId": "factory-assembly-jig",
+          "asset": {
+            "buildAssetId": "factory-assembly-jig"
+          },
+          "name": "02 · Item assembly cell",
+          "position": {
+            "x": -12,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "worldSupplyStation": "assembly",
+            "prompt": "02 · Item assembly cell · E / Use",
+            "interactionDistance": 7
+          }
+        },
+        {
+          "id": "factory-inspection",
+          "modelId": "factory-calibration-rig",
+          "asset": {
+            "buildAssetId": "factory-calibration-rig"
+          },
+          "name": "03 · Quality & configuration checks",
+          "position": {
+            "x": 12,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "worldSupplyStation": "quality",
+            "prompt": "03 · Quality & configuration checks · E / Use",
+            "interactionDistance": 7
+          }
+        },
+        {
+          "id": "factory-packing",
+          "modelId": "factory-dispatch-terminal",
+          "asset": {
+            "buildAssetId": "factory-dispatch-terminal"
+          },
+          "name": "04 · Sealed packing & dispatch",
+          "position": {
+            "x": 36,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "worldSupplyStation": "packing",
+            "prompt": "04 · Sealed packing & dispatch · E / Use",
+            "interactionDistance": 7
+          }
+        },
+        {
+          "id": "factory-transfer-conveyor--24",
+          "modelId": "factory-conveyor",
+          "asset": {
+            "buildAssetId": "factory-conveyor"
+          },
+          "name": "Counted component transfer conveyor",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-transfer-conveyor-0",
+          "modelId": "factory-conveyor",
+          "asset": {
+            "buildAssetId": "factory-conveyor"
+          },
+          "name": "Counted component transfer conveyor",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-transfer-conveyor-24",
+          "modelId": "factory-conveyor",
+          "asset": {
+            "buildAssetId": "factory-conveyor"
+          },
+          "name": "Counted component transfer conveyor",
+          "position": {
+            "x": 24,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-stock-warehouse",
+          "modelId": "freight-warehouse",
+          "asset": {
+            "buildAssetId": "freight-warehouse"
+          },
+          "name": "Packed stock warehouse",
+          "position": {
+            "x": -52,
+            "y": 0,
+            "z": 17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-dispatch-warehouse",
+          "modelId": "freight-warehouse",
+          "asset": {
+            "buildAssetId": "freight-warehouse"
+          },
+          "name": "World supply dispatch warehouse",
+          "position": {
+            "x": 52,
+            "y": 0,
+            "z": 17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-sealed-crate-0",
+          "modelId": "factory-freight-crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "name": "Sealed freight staging bay",
+          "position": {
+            "x": -42,
+            "y": 0,
+            "z": 34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-sealed-crate-1",
+          "modelId": "factory-freight-crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "name": "Sealed freight staging bay",
+          "position": {
+            "x": -34,
+            "y": 0,
+            "z": 34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-sealed-crate-2",
+          "modelId": "factory-freight-crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "name": "Sealed freight staging bay",
+          "position": {
+            "x": 34,
+            "y": 0,
+            "z": 34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-sealed-crate-3",
+          "modelId": "factory-freight-crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "name": "Sealed freight staging bay",
+          "position": {
+            "x": 42,
+            "y": 0,
+            "z": 34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-shipping-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Shipping lanes · Strait of Hormuz",
+          "position": {
+            "x": 22,
+            "y": 0,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Shipping lanes · Strait of Hormuz · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "hormuz-shipping"
+            }
+          }
+        },
+        {
+          "id": "factory-commons-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Return to World Commons",
+          "position": {
+            "x": -22,
+            "y": 0,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Return to World Commons · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "public-commons"
+            }
+          }
+        },
+        {
+          "id": "factory-engineering-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Atlas engineering & certification",
+          "position": {
+            "x": -63,
+            "y": 0,
+            "z": 52
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Atlas engineering & certification · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-missile-factory"
+            }
+          }
+        },
+        {
+          "id": "factory-lamp--64--39",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Factory yard light",
+          "position": {
+            "x": -64,
+            "y": 0,
+            "z": -39
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-lamp--64-42",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Factory yard light",
+          "position": {
+            "x": -64,
+            "y": 0,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-lamp-64--39",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Factory yard light",
+          "position": {
+            "x": 64,
+            "y": 0,
+            "z": -39
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        },
+        {
+          "id": "factory-lamp-64-42",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Factory yard light",
+          "position": {
+            "x": 64,
+            "y": 0,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 2307901,
+        "worldSupply": {
+          "enabled": true,
+          "stages": [
+            "sourcing",
+            "assembly",
+            "quality",
+            "packing"
+          ],
+          "stations": [
+            {
+              "id": "factory-intake",
+              "stageId": "sourcing",
+              "name": "01 · Blueprint & component intake",
+              "modelId": "factory-procurement-terminal",
+              "position": {
+                "x": -36,
+                "y": 0,
+                "z": -20
+              },
+              "approach": {
+                "x": -36,
+                "y": 0,
+                "z": -13
+              }
+            },
+            {
+              "id": "factory-production",
+              "stageId": "assembly",
+              "name": "02 · Item assembly cell",
+              "modelId": "factory-assembly-jig",
+              "position": {
+                "x": -12,
+                "y": 0,
+                "z": -20
+              },
+              "approach": {
+                "x": -12,
+                "y": 0,
+                "z": -13
+              }
+            },
+            {
+              "id": "factory-inspection",
+              "stageId": "quality",
+              "name": "03 · Quality & configuration checks",
+              "modelId": "factory-calibration-rig",
+              "position": {
+                "x": 12,
+                "y": 0,
+                "z": -20
+              },
+              "approach": {
+                "x": 12,
+                "y": 0,
+                "z": -13
+              }
+            },
+            {
+              "id": "factory-packing",
+              "stageId": "packing",
+              "name": "04 · Sealed packing & dispatch",
+              "modelId": "factory-dispatch-terminal",
+              "position": {
+                "x": 36,
+                "y": 0,
+                "z": -20
+              },
+              "approach": {
+                "x": 36,
+                "y": 0,
+                "z": -13
+              }
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "factory-intake",
+            "name": "01 · Blueprint & component intake",
+            "x": -36,
+            "z": -13,
+            "width": 20,
+            "depth": 24,
+            "description": "Use the saved item blueprint, detailed operations and server-confirmed production controls."
+          },
+          {
+            "id": "factory-production",
+            "name": "02 · Item assembly cell",
+            "x": -12,
+            "z": -13,
+            "width": 20,
+            "depth": 24,
+            "description": "Use the saved item blueprint, detailed operations and server-confirmed production controls."
+          },
+          {
+            "id": "factory-inspection",
+            "name": "03 · Quality & configuration checks",
+            "x": 12,
+            "z": -13,
+            "width": 20,
+            "depth": 24,
+            "description": "Use the saved item blueprint, detailed operations and server-confirmed production controls."
+          },
+          {
+            "id": "factory-packing",
+            "name": "04 · Sealed packing & dispatch",
+            "x": 36,
+            "z": -13,
+            "width": 20,
+            "depth": 24,
+            "description": "Use the saved item blueprint, detailed operations and server-confirmed production controls."
+          },
+          {
+            "id": "factory-dispatch-yard",
+            "name": "Sealed stock & shipping dispatch",
+            "x": 36,
+            "z": 34,
+            "width": 28,
+            "depth": 20,
+            "description": "Reserve finished lots and complete the Hormuz sea voyage before destination stock increases."
+          },
+          {
+            "id": "factory-arrival",
+            "name": "World factory arrival & travel gates",
+            "x": 0,
+            "z": 54,
+            "width": 60,
+            "depth": 14,
+            "description": "Visit every manufacturing station or take the direct shipping gateway."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=world-item-factory&house=world-item-factory&mode=multiplayer&autoplay=1"
   }
 ]

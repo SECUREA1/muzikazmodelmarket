@@ -30,8 +30,26 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 ## Catalog coverage and verification
 
-Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 46 worlds and 5,288 placed instances: all 605 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 47 worlds and 5,311 placed instances: all 605 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
 
 `public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
 
 Earned-only quest collectibles keep their existing ownership rules. The four Ironwood Prison keepsakes remain earned and account-bound; factory production cannot mint replacement quest licenses. They remain visible in the market with their earning instructions.
+
+## World Item Factory map
+
+Choose **World Item Factory** in Maps → Factories, or open `model-explorer.html?environment=world-item-factory&autoplay=1`. It is a permanent shared destination, featured in the map picker and included in the offline map manifest, atlas, public directory and supply destinations.
+
+The production campus has four physical stations: blueprint/component intake, assembly, quality verification, and sealed packing/dispatch. Walk to the marked operator pad and press **E / Use** to open that stage's production workspace. The Quests control opens the factory workspace on this map. The campus uses the same procedural geometry for browser rendering and server collision. Its signs are scalable/high-resolution, and the bay lights reflect confirmed running or paused work when the factory board refreshes.
+
+Use the physical gateways to Hormuz Shipping, the World Commons, and Atlas engineering. Reciprocal gateways from Jebel Ali and the Atlas factory return to the World Item Factory. No gateway completes a delivery or creates stock.
+
+## Detailed batch framework
+
+Every item now has a versioned plan and fingerprint, an immutable snapshot of its native/model identity and game behavior, an abstract game bill of components, and twelve operations across the four stages. The server records operation starts and completions. Quality checks and sealed packing each produce a batch receipt. These game-factory checks do not replace official Atlas certification. Component procurement is represented in the quoted MZK cost; the abstract component list does not remove extra finished items from world stock.
+
+Use **Inspect operations & trace** to view the saved item blueprint, station operations, checks, events and the batch's stock lots. Pause freezes progress, including across server restarts; resume preserves remaining work without charging again. Paused orders still count toward the twenty-active-order limit and can be cancelled once for their original cost. Older timed and four-stage batches remain compatible.
+
+Packed output creates a counted factory lot. Dispatch reserves exact lot quantities in order; split shipments retain their lot references. Cancelling returns those exact units. Only verified final unloading credits the receiving inventory and records a stock receipt. Historical warehouse stock is marked as legacy stock instead of receiving invented manufacturing proof.
+
+Recipe previews are compact in the catalog; full per-item blueprints are fetched on demand through `GET /api/world-supply/recipe?itemId=...`. `GET /api/world-supply/trace?productionId=...` (also `shipmentId` or `lotId`) follows the saved production→lot→shipment→stock receipt references. Authenticated pause/resume actions use the same CSRF and idempotent request rules as production.

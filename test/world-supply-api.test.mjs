@@ -36,6 +36,17 @@ test('world supply API protects paid production, validates destinations, and exp
   assert.equal((await call('/api/world-supply/produce',headers,{...productionInput,expectedPriceMzk:0})).status,409);
   const production=await call('/api/world-supply/produce',headers,productionInput);assert.equal(production.status,200);
   assert.equal(production.body.data.phase,'building');assert.equal((await call('/api/world-supply/produce',headers,productionInput)).body.data.id,production.body.data.id);
+  const detailed=(await call('/api/world-supply/recipe?itemId='+encodeURIComponent(item.id))).body.data;
+  assert.equal(detailed.recipeVersion,2);assert.ok(detailed.stages.every(stage=>stage.operations.length===3));
+  const controls={productionId:production.body.data.id,requestId:'api-pause'};
+  assert.equal((await call('/api/world-supply/pause',{},controls)).status,401);
+  assert.equal((await call('/api/world-supply/pause',{cookie},controls)).body.code,'CSRF_INVALID');
+  const paused=await call('/api/world-supply/pause',headers,controls);assert.equal(paused.status,200);assert.equal(paused.body.data.phase,'paused');
+  assert.equal((await call('/api/world-supply/pause',headers,controls)).body.data.progress,paused.body.data.progress);
+  const resumed=await call('/api/world-supply/resume',headers,{productionId:production.body.data.id,requestId:'api-resume'});assert.equal(resumed.status,200);assert.equal(resumed.body.data.phase,'building');
+  const trace=(await call('/api/world-supply/trace?productionId='+production.body.data.id,headers)).body.data;
+  assert.equal(trace.production.length,1);assert.equal(trace.lots.length,0);assert.equal(trace.stockReceipts.length,0);
+
   assert.equal((await call('/api/world-supply/produce',headers,{...productionInput,quantity:11})).status,409);
   const after=(await call('/api/economy',headers)).body.data;assert.equal(after.balance,before.balance-quote.priceMzk);
   let state=(await call('/api/world-supply',headers)).body.data;
@@ -48,7 +59,7 @@ test('world supply API protects paid production, validates destinations, and exp
   const persisted=JSON.parse(await readFile(join(dir,'users.json'),'utf8'));
   const completedJob=persisted.worldSupply.production[production.body.data.id],shift=completedJob.readyAt-(Date.now()-1);
   completedJob.startedAt-=shift;completedJob.readyAt-=shift;
-  for(const stage of completedJob.stages||[]){stage.startedAt-=shift;stage.readyAt-=shift;}
+  for(const stage of completedJob.stages||[]){stage.startedAt-=shift;stage.readyAt-=shift;for(const operation of stage.operations||[]){operation.startedAt-=shift;operation.readyAt-=shift;}}
   await writeFile(join(dir,'users.json'),JSON.stringify(persisted));
   state=(await call('/api/world-supply',headers)).body.data;
   assert.equal(state.factoryStock[item.id],10);assert.equal(state.worldStock[item.id],1000);

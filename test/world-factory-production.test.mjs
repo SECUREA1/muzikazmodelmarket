@@ -19,7 +19,7 @@ async function fixture(t){
 test('all four server manufacturing stages finish before packed stock can enter shipping, never the world store',async t=>{
  const f=await fixture(t),quote=await f.service.action(wallet,'quote',{itemId,quantity:10});
  const production=await f.service.action(wallet,'produce',{itemId,quantity:10,expectedPriceMzk:quote.priceMzk,requestId:'build',readyAt:0,buildMs:0,stages:[],recipe:{unitsPerContainer:100000}});
- assert.equal(production.schemaVersion,2);assert.equal(production.shippingRequired,true);
+ assert.equal(production.schemaVersion,3);assert.equal(production.shippingRequired,true);
  assert.deepEqual(production.stages.map(stage=>stage.id),['sourcing','assembly','quality','packing']);
  assert.equal(production.readyAt-production.startedAt,quote.buildMs,'client timing is ignored');
  for(const [index,stage] of production.stages.entries()){
