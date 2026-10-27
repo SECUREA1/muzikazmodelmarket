@@ -7,7 +7,7 @@ import {PROVING_ID,COMPOUND_ID,PROVING_STATIONS,COMPOUND_STATIONS,PROVING_TARGET
 const turns=async()=>{for(let index=0;index<12;index++)await Promise.resolve();};
 const models=[{id:'owned-training',name:'Own training model',buildAssetId:'factory-training-missile',profileId:'accuracy'},{id:'owned-cargo',name:'Own cargo model',buildAssetId:'factory-cargo-rocket',profileId:'cargo'}];
 function canvasRecorder(){const calls=[],context=new Proxy({},{get:(object,key)=>object[key]??((...args)=>calls.push({method:key,args})),set:(object,key,value)=>(object[key]=value,true)});return {canvas:{width:0,height:0,getContext:()=>context},calls};}
-function fixture({environment={id:PROVING_ID},state={},position=null,stations=null,items=models,canvas=null,deferAction=null,presenting=true}={}){
+function fixture({environment={id:PROVING_ID},state={},position=null,stations=null,items=models,canvas=null,deferAction=null,presenting=true,reducedMotion=false}={}){
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),compound=environment.id===COMPOUND_ID||environment.factoryTesting?.kind==='compound';
  const location={...(position||(compound?COMPOUND_STATIONS[1].position:PROVING_STATIONS[0].position))};camera.position.set(location.x,location.y+1.65,location.z);scene.add(camera);
  let currentEnvironment=environment,time=10000,sequence=1,resolver=null,held=null,present=presenting;
@@ -15,7 +15,7 @@ function fixture({environment={id:PROVING_ID},state={},position=null,stations=nu
  const own={session:null,progress:{completedTests:0,skills:{},badges:[]},clearance:{compound:false,deep:false},containment:null,...structuredClone(state)};
  const publicView={kind:compound?'compound':'proving',stations:structuredClone(stations||(compound?COMPOUND_STATIONS:PROVING_STATIONS)),targets:structuredClone(PROVING_TARGETS),sessions:[]};
  const make=(privateItems=true)=>({sequence:sequence++,selfId:'me',serverTime:time,testing:structuredClone(publicView),players:{me:{actorId:'me',health:100,heldId:held,position:{...location},testing:structuredClone(own)}},...(privateItems?{result:{message:'Server accepted action',testing:{...structuredClone(own),eligibleItems:structuredClone(items)}}}:{})});
- const vr=createFactoryTestingVR({THREE,scene,camera,getEnvironment:()=>currentEnvironment,getPosition:()=>location,getPresenting:()=>present,getServerTime:()=>time,createCanvas:()=>canvas,onStatus:value=>statuses.push(value),onInputRelease:value=>releases.push(value),send:(action,fields)=>{
+ const vr=createFactoryTestingVR({THREE,scene,camera,getEnvironment:()=>currentEnvironment,getPosition:()=>location,getPresenting:()=>present,getServerTime:()=>time,getReducedMotion:()=>reducedMotion,createCanvas:()=>canvas,onStatus:value=>statuses.push(value),onInputRelease:value=>releases.push(value),send:(action,fields)=>{
   commands.push({action,...fields});
   if(action===deferAction)return new Promise(resolve=>resolver=resolve);
   if(action==='proving-setup')own.session={id:'configured-test',status:'configured',itemId:fields.itemId,itemName:'Own training model',profileId:fields.profileId,targetId:fields.targetId};
@@ -107,4 +107,23 @@ test('cleared station lists, unsupported maps and a missing headset cannot expos
  const f=fixture();await f.open();f.view.stations=[];f.vr.receive(f.make(),'me');assert.equal(f.vr.isActive(),false);assert.equal(f.vr.visible(),false);assert.equal(f.vr.setVisible(true),false);f.vr.dispose();
  const ordinary=fixture();ordinary.setEnvironment({id:'ordinary-world'});assert.equal(ordinary.vr.isActive(),false);assert.equal(ordinary.vr.setVisible(true),false);ordinary.vr.dispose();
  const desktop=fixture({presenting:false});assert.equal(desktop.vr.setVisible(true),false);assert.equal(desktop.vr.pointerMove({origin:[0,0,0],direction:[0,0,-1]}),false);desktop.vr.dispose();
+});
+
+
+test('reduced-motion telemetry keeps a static schematic marker while the authoritative course clock advances',async()=>{
+ const recorder=canvasRecorder(),f=fixture({canvas:recorder.canvas,reducedMotion:true,state:{session:{id:'reduced',profileId:'accuracy',status:'flight',launchAt:9000,flightEndsAt:17000,endsAt:19000}}});
+ await f.open();f.vr.setDashboard('telemetry');const marker=()=>recorder.calls.filter(value=>value.method==='translate'&&value.args[0]!==28).at(-1)?.args;
+ const first=marker();assert.ok(first);f.advance(600);f.vr.tick();assert.deepEqual(marker(),first,'comfort mode never moves the rocket continuously across the board');
+ assert.equal(f.vr.snapshot().session.status,'flight');f.vr.dispose();
+});
+
+test('the panel rejects back-facing, zero-length, nonfinite and distant rays while its background absorbs a real pointer',async()=>{
+ const f=fixture();await f.open();const center=f.vr.root.localToWorld(new THREE.Vector3(0,0,0)),normal=new THREE.Vector3(0,0,1).applyQuaternion(f.vr.root.getWorldQuaternion(new THREE.Quaternion()));
+ assert.equal(f.vr.pointerDown({origin:center.clone().addScaledVector(normal,-1),direction:normal}),false);
+ assert.equal(f.vr.pointerDown({origin:center.clone().addScaledVector(normal,1),direction:new THREE.Vector3()}),false);
+ assert.equal(f.vr.pointerDown({origin:[Infinity,0,0],direction:[0,0,-1]}),false);
+ assert.equal(f.vr.pointerDown({origin:center.clone().addScaledVector(normal,8),direction:normal.clone().negate()}),false);
+ const background=f.vr.root.localToWorld(new THREE.Vector3(0,.38,0)),origin=f.camera.getWorldPosition(new THREE.Vector3()),before=f.commands.length;
+ assert.equal(f.vr.pointerMove({origin,direction:background.clone().sub(origin).normalize()}),true);
+ assert.equal(f.vr.pointerDown({origin,direction:background.sub(origin).normalize()},'left'),true);await turns();assert.equal(f.commands.length,before);f.vr.dispose();
 });

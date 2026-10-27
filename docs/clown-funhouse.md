@@ -9,7 +9,9 @@ existing game. Walk through the giant grinning doorway into the horror house,
 explore the crooked mirror maze, find the monster ball pit and wind up the
 surprise box. On the midway, board the clown car or dizzy spinner and play their
 timing games. Striped carnival stalls, balloons, clown hosts and the
-water-gun gallery complete the grounds.
+water-gun gallery complete the grounds. Lantern walks, theatrical clockwork,
+story displays, ornate house framing and clearer wayfinding add places to
+explore between games.
 
 Every funhouse performer, resident and visiting player appears as a creepy clown,
 with pale makeup, dark eyes and a toothy grin. This appearance follows the
@@ -19,7 +21,9 @@ returns when you leave for another world.
 Use the normal **WASD / arrows** or touch controls to walk. **View / V** switches
 camera views. Approach an attraction and press **E / Use** to open its controls.
 Choose an attraction's first-person play button to close the menu and play in
-the world. Its compact action bar shows the timer, score and available controls.
+the world. Its compact action bar shows the timer, score and current cue. Expand
+**Actions** to reveal touch buttons and help; keyboard actions keep working
+while it is collapsed. Look freely around either ride using normal look controls.
 **Escape / Stop** ends the current activity; rides also have an **Exit ride**
 button. Walking resumes after leaving a seat. The local map marks each area.
 
@@ -41,12 +45,31 @@ saved with your player in this map's room. Trying the dressing-room
 costumes does not grant an owned Backpack item; permanent copies are sold in
 the market.
 
+## The Lost Laugh Trail
+
+Begin the optional ten-minute adventure at the welcome trail marker. Follow
+six clues across the midway, wardrobe, water gallery, spinner, monster playroom
+and mirror maze. Walk to each marked object and inspect it in order to uncover
+its story and a theatrical surprise. The trail shows the next hint and your
+progress. Expand **Trail** for the hint, inspection and Stop buttons, or use
+**F** beside the next clue. Stop ends the adventure whenever you want.
+
+Each discovery earns 25 points. Finding all six completes the trail and adds a
+time bonus of up to 100 points, with a personal best saved in this shared room.
+You can enjoy attractions between discoveries. Using map travel or leaving the
+world ends the active trail. This adventure belongs to the permanent funhouse;
+individual placed attractions retain their own games and rides.
+
 In a WebXR headset, either controller trigger selects physical attraction
 controls and targets. **X / B** opens the game menu, which includes the nearby
 attraction actions and a floating control board. The board is part of the 3D
 scene and can be hidden or recentered from that menu. The headset keeps its
 tracked view during seated rides. Ending the session or changing worlds releases
 held controls and closes its attraction board.
+
+The floating board recenters after boarding or leaving a ride. Its action pages
+keep every target and stop control reachable, and its trail view carries
+adventure hints and inspection controls without covering the entire scene.
 
 The VR game menu also carries the available actions and settings from existing
 game panels. It updates as rounds and selections change, so those controls stay

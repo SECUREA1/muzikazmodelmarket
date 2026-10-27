@@ -13,10 +13,11 @@ with sync_playwright() as p:
         page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/compact-sports-actions.html')
         page.evaluate('''async () => {
           window.spoken=[];window.commands=[];
-          window.SpeechSynthesisUtterance=class {constructor(text){this.text=text}};
-          Object.defineProperty(window,'speechSynthesis',{value:{speak:u=>{spoken.push(u.text);queueMicrotask(()=>u.onend?.());},cancel(){},resume(){}},configurable:true});
+          const Utterance=class {constructor(text){this.text=text}};
+          const {GENERATED_VOICES}=await import('/public/js/neural-character-speech.js');
+          const speech={getVoices:()=>GENERATED_VOICES,speak:u=>{spoken.push(u.text);u.onstart?.();queueMicrotask(()=>u.onend?.());},cancel(){},resume(){}};
           const {mountAirportOperations}=await import('/public/js/airport-operations.js');
-          window.ops=mountAirportOperations({stage:document.querySelector('.house-stage'),getAim:()=>({origin:{x:0,y:1,z:0},direction:[0,0,-1]}),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Tower. Cleared for takeoff.'}}}});
+          window.ops=mountAirportOperations({audioOptions:{speech,Utterance,audioFactory:()=>null},stage:document.querySelector('.house-stage'),getAim:()=>({origin:{x:0,y:1,z:0},direction:[0,0,-1]}),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Tower. Cleared for takeoff.'}}}});
           ops.updateEnvironment({airport:{enabled:true}});
           ops.update({players:{pilot:{vehicleId:'plane'}},actors:{plane:{id:'plane',modelId:'corsair-aircraft',flight:{phase:'parked'}}}},'pilot');
         }''')

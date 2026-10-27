@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
 jobs:
   construction:
     runs-on: ubuntu-latest

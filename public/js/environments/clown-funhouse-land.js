@@ -1,4 +1,5 @@
 import {funhouseRideCue} from '../funhouse-experience-rules.js';
+import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable} from '../funhouse-adventure-rules.js';
 import * as T from '../../vendor/three/three.module.min.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import {createCreepyClownFace} from '../creepy-clown-face.js';
@@ -16,7 +17,7 @@ export function createClownFunhouseLand(environment={}) {
  const clownPallor=material('#e7e4dc'),clownCrimson=material('#68152f'),clownPlum=material('#30162e'),clownInk=material('#18111e'),clownIvory=material('#f8edd2'),clownIris=material('#e4b96e',{emissive:'#9a452f',emissiveIntensity:.18});
  const clownFaceMaterials={pallor:clownPallor,ink:clownInk,crimson:clownCrimson,ivory:clownIvory,iris:clownIris};
  const animations=[],targets=[],jackPops=[],performers=[],balloons=[],bulbs=[],bursts=[],interactionTargets=[],ballTargets=[],tossBalls=[];
- const rideAnchors={},balanceControls=[];
+ const rideAnchors={},balanceControls=[],adventureMarkers=[],adventureRigs=[],storyDetails=[];
  let hornCue=null;
  let galleryRoot=null,splashRay=null,tossRay=null;
  let experienceState={},experienceTime=0,experienceReceivedAt=0,ballTarget=-1,tossTargetId=0,tossUntil=-1;
@@ -30,9 +31,10 @@ export function createClownFunhouseLand(environment={}) {
  const cylinder=(parent,name,x,y,z,r,h,mat,solid=false,segments=24)=>mesh(parent,new T.CylinderGeometry(r,r,h,segments),mat,name,x,y,z,solid);
  const sphere=(parent,name,x,y,z,r,mat)=>mesh(parent,new T.SphereGeometry(r,16,12),mat,name,x,y,z);
  function group(parent,name,x=0,z=0,y=0){const node=new T.Group();node.name=name;node.position.set(x,y,z);parent.add(node);return node;}
- function action(node,{id,stationId,kind,operation,targetId,radius=.45,offset={x:0,y:0,z:0}}){
-  const descriptor={id,stationId,kind,operation,...(targetId!==undefined?{targetId}:{}),root:node,radius,offset};
-  node.userData.funhouseAction={id,stationId,kind,operation,...(targetId!==undefined?{targetId}:{})};node.userData.dynamicDecoration=true;
+ function action(node,{id,stationId,kind,operation,targetId,clueId,radius=.45,offset={x:0,y:0,z:0}}){
+  const fields={id,stationId,kind,operation,...(targetId!==undefined?{targetId}:{}),...(clueId?{clueId}:{})};
+  const descriptor={...fields,root:node,radius,offset};
+  node.userData.funhouseAction=fields;node.userData.dynamicDecoration=true;
   interactionTargets.push(descriptor);return node;
  }
  function control(parent,name,x,y,z,text,stationId,kind,operation,mat=cyan){
@@ -71,6 +73,118 @@ export function createClownFunhouseLand(environment={}) {
  function stall(name,x,z,frontMat,label,sub){const g=group(root,name,x,z);stripedBox(g,'FUNHOUSE_MIDWAY_STALL',0,1.2,0,7,2.4,3.6);box(g,'FUNHOUSE_STALL_COUNTER',0,2.45,2,7.8,.18,1,wood,true);for(const dx of [-3.6,3.6])cylinder(g,'FUNHOUSE_STALL_POLE',dx,3,1.8,.09,6,yellow,true);mesh(g,new T.ConeGeometry(5.3,2.5,4),frontMat,'FUNHOUSE_STALL_ROOF',0,6.3,0).rotation.y=Math.PI/4;sign(g,label,0,4.2,2.15,7.7,1.5,sub);return g;}
  function balloonBunch(x,z){const g=group(root,'FUNHOUSE_BALLOON_BUNCH',x,z);cylinder(g,'FUNHOUSE_BALLOON_WEIGHT',0,.14,0,.24,.28,yellow,true);for(let i=0;i<5;i++){const a=i*2.4,dx=Math.cos(a)*.65,dz=Math.sin(a)*.55,h=3.1+(i%3)*.45;line(g,'FUNHOUSE_BALLOON_STRING',[[0,.2,0],[dx*.4,h*.5,dz*.4],[dx,h,dz]],cream);const b=sphere(g,'FUNHOUSE_HELIUM_BALLOON',dx,h+.4,dz,.46,ballMats[i]);b.scale.set(.85,1.2,.85);b.userData.dynamicDecoration=true;animations.push(t=>b.position.x=dx+Math.sin(t*.65+i)*.08);}}
  function bunting(x1,z1,x2,z2,y){const points=[];for(let i=0;i<=16;i++){const f=i/16;points.push([x1+(x2-x1)*f,y-Math.sin(f*Math.PI)*1.15,z1+(z2-z1)*f]);}line(root,'FUNHOUSE_BUNTING_CABLE',points,black);for(let i=1;i<16;i++){const f=i/16,x=x1+(x2-x1)*f,z=z1+(z2-z1)*f,h=y-Math.sin(f*Math.PI)*1.15;const flag=mesh(root,new T.ConeGeometry(.42,.8,3),ballMats[i%ballMats.length],'FUNHOUSE_BUNTING_FLAG',x,h-.35,z);flag.rotation.z=Math.PI;flag.scale.z=.06;bulb(root,x,h+.08,z,i%2?lamp:pink,.075);}}
+ function storyArea(id,name,x,z){const node=group(root,id,x,z);node.userData.funhouseScenery=name;storyDetails.push({id,name,root:node});return node;}
+ function theatreLantern(parent,x,y,z){
+  const holder=group(parent,'FUNHOUSE_THEATRE_LANTERN',x,z,y);
+  cylinder(holder,'FUNHOUSE_LANTERN_CAP',0,.33,0,.24,.09,black);
+  cylinder(holder,'FUNHOUSE_LANTERN_BASE',0,-.33,0,.24,.09,black);
+  for(const dx of [-.19,.19])for(const dz of [-.19,.19])box(holder,'FUNHOUSE_LANTERN_CAGE',dx,0,dz,.025,.68,.025,steel);
+  sphere(holder,'FUNHOUSE_LANTERN_GLOW',0,0,0,.15,lamp);
+  torus(holder,'FUNHOUSE_LANTERN_HANDLE',0,.5,0,.14,.025,steel);
+  return holder;
+ }
+ function storyPortrait(parent,x,y,z,index=0,rotation=0){
+  const portrait=group(parent,'FUNHOUSE_WHISPERING_PORTRAIT',x,z,y);portrait.rotation.y=rotation;
+  box(portrait,'FUNHOUSE_PORTRAIT_BACK',0,0,0,1.55,2.08,.07,black);
+  for(const dx of [-.81,.81])box(portrait,'FUNHOUSE_PORTRAIT_FRAME',dx,0,.02,.1,2.28,.12,yellow);
+  for(const dy of [-1.09,1.09])box(portrait,'FUNHOUSE_PORTRAIT_FRAME',0,dy,.02,1.72,.1,.12,yellow);
+  const head=createCreepyClownFace({radius:.38,depth:.12,materials:clownFaceMaterials});head.position.set(0,.1,.08);portrait.add(head);
+  const collar=box(portrait,'FUNHOUSE_PORTRAIT_COLLAR',0,-.6,.09,.9,.32,.09,index%2?plum:blue);collar.rotation.z=index%2 ? .08 : -.08;
+  for(const side of [-1,1])sphere(portrait,'FUNHOUSE_PORTRAIT_CURL',side*.43,.15,.08,.2,index%2?red:plum);
+  return portrait;
+ }
+ function buildStoryScenery(){
+  // These additions belong to the whole destination. A market thumbnail or a
+  // placed ride still allocates only the attraction that was requested.
+  const ribs=storyArea('FUNHOUSE_VELVET_HOUSE_RIBS','Open theatre rafters',0,-28);
+  for(const z of [-12.7,-21,-30,-42.8]){
+   box(ribs,'FUNHOUSE_VELVET_RAFTER',0,5.65,z+28,46,.18,.22,wood);
+   for(const x of [-21,0,21]){line(ribs,'FUNHOUSE_LANTERN_CHAIN',[[x,5.65,z+28],[x,4.65,z+28]],steel);theatreLantern(ribs,x,4.35,z+28);}
+  }
+  for(const x of [-23.7,23.7])box(ribs,'FUNHOUSE_UPPER_VELVET_SWAG',x,5.15,0,.2,.65,30,plum);
+  const gallery=storyArea('FUNHOUSE_STORY_GALLERY','Hall of missing laughs',0,0);
+  for(const [index,z]of [-16.4,-20.2,-28,-37.5].entries())storyPortrait(gallery,-23.65,2.25,z,index,Math.PI/2);
+  for(const [index,x]of [-20,-15,-10].entries())storyPortrait(gallery,x,2.2,-43.65,index,0);
+  sign(gallery,'HALL OF MISSING LAUGHS',-15,4,-43.6,13,1,'THE PORTRAITS REMEMBER EVERY VISITOR');
+  for(const [x,z,angle]of [[-4.5,-20,0],[-4.5,-28,Math.PI/2],[-22.5,-28,0],[-22.5,-38,-Math.PI/2]]){
+   const marker=group(gallery,'FUNHOUSE_MAZE_WAYFINDING',x,z);
+   const disc=torus(marker,'FUNHOUSE_MAZE_FLOOR_MEDALLION',0,.055,0,.48,.025,cyan,Math.PI/2);
+   const arrow=mesh(marker,new T.CircleGeometry(.3,3),lamp,'FUNHOUSE_MAZE_ROUTE_ARROW',0,.057,0);arrow.rotation.x=-Math.PI/2;arrow.rotation.z=angle;
+   disc.userData.dynamicDecoration=true;
+  }
+  const stage=storyArea('FUNHOUSE_CLOCKWORK_THEATRE','Clockwork puppet theatre',7,-42.9);
+  box(stage,'FUNHOUSE_PUPPET_STAGE',0,.28,0,8,.56,1.1,wood);
+  for(const side of [-1,1]){
+   box(stage,'FUNHOUSE_STAGE_CURTAIN',side*3.5,2.35,0,.8,4,.28,plum);
+   for(let i=0;i<4;i++)cylinder(stage,'FUNHOUSE_CURTAIN_FOLD',side*(3.2+i*.16),2.35,.2,.1,3.9,red);
+  }
+  box(stage,'FUNHOUSE_STAGE_HEADER',0,4.45,0,8.2,.3,.32,black);
+  sign(stage,'THE CLOCKWORK LAUGH',0,4.45,.19,7.6,.58,'');
+  const puppet=clown(stage,'FUNHOUSE_CLOCKWORK_PUPPET',0,.05,.63,blue);puppet.position.y=.35;puppet.userData.dynamicDecoration=true;
+  for(const x of [-.52,.52])line(stage,'FUNHOUSE_MARIONETTE_STRING',[[x,4.3,.05],[x,1.8,.05]],cream);
+  const clock=group(stage,'FUNHOUSE_CLOCKWORK_CLOCK',2.25,.08,2.6);
+  cylinder(clock,'FUNHOUSE_CLOCK_FACE',0,0,0,.61,.08,cream).rotation.x=Math.PI/2;
+  const hand=box(clock,'FUNHOUSE_CLOCK_HAND',0,.19,.06,.05,.42,.04,black);hand.userData.dynamicDecoration=true;
+  for(let i=0;i<12;i++){const a=i/12*Math.PI*2;sphere(clock,'FUNHOUSE_CLOCK_HOUR',Math.sin(a)*.48,Math.cos(a)*.48,.065,.035,red);}
+  animations.push(t=>{puppet.rotation.z=Math.sin(t*.45)*.035;hand.rotation.z=-t*.12;});
+  const nursery=storyArea('FUNHOUSE_TOY_NURSERY','Forgotten toy nursery',20.5,-16.5);
+  for(let i=0;i<3;i++){const block=box(nursery,'FUNHOUSE_FORGOTTEN_TOY_BLOCK',-1.2+i*.95,.3,-.25,.6,.6,.6,ballMats[i]);block.rotation.y=i*.25;sign(nursery,['B','O','O'][i],-1.2+i*.95,.3,.06,.45,.45);}
+  const hoop=torus(nursery,'FUNHOUSE_CROOKED_NURSERY_HOOP',0,1.4,-.5,.7,.05,yellow);hoop.rotation.z=.16;
+  sign(nursery,'TOYS AFTER MIDNIGHT',0,2.8,-.6,4.6,.68,'SOMEONE FORGOT TO GO HOME');
+  const walk=storyArea('FUNHOUSE_LANTERN_WALK','Lantern walk and ride queues',0,0);
+  for(const z of [32,44]){
+   line(walk,'FUNHOUSE_LANTERN_ARCH',[[-7,0,z],[-7,4.7,z],[-4,6.1,z],[4,6.1,z],[7,4.7,z],[7,0,z]],steel);
+   for(const x of [-5,0,5])theatreLantern(walk,x,5.2,z);
+  }
+  for(const [x,z,label,sub]of [[0,29,'MIRRORS ←   → RIDES','FOLLOW THE LOST LAUGH TRAIL'],[0,9,'SPLASH ←   → SPIN','THRILLS AHEAD IN THE GRINNING HOUSE'],[0,-8,'MIRROR PASSAGES ←   → TOY ROOM','EXIT BELL AT THE FAR LEFT']])sign(walk,label,x,2.8,z,7.4,.85,sub);
+  for(const [x,z]of [[20,31],[20,27],[20,23],[20,6],[20,2],[20,-2]]){
+   cylinder(walk,'FUNHOUSE_QUEUE_STANCHION',x,.52,z,.035,1.04,steel);sphere(walk,'FUNHOUSE_QUEUE_FINIAL',x,1.08,z,.07,yellow);
+   const foot=cylinder(walk,'FUNHOUSE_QUEUE_FOOT',x,.035,z,.23,.05,black);foot.userData.collisionDisabled=true;
+  }
+  for(const [a,b,z]of [[20,24,31],[20,24,23],[20,23,6],[20,23,-2]])line(walk,'FUNHOUSE_QUEUE_ROPE',[[a,1,z],[(a+b)/2,.83,z],[b,1,z]],red);
+  floorInlay('THE LOST LAUGH TRAIL',0,46,9,'#83e3d4');
+  floorInlay('HORROR HOUSE',0,-6,8,'#ecc77f');
+ }
+ function adventureMarker(definition,index=-1){
+  const isStart=index<0,id=isStart?'START':definition.id,base=storyArea('FUNHOUSE_ADVENTURE_'+id,isStart?FUNHOUSE_ADVENTURE_START.name:definition.name,definition.position.x,definition.position.z);
+  base.userData.funhouseAdventureMarker=definition.id;
+  cylinder(base,'FUNHOUSE_ADVENTURE_MEDALLION',0,.045,0,.62,.04,purple);
+  torus(base,'FUNHOUSE_ADVENTURE_GROUND_RING',0,.07,0,.55,.025,yellow,Math.PI/2);
+  const token=group(base,'FUNHOUSE_ADVENTURE_TOKEN',0,0,1.3);
+  const gem=mesh(token,new T.OctahedronGeometry(.18),isStart?lamp:cyan,'FUNHOUSE_LOST_LAUGH_GEM');gem.userData.dynamicDecoration=true;
+  const halo=torus(token,'FUNHOUSE_ADVENTURE_ACTIVE_HALO',0,0,0,.38,.028,isStart?yellow:cyan);halo.userData.dynamicDecoration=true;
+  const seal=torus(token,'FUNHOUSE_ADVENTURE_FOUND_SEAL',0,0,.025,.27,.035,lamp);seal.visible=false;seal.userData.dynamicDecoration=true;
+  action(token,{id:isStart?'adventure-start':'adventure-'+definition.id,stationId:'funhouse-adventure',kind:'adventure',operation:isStart?'adventure-start':'inspect',...(isStart?{}:{clueId:definition.id}),radius:.5});
+  const label=sign(base,isStart?'THE LOST LAUGH TRAIL':definition.name.toUpperCase(),0,.68,.28,isStart?4.6:3.7,.6,isStart?'START A SIX-CLUE MIDNIGHT ADVENTURE':'AIM + INSPECT / TRIGGER');label.rotation.x=-.18;
+  cylinder(base,'FUNHOUSE_ADVENTURE_PLAQUE_STAND',0,.32,.18,.035,.6,steel);
+  const marker={id:definition.id,clueId:isStart?null:definition.id,index,root:base,token,highlight:halo,seal,gem,position:{...definition.position},baseY:1.3};adventureMarkers.push(marker);
+  if(isStart)return;
+  const rig=group(base,'FUNHOUSE_ADVENTURE_SETPIECE',0,-.4);
+  if(definition.scare==='ticket'){
+   const ticket=sign(rig,'TICKET 13',0,.7,0,1.25,.48,'ADMIT ONE LOST LAUGH');ticket.rotation.z=-.14;
+   for(const x of [-.59,.59])for(let i=0;i<4;i++)sphere(rig,'FUNHOUSE_TICKET_PERFORATION',x,.53+i*.11,.01,.025,cream);
+   adventureRigs.push({id:definition.id,kind:'ticket',node:ticket});
+  }else if(definition.scare==='wardrobe'){
+   box(rig,'FUNHOUSE_WHISPER_WARDROBE',0,.68,0,1.1,1.35,.45,wood);
+   const door=group(rig,'FUNHOUSE_WHISPER_WARDROBE_DOOR',-.55,.25,.7);box(door,'FUNHOUSE_WARDROBE_DOOR_PANEL',.55,0,0,1.08,1.3,.07,plum);sphere(door,'FUNHOUSE_WARDROBE_KNOB',.94,0,.08,.055,yellow);
+   adventureRigs.push({id:definition.id,kind:'door',node:door});
+  }else if(definition.scare==='mask'){
+   const basin=cylinder(rig,'FUNHOUSE_DROWNED_MASK_BASIN',0,.22,0,.58,.4,blue);basin.scale.z=.8;
+   const mask=createCreepyClownFace({radius:.23,depth:.11,materials:clownFaceMaterials});mask.position.set(0,.74,.08);rig.add(mask);
+   adventureRigs.push({id:definition.id,kind:'mask',node:mask,baseY:.74});
+  }else if(definition.scare==='shadow'){
+   const shadow=mesh(rig,new T.CircleGeometry(.95,20),black,'FUNHOUSE_SECOND_SHADOW',0,.08,0);shadow.rotation.x=-Math.PI/2;shadow.scale.set(.5,1.8,1);
+   for(const x of [-.12,.12])sphere(rig,'FUNHOUSE_SHADOW_WATCHING_EYE',x,.37,.3,.045,lamp);
+   adventureRigs.push({id:definition.id,kind:'shadow',node:shadow});
+  }else if(definition.scare==='chest'){
+   box(rig,'FUNHOUSE_SECRET_TOY_CHEST',0,.27,0,1.45,.52,.9,red);
+   const lid=group(rig,'FUNHOUSE_SECRET_CHEST_LID',0,-.45,.56);box(lid,'FUNHOUSE_CHEST_LID_PANEL',0,0,.45,1.52,.1,.92,yellow);
+   const face=createCreepyClownFace({radius:.2,depth:.1,materials:clownFaceMaterials});face.position.set(0,.5,.12);rig.add(face);
+   adventureRigs.push({id:definition.id,kind:'lid',node:lid});
+  }else if(definition.scare==='lantern'){
+   const lantern=theatreLantern(rig,0,.55,0);adventureRigs.push({id:definition.id,kind:'lantern',node:lantern});
+  }
+ }
  if(full&&environment.builderScene?.layoutMeta?.funhouse?.editableItems){
   box(root,'BUILDER_WALKABLE_FLOOR_clown-funhouse',0,-.2,0,120,.4,120,purple,true);
   return root;
@@ -369,6 +483,11 @@ export function createClownFunhouseLand(environment={}) {
  if(full)clown(root,'FUNHOUSE_PLAYROOM_CLOWN',19,-17,1.05,red);
 
  if(full) {
+ buildStoryScenery();
+ if(!environment.id||funhouseAdventureAvailable(environment)){
+  adventureMarker(FUNHOUSE_ADVENTURE_START);
+  FUNHOUSE_ADVENTURE_CLUES.forEach(adventureMarker);
+ }
  // Soft theatre light, stable without flashes or a ceiling over the overview.
  root.add(new T.HemisphereLight('#b8afdd','#241328',2.1));
  const fill=new T.DirectionalLight('#ffd5b0',1.8);fill.position.set(-18,30,22);root.add(fill);
@@ -381,9 +500,12 @@ export function createClownFunhouseLand(environment={}) {
  root.userData.funhouseInteractionTargets=interactionTargets;
  root.userData.funhouseRideAnchors=rideAnchors;
  root.userData.funhouseBallTargets=ballTargets;
+ root.userData.funhouseAdventureMarkers=adventureMarkers;
+ root.userData.funhouseScenery=storyDetails;
  root.userData.splashFunhouseTarget=splashTarget;
  root.userData.animateFunhouseStation=(id,result={})=>{
-  if(id==='funhouse-clown-car')carUntil=lastTime+7;
+  if(['adventure','adventure-discovery'].includes(result.kind)&&result.clueId)timed.set('adventure:'+result.clueId,lastTime+3.5);
+  else if(id==='funhouse-clown-car')carUntil=lastTime+7;
   else if(id==='funhouse-spinner')spinnerUntil=lastTime+4;
   else if(id==='funhouse-jack-box')jackUntil=lastTime+5;
   else if(id==='funhouse-ball-pit'){ballUntil=lastTime+4;if(result.kind==='toss'){if(ballTargets[result.targetId])tossTargetId=result.targetId;tossUntil=lastTime+.65;tossRay=tossBalls[0]?localRay(tossBalls[0].parent,result,10):null;if(result.hit&&ballTargets[result.targetId])timed.set('ball-'+result.targetId,lastTime+.5);}}
@@ -410,6 +532,23 @@ export function createClownFunhouseLand(environment={}) {
   const carRide=projectRide(activity('car','ride')),spinnerRide=projectRide(activity('spinner','ride')),jackGame=activity('jackbox','challenge'),ballGame=activity('ballpit','challenge');
   const ridingCar=carRide?.status==='active'&&now<carRide.endsAt,ridingSpinner=spinnerRide?.status==='active'&&now<spinnerRide.endsAt;
   if(!reducedMotion)for(const animate of animations)animate(time);
+  const adventures=stateFrames().map(value=>value.adventure).filter(Boolean),adventure=experienceState.funhouse?experienceState.funhouse.adventure:adventures.find(value=>value.status==='active')||adventures[0];
+  for(const marker of adventureMarkers){
+   const found=marker.clueId&&adventure?.found?.includes(marker.clueId),next=marker.index<0?adventure?.status!=='active':adventure?.status==='active'&&marker.index===adventure.clueIndex;
+   marker.highlight.visible=Boolean(next);marker.seal.visible=Boolean(found);
+   marker.token.position.y=marker.baseY+(reducedMotion?0:Math.sin(time*.85+Math.max(0,marker.index))*.055);
+   marker.gem.rotation.y=reducedMotion?0:time*.3;
+   marker.highlight.scale.setScalar(next&&!reducedMotion?1+Math.sin(time*1.4)*.045:1);
+  }
+  for(const rig of adventureRigs){
+   const active=(timed.get('adventure:'+rig.id)||-1)>time,pulse=active&&!reducedMotion?Math.sin(time*4):0;
+   if(rig.kind==='ticket')rig.node.rotation.z=-.14+pulse*.12;
+   else if(rig.kind==='door')rig.node.rotation.y=active?-.65+pulse*.035:0;
+   else if(rig.kind==='mask')rig.node.position.y=rig.baseY+(active ? .16 : 0)+pulse*.035;
+   else if(rig.kind==='shadow')rig.node.rotation.z=active ? .3+pulse*.025 : 0;
+   else if(rig.kind==='lid')rig.node.rotation.x=active?-.8+pulse*.035:0;
+   else if(rig.kind==='lantern')rig.node.rotation.z=pulse*.07;
+  }
   for(let i=0;i<performers.length;i++){const c=performers[i];c.rotation.z=reducedMotion?0:Math.sin(time*1.25+i)*.025;const left=c.getObjectByName('FUNHOUSE_CLOWN_ARM');if(left)left.rotation.x=reducedMotion?0:Math.sin(time*1.8+i)*.18;}
   for(const [i,target]of targets.entries()){
    const hit=(timed.get(target.id)||-1)>time;
@@ -444,6 +583,26 @@ export function createClownFunhouseLand(environment={}) {
   updateLiveSign('ballpit',ballGame?.status==='active'?'SCORE '+ballGame.score+' · '+Math.max(0,Math.ceil((ballGame.endsAt-now)/1000))+'s':'FOLLOW THE LIT HOOP','START · AIM · TOSS');
   updateLiveSign('jackbox',jackReady?'CATCH THE CLOWN!':jackGame?.status==='active'?'WIND '+jackGame.windCount+' / 3':'WIND THE HANDLE',jackGame?.phase==='ready'&&!jackReady?'WAIT FOR THE POP':'AIM + USE / TRIGGER');
  };
+ // Flatten only the newly authored static set dressing. Transforming parts
+ // into each area's local frame retains its appearance while keeping all
+ // animated doors, tokens, puppets and physical attraction meshes separate.
+ for(const rig of adventureRigs)rig.node.userData.dynamicDecoration=true;
+ root.updateWorldMatrix(true,true);
+ for(const area of storyDetails){
+  const parent=area.root,inverse=parent.matrixWorld.clone().invert(),batches=new Map();
+  parent.traverse(node=>{
+   if(!node.isMesh||node.userData.collisionDisabled!==true||node.userData.dynamicDecoration||!node.visible||Array.isArray(node.material)||node.material.transparent)return;
+   for(let ancestor=node.parent;ancestor&&ancestor!==parent;ancestor=ancestor.parent)if(ancestor.userData.dynamicDecoration)return;
+   const nodes=batches.get(node.material)||[];nodes.push(node);batches.set(node.material,nodes);
+  });
+  for(const [mat,nodes]of batches){
+   if(nodes.length<2)continue;
+   const parts=nodes.map(node=>node.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(inverse,node.matrixWorld))),geometry=mergeGeometries(parts);
+   for(const part of parts)part.dispose();if(!geometry)continue;
+   const batch=new T.Mesh(geometry,mat);batch.name='FUNHOUSE_BATCHED_STORY_SCENERY';batch.userData.collisionDisabled=true;batch.receiveShadow=true;parent.add(batch);
+   for(const node of nodes){node.removeFromParent();node.geometry.dispose();}
+  }
+ }
  // Batch static sibling decorations by material. Animated groups keep their
  // own coordinate system, and physical meshes remain individually queryable.
  const groups=[];root.traverse(node=>{if(node.isGroup)groups.push(node);});

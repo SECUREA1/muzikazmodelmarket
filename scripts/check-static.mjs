@@ -179,9 +179,14 @@ for (const directory of excludedBuildDirectories) {
   }
 }
 
+const eventAudioGamePages = new Set(['index.html', 'model-explorer.html', 'model-market.html']);
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : page === 'environment-builder.html' ? ['styles.css', 'environment-builder.css', 'environment-builder.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  let requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : page === 'environment-builder.html' ? ['styles.css', 'environment-builder.css', 'environment-builder.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  if (eventAudioGamePages.has(page)) {
+    requiredAssets = requiredAssets.filter(asset => asset !== 'battle-theme.js');
+    if (html.includes('battle-theme.js')) throw new Error(`${page} must keep automatic background synthesis out of spoken gameplay.`);
+  }
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {

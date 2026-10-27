@@ -1,4 +1,5 @@
-import {funhouseRideCue} from './funhouse-experience-rules.js';
+import {funhouseRideCue,funhouseRidePose} from './funhouse-experience-rules.js';
+import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './funhouse-adventure-rules.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {funhouseStations,isFunhouseEnvironment} from './clown-funhouse-config.js';
 import {funhouseInteractionHit} from './funhouse-scene-actions.js';
@@ -21,7 +22,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  face.name='FUNHOUSE_VR_ACTION_BOARD';face.renderOrder=990;face.userData.collisionDisabled=true;root.add(face);
  const inverse=new THREE.Matrix4(),localRay=new THREE.Ray(),localPoint=new THREE.Vector3(),head=new THREE.Vector3(),orientation=new THREE.Quaternion(),forward=new THREE.Vector3(),right=new THREE.Vector3();
  const held=new Set();
- let state={},latestActors=null,selfId=null,sequence=-1,offset=0,pending=false,disposed=false,visible=false,available=false,generation=0,selectedId=null,message='',lastSignature='',buttons=[],hovered=null,drawCount=0,worldId=null,lastTickAt=-Infinity;
+ let state={},latestActors=null,selfId=null,sequence=-1,offset=0,pending=false,disposed=false,visible=false,available=false,generation=0,selectedId=null,message='',lastSignature='',buttons=[],hovered=null,drawCount=0,worldId=null,lastTickAt=-Infinity,boardMode='attraction',actionPage=0,observedRideId=null,pendingRideAnchor=null,boardRideFollow=null;
  const now=()=>getServerTime?getServerTime():Date.now()+offset;
  const allStations=()=>funhouseStations(getEnvironment(),{actors:latestActors||getActors()});
  function nearest(){let result=null,limit=6.5;for(const station of allStations()){const gap=distance(getPosition(),station.position);if(gap<Math.min(limit,station.interactionDistance||6.5)){limit=gap;result=station;}}return result;}
@@ -40,6 +41,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   return Promise.resolve().then(()=>send(action,fields)).then(async snapshot=>{
    if(disposed||token!==generation||getEnvironment()?.id!==environmentId||!snapshot)return false;
    const accepted=receive(snapshot,snapshot.selfId||selfId);
+   if(action==='funhouse-adventure'&&fields.operation==='start'&&active(state.adventure)){boardMode='adventure';actionPage=0;}
    if(action==='funhouse-ride'&&beganPresenting&&!getPresenting()&&active(state.ride)){const ended=await send('funhouse-ride-exit',{rideId:state.ride.id});if(!disposed&&token===generation&&ended)receive(ended,ended.selfId||selfId);return false;}
    if(!accepted)return false;message=snapshot.result?.message||state.message||'Attraction ready.';
    if(action==='funhouse-ride')onStartRide(state.ride,station);if(action==='funhouse-ride-exit')onExitRide(state.ride,station);
@@ -53,12 +55,12 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   if(!station)return [];
   const ride=active(state.ride)&&state.ride.stationId===station.id?{...state.ride,...funhouseRideCue(state.ride,now())}:null,challenge=active(state.challenge)&&state.challenge.stationId===station.id?state.challenge:null,round=active(state.round)&&state.round.stationId===station.id?state.round:null,kind=station.kind;
   if(ride){
-   const options=kind==='car'?[entry('honk','Squeeze the horn',()=>actionFor(station,'honk'))]:[
-    entry('balance-0',(ride.targetId===0?'● ':'')+'Balance left',()=>actionFor(station,'balance',{targetId:0})),
-    entry('balance-1',(ride.targetId===1?'● ':'')+'Balance right',()=>actionFor(station,'balance',{targetId:1})),
-    entry('gentle',getReducedMotion()?'Comfort motion enabled':ride.gentle===false?'Use gentle motion':'Use lively motion',()=>actionFor(station,'gentle',{enabled:getReducedMotion()||ride.gentle===false}),!getReducedMotion())
+   const ready=!finite(ride.lastActionAt)||now()>=Number(ride.lastActionAt)+(kind==='car'?400:300);
+   const options=kind==='car'?[entry('honk','Squeeze the horn',()=>actionFor(station,'honk'),ready)]:[
+    entry('balance-0',(ride.targetId===0?'● ':'')+'Balance left',()=>actionFor(station,'balance',{targetId:0}),ready&&ride.lastCueHit!==ride.cueIndex),
+    entry('balance-1',(ride.targetId===1?'● ':'')+'Balance right',()=>actionFor(station,'balance',{targetId:1}),ready&&ride.lastCueHit!==ride.cueIndex)
    ];
-   return [...options,entry('ride-exit','Stop ride and step off',()=>run('funhouse-ride-exit',{rideId:ride.id},station))];
+   return [...options,entry('gentle',getReducedMotion()?'Comfort motion enabled':ride.gentle===false?'Use gentle motion':'Use lively motion',()=>actionFor(station,'gentle',{enabled:getReducedMotion()||ride.gentle===false}),!getReducedMotion()),entry('ride-exit','Stop ride and step off',()=>run('funhouse-ride-exit',{rideId:ride.id},station))];
   }
   if(kind==='water'){
    if(!round)return [entry('water-start','Start water-gun round',()=>command(station,'funhouse-start'))];
@@ -72,32 +74,50 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
    const ready=challenge.readyAt&&now()>=challenge.readyAt&&now()<=challenge.catchUntil;
    return [entry('wind','Wind the handle · '+(challenge.windCount||0)+' / 3',()=>actionFor(station,'wind'),(challenge.windCount||0)<3),entry('catch',ready?'Catch the clown now!':'Wait for the clown…',()=>actionFor(station,'catch'),!!ready),entry('challenge-stop','Stop this challenge',()=>actionFor(station,'stop'))];
   }
-  if(kind==='ballpit')return challenge?[...Array.from({length:4},(_,targetId)=>entry('toss-'+targetId,(challenge.targetId===targetId?'● ':'')+'Toss at '+ballNames[targetId],()=>actionFor(station,'toss',{targetId}))),entry('challenge-stop','Stop this challenge',()=>actionFor(station,'stop'))]:[entry('ball-start','Start the monster toss game',()=>command(station,'funhouse-challenge')),entry('show','Bounce the monster balls',()=>command(station,'funhouse-use'))];
+  if(kind==='ballpit')return challenge?[...Array.from({length:4},(_,targetId)=>entry('toss-'+targetId,(challenge.targetId===targetId?'● ':'')+'Toss at '+ballNames[targetId],()=>actionFor(station,'toss',{targetId}),!finite(challenge.lastActionAt)||now()>=Number(challenge.lastActionAt)+350)),entry('challenge-stop','Stop this challenge',()=>actionFor(station,'stop'))]:[entry('ball-start','Start the monster toss game',()=>command(station,'funhouse-challenge')),entry('show','Bounce the monster balls',()=>command(station,'funhouse-use'))];
   if(kind==='mirrors')return challenge?[entry('maze-check','Check this maze checkpoint',()=>actionFor(station,'check-in')),entry('challenge-stop','Stop this challenge',()=>actionFor(station,'stop'))]:[entry('maze-start','Start the mirror maze',()=>command(station,'funhouse-challenge'))];
   if(kind==='maze-finish')return [entry('maze-bell','Ring the maze exit bell',()=>command(station,'funhouse-use'))];
   return [entry('welcome','Hear the attraction guide',()=>command(station,'funhouse-use'))];
  }
+ function adventureActions(){
+  if(!funhouseAdventureAvailable(getEnvironment()))return [];
+  const adventure=state.adventure,clue=funhouseAdventureNextClue(adventure),riding=active(state.ride);
+  if(active(adventure))return [entry('adventure-inspect','Inspect '+(clue?.name||'the next clue'),()=>run('funhouse-adventure',{operation:'inspect',adventureId:adventure.id,clueId:clue?.id}),!riding&&funhouseAdventureNear(getPosition(),clue)),entry('adventure-stop','Stop the adventure trail',()=>run('funhouse-adventure',{operation:'stop',adventureId:adventure.id}))];
+  return [entry('adventure-start',adventure?'Start the trail again':'Start the adventure trail',()=>run('funhouse-adventure',{operation:'start'}),!riding&&funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START))];
+ }
  function summary(station){
+  if(boardMode==='adventure'){
+   const adventure=state.adventure,clue=funhouseAdventureNextClue(adventure);
+   if(active(adventure))return {title:'The Lost Laugh Trail',headline:(adventure.found?.length||0)+' / '+FUNHOUSE_ADVENTURE_CLUES.length+' clues · '+Math.max(0,Math.ceil((adventure.endsAt-now())/1000))+'s',detail:clue?.hint||adventure.hint||'Explore the midway.',cue:clue?.name||'Find the next discovery'};
+   if(adventure)return {title:'The Lost Laugh Trail',headline:(adventure.status==='complete'?'Trail complete':'Trail stopped')+' · '+Number(adventure.score||0)+' points',detail:adventure.message||'Return to the welcome board for another adventure.',cue:'BEST TRAIL '+Number(state.bestScores?.adventure||0)};
+   return {title:'The Lost Laugh Trail',headline:'Six lost laughs · ten minutes',detail:'Start at the welcome board. Explore the midway and haunted house to inspect six mysterious clues.',cue:'ENJOY THE RIDES ALONG THE WAY'};
+  }
   const ride=active(state.ride)?{...state.ride,...funhouseRideCue(state.ride,now())}:null,round=active(state.round)?state.round:null,challenge=active(state.challenge)?state.challenge:null;
   if(ride){const remaining=Math.max(0,Math.ceil((ride.endsAt-now())/1000));return {headline:remaining+'s · '+Number(ride.score||0)+' ride points',detail:ride.kind==='car'?'Squeeze the horn when the cue lights up.':'Balance toward the lit side. Stop at any time.',cue:ride.kind==='car'?(now()>=ride.nextCueAt&&now()<=ride.nextCueAt+1500?'HONK NOW!':'Next horn cue in '+Math.max(0,Math.ceil((ride.nextCueAt-now())/1000))+'s'):(ride.targetId===0?'BALANCE LEFT':'BALANCE RIGHT')};}
   if(round){return {headline:Number(round.score||0)+' points · '+Math.max(0,Math.ceil((round.endsAt-now())/1000))+'s',detail:'Aim at the glowing clown and squeeze either trigger.',cue:'GLOWING CLOWN '+(Number(round.targetId)+1)};}
   if(challenge){return {headline:Number(challenge.score||0)+' points · '+Math.max(0,Math.ceil((challenge.endsAt-now())/1000))+'s',detail:challenge.kind==='jackbox'?'Wind three times, then catch the clown as it appears.':challenge.kind==='mirrors'?'Follow the passages and the ordered checkpoint markers.':'Aim at the glowing monster target and toss a ball.',cue:challenge.kind==='jackbox'?(challenge.windCount<3?'WIND '+(challenge.windCount||0)+' / 3':now()<challenge.readyAt?'WAIT…':now()<=challenge.catchUntil?'CATCH NOW!':'Try the challenge again'):challenge.kind==='mirrors'?'CHECKPOINT '+(Number(challenge.checkpointIndex||0)+1):ballNames[challenge.targetId]?.toUpperCase()||'FIND THE GLOWING TARGET'};}
-  return {headline:station?.name||'Midnight Laughs Funhouse',detail:station?'Point at a control and squeeze a trigger.':'Walk close to an attraction to see its controls.',cue:'PASSPORT '+(state.stamps?.length||0)+' / 6 · BEST SPLASH '+(state.bestScore||0)};
+  const completed=[state.ride,state.round,state.challenge].find(value=>value&&value.status!=='active'&&value.stationId===station?.id);
+  return {headline:completed?(completed.status==='complete'?'Complete':'Stopped')+' · '+Number(completed.score||0)+' points':station?.name||'Midnight Laughs Funhouse',detail:completed?completed.message||'Choose another round or keep exploring.':station?'Point at a control and squeeze a trigger.':'Walk close to an attraction to see its controls.',cue:'PASSPORT '+(state.stamps?.length||0)+' / 6 · BEST SPLASH '+(state.bestScore||0)};
  }
  function redraw(){
   if(disposed||!visible){lastSignature='';return;}
-  const station=currentStation(),info=summary(station),actions=attractionActions(station);
-  actions.push(entry('close','Hide this board',()=>setVisible(false)));
-  buttons=actions.slice(0,8).map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||item.id==='close'),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
+  const station=currentStation(),info=summary(station),actions=boardMode==='adventure'?[...adventureActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:attractionActions(station);
+  if(boardMode!=='adventure'&&funhouseAdventureAvailable(getEnvironment()))actions.push(entry('adventure-board',active(state.adventure)?'Adventure trail · '+(state.adventure.found?.length||0)+' / 6':'Explore the adventure trail',()=>{boardMode='adventure';actionPage=0;redraw();}));
+  const pages=Math.max(1,Math.ceil(actions.length/5));actionPage=Math.min(actionPage,pages-1);
+  const pageActions=actions.slice(actionPage*5,actionPage*5+5);
+  if(actionPage>0)pageActions.push(entry('previous-actions','Previous actions',()=>{actionPage--;redraw();}));
+  if(actionPage+1<pages)pageActions.push(entry('next-actions','Next actions',()=>{actionPage++;redraw();}));
+  pageActions.push(entry('close','Hide this board',()=>setVisible(false)));
+  buttons=pageActions.map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||['close','next-actions','previous-actions','adventure-board','attraction-board'].includes(item.id)),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
   const signature=JSON.stringify([station?.id,info,pending,message,hovered,buttons.map(button=>[button.id,button.label,button.enabled])]);
   if(signature===lastSignature)return;lastSignature=signature;drawCount++;
   if(!ink)return;
   ink.clearRect(0,0,width,height);ink.fillStyle='rgba(25,13,40,.96)';ink.fillRect(0,0,width,height);ink.strokeStyle='#edb666';ink.lineWidth=6;ink.strokeRect(3,3,width-6,height-6);
   ink.textAlign='left';ink.textBaseline='middle';ink.fillStyle='#f4c77d';ink.font='bold 27px system-ui';ink.fillText('MIDNIGHT LAUGHS · IMMERSIVE CONTROLS',28,38,968);
-  ink.font='bold 38px system-ui';ink.fillStyle='#ffedc8';ink.fillText(text(station?.name||'Welcome to the midway'),28,91,968);
+  ink.font='bold 38px system-ui';ink.fillStyle='#ffedc8';ink.fillText(text(info.title||station?.name||'Welcome to the midway'),28,91,968);
   ink.fillStyle='#8df5e8';ink.font='bold 35px system-ui';ink.fillText(text(info.headline),28,150,968);
-  ink.fillStyle='#e9c6dc';ink.font='27px system-ui';ink.fillText(text(info.detail),28,198,968);
-  ink.fillStyle='#ffd487';ink.font='bold 31px system-ui';ink.fillText(text(info.cue),28,248,968);
+  ink.fillStyle='#e9c6dc';ink.font='25px system-ui';const detailLines=[];let detailLine='';for(const word of text(info.detail).split(' ')){const next=detailLine?detailLine+' '+word:word;if(ink.measureText(next).width>968&&detailLine){detailLines.push(detailLine);detailLine=word;}else detailLine=next;}if(detailLine)detailLines.push(detailLine);detailLines.slice(0,2).forEach((line,index)=>ink.fillText(line,28,192+index*31,968));
+  ink.fillStyle='#ffd487';ink.font='bold 31px system-ui';ink.fillText(text(info.cue),28,267,968);
   for(const button of buttons){ink.fillStyle=button.enabled?(hovered===button.id?'#684164':'#32203f'):'#261b30';ink.fillRect(button.x,button.y,button.w,button.h);ink.strokeStyle=button.enabled?(hovered===button.id?'#91fff0':'#bc8d64'):'#514454';ink.lineWidth=hovered===button.id?6:3;ink.strokeRect(button.x+2,button.y+2,button.w-4,button.h-4);ink.fillStyle=button.enabled?'#fff1d0':'#8c7c96';ink.textAlign='center';ink.font='bold 27px system-ui';ink.fillText(text(button.label),button.x+button.w/2,button.y+button.h/2,button.w-24);}
   ink.textAlign='left';ink.font='23px system-ui';ink.fillStyle='#9be6df';ink.fillText(text(pending?'Attraction is responding…':message||state.message||'Either trigger selects · X/B opens the game menu'),28,719,968);texture.needsUpdate=true;
  }
@@ -105,9 +125,11 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   const tracked=getCamera();tracked?.updateWorldMatrix?.(true,false);tracked?.getWorldPosition?.(head);tracked?.getWorldQuaternion?.(orientation);
   forward.set(0,0,-1).applyQuaternion(orientation);forward.y=0;if(forward.lengthSq()<.01)forward.set(0,0,-1);forward.normalize();right.set(1,0,0).applyQuaternion(orientation);right.y=0;right.normalize();
   root.position.copy(head).addScaledVector(forward,1.45).addScaledVector(right,.68);root.position.y-=.29;root.rotation.set(0,Math.atan2(-forward.x,-forward.z),0);root.updateMatrixWorld(true);
+  const pose=liveRidePosition();boardRideFollow=pose?{id:state.ride.id,position:{...pose}}:null;
  }
+ function liveRidePosition(){const ride=state.ride;if(!active(ride))return null;const station=allStations().find(station=>station.id===ride.stationId);return station&&Number.isFinite(ride.startedAt)&&Number.isFinite(ride.durationMs)?funhouseRidePose(ride,station,now()).position:ride.pose?.position||null;}
  function setVisible(next){
-  next=!!next&&!disposed&&getPresenting();if(next&&!visible){selectedId=currentStation()?.id||nearest()?.id||null;anchor();onInputRelease('funhouse-vr-board');lastSignature='';}
+  next=!!next&&!disposed&&getPresenting();if(next&&!visible){const station=currentStation();selectedId=station?.id||nearest()?.id||null;if(active(state.adventure)&&!station)boardMode='adventure';actionPage=0;anchor();onInputRelease('funhouse-vr-board');lastSignature='';}
   visible=next;root.visible=next;if(!next){held.clear();hovered=null;}redraw();return next;
  }
  function receive(snapshot,id){
@@ -117,8 +139,9 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   selfId=id||selfId;if(Number.isFinite(snapshot?.serverTime))offset=snapshot.serverTime-Date.now();
   if(snapshot?.actors&&typeof snapshot.actors==='object')latestActors=snapshot.actors;
   const next=snapshot?.players?.[selfId]?.funhouse||getState();if(next){if(next.message!==state.message)message='';state=next;}
+  if(state.ride?.id){const key=state.ride.id+':'+state.ride.status;if(key!==observedRideId){observedRideId=key;pendingRideAnchor={key,position:active(state.ride)?state.ride.pose?.position:state.ride.pose?.exitPosition||allStations().find(station=>station.id===state.ride.stationId)?.position};if(active(state.ride)){boardMode='attraction';actionPage=0;}}}
   available=isFunhouseEnvironment(getEnvironment())||allStations().length>0;
-  if(visible){const station=currentStation(),running=active(state.ride)||active(state.round)||active(state.challenge);if(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7)setVisible(false);}
+  if(visible){const station=currentStation(),trail=boardMode==='adventure'&&funhouseAdventureAvailable(getEnvironment()),running=active(state.ride)||active(state.round)||active(state.challenge);if(!trail&&(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7))setVisible(false);}
   if(!getPresenting()&&visible)setVisible(false);redraw();return true;
  }
  function hitPanel(ray){
@@ -138,7 +161,23 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  function pointerUp(controller=null){if(controller===null)held.clear();else held.delete(controller);}
  function aimFields(ray){const origin=point(ray?.origin),direction=point(ray?.direction);return Object.values(origin).every(Number.isFinite)&&Object.values(direction).every(Number.isFinite)?{origin,direction:[direction.x,direction.y,direction.z]}:{};}
  function worldTrigger(ray,controller='primary'){
-  if(disposed||pending)return !!pending;const station=currentStation();if(!station)return false;
+  if(disposed||pending)return !!pending;
+  if(funhouseAdventureAvailable(getEnvironment())){
+   const discovery=funhouseInteractionHit(ray,getRoots(),{kind:'adventure',maxDistance:20});
+   if(discovery){
+    if(discovery.operation==='adventure-start'){if(!active(state.ride)&&funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START))void run('funhouse-adventure',{operation:'start'});else onStatus('Walk to the welcome board and step off your ride to begin the trail.');return true;}
+    if(discovery.operation==='inspect'){
+     const clue=funhouseAdventureNextClue(state.adventure);
+     if(!clue)onStatus('Begin the Lost Laugh Trail at the welcome board.');
+     else if(active(state.ride))onStatus('Step off your ride before inspecting a clue.');
+     else if(clue.id!==discovery.clueId)onStatus(clue.hint);
+     else if(funhouseAdventureNear(getPosition(),clue))void run('funhouse-adventure',{operation:'inspect',adventureId:state.adventure.id,clueId:clue.id});
+     else onStatus('Walk closer to '+clue.name+'.');
+     return true;
+    }
+   }
+  }
+  const station=currentStation();if(!station)return false;
   const round=active(state.round)?state.round:null,challenge=active(state.challenge)?state.challenge:null,ride=active(state.ride)?state.ride:null;
   const aimingGame=round||challenge?.kind==='ballpit';
   const hit=funhouseInteractionHit(ray,getRoots(),{...(aimingGame||ride?{stationId:canonicalId(station),objectId:station.objectId||undefined}:{}),...(round?{operation:'squirt'}:challenge?.kind==='ballpit'?{operation:'toss'}:{}),maxDistance:20}),fields=aimFields(ray);
@@ -159,12 +198,12 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function trigger(ray,controller='primary'){if(pointerDown(ray,controller))return true;if(held.has(controller))return true;const handled=worldTrigger(ray,controller);if(handled)held.add(controller);return handled;}
  function menuItems(){
-  const station=currentStation(),items=attractionActions(station).map(action=>({label:action.label,run:()=>action.enabled?action.run():onStatus('Wait for the next attraction cue.')}));
+  const station=currentStation(),items=[...attractionActions(station),...adventureActions()].map(action=>({id:'funhouse:'+action.id,label:action.label,disabled:!action.enabled,run:()=>action.enabled?action.run():onStatus(action.id.startsWith('adventure')?'Follow the trail hint and move close to the correct discovery.':'Wait for the next attraction cue.')}));
   if(isAvailable())items.push({label:visible?'Hide attraction controls':'Show attraction controls',run:()=>setVisible(!visible)},{label:'Recenter attraction board',run:()=>{setVisible(true);anchor();}});
   return items;
  }
  function release(){held.clear();hovered=null;redraw();}
- function tick(){if(disposed||!visible)return;if(!getPresenting())setVisible(false);if(now()-lastTickAt<80)return;lastTickAt=now();redraw();}
- function reset(){generation++;pending=false;state={};latestActors=null;sequence=-1;selfId=null;selectedId=null;message='';lastSignature='';worldId=null;lastTickAt=-Infinity;held.clear();visible=available=false;root.visible=false;buttons=[];}
- return {root,update:receive,receive,tick,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
+ function tick(){if(disposed||!visible)return;if(!getPresenting())setVisible(false);if(pendingRideAnchor){const tracked=getCamera(),pose=pendingRideAnchor.position;tracked?.updateWorldMatrix?.(true,false);tracked?.getWorldPosition?.(head);if(pose&&Math.hypot(head.x-pose.x,head.z-pose.z)<2.5){anchor();pendingRideAnchor=null;}}const ridePosition=liveRidePosition();if(ridePosition&&boardRideFollow?.id===state.ride.id&&!pendingRideAnchor){root.position.x+=ridePosition.x-boardRideFollow.position.x;root.position.y+=ridePosition.y-boardRideFollow.position.y;root.position.z+=ridePosition.z-boardRideFollow.position.z;boardRideFollow.position={...ridePosition};}if(!ridePosition)boardRideFollow=null;if(now()-lastTickAt<80)return;lastTickAt=now();redraw();}
+ function reset(){generation++;pending=false;state={};latestActors=null;sequence=-1;selfId=null;selectedId=null;message='';lastSignature='';worldId=null;lastTickAt=-Infinity;boardMode='attraction';actionPage=0;observedRideId=pendingRideAnchor=boardRideFollow=null;held.clear();visible=available=false;root.visible=false;buttons=[];}
+ return {root,update:receive,receive,tick,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,mode:boardMode,page:actionPage,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null,adventure:state.adventure?{...state.adventure}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
 }

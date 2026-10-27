@@ -19,13 +19,13 @@ try:
   page.wait_for_function("document.body.dataset.ready === 'true'")
   page.evaluate('''async () => {
    window.spoken=[]; window.cancelled=0;
-   window.SpeechSynthesisUtterance=class { constructor(text){this.text=text;} };
-   const speech={getVoices:()=>[],speak:call=>{spoken.push(call);call.onstart?.();},cancel(){cancelled++;},resume(){}};
-   Object.defineProperty(window,'speechSynthesis',{value:speech,configurable:true});
+   const Utterance=class { constructor(text){this.text=text;} };
+   const {GENERATED_VOICES}=await import('/public/js/neural-character-speech.js');
+   const speech={getVoices:()=>GENERATED_VOICES,speak:call=>{spoken.push(call);call.onstart?.();},cancel(){cancelled++;},resume(){}};
    const {createQuestConversationVoice}=await import('/public/js/quest-conversation-voice.js');
    const {mountAirportOperations}=await import('/public/js/airport-operations.js');
-   window.worldVoice=createQuestConversationVoice();
-   window.airportOps=mountAirportOperations({stage:document.querySelector('.house-stage'),command:async()=>({result:{message:'Tower. Ready.'}})});
+   window.worldVoice=createQuestConversationVoice({speech,Utterance});
+   window.airportOps=mountAirportOperations({audioOptions:{speech,Utterance,audioFactory:()=>null},stage:document.querySelector('.house-stage'),command:async()=>({result:{message:'Tower. Ready.'}})});
    airportOps.updateEnvironment({id:'airport',airport:{enabled:true}});
    airportOps.update({players:{pilot:{health:100,position:{x:0,y:0,z:0}}},actors:{}},'pilot');
    worldVoice.unlock();worldVoice.announce('Welcome to the airport.',{worldId:'airport',category:'introduction'});

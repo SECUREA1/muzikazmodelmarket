@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {createFunhouseVR} from '../public/js/funhouse-vr.js';
 import {FUNHOUSE_STATIONS} from '../public/js/clown-funhouse-config.js';
+import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES} from '../public/js/funhouse-adventure-rules.js';
+import {funhouseRidePose} from '../public/js/funhouse-experience-rules.js';
 
 const turns=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 function fixture(kind='water',{state={},defer=false,reducedMotion=false,roots=[]}={}){
@@ -100,6 +102,57 @@ test('the anchored board retains real head parallax, recenters on request and re
  f.vr.menuItems().find(item=>item.label==='Recenter attraction board').run();assert.ok(f.vr.snapshot().position[0]>anchored[0]+1.9);
  f.setPresenting(false);f.vr.tick();assert.equal(f.vr.snapshot().visible,false);
  assert.equal(f.vr.pointerDown({origin:[0,0,0],direction:[0,0,-1]}),false);f.vr.dispose();
+});
+
+test('boarding and exiting reanchor controls once after the tracked head reaches the new pose',()=>{
+ const f=fixture('car');f.vr.setVisible(true);const approach=f.vr.snapshot().position;
+ const pose={position:{x:27.35,y:.6,z:25.55},exitPosition:{...f.position}};
+ f.vr.update(f.snapshot({ride:{id:'boarded',kind:'car',stationId:f.station.id,status:'active',endsAt:Date.now()+20000,pose}}),'me');
+ f.vr.tick();assert.deepEqual(f.vr.snapshot().position,approach,'the panel must wait for actual tracked arrival');
+ f.camera.position.set(pose.position.x,pose.position.y+1.15,pose.position.z);f.vr.tick();
+ const seated=f.vr.snapshot().position;assert.ok(Math.hypot(seated[0]-approach[0],seated[2]-approach[2])>2);
+ f.camera.position.x+=.35;f.vr.tick();assert.deepEqual(f.vr.snapshot().position,seated,'ordinary head parallax must not drag the panel');
+ f.vr.update(f.snapshot({ride:{id:'boarded',kind:'car',stationId:f.station.id,status:'cancelled',pose}}),'me');
+ f.camera.position.set(f.position.x,f.position.y+1.65,f.position.z);f.vr.tick();
+ assert.ok(Math.hypot(f.vr.snapshot().position[0]-seated[0],f.vr.snapshot().position[2]-seated[2])>2);f.vr.dispose();
+});
+
+test('the board travels with the physical spinner seat through snapshots without following head motion',()=>{
+ const originalNow=Date.now;let clock=100000;Date.now=()=>clock;
+ try{
+  const station=FUNHOUSE_STATIONS.find(station=>station.kind==='spinner'),ride={id:'spinning',kind:'spinner',stationId:station.id,status:'active',startedAt:clock,endsAt:clock+15000,durationMs:15000,gentle:true};
+  ride.pose=funhouseRidePose(ride,station,clock);
+  const f=fixture('spinner',{state:{ride}});f.camera.position.set(ride.pose.position.x,ride.pose.position.y+1.15,ride.pose.position.z);f.vr.setVisible(true);f.vr.tick();
+  const offset=f.vr.snapshot().position.map((value,index)=>value-[ride.pose.position.x,ride.pose.position.y,ride.pose.position.z][index]);
+  for(let index=0;index<6;index++){
+   clock+=800;const pose=funhouseRidePose(ride,station,clock);
+   f.camera.position.set(pose.position.x,pose.position.y+1.15,pose.position.z);f.vr.update(f.snapshot({ride:{...ride,pose}}),'me');f.vr.tick();
+   f.vr.snapshot().position.forEach((value,axis)=>assert.ok(Math.abs(value-[pose.position.x,pose.position.y,pose.position.z][axis]-offset[axis])<1e-7));
+  }
+  const anchored=f.vr.snapshot().position;f.camera.position.x+=.4;f.vr.tick();assert.deepEqual(f.vr.snapshot().position,anchored,'leaning the headset retains physical parallax');
+  clock+=100;const between=funhouseRidePose(ride,station,clock);f.vr.tick();
+  f.vr.snapshot().position.forEach((value,axis)=>assert.ok(Math.abs(value-[between.position.x,between.position.y,between.position.z][axis]-offset[axis])<1e-7,'seat transport stays smooth between network snapshots'));
+  f.vr.dispose();
+ }finally{Date.now=originalNow;}
+});
+
+test('all target controls remain reachable through board pages and the car has comfort controls',async()=>{
+ const station=FUNHOUSE_STATIONS.find(station=>station.kind==='water'),f=fixture('water',{state:{round:{id:'round',stationId:station.id,status:'active',endsAt:Date.now()+30000,targetId:5}}});
+ f.vr.setVisible(true);assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='close'));
+ f.vr.pointerDown(f.rayToButton('next-actions'),'right');await turns();f.vr.pointerUp('right');
+ assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='water-5'));assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='water-stop'));assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='close'));f.vr.dispose();
+ const car=FUNHOUSE_STATIONS.find(station=>station.kind==='car'),rider=fixture('car',{state:{ride:{id:'car',kind:'car',stationId:car.id,status:'active',endsAt:Date.now()+20000,gentle:true}}});
+ rider.vr.setVisible(true);assert.ok(rider.vr.snapshot().buttons.some(button=>button.id==='gentle'));await rider.vr.menuItems().find(item=>item.id==='funhouse:gentle').run();assert.equal(rider.commands[0].operation,'gentle');rider.vr.dispose();
+});
+
+test('physical discoveries work far from attraction stations and trail stop preserves a ride',async()=>{
+ const clue=FUNHOUSE_ADVENTURE_CLUES[0],root=new THREE.Group(),token=new THREE.Group();token.position.set(clue.position.x,1.5,clue.position.z-1);root.add(token);root.userData.funhouseInteractionTargets=[{kind:'adventure',operation:'inspect',clueId:clue.id,root:token,radius:.5}];
+ const f=fixture('welcome',{roots:[root],state:{adventure:{id:'trail',status:'active',startedAt:Date.now(),endsAt:Date.now()+600000,clueIndex:0,found:[]}}});
+ Object.assign(f.position,clue.position);f.camera.position.set(f.position.x,1.5,f.position.z);
+ assert.equal(f.vr.worldTrigger({origin:f.camera.position,direction:[0,0,-1]}),true);await turns();
+ assert.equal(f.commands[0].action,'funhouse-adventure');assert.equal(f.commands[0].clueId,clue.id);
+ f.vr.setVisible(true);assert.equal(f.vr.snapshot().mode,'adventure');assert.ok(f.vr.snapshot().buttons.some(button=>button.id==='adventure-stop'));
+ await f.vr.menuItems().find(item=>item.id==='funhouse:adventure-stop').run();assert.deepEqual(f.commands[1],{action:'funhouse-adventure',operation:'stop',adventureId:'trail'});f.vr.dispose();
 });
 
 test('reset invalidates pending actions without reopening a stale board or replacing current state',async()=>{

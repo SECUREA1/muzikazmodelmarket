@@ -1,3 +1,8 @@
+"""Check chat/game speech ownership with an explicit shared-adapter fixture.
+
+Real generated audio and HTTP playback are covered by neural-speech.browser.py;
+this fixture controls completion/error events to exercise UI lifecycle races.
+"""
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -14,6 +19,11 @@ try:
   browser = p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox'])
   page = browser.new_page(); errors=[]
   page.on('pageerror', lambda error:errors.append(str(error)))
+  page.route('**/public/js/neural-character-speech.js',lambda route:route.fulfill(status=200,content_type='text/javascript',body='''
+   export function gameSpeech(){return window.speechSynthesis;}
+   export const GameSpeechUtterance=window.SpeechSynthesisUtterance;
+   export const GENERATED_VOICES=window.speechSynthesis.getVoices();
+  '''))
   page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/gameplay-audio.html')
   result=page.evaluate('''async () => {
    const assert=(condition,message)=>{if(!condition)throw Error(message);};
@@ -25,7 +35,11 @@ try:
    localStorage.setItem('muzikazChatTextToSpeech','true');
    localStorage.removeItem('muzikazDesignatedAvatar');
    window.MUZIKAZ_HOUSE_TRACKING={roomId:'room-a'};
-   const speech={spoken:[],cancelled:0,current:null,getVoices:()=>[],resume(){},
+   const voices=[
+    {name:'MUZIKAZ Natural Female',voiceURI:'muzikaz:neural-female',gender:'female',lang:'en-US',generated:true,natural:true,default:true},
+    {name:'MUZIKAZ Natural Male',voiceURI:'muzikaz:neural-male',gender:'male',lang:'en-US',generated:true,natural:true,default:false}
+   ];
+   const speech={spoken:[],cancelled:0,current:null,getVoices:()=>voices,resume(){},
     speak(call){this.spoken.push(call);this.current=call;call.onstart?.();},
     cancel(){this.cancelled++;const previous=this.current;this.current=null;previous?.onerror?.({error:'interrupted'});}
    };
