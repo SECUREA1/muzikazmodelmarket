@@ -9,6 +9,7 @@ import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
 import {createRoadVehicle,updateRoadVehicle} from './road-vehicle-models.js';
 import {CONSTRUCTION_MODEL_IDS,createConstructionModel,updateConstructionModel} from './construction-models.js';
+import {CONSTRUCTION_SITE_MODEL_INFO,createConstructionSiteModel} from './construction-site-models.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
 import {createPatrolBoat,updatePatrolBoat} from './patrol-boat.js';
 import {createLandSaleModel} from './land-sale-models.js';
@@ -51,6 +52,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...CONSTRUCTION_SITE_MODEL_INFO,
   ...PORTAL_MODEL_INFO,
   ...COMMON_PROP_MODEL_INFO,
   ...FACTORY_LOGISTICS_MODEL_INFO,
@@ -339,6 +341,7 @@ export function createBuilderModel(id,options={}) {
 }
 
 function buildNativeModel(id,options={}) {
+  if(CONSTRUCTION_SITE_MODEL_INFO[id])return createConstructionSiteModel(id);
   if(EQUIPMENT_PROP_MODEL_INFO[id])return createEquipmentPropModel(id);
   if(CRAFTED_LANDSCAPE_MODEL_INFO[id])return createCraftedLandscapeModel(id);
   if(CRAFTED_CHARACTER_MODEL_INFO[id])return createCraftedCharacterModel(id);

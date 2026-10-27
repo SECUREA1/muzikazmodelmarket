@@ -2,6 +2,8 @@
 
 The shared yard is 336 × 304 m, with 13 real earthwork areas. The Construction map and its editable Builder copy carry the same terrain, signs and haul roads. Open **Crew / jobs** for the site operations plan, locations, machine instructions and live progress. The compact Work / Drive controls stay unchanged.
 
+The yard now places the current detailed Titan 78 crane, Terra 40 truck, D9 bulldozer and HX350 excavator alongside reusable site-support models. The modular office has framed glazing, corrugated panels, lift-plan furniture and roof services; the maintenance shelter uses six steel posts and braced trusses; four narrow-base floodlights have generator cabinets and sixteen emissive optics each. Three corrugated cargo containers replace the loose container boxes. All models use the shared native surface finish and remain available in Builder copies. The service aisle stays open beneath its dedicated roof and column colliders, and the support models retain their existing footprints outside excavation cells and haul routes.
+
 | Work area | Site X / Z | Job |
 | --- | --- | --- |
 | Pavement reclamation | 198 / 12 | Rip the flat 24 cm pavement using the bucket or blade. Reclaimed pavement becomes gravel cargo. |

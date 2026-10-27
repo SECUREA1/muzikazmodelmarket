@@ -1,11 +1,17 @@
 // Camera video is opt-in and peer-to-peer; it is never written to server storage.
-export function mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,announce}){
+export function mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,announce,isRoomReady=()=>false}){
  const peers=new Map(),views=new Map(),watching=new Map();let local=null,deviceId=null,polling=false,closed=false,generation=0;
  const room=()=>window.MUZIKAZ_HOUSE_TRACKING?.roomId||localStorage.getItem('muzikazMultiplayerWorld');
  let currentRoom=room(),csrf='';
  const api=window.MUZIKAZ_API,fetchApi=(path,options)=>api?api.fetch(path,options):fetch(path,options);
+ const canSignal=()=>!closed&&Boolean(room())&&isRoomReady();
  async function request(body){
+  if(!canSignal())throw Error('Join this multiplayer room before using a live camera.');
+  const requestedRoom=room(),requestedGeneration=generation;
+  await api?.ready;
+  if(!canSignal()||requestedRoom!==room()||requestedGeneration!==generation)throw new DOMException('The camera room changed.','AbortError');
   if(!csrf){const response=await fetchApi('/api/market/session',{cache:'no-store'}),data=await response.json();if(!response.ok)throw Error(data.error||'Join the game to use a camera.');csrf=data.csrfToken;}
+  if(!canSignal()||requestedRoom!==room()||requestedGeneration!==generation)throw new DOMException('The camera room changed.','AbortError');
   const response=await fetchApi('/api/houses/ioncore-house/camera/signal',{method:body?'POST':'GET',cache:'no-store',headers:{'Content-Type':'application/json','X-MUZIKAZ-Session':localStorage.getItem('muzikazHouseSessionId')||'','X-CSRF-Token':csrf},...(body?{body:JSON.stringify(body)}:{})});
   const data=await response.json();if(!response.ok)throw Error(data.error||'Camera connection failed.');return data;
  }
@@ -34,6 +40,8 @@ export function mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,ann
   if(peer.remoteDescription)for(const candidate of entry.candidates.splice(0))await peer.addIceCandidate(candidate);
  }
  async function poll(){
+  if(room()!==currentRoom){reset();currentRoom=room();csrf='';}
+  if(!canSignal()){if(local)reset();return;}
   if(local&&!rootFor(deviceId)){stop();announce('Camera stopped because its screen was removed.');}
   if(polling||closed||!room()||!getRoots().some(root=>{let found=false;root.traverse(node=>{if(node.userData.mediaScreen)found=true;});return found;}))return;polling=true;const pollGeneration=generation;
   try{
@@ -52,6 +60,7 @@ export function mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,ann
  function reset(){generation++;local?.getTracks().forEach(track=>track.stop());local=null;deviceId=null;for(const id of peers.keys())closePeer(id);for(const source of views.keys())clearView(source);watching.clear();}
  function stop(){const active=Boolean(local);reset();return active?request({operation:'stop'}).catch(()=>{}):Promise.resolve();}
  async function start(id){
+  if(!canSignal())throw Error('Join this multiplayer room before using a live camera.');
   if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection)throw Error('Live camera requires a supported browser over HTTPS.');
   await stop();const token=generation,startedRoom=room();const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{width:{ideal:640},height:{ideal:360},frameRate:{ideal:15,max:24}}});
   if(token!==generation||startedRoom!==room()){stream.getTracks().forEach(track=>track.stop());return;}

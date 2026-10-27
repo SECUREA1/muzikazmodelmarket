@@ -34423,7 +34423,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-27T18:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T22:40:21.000Z",
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 768,
@@ -34496,7 +34496,7 @@
         {
           "id": "construction-crane",
           "modelId": "tower-crane",
-          "name": "Atlas TC-78 Tower Crane",
+          "name": "Titan 78 Tower Crane",
           "placementAnchor": "collider-base",
           "position": {
             "x": -18,
@@ -34517,15 +34517,20 @@
             "behavior": "vehicle",
             "interactionKey": "e",
             "interactionDistance": 6,
-            "prompt": "Operate Atlas TC-78 Tower Crane · E / Use",
+            "prompt": "Operate Titan 78 Tower Crane · E / Use",
             "destructible": false,
             "health": 1000
+          },
+          "asset": {
+            "buildAssetId": "tower-crane",
+            "name": "Titan 78 Tower Crane",
+            "type": "vehicle"
           }
         },
         {
           "id": "construction-truck",
           "modelId": "site-dumptruck",
-          "name": "HT-40 Articulated Dump Truck",
+          "name": "Terra 40 Articulated Dump Truck",
           "placementAnchor": "collider-base",
           "position": {
             "x": 21,
@@ -34546,9 +34551,14 @@
             "behavior": "vehicle",
             "interactionKey": "e",
             "interactionDistance": 5,
-            "prompt": "Operate HT-40 Articulated Dump Truck · E / Use",
+            "prompt": "Operate Terra 40 Articulated Dump Truck · E / Use",
             "destructible": false,
             "health": 1000
+          },
+          "asset": {
+            "buildAssetId": "site-dumptruck",
+            "name": "Terra 40 Articulated Dump Truck",
+            "type": "vehicle"
           }
         },
         {
@@ -34578,12 +34588,17 @@
             "prompt": "Operate D9 Crawler Bulldozer · E / Use",
             "destructible": false,
             "health": 1000
+          },
+          "asset": {
+            "buildAssetId": "site-bulldozer",
+            "name": "D9 Crawler Bulldozer",
+            "type": "vehicle"
           }
         },
         {
           "id": "construction-excavator",
           "modelId": "site-excavator",
-          "name": "EX-300 Hydraulic Excavator",
+          "name": "HX350 Hydraulic Excavator",
           "placementAnchor": "collider-base",
           "position": {
             "x": 25,
@@ -34604,9 +34619,14 @@
             "behavior": "vehicle",
             "interactionKey": "e",
             "interactionDistance": 5,
-            "prompt": "Operate EX-300 Hydraulic Excavator · E / Use",
+            "prompt": "Operate HX350 Hydraulic Excavator · E / Use",
             "destructible": false,
             "health": 1000
+          },
+          "asset": {
+            "buildAssetId": "site-excavator",
+            "name": "HX350 Hydraulic Excavator",
+            "type": "vehicle"
           }
         },
         {
@@ -40339,158 +40359,13 @@
         },
         {
           "id": "construction-site-office",
-          "modelId": "material:cube",
-          "name": "site office",
+          "modelId": "construction-site-office",
+          "name": "Modular Site Office · Lift Plans",
           "placementAnchor": "collider-base",
           "position": {
             "x": -34,
             "y": 0,
             "z": 24
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 10,
-            "y": 3,
-            "z": 5.833333333333334
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#47616d"
-          }
-        },
-        {
-          "id": "construction-site-office-roof",
-          "modelId": "material:cube",
-          "name": "site office roof",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -34,
-            "y": 3.6,
-            "z": 24
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 10.416666666666668,
-            "y": 0.18333333333333335,
-            "z": 6.25
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#aab7b5"
-          }
-        },
-        {
-          "id": "construction-office-window-0",
-          "modelId": "material:cube",
-          "name": "office window 0",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -38,
-            "y": 1.4,
-            "z": 27.54
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 2,
-            "y": 0.9166666666666667,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#80bfd0"
-          }
-        },
-        {
-          "id": "construction-office-window-1",
-          "modelId": "material:cube",
-          "name": "office window 1",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -34,
-            "y": 1.4,
-            "z": 27.54
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 2,
-            "y": 0.9166666666666667,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#80bfd0"
-          }
-        },
-        {
-          "id": "construction-office-window-2",
-          "modelId": "material:cube",
-          "name": "office window 2",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -30,
-            "y": 1.4,
-            "z": 27.54
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 2,
-            "y": 0.9166666666666667,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#80bfd0"
-          }
-        },
-        {
-          "id": "construction-office-door",
-          "modelId": "material:cube",
-          "name": "office door",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -34,
-            "y": 0,
-            "z": 27.58
           },
           "rotation": {
             "x": 0,
@@ -40499,16 +40374,12 @@
           },
           "scale": {
             "x": 1,
-            "y": 1.9166666666666665,
-            "z": 0.1
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#d9b74c"
           }
         },
         {
@@ -41452,71 +41323,13 @@
           }
         },
         {
-          "id": "construction-maintenance-post--78",
-          "modelId": "material:cube",
-          "name": "maintenance post  78",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -78,
-            "y": 0,
-            "z": -17
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.20833333333333334,
-            "y": 3.3333333333333335,
-            "z": 0.20833333333333334
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#9cacab"
-          }
-        },
-        {
-          "id": "construction-maintenance-post--48",
-          "modelId": "material:cube",
-          "name": "maintenance post  48",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -48,
-            "y": 0,
-            "z": -17
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.20833333333333334,
-            "y": 3.3333333333333335,
-            "z": 0.20833333333333334
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#9cacab"
-          }
-        },
-        {
           "id": "construction-maintenance-canopy",
-          "modelId": "material:baseplate",
-          "name": "maintenance canopy",
+          "modelId": "construction-service-canopy",
+          "name": "Steel Service Canopy",
           "placementAnchor": "collider-base",
           "position": {
             "x": -63,
-            "y": 4,
+            "y": 0,
             "z": -17
           },
           "rotation": {
@@ -41525,23 +41338,19 @@
             "z": 0
           },
           "scale": {
-            "x": 6.875,
+            "x": 1,
             "y": 1,
-            "z": 1.4583333333333335
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#7b9097"
           }
         },
         {
           "id": "construction-container-0",
-          "modelId": "material:cube",
-          "name": "container 0",
+          "modelId": "shipping-container-box",
+          "name": "Corrugated Service Container 1",
           "placementAnchor": "collider-base",
           "position": {
             "x": -39,
@@ -41550,201 +41359,23 @@
           },
           "rotation": {
             "x": 0,
-            "y": 0,
+            "y": 1.5707963267948966,
             "z": 0
           },
           "scale": {
-            "x": 5,
-            "y": 2.166666666666667,
-            "z": 2.666666666666667
+            "x": 1.3333333333333335,
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#ac6943"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-0",
-          "modelId": "material:cube",
-          "name": "container rib 0 0",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -41.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-1",
-          "modelId": "material:cube",
-          "name": "container rib 0 1",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -40.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-2",
-          "modelId": "material:cube",
-          "name": "container rib 0 2",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -39.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-3",
-          "modelId": "material:cube",
-          "name": "container rib 0 3",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -38.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-4",
-          "modelId": "material:cube",
-          "name": "container rib 0 4",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -37.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-0-5",
-          "modelId": "material:cube",
-          "name": "container rib 0 5",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -36.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
           }
         },
         {
           "id": "construction-container-1",
-          "modelId": "material:cube",
-          "name": "container 1",
+          "modelId": "shipping-container-box",
+          "name": "Corrugated Service Container 2",
           "placementAnchor": "collider-base",
           "position": {
             "x": -31,
@@ -41753,201 +41384,23 @@
           },
           "rotation": {
             "x": 0,
-            "y": 0,
+            "y": 1.5707963267948966,
             "z": 0
           },
           "scale": {
-            "x": 5,
-            "y": 2.166666666666667,
-            "z": 2.666666666666667
+            "x": 1.3333333333333335,
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#4b7882"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-0",
-          "modelId": "material:cube",
-          "name": "container rib 1 0",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -33.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-1",
-          "modelId": "material:cube",
-          "name": "container rib 1 1",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -32.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-2",
-          "modelId": "material:cube",
-          "name": "container rib 1 2",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -31.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-3",
-          "modelId": "material:cube",
-          "name": "container rib 1 3",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -30.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-4",
-          "modelId": "material:cube",
-          "name": "container rib 1 4",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -29.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-1-5",
-          "modelId": "material:cube",
-          "name": "container rib 1 5",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -28.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
           }
         },
         {
           "id": "construction-container-2",
-          "modelId": "material:cube",
-          "name": "container 2",
+          "modelId": "shipping-container-box",
+          "name": "Corrugated Service Container 3",
           "placementAnchor": "collider-base",
           "position": {
             "x": -23,
@@ -41956,195 +41409,17 @@
           },
           "rotation": {
             "x": 0,
-            "y": 0,
+            "y": 1.5707963267948966,
             "z": 0
           },
           "scale": {
-            "x": 5,
-            "y": 2.166666666666667,
-            "z": 2.666666666666667
+            "x": 1.3333333333333335,
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#717d47"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-0",
-          "modelId": "material:cube",
-          "name": "container rib 2 0",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -25.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-1",
-          "modelId": "material:cube",
-          "name": "container rib 2 1",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -24.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-2",
-          "modelId": "material:cube",
-          "name": "container rib 2 2",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -23.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-3",
-          "modelId": "material:cube",
-          "name": "container rib 2 3",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -22.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-4",
-          "modelId": "material:cube",
-          "name": "container rib 2 4",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -21.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
-          }
-        },
-        {
-          "id": "construction-container-rib-2-5",
-          "modelId": "material:cube",
-          "name": "container rib 2 5",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -20.5,
-            "y": 0.1,
-            "z": -30.37
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.1,
-            "y": 2,
-            "z": 0.06666666666666667
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#bec1b4"
           }
         },
         {
@@ -42393,42 +41668,13 @@
           }
         },
         {
-          "id": "construction-light-pole--82--56",
-          "modelId": "material:cube",
-          "name": "light pole  82  56",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -82,
-            "y": 0,
-            "z": -56
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.15,
-            "y": 6.666666666666667,
-            "z": 0.15
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#a4a59d"
-          }
-        },
-        {
           "id": "construction-floodlight--82--56",
-          "modelId": "material:cube",
-          "name": "floodlight  82  56",
+          "modelId": "construction-floodlight",
+          "name": "Four-head Site Floodlight",
           "placementAnchor": "collider-base",
           "position": {
             "x": -82,
-            "y": 7.5,
+            "y": 0,
             "z": -56
           },
           "rotation": {
@@ -42438,55 +41684,22 @@
           },
           "scale": {
             "x": 1,
-            "y": 0.4166666666666667,
-            "z": 0.33333333333333337
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#fff0b8"
-          }
-        },
-        {
-          "id": "construction-light-pole-142--56",
-          "modelId": "material:cube",
-          "name": "light pole 142  56",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": 142,
-            "y": 0,
-            "z": -56
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.15,
-            "y": 6.666666666666667,
-            "z": 0.15
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#a4a59d"
           }
         },
         {
           "id": "construction-floodlight-142--56",
-          "modelId": "material:cube",
-          "name": "floodlight 142  56",
+          "modelId": "construction-floodlight",
+          "name": "Four-head Site Floodlight",
           "placementAnchor": "collider-base",
           "position": {
             "x": 142,
-            "y": 7.5,
+            "y": 0,
             "z": -56
           },
           "rotation": {
@@ -42496,55 +41709,22 @@
           },
           "scale": {
             "x": 1,
-            "y": 0.4166666666666667,
-            "z": 0.33333333333333337
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#fff0b8"
-          }
-        },
-        {
-          "id": "construction-light-pole--82-132",
-          "modelId": "material:cube",
-          "name": "light pole  82 132",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": -82,
-            "y": 0,
-            "z": 132
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.15,
-            "y": 6.666666666666667,
-            "z": 0.15
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#a4a59d"
           }
         },
         {
           "id": "construction-floodlight--82-132",
-          "modelId": "material:cube",
-          "name": "floodlight  82 132",
+          "modelId": "construction-floodlight",
+          "name": "Four-head Site Floodlight",
           "placementAnchor": "collider-base",
           "position": {
             "x": -82,
-            "y": 7.5,
+            "y": 0,
             "z": 132
           },
           "rotation": {
@@ -42554,55 +41734,22 @@
           },
           "scale": {
             "x": 1,
-            "y": 0.4166666666666667,
-            "z": 0.33333333333333337
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#fff0b8"
-          }
-        },
-        {
-          "id": "construction-light-pole-142-132",
-          "modelId": "material:cube",
-          "name": "light pole 142 132",
-          "placementAnchor": "collider-base",
-          "position": {
-            "x": 142,
-            "y": 0,
-            "z": 132
-          },
-          "rotation": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "scale": {
-            "x": 0.15,
-            "y": 6.666666666666667,
-            "z": 0.15
-          },
-          "functionalSettings": {
-            "behavior": "decor",
-            "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#a4a59d"
           }
         },
         {
           "id": "construction-floodlight-142-132",
-          "modelId": "material:cube",
-          "name": "floodlight 142 132",
+          "modelId": "construction-floodlight",
+          "name": "Four-head Site Floodlight",
           "placementAnchor": "collider-base",
           "position": {
             "x": 142,
-            "y": 7.5,
+            "y": 0,
             "z": 132
           },
           "rotation": {
@@ -42612,16 +41759,12 @@
           },
           "scale": {
             "x": 1,
-            "y": 0.4166666666666667,
-            "z": 0.33333333333333337
+            "y": 1,
+            "z": 1
           },
           "functionalSettings": {
             "behavior": "decor",
             "destructible": false
-          },
-          "materialSettings": {
-            "useAccent": true,
-            "accent": "#fff0b8"
           }
         },
         {
@@ -55443,7 +54586,7 @@
         {
           "id": "construction-crane-guide",
           "modelId": "street-sign",
-          "name": "TC-78 Lift Plan",
+          "name": "Titan 78 Lift Plan",
           "placementAnchor": "collider-base",
           "position": {
             "x": -23,
@@ -55463,7 +54606,7 @@
           "functionalSettings": {
             "behavior": "talk",
             "interactionDistance": 5,
-            "prompt": "Read TC-78 Lift Plan",
+            "prompt": "Read Titan 78 Lift Plan",
             "destructible": false
           },
           "dialogueSettings": {
@@ -56033,7 +55176,7 @@
           },
           {
             "id": "crane",
-            "name": "TC-78 Tower Crane",
+            "name": "Titan 78 Tower Crane",
             "x": -18,
             "z": -4,
             "width": 7,

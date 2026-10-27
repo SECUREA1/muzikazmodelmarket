@@ -8644,6 +8644,120 @@
         "version": "crafted-native-v3",
         "thumbnailUrl": "/public/images/native-designs/prison-supply-crate.svg"
       }
+    },
+    {
+      "id": "builder-construction-site-office",
+      "buildAssetId": "construction-site-office",
+      "name": "Modular Site Office",
+      "description": "A fitted steel site office with framed glazing, panel seams, lift-plan furniture and rooftop services.",
+      "dimensions": [
+        12.4,
+        3.9,
+        7.4
+      ],
+      "type": "interior",
+      "category": "buildings",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-site-office.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Modular Site Office"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-site-office.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-site-office.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "buildings",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
+    },
+    {
+      "id": "builder-construction-service-canopy",
+      "buildAssetId": "construction-service-canopy",
+      "name": "Steel Service Canopy",
+      "description": "An open six-post maintenance shelter with braced roof trusses and corrugated weather sheets.",
+      "dimensions": [
+        33,
+        4.3,
+        7
+      ],
+      "type": "interior",
+      "category": "buildings",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-service-canopy.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Steel Service Canopy"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-service-canopy.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-service-canopy.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "buildings",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
+    },
+    {
+      "id": "builder-construction-floodlight",
+      "buildAssetId": "construction-floodlight",
+      "name": "Four-head Site Floodlight",
+      "description": "A narrow generator base, telescopic mast, cable winch and four individually framed LED optics.",
+      "dimensions": [
+        1.3,
+        8.1,
+        1.3
+      ],
+      "type": "interior",
+      "category": "props",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-floodlight.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Four-head Site Floodlight"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-floodlight.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-floodlight.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "props",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
     }
   ]
 }
