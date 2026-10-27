@@ -1,3 +1,4 @@
+import {constructionOperations} from './construction-operations.js';
 import {gameplayOverlayOpen} from './game-menu-controls.js';
 import {requestGameInputRelease} from './game-input-release.js';
 import {sportIcon} from './sports-action-bar.js';
@@ -80,6 +81,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
  const crewActions=document.createElement('div');crewActions.className='construction-crew-actions';
  for(const [operation,label]of [['start','Start crew'],['pause','Pause crew']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.crewOperation=operation;button.onclick=()=>requestCrew(operation);crewActions.append(button);}
  const crewWorkers=document.createElement('div');crewWorkers.className='construction-crew-workers';const crewJobs=document.createElement('section');crewJobs.className='construction-crew-jobs';crewJobs.setAttribute('aria-label','Construction job progress');crewDialog.append(crewStatus,crewActions,crewWorkers,crewJobs);
+ const operations=document.createElement('section');operations.className='construction-crew-jobs construction-site-operations';operations.setAttribute('aria-label','Site operations plan');const operationsTitle=document.createElement('h3');operationsTitle.textContent='Site operations · live ground progress';operations.append(operationsTitle);crewDialog.insertBefore(operations,crewWorkers);const operationNodes=new Map();let operationsEarth=null,operationsRevision=-1,operationsSteel=-1;
  const workerNodes=new Map(),jobNodes=new Map();let crewBusy=false,crewRevision=0;
 
  manual.append(pads,travelPanel);panel.append(heading,compactState,manual);stage.append(panel);
@@ -186,7 +188,20 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   root.append(header,summary,assignment,run,appearance);crewWorkers.append(root);
   return {root,name,summary,avatar,jobs,machines,form,input,assign,save,appearanceTitle,syncMachines};
  }
+ function updateOperations(){
+  const site=snapshot?.construction||{},earth=site.earthworks,steel=site.tower?.placed;
+  if(operationsEarth===earth&&operationsRevision===earth?.revision&&operationsSteel===steel)return;
+  operationsEarth=earth;operationsRevision=earth?.revision;operationsSteel=steel;
+  const tasks=constructionOperations(site);
+  for(const [id,node]of operationNodes)if(!tasks.some(task=>task.id===id)){node.root.remove();operationNodes.delete(id);}
+  for(const task of tasks){
+   let node=operationNodes.get(task.id);
+   if(!node){const root=document.createElement('article'),label=document.createElement('strong'),output=document.createElement('output'),guide=document.createElement('p'),meter=document.createElement('progress');root.dataset.operationId=task.id;meter.max=1;root.append(label,output,meter,guide);operations.append(root);node={root,label,output,guide,meter};operationNodes.set(task.id,node);}
+   setText(node.label,task.label);setText(node.output,task.detail+' · Site X '+task.x+' / Z '+task.z);setText(node.guide,task.guide);node.meter.value=task.progress;setAttr(node.meter,'aria-label',task.label+' progress');
+  }
+ }
  function updateCrew(){
+  updateOperations();
   const crew=snapshot?.construction?.crew,workers=crew?.workers||[],jobs=crew?.jobs||[];
   if(performance.now()>Number(crewStatus.dataset.feedbackUntil||0))setText(crewStatus,crew?.message||(crew?'Assign a real site job, start the crew, or pause to take over a machine.':'Crew is waiting for the construction site server.'));
   for(const [id,node]of workerNodes)if(!workers.some(worker=>worker.id===id)){node.root.remove();workerNodes.delete(id);}

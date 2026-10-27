@@ -90,9 +90,9 @@ test('builder can copy every construction site part and retain independent worki
 
 test('expanded earthwork bays remain open to real excavation and safe from static pads',()=>{
  const map=constructionWorld(),config=map.construction,yard=config.yard,earth=createEarthworks(config);
- assert.ok((yard.maxX-yard.minX)*(yard.maxZ-yard.minZ)>50000,'usable yard expands to more than five hectares');
- assert.equal(map.builderScene.mapSize,512);assert.ok(map.builderScene.objects.length<850,'yard growth does not multiply scene draw calls');
- assert.equal(earth.patches.length,7);
+ assert.ok((yard.maxX-yard.minX)*(yard.maxZ-yard.minZ)>100000,'usable yard expands to more than five hectares');
+ assert.equal(map.builderScene.mapSize,768);assert.ok(map.builderScene.objects.length<850,'yard growth does not multiply scene draw calls');
+ assert.equal(earth.patches.length,13);
  const bounds=earth.patches.map(patch=>({id:patch.id,minX:patch.origin.x,maxX:patch.origin.x+patch.columns*patch.cellSize,minZ:patch.origin.z,maxZ:patch.origin.z+patch.rows*patch.cellSize}));
  const overlaps=(a,b)=>Math.min(a.maxX,b.maxX)>Math.max(a.minX,b.minX)+1e-8&&Math.min(a.maxZ,b.maxZ)>Math.max(a.minZ,b.minZ)+1e-8;
  for(let index=0;index<bounds.length;index++){

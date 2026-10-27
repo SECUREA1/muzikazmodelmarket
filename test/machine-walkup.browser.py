@@ -97,6 +97,16 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       panel.locator('[data-operation=exit]').click()
       wait(lambda s:not s['players'][next(iter(s['players']))].get('vehicleId'),'exit failed '+machine)
       print(machine+': walk-up, '+('touch' if index<2 else 'F key')+', hydraulic control, neutral and exit passed',flush=True)
+     page.get_by_role('button',name='Construction crew and jobs',exact=True).click()
+     plan=page.get_by_role('region',name='Site operations plan')
+     assert plan.locator('[data-operation-id]').count()==7
+     assert '20 cm road base' in plan.inner_text()
+     assert plan.locator('[data-operation-id=new-road] progress').evaluate('node=>node.value')==0
+     assert plan.locator('[data-operation-id=pavement-reclamation]').is_visible()
+     assert not plan.evaluate('node=>node.scrollWidth>node.clientWidth+1'),'Site plan overflows on a phone'
+     page.screenshot(path='/tmp/construction-operations-plan.png')
+     page.get_by_role('button',name='Close crew',exact=True).click()
+     print('Expanded site: seven operations, live road progress and mobile site plan passed',flush=True)
      s=state();worker=s['construction']['crew']['workers'][0];command('map-access',position={'x':worker['position']['x']-1,'z':worker['position']['z']})
      nearby=page.get_by_role('button',name='Talk to Maya Chen',exact=True)
      nearby.wait_for(state='visible',timeout=15000);nearby.tap()
