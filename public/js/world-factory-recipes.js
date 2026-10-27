@@ -112,6 +112,7 @@ function profileFor(item={}){
 
 const RECIPE_VERSION=2;
 const profileDetails={
+ 'rocket-collectibles':{components:'fictional display sections and game collectible modules',fixture:'collectible display assembly fixtures',assembly:'Fit collectible display models',verification:'catalog display scale, appearance and animation settings',packaging:'individual braced collectible containers',stations:['Display module intake','Collectible model assembly','Display configuration inspection','Individual collectible crating']},
  materials:{components:'catalog feedstock and finishing components',fixture:'material forming fixtures',assembly:'Form material units',verification:'construction-piece settings',packaging:'labeled material pallets',stations:['Materials receiving','Material processing line','Material grading bench','Pallet wrapping line']},
  tools:{components:'tool body and game function modules',fixture:'tool assembly fixtures',assembly:'Fit tool assemblies',verification:'the configured tool action',packaging:'protective tool cases',stations:['Tool component intake','Tool assembly bench','Tool function test bench','Tool case packing line']},
  care:{components:'game supply components and unit containers',fixture:'the game supply batch line',assembly:'Prepare supply units',verification:'the configured game care effect',packaging:'sealed supply cases',stations:['Care supply intake','Care batch line','Care batch inspection','Care case sealing line']},

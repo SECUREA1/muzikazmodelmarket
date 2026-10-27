@@ -5,6 +5,7 @@ import {worldFactoryRecipe,worldFactoryPlan} from '../public/js/world-factory-re
 import {AIRCRAFT_TYPES} from '../public/js/aircraft-types.js';
 import {ROAD_VEHICLES} from '../public/js/road-vehicles.js';
 import {SHIPPING_VESSELS} from '../public/js/shipping-vessel-specs.js';
+import {ensureWorldSupply} from '../world-supply.mjs';
 
 function validPlan(item,quantity,options){
  const plan=worldFactoryPlan(item,quantity,options);
@@ -38,6 +39,32 @@ test('every native, GLB and care item has a deterministic valid four-phase manuf
   assert.ok(Number.isSafeInteger(plan.recipe.unitsPerContainer)&&plan.recipe.unitsPerContainer>0);
  }
  for(const item of CARE_SUPPLIES)assert.equal(worldFactoryRecipe(item).id,'care');
+});
+
+test('every canonical finite-supply item supports a complete item-specific plan used by global supply state',()=>{
+ const ledger=ensureWorldSupply({}),items=Object.values(ledger.catalog),planIds=new Set(),fingerprints=new Set();
+ assert.ok(items.length>500,'exercise the complete canonical supply registry');
+ assert.ok(items.some(item=>item.buildAssetId==='factory-cargo-rocket'));
+ assert.ok(items.some(item=>item.buildAssetId==='factory-training-missile'));
+ for(const item of items){
+  const before=JSON.stringify(item);let plan;
+  assert.doesNotThrow(()=>{plan=validPlan(item,7);},item.supplyId+' must have a complete processing profile');
+  assert.equal(plan.blueprint.itemId,item.supplyId,item.supplyId);
+  assert.equal(plan.blueprint.sku,item.supplyId,item.supplyId);
+  assert.equal(plan.blueprint.name,item.name,item.supplyId);
+  assert.match(plan.fingerprint,/^[a-f0-9]{16}$/);
+  assert.equal(planIds.has(plan.itemPlanId),false,item.supplyId+' has a unique plan identity');
+  assert.equal(fingerprints.has(plan.fingerprint),false,item.supplyId+' has a unique blueprint fingerprint');
+  planIds.add(plan.itemPlanId);fingerprints.add(plan.fingerprint);
+  assert.equal(plan.stages.flatMap(stage=>stage.operations).length,12,item.supplyId);
+  for(const stage of plan.stages){assert.equal(stage.operations.length,3,item.supplyId+' / '+stage.id);assert.ok(stage.description.includes(item.name));}
+  assert.equal(plan.recipe.qualityChecks.length,3,item.supplyId);
+  for(const check of plan.recipe.qualityChecks)assert.equal(check.expected.itemId,item.supplyId);
+  assert.equal(plan.stages.at(-1).outputs[0].id,item.supplyId);
+  assert.equal(plan.stages.at(-1).outputs[0].quantity,7);
+  assert.deepEqual(worldFactoryPlan(item,7),plan,item.supplyId+' is deterministic');
+  assert.equal(JSON.stringify(item),before,item.supplyId+' retains its catalog definition');
+ }
 });
 
 test('trusted item metadata selects packaging density and assembly class independently of GLB format',()=>{

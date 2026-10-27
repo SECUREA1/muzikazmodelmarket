@@ -199,8 +199,13 @@ const xrControls=mountXRGameControls({renderer,scene,camera,rig:vrRig,parent:acc
 
 function releaseHockeyGameInput(){keys.clear();controllerMove={x:0,y:0};hockeyTrigger.reset();lookDrag=null;hockeyController.reset();flushInput();}
 document.addEventListener(GAME_INPUT_RELEASE_EVENT,releaseHockeyGameInput,true);
-const hockeyChallenges=mountNativeGameChallenges({parent:document.body,name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:releaseHockeyGameInput,onReturnFocus:()=>canvas.focus({preventScroll:true})});
+const hockeyChallenges=mountNativeGameChallenges({parent:$('#lobby'),name:'Ice hockey',offers:HOCKEY_CHALLENGES,onRelease:releaseHockeyGameInput,onReturnFocus:()=>canvas.focus({preventScroll:true})});
 function updateHockeyChallenges(){
+ // Lobby controls must remain reachable when a small screen scrolls beneath
+ // the expanded companion panel. Use the fixed overlay only during a match.
+ const challengeParent=running?document.body:$('#lobby');
+ if(hockeyChallenges.root.parentElement!==challengeParent)challengeParent.append(hockeyChallenges.root);
+ hockeyChallenges.root.classList.toggle('hockey-lobby-challenges',!running);
  const elapsed=state?.elapsed||0,me=state?.players.find(player=>player.human===selfId);
  if(running&&!nativeHockeyWasRunning||elapsed<nativeHockeyLastElapsed-.1)nativeHockeyEpoch++;
  nativeHockeyLastElapsed=elapsed;nativeHockeyWasRunning=running;

@@ -131,14 +131,14 @@ The 2026-10-27 audit found:
 
 | Coverage | Count |
 | --- | ---: |
-| Public worlds: 37 bundled/current authored worlds plus Commons and eight districts | 46 |
-| Placed native and whole GLB model instances | 5,311 |
-| Distinct market items used by those worlds | 208 |
-| Renderer metadata model IDs | 260 |
-| Shared native definitions, including materials and gameplay items | 479 |
-| Existing economy SKUs | 605 |
+| Public worlds: 38 bundled/current authored worlds plus Commons and eight districts | 47 |
+| Placed native and whole GLB model instances | 5,431 |
+| Distinct market items used by those worlds | 210 |
+| Renderer metadata model IDs | 276 |
+| Shared native definitions, including materials and gameplay items | 487 |
+| Existing economy SKUs | 613 |
 | Authored GLB/GLTF files across the repository | 46 |
-| Canonical finite supply items, including care supplies | 590 |
+| Canonical finite supply items, including care supplies | 598 |
 | Earned Ironwood collectibles with protected ownership receipts, excluded from factory supply | 4 |
 | Missing native definitions, market entries, discovered files, or supply registrations | 0 |
 | Invalid model headers or unrenderable procedural definitions | 0 |

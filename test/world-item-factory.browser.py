@@ -4,6 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 ROOT=Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
+Path('/workspace/scratch').mkdir(exist_ok=True)
 with socket.socket() as probe:
     probe.bind(('127.0.0.1',0)); port=probe.getsockname()[1]
 base=f'http://127.0.0.1:{port}'
@@ -27,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='world-factory-browser-') as directory:
                     assert world['permanent'] and world['sharedWorld'] and world['worldSupply']['enabled']
                     assert 'hormuz-shipping' in world['portalTargets']
                     print('World registered; opening live factory map.',flush=True)
-                    page=context.new_page();errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+                    page=context.new_page();page.set_default_timeout(15000);errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
                     page.route('https://**/*',lambda route:route.abort())
                     page.goto(base+'/'+world['playUrl'],wait_until='domcontentloaded',timeout=90000)
                     page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady && window.MuzikazHouseExplorer.snapshot().roomId === "world-item-factory"',timeout=90000)
@@ -35,10 +36,10 @@ with tempfile.TemporaryDirectory(prefix='world-factory-browser-') as directory:
                     page.screenshot(path='/workspace/scratch/world-item-factory-campus.png')
                     toggle=page.get_by_role('button',name='World item factory',exact=True)
                     if not toggle.is_visible():page.get_by_role('button',name='More view controls',exact=True).click()
-                    toggle.click();panel=page.locator('#world-supply-panel');panel.wait_for(state='visible')
-                    panel.locator('[data-search]').fill('material:wood')
+                    print('Opening factory board.',flush=True);toggle.click();print('Factory board opened.',flush=True);panel=page.locator('#world-supply-panel');panel.wait_for(state='visible')
+                    print('Selecting wood.',flush=True);panel.locator('[data-search]').fill('material:wood')
                     panel.locator('[data-item]').select_option('material:wood')
-                    panel.locator('[data-quantity]').fill('1000');panel.locator('[data-quote]').click()
+                    print('Requesting batch price.',flush=True);panel.locator('[data-quantity]').fill('1000');panel.locator('[data-quote]').click()
                     page.wait_for_function('!document.querySelector("[data-produce]").disabled',timeout=15000)
                     panel.locator('.supply-process-diagram').wait_for(state='visible',timeout=15000)
                     assert panel.locator('[data-inspect-stage]').count()==4
@@ -76,7 +77,9 @@ with tempfile.TemporaryDirectory(prefix='world-factory-browser-') as directory:
                     print('World Item Factory map, live operations, pause/resume, traced stock and shipping travel passed.')
                 finally:browser.close()
         except Exception:
-            try:print(page.locator('[data-inspector]').inner_html()[:1500],page.locator('[data-status]').inner_text(),errors)
+            try:
+                page.screenshot(path='/workspace/scratch/world-item-factory-failure.png')
+                print(page.locator('[data-inspector]').inner_html()[:1500],page.locator('[data-status]').inner_text(),errors)
             except Exception:pass
             print(Path(directory,'server.log').read_text()[-6000:]);raise
         finally:

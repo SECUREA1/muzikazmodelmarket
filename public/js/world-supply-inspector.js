@@ -2,7 +2,9 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&
 const short=value=>String(value||'').slice(-16);
 export function factoryInspectorMarkup({item,job,trace,stageId,now=Date.now()}={}){
  const recipe=job?.recipe||item?.recipe;if(!recipe)return '<p class="supply-muted">Select an item to inspect its production blueprint.</p>';
- const stages=job?.stages||recipe.stages,selected=stages.find(stage=>stage.id===stageId)||stages[job?.stageIndex||0],blueprint=job?.blueprint||recipe.blueprint||{};
+ const stages=Array.isArray(job?.stages)&&job.stages.length?job.stages:Array.isArray(recipe.stages)?recipe.stages:[];
+ if(!stages.length)return '<p class="supply-muted">Request a server quote to preview this item’s manufacturing operations.</p>';
+ const selected=stages.find(stage=>stage.id===stageId)||stages[job?.stageIndex||0]||stages[0],blueprint=job?.blueprint||recipe.blueprint||{};
  const line='<svg class="supply-process-diagram" viewBox="0 0 1000 115" role="img" aria-label="Four connected manufacturing stations"><path d="M125 55H875" stroke="#416b73" stroke-width="8"/>'+stages.map((stage,index)=>'<g><circle cx="'+(125+index*250)+'" cy="55" r="28" fill="'+(stage.phase==='complete'?'#84dfc3':stage.id===selected.id?'#ffcc78':'#254956')+'"/><text x="'+(125+index*250)+'" y="62" text-anchor="middle" fill="#102d35" font-size="21" font-weight="bold">'+(index+1)+'</text><text x="'+(125+index*250)+'" y="108" text-anchor="middle" fill="#e3f3ee" font-size="17">'+esc(stage.id.toUpperCase())+'</text></g>').join('')+'</svg>';
  const tabs='<div class="supply-stage-tabs" role="group" aria-label="Inspect manufacturing stage">'+stages.map((stage,index)=>'<button type="button" data-inspect-stage="'+esc(stage.id)+'" aria-pressed="'+(stage.id===selected.id)+'">'+(index+1)+'. '+esc(stage.name)+'</button>').join('')+'</div>';
  const operations=(selected.operations||[]).map(operation=>{
