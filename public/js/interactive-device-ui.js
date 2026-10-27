@@ -11,7 +11,7 @@ import {INTERACTIVE_DEVICES,deviceArtworkUrl,deviceTime,deviceScreenGamer} from 
 import {requestGameInputRelease} from './game-input-release.js';
 import {createSpatialEffectOutput,spatialEffectGain} from './shared-effect-audio.js';
 const cardName=card=>['2','3','4','5','6','7','8','9','10','J','Q','K','A'][card%13]+['♣','♦','♥','♠'][Math.floor(card/13)];
-export function mountInteractiveDevices({THREE,stage,send,getRoots,getPosition,getDirection=()=>({x:0,y:0,z:-1}),getSpatialAudio=()=>true,getVolume=()=>1,market,upload,announce}){
+export function mountInteractiveDevices({THREE,stage,send,getRoots,getPosition,getDirection=()=>({x:0,y:0,z:-1}),getSpatialAudio=()=>true,getVolume=()=>1,market,upload,announce,cameraReady=()=>false}){
  if(!document.querySelector('[data-interactive-device-style]')){const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('../css/interactive-devices.css',import.meta.url).href;style.dataset.interactiveDeviceStyle='';document.head.append(style);}
  const dialog=document.createElement('dialog');dialog.className='interactive-device-dialog';dialog.tabIndex=-1;dialog.setAttribute('aria-label','Interactive device');document.body.append(dialog);
  // Live machine pages may rebuild inside one open session. Only actual
@@ -20,7 +20,7 @@ export function mountInteractiveDevices({THREE,stage,send,getRoots,getPosition,g
  const showDialog=()=>{if(!dialogActive){dialogActive=true;restoreFocus=true;returnFocus=document.activeElement;requestGameInputRelease('device-panel-open');}dialog.showModal();};
  const releaseDialog=()=>{if(dialog.open||!dialogActive)return;dialogActive=false;commandGeneration++;busy=false;requestGameInputRelease('device-panel-close');const focused=document.activeElement;if(restoreFocus&&!document.querySelector('dialog:modal')&&(focused===returnFocus||focused===document.body||dialog.contains(focused)))stage.querySelector('canvas')?.focus({preventScroll:true});};
  const sound=document.createElement('button');sound.className='shared-media-enable';sound.type='button';sound.textContent='Enable shared media audio';sound.hidden=true;stage.append(sound);
- const liveCamera=mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,announce});
+ const liveCamera=mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,announce,isRoomReady:cameraReady});
  let machineMenu=null,devicePageTarget=null;
  let demo=null,playerMenu=null,deviceError='',arcadeScreen=null,liveHolds=new Set(),handKey='';
  dialog.addEventListener('close',()=>{if(dialog.open)return;releaseDialog();machineMenu?.dispose();machineMenu=null;devicePageTarget=null;playerMenu?.dispose();playerMenu=null;arcadeScreen?.dispose();arcadeScreen=null;demo?.dispose();demo=null;});

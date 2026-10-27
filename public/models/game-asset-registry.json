@@ -3148,6 +3148,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-boarding-kiosk.svg"
+      },
       "priceMzk": 280,
       "description": "Shop equipment and access your own Backpack before departure.",
       "behavior": "interact",
@@ -3220,6 +3224,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-club-radio.svg"
+      },
       "priceMzk": 300,
       "description": "Tune and share a direct audio stream with nearby club visitors.",
       "behavior": "interact",
@@ -3292,6 +3300,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-coffee-table.svg"
+      },
       "priceMzk": 150,
       "description": "A dark stone table with brass edging for executive seating areas.",
       "behavior": "decor",
@@ -3363,6 +3375,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-executive-screen.svg"
+      },
       "priceMzk": 420,
       "description": "A shared video screen for the airport executive lounge.",
       "behavior": "interact",
@@ -3435,6 +3451,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-flight-board.svg"
+      },
       "priceMzk": 320,
       "description": "Share flight plans and meetups on the public club noticeboard.",
       "behavior": "interact",
@@ -3507,6 +3527,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/aerie-vip-sofa.svg"
+      },
       "priceMzk": 210,
       "description": "A usable upholstered airport club sofa with champagne trim.",
       "behavior": "seat",
@@ -3588,6 +3612,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-first-aid.svg"
+      },
       "priceMzk": 220,
       "description": "Use nearby to recover 25 health, with a 30-second cooldown.",
       "behavior": "heal",
@@ -3661,6 +3689,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-lounge-jukebox.svg"
+      },
       "priceMzk": 300,
       "description": "Queue and control shared lodge music through the room audio system.",
       "behavior": "interact",
@@ -3733,6 +3765,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-marble-hearth.svg"
+      },
       "priceMzk": 360,
       "description": "A sculpted marble fireplace with glowing flames and brass trim.",
       "behavior": "decor",
@@ -3804,6 +3840,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-race-board.svg"
+      },
       "priceMzk": 320,
       "description": "Post shared race meetups and mountain club messages.",
       "behavior": "interact",
@@ -3876,6 +3916,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-ski-service.svg"
+      },
       "priceMzk": 240,
       "description": "A walnut and brass ski rack. At Pixel Peaks, use it to equip or return skis.",
       "behavior": "interact",
@@ -3947,6 +3991,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-velvet-chaise.svg"
+      },
       "priceMzk": 180,
       "description": "A usable velvet chaise with walnut framing and brass feet.",
       "behavior": "seat",
@@ -4028,6 +4076,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-slot-machine.svg"
+      },
       "description": "Spin three reels using separate practice credits.",
       "behavior": "interact",
       "function_data": {
@@ -4097,6 +4149,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/artisan-workshop.svg"
+      },
       "description": "A workshop with benches along the rear wall. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4162,6 +4218,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/blackjack-cabinet.svg"
+      },
       "description": "Hit or stand against the house dealer. Practice cards only.",
       "behavior": "interact",
       "function_data": {
@@ -4231,6 +4291,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/boutique-hotel.svg"
+      },
       "description": "A spacious lobby and rear guest rooms. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4296,6 +4360,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/brick-breaker-cabinet.svg"
+      },
       "description": "Bounce the ball into every brick with your paddle.",
       "behavior": "interact",
       "function_data": {
@@ -4369,6 +4437,10 @@
         5.2,
         3.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/canopy-tree.svg"
+      },
       "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
@@ -4434,6 +4506,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/cinema-screen.svg"
+      },
       "description": "A wide shared screen for community movie sessions.",
       "behavior": "interact",
       "function_data": {
@@ -4503,6 +4579,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/civic-bank.svg"
+      },
       "description": "A columned banking hall with a rear vault room. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4572,6 +4652,10 @@
         0.9,
         0.92
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/sofa.svg"
+      },
       "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
@@ -4637,6 +4721,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/community-noticeboard.svg"
+      },
       "description": "Post a shared message for everyone in this space.",
       "behavior": "interact",
       "function_data": {
@@ -4706,6 +4794,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/community-supermarket.svg"
+      },
       "description": "An open retail hall for shelves and vending machines. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4771,6 +4863,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/corner-bakery.svg"
+      },
       "description": "A warm bakery shell with a service counter. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4836,6 +4932,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/courtyard-cafe.svg"
+      },
       "description": "An airy cafe with a terrace for tables and media. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -4956,6 +5056,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/digital-photo-frame.svg"
+      },
       "description": "Share an image on an in-world frame.",
       "behavior": "interact",
       "function_data": {
@@ -5025,6 +5129,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/district-firehouse.svg"
+      },
       "description": "A fire station with a vehicle-size open bay. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5090,6 +5198,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/district-police.svg"
+      },
       "description": "A civic station with a reception counter and rear office. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5155,6 +5267,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/dj-mixing-deck.svg"
+      },
       "description": "Control the shared track, seek position and room volume.",
       "behavior": "interact",
       "function_data": {
@@ -5224,6 +5340,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/dusty-saloon.svg"
+      },
       "description": "A western saloon with a broad porch and open main room. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5289,6 +5409,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fashion-boutique.svg"
+      },
       "description": "A glazed storefront with fitting and display space. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5354,6 +5478,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/four-in-row-cabinet.svg"
+      },
       "description": "Drop discs and connect four against the cabinet.",
       "behavior": "interact",
       "function_data": {
@@ -5423,6 +5551,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/freight-warehouse.svg"
+      },
       "description": "A tall loading hall with a wide drive-in entrance. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5488,6 +5620,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/frontier-tavern.svg"
+      },
       "description": "A timber gathering hall with a bar and covered entry. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5553,6 +5689,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/general-store.svg"
+      },
       "description": "A storefront with display windows and open retail floor. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5618,6 +5758,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/grand-restaurant.svg"
+      },
       "description": "A dining hall with a rear preparation room. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -5683,6 +5827,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/high-low-cabinet.svg"
+      },
       "description": "Predict the next card and build a streak.",
       "behavior": "interact",
       "function_data": {
@@ -5752,6 +5900,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/item-vending-machine.svg"
+      },
       "description": "Shop equipment and building supplies using your own account.",
       "behavior": "interact",
       "function_data": {
@@ -5821,6 +5973,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/karaoke-machine.svg"
+      },
       "description": "Queue backing tracks alongside the existing room voice chat.",
       "behavior": "interact",
       "function_data": {
@@ -5894,6 +6050,10 @@
         3.4,
         0.55
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lamp-post.svg"
+      },
       "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
@@ -5959,6 +6119,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lights-out-cabinet.svg"
+      },
       "description": "Toggle a light and its neighbours until every light is off.",
       "behavior": "interact",
       "function_data": {
@@ -6028,6 +6192,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/live-music-club.svg"
+      },
       "description": "A music venue with a raised rear stage. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6093,6 +6261,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/market-atm.svg"
+      },
       "description": "Open the live item marketplace and your Backpack.",
       "behavior": "interact",
       "function_data": {
@@ -6162,6 +6334,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/maze-runner-cabinet.svg"
+      },
       "description": "Navigate a maze and reach the exit.",
       "behavior": "interact",
       "function_data": {
@@ -6231,6 +6407,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/media-boombox.svg"
+      },
       "description": "A shared audio queue with distance-based volume.",
       "behavior": "interact",
       "function_data": {
@@ -6300,6 +6480,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/medical-clinic.svg"
+      },
       "description": "A reception hall with rear treatment space. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6365,6 +6549,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/memory-match-cabinet.svg"
+      },
       "description": "Find all eight matching pairs on a hidden card board.",
       "behavior": "interact",
       "function_data": {
@@ -6434,6 +6622,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/mine-sweeper-cabinet.svg"
+      },
       "description": "Reveal safe cells on a six-by-six board. First pick is safe.",
       "behavior": "interact",
       "function_data": {
@@ -6503,6 +6695,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/motor-garage.svg"
+      },
       "description": "An open vehicle bay and repair space. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6568,6 +6764,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/neighborhood-center.svg"
+      },
       "description": "A flexible community hall for games, meetings and classes. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6633,6 +6833,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/neighborhood-pharmacy.svg"
+      },
       "description": "A clean retail shell with a consultation room. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6698,6 +6902,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/picture-house.svg"
+      },
       "description": "A screening hall and entrance lobby for shared video. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6763,6 +6971,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/public-library.svg"
+      },
       "description": "A reading hall ready for shelves, seating and quests. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -6828,6 +7040,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/radio-console.svg"
+      },
       "description": "Tune a direct audio stream for nearby listeners.",
       "behavior": "interact",
       "function_data": {
@@ -6897,6 +7113,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/recording-booth.svg"
+      },
       "description": "",
       "behavior": "decor",
       "function_data": {}
@@ -6966,6 +7186,10 @@
         0.22,
         2.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/pond.svg"
+      },
       "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
@@ -7031,6 +7255,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/retro-pong-cabinet.svg"
+      },
       "description": "Move your paddle and return the ball against the machine.",
       "behavior": "interact",
       "function_data": {
@@ -7100,6 +7328,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/retro-snake-cabinet.svg"
+      },
       "description": "Steer through the grid, eat stars and avoid your tail.",
       "behavior": "interact",
       "function_data": {
@@ -7169,6 +7401,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/roadside-diner.svg"
+      },
       "description": "A wide diner with a service bar and dining space. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -7234,6 +7470,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/roadside-motel.svg"
+      },
       "description": "A lobby, guest rooms and sheltered entrance. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -7299,6 +7539,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/rock-paper-scissors-cabinet.svg"
+      },
       "description": "Challenge the machine to a quick hand-gesture duel.",
       "behavior": "interact",
       "function_data": {
@@ -7368,6 +7612,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/service-station.svg"
+      },
       "description": "A service shop with a wide bay and forecourt canopy. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -7433,6 +7681,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shared-jukebox.svg"
+      },
       "description": "Queue music and share playback with the room.",
       "behavior": "interact",
       "function_data": {
@@ -7502,6 +7754,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shared-video-player.svg"
+      },
       "description": "Anyone nearby can upload a video or add a link to the shared queue.",
       "behavior": "interact",
       "function_data": {
@@ -7575,6 +7831,10 @@
         2.8,
         2.1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/spiral-stairs.svg"
+      },
       "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
@@ -7640,6 +7900,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tic-tac-toe-cabinet.svg"
+      },
       "description": "Play a three-in-a-row match against the cabinet.",
       "behavior": "interact",
       "function_data": {
@@ -7709,6 +7973,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-cinema.svg"
+      },
       "priceMzk": 420,
       "description": "Upload or queue a video for the yacht club shared screen.",
       "behavior": "interact",
@@ -7781,6 +8049,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-concierge.svg"
+      },
       "priceMzk": 280,
       "description": "Open the live item marketplace and your own Backpack.",
       "behavior": "interact",
@@ -7853,6 +8125,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-daybed.svg"
+      },
       "priceMzk": 190,
       "description": "A usable ivory daybed with teak framing and champagne metalwork.",
       "behavior": "seat",
@@ -7934,6 +8210,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-dj-console.svg"
+      },
       "priceMzk": 400,
       "description": "Queue audio and adjust the club shared playback and volume.",
       "behavior": "interact",
@@ -8006,6 +8286,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-marble-table.svg"
+      },
       "priceMzk": 140,
       "description": "A veined stone lounge table with a recessed brass pedestal.",
       "behavior": "decor",
@@ -8077,6 +8361,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tideglass-planter.svg"
+      },
       "priceMzk": 120,
       "description": "A sculpted brass planter with layered tropical foliage.",
       "behavior": "decor",
@@ -8148,6 +8436,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/town-post-office.svg"
+      },
       "description": "A postal hall with a counter and rear sorting space. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor",
       "function_data": {}
@@ -8213,6 +8505,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/trivia-terminal.svg"
+      },
       "description": "Answer server-checked questions and compare arcade scores.",
       "behavior": "interact",
       "function_data": {
@@ -8282,6 +8578,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/video-poker-table.svg"
+      },
       "description": "Deal, hold and draw a five-card hand using practice credits.",
       "behavior": "interact",
       "function_data": {
@@ -8351,6 +8651,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/video-projector.svg"
+      },
       "description": "A projector station with a shared display.",
       "behavior": "interact",
       "function_data": {
@@ -8420,6 +8724,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/basketball.svg"
+      },
       "priceMzk": 0,
       "description": "Free regulation basketball. Catch nearby with E, toss with T, or play a full match at MUZIKAZ Arena.",
       "behavior": "pickup",
@@ -8541,6 +8849,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/basketball-hoop.svg"
+      },
       "priceMzk": 0,
       "description": "Free regulation basketball hoop with a glass backboard, orange rim, white woven net and padded support. Place it in game and shoot with your basketball.",
       "behavior": "decor",
@@ -8624,6 +8936,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/basketball-jersey-away.svg"
+      },
       "priceMzk": 0,
       "description": "Free coral number 08 sleeveless jersey. Equips on your current avatar and joins the Away team on the basketball court.",
       "behavior": "interact",
@@ -8707,6 +9023,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/basketball-jersey-home.svg"
+      },
       "priceMzk": 0,
       "description": "Free teal number 24 sleeveless jersey. Equips on your current avatar and joins the Home team on the basketball court.",
       "behavior": "interact",
@@ -9053,6 +9373,10 @@
         5,
         5.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg"
+      },
       "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third.",
       "behavior": "decor",
       "function_data": {
@@ -9120,6 +9444,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/alpine-quad.svg"
+      },
       "description": "All-terrain quad with luggage racks, exposed suspension, LED lights and digital instruments.",
       "behavior": "vehicle",
       "function_data": {}
@@ -9189,6 +9517,10 @@
         6,
         4.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/ancient-oak.svg"
+      },
       "description": "A broad branching oak with flared roots, ridged bark and a layered spreading crown.",
       "behavior": "decor",
       "function_data": {}
@@ -9258,6 +9590,10 @@
         1.3,
         0.12
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arc-bow.svg"
+      },
       "description": "A recurved timber bow with alloy limb tips, tensioned string and luminous aiming inlays.",
       "behavior": "decor",
       "function_data": {}
@@ -9323,6 +9659,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-air-hockey.svg"
+      },
       "description": "Complete interactive arcade station.",
       "behavior": "interact",
       "function_data": {
@@ -9392,6 +9732,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-air-hockey-mallet.svg"
+      },
       "description": "Table mallet with grip and round striking base.",
       "behavior": "decor",
       "function_data": {}
@@ -9457,6 +9801,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-arcade-target.svg"
+      },
       "description": "Standing bullseye target equipment prop.",
       "behavior": "decor",
       "function_data": {}
@@ -9522,6 +9870,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-basketball.svg"
+      },
       "description": "Complete interactive arcade station.",
       "behavior": "interact",
       "function_data": {
@@ -9591,6 +9943,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-basketball-ball.svg"
+      },
       "description": "Seamed basketball equipment prop.",
       "behavior": "decor",
       "function_data": {}
@@ -9656,6 +10012,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-basketball-hoop.svg"
+      },
       "description": "Backboard, ring, net and upright prop; play through the complete Basketball station.",
       "behavior": "decor",
       "function_data": {}
@@ -9721,6 +10081,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-bench.svg"
+      },
       "description": "One park bench.",
       "behavior": "decor",
       "function_data": {}
@@ -9786,6 +10150,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-benches.svg"
+      },
       "description": "Seating beside the walkways.",
       "behavior": "decor",
       "function_data": {}
@@ -9851,6 +10219,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-billiard-balls.svg"
+      },
       "description": "Six colored balls and one white cue ball.",
       "behavior": "decor",
       "function_data": {}
@@ -9916,6 +10288,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-billiard-cue.svg"
+      },
       "description": "Wooden cue with ferrule and dark tip.",
       "behavior": "decor",
       "function_data": {}
@@ -9981,6 +10357,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-billiards.svg"
+      },
       "description": "Complete interactive arcade station.",
       "behavior": "interact",
       "function_data": {
@@ -10050,6 +10430,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster.svg"
+      },
       "description": "Elevated closed track, supports, safety restraint and animated car.",
       "behavior": "interact",
       "function_data": {
@@ -10119,6 +10503,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car.svg"
+      },
       "description": "Restrained coaster car prop; use Skyline coaster for the running ride.",
       "behavior": "decor",
       "function_data": {}
@@ -10184,6 +10572,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-support.svg"
+      },
       "description": "Upright support with foundation and track crossbeam.",
       "behavior": "decor",
       "function_data": {}
@@ -10249,6 +10641,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-fountain.svg"
+      },
       "description": "Raised central fountain and water.",
       "behavior": "decor",
       "function_data": {}
@@ -10314,6 +10710,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-ground.svg"
+      },
       "description": "Two tier park foundation.",
       "behavior": "decor",
       "function_data": {}
@@ -10379,6 +10779,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-hockey.svg"
+      },
       "description": "Complete interactive arcade station.",
       "behavior": "interact",
       "function_data": {
@@ -10448,6 +10852,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-hockey-goal.svg"
+      },
       "description": "Framed hockey goal with a visible net; play through the complete Ice hockey station.",
       "behavior": "decor",
       "function_data": {}
@@ -10513,6 +10921,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-hockey-puck.svg"
+      },
       "description": "Low profile ice hockey puck equipment prop.",
       "behavior": "decor",
       "function_data": {}
@@ -10578,6 +10990,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-lamp.svg"
+      },
       "description": "One park lamp.",
       "behavior": "decor",
       "function_data": {}
@@ -10643,6 +11059,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-lamps.svg"
+      },
       "description": "Eight named lamps with glowing globes.",
       "behavior": "decor",
       "function_data": {}
@@ -10708,6 +11128,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-path.svg"
+      },
       "description": "One modular walkway tile.",
       "behavior": "decor",
       "function_data": {}
@@ -10773,6 +11197,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-paths.svg"
+      },
       "description": "Crossing paths and perimeter walkways.",
       "behavior": "decor",
       "function_data": {}
@@ -10838,6 +11266,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-rail-segment.svg"
+      },
       "description": "A short pair of rails with sleepers; the running train follows its complete route.",
       "behavior": "decor",
       "function_data": {}
@@ -10903,6 +11335,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-safety-bar.svg"
+      },
       "description": "Passenger safety bar equipment prop.",
       "behavior": "decor",
       "function_data": {}
@@ -10968,6 +11404,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-shooting.svg"
+      },
       "description": "Complete interactive arcade station.",
       "behavior": "interact",
       "function_data": {
@@ -11037,6 +11477,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-sign.svg"
+      },
       "description": "One park direction sign.",
       "behavior": "decor",
       "function_data": {}
@@ -11102,6 +11546,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-signs.svg"
+      },
       "description": "Neon Junction entrance sign.",
       "behavior": "decor",
       "function_data": {}
@@ -11167,6 +11615,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train.svg"
+      },
       "description": "Closed perimeter track, locomotive and three passenger carriages.",
       "behavior": "interact",
       "function_data": {
@@ -11236,6 +11688,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage.svg"
+      },
       "description": "Passenger carriage prop; use Park express for the running ride.",
       "behavior": "decor",
       "function_data": {}
@@ -11301,6 +11757,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine.svg"
+      },
       "description": "Locomotive equipment prop; use Park express for the running ride.",
       "behavior": "decor",
       "function_data": {}
@@ -11366,6 +11826,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-station.svg"
+      },
       "description": "Covered passenger platform.",
       "behavior": "decor",
       "function_data": {}
@@ -11431,6 +11895,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-tree.svg"
+      },
       "description": "One tree to place anywhere.",
       "behavior": "decor",
       "function_data": {}
@@ -11496,6 +11964,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-trees.svg"
+      },
       "description": "Named tree instances around the courts.",
       "behavior": "decor",
       "function_data": {}
@@ -11565,6 +12037,10 @@
         2.8,
         0.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/archway.svg"
+      },
       "description": "Block-built limestone pillars and an arched passage with a contrasting carved keystone.",
       "behavior": "decor",
       "function_data": {}
@@ -11634,6 +12110,10 @@
         1.02,
         0.9
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/armchair.svg"
+      },
       "description": "A tailored lounge chair with upholstered cushions, rounded arms and walnut legs.",
       "behavior": "decor",
       "function_data": {}
@@ -11703,6 +12183,10 @@
         2.15,
         0.18
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/art-wall.svg"
+      },
       "description": "A gallery wall with a walnut and brass frame around a layered geometric composition.",
       "behavior": "decor",
       "function_data": {}
@@ -11772,6 +12256,10 @@
         2.15,
         0.58
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/bathroom-vanity.svg"
+      },
       "description": "Vanity cabinet, basin, mirror and fixtures.",
       "behavior": "decor",
       "function_data": {
@@ -11843,6 +12331,10 @@
         1.5,
         0.16
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/battle-axe.svg"
+      },
       "description": "A curved forged steel axe head with an inset cutting edge, brass rivets and a leather-wrapped haft.",
       "behavior": "decor",
       "function_data": {}
@@ -11912,6 +12404,10 @@
         2.05,
         0.38
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/bookshelf.svg"
+      },
       "description": "A walnut bookcase with fitted shelves, individual bound books and a ceramic ornament.",
       "behavior": "decor",
       "function_data": {}
@@ -11981,6 +12477,10 @@
         2.6,
         0.65
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-activity-board.svg"
+      },
       "description": "Accept a trail quest, find the supply pack and badge, then return for room score.",
       "behavior": "quest",
       "function_data": {
@@ -12062,6 +12562,10 @@
         4,
         7.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-cabin.svg"
+      },
       "description": "An enterable timber cabin with a wide doorway, porch and removable roof.",
       "behavior": "decor",
       "function_data": {
@@ -12133,6 +12637,10 @@
         2.2,
         1.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack.svg"
+      },
       "description": "Stored canoes and paddles for scenic waterfront dressing.",
       "behavior": "decor",
       "function_data": {
@@ -12204,6 +12712,10 @@
         1.2,
         4.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-climbing-steps.svg"
+      },
       "description": "A low timber obstacle with gradual, solid steps on both sides.",
       "behavior": "decor",
       "function_data": {
@@ -12275,6 +12787,10 @@
         1.2,
         6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-dock.svg"
+      },
       "description": "A low, walkable timber platform with an open approach.",
       "behavior": "decor",
       "function_data": {
@@ -12346,6 +12862,10 @@
         3.8,
         0.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-flag.svg"
+      },
       "description": "A bright camp pennant and tall flagpole for gathering spots.",
       "behavior": "decor",
       "function_data": {
@@ -12417,6 +12937,10 @@
         0.18,
         12
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-lake.svg"
+      },
       "description": "A shallow scenic water surface; the surrounding ground remains walkable.",
       "behavior": "decor",
       "function_data": {
@@ -12488,6 +13012,10 @@
         2.3,
         0.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-lantern.svg"
+      },
       "description": "A warm, emissive lantern on a timber post.",
       "behavior": "decor",
       "function_data": {
@@ -12559,6 +13087,10 @@
         0.55,
         0.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-log-bench.svg"
+      },
       "description": "A usable camp seat with a clear stand-up space.",
       "behavior": "seat",
       "function_data": {
@@ -12641,6 +13173,10 @@
         1,
         2.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-picnic-table.svg"
+      },
       "description": "A timber picnic table with benches for a camp dining area.",
       "behavior": "decor",
       "function_data": {
@@ -12712,6 +13248,10 @@
         0.8,
         0.45
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-supply-pack.svg"
+      },
       "description": "A collectable trail backpack used by the camp quest.",
       "behavior": "pickup",
       "function_data": {
@@ -12784,6 +13324,10 @@
         2.3,
         1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-target.svg"
+      },
       "description": "A decorative bullseye target on a timber stand.",
       "behavior": "decor",
       "function_data": {
@@ -12855,6 +13399,10 @@
         3.3,
         4.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-tent.svg"
+      },
       "description": "An open-ended canvas tent with a walkable floor and timber ridge.",
       "behavior": "decor",
       "function_data": {
@@ -12926,6 +13474,10 @@
         0.85,
         0.3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-trail-badge.svg"
+      },
       "description": "A collectable compass badge used by the camp quest.",
       "behavior": "pickup",
       "function_data": {
@@ -12998,6 +13550,10 @@
         2.5,
         0.45
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/camp-trail-sign.svg"
+      },
       "description": "A colorful timber trail marker for paths and camp entrances.",
       "behavior": "decor",
       "function_data": {
@@ -13069,6 +13625,10 @@
         1.05,
         1.05
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/campfire.svg"
+      },
       "description": "Charred split logs, glowing embers and layered animated flames in a ring of weathered stone.",
       "behavior": "decor",
       "function_data": {}
@@ -13138,6 +13698,10 @@
         5.2,
         3.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/canopy-tree.svg"
+      },
       "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
@@ -13207,6 +13771,10 @@
         0.65,
         1.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/cave-spider.svg"
+      },
       "description": "An eight-legged cave hunter with plated chitin, articulated limbs, amber eyes and curved ivory fangs.",
       "behavior": "decor",
       "function_data": {}
@@ -13276,6 +13844,10 @@
         1.9,
         0.65
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/clockwork-knight.svg"
+      },
       "description": "An articulated brass guardian with overlapping steel armour, exposed pivot joints and a luminous visor.",
       "behavior": "decor",
       "function_data": {}
@@ -13345,6 +13917,10 @@
         0.46,
         0.72
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/coffee-table.svg"
+      },
       "description": "A joinery-built walnut table with inset top panels, a lower shelf and brass feet.",
       "behavior": "decor",
       "function_data": {}
@@ -13410,9 +13986,256 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/connected-suite.svg"
+      },
       "description": "Room piece for the in-game map builder.",
       "behavior": "decor",
       "function_data": {}
+    },
+    {
+      "assetId": "builder-construction-floodlight",
+      "name": "Four-head Site Floodlight",
+      "category": "props",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/construction-floodlight.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "construction-floodlight",
+      "builderCategory": "props",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.3,
+        8.1,
+        1.3
+      ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-floodlight.svg"
+      },
+      "priceMzk": 100,
+      "description": "A narrow generator base, telescopic mast, cable winch and four individually framed LED optics.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Four-head Site Floodlight"
+      }
+    },
+    {
+      "assetId": "builder-construction-service-canopy",
+      "name": "Steel Service Canopy",
+      "category": "buildings",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/construction-service-canopy.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "construction-service-canopy",
+      "builderCategory": "buildings",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        33,
+        4.3,
+        7
+      ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-service-canopy.svg"
+      },
+      "priceMzk": 100,
+      "description": "An open six-post maintenance shelter with braced roof trusses and corrugated weather sheets.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Steel Service Canopy"
+      }
+    },
+    {
+      "assetId": "builder-construction-site-office",
+      "name": "Modular Site Office",
+      "category": "buildings",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/construction-site-office.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "construction-site-office",
+      "builderCategory": "buildings",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        12.4,
+        3.9,
+        7.4
+      ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-site-office.svg"
+      },
+      "priceMzk": 100,
+      "description": "A fitted steel site office with framed glazing, panel seams, lift-plan furniture and rooftop services.",
+      "behavior": "decor",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Modular Site Office"
+      }
     },
     {
       "assetId": "builder-construction-steel-beam",
@@ -13475,6 +14298,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-steel-beam.svg"
+      },
       "description": "Eighteen metre structural steel beam with lift points for skyscraper construction.",
       "behavior": "decor",
       "function_data": {}
@@ -13540,6 +14367,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/corsair-aircraft.svg"
+      },
       "description": "Blackwing Corsair from the Environment Builder, ready to drop into the running game.",
       "behavior": "vehicle",
       "function_data": {}
@@ -13609,6 +14440,10 @@
         1.8,
         0.3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/crystal-staff.svg"
+      },
       "description": "A brass-bound carved staff with a faceted amethyst held in an open three-prong crown.",
       "behavior": "decor",
       "function_data": {}
@@ -13678,6 +14513,10 @@
         3,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/desert-cactus.svg"
+      },
       "description": "A ribbed saguaro with curved upright arms, clustered spines and a coral desert blossom.",
       "behavior": "decor",
       "function_data": {}
@@ -13747,6 +14586,10 @@
         1.75,
         0.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/desert-merchant.svg"
+      },
       "description": "A robed trader with wrapped headwear, embroidered hems, coin clasps and an expedition satchel.",
       "behavior": "decor",
       "function_data": {}
@@ -13812,6 +14655,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/diamond-da40.svg"
+      },
       "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
       "behavior": "vehicle",
       "function_data": {
@@ -13884,6 +14731,10 @@
         1.05,
         2.25
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/dining-set.svg"
+      },
       "description": "Six-place dining table and correctly scaled chairs.",
       "behavior": "decor",
       "function_data": {
@@ -13955,6 +14806,10 @@
         4,
         12
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/drive-in-garage.svg"
+      },
       "description": "Double garage with a wide open vehicle bay and work area.",
       "behavior": "decor",
       "function_data": {
@@ -14022,6 +14877,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/dune-quad.svg"
+      },
       "description": "Nightcrawler Dune Quad from the Environment Builder, ready to drop into the running game.",
       "behavior": "vehicle",
       "function_data": {}
@@ -14091,6 +14950,10 @@
         3,
         0.55
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/elevator.svg"
+      },
       "description": "Framed lift entrance, split doors and call control.",
       "behavior": "decor",
       "function_data": {
@@ -14158,6 +15021,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/ember-dragon.svg"
+      },
       "description": "Ember Dragon from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -14227,6 +15094,10 @@
         0.8,
         0.9
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/emerald-slime.svg"
+      },
       "description": "A glossy, irregular emerald creature with an inset heart crystal, suspended bubbles and a curious face.",
       "behavior": "decor",
       "function_data": {}
@@ -14296,6 +15167,10 @@
         3.6,
         16
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/estate-house.svg"
+      },
       "description": "Enterable four-room home with wide passages and a terrace.",
       "behavior": "decor",
       "function_data": {
@@ -14367,6 +15242,10 @@
         1.1,
         22
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/estate-yard.svg"
+      },
       "description": "Open lawn with paths, planting and a wide entrance.",
       "behavior": "decor",
       "function_data": {
@@ -14439,6 +15318,10 @@
         6.5,
         5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-assembly-jig.svg"
+      },
       "priceMzk": 900,
       "description": "A production assembly station with twin robotic arms, a segmented workpiece and an overhead service gantry.",
       "behavior": "interact",
@@ -14525,6 +15408,10 @@
         4.8,
         4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-calibration-rig.svg"
+      },
       "priceMzk": 450,
       "description": "A quality-control station with a circular inspection arch, animated scan bar and twin systems consoles.",
       "behavior": "interact",
@@ -14610,6 +15497,10 @@
         3.7,
         12.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket.svg"
+      },
       "priceMzk": 320,
       "description": "Factory-crafted cargo rocket collectible with booster pods, payload fairing and a service cradle.",
       "behavior": "decor",
@@ -14686,6 +15577,10 @@
         3,
         2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-certification-kiosk.svg"
+      },
       "priceMzk": 180,
       "description": "Review production-test certification at a configurable kiosk with a test matrix, status display and operator desk.",
       "behavior": "interact",
@@ -14770,6 +15665,10 @@
         1.1,
         8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-conveyor.svg"
+      },
       "priceMzk": 120,
       "description": "A movable steel material conveyor with individual animated rollers and safety rails.",
       "behavior": "decor",
@@ -14847,6 +15746,10 @@
         2.4,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-dispatch-terminal.svg"
+      },
       "priceMzk": 160,
       "description": "Deliver completed orders and collect crafted items to Backpack from this shipment console.",
       "behavior": "interact",
@@ -14932,6 +15835,10 @@
         2.6,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-export-terminal.svg"
+      },
       "priceMzk": 240,
       "description": "Trade and export certified game items from a freight desk with shipment screens and an MZK payment panel.",
       "behavior": "interact",
@@ -15017,6 +15924,10 @@
         4.8,
         4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-fabricator.svg"
+      },
       "priceMzk": 650,
       "description": "Operate this component-fabrication station in a custom factory, with a sliding tool head, stock rollers and an operator console.",
       "behavior": "interact",
@@ -15102,6 +16013,10 @@
         1.8,
         2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-freight-crate.svg"
+      },
       "priceMzk": 70,
       "description": "A reusable cargo prop with reinforced corners, locking straps and a marked shipping label.",
       "behavior": "decor",
@@ -15179,6 +16094,10 @@
         0.12,
         14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-loading-bay.svg"
+      },
       "priceMzk": 180,
       "description": "A marked freight-loading station for the factory truck. Move or rotate it to define your custom production route.",
       "behavior": "interact",
@@ -15265,6 +16184,10 @@
         2.4,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-procurement-terminal.svg"
+      },
       "priceMzk": 160,
       "description": "Buy game production kits and open factory jobs at this MZK order desk with a stock manifest screen and material bins.",
       "behavior": "interact",
@@ -15350,6 +16273,10 @@
         2.3,
         8.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/factory-training-missile.svg"
+      },
       "priceMzk": 180,
       "description": "Factory-crafted inert training collectible with segmented shell, stabilizer fins and a display cradle.",
       "behavior": "decor",
@@ -15426,6 +16353,10 @@
         2.05,
         0.48
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fireplace.svg"
+      },
       "description": "Stone hearth, mantel and animated flame bed.",
       "behavior": "decor",
       "function_data": {
@@ -15493,6 +16424,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-bait.svg"
+      },
       "priceMzk": 0,
       "description": "Reusable practice bait for freshwater and coastal fish.",
       "behavior": "interact",
@@ -15567,6 +16502,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-lure.svg"
+      },
       "priceMzk": 60,
       "description": "Reusable lure that attracts stronger fish.",
       "behavior": "interact",
@@ -15641,6 +16580,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-net.svg"
+      },
       "priceMzk": 45,
       "description": "A landing net for bringing catches aboard.",
       "behavior": "interact",
@@ -15715,6 +16658,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-pro-rod.svg"
+      },
       "priceMzk": 120,
       "description": "Carbon rod for difficult fish and longer controlled fights.",
       "behavior": "interact",
@@ -15789,6 +16736,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-reel.svg"
+      },
       "priceMzk": 90,
       "description": "A smooth adjustable drag reel for the fishing loadout.",
       "behavior": "interact",
@@ -15863,6 +16814,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-rod.svg"
+      },
       "priceMzk": 0,
       "description": "Starter spinning rod with working reel, guides and line. Cast from a fishing station or a marked shore.",
       "behavior": "interact",
@@ -15937,6 +16892,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fishing-tackle-box.svg"
+      },
       "priceMzk": 80,
       "description": "Organized hooks, floats and tackle for your fishing loadout.",
       "behavior": "interact",
@@ -16015,6 +16974,10 @@
         0.04,
         15
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-agility-ladder.svg"
+      },
       "priceMzk": 100,
       "description": "Nine-rung gold footwork ladder laid flat for a clear fifteen-metre reaction lane.",
       "behavior": "interact",
@@ -16097,6 +17060,10 @@
         0.32,
         1.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-balance-beam.svg"
+      },
       "priceMzk": 140,
       "description": "Low eight-metre stability beam with gold end caps and wide support feet.",
       "behavior": "interact",
@@ -16179,6 +17146,10 @@
         0.28,
         1.1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-balance-pad.svg"
+      },
       "priceMzk": 40,
       "description": "Round textured stability pad with a gold rim for low-impact balance training.",
       "behavior": "interact",
@@ -16261,6 +17232,10 @@
         0.6,
         0.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-barbell.svg"
+      },
       "priceMzk": 90,
       "description": "Grounded Olympic bar with black and gold removable-style weight plates.",
       "behavior": "interact",
@@ -16343,6 +17318,10 @@
         4.4,
         2.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-basketball-hoop.svg"
+      },
       "priceMzk": 420,
       "description": "Regulation-height 3.05 m rim, backboard, woven-style net and a weighted gold-trimmed portable stand.",
       "behavior": "interact",
@@ -16425,6 +17404,10 @@
         2,
         2.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-bench-press.svg"
+      },
       "priceMzk": 360,
       "description": "Padded strength bench with spotter rails, gold barbell plates and a stable steel rack.",
       "behavior": "interact",
@@ -16507,6 +17490,10 @@
         1.5,
         1.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-bike.svg"
+      },
       "priceMzk": 240,
       "description": "Indoor cycle with a flywheel, padded saddle, pedals and gold-trimmed handlebars.",
       "behavior": "decor",
@@ -16581,6 +17568,10 @@
         2.24,
         12.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-boxing-ring.svg"
+      },
       "priceMzk": 850,
       "description": "Championship training ring with four ropes, padded red and blue corners, an open south entrance, shallow access steps and a marked canvas apron.",
       "behavior": "interact",
@@ -16663,6 +17654,10 @@
         2.4,
         0.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-coach-board.svg"
+      },
       "priceMzk": 80,
       "description": "Freestanding gold-framed training board with a session diagram and stable feet.",
       "behavior": "decor",
@@ -16737,6 +17732,10 @@
         0.92,
         0.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-cone.svg"
+      },
       "priceMzk": 20,
       "description": "Low slalom cone with a broad rubber foot and gold high-visibility marker.",
       "behavior": "interact",
@@ -16819,6 +17818,10 @@
         0.62,
         6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-deadlift-platform.svg"
+      },
       "priceMzk": 350,
       "description": "Timber and rubber lifting platform with a loaded gold-accented Olympic barbell.",
       "behavior": "interact",
@@ -16901,6 +17904,10 @@
         0.28,
         0.28
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-dumbbell.svg"
+      },
       "priceMzk": 35,
       "description": "Single hand weight with a knurled steel grip and gold-edged rubber heads.",
       "behavior": "decor",
@@ -16975,6 +17982,10 @@
         1.2,
         1.3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-dumbbell-rack.svg"
+      },
       "priceMzk": 300,
       "description": "Long two-tier steel rack with nine individually modelled pairs of training dumbbells.",
       "behavior": "decor",
@@ -17049,6 +18060,10 @@
         0.34,
         0.34
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-foam-roller.svg"
+      },
       "priceMzk": 25,
       "description": "Compact ribbed recovery roller with a gold core and dark padded surface.",
       "behavior": "decor",
@@ -17123,6 +18138,10 @@
         5,
         1.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-heavy-bag.svg"
+      },
       "priceMzk": 220,
       "description": "Freestanding steel suspension frame with a gold striking bag, chains and padded bands.",
       "behavior": "interact",
@@ -17205,6 +18224,10 @@
         0.94,
         0.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-hurdle.svg"
+      },
       "priceMzk": 55,
       "description": "Lightweight hurdle with a gold crossbar, adjustable-style uprights and wide stable feet.",
       "behavior": "interact",
@@ -17287,6 +18310,10 @@
         0.12,
         2.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-jump-rope.svg"
+      },
       "priceMzk": 45,
       "description": "Full-length gold training rope laid out with two ergonomic handles.",
       "behavior": "interact",
@@ -17369,6 +18396,10 @@
         2.6,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-locker.svg"
+      },
       "priceMzk": 100,
       "description": "Full-height steel locker with gold vents, handle and a numbered-style nameplate.",
       "behavior": "decor",
@@ -17443,6 +18474,10 @@
         0.63,
         1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-locker-bench.svg"
+      },
       "priceMzk": 80,
       "description": "Five-metre timber changing bench with gold steel legs and supportive cross rails.",
       "behavior": "decor",
@@ -17517,6 +18552,10 @@
         0.7,
         0.45
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-monitor.svg"
+      },
       "priceMzk": 70,
       "description": "Desk-mounted gold-framed display with an illustrated training progress screen.",
       "behavior": "decor",
@@ -17591,6 +18630,10 @@
         2,
         0.9
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-plate-tree.svg"
+      },
       "priceMzk": 120,
       "description": "Stable plate-storage tower with three sets of gold Olympic weight plates.",
       "behavior": "decor",
@@ -17665,6 +18708,10 @@
         3,
         2.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-power-rack.svg"
+      },
       "priceMzk": 400,
       "description": "Open squat and pull-up rack with gold safety catches, floor feet and a loaded bar.",
       "behavior": "interact",
@@ -17747,6 +18794,10 @@
         1.42,
         1.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-reception-counter.svg"
+      },
       "priceMzk": 220,
       "description": "Timber reception desk with a pale worktop, gold trim and recessed front panels.",
       "behavior": "decor",
@@ -17821,6 +18872,10 @@
         0.05,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-recovery-mat.svg"
+      },
       "priceMzk": 35,
       "description": "Full-length cushioned exercise mat with stitched gold edges and alignment lines.",
       "behavior": "decor",
@@ -17895,6 +18950,10 @@
         3.4,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-ring-scoreboard.svg"
+      },
       "priceMzk": 240,
       "description": "Freestanding championship scoreclock with red and blue score panels, round display and a three-minute digital timer.",
       "behavior": "interact",
@@ -17977,6 +19036,10 @@
         1.6,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-ringside-seating.svg"
+      },
       "priceMzk": 180,
       "description": "Three-tier ringside spectator stand with padded seats, gold aisle rails and a clear front approach.",
       "behavior": "decor",
@@ -18051,6 +19114,10 @@
         1.5,
         3.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-rower.svg"
+      },
       "priceMzk": 280,
       "description": "Rail-mounted seat, flywheel, foot plates and a gold training display.",
       "behavior": "interact",
@@ -18133,6 +19200,10 @@
         2.6,
         28
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-sprint-gates.svg"
+      },
       "priceMzk": 360,
       "description": "Three-lane sprint and hurdle course with start and finish timing gates, lane markings and low training hurdles.",
       "behavior": "interact",
@@ -18215,6 +19286,10 @@
         1.1,
         1.525
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-table-tennis.svg"
+      },
       "priceMzk": 280,
       "description": "Regulation 2.74 × 1.525 m playing surface at 0.76 m, centre net, folding-style underframe and gold court edging.",
       "behavior": "interact",
@@ -18297,6 +19372,10 @@
         1.75,
         3.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-treadmill.svg"
+      },
       "priceMzk": 300,
       "description": "Running deck, safety rails and a live-style gold-framed training console.",
       "behavior": "decor",
@@ -18371,6 +19450,10 @@
         2.7,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/fitness-water-station.svg"
+      },
       "priceMzk": 90,
       "description": "Floor-standing water dispenser with a clear aqua bottle and gold taps.",
       "behavior": "decor",
@@ -18445,6 +19528,10 @@
         1.75,
         0.62
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/floor-lamp.svg"
+      },
       "description": "A sculpted standing lamp with a brass stem, pleated fabric shade and warm diffuser.",
       "behavior": "decor",
       "function_data": {}
@@ -18514,6 +19601,10 @@
         0.35,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/flower-bed.svg"
+      },
       "description": "A bordered garden bed filled with leafy stems and individual coloured flowers.",
       "behavior": "decor",
       "function_data": {}
@@ -18583,6 +19674,10 @@
         1.8,
         0.55
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/forest-ranger.svg"
+      },
       "description": "A hooded woodland guide with a layered travelling cloak, fitted leather equipment and a full arrow quiver.",
       "behavior": "decor",
       "function_data": {}
@@ -18648,6 +19743,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/freight-loading-bay.svg"
+      },
       "priceMzk": 180,
       "description": "Marked loading and shipping station for road freight maps.",
       "behavior": "interact",
@@ -18718,6 +19817,10 @@
         1.65,
         0.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/friendly-ghost.svg"
+      },
       "description": "A gentle floating spirit with a scalloped sheet silhouette, welcoming arms and a softly glowing smile.",
       "behavior": "decor",
       "function_data": {}
@@ -18783,6 +19886,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/frontier-pickup.svg"
+      },
       "priceMzk": 800,
       "description": "Crew-cab pickup with glass cabin, dashboard, four cargo slots, trailer hitch and freight delivery contracts.",
       "behavior": "vehicle",
@@ -18849,6 +19956,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/garden-courtyard.svg"
+      },
       "description": "Room piece for the in-game map builder.",
       "behavior": "decor",
       "function_data": {}
@@ -18918,6 +20029,10 @@
         0.75,
         1.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/garden-rocks.svg"
+      },
       "description": "Layered, weathered garden stones with pale mineral seams and small moss patches.",
       "behavior": "decor",
       "function_data": {}
@@ -18987,6 +20102,10 @@
         2.2,
         2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/giant-mushrooms.svg"
+      },
       "description": "A grove of rose-capped mushrooms with real gills, pale stem collars and softly luminous spots.",
       "behavior": "decor",
       "function_data": {}
@@ -19056,6 +20175,10 @@
         2.35,
         0.18
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/glass-door.svg"
+      },
       "description": "Human-scale glazed door with structural frame and handle.",
       "behavior": "decor",
       "function_data": {
@@ -19123,6 +20246,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/grand-floor.svg"
+      },
       "description": "Map piece for the in-game map builder.",
       "behavior": "decor",
       "function_data": {}
@@ -19188,6 +20315,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/grand-tourer.svg"
+      },
       "description": "Luxury four-seat touring car with panoramic glass, leather cabin and live digital dashboard.",
       "behavior": "vehicle",
       "function_data": {}
@@ -19257,6 +20388,10 @@
         1.6,
         1.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/green-bubbles.svg"
+      },
       "description": "A brass-trimmed healing plinth with luminous channels and rising green alchemy bubbles.",
       "behavior": "decor",
       "function_data": {}
@@ -19326,6 +20461,10 @@
         2.7,
         6.3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat.svg"
+      },
       "description": "Driveable fishing launch with two side casting stations, real rods and spinning reels, tackle locker and livewell.",
       "behavior": "vehicle",
       "function_data": {
@@ -19403,6 +20542,10 @@
         2.9,
         7.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/harbor-patrol.svg"
+      },
       "description": "Armored coastal patrol boat with a deck cannon, rescue gear, live crew radio and cooperative smuggler missions.",
       "behavior": "vehicle",
       "function_data": {
@@ -19478,6 +20621,10 @@
         4.8,
         4.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/harbor-sailboat.svg"
+      },
       "description": "A steerable marina boat with a mast and sail.",
       "behavior": "vehicle",
       "function_data": {
@@ -19551,6 +20698,10 @@
         1.5,
         4.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/harbor-skiff.svg"
+      },
       "description": "Board and steer a launch on harbor water.",
       "behavior": "vehicle",
       "function_data": {
@@ -19624,6 +20775,10 @@
         7,
         42
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/harbor-yacht.svg"
+      },
       "description": "A massive drivable yacht with bedroom, lounge, billiards and aft terrace.",
       "behavior": "vehicle",
       "function_data": {
@@ -19697,6 +20852,10 @@
         1,
         0.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/healing-potion.svg"
+      },
       "description": "Rose restorative in a glass flask with brass fittings and a healing emblem.",
       "behavior": "decor",
       "function_data": {}
@@ -19766,6 +20925,10 @@
         1.05,
         2.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/hedge-corner.svg"
+      },
       "description": "A clipped evergreen corner with a timber edging and dense, varied foliage.",
       "behavior": "decor",
       "function_data": {}
@@ -19831,6 +20994,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/hero-spawn.svg"
+      },
       "description": "Hero Spawn from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -19900,6 +21067,10 @@
         1.25,
         3.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/hill.svg"
+      },
       "description": "A grassy mound with exposed stone, low meadow plants and a walkable rounded surface.",
       "behavior": "decor",
       "function_data": {}
@@ -19969,6 +21140,10 @@
         0.8,
         0.45
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/iron-anvil.svg"
+      },
       "description": "A forged anvil with a tapered horn, hardened working face, hardy hole and bolted timber pedestal.",
       "behavior": "decor",
       "function_data": {}
@@ -20038,6 +21213,10 @@
         0.94,
         0.9
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/kitchen-island.svg"
+      },
       "description": "An inset-panel island with stone worktop, metal sink, curved tap and cabinet handles.",
       "behavior": "decor",
       "function_data": {}
@@ -20107,6 +21286,10 @@
         3.4,
         0.55
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lamp-post.svg"
+      },
       "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
@@ -21826,6 +23009,10 @@
         1.1,
         0.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lever-switch.svg"
+      },
       "description": "A pivoting brass control lever with a guarded base and luminous status lamps.",
       "behavior": "decor",
       "function_data": {}
@@ -21895,6 +23082,10 @@
         2.05,
         1.25
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/loft-bed.svg"
+      },
       "description": "Raised bed, mattress, guard rail and ladder.",
       "behavior": "decor",
       "function_data": {
@@ -21966,6 +23157,10 @@
         1.1,
         0.19
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-boundary-stake.svg"
+      },
       "description": "Timber survey stake with a brass cap for marking lot corners.",
       "behavior": "decor",
       "function_data": {
@@ -22037,6 +23232,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-owned-sign.svg"
+      },
       "description": "Timber sign marking a lot with an existing deed owner.",
       "behavior": "decor",
       "function_data": {
@@ -22108,6 +23307,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-10000.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22179,6 +23382,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-15000.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22250,6 +23457,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-20000.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22321,6 +23532,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-25000.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22392,6 +23607,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-5000.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22463,6 +23682,10 @@
         1.95,
         0.14
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/lot-sale-sign-7500.svg"
+      },
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "behavior": "decor",
       "function_data": {
@@ -22534,6 +23757,10 @@
         2.8,
         2.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/market-stall.svg"
+      },
       "description": "A striped canvas market canopy shelters a board-built counter, woven produce trays and hand-fitted brass details.",
       "behavior": "decor",
       "function_data": {}
@@ -22603,6 +23830,10 @@
         2.8,
         0.28
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/modular-wall.svg"
+      },
       "description": "Full-height framed wall bay for realistic room construction.",
       "behavior": "decor",
       "function_data": {
@@ -22674,6 +23905,10 @@
         2.6,
         1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/moss-golem.svg"
+      },
       "description": "A weathered stone sentinel with articulated boulder limbs, mineral seams, moss patches and glowing eyes.",
       "behavior": "decor",
       "function_data": {}
@@ -22743,6 +23978,10 @@
         3.6,
         16
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/open-office.svg"
+      },
       "description": "Enterable office with workstations and a meeting room.",
       "behavior": "decor",
       "function_data": {
@@ -22810,6 +24049,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/open-studio.svg"
+      },
       "description": "Room piece for the in-game map builder.",
       "behavior": "decor",
       "function_data": {}
@@ -22879,6 +24122,10 @@
         5,
         3.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/palm-cluster.svg"
+      },
       "description": "Three curved ringed palm trunks with hand-shaped pinnate fronds and hanging coconuts.",
       "behavior": "decor",
       "function_data": {}
@@ -22948,6 +24195,10 @@
         0.12,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/path-tile.svg"
+      },
       "description": "Eight fitted slate pavers set into a chamfered stone border.",
       "behavior": "decor",
       "function_data": {}
@@ -23017,6 +24268,10 @@
         0.42,
         1.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/pillow-ring.svg"
+      },
       "description": "An upholstered floor cushion with stitched panels, piping and a recessed centre seat.",
       "behavior": "seat",
       "function_data": {}
@@ -23086,6 +24341,10 @@
         5.8,
         2.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/pine-tree.svg"
+      },
       "description": "A textured evergreen with layered needle boughs and a bark-covered trunk.",
       "behavior": "decor",
       "function_data": {}
@@ -23151,6 +24410,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/piper-cub.svg"
+      },
       "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
       "behavior": "vehicle",
       "function_data": {
@@ -23223,6 +24486,10 @@
         1.45,
         0.85
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/planter.svg"
+      },
       "description": "A fluted ceramic vessel with a brass foot and a layered leafy ornamental plant.",
       "behavior": "decor",
       "function_data": {}
@@ -23292,6 +24559,10 @@
         1.4,
         0.12
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/plasma-sword.svg"
+      },
       "description": "A forged alloy hilt with wrapped grip, cyan reactor and a tapered luminous plasma blade.",
       "behavior": "decor",
       "function_data": {}
@@ -23361,6 +24632,10 @@
         0.22,
         2.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/pond.svg"
+      },
       "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
@@ -23430,6 +24705,10 @@
         2.5,
         0.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/portal-door.svg"
+      },
       "description": "Machined alloy gateway with a violet vortex, luminous edge rails and a reinforced threshold.",
       "behavior": "decor",
       "function_data": {}
@@ -23499,6 +24778,10 @@
         0.43,
         0.95
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/prison-chess-set.svg"
+      },
       "priceMzk": 0,
       "description": "A workshop-made folding chessboard with thirty-two individual pieces, a brass clasp and timber edging. An earned display collectible for your home or custom map.",
       "earnedOnly": true,
@@ -23578,6 +24861,10 @@
         1.22,
         0.54
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/prison-earned-trophy.svg"
+      },
       "priceMzk": 0,
       "description": "A polished brass escape-challenge trophy on an engraved dark plinth. Earn it by completing the prison escape, then display it in any of your worlds.",
       "earnedOnly": true,
@@ -23657,6 +24944,10 @@
         1.15,
         0.39
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/prison-radio.svg"
+      },
       "priceMzk": 0,
       "description": "An earned portable radio with a folding handle, tuning dial and telescopic aerial. Place it in another world to share a direct audio stream.",
       "earnedOnly": true,
@@ -23740,6 +25031,10 @@
         0.9,
         0.92
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/prison-supply-crate.svg"
+      },
       "priceMzk": 0,
       "description": "A reusable workshop-crafted keepsake crate with timber slats, steel corners, handles and a stamped inventory panel. This display collectible does not grant consumable supplies.",
       "earnedOnly": true,
@@ -23819,6 +25114,10 @@
         0.3,
         0.76
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/quest-scroll.svg"
+      },
       "description": "Rolled parchment, handwritten ink and a stamped wax quest seal.",
       "behavior": "decor",
       "function_data": {}
@@ -23884,6 +25183,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/rad-tox.svg"
+      },
       "description": "RAD-TOX Mutant from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -23949,6 +25252,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/rogue-bot.svg"
+      },
       "description": "Rogue Bot from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -24018,6 +25325,10 @@
         2,
         0.18
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/room-divider.svg"
+      },
       "description": "A framed timber screen with chamfered vertical slats, brass joints and stable feet.",
       "behavior": "decor",
       "function_data": {}
@@ -24087,6 +25398,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-blacksite.svg"
+      },
       "description": "Blacksite compound activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24158,6 +25473,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-cargo-yard.svg"
+      },
       "description": "Cargo yard activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24229,6 +25548,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-creator-studios.svg"
+      },
       "description": "Creator studios activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24300,6 +25623,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-desert-outpost.svg"
+      },
       "description": "Desert outpost activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24371,6 +25698,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-dungeon-maze.svg"
+      },
       "description": "Dungeon maze activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24442,6 +25773,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-firing-range.svg"
+      },
       "description": "Force training range activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24513,6 +25848,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-hedge-maze.svg"
+      },
       "description": "Hedge maze activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24584,6 +25923,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-market-square.svg"
+      },
       "description": "Market square activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24655,6 +25998,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-mega-mall.svg"
+      },
       "description": "Mall scene activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24726,6 +26073,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-movie-studio.svg"
+      },
       "description": "Movie studio activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24797,6 +26148,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-neon-arena.svg"
+      },
       "description": "Neon arena activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24868,6 +26223,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-neon-maze.svg"
+      },
       "description": "Neon labyrinth activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -24939,6 +26298,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-office-tower.svg"
+      },
       "description": "Office scene activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -25010,6 +26373,10 @@
         7,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scene-vendor-street.svg"
+      },
       "description": "Vendor street activity scene. Place inside a larger map, then move, rotate or scale independently.",
       "behavior": "decor",
       "function_data": {
@@ -25081,6 +26448,10 @@
         3,
         5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/sci-fi-bunker.svg"
+      },
       "description": "A segmented expedition bunker with reinforced panel seams, protected glazing, cooling vents and an illuminated entry frame.",
       "behavior": "decor",
       "function_data": {}
@@ -25146,6 +26517,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/scout-avatar.svg"
+      },
       "description": "AAPE Scout from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -25215,6 +26590,10 @@
         11.5,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shipping-container.svg"
+      },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
       "behavior": "vehicle",
@@ -25293,6 +26672,10 @@
         2.6,
         6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shipping-container-box.svg"
+      },
       "priceMzk": 100,
       "description": "Corrugated steel container with locking bars and corner castings.",
       "behavior": "decor",
@@ -25368,6 +26751,10 @@
         7.4,
         20
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shipping-feeder.svg"
+      },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
       "behavior": "vehicle",
@@ -25446,6 +26833,10 @@
         26,
         40
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shipping-port-crane.svg"
+      },
       "priceMzk": 100,
       "description": "Container terminal gantry with boom, lift cables, trolley and spreader.",
       "behavior": "decor",
@@ -25521,6 +26912,10 @@
         12.5,
         46
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/shipping-tanker.svg"
+      },
       "priceMzk": 750,
       "description": "Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.",
       "behavior": "vehicle",
@@ -25595,6 +26990,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/site-bulldozer.svg"
+      },
       "description": "Tracked bulldozer with hydraulic grading blade and twin joystick controls.",
       "behavior": "vehicle",
       "function_data": {}
@@ -25660,6 +27059,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/site-dumptruck.svg"
+      },
       "description": "Six-wheel site hauler with hydraulic tipping bed, payload indicator and detailed operator cab.",
       "behavior": "vehicle",
       "function_data": {}
@@ -25725,6 +27128,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/site-excavator.svg"
+      },
       "description": "Tracked excavator with rotating house, boom, stick, bucket and moving hydraulic rams.",
       "behavior": "vehicle",
       "function_data": {}
@@ -25794,6 +27201,10 @@
         0.55,
         1.8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/sky-ray.svg"
+      },
       "description": "A soaring ray with sculpted wings, a long curling tail and luminous turquoise markings.",
       "behavior": "decor",
       "function_data": {}
@@ -25863,6 +27274,10 @@
         0.9,
         0.92
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/sofa.svg"
+      },
       "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
@@ -25932,6 +27347,10 @@
         1.7,
         0.6
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/spectral-ghost.svg"
+      },
       "description": "A translucent hooded spirit with a scalloped spectral robe, luminous eyes and a sheltered soul core.",
       "behavior": "decor",
       "function_data": {}
@@ -26001,6 +27420,10 @@
         2.8,
         2.1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/spiral-stairs.svg"
+      },
       "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
@@ -26070,6 +27493,10 @@
         7,
         4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/stone-tower.svg"
+      },
       "description": "An open stone entry leads into a block-built watchtower with carved arrow slits, timber bracing and crenellated battlements.",
       "behavior": "decor",
       "function_data": {}
@@ -26139,6 +27566,10 @@
         2.4,
         0.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/street-sign.svg"
+      },
       "description": "A cedar wayfinding post with carved arrow boards, iron brackets, brass nails and a warm lantern.",
       "behavior": "decor",
       "function_data": {}
@@ -26208,6 +27639,10 @@
         1.4,
         1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/studio-desk.svg"
+      },
       "description": "Production desk with displays, monitors and mixing surface.",
       "behavior": "decor",
       "function_data": {
@@ -26279,6 +27714,10 @@
         1,
         1.1
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/supply-crate.svg"
+      },
       "description": "Individual timber boards, reinforced corners, iron straps and recessed handles.",
       "behavior": "decor",
       "function_data": {}
@@ -26348,6 +27787,10 @@
         0.2,
         2.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/teleport-pad.svg"
+      },
       "description": "Low-profile transport disc with concentric energy channels, segmented plating and an animated core.",
       "behavior": "decor",
       "function_data": {}
@@ -26417,6 +27860,10 @@
         3.2,
         3.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg"
+      },
       "description": "Layered sandstone escarpment with fractured ledges, moss seams and fallen scree.",
       "behavior": "decor",
       "function_data": {}
@@ -26486,6 +27933,10 @@
         0.8,
         5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg"
+      },
       "description": "A scorched impact bowl with a raised fractured rim, mineral seams and scattered ejecta.",
       "behavior": "decor",
       "function_data": {}
@@ -26555,6 +28006,10 @@
         0.2,
         3
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/terrain-river.svg"
+      },
       "description": "A curved clear-water channel between shaped earthen banks, reeds and rounded river stones.",
       "behavior": "decor",
       "function_data": {}
@@ -26624,6 +28079,10 @@
         1.2,
         2.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg"
+      },
       "description": "Sculpted snow drifts with swept crests, cool blue ice facets and granular edge rocks.",
       "behavior": "decor",
       "function_data": {}
@@ -26693,6 +28152,10 @@
         7,
         1.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-blast-door.svg"
+      },
       "priceMzk": 350,
       "description": "An eight-metre clear doorway with decorative sliding panels and an underground-compound entry interaction.",
       "behavior": "interact",
@@ -26777,6 +28240,10 @@
         0.12,
         12
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-cargo-platform.svg"
+      },
       "priceMzk": 180,
       "description": "A drive-over receiving platform defining the cargo test destination in a custom range.",
       "behavior": "decor",
@@ -26855,6 +28322,10 @@
         6,
         8
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-containment-core.svg"
+      },
       "priceMzk": 650,
       "description": "A fictional underground power-core puzzle station with luminous rings, an observation sphere and service pipes.",
       "behavior": "interact",
@@ -26939,6 +28410,10 @@
         2.5,
         2.4
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-launch-console.svg"
+      },
       "priceMzk": 240,
       "description": "Operate fictional test launches from a detailed three-screen control desk.",
       "behavior": "interact",
@@ -27023,6 +28498,10 @@
         0.12,
         18
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-launch-pad.svg"
+      },
       "priceMzk": 450,
       "description": "Place a drive-over launch platform for factory testing jobs in your own map.",
       "behavior": "interact",
@@ -27107,6 +28586,10 @@
         7,
         2.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-range-target.svg"
+      },
       "priceMzk": 120,
       "description": "An accuracy objective with layered scoring sectors and a moving tracking line.",
       "behavior": "decor",
@@ -27185,6 +28668,10 @@
         2.6,
         2.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/testing-telemetry-terminal.svg"
+      },
       "priceMzk": 160,
       "description": "Set up a test run and review game telemetry from this systems desk.",
       "behavior": "interact",
@@ -27269,6 +28756,10 @@
         3.6,
         5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/timber-cabin.svg"
+      },
       "description": "A fitted timber cabin with board seams, a shingled pitched roof, framed windows and a brass-latched entrance.",
       "behavior": "decor",
       "function_data": {}
@@ -27334,6 +28825,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/touring-motorcycle.svg"
+      },
       "description": "Touring motorcycle with detailed engine, mirrors, luggage cases and digital instruments.",
       "behavior": "vehicle",
       "function_data": {}
@@ -27399,6 +28894,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/tower-crane.svg"
+      },
       "description": "Slewing lattice tower crane with trolley, wire rope, hook block and remote operator cab.",
       "behavior": "vehicle",
       "function_data": {}
@@ -27468,6 +28967,10 @@
         0.8,
         0.7
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/treasure-chest.svg"
+      },
       "description": "An arched oak chest with fitted brass bands, rivets and a keyhole lock.",
       "behavior": "decor",
       "function_data": {}
@@ -27537,6 +29040,10 @@
         1.32,
         0.98
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/treasure-crystal.svg"
+      },
       "description": "Cut cyan crystal shards held in a machined luminous plinth.",
       "behavior": "decor",
       "function_data": {}
@@ -27602,6 +29109,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer.svg"
+      },
       "priceMzk": 350,
       "description": "Hitchable tandem trailer. Eight crate slots, visible stacking and secured shipping manifests.",
       "behavior": "interact",
@@ -27668,6 +29179,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/void-wolf.svg"
+      },
       "description": "Void Wolf from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -27737,6 +29252,10 @@
         2.35,
         0.62
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/wardrobe.svg"
+      },
       "description": "Fitted wardrobe with shelves, rail and drawers.",
       "behavior": "decor",
       "function_data": {
@@ -27808,6 +29327,10 @@
         6,
         2.5
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/windmill.svg"
+      },
       "description": "A tapered masonry mill with timber balcony, braced canvas sails and a driven iron rotor.",
       "behavior": "decor",
       "function_data": {}
@@ -27873,6 +29396,10 @@
       "format": "procedural-3d",
       "native": true,
       "dimensions": null,
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/wolf-guardian.svg"
+      },
       "description": "Volt Guardian from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
       "function_data": {}
@@ -27942,6 +29469,10 @@
         1.5,
         1.2
       ],
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/wooden-cart.svg"
+      },
       "description": "A board-built handcart with iron tyres, open spoked wheels, cross-braced sides and fitted pull shafts.",
       "behavior": "decor",
       "function_data": {}
@@ -30848,7 +32379,7 @@
     }
   ],
   "audit": {
-    "assetCount": 467,
+    "assetCount": 470,
     "generatedCount": 44,
     "warnings": [
       {

@@ -19,12 +19,12 @@ export function constructionWorld(){
  const box=(id,x,y,z,width,height,depth,color,material='cube')=>add(id,'material:'+material,x,y,z,{scale:{x:width/1.2,y:height/1.2,z:depth/1.2},materialSettings:{useAccent:true,accent:color}});
  const slab=(id,x,y,z,width,depth,color,height=.12)=>add(id,'material:baseplate',x,y,z,{scale:{x:width/4.8,y:height/.2,z:depth/4.8},materialSettings:{useAccent:true,accent:color}});
  const sign=(id,name,x,z,text)=>add(id,'street-sign',x,0,z,{name,functionalSettings:{behavior:'talk',interactionDistance:5,prompt:'Read '+name,destructible:false},dialogueSettings:{text}});
- const machine=(id,modelId,name,x,z)=>add(id,modelId,x,0,z,{name,functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:modelId==='tower-crane'?6:5,prompt:'Operate '+name+' · E / Use',destructible:false,health:1000}});
+ const machine=(id,modelId,name,x,z)=>add(id,modelId,x,0,z,{name,asset:{buildAssetId:modelId,name,type:'vehicle'},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:modelId==='tower-crane'?6:5,prompt:'Operate '+name+' · E / Use',destructible:false,health:1000}});
  // Keep the four working machines first, including in lightweight map previews.
- machine('crane','tower-crane','Atlas TC-78 Tower Crane',-18,-4);
- machine('truck','site-dumptruck','HT-40 Articulated Dump Truck',21,30);
+ machine('crane','tower-crane','Titan 78 Tower Crane',-18,-4);
+ machine('truck','site-dumptruck','Terra 40 Articulated Dump Truck',21,30);
  machine('dozer','site-bulldozer','D9 Crawler Bulldozer',45,58).rotation.y=Math.PI/2;
- machine('excavator','site-excavator','EX-300 Hydraulic Excavator',25,17);
+ machine('excavator','site-excavator','HX350 Hydraulic Excavator',25,17);
  slab('tower-raft',5,-.24,-10,22,22,'#b7b8b1',.24);
  slab('crane-raft',-18,-.16,-4,7,7,'#aaa69a',.16);
  // Keep the starter structure low and open: each new crane-placed floor
@@ -67,10 +67,7 @@ export function constructionWorld(){
  slab('truck-loading-approach',49,-.07,30,8,32,'#a89573',.072);
  for(const x of [28,33])box('truck-loading-guide-'+x,x,.003,19,.1,.006,9,'#f3d57c');
  // Site office, covered workshop, freight containers and service facilities.
- box('site-office',-34,0,24,12,3.6,7,'#47616d');
- box('site-office-roof',-34,3.6,24,12.5,.22,7.5,'#aab7b5');
- for(let i=0;i<3;i++)box('office-window-'+i,-38+i*4,1.4,27.54,2.4,1.1,.08,'#80bfd0');
- box('office-door',-34,0,27.58,1.2,2.3,.12,'#d9b74c');
+ add('site-office','construction-site-office',-34,0,24,{name:'Modular Site Office · Lift Plans'});
  add('office-desk','studio-desk',-34,0,31);
  add('office-bench','material:bench',-39,0,31);
  // The crew has its own pedestrian apron and muster, away from truck turns.
@@ -91,19 +88,16 @@ export function constructionWorld(){
  }
  sign('plant-parking','PLANT PARKING · Six machine bays',-84,62,'Park with the implement raised for travel, stop the engine controls and leave a clear route through the central maintenance lane. Six full-size bays are ready for trucks and tracked machines.');
  slab('maintenance-apron',-62,-.08,-8,40,26,'#7f8a85',.1);
- for(const x of [-78,-48])box('maintenance-post-'+x,x,0,-17,.25,4,.25,'#9cacab');
- slab('maintenance-canopy',-63,4,-17,33,7,'#7b9097',.2);
+ add('maintenance-canopy','construction-service-canopy',-63,0,-17,{name:'Steel Service Canopy'});
  for(let i=0;i<3;i++){
   const x=-39+i*8;
-  box('container-'+i,x,0,-32,6,2.6,3.2,['#ac6943','#4b7882','#717d47'][i]);
-  for(let rib=0;rib<6;rib++)box('container-rib-'+i+'-'+rib,x-2.5+rib,.1,-30.37,.12,2.4,.08,'#bec1b4');
+  add('container-'+i,'shipping-container-box',x,0,-32,{name:'Corrugated Service Container '+(i+1),rotation:{x:0,y:Math.PI/2,z:0},scale:{x:3.2/2.4,y:1,z:1}});
  }
  for(const x of [-36,-24])for(const z of [-19,-11])box('workshop-post-'+x+'-'+z,x,0,z,.22,4,.22,'#8e9c9c');
  slab('workshop-roof',-30,4,-15,14,10,'#6c848a',.2);
  for(let i=0;i<4;i++)add('equipment-crate-'+i,'supply-crate',-34+i*2.4,0,-15);
  for(const [x,z]of [[-82,-56],[142,-56],[-82,132],[142,132]]){
-  box('light-pole-'+x+'-'+z,x,0,z,.18,8,.18,'#a4a59d');
-  box('floodlight-'+x+'-'+z,x,7.5,z,1.2,.5,.4,'#fff0b8');
+  add('floodlight-'+x+'-'+z,'construction-floodlight',x,0,z,{name:'Four-head Site Floodlight'});
  }
  // Expanded 336 × 304 m working yard; long fence runs keep draw calls modest.
  for(const z of [-70,234])for(let x=-90;x<=238;x+=8){
@@ -134,8 +128,8 @@ export function constructionWorld(){
   locations.push({id:'city-tower-'+i,name:'City Tower '+(i+1),x,z,width,depth,description:'Surrounding city skyline. All building pieces can be edited in a copied Builder map.'});
  });
  sign('welcome','Skyline Works · Crane, Earth & Crew',-20,28,'Build the city skyline in a 336 by 304 metre working yard. Enter the crane with E / Use, choose steel assistance or control the joysticks, and secure beams on the highlighted frame. Earthworks extend east and south: deep soil, loose gravel, stockpiles, a fill platform and full-size haul lanes. Crew & jobs lets workers use the shared machinery while you supervise or take control.');
- sign('crane-guide','TC-78 Lift Plan',-23,2,'Crane controls: left joystick slews and runs the trolley; right joystick hoists. Lower the hook to the steel supply, attach a load, raise it, slew to the tower and lower onto the highlighted target. The server shares each movement and placed beam with everyone on site.');
+ sign('crane-guide','Titan 78 Lift Plan',-23,2,'Crane controls: left joystick slews and runs the trolley; right joystick hoists. Lower the hook to the steel supply, attach a load, raise it, slew to the tower and lower onto the highlighted target. The server shares each movement and placed beam with everyone on site.');
  sign('earthworks-guide','Earthworks Plan · Starter Cut',44,3,'Park the excavator for its dig cycle, then position the truck five metres east of it to receive material. Drive loaded trucks along the haul loop to a spoil bay or the fill platform. Lower the bulldozer blade to push real soil and gravel. Stop before exiting; use Hide controls to clear the view.');
- locations.push({id:'tower',name:'Skyline Tower · 16-floor steel frame',x:5,z:-10,width:22,depth:22,description:'Open starter steelwork keeps the actual building visible as crane-placed floors rise to 64 metres.'},{id:'crane',name:'TC-78 Tower Crane',x:-18,z:-4,width:7,depth:7,description:'Enter from the base. Steel assistance and independent slew, trolley and hoist controls.'},{id:'steel-supply',name:'Steel Delivery Yard',x:-8,z:15,width:14,depth:10,description:'Steel I-beams ready for the crane hook; every connection lies within the jib envelope.'},{id:'excavation',name:'Foundation Excavation',x:25,z:17,width:24,depth:24,description:'Starter hydraulic excavation with a truck loading approach to the east.'},{id:'plant-parking',name:'Plant Parking · Six full-size bays',x:-62,z:90,width:42,depth:60,description:'Truck and tracked-machine parking with a central maintenance lane and room to turn.'},{id:'crew-muster',name:'Crew Muster & Jobs',x:-58,z:35,width:28,depth:20,description:'Assign workers to the shared dig, load, haul, tip, grade and steel jobs. A separate pedestrian path links the site.'},{id:'haul-loop',name:'Heavy Haul Loop',x:85,z:88,width:132,depth:88,description:'Connected haul lanes, wide turns and signed approaches link all earthworks and the fill platform.'},{id:'site-office',name:'Site Office & Lift Plans',x:-34,z:24,width:12,depth:7,description:'Site information and construction controls.'});
- return {id:'skyscraper-construction',name:'Skyline Construction · Crane & Earthworks',label:'Build, dig and run the crew',description:'A 336 × 304 metre construction yard in a city skyline. Erect a 16-floor skyscraper with a 78-metre tower crane, dig deep foundation bays, push real dirt and gravel, load an articulated truck, haul material and grade a new fill platform. Rip and recycle pavement, create a gravel road, excavate utility trenches and a basement, and level a large earth platform. A worker crew, shared jobs, large stockpiles, six plant bays, clear lift guides and live machinery dashboards support synchronized multiplayer building.',category:'Construction & machinery',game:'construction',worldId:'skyline-deck',construction,permanent:true,publicDestination:true,proceduralLand:true,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false,ownerId:'muzikaz',ownerName:'MUZIKAZ',contentUpdatedAt:'2026-10-27T18:00:00.000Z',scale:1,spaceScale:1,playableSize:768,thumbnailUrl:'/public/images/construction/skyscraper-construction.svg',spawn:{x:-20,y:.02,z:23,rotationY:0},streets,builderScene:{version:3,layout:'grand-floor',mapSize:768,objects,layoutMeta:{color:0x88745b,construction,locations},gameplay:{multiplayer:true,friendlyFire:false,construction:{enabled:true}}},playUrl:'model-explorer.html?environment=skyscraper-construction&autoplay=1&mode=multiplayer'};
+ locations.push({id:'tower',name:'Skyline Tower · 16-floor steel frame',x:5,z:-10,width:22,depth:22,description:'Open starter steelwork keeps the actual building visible as crane-placed floors rise to 64 metres.'},{id:'crane',name:'Titan 78 Tower Crane',x:-18,z:-4,width:7,depth:7,description:'Enter from the base. Steel assistance and independent slew, trolley and hoist controls.'},{id:'steel-supply',name:'Steel Delivery Yard',x:-8,z:15,width:14,depth:10,description:'Steel I-beams ready for the crane hook; every connection lies within the jib envelope.'},{id:'excavation',name:'Foundation Excavation',x:25,z:17,width:24,depth:24,description:'Starter hydraulic excavation with a truck loading approach to the east.'},{id:'plant-parking',name:'Plant Parking · Six full-size bays',x:-62,z:90,width:42,depth:60,description:'Truck and tracked-machine parking with a central maintenance lane and room to turn.'},{id:'crew-muster',name:'Crew Muster & Jobs',x:-58,z:35,width:28,depth:20,description:'Assign workers to the shared dig, load, haul, tip, grade and steel jobs. A separate pedestrian path links the site.'},{id:'haul-loop',name:'Heavy Haul Loop',x:85,z:88,width:132,depth:88,description:'Connected haul lanes, wide turns and signed approaches link all earthworks and the fill platform.'},{id:'site-office',name:'Site Office & Lift Plans',x:-34,z:24,width:12,depth:7,description:'Site information and construction controls.'});
+ return {id:'skyscraper-construction',name:'Skyline Construction · Crane & Earthworks',label:'Build, dig and run the crew',description:'A 336 × 304 metre construction yard in a city skyline. Erect a 16-floor skyscraper with a 78-metre tower crane, dig deep foundation bays, push real dirt and gravel, load an articulated truck, haul material and grade a new fill platform. Rip and recycle pavement, create a gravel road, excavate utility trenches and a basement, and level a large earth platform. A worker crew, shared jobs, large stockpiles, six plant bays, clear lift guides and live machinery dashboards support synchronized multiplayer building.',category:'Construction & machinery',game:'construction',worldId:'skyline-deck',construction,permanent:true,publicDestination:true,proceduralLand:true,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false,ownerId:'muzikaz',ownerName:'MUZIKAZ',contentUpdatedAt:'2026-10-27T22:40:21.000Z',scale:1,spaceScale:1,playableSize:768,thumbnailUrl:'/public/images/construction/skyscraper-construction.svg',spawn:{x:-20,y:.02,z:23,rotationY:0},streets,builderScene:{version:3,layout:'grand-floor',mapSize:768,objects,layoutMeta:{color:0x88745b,construction,locations},gameplay:{multiplayer:true,friendlyFire:false,construction:{enabled:true}}},playUrl:'model-explorer.html?environment=skyscraper-construction&autoplay=1&mode=multiplayer'};
 }
