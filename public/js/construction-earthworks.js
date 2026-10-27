@@ -9,10 +9,10 @@ export const earthCargo=cargo=>({soil:Math.max(0,finite(cargo?.soil)),gravel:Mat
 export function earthworksPatch(config={},cellSize=2,index=0){
  cellSize=clamp(config.cellSize||cellSize,1,4);
  const width=clamp(config.width||finite(config.radius,10)*2,cellSize,128),depth=clamp(config.depth||finite(config.radius,10)*2,cellSize,128),columns=Math.ceil(width/cellSize),rows=Math.ceil(depth/cellSize),baseY=finite(config.baseY),minY=baseY-clamp(config.maxDepth??(config.kind==='excavation'?8:0),0,12),area=cellSize*cellSize;
- const patch={id:String(config.id||'earth-'+index),kind:config.kind||'excavation',origin:{x:finite(config.x)-columns*cellSize/2,z:finite(config.z)-rows*cellSize/2},cellSize,columns,rows,baseY,minY,heights:[],soil:[],gravel:[],initialSoil:[],initialVolume:0};
+ const patch={id:String(config.id||'earth-'+index),kind:config.kind||'excavation',origin:{x:finite(config.x)-columns*cellSize/2,z:finite(config.z)-rows*cellSize/2},cellSize,columns,rows,baseY,minY,...(config.surface==='asphalt'?{surface:'asphalt',surfaceThickness:clamp(config.surfaceThickness??.24,.05,.6)}:{}),heights:[],soil:[],gravel:[],initialSoil:[],initialVolume:0};
  for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
-  const x=(column+.5)*cellSize-columns*cellSize/2,z=(row+.5)*cellSize-rows*cellSize/2,radius=finite(config.radius,Math.min(width,depth)/2),mound=clamp(config.height??0,0,6) * Math.max(0,1-Math.hypot(x,z)/radius),native=(baseY-minY)*area,soil=native+(config.material==='gravel'?0:mound*area),gravel=config.material==='gravel'?mound*area:0;
-  patch.initialSoil.push(native);patch.soil.push(soil);patch.gravel.push(gravel);patch.heights.push(baseY+mound);patch.initialVolume+=soil+gravel;
+  const x=(column+.5)*cellSize-columns*cellSize/2,z=(row+.5)*cellSize-rows*cellSize/2,radius=finite(config.radius,Math.min(width,depth)/2),mound=clamp(config.height??0,0,6) * Math.max(0,1-Math.hypot(x,z)/radius),native=(baseY-minY)*area,soil=native+(config.material==='gravel'?0:mound*area),gravel=(config.material==='gravel'?mound*area:0)+(patch.surface==='asphalt'?patch.surfaceThickness*area:0);
+  patch.initialSoil.push(native);patch.soil.push(soil);patch.gravel.push(gravel);patch.heights.push(baseY+mound+(patch.surface==='asphalt'?patch.surfaceThickness:0));patch.initialVolume+=soil+gravel;
  }
  return patch;
 }
@@ -81,4 +81,15 @@ export function earthworksCollisionBoxes(earthworks,bounds=null){
   const minColumn=bounds?Math.max(0,Math.floor((bounds.min.x-patch.origin.x)/size)):0,maxColumn=bounds?Math.min(patch.columns-1,Math.floor((bounds.max.x-patch.origin.x)/size)):patch.columns-1,minRow=bounds?Math.max(0,Math.floor((bounds.min.z-patch.origin.z)/size)):0,maxRow=bounds?Math.min(patch.rows-1,Math.floor((bounds.max.z-patch.origin.z)/size)):patch.rows-1;
   for(let row=minRow;row<=maxRow;row++)for(let column=minColumn;column<=maxColumn;column++){const index=row*patch.columns+column,top=patch.heights[index],bottom=Math.min(patch.minY,patch.baseY-.15);if(top<=bottom+1e-6||bounds&&(top<bounds.min.y-.05||bottom>bounds.max.y+.05))continue;const center={x:patch.origin.x+(column+.5)*size,y:(top+bottom)/2,z:patch.origin.z+(row+.5)*size};boxes.push({part:'earth-'+patch.id,objectId:'earth:'+patch.id+':'+index,center,size:{x:size,y:top-bottom,z:size},matrix:[1,0,0,0,0,1,0,0,0,0,1,0,center.x,center.y,center.z,1],diggable:true,earthworks:true,patchId:patch.id,cellIndex:index});}
  }return boxes;
+}
+
+/** Grow saved sites without resetting worked cells, cargo or the material ledger. */
+export function expandEarthworks(earthworks,config={}){
+ const definitions=config.earthworks?.patches||[],ids=new Set(earthworks.patches.map(patch=>patch.id));let added=0;
+ for(const definition of definitions){
+  if(ids.has(definition.id)||earthworks.patches.length>=16)continue;
+  const patch=earthworksPatch(definition,config.earthworks?.cellSize,earthworks.patches.length);
+  earthworks.patches.push(patch);ids.add(patch.id);earthworks.initialVolume+=patch.initialVolume;added++;
+ }
+ if(added)changed(earthworks);return added;
 }

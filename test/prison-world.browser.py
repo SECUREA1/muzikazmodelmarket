@@ -145,6 +145,7 @@ with tempfile.TemporaryDirectory(prefix='prison-browser-') as directory:
                         }});
                         window.prisonMove=id=>{prisonPos={...PRISON_STATIONS.find(s=>s.id===id).position};prisonSync();prisonUI.open(id);};
                         prisonSync();
+                        const tick=()=>{prisonUI.tick();requestAnimationFrame(tick);};requestAnimationFrame(tick);
                     }""")
                     trigger=page.get_by_role('button',name='Open Ironwood prison activities',exact=True)
                     trigger.click()
@@ -154,9 +155,28 @@ with tempfile.TemporaryDirectory(prefix='prison-browser-') as directory:
                     # A remotely selected activity remains visibly disabled.
                     panel.locator('[data-station="meal"]').click()
                     assert panel.locator('[data-operation="meal"]').is_disabled()
+                    assert 'walk closer' in panel.locator('[data-action-help]').inner_text().casefold(), panel.locator('[data-action-help]').inner_text()
+                    panel.locator('[data-tab="map"]').click()
+                    assert page.evaluate('''()=>{
+                        const marker=document.querySelector('[data-map-station="meal"]');marker.focus();
+                        for(let i=0;i<20;i++)prisonSync();
+                        return marker.isConnected&&document.activeElement===marker;
+                    }'''), 'Live map snapshots preserve keyboard and touch targets.'
+                    page.keyboard.press('Enter')
+                    assert panel.locator('[data-station-title]').inner_text().casefold() == 'cafeteria meal service'
+                    panel.locator('[data-walk-to]').click()
+                    assert not panel.is_visible()
+                    assert page.evaluate('prisonUI.getDestination().id') == 'meal'
+                    assert page.locator('.prison-route-hint').is_visible()
+                    assert 'm northeast' in page.locator('.prison-route-hint').inner_text().casefold()
                     page.evaluate("prisonMove('meal')")
+                    assert not page.locator('.prison-route-hint').is_visible()
+                    assert page.evaluate('prisonUI.getDestination()') is None
                     panel.locator('[data-operation="meal"]').click()
                     assert page.evaluate("prisonState.players.me.completed.includes('meal')")
+                    assert panel.locator('[data-operation="meal"]').is_disabled()
+                    page.wait_for_function('document.querySelector("[data-action-help]").textContent.includes("Ready again")')
+                    assert 'Ready again' in panel.locator('[data-operation="meal"]').get_attribute('title')
                     page.evaluate("prisonMove('tv')")
                     panel.locator('[data-operation="tv"]').click()
                     assert page.evaluate("prisonState.players.me.completed.includes('tv')")
@@ -167,8 +187,13 @@ with tempfile.TemporaryDirectory(prefix='prison-browser-') as directory:
                     panel.locator('[data-frequency]').fill('94.7')
                     panel.locator('[data-operation="radio"]').click()
                     assert page.evaluate("prisonState.players.me.completed.includes('radio')")
+                    assert page.evaluate('''()=>{
+                        const field=document.querySelector('[data-frequency]');field.focus();field.value='95.1';
+                        prisonSync();return field.isConnected&&document.activeElement===field&&field.value==='95.1';
+                    }'''), 'Snapshots retain editable radio input and focus.'
                     page.evaluate("prisonMove('arcade')")
                     panel.locator('[data-operation="arcade-start"]').click()
+                    assert 'MOVE 1 / 5' in panel.locator('[data-round-progress]').inner_text()
                     for _ in range(5):
                         cue=page.evaluate('prisonState.players.me.round.inputs[prisonState.players.me.round.index]')
                         panel.locator('[data-operation="arcade-input"][data-input="'+cue+'"]').click()
@@ -185,6 +210,21 @@ with tempfile.TemporaryDirectory(prefix='prison-browser-') as directory:
                     for color in ['orange','white','blue']:
                         panel.locator('[data-operation="work"][data-input="'+color+'"]').click()
                     assert page.evaluate("prisonState.players.me.completed.includes('work')")
+                    page.evaluate("prisonMove('security')")
+                    page.wait_for_function('document.querySelector("[data-action-help]").textContent.includes("bent wire")')
+                    assert panel.locator('[data-operation="keycard"]').is_disabled()
+                    assert 'bent wire' in panel.locator('[data-action-help]').inner_text().casefold()
+                    page.evaluate("prisonMove('vent')")
+                    assert panel.locator('[data-operation="vent"]').is_disabled()
+                    assert 'bent wire and security keycard' in panel.locator('[data-action-help]').inner_text().casefold()
+                    page.evaluate('''()=>{
+                        const other=Object.values(prisonState.cells).length;
+                        const id=Object.keys(prisonState.cells).find(id=>id!==prisonState.players.me.cellId);
+                        prisonMove('cell-'+id);
+                    }''')
+                    assert panel.locator('[data-operation="cell-unlock"]').is_disabled()
+                    assert panel.locator('[data-operation="rest"]').is_disabled()
+                    assert 'another cell' in panel.locator('[data-action-help]').inner_text().casefold()
                     for width,height in [(390,844),(844,390),(1280,900)]:
                         page.set_viewport_size({'width':width,'height':height})
                         panel.locator('[data-tab="map"]').click()

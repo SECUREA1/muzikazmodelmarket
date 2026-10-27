@@ -41,7 +41,7 @@ export function createConstructionBaseGeometry(THREE,size,patches,{color=0x88745
 
 export function createConstructionEarthGeometry(THREE,patch){
  const cell=Number(patch.cellSize)||2,cols=patch.columns|0,rows=patch.rows|0,bounds=constructionPatchBounds(patch),base=Number(patch.baseY)||0;
- const positions=[],colors=[],soil=new THREE.Color(0x866346),gravel=new THREE.Color(0x92948b),tint=new THREE.Color();
+ const positions=[],colors=[],soil=new THREE.Color(0x866346),gravel=new THREE.Color(0x92948b),asphalt=new THREE.Color(0x343b40),tint=new THREE.Color();
  const height=(x,z)=>x<0||z<0||x>=cols||z>=rows?base:Number(patch.heights?.[z*cols+x]??base);
  function face(points,color,shade=1){
   for(const i of [0,1,2,0,2,3]){positions.push(...points[i]);colors.push(color.r*shade,color.g*shade,color.b*shade);}
@@ -49,7 +49,8 @@ export function createConstructionEarthGeometry(THREE,patch){
  for(let z=0;z<rows;z++)for(let x=0;x<cols;x++){
   const i=z*cols+x,y=height(x,z),x0=bounds.minX+x*cell,x1=x0+cell,z0=bounds.minZ+z*cell,z1=z0+cell;
   const gravelVolume=Number(patch.gravel?.[i])||0;
-  tint.copy(gravelVolume>1e-8?gravel:soil).multiplyScalar(.96+((x*17+z*31)%13)/160);
+  const intactPavement=patch.surface==='asphalt'&&y>base+.01&&gravelVolume>1e-8;
+  tint.copy(intactPavement?asphalt:gravelVolume>1e-8?gravel:soil).multiplyScalar(.96+((x*17+z*31)%13)/160);
   face([[x0,y,z0],[x0,y,z1],[x1,y,z1],[x1,y,z0]],tint);
   for(const [dx,dz,edge]of [[-1,0,[[x0,z1],[x0,z0]]],[1,0,[[x1,z0],[x1,z1]]],[0,-1,[[x0,z0],[x1,z0]]],[0,1,[[x1,z1],[x0,z1]]]]){
    const other=height(x+dx,z+dz),outside=x+dx<0||z+dz<0||x+dx>=cols||z+dz>=rows;

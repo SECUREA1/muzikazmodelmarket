@@ -9,7 +9,8 @@ const degrees=angle=>((angle*180/Math.PI)%360+360)%360;
 // heading, inertia, wind drive and shore contacts are calculated here.
 export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=()=>false}={}){
  input ||= {};
- const old=boat.boating||{},cargo=shippingVesselType(boat),loadRatio=cargo?clamp(finite(old.cargoMass)/cargo.capacity,0,1):0,inertia=1+loadRatio*.45,sailing=(boat.modelId||boat.asset?.buildAssetId)==='harbor-sailboat',duration=clamp(finite(dt),0,.25),maximum=cargo?cargo.speed:sailing?6.4:(boat.modelId||boat.asset?.buildAssetId)==='harbor-patrol'?12:(boat.modelId||boat.asset?.buildAssetId)==='harbor-fishing-boat'?8:9;
+ const modelId=boat.modelId||boat.asset?.buildAssetId,paddle=modelId==='resort-paddle-boat',pontoon=modelId==='resort-pontoon';
+ const old=boat.boating||{},cargo=shippingVesselType(boat),loadRatio=cargo?clamp(finite(old.cargoMass)/cargo.capacity,0,1):0,inertia=1+loadRatio*.45,sailing=modelId==='harbor-sailboat',duration=clamp(finite(dt),0,.25),maximum=cargo?cargo.speed:paddle?3.4:pontoon?6:sailing?6.4:modelId==='harbor-patrol'?12:modelId==='harbor-fishing-boat'?8:9;
  const position={x:finite(boat.position?.x),y:0,z:finite(boat.position?.z)};
  let yaw=normalizeAngle(finite(boat.rotation?.y)),speed=clamp(finite(old.speed),-2,maximum),throttle=clamp(finite(old.throttle),-1,1),rudder=clamp(finite(old.rudder),-1,1),impactDamage=0,held=false;
  const forward=clamp(finite(input.forward),-1,1),absolute=input.throttle!==undefined&&input.throttle!==null&&Number.isFinite(Number(input.throttle)),throttleCommand=absolute?clamp(Number(input.throttle),-1,1):Math.abs(forward)>.02?forward:clamp(finite(old.throttleCommand,finite(old.throttle)),-1,1);
@@ -24,13 +25,13 @@ export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=(
   const windAngle=Math.abs(normalizeAngle(yaw-windYaw));
   const polar=windAngle<.45?.08:windAngle<1.4?.08+(windAngle-.45)/.95*.92:1-(windAngle-1.4)/(Math.PI-1.4)*.28;
   const bestTrim=clamp(windAngle/Math.PI,.12,.95);trimEfficiency=clamp(1-Math.abs(sailTrim-bestTrim)*1.3,.15,1);windEfficiency=polar*trimEfficiency;
-  const thrust=sailing?throttle*3.8+Math.max(0,throttle)*windSpeed*1.1*windEfficiency:throttle*(cargo?.thrust||18);
+  const thrust=sailing?throttle*3.8+Math.max(0,throttle)*windSpeed*1.1*windEfficiency:throttle*(cargo?.thrust||(paddle?7:pontoon?12:18));
   const drag=(sailing?1.55:1.8)*speed+.023*speed*Math.abs(speed),braking=anchor?9:brake?7:forward<0&&speed>0?4:0;
   speed=clamp(speed+(thrust-drag-Math.sign(speed)*braking)/inertia*step,-2,maximum);
   if((anchor||brake)&&Math.abs(speed)<.12)speed=0;
   if(anchor&&speed===0)throttle=0;
-  const fishing=(boat.modelId||boat.asset?.buildAssetId)==='harbor-fishing-boat',thruster=(boat.modelId==='harbor-yacht'||(fishing||cargo)&&!anchor)&&input.bowThruster===true&&Math.abs(speed)<.2;
-  yaw=normalizeAngle(yaw-rudder*(thruster?(fishing?.5:cargo?.32:.3):(cargo?cargo.turnRate/(1+loadRatio*.2):boat.modelId==='harbor-yacht'?.14:sailing?.64:.8)*clamp(speed/4,-.6,1))*step);
+  const fishing=modelId==='harbor-fishing-boat',thruster=(modelId==='harbor-yacht'||(fishing||cargo)&&!anchor)&&input.bowThruster===true&&Math.abs(speed)<.2;
+  yaw=normalizeAngle(yaw-rudder*(thruster?(fishing?.5:cargo?.32:.3):(cargo?cargo.turnRate/(1+loadRatio*.2):modelId==='harbor-yacht'?.14:paddle?1.15:pontoon?.6:sailing?.64:.8)*clamp(speed/(paddle?2:4),-.6,1))*step);
   position.x-=Math.sin(yaw)*speed*step;position.z-=Math.cos(yaw)*speed*step;
   const valid=watercraftFootprint(position,yaw,boat).every(point=>harborWaterAt(environment,point,.25));
   if(!valid||blocked(previous,position,yaw)){
@@ -39,7 +40,7 @@ export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=(
  }
  const elapsed=finite(old.elapsed)+duration,time=finite(now)>0?finite(now)/1000:elapsed,moving=Math.min(1,Math.abs(speed)/maximum),pitch=(anchor&&speed===0?0:Math.sin(time*1.7+position.z*.03)*(.004+moving*.008))*(cargo?.3:1),roll=(anchor&&speed===0?0:Math.sin(time*1.3+position.x*.025)*.006-rudder*moving*.035)*(cargo?.3:1);
  const phase=held?'hold':anchor?'anchored':Math.abs(speed)<.12?'moored':speed<0?'astern':sailing?'sailing':Math.abs(speed)>5?'cruise':'maneuvering';
- return {position,rotation:{x:pitch,y:yaw,z:roll},boating:{...old,speed,speedKnots:Math.abs(speed)*1.94384,throttle,throttleCommand,rpm:Math.round(anchor?0:650+Math.abs(throttle)*(sailing?1550:3850)),rudder,rudderCommand,heading:degrees(-yaw),windSpeed,windDirection,windEfficiency,trimEfficiency,sailTrim,sailPower:sailing?windEfficiency*Math.max(0,throttle):0,wakeStrength:moving,anchor,brake,phase,warning:held?'WATERWAY OBSTRUCTION':anchor&&Math.abs(throttleCommand)>.05?'ANCHOR SET':sailing&&windEfficiency<.18&&throttleCommand>.1?'HEAD TO WIND — TURN TO FILL SAIL':'',impactDamage,elapsed,sailing}};
+ return {position,rotation:{x:pitch,y:yaw,z:roll},boating:{...old,speed,speedKnots:Math.abs(speed)*1.94384,throttle,throttleCommand,rpm:Math.round(anchor?0:paddle?Math.abs(throttle)*75:650+Math.abs(throttle)*(sailing?1550:3850)),pedalDriven:paddle,rudder,rudderCommand,heading:degrees(-yaw),windSpeed,windDirection,windEfficiency,trimEfficiency,sailTrim,sailPower:sailing?windEfficiency*Math.max(0,throttle):0,wakeStrength:moving,anchor,brake,phase,warning:held?'WATERWAY OBSTRUCTION':anchor&&Math.abs(throttleCommand)>.05?'ANCHOR SET':sailing&&windEfficiency<.18&&throttleCommand>.1?'HEAD TO WIND — TURN TO FILL SAIL':'',impactDamage,elapsed,sailing}};
 }
 export function harborNavigation(environment,position){
  const meta=environment?.builderScene?.layoutMeta||{},locations=meta.locations||meta.harbor?.islands||[];

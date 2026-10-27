@@ -182,18 +182,14 @@ try:
             assert any('mapId=hockey-arena' in path for path in shell_requests)
             assert any('mapId=neon-junction' in path for path in shell_requests)
             assert not shell_errors,shell_errors
+            # The resort now enters the shared native world; it no longer has
+            # a separate settings dialog or standalone factory implementation.
+            shell.route('**/model-explorer.html?**',lambda route:route.fulfill(content_type='text/html',body='<main>Shared native world entry</main>'))
             shell.goto(base+'/tropical-island.html?environment=tropical-island',wait_until='domcontentloaded')
-            shell.wait_for_function('window.islandAdventure?.ready',timeout=45000)
-            shell.get_by_role('button',name='Settings and controls',exact=True).click()
-            shell.get_by_role('button',name='World item factory',exact=True).click()
-            shell.wait_for_function('document.querySelector("[data-item]").options.length===1')
-            assert shell.locator('.world-supply-dialog').is_visible()
-            assert not shell.locator('#settings-dialog').is_visible()
-            shell.keyboard.press('Escape')
-            assert not shell.locator('.world-supply-dialog').is_visible()
-            assert any('mapId=tropical-island' in path for path in shell_requests)
+            shell.wait_for_url('**/model-explorer.html?**')
+            assert 'environment=tropical-island' in shell.url
             shell.close()
-            print('Standalone hockey, arcade and tropical island shells expose map-scoped factory controls.')
+            print('Hockey and arcade expose map-scoped factory controls; the resort enters the shared native world.')
 
         finally:
             browser.close()

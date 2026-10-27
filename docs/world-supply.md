@@ -53,3 +53,19 @@ Use **Inspect operations & trace** to view the saved item blueprint, station ope
 Packed output creates a counted factory lot. Dispatch reserves exact lot quantities in order; split shipments retain their lot references. Cancelling returns those exact units. Only verified final unloading credits the receiving inventory and records a stock receipt. Historical warehouse stock is marked as legacy stock instead of receiving invented manufacturing proof.
 
 Recipe previews are compact in the catalog; full per-item blueprints are fetched on demand through `GET /api/world-supply/recipe?itemId=...`. `GET /api/world-supply/trace?productionId=...` (also `shipmentId` or `lotId`) follows the saved production→lot→shipment→stock receipt references. Authenticated pause/resume actions use the same CSRF and idempotent request rules as production.
+
+## Strait distribution challenges
+
+The World item factory board now offers six prepared deliveries: cargo rockets, inert training collectibles, Builder metal, port repair tools, community care supplies and factory freight terminals. Each challenge selects its canonical item, batch quantity, destination warehouse and actual Strait sea route. Produce the missing units, dispatch them, and complete the normal loading, passage and unloading controls. Editing any selection clears the challenge binding; the server independently verifies every requirement.
+
+Rocket and training collectibles pack individually, one per container. Four sealed units fit a feeder manifest. A challenge records completion only after the authoritative delivery reaches its destination with the required 85% or 90% cargo quality. Lower-quality delivered goods still reach stock, while the challenge remains incomplete. Completion never adds another currency reward; normal capped freight rewards continue. Counts and completion history survive reloads and duplicate requests.
+
+When any central catalog stock falls below 250 units, the board also offers a restocking task for that item. Depletion remains in the shared ledger; generating or refreshing a task never creates stock. Generic factory shipments continue to support every registered item and available map, including copied shipping worlds.
+
+Builder cards and the standalone map editor preserve the server supply identity and current available/world counts for native and authored models. An explicit zero at a supplied map remains zero even when central stores have stock; personal prepaid material pieces stay a separate balance.
+
+## Recent integration review
+
+Reviewed the latest five first-parent commits through `a16af59d`, including factory staging, finite supply and Ironwood earned-item merges, against the existing shipping and market paths. Subsequent shared-radio, boat-control and native-resort merges were also checked against factory freight and warehouse inventories. Certified Atlas model handling remains a reusable personal-item transfer; bulk manufacturing is the path that creates paid stock for distribution. Quest-only licenses keep their earned ownership rules.
+
+The review fixed wallet connection migration for paid production, shipment ownership/reservations, factory proof ownership, credits and saved reward caps; connecting an Ethereum wallet no longer strands those records or permits replayed charges. It also fixed same-SKU display collisions between independent rocket owners at proving grounds. Existing scenery, catalog browsing and AI demonstration activity do not create global stock.

@@ -47,3 +47,7 @@ Delivered provisions exchange for a Medkit unlock or ten prepaid wood pieces. Ma
 ## Validation
 
 Focused server, economy, route, geometry, vessel, control-isolation and rendering tests cover the shipping extension and existing harbor/fishing behavior. Browser checks exercise mobile layout, exact port selection and the real server gameplay loop. VR menu and bridge tests use simulated controller/session state; physical headset testing is separate.
+
+### Distribution challenges
+
+Use **World factory shipment tasks → Distribution challenges** to prepare rocket, range, construction, dock, care and factory-equipment deliveries. Production and destination stock use the same global supply ledger as Builder and the markets. Rockets occupy one sealed container each. Actual passage and full unload are required; completion is recorded against the stated cargo-quality target and grants no duplicate reward. See `docs/world-supply.md` for the supply and migration rules.

@@ -48,6 +48,8 @@ test('trusted item metadata selects packaging density and assembly class indepen
   [{buildAssetId:'modern-sofa',behavior:'seat'},'furniture',50],
   [{kind:'asset',assetType:'props'},'props',100],
   [{buildAssetId:'factory-control-console'},'electronics',250],
+  [{buildAssetId:'factory-cargo-rocket'},'rocket-collectibles',1],
+  [{buildAssetId:'factory-training-missile'},'rocket-collectibles',1],
   [{assetType:'vehicles'},'vehicles',4],
   [{assetType:'aircraft'},'aircraft',1],
   [{assetType:'watercraft'},'watercraft',1],

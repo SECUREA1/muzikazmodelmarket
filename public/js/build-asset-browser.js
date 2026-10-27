@@ -1,5 +1,6 @@
 import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js';
 import {mountMarketPreviewTuner} from './market-preview-tuner.js';
+import {catalogSupplyLabel} from './catalog-supply.js';
 import {buildingCatalogCategories,BUILDING_CATALOG_FUNCTIONS,matchesBuildingCatalogItem} from './in-game-building-catalog.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const owned=asset=>asset.owned===true||asset.basic===true;
@@ -15,6 +16,7 @@ function itemFacts(asset){
  const placement=number(asset.unitPriceMzk??asset.useCostMzk),price=number(asset.priceMzk),stock=number(asset.stock);
  if(placement!==null)facts.push(['Placement',placement===0?'Included':placement+(asset.toolId?' MZK / use':' MZK / drop')]);
  if(stock!==null)facts.push(['Stock',stock+' prepaid pieces']);
+ const supply=catalogSupplyLabel(asset);if(supply)facts.push(['Supply',supply]);
  if(!owned(asset)&&price!==null)facts.push(['Unlock',price+' MZK']);
  return facts;
 }
@@ -76,7 +78,7 @@ export function mountBuildAssetBrowser(root,{assets=[],tray=[],previous={},categ
   if(pageItems.length&&!pageItems.some(asset=>asset.id===selectedId))selectedId=pageItems[0].id;
   root.querySelector('[data-build-results]').textContent=`${filtered.length} of ${assets.length} building items`;
   root.querySelector('[data-build-empty]').hidden=filtered.length!==0;root.querySelector('[data-build-layout]').hidden=filtered.length===0;
-  releaseMarketPreviews(items);items.innerHTML=pageItems.map(asset=>`<article class="build-catalog-card${asset.id===selectedId?' is-build-selected':''}" data-build-card="${escape(asset.id)}">${marketItemPreview(asset,{preferModel:true})}<button type="button" data-build-select="${escape(asset.id)}" aria-pressed="${asset.id===selectedId}" aria-label="Preview ${escape(asset.name)}"><strong>${escape(asset.name)}</strong><span>${escape(asset.catalogCategoryLabel||asset.categoryLabel||asset.category)} · ${asset.catalogSource==='glb'?'GLB':asset.toolId?'Tool':'Native'}</span><small>${asset.basic?'Basic · included':owned(asset)?'Owned':'Locked'}</small></button></article>`).join('');
+  releaseMarketPreviews(items);items.innerHTML=pageItems.map(asset=>`<article class="build-catalog-card${asset.id===selectedId?' is-build-selected':''}" data-build-card="${escape(asset.id)}">${marketItemPreview(asset,{preferModel:true})}<button type="button" data-build-select="${escape(asset.id)}" aria-pressed="${asset.id===selectedId}" aria-label="Preview ${escape(asset.name)}"><strong>${escape(asset.name)}</strong><span>${escape(asset.catalogCategoryLabel||asset.categoryLabel||asset.category)} · ${asset.catalogSource==='glb'?'GLB':asset.toolId?'Tool':'Native'}</span><small>${asset.basic?'Basic · included':owned(asset)?'Owned':'Locked'}</small>${catalogSupplyLabel(asset)?'<small>'+escape(catalogSupplyLabel(asset))+'</small>':''}</button></article>`).join('');
   root.querySelector('[data-build-page]').textContent=pageCount?`${start+1}–${Math.min(start+PAGE_SIZE,filtered.length)} · Page ${page+1} / ${pageCount}`:'0 items';
   root.querySelector('[data-build-previous]').disabled=page===0;root.querySelector('[data-build-next]').disabled=page>=pageCount-1;
   inspect(filtered.find(asset=>asset.id===selectedId));hydrateMarketPreviews(items);

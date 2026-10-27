@@ -1,13 +1,13 @@
-import {isWatercraft,harborWaterAt} from './public/js/harbor-water.js';
+import {isWatercraft,harborWaterAt,harborForEnvironment,RESORT_BOATS} from './public/js/harbor-water.js';
 import {clearBoatAssist} from './public/js/boat-assist.js';
 export function stopBoat(boat,{preserveNavigation=false}={}){if(!isWatercraft(boat))return;if(!preserveNavigation)clearBoatAssist(boat);boat.rotation={...boat.rotation,x:0,z:0};boat.boating={...boat.boating,assist:null,speed:0,speedKnots:0,throttle:0,throttleCommand:0,rpm:0,anchor:true,phase:'anchored',warning:'',wakeStrength:0};}
 export function harborRadio(sim,player,environment,operation){
- if(!environment.builderScene?.layoutMeta?.harbor)throw Object.assign(Error('This map has no harbor office.'),{statusCode:409});
+ const harbor=harborForEnvironment(environment);if(!harbor)throw Object.assign(Error('This map has no harbor office.'),{statusCode:409});
  const boats=Object.values(sim.actors).filter(actor=>isWatercraft(actor)&&actor.active!==false),boat=sim.actors[player.vehicleId],points=(environment.builderScene.objects||[]).filter(isWatercraft);
- if(operation==='status')return 'Neon Harbor. '+boats.length+' boats live. Watch pier lights, keep clear of shore and reduce power before mooring. Open the passage planner for island distances and bearings.';
+ if(operation==='status')return (harbor.name||'Neon Harbor')+'. '+boats.length+' boats live. Watch pier lights, keep clear of shore and reduce power before mooring. Open the passage planner for island distances and bearings.';
  if(!['service','moor'].includes(operation))throw Object.assign(Error('Choose a harbor radio operation.'),{statusCode:422});
  if(!isWatercraft(boat))throw Object.assign(Error('Board a boat before requesting harbor services.'),{statusCode:409});
- const nearest=points.filter(point=>(point.modelId==='harbor-yacht')===(boat.modelId==='harbor-yacht')).map(point=>({point,distance:Math.hypot(point.position.x-boat.position.x,point.position.z-boat.position.z)})).filter(row=>row.distance<=12).sort((a,b)=>a.distance-b.distance);
+ const nearest=points.filter(point=>RESORT_BOATS.includes(boat.modelId)?point.modelId===boat.modelId:(point.modelId==='harbor-yacht')===(boat.modelId==='harbor-yacht')).map(point=>({point,distance:Math.hypot(point.position.x-boat.position.x,point.position.z-boat.position.z)})).filter(row=>row.distance<=12).sort((a,b)=>a.distance-b.distance);
  if(!nearest.length)throw Object.assign(Error('Approach a marina or island landing before requesting this service.'),{statusCode:409});
  if(Math.abs(boat.boating?.speed||0)>(operation==='moor'?2:.5))throw Object.assign(Error(operation==='moor'?'Slow below 2 m/s to moor.':'Stop beside a landing before requesting service.'),{statusCode:409});
  if(operation==='service'){boat.health=boat.maxHealth||200;player.fuel=100;return 'Harbor crew. Hull repaired and fuel topped up. Check your anchor before departure.';}

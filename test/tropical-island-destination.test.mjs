@@ -14,32 +14,32 @@ import {isTropicalIslandMap,tropicalIslandPlayUrl} from '../public/js/tropical-i
 const records=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
 const island=records.find(map=>map.id==='tropical-island');
 
-test('the resort is a permanent native solo game with a dedicated map preview',async()=>{
- assert.ok(island);assert.equal(island.buzzSeconds,120);assert.equal(island.unlimitedExploration,true);assert.equal(island.roundSeconds,undefined);assert.equal(island.builderScene.gameplay.roundSeconds,undefined);assert.equal(island.builderScene.gameplay.buzzSeconds,120);assert.equal(island.multiplayer,false);assert.equal(island.permanent,true);
+test('the resort is a permanent native shared world with a dedicated map preview',async()=>{
+ assert.ok(island);assert.equal(island.buzzSeconds,120);assert.equal(island.unlimitedExploration,true);assert.equal(island.roundSeconds,undefined);assert.equal(island.builderScene.gameplay.roundSeconds,undefined);assert.equal(island.builderScene.gameplay.buzzSeconds,120);assert.equal(island.multiplayer,true);assert.equal(island.permanent,true);
  assert.match(island.description,/for as long as you like/);assert.match(island.description,/independently within 120 seconds/);
  assert.equal(island.canDelete,false);assert.equal(island.canEdit,false);assert.equal(island.game,'tropical-island');
  assert.equal(isTropicalIslandMap(island),true);assert.equal(isTropicalIslandMap({mapId:island.id}),true);assert.equal(isTropicalIslandMap({game:'basketball'}),false);
  const thumbnail=await readFile(new URL('..'+island.thumbnailUrl,import.meta.url),'utf8');
  assert.match(thumbnail,/<title/);assert.match(thumbnail,/<desc/);assert.match(thumbnail,/paddle boats/);
  const registry=new EnvironmentRegistry();registry.environments=normalizeEnvironmentList([island]);
- assert.equal(registry.find('island-adventure').id,island.id);assert.equal(registry.find('tropical-resort').sharedWorld,false);
+ assert.equal(registry.find('island-adventure').id,island.id);assert.equal(registry.find('tropical-resort').sharedWorld,true);
 });
 
 test('the island survives publication refreshes and launches from its permanent atlas building and saved pin',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'tropical-island-directory-'));t.after(()=>rm(directory,{recursive:true,force:true}));
  const file=join(directory,'atlas.json');let atlas=new WorldAtlas(file);
  let result=await synchronizeWorldDirectory(atlas,[]),map=result.environments.find(map=>map.id===island.id);
- assert.ok(map);assert.equal(map.sharedWorld,false);assert.equal(map.multiplayer,false);assert.equal(map.playUrl,tropicalIslandPlayUrl(map));
- const launch=new URL(map.playUrl,'https://world.example/');assert.equal(launch.pathname,'/tropical-island.html');assert.equal(launch.searchParams.get('mode'),'solo');assert.equal(launch.searchParams.get('environment'),island.id);
+ assert.ok(map);assert.equal(map.sharedWorld,true);assert.equal(map.multiplayer,true);assert.equal(map.playUrl,tropicalIslandPlayUrl(map));
+ const launch=new URL(map.playUrl,'https://world.example/');assert.equal(launch.pathname,'/model-explorer.html');assert.equal(launch.searchParams.get('mode'),'multiplayer');assert.equal(launch.searchParams.get('environment'),island.id);
  const district=result.environments.find(place=>place.id===map.districtId);
  assert.ok(district.builderScene.objects.some(object=>object.atlasDestination===island.id));
  assert.ok(map.portalTargets.includes('public-commons'));assert.ok(map.portalTargets.includes(district.id));
  const cell=Object.values(result.atlas.cells).find(cell=>cell.mapId===island.id),pin=await atlas.pin(island.id,null,{accountId:'tester',username:'Test player'});
- assert.equal(new URL(pin.playUrl,'https://world.example/').pathname,'/tropical-island.html');assert.match(pin.playUrl,/mode=solo/);
+ assert.equal(new URL(pin.playUrl,'https://world.example/').pathname,'/model-explorer.html');assert.match(pin.playUrl,/mode=multiplayer/);
  atlas=new WorldAtlas(file);result=await synchronizeWorldDirectory(atlas,[{id:island.id,name:'Override',visibility:'private',playable:false}]);
  const restored=result.environments.find(map=>map.id===island.id),restoredCell=Object.values(result.atlas.cells).find(cell=>cell.mapId===island.id);
- assert.equal(restored.name,island.name);assert.equal(restored.visibility,'public');assert.equal(restored.multiplayer,false);
- assert.deepEqual([restoredCell.column,restoredCell.row],[cell.column,cell.row]);assert.match(restoredCell.playUrl,/^tropical-island\.html/);
+ assert.equal(restored.name,island.name);assert.equal(restored.visibility,'public');assert.equal(restored.multiplayer,true);
+ assert.deepEqual([restoredCell.column,restoredCell.row],[cell.column,cell.row]);assert.match(restoredCell.playUrl,/^model-explorer\.html/);
 });
 
 test('the island is searchable and featured in the games map with a tropical icon',()=>{

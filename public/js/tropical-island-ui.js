@@ -1,0 +1,54 @@
+import {ISLAND_EXPERIENCES,isTropicalIslandEnvironment} from './tropical-island-config.js';
+import {stepIslandSession,islandEffects} from './tropical-island-rules.js';
+import {requestGameInputRelease} from './game-input-release.js';
+
+const clock=seconds=>{const s=Math.max(0,Math.ceil(seconds||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+const gap=(a,b)=>a&&b?Math.hypot(a.x-b.x,(a.y||0)-(b.y||0),a.z-b.z):Infinity;
+
+/** A facility panel inside the normal world, never a second game/controller. */
+export function mountTropicalIslandUI({stage,toolbar=stage,command,getPosition,announce=()=>{},onOpen=()=>{},onMap=()=>{},onQuests=()=>{},onPeople=()=>{}}){
+ const document=stage.ownerDocument,css=document.createElement('link');css.rel='stylesheet';css.href=new URL('../assets/tropical-island-native.css',import.meta.url).href;document.head.append(css);
+ const trigger=document.createElement('button');trigger.type='button';trigger.hidden=true;trigger.className='house-bottom-control island-native-toggle';trigger.setAttribute('aria-label','Resort activities');trigger.setAttribute('aria-haspopup','dialog');trigger.innerHTML='<b aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V8M12 8Q4 1 2 10q6-4 10-2Zm0 0q8-7 10 2-6-4-10-2ZM4 22q8-4 16 0"/></svg></b><span>Resort activities</span>';toolbar.append(trigger);
+ const hud=document.createElement('button');hud.type='button';hud.className='island-native-status';hud.hidden=true;hud.setAttribute('aria-label','Open resort passport and drink effects');stage.append(hud);
+ const dialog=document.createElement('dialog');dialog.id='island-resort-panel';dialog.className='island-native-dialog';dialog.setAttribute('aria-label','Palm Coast Resort activities');
+ dialog.innerHTML='<header><div><small>MUZIKAZ WORLD · PALM COAST</small><h2>Island Adventure</h2><p>Shared world. Your own island pace.</p></div><button type="button" data-island-close aria-label="Close resort activities">×</button></header><nav aria-label="Shared world connections"><button type="button" data-island-map>World map &amp; travel</button><button type="button" data-island-quests>Quests</button><button type="button" data-island-people>People &amp; AI</button></nav><div class="island-native-content"><aside aria-label="Resort passport" data-island-passport></aside><section><small class="island-native-eyebrow" data-island-category></small><h3 data-island-title></h3><p data-island-description></p><p data-island-distance></p><button type="button" data-island-visit>Stamp this stop</button><button type="button" data-island-activity hidden></button><section data-island-bar hidden><h4>Beach bar</h4><p>Each beer or cocktail builds gradually, stacks with other drinks, and fades independently over two minutes. Drinking earns no points.</p><div class="island-native-drinks"><button type="button" data-island-drink="beer">Island beer</button><button type="button" data-island-drink="cocktail">Sunset cocktail</button><button type="button" data-island-drink="mocktail">Coconut cooler · no alcohol</button><button type="button" data-island-drink="water">Still water</button></div></section><section class="island-native-buzz"><div><h4>Beer goggles</h4><b data-island-buzz-label>Clear</b></div><meter min="0" max="1" value="0" aria-label="Fictional arcade buzz strength" data-island-meter></meter><p data-island-buzz-description></p><ul data-island-drink-timers aria-label="Individual drink timers"></ul><label><input type="checkbox" data-island-reduce> Reduce beer-goggle visuals and camera motion</label><small>Fictional arcade effects, not a real alcohol or sobriety estimate. Water does not instantly remove a buzz. Headset motion remains tracked normally.</small></section></section></div><footer><p role="status" aria-live="polite" data-island-feedback>Explore all eight stops. Use the normal world map, quests, residents and controls.</p><button type="button" data-island-close>Back to the world</button></footer>';
+ document.body.append(dialog);const $=selector=>dialog.querySelector(selector),cards=new Map();
+ let environment=null,self=null,selfId=null,selected=ISLAND_EXPERIENCES[0],busy=false,revision=0,receivedAt=performance.now(),lastDraw=0,projected=null,signature='',reduced=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
+ try{if(localStorage.getItem('muzikaz.island.reduceEffects')==='true')reduced=true;}catch{}
+ const active=()=>isTropicalIslandEnvironment(environment)&&!!self;
+ function near(){if(!active()||self.vehicleId||self.seatedId||self.health<=0)return null;const position=getPosition();return [...ISLAND_EXPERIENCES].sort((a,b)=>gap(position,a)-gap(position,b)).find(point=>gap(position,point)<=point.radius)||null;}
+ function close(){if(dialog.open)dialog.close();trigger.setAttribute('aria-expanded','false');}
+ function open(id){if(!active())return;selected=ISLAND_EXPERIENCES.find(point=>point.id===id)||near()||selected;onOpen();requestGameInputRelease('island-panel-open',document);document.exitPointerLock?.();if(!dialog.open)dialog.showModal();trigger.setAttribute('aria-expanded','true');draw();}
+ function visual(){
+  const source=self?.island;if(!active()||!source)return null;
+  const state=structuredClone(source);stepIslandSession(state,Math.max(0,(performance.now()-receivedAt)/1000));state.effects=islandEffects(state);return state;
+ }
+ async function request(operation,fields={}){
+  if(busy||!active())return false;const version=revision,station=selected.id;busy=true;$('[data-island-feedback]').textContent='Checking with the live resort…';requestGameInputRelease('island-action',document);draw();
+  try{const state=await command('island-action',{operation,stationId:station,...fields});if(version!==revision||!active())return false;if(!state)throw Error('The action did not reach the resort. Try again when connected.');const next=state.players?.[selfId];if(next){self=next;receivedAt=performance.now();}const message=state.result?.message||'Resort activity confirmed.';$('[data-island-feedback]').textContent=message;announce(message);return state;}
+  catch(error){if(version===revision)$('[data-island-feedback]').textContent=error.message||'The resort could not apply that action.';return false;}
+  finally{if(version===revision){busy=false;draw();}}
+ }
+ for(const point of ISLAND_EXPERIENCES){const button=document.createElement('button');button.type='button';button.dataset.islandStation=point.id;button.innerHTML='<span></span><b></b>';button.querySelector('span').textContent=point.label;button.onclick=()=>{selected=point;draw();};cards.set(point.id,button);$('[data-island-passport]').append(button);}
+ function draw(){
+  projected=visual();const state=projected,visits=state?.visits||[],effects=state?.effects||{strength:0,label:'Clear'};
+  hud.textContent='Resort '+visits.length+' / 8 · '+effects.label+(state?.activeDrinks?.length?' · clear in '+clock(state.buzzRemaining):'');hud.hidden=trigger.hidden=!active();
+  if(!dialog.open||!active())return;
+  for(const [id,button]of cards){button.setAttribute('aria-pressed',String(id===selected.id));button.querySelector('b').textContent=visits.includes(id)?'✓':'↗';}
+  $('[data-island-category]').textContent=selected.type.toUpperCase();$('[data-island-title]').textContent=selected.label;$('[data-island-description]').textContent=selected.description;
+  const distance=gap(getPosition(),selected),within=distance<=selected.radius+.2,aboard=!!(self.vehicleId||self.seatedId),usable=within&&!aboard&&self.health>0;
+  $('[data-island-distance]').textContent=within?'You are at this resort stop.':Math.round(distance)+' metres away · walk there or use World map & travel.';
+  const stamp=$('[data-island-visit]');stamp.disabled=busy||!within||self.health<=0;stamp.textContent=visits.includes(selected.id)?'Passport stamped ✓':'Stamp this stop';
+  $('[data-island-bar]').hidden=selected.type!=='bar';for(const button of dialog.querySelectorAll('[data-island-drink]'))button.disabled=busy||!usable||Number(state?.cooldown)>0;
+  const activity=$('[data-island-activity]'),operation={ball:'kick',snorkel:'snorkel',relax:'relax',lookout:'relax'}[selected.type];activity.hidden=!operation;activity.textContent=selected.type==='ball'?'Kick beach ball':selected.type==='snorkel'?'Explore the reef view':'Relax & enjoy the view';activity.disabled=busy||!usable;activity.onclick=()=>request(operation);
+  $('[data-island-buzz-label]').textContent=effects.label;$('[data-island-meter]').value=effects.strength;
+  const drinks=state?.activeDrinks||[];$('[data-island-buzz-description]').textContent=drinks.length?drinks.length+' active '+(drinks.length===1?'drink':'drinks')+' · fully clear in '+clock(state.buzzRemaining)+'. Each drink has its own clock.':'Clear skies. The island has no time limit.';
+  const next=drinks.map(drink=>[drink.id,drink.kind,Math.ceil(drink.remaining)]),key=JSON.stringify(next);if(key!==signature){signature=key;const list=$('[data-island-drink-timers]');list.replaceChildren();for(const [id,kind,remaining]of next){const row=document.createElement('li');row.textContent=(kind==='beer'?'Island beer':'Sunset cocktail')+' '+id+' · '+clock(remaining);list.append(row);}}
+ }
+ trigger.onclick=()=>open();hud.onclick=()=>open();for(const button of dialog.querySelectorAll('[data-island-close]'))button.onclick=close;
+ $('[data-island-visit]').onclick=()=>request('visit');for(const button of dialog.querySelectorAll('[data-island-drink]'))button.onclick=()=>request('drink',{kind:button.dataset.islandDrink});
+ for(const [selector,run]of [['[data-island-map]',onMap],['[data-island-quests]',onQuests],['[data-island-people]',onPeople]])$(selector).onclick=()=>{close();run();};
+ const checkbox=$('[data-island-reduce]');checkbox.checked=reduced;checkbox.onchange=()=>{reduced=checkbox.checked;try{localStorage.setItem('muzikaz.island.reduceEffects',String(reduced));}catch{}};
+ dialog.addEventListener('close',()=>{requestGameInputRelease('island-panel-close',document);trigger.setAttribute('aria-expanded','false');if(!trigger.hidden)trigger.focus({preventScroll:true});});
+ return {open,close,near,available:active,visible:()=>dialog.open,reduced:()=>reduced,visual,update(snapshot,id,env){const changed=environment?.id!==env?.id||selfId!==id;if(changed){revision++;busy=false;close();signature='';}environment=env;selfId=id;self=snapshot?.players?.[id]||null;receivedAt=performance.now();if(!active())close();draw();},tick(now=performance.now()){if(now-lastDraw>100){lastDraw=now;draw();}},reset(){revision++;busy=false;self=null;environment=null;projected=null;close();hud.hidden=trigger.hidden=true;},snapshot:()=>({available:active(),open:dialog.open,selected:selected.id,reduced,player:visual()}),dispose(){revision++;close();trigger.remove();hud.remove();dialog.remove();css.remove();}};
+}

@@ -13,7 +13,8 @@ export function shippingSupplyManifest(job){
  if(!job?.shipmentId||!Array.isArray(job.supplyManifest)||!job.supplyManifest.length)return '';
  const items=job.supplyManifest.map(item=>(item.name||item.itemId)+' × '+Math.max(0,Number(item.quantity)||0).toLocaleString()).join(', ');
  const packing=job.supplyPacking,packingText=packing?' Packed into '+Number(packing.containersRequired||1)+' of '+Number(packing.containerSlots||job.units||4)+' manifest containers.':'';
- return 'Supply cargo: '+items+'. Destination inventory: '+(job.destinationMapName||job.destinationMapId||'world stock')+'.'+packingText+' Restocked after the complete shipping manifest is unloaded.';
+ const challenge=job.supplyChallenge,goal=challenge?' Challenge: '+challenge.name+' · '+Number(challenge.minimumQuality)+'% quality required.':'';
+ return 'Supply cargo: '+items+'. Destination inventory: '+(job.destinationMapName||job.destinationMapId||'world stock')+'.'+packingText+' Restocked after the complete shipping manifest is unloaded.'+goal;
 }
 export function shippingPresentation(shipping={}){
  const job=shipping.job,loaded=job?.loaded||[],port=loaded.filter(unit=>unit.side==='port').reduce((sum,unit)=>sum+(Number(unit.mass)||1),0),starboard=loaded.filter(unit=>unit.side==='starboard').reduce((sum,unit)=>sum+(Number(unit.mass)||1),0);
