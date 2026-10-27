@@ -33,14 +33,14 @@ test('deleting or disabling editable equipment never revives inherited station c
  environment.builderScene.objects=[];assert.deepEqual(fitnessStations(environment),[]);
  environment.builderScene.objects=[{id:'decoration',modelId:'fitness-bench-press'}];assert.deepEqual(fitnessStations(environment),[]);
  const fallback={id:'legacy-custom-gym',builderScene:{sourceFitness:{enabled:true,stations:[{...FITNESS_STATIONS[1],position:{x:40,y:.2,z:50}}]}}};assert.equal(fitnessStations(fallback)[0].position.x,40);
- const canonical=fitnessStations({id:FITNESS_ID,builderScene:{objects:[equipment('ignored')]}});assert.equal(canonical.length,7);assert.deepEqual(canonical.map(station=>station.position),FITNESS_STATIONS.map(station=>station.position));
+ const canonical=fitnessStations({id:FITNESS_ID,builderScene:{objects:[equipment('ignored')]}});assert.equal(canonical.length,FITNESS_STATIONS.length);assert.deepEqual(canonical.map(station=>station.position),FITNESS_STATIONS.map(station=>station.position));
 });
 
 test('spawned purchased equipment adds live stations while held, destroyed and authored duplicates are excluded',()=>{
  const environment={id:FITNESS_ID,builderScene:{objects:[equipment('authored-bench')]}},makeActor=(id,extra={})=>({id,spawned:true,active:true,health:100,position:{x:14,y:.02,z:20},rotation:{x:0,y:Math.PI/2,z:0},scale:{x:2,y:2,z:2},asset:{name:'Purchased press',buildAssetId:'fitness-bench-press',function_data:{fitnessStation:'bench-press',fitnessApproach:{x:0,y:0,z:4}}},definition:{gameplay:{behavior:'interact'}},...extra});
  const actors={one:makeActor('spawn-one'),authored:makeActor('authored-bench'),held:makeActor('spawn-held',{holderId:'account:alice'}),dead:makeActor('spawn-dead',{health:0}),removed:makeActor('spawn-removed',{active:false})},stations=fitnessStations(environment,{actors});
- assert.equal(stations.length,8);const owned=stations.find(station=>station.objectId==='spawn-one');assert.ok(owned);assert.equal(owned.canonicalStationId,'fitness-bench-press');assert.ok(Math.abs(owned.position.x-22)<1e-8);assert.ok(Math.abs(owned.position.z-20)<1e-8);
- const f=fixture();f.environment.id=FITNESS_ID;f.environment.builderScene={objects:environment.builderScene.objects};f.sim.actors=actors;stepFitness(f.sim,f.environment,f.now);assert.equal(fitnessView(f.sim,f.now).stations.length,8);
+ assert.equal(stations.length,FITNESS_STATIONS.length+1);const owned=stations.find(station=>station.objectId==='spawn-one');assert.ok(owned);assert.equal(owned.canonicalStationId,'fitness-bench-press');assert.ok(Math.abs(owned.position.x-22)<1e-8);assert.ok(Math.abs(owned.position.z-20)<1e-8);
+ const f=fixture();f.environment.id=FITNESS_ID;f.environment.builderScene={objects:environment.builderScene.objects};f.sim.actors=actors;stepFitness(f.sim,f.environment,f.now);assert.equal(fitnessView(f.sim,f.now).stations.length,FITNESS_STATIONS.length+1);
  f.player.position={...owned.position};f.send('fitness-start',{stationId:owned.id});actors.one.rotation.y=0;stepFitness(f.sim,f.environment,f.now);assert.equal(f.player.fitness.status,'cancelled');
 });
 
@@ -64,4 +64,14 @@ test('duplicate equipment has independent occupancy while sharing the same canon
  const f=fixture([equipment('one'),equipment('two',{position:{x:-15,y:.02,z:-20}})]),stations=fitnessStations(f.environment);f.send('fitness-start',{stationId:stations[0].id});
  const bob={...f.player,actorId:'account:bob',position:{...stations[1].position},fitness:null};f.sim.players[bob.actorId]=bob;fitnessCommand(f.sim,bob,f.environment,{action:'fitness-start',stationId:stations[1].id},f.now);
  assert.equal(bob.fitness.canonicalStationId,f.player.fitness.canonicalStationId);assert.notEqual(bob.fitness.stationId,f.player.fitness.stationId);const view=fitnessView(f.sim,f.now);assert.deepEqual(new Set(view.stations.map(station=>station.occupiedBy)),new Set(['account:alice','account:bob']));
+});
+
+
+test('expanded saved-map activities retain instance identities and cannot fall back to deleted native coordinates',()=>{
+ const kinds=['boxing-sparring','basketball','table-tennis','sprint'];
+ const objects=kinds.map((kind,index)=>equipment('expanded-'+kind,{name:'My '+kind,position:{x:45+index*7,y:0,z:8},functionalSettings:{fitnessStation:kind,fitnessStationId:'fitness-'+kind,fitnessApproach:{x:0,y:0,z:4},interactionDistance:4}}));
+ const environment=editable(objects),stations=fitnessStations(environment);assert.equal(stations.length,kinds.length);
+ for(const [index,station]of stations.entries()){assert.equal(station.kind,kinds[index]);assert.equal(station.id,'fitness-instance:expanded-'+kinds[index]);assert.equal(station.canonicalStationId,'fitness-'+kinds[index]);assert.equal(station.position.x,objects[index].position.x);assert.equal(station.position.z,12);}
+ environment.builderScene.objects=objects.filter(object=>object.functionalSettings.fitnessStation!=='table-tennis');
+ assert.ok(!fitnessStations(environment).some(station=>station.kind==='table-tennis'),'a removed table-tennis table does not revive the native east-wing station');
 });

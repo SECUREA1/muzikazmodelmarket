@@ -82,8 +82,8 @@ test('durable cooldown and daily ceiling limit awards across reconnects; UTC day
 
 test('trainer circuit badges use durable server results and malformed or low scores do not grant rewards',async t=>{
  const {db,wallet}=await databaseFixture(t);let now=1000000;
- for(const station of FITNESS_STATIONS){now+=30000;await grantFitnessReward(db,wallet,resultFor(station,now),{now});}
- const state=await fitnessAccountState(db,wallet);assert.equal(state.progress.badges.length,2);assert.equal(state.progress.completedSets,7);
+ for(let index=0;index<FITNESS_STATIONS.length;index++){now+=30000;const result=fixture(index).fullSet();await grantFitnessReward(db,wallet,result,{now});}
+ const state=await fitnessAccountState(db,wallet);assert.equal(state.progress.badges.length,FITNESS_TRAINERS.length);assert.equal(state.progress.completedSets,FITNESS_STATIONS.length);
  const low=resultFor(FITNESS_STATIONS[0],now+30000,400),practice=await grantFitnessReward(db,wallet,low,{now:now+30000});assert.equal(practice.amountMzk,0);assert.equal(practice.medal,'Practice');assert.equal(fitnessRoundReward('boxing',479),0);
  const before=await db.read();for(const change of [{score:999999},{hits:0},{bestCombo:13},{startedAt:now},{kind:'fake'},{roundId:'invented'},{finishedAt:now+60000}])await assert.rejects(async()=>grantFitnessReward(db,wallet,{...resultFor(FITNESS_STATIONS[0],now+30000),...change},{now:now+30000}),/Invalid authoritative fitness result/);assert.deepEqual(await db.read(),before);
 });

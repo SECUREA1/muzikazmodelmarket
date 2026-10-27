@@ -1,5 +1,7 @@
 /** Shared world, activity and character coordinates. All distances are metres. */
 export const FITNESS_ID='muzikaz-fitness-centre';
+export const FITNESS_EXPANSION_VERSION=2;
+export const FITNESS_BOUNDS=Object.freeze({minX:-40,maxX:80,minZ:-40,maxZ:40,width:120,depth:80,mapSize:160,centerX:20});
 export const isFitnessEnvironment=environment=>environment?.id===FITNESS_ID||environment?.game==='fitness'||environment?.builderScene?.layout==='fitness-centre'||environment?.fitness?.enabled===true||environment?.builderScene?.sourceLayout==='fitness-centre'||environment?.builderScene?.sourceFitness?.enabled===true||environment?.builderScene?.layoutMeta?.fitness?.enabled===true;
 const point=(x,z,y=.02)=>({x,y,z});
 const station=(id,kind,name,x,z,extra={})=>({id:'fitness-'+id,kind,name,position:point(x,z),interactionDistance:4,prompt:'Train '+name+' · E / Use',trainer:['boxing','agility','jump-rope'].includes(kind)?'fitness-trainer-maya':'fitness-trainer-leon',...extra});
@@ -10,7 +12,11 @@ export const FITNESS_STATIONS=Object.freeze([
  station('agility','agility','Agility · Reaction Run',19,7,{equipmentPosition:point(21,8),description:'React to the changing direction cues with fast, accurate footwork.'}),
  station('jump-rope','jump-rope','Jump Rope · Rhythm Studio',-11,6,{equipmentPosition:point(-14,6),description:'Find the cadence and jump in time to keep your streak.'}),
  station('rowing','rowing','Rowing · Endurance Bay',-24,15,{equipmentPosition:point(-27,15),description:'Time your drive and recovery to complete smooth, powerful strokes.'}),
- station('balance','balance','Balance · Stability Course',21,23,{equipmentPosition:point(25,25),description:'Keep the marker centred with precise left and right corrections.'})
+ station('balance','balance','Balance · Stability Course',21,23,{equipmentPosition:point(25,25),description:'Keep the marker centred with precise left and right corrections.'}),
+ station('boxing-sparring','boxing-sparring','Championship Boxing · AI Sparring',-22,-12,{equipmentPosition:point(-22,-18),trainer:'fitness-trainer-maya',competition:true,description:'Choose a sparring partner, read their attacks and fight three scored rounds. Land jabs and crosses, guard punches and slip counters.'}),
+ station('basketball','basketball','Basketball · Shootout',52,-17,{equipmentPosition:point(52,-29),competition:true,description:'Set your aim, square up and release four timed shots against an AI challenger. Clean preparation creates scoring chances.'}),
+ station('table-tennis','table-tennis','Table Tennis · Rally Challenge',65,5,{equipmentPosition:point(65,2),competition:true,description:'Read the returning ball, choose a forehand, backhand or smash, and win points against a gym rival.'}),
+ station('sprint','sprint','Sprint · Hurdle Race',51,23,{equipmentPosition:point(51,21),competition:true,description:'Drive left and right in rhythm and clear the hurdles to race an AI athlete over three splits.'})
 ]);
 
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -72,7 +78,23 @@ export const FITNESS_LOCATIONS=Object.freeze([
  {id:'fitness-agility',name:'Agility · Reaction Run',x:21,z:8,width:20,depth:18,description:'Ladders, cones, hurdles and a reaction training challenge.'},
  {id:'fitness-balance',name:'Recovery · Balance Course',x:23,z:25,width:22,depth:10,description:'Stability beams, balance pads and space for guided recovery.'},
  {id:'fitness-lockers',name:'Lockers & Hydration',x:-22,z:29,width:18,depth:10,description:'Locker storage, seating and a water station between sessions.'}
+ ,{id:'fitness-shootout',name:'Competition Wing · Basketball',x:54,z:-19,width:32,depth:26,description:'A marked half court, basketball hoop, timed shootout and AI challengers.'}
+ ,{id:'fitness-table-tennis',name:'Competition Wing · Table Tennis',x:65,z:3,width:20,depth:17,description:'Tournament table, rally challenge, practice partners and spectator seats.'}
+ ,{id:'fitness-sprint',name:'Competition Wing · Sprint Track',x:53,z:24,width:32,depth:17,description:'Three marked racing lanes, hurdle gates and AI sprint rivals.'}
 ]);
+/** Public profiles are copied into each match; clients can select only these IDs. */
+export const FITNESS_OPPONENTS=Object.freeze([
+ {id:'fitness-member-ava',name:'Ava Rivera',kind:'boxing-sparring',style:'Patient counterpuncher',rating:48,accuracy:.46,difficulty:'Rookie',color:'#e2677c'},
+ {id:'fitness-rival-darius',name:'Darius Stone',kind:'boxing-sparring',style:'Pressure and sharp combinations',rating:72,accuracy:.66,difficulty:'Club',color:'#de654b'},
+ {id:'fitness-rival-tessa',name:'Tessa Quinn',kind:'boxing-sparring',style:'Technical southpaw champion',rating:90,accuracy:.83,difficulty:'Elite',color:'#668ee1'},
+ {id:'fitness-member-zoe',name:'Zoe Okafor',kind:'basketball',style:'Balanced set-shot specialist',rating:55,accuracy:.49,difficulty:'Rookie',color:'#f0b451'},
+ {id:'fitness-member-malik',name:'Malik Davis',kind:'basketball',style:'Quick-release perimeter scorer',rating:84,accuracy:.78,difficulty:'Elite',color:'#7f9bdf'},
+ {id:'fitness-member-amara',name:'Amara Singh',kind:'table-tennis',style:'Steady placement and long rallies',rating:56,accuracy:.5,difficulty:'Rookie',color:'#be8bdb'},
+ {id:'fitness-member-finn',name:'Finn Larsen',kind:'table-tennis',style:'Attacking spin and fast returns',rating:85,accuracy:.8,difficulty:'Elite',color:'#69bdba'},
+ {id:'fitness-member-jules',name:'Jules Mensah',kind:'sprint',style:'Smooth cadence and clean hurdles',rating:54,accuracy:.48,difficulty:'Rookie',color:'#cfb650'},
+ {id:'fitness-member-victor',name:'Victor Santos',kind:'sprint',style:'Explosive starts and fast splits',rating:86,accuracy:.81,difficulty:'Elite',color:'#ed8759'}
+].map(opponent=>Object.freeze(opponent)));
+export const fitnessOpponents=kind=>FITNESS_OPPONENTS.filter(opponent=>opponent.kind===kind);
 export const FITNESS_TRAINERS=Object.freeze([
  {id:'fitness-trainer-maya',name:'Maya Chen',role:'Boxing & movement trainer',home:point(-6,24),position:point(-6,24),color:'#ec7750',skin:'#d6a17d',specialties:['boxing','agility','jump-rope'],greeting:'Welcome to the Fitness Centre. Pick an activity, follow the cues, and build a clean streak. I coach boxing, agility and rhythm.'},
  {id:'fitness-trainer-leon',name:'Leon Brooks',role:'Strength & conditioning trainer',home:point(7,-5),position:point(7,-5),color:'#49b6af',skin:'#865b46',specialties:['bench-press','deadlift','rowing','balance'],greeting:'Control comes before speed. Try a bench press, deadlift or rowing set, then recover with the balance challenge.'}
@@ -84,5 +106,15 @@ export const FITNESS_RESIDENTS=Object.freeze([
  {id:'fitness-member-iman',name:'Iman Reed',role:'Cardio member',home:point(-31,5,.4),activity:'running',color:'#e0bb58',skin:'#78543e',heading:0},
  {id:'fitness-member-kai',name:'Kai Mori',role:'Rowing member',home:point(-26,20),activity:'rowing',color:'#66bea5',skin:'#d5ad87',heading:Math.PI/2},
  {id:'fitness-member-sofia',name:'Sofia Vega',role:'Movement member',home:point(27,5),activity:'stretching',color:'#af85ce',skin:'#c28e6b',heading:-Math.PI/2},
- {id:'fitness-member-ellis',name:'Ellis Cole',role:'Rhythm member',home:point(-15,1),activity:'jump-rope',color:'#5fb5c6',skin:'#d7b094',heading:0}
+ {id:'fitness-member-ellis',name:'Ellis Cole',role:'Rhythm member',home:point(-15,1),activity:'jump-rope',color:'#5fb5c6',skin:'#d7b094',heading:0},
+ {id:'fitness-referee-nia',name:'Nia Bennett',role:'Ring referee & competition official',duty:'referee',home:point(-26,-21,.18),activity:'refereeing',color:'#ecece0',skin:'#81563f',heading:Math.PI/2,watchKind:'boxing-sparring',personality:'Fair, observant and encouraging',backstory:'A club referee who keeps sparring controlled and explains each decision.',skills:{officiating:92,boxing:75},spectate:point(-29,-19)},
+ {id:'fitness-rival-darius',name:'Darius Stone',role:'Club boxing rival',home:point(-22.9,-20,.18),activity:'sparring',color:'#de654b',skin:'#865940',heading:0,stationKind:'boxing-sparring',sparringSide:'red',partnerId:'fitness-rival-tessa',spectate:point(-29,-22),personality:'Competitive and direct',backstory:'A pressure boxer who trains combinations and respects a clean defensive round.',skills:{boxing:72,coordination:77}},
+ {id:'fitness-rival-tessa',name:'Tessa Quinn',role:'Technical boxing champion',home:point(-21.1,-20,.18),activity:'sparring',color:'#668ee1',skin:'#d0a27e',heading:Math.PI,stationKind:'boxing-sparring',sparringSide:'blue',partnerId:'fitness-rival-darius',spectate:point(-15,-21),personality:'Calm, tactical and precise',backstory:'A southpaw club champion who uses footwork and timed counters.',skills:{boxing:90,agility:86}},
+ {id:'fitness-member-zoe',name:'Zoe Okafor',role:'Basketball shootout challenger',home:point(49,-24),activity:'basketball',color:'#f0b451',skin:'#77503b',heading:Math.PI,stationKind:'basketball',spectate:point(42,-29),patrol:[point(49,-24),point(50,-21)],skills:{basketball:55,coordination:66}},
+ {id:'fitness-member-malik',name:'Malik Davis',role:'Perimeter scoring rival',home:point(55,-24),activity:'basketball',color:'#7f9bdf',skin:'#9b6849',heading:Math.PI,stationKind:'basketball',spectate:point(43,-25),patrol:[point(55,-24),point(56,-21)],skills:{basketball:84,coordination:82}},
+ {id:'fitness-member-amara',name:'Amara Singh',role:'Table tennis rally partner',home:point(63,2),activity:'table-tennis',color:'#be8bdb',skin:'#b67f59',heading:0,stationKind:'table-tennis',partnerId:'fitness-member-finn',spectate:point(73,-1),skills:{'table-tennis':56,agility:63}},
+ {id:'fitness-member-finn',name:'Finn Larsen',role:'Table tennis attacking rival',home:point(67,2),activity:'table-tennis',color:'#69bdba',skin:'#d8b490',heading:Math.PI,stationKind:'table-tennis',partnerId:'fitness-member-amara',spectate:point(73,7),skills:{'table-tennis':85,agility:84}},
+ {id:'fitness-member-jules',name:'Jules Mensah',role:'Sprint & hurdles challenger',home:point(47,32),activity:'sprint',color:'#cfb650',skin:'#80533d',heading:Math.PI/2,stationKind:'sprint',spectate:point(72,19),maxRoam:26,patrol:[point(47,32),point(47,8)],skills:{sprint:54,endurance:68}},
+ {id:'fitness-member-victor',name:'Victor Santos',role:'Sprint pace rival',home:point(55,32),activity:'sprint',color:'#ed8759',skin:'#b88762',heading:Math.PI/2,stationKind:'sprint',spectate:point(72,29),maxRoam:26,patrol:[point(55,32),point(55,8)],skills:{sprint:86,endurance:84}},
+ {id:'fitness-member-sam',name:'Sam Park',role:'Ringside analyst & gym regular',home:point(-13,-23),activity:'spectating',color:'#97a585',skin:'#c79977',heading:-Math.PI/2,watchKind:'boxing-sparring',patrol:[point(-13,-23),point(-13,-17)],spectate:point(-13,-23),personality:'Warm, curious and analytical',backstory:'A local sports enthusiast who enjoys reading the bout scorecard and cheering clean technique.',skills:{officiating:63,coordination:52}}
 ]);

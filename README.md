@@ -220,12 +220,17 @@ Demonstrations do not spend MZK or grant player items or quest completion.
 
 ## Fitness Centre
 
-The permanent **MUZIKAZ Fitness Centre** includes seven playable skill stations,
-boxing and weight equipment, two trainers, animated gym members, and connected
-local/world maps. Qualifying rounds earn server-validated, idempotent MZK rewards
-in the existing wallet. Enter from the world menu's **Fitness** category or open
+The permanent **MUZIKAZ Fitness Centre** includes a championship boxing ring,
+three-round AI sparring, basketball shootouts, table-tennis rallies and hurdle
+races alongside the seven original skill stations. Eighteen AI characters include
+two trainers, nine selectable rivals and a referee. Qualifying sessions earn
+server-validated MZK in the existing wallet, with the same daily reward cap.
+Enter from **Fitness** or open
 `model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&mode=multiplayer&autoplay=1`.
-See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. Builder includes a **Gold Fitness Centre** template with 58 editable equipment assemblies, and all 26 gym item types are available in **ITEMS → Fitness & gym** and **Marketplace → All game items → Fitness & gym upgrades**.
+See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold.
+Builder includes the expanded **Gold Fitness Centre** template with 65 editable
+assemblies; all 31 gym item types are available in **ITEMS → Fitness & gym** and
+**Marketplace → All game items → Fitness & gym upgrades**.
 
 ## Ironwood Prison
 

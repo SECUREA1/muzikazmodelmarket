@@ -58251,8 +58251,8 @@
   {
     "id": "muzikaz-fitness-centre",
     "name": "MUZIKAZ Fitness Centre",
-    "label": "Boxing · strength · skill games",
-    "description": "Enter a complete 72 × 72 metre fitness centre with a boxing ring, heavy bags, bench presses, deadlift platforms, power rack, cardio machines, jump-rope studio, agility lanes and a recovery balance course. Play seven skill-based fitness challenges for server-verified MZK rewards. Meet two fitness trainers, Maya Chen and Leon Brooks, and members actively working out. All training zones appear on the local map and the shared world atlas.",
+    "label": "Championship boxing · competitive sports",
+    "description": "Explore a 120 × 80 metre fitness centre with a championship boxing ring, three-round AI sparring, basketball shootouts, table-tennis rallies and hurdle races. Seven original training drills join four competitive activities for server-verified MZK rewards. Meet two trainers, a referee and fifteen gym members, including nine selectable AI rivals. The competition wing, ring and all training zones connect to local maps, the world atlas, Builder and equipment upgrades.",
     "category": "Fitness & sports",
     "game": "fitness",
     "mapColor": "#d8ad45",
@@ -58263,8 +58263,19 @@
     "fitness": {
       "enabled": true,
       "currency": "MZK",
-      "width": 72,
-      "depth": 72,
+      "expansionVersion": 2,
+      "width": 120,
+      "depth": 80,
+      "bounds": {
+        "minX": -40,
+        "maxX": 80,
+        "minZ": -40,
+        "maxZ": 40,
+        "width": 120,
+        "depth": 80,
+        "mapSize": 160,
+        "centerX": 20
+      },
       "stations": [
         {
           "id": "fitness-boxing",
@@ -58398,6 +58409,86 @@
             "z": 25
           },
           "description": "Keep the marker centred with precise left and right corrections."
+        },
+        {
+          "id": "fitness-boxing-sparring",
+          "kind": "boxing-sparring",
+          "name": "Championship Boxing · AI Sparring",
+          "position": {
+            "x": -22,
+            "y": 0.02,
+            "z": -12
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Championship Boxing · AI Sparring · E / Use",
+          "trainer": "fitness-trainer-maya",
+          "equipmentPosition": {
+            "x": -22,
+            "y": 0.02,
+            "z": -18
+          },
+          "competition": true,
+          "description": "Choose a sparring partner, read their attacks and fight three scored rounds. Land jabs and crosses, guard punches and slip counters."
+        },
+        {
+          "id": "fitness-basketball",
+          "kind": "basketball",
+          "name": "Basketball · Shootout",
+          "position": {
+            "x": 52,
+            "y": 0.02,
+            "z": -17
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Basketball · Shootout · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 52,
+            "y": 0.02,
+            "z": -29
+          },
+          "competition": true,
+          "description": "Set your aim, square up and release four timed shots against an AI challenger. Clean preparation creates scoring chances."
+        },
+        {
+          "id": "fitness-table-tennis",
+          "kind": "table-tennis",
+          "name": "Table Tennis · Rally Challenge",
+          "position": {
+            "x": 65,
+            "y": 0.02,
+            "z": 5
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Table Tennis · Rally Challenge · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 65,
+            "y": 0.02,
+            "z": 2
+          },
+          "competition": true,
+          "description": "Read the returning ball, choose a forehand, backhand or smash, and win points against a gym rival."
+        },
+        {
+          "id": "fitness-sprint",
+          "kind": "sprint",
+          "name": "Sprint · Hurdle Race",
+          "position": {
+            "x": 51,
+            "y": 0.02,
+            "z": 23
+          },
+          "interactionDistance": 4,
+          "prompt": "Train Sprint · Hurdle Race · E / Use",
+          "trainer": "fitness-trainer-leon",
+          "equipmentPosition": {
+            "x": 51,
+            "y": 0.02,
+            "z": 21
+          },
+          "competition": true,
+          "description": "Drive left and right in rhythm and clear the hurdles to race an AI athlete over three splits."
         }
       ],
       "trainers": [
@@ -58461,10 +58552,10 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-23T12:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T16:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
-    "playableSize": 80,
+    "playableSize": 120,
     "thumbnailUrl": "/public/images/fitness/fitness-centre.svg",
     "spawn": {
       "x": 0,
@@ -58476,7 +58567,7 @@
     "builderScene": {
       "version": 3,
       "layout": "fitness-centre",
-      "mapSize": 80,
+      "mapSize": 160,
       "objects": [
         {
           "id": "fitness-boxing",
@@ -58715,6 +58806,142 @@
           "dialogueSettings": {
             "text": "Keep the marker centred with precise left and right corrections."
           }
+        },
+        {
+          "id": "fitness-boxing-sparring",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Championship Boxing · AI Sparring",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -22,
+            "y": 0.02,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "boxing-sparring",
+            "fitnessStationId": "fitness-boxing-sparring",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Championship Boxing · AI Sparring · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Choose a sparring partner, read their attacks and fight three scored rounds. Land jabs and crosses, guard punches and slip counters."
+          }
+        },
+        {
+          "id": "fitness-basketball",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Basketball · Shootout",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 52,
+            "y": 0.02,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "basketball",
+            "fitnessStationId": "fitness-basketball",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Basketball · Shootout · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Set your aim, square up and release four timed shots against an AI challenger. Clean preparation creates scoring chances."
+          }
+        },
+        {
+          "id": "fitness-table-tennis",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Table Tennis · Rally Challenge",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 65,
+            "y": 0.02,
+            "z": 5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "table-tennis",
+            "fitnessStationId": "fitness-table-tennis",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Table Tennis · Rally Challenge · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Read the returning ball, choose a forehand, backhand or smash, and win points against a gym rival."
+          }
+        },
+        {
+          "id": "fitness-sprint",
+          "modelId": "street-sign",
+          "fitnessStation": true,
+          "name": "Sprint · Hurdle Race",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 51,
+            "y": 0.02,
+            "z": 23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "fitnessStation": "sprint",
+            "fitnessStationId": "fitness-sprint",
+            "interactionKey": "e",
+            "interactionDistance": 4,
+            "prompt": "Train Sprint · Hurdle Race · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Drive left and right in rhythm and clear the hurdles to race an AI athlete over three splits."
+          }
         }
       ],
       "layoutMeta": {
@@ -58722,8 +58949,19 @@
         "fitness": {
           "enabled": true,
           "currency": "MZK",
-          "width": 72,
-          "depth": 72,
+          "expansionVersion": 2,
+          "width": 120,
+          "depth": 80,
+          "bounds": {
+            "minX": -40,
+            "maxX": 80,
+            "minZ": -40,
+            "maxZ": 40,
+            "width": 120,
+            "depth": 80,
+            "mapSize": 160,
+            "centerX": 20
+          },
           "stations": [
             {
               "id": "fitness-boxing",
@@ -58857,6 +59095,86 @@
                 "z": 25
               },
               "description": "Keep the marker centred with precise left and right corrections."
+            },
+            {
+              "id": "fitness-boxing-sparring",
+              "kind": "boxing-sparring",
+              "name": "Championship Boxing · AI Sparring",
+              "position": {
+                "x": -22,
+                "y": 0.02,
+                "z": -12
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Championship Boxing · AI Sparring · E / Use",
+              "trainer": "fitness-trainer-maya",
+              "equipmentPosition": {
+                "x": -22,
+                "y": 0.02,
+                "z": -18
+              },
+              "competition": true,
+              "description": "Choose a sparring partner, read their attacks and fight three scored rounds. Land jabs and crosses, guard punches and slip counters."
+            },
+            {
+              "id": "fitness-basketball",
+              "kind": "basketball",
+              "name": "Basketball · Shootout",
+              "position": {
+                "x": 52,
+                "y": 0.02,
+                "z": -17
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Basketball · Shootout · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 52,
+                "y": 0.02,
+                "z": -29
+              },
+              "competition": true,
+              "description": "Set your aim, square up and release four timed shots against an AI challenger. Clean preparation creates scoring chances."
+            },
+            {
+              "id": "fitness-table-tennis",
+              "kind": "table-tennis",
+              "name": "Table Tennis · Rally Challenge",
+              "position": {
+                "x": 65,
+                "y": 0.02,
+                "z": 5
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Table Tennis · Rally Challenge · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 65,
+                "y": 0.02,
+                "z": 2
+              },
+              "competition": true,
+              "description": "Read the returning ball, choose a forehand, backhand or smash, and win points against a gym rival."
+            },
+            {
+              "id": "fitness-sprint",
+              "kind": "sprint",
+              "name": "Sprint · Hurdle Race",
+              "position": {
+                "x": 51,
+                "y": 0.02,
+                "z": 23
+              },
+              "interactionDistance": 4,
+              "prompt": "Train Sprint · Hurdle Race · E / Use",
+              "trainer": "fitness-trainer-leon",
+              "equipmentPosition": {
+                "x": 51,
+                "y": 0.02,
+                "z": 21
+              },
+              "competition": true,
+              "description": "Drive left and right in rhythm and clear the hurdles to race an AI athlete over three splits."
             }
           ],
           "trainers": [
@@ -58981,6 +59299,33 @@
             "width": 18,
             "depth": 10,
             "description": "Locker storage, seating and a water station between sessions."
+          },
+          {
+            "id": "fitness-shootout",
+            "name": "Competition Wing · Basketball",
+            "x": 54,
+            "z": -19,
+            "width": 32,
+            "depth": 26,
+            "description": "A marked half court, basketball hoop, timed shootout and AI challengers."
+          },
+          {
+            "id": "fitness-table-tennis",
+            "name": "Competition Wing · Table Tennis",
+            "x": 65,
+            "z": 3,
+            "width": 20,
+            "depth": 17,
+            "description": "Tournament table, rally challenge, practice partners and spectator seats."
+          },
+          {
+            "id": "fitness-sprint",
+            "name": "Competition Wing · Sprint Track",
+            "x": 53,
+            "z": 24,
+            "width": 32,
+            "depth": 17,
+            "description": "Three marked racing lanes, hurdle gates and AI sprint rivals."
           }
         ],
         "residents": [
@@ -59120,6 +59465,323 @@
             "color": "#5fb5c6",
             "skin": "#d7b094",
             "heading": 0
+          },
+          {
+            "id": "fitness-referee-nia",
+            "name": "Nia Bennett",
+            "role": "Ring referee & competition official",
+            "duty": "referee",
+            "home": {
+              "x": -26,
+              "y": 0.18,
+              "z": -21
+            },
+            "activity": "refereeing",
+            "color": "#ecece0",
+            "skin": "#81563f",
+            "heading": 1.5707963267948966,
+            "watchKind": "boxing-sparring",
+            "personality": "Fair, observant and encouraging",
+            "backstory": "A club referee who keeps sparring controlled and explains each decision.",
+            "skills": {
+              "officiating": 92,
+              "boxing": 75
+            },
+            "spectate": {
+              "x": -29,
+              "y": 0.02,
+              "z": -19
+            }
+          },
+          {
+            "id": "fitness-rival-darius",
+            "name": "Darius Stone",
+            "role": "Club boxing rival",
+            "home": {
+              "x": -22.9,
+              "y": 0.18,
+              "z": -20
+            },
+            "activity": "sparring",
+            "color": "#de654b",
+            "skin": "#865940",
+            "heading": 0,
+            "stationKind": "boxing-sparring",
+            "sparringSide": "red",
+            "partnerId": "fitness-rival-tessa",
+            "spectate": {
+              "x": -29,
+              "y": 0.02,
+              "z": -22
+            },
+            "personality": "Competitive and direct",
+            "backstory": "A pressure boxer who trains combinations and respects a clean defensive round.",
+            "skills": {
+              "boxing": 72,
+              "coordination": 77
+            }
+          },
+          {
+            "id": "fitness-rival-tessa",
+            "name": "Tessa Quinn",
+            "role": "Technical boxing champion",
+            "home": {
+              "x": -21.1,
+              "y": 0.18,
+              "z": -20
+            },
+            "activity": "sparring",
+            "color": "#668ee1",
+            "skin": "#d0a27e",
+            "heading": 3.141592653589793,
+            "stationKind": "boxing-sparring",
+            "sparringSide": "blue",
+            "partnerId": "fitness-rival-darius",
+            "spectate": {
+              "x": -15,
+              "y": 0.02,
+              "z": -21
+            },
+            "personality": "Calm, tactical and precise",
+            "backstory": "A southpaw club champion who uses footwork and timed counters.",
+            "skills": {
+              "boxing": 90,
+              "agility": 86
+            }
+          },
+          {
+            "id": "fitness-member-zoe",
+            "name": "Zoe Okafor",
+            "role": "Basketball shootout challenger",
+            "home": {
+              "x": 49,
+              "y": 0.02,
+              "z": -24
+            },
+            "activity": "basketball",
+            "color": "#f0b451",
+            "skin": "#77503b",
+            "heading": 3.141592653589793,
+            "stationKind": "basketball",
+            "spectate": {
+              "x": 42,
+              "y": 0.02,
+              "z": -29
+            },
+            "patrol": [
+              {
+                "x": 49,
+                "y": 0.02,
+                "z": -24
+              },
+              {
+                "x": 50,
+                "y": 0.02,
+                "z": -21
+              }
+            ],
+            "skills": {
+              "basketball": 55,
+              "coordination": 66
+            }
+          },
+          {
+            "id": "fitness-member-malik",
+            "name": "Malik Davis",
+            "role": "Perimeter scoring rival",
+            "home": {
+              "x": 55,
+              "y": 0.02,
+              "z": -24
+            },
+            "activity": "basketball",
+            "color": "#7f9bdf",
+            "skin": "#9b6849",
+            "heading": 3.141592653589793,
+            "stationKind": "basketball",
+            "spectate": {
+              "x": 43,
+              "y": 0.02,
+              "z": -25
+            },
+            "patrol": [
+              {
+                "x": 55,
+                "y": 0.02,
+                "z": -24
+              },
+              {
+                "x": 56,
+                "y": 0.02,
+                "z": -21
+              }
+            ],
+            "skills": {
+              "basketball": 84,
+              "coordination": 82
+            }
+          },
+          {
+            "id": "fitness-member-amara",
+            "name": "Amara Singh",
+            "role": "Table tennis rally partner",
+            "home": {
+              "x": 63,
+              "y": 0.02,
+              "z": 2
+            },
+            "activity": "table-tennis",
+            "color": "#be8bdb",
+            "skin": "#b67f59",
+            "heading": 0,
+            "stationKind": "table-tennis",
+            "partnerId": "fitness-member-finn",
+            "spectate": {
+              "x": 73,
+              "y": 0.02,
+              "z": -1
+            },
+            "skills": {
+              "table-tennis": 56,
+              "agility": 63
+            }
+          },
+          {
+            "id": "fitness-member-finn",
+            "name": "Finn Larsen",
+            "role": "Table tennis attacking rival",
+            "home": {
+              "x": 67,
+              "y": 0.02,
+              "z": 2
+            },
+            "activity": "table-tennis",
+            "color": "#69bdba",
+            "skin": "#d8b490",
+            "heading": 3.141592653589793,
+            "stationKind": "table-tennis",
+            "partnerId": "fitness-member-amara",
+            "spectate": {
+              "x": 73,
+              "y": 0.02,
+              "z": 7
+            },
+            "skills": {
+              "table-tennis": 85,
+              "agility": 84
+            }
+          },
+          {
+            "id": "fitness-member-jules",
+            "name": "Jules Mensah",
+            "role": "Sprint & hurdles challenger",
+            "home": {
+              "x": 47,
+              "y": 0.02,
+              "z": 32
+            },
+            "activity": "sprint",
+            "color": "#cfb650",
+            "skin": "#80533d",
+            "heading": 1.5707963267948966,
+            "stationKind": "sprint",
+            "spectate": {
+              "x": 72,
+              "y": 0.02,
+              "z": 19
+            },
+            "maxRoam": 26,
+            "patrol": [
+              {
+                "x": 47,
+                "y": 0.02,
+                "z": 32
+              },
+              {
+                "x": 47,
+                "y": 0.02,
+                "z": 8
+              }
+            ],
+            "skills": {
+              "sprint": 54,
+              "endurance": 68
+            }
+          },
+          {
+            "id": "fitness-member-victor",
+            "name": "Victor Santos",
+            "role": "Sprint pace rival",
+            "home": {
+              "x": 55,
+              "y": 0.02,
+              "z": 32
+            },
+            "activity": "sprint",
+            "color": "#ed8759",
+            "skin": "#b88762",
+            "heading": 1.5707963267948966,
+            "stationKind": "sprint",
+            "spectate": {
+              "x": 72,
+              "y": 0.02,
+              "z": 29
+            },
+            "maxRoam": 26,
+            "patrol": [
+              {
+                "x": 55,
+                "y": 0.02,
+                "z": 32
+              },
+              {
+                "x": 55,
+                "y": 0.02,
+                "z": 8
+              }
+            ],
+            "skills": {
+              "sprint": 86,
+              "endurance": 84
+            }
+          },
+          {
+            "id": "fitness-member-sam",
+            "name": "Sam Park",
+            "role": "Ringside analyst & gym regular",
+            "home": {
+              "x": -13,
+              "y": 0.02,
+              "z": -23
+            },
+            "activity": "spectating",
+            "color": "#97a585",
+            "skin": "#c79977",
+            "heading": -1.5707963267948966,
+            "watchKind": "boxing-sparring",
+            "patrol": [
+              {
+                "x": -13,
+                "y": 0.02,
+                "z": -23
+              },
+              {
+                "x": -13,
+                "y": 0.02,
+                "z": -17
+              }
+            ],
+            "spectate": {
+              "x": -13,
+              "y": 0.02,
+              "z": -23
+            },
+            "personality": "Warm, curious and analytical",
+            "backstory": "A local sports enthusiast who enjoys reading the bout scorecard and cheering clean technique.",
+            "skills": {
+              "officiating": 63,
+              "coordination": 52
+            }
           }
         ]
       },
