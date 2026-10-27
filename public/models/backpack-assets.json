@@ -406,10 +406,15 @@
       "type": "props",
       "buildAssetId": "canopy-tree",
       "builderCategory": "landscape",
-      "thumbnailUrl": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/canopy-tree.svg",
       "format": "procedural-3d",
       "visibility": "public",
-      "description": "A dimensional tree that pops directly into the current environment."
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ]
     },
     {
       "id": "backpack-lamp-post",
@@ -418,9 +423,15 @@
       "type": "props",
       "buildAssetId": "lamp-post",
       "builderCategory": "landscape",
-      "thumbnailUrl": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/lamp-post.svg",
       "format": "procedural-3d",
-      "visibility": "public"
+      "visibility": "public",
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ]
     },
     {
       "id": "backpack-cloud-sofa",
@@ -429,9 +440,15 @@
       "type": "props",
       "buildAssetId": "sofa",
       "builderCategory": "interior",
-      "thumbnailUrl": "/public/images/builder-pack/sofa.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/sofa.svg",
       "format": "procedural-3d",
-      "visibility": "public"
+      "visibility": "public",
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ]
     },
     {
       "id": "backpack-recording-booth",
@@ -451,9 +468,15 @@
       "type": "props",
       "buildAssetId": "spiral-stairs",
       "builderCategory": "interior",
-      "thumbnailUrl": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/spiral-stairs.svg",
       "format": "procedural-3d",
-      "visibility": "public"
+      "visibility": "public",
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ]
     },
     {
       "id": "backpack-reflecting-pond",
@@ -462,9 +485,15 @@
       "type": "props",
       "buildAssetId": "pond",
       "builderCategory": "landscape",
-      "thumbnailUrl": "/public/images/builder-pack/pond.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/pond.svg",
       "format": "procedural-3d",
-      "visibility": "public"
+      "visibility": "public",
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ]
     },
     {
       "id": "beeduck-companion",
@@ -700,127 +729,177 @@
       "name": "Canopy Tree",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/canopy-tree.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "canopy-tree",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ]
     },
     {
       "id": "builder-pine-tree",
       "name": "Pine Tree",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/pine-tree.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/pine-tree.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "pine-tree",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A textured evergreen with layered needle boughs and a bark-covered trunk.",
+      "dimensions": [
+        2.8,
+        5.8,
+        2.8
+      ]
     },
     {
       "id": "builder-flower-bed",
       "name": "Flower Bed",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/flower-bed.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/flower-bed.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "flower-bed",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A bordered garden bed filled with leafy stems and individual coloured flowers.",
+      "dimensions": [
+        2.4,
+        0.35,
+        1.2
+      ]
     },
     {
       "id": "builder-hedge-corner",
       "name": "Hedge Corner",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/hedge-corner.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/hedge-corner.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "hedge-corner",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A clipped evergreen corner with a timber edging and dense, varied foliage.",
+      "dimensions": [
+        2.4,
+        1.05,
+        2.4
+      ]
     },
     {
       "id": "builder-garden-rocks",
       "name": "Garden Rocks",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/garden-rocks.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/garden-rocks.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "garden-rocks",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "Layered, weathered garden stones with pale mineral seams and small moss patches.",
+      "dimensions": [
+        2.1,
+        0.75,
+        1.5
+      ]
     },
     {
       "id": "builder-pond",
       "name": "Reflecting Pond",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/pond.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/pond.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "pond",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ]
     },
     {
       "id": "builder-path-tile",
       "name": "Path Tile",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/path-tile.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/path-tile.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "path-tile",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "Eight fitted slate pavers set into a chamfered stone border.",
+      "dimensions": [
+        2.2,
+        0.12,
+        1.2
+      ]
     },
     {
       "id": "builder-hill",
       "name": "Soft Hill",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/hill.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/hill.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "hill",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A grassy mound with exposed stone, low meadow plants and a walkable rounded surface.",
+      "dimensions": [
+        4.2,
+        1.25,
+        3.6
+      ]
     },
     {
       "id": "builder-lamp-post",
       "name": "Lamp Post",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/lamp-post.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "lamp-post",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ]
     },
     {
       "id": "builder-planter",
       "name": "Tall Planter",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/planter.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/planter.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "landscape",
       "buildAssetId": "planter",
-      "description": "Landscape piece for the in-game map builder."
+      "description": "A fluted ceramic vessel with a brass foot and a layered leafy ornamental plant.",
+      "dimensions": [
+        0.85,
+        1.45,
+        0.85
+      ]
     },
     {
       "id": "builder-pillow-ring",
       "name": "Pillow Ring Seat",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/pillow-ring.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/pillow-ring.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interior",
@@ -836,127 +915,182 @@
         0,
         0
       ],
-      "description": "A gameplay-ready floor seat. Walk close and press E, or use the mobile action, to sit and stand."
+      "description": "An upholstered floor cushion with stitched panels, piping and a recessed centre seat.",
+      "dimensions": [
+        1.5,
+        0.42,
+        1.5
+      ]
     },
     {
       "id": "builder-sofa",
       "name": "Cloud Sofa",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/sofa.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/sofa.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "sofa",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ]
     },
     {
       "id": "builder-armchair",
       "name": "Accent Chair",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/armchair.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/armchair.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "armchair",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A tailored lounge chair with upholstered cushions, rounded arms and walnut legs.",
+      "dimensions": [
+        0.9,
+        1.02,
+        0.9
+      ]
     },
     {
       "id": "builder-coffee-table",
       "name": "Coffee Table",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/coffee-table.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/coffee-table.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "coffee-table",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A joinery-built walnut table with inset top panels, a lower shelf and brass feet.",
+      "dimensions": [
+        1.25,
+        0.46,
+        0.72
+      ]
     },
     {
       "id": "builder-bookshelf",
       "name": "Bookshelf",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/bookshelf.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/bookshelf.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "bookshelf",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A walnut bookcase with fitted shelves, individual bound books and a ceramic ornament.",
+      "dimensions": [
+        1.2,
+        2.05,
+        0.38
+      ]
     },
     {
       "id": "builder-floor-lamp",
       "name": "Floor Lamp",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/floor-lamp.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/floor-lamp.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "floor-lamp",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A sculpted standing lamp with a brass stem, pleated fabric shade and warm diffuser.",
+      "dimensions": [
+        0.62,
+        1.75,
+        0.62
+      ]
     },
     {
       "id": "builder-room-divider",
       "name": "Room Divider",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/room-divider.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/room-divider.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "room-divider",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A framed timber screen with chamfered vertical slats, brass joints and stable feet.",
+      "dimensions": [
+        1.8,
+        2,
+        0.18
+      ]
     },
     {
       "id": "builder-kitchen-island",
       "name": "Kitchen Island",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/kitchen-island.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/kitchen-island.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "kitchen-island",
-      "description": "Interior piece for the in-game map builder."
+      "description": "An inset-panel island with stone worktop, metal sink, curved tap and cabinet handles.",
+      "dimensions": [
+        2.1,
+        0.94,
+        0.9
+      ]
     },
     {
       "id": "builder-spiral-stairs",
       "name": "Spiral Stairs",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/spiral-stairs.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "spiral-stairs",
-      "description": "Interior piece for the in-game map builder."
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ]
     },
     {
       "id": "builder-archway",
       "name": "Archway",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/archway.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/archway.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "archway",
-      "description": "Interior piece for the in-game map builder."
+      "description": "Block-built limestone pillars and an arched passage with a contrasting carved keystone.",
+      "dimensions": [
+        2.4,
+        2.8,
+        0.5
+      ]
     },
     {
       "id": "builder-art-wall",
       "name": "Art Wall",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/builder-pack/art-wall.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/art-wall.svg",
       "format": "svg",
       "visibility": "public",
       "builderCategory": "interior",
       "buildAssetId": "art-wall",
-      "description": "Interior piece for the in-game map builder."
+      "description": "A gallery wall with a walnut and brass frame around a layered geometric composition.",
+      "dimensions": [
+        2.2,
+        2.15,
+        0.18
+      ]
     },
     {
       "id": "builder-corsair-aircraft",
@@ -1143,36 +1277,51 @@
       "name": "Campfire",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/campfire.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "campfire",
-      "description": "Campfire from the Environment Builder, ready to drop into the running game."
+      "description": "Charred split logs, glowing embers and layered animated flames in a ring of weathered stone.",
+      "dimensions": [
+        1.05,
+        1.05,
+        1.05
+      ]
     },
     {
       "id": "builder-friendly-ghost",
       "name": "Friendly Ghost",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/friendly-ghost.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "friendly-ghost",
-      "description": "Friendly Ghost from the Environment Builder, ready to drop into the running game."
+      "description": "A gentle floating spirit with a scalloped sheet silhouette, welcoming arms and a softly glowing smile.",
+      "dimensions": [
+        0.9,
+        1.65,
+        0.7
+      ]
     },
     {
       "id": "builder-green-bubbles",
       "name": "Green Bubble Field",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/green-bubbles.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "green-bubbles",
-      "description": "Green Bubble Field from the Environment Builder, ready to drop into the running game."
+      "description": "A brass-trimmed healing plinth with luminous channels and rising green alchemy bubbles.",
+      "dimensions": [
+        1.6,
+        1.6,
+        1.6
+      ]
     },
     {
       "id": "builder-lever-switch",
@@ -1230,12 +1379,17 @@
       "name": "Working Windmill",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/windmill.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "windmill",
-      "description": "Working Windmill from the Environment Builder, ready to drop into the running game."
+      "description": "A tapered masonry mill with timber balcony, braced canvas sails and a driven iron rotor.",
+      "dimensions": [
+        4,
+        6,
+        2.5
+      ]
     },
     {
       "id": "builder-alpine-mountain",
@@ -1262,144 +1416,204 @@
       "name": "Weathered Cliff",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/terrain-cliff.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
       "buildAssetId": "terrain-cliff",
-      "description": "Weathered Cliff from the Environment Builder, ready to drop into the running game."
+      "description": "Layered sandstone escarpment with fractured ledges, moss seams and fallen scree.",
+      "dimensions": [
+        4.8,
+        3.2,
+        3.5
+      ]
     },
     {
       "id": "builder-terrain-river",
       "name": "River Bend",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/terrain-river.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
       "buildAssetId": "terrain-river",
-      "description": "River Bend from the Environment Builder, ready to drop into the running game."
+      "description": "A curved clear-water channel between shaped earthen banks, reeds and rounded river stones.",
+      "dimensions": [
+        6,
+        0.2,
+        3
+      ]
     },
     {
       "id": "builder-terrain-crater",
       "name": "Impact Crater",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/terrain-crater.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
       "buildAssetId": "terrain-crater",
-      "description": "Impact Crater from the Environment Builder, ready to drop into the running game."
+      "description": "A scorched impact bowl with a raised fractured rim, mineral seams and scattered ejecta.",
+      "dimensions": [
+        5,
+        0.8,
+        5
+      ]
     },
     {
       "id": "builder-terrain-snowbank",
       "name": "Snow Bank",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/terrain-snowbank.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
       "buildAssetId": "terrain-snowbank",
-      "description": "Snow Bank from the Environment Builder, ready to drop into the running game."
+      "description": "Sculpted snow drifts with swept crests, cool blue ice facets and granular edge rocks.",
+      "dimensions": [
+        4,
+        1.2,
+        2.4
+      ]
     },
     {
       "id": "builder-ancient-oak",
       "name": "Ancient Oak",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/ancient-oak.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "plants",
       "buildAssetId": "ancient-oak",
-      "description": "Ancient Oak from the Environment Builder, ready to drop into the running game."
+      "description": "A broad branching oak with flared roots, ridged bark and a layered spreading crown.",
+      "dimensions": [
+        4.5,
+        6,
+        4.5
+      ]
     },
     {
       "id": "builder-palm-cluster",
       "name": "Palm Cluster",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/palm-cluster.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "plants",
       "buildAssetId": "palm-cluster",
-      "description": "Palm Cluster from the Environment Builder, ready to drop into the running game."
+      "description": "Three curved ringed palm trunks with hand-shaped pinnate fronds and hanging coconuts.",
+      "dimensions": [
+        3.5,
+        5,
+        3.5
+      ]
     },
     {
       "id": "builder-giant-mushrooms",
       "name": "Giant Mushrooms",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/giant-mushrooms.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "plants",
       "buildAssetId": "giant-mushrooms",
-      "description": "Giant Mushrooms from the Environment Builder, ready to drop into the running game."
+      "description": "A grove of rose-capped mushrooms with real gills, pale stem collars and softly luminous spots.",
+      "dimensions": [
+        2.4,
+        2.2,
+        2
+      ]
     },
     {
       "id": "builder-desert-cactus",
       "name": "Desert Cactus",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/desert-cactus.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "plants",
       "buildAssetId": "desert-cactus",
-      "description": "Desert Cactus from the Environment Builder, ready to drop into the running game."
+      "description": "A ribbed saguaro with curved upright arms, clustered spines and a coral desert blossom.",
+      "dimensions": [
+        1.5,
+        3,
+        1.2
+      ]
     },
     {
       "id": "builder-timber-cabin",
       "name": "Timber Cabin",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/timber-cabin.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "buildings",
       "buildAssetId": "timber-cabin",
-      "description": "Timber Cabin from the Environment Builder, ready to drop into the running game."
+      "description": "A fitted timber cabin with board seams, a shingled pitched roof, framed windows and a brass-latched entrance.",
+      "dimensions": [
+        6,
+        3.6,
+        5
+      ]
     },
     {
       "id": "builder-stone-tower",
       "name": "Stone Watchtower",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/stone-tower.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "buildings",
       "buildAssetId": "stone-tower",
-      "description": "Stone Watchtower from the Environment Builder, ready to drop into the running game."
+      "description": "An open stone entry leads into a block-built watchtower with carved arrow slits, timber bracing and crenellated battlements.",
+      "dimensions": [
+        4,
+        7,
+        4
+      ]
     },
     {
       "id": "builder-market-stall",
       "name": "Market Stall",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/market-stall.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "buildings",
       "buildAssetId": "market-stall",
-      "description": "Market Stall from the Environment Builder, ready to drop into the running game."
+      "description": "A striped canvas market canopy shelters a board-built counter, woven produce trays and hand-fitted brass details.",
+      "dimensions": [
+        3,
+        2.8,
+        2.2
+      ]
     },
     {
       "id": "builder-sci-fi-bunker",
       "name": "Sci-fi Bunker",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/sci-fi-bunker.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "buildings",
       "buildAssetId": "sci-fi-bunker",
-      "description": "Sci-fi Bunker from the Environment Builder, ready to drop into the running game."
+      "description": "A segmented expedition bunker with reinforced panel seams, protected glazing, cooling vents and an illuminated entry frame.",
+      "dimensions": [
+        7,
+        3,
+        5
+      ]
     },
     {
       "id": "builder-supply-crate",
@@ -1423,180 +1637,255 @@
       "name": "Wooden Cart",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/wooden-cart.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "props",
       "buildAssetId": "wooden-cart",
-      "description": "Wooden Cart from the Environment Builder, ready to drop into the running game."
+      "description": "A board-built handcart with iron tyres, open spoked wheels, cross-braced sides and fitted pull shafts.",
+      "dimensions": [
+        2.4,
+        1.5,
+        1.2
+      ]
     },
     {
       "id": "builder-iron-anvil",
       "name": "Iron Anvil",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/iron-anvil.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "props",
       "buildAssetId": "iron-anvil",
-      "description": "Iron Anvil from the Environment Builder, ready to drop into the running game."
+      "description": "A forged anvil with a tapered horn, hardened working face, hardy hole and bolted timber pedestal.",
+      "dimensions": [
+        0.9,
+        0.8,
+        0.45
+      ]
     },
     {
       "id": "builder-street-sign",
       "name": "Weathered Signpost",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/street-sign.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "props",
       "buildAssetId": "street-sign",
-      "description": "Weathered Signpost from the Environment Builder, ready to drop into the running game."
+      "description": "A cedar wayfinding post with carved arrow boards, iron brackets, brass nails and a warm lantern.",
+      "dimensions": [
+        1.2,
+        2.4,
+        0.5
+      ]
     },
     {
       "id": "builder-plasma-sword",
       "name": "Plasma Sword",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/plasma-sword.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "weapons",
       "buildAssetId": "plasma-sword",
-      "description": "Plasma Sword from the Environment Builder, ready to drop into the running game."
+      "description": "A forged alloy hilt with wrapped grip, cyan reactor and a tapered luminous plasma blade.",
+      "dimensions": [
+        0.25,
+        1.4,
+        0.12
+      ]
     },
     {
       "id": "builder-battle-axe",
       "name": "Battle Axe",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/battle-axe.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "weapons",
       "buildAssetId": "battle-axe",
-      "description": "Battle Axe from the Environment Builder, ready to drop into the running game."
+      "description": "A curved forged steel axe head with an inset cutting edge, brass rivets and a leather-wrapped haft.",
+      "dimensions": [
+        0.8,
+        1.5,
+        0.16
+      ]
     },
     {
       "id": "builder-arc-bow",
       "name": "Arc Bow",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/arc-bow.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "weapons",
       "buildAssetId": "arc-bow",
-      "description": "Arc Bow from the Environment Builder, ready to drop into the running game."
+      "description": "A recurved timber bow with alloy limb tips, tensioned string and luminous aiming inlays.",
+      "dimensions": [
+        0.9,
+        1.3,
+        0.12
+      ]
     },
     {
       "id": "builder-crystal-staff",
       "name": "Crystal Staff",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/crystal-staff.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "weapons",
       "buildAssetId": "crystal-staff",
-      "description": "Crystal Staff from the Environment Builder, ready to drop into the running game."
+      "description": "A brass-bound carved staff with a faceted amethyst held in an open three-prong crown.",
+      "dimensions": [
+        0.3,
+        1.8,
+        0.3
+      ]
     },
     {
       "id": "builder-forest-ranger",
       "name": "Forest Ranger",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/forest-ranger.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "characters",
       "buildAssetId": "forest-ranger",
-      "description": "Forest Ranger from the Environment Builder, ready to drop into the running game."
+      "description": "A hooded woodland guide with a layered travelling cloak, fitted leather equipment and a full arrow quiver.",
+      "dimensions": [
+        0.75,
+        1.8,
+        0.55
+      ]
     },
     {
       "id": "builder-desert-merchant",
       "name": "Desert Merchant",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/desert-merchant.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "characters",
       "buildAssetId": "desert-merchant",
-      "description": "Desert Merchant from the Environment Builder, ready to drop into the running game."
+      "description": "A robed trader with wrapped headwear, embroidered hems, coin clasps and an expedition satchel.",
+      "dimensions": [
+        0.8,
+        1.75,
+        0.6
+      ]
     },
     {
       "id": "builder-clockwork-knight",
       "name": "Clockwork Knight",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/clockwork-knight.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "characters",
       "buildAssetId": "clockwork-knight",
-      "description": "Clockwork Knight from the Environment Builder, ready to drop into the running game."
+      "description": "An articulated brass guardian with overlapping steel armour, exposed pivot joints and a luminous visor.",
+      "dimensions": [
+        0.85,
+        1.9,
+        0.65
+      ]
     },
     {
       "id": "builder-spectral-ghost",
       "name": "Spectral Ghost",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/spectral-ghost.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "characters",
       "buildAssetId": "spectral-ghost",
-      "description": "Spectral Ghost from the Environment Builder, ready to drop into the running game."
+      "description": "A translucent hooded spirit with a scalloped spectral robe, luminous eyes and a sheltered soul core.",
+      "dimensions": [
+        0.85,
+        1.7,
+        0.6
+      ]
     },
     {
       "id": "builder-emerald-slime",
       "name": "Emerald Slime",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/emerald-slime.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "creatures",
       "buildAssetId": "emerald-slime",
-      "description": "Emerald Slime from the Environment Builder, ready to drop into the running game."
+      "description": "A glossy, irregular emerald creature with an inset heart crystal, suspended bubbles and a curious face.",
+      "dimensions": [
+        1,
+        0.8,
+        0.9
+      ]
     },
     {
       "id": "builder-moss-golem",
       "name": "Moss Golem",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/moss-golem.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "creatures",
       "buildAssetId": "moss-golem",
-      "description": "Moss Golem from the Environment Builder, ready to drop into the running game."
+      "description": "A weathered stone sentinel with articulated boulder limbs, mineral seams, moss patches and glowing eyes.",
+      "dimensions": [
+        1.4,
+        2.6,
+        1
+      ]
     },
     {
       "id": "builder-cave-spider",
       "name": "Cave Spider",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/cave-spider.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "creatures",
       "buildAssetId": "cave-spider",
-      "description": "Cave Spider from the Environment Builder, ready to drop into the running game."
+      "description": "An eight-legged cave hunter with plated chitin, articulated limbs, amber eyes and curved ivory fangs.",
+      "dimensions": [
+        1.8,
+        0.65,
+        1.6
+      ]
     },
     {
       "id": "builder-sky-ray",
       "name": "Sky Ray",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/sky-ray.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "creatures",
       "buildAssetId": "sky-ray",
-      "description": "Sky Ray from the Environment Builder, ready to drop into the running game."
+      "description": "A soaring ray with sculpted wings, a long curling tail and luminous turquoise markings.",
+      "dimensions": [
+        3.2,
+        0.55,
+        1.8
+      ]
     },
     {
       "id": "builder-land-basketball-stadium",
@@ -6705,7 +6994,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Factory Export Terminal \u00b7 E / Use",
+        "prompt": "Open Factory Export Terminal · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6744,7 +7033,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Factory Certification Kiosk \u00b7 E / Use",
+        "prompt": "Open Factory Certification Kiosk · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6818,7 +7107,7 @@
         "device": "radio-console",
         "interactionKey": "e",
         "interactionDistance": 3,
-        "prompt": "Use Ironwood Portable Radio \u00b7 E / Use"
+        "prompt": "Use Ironwood Portable Radio · E / Use"
       },
       "metadata": {
         "prisonCollectible": true,

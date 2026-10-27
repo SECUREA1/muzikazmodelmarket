@@ -2,8 +2,8 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 487 definitions;
-the economy has 613 SKUs, including 548 native item, material, tool, and layout
+items and their runtime settings. The current library has 492 definitions;
+the economy has 618 SKUs, including 553 native item, material, tool, and layout
 offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
@@ -102,6 +102,22 @@ copies own their animated materials so changing one copy does not affect another
 The editor, in-game library and market share dedicated SVG thumbnails under
 `public/images/native-upgrades/`. Regression coverage lives in
 `test/native-asset-designs.test.mjs` and `test/native-asset-designs.browser.py`.
+
+The same crafted finish now covers the remaining original expanded-library
+recipes: four weapons, a cart, anvil, signpost and working windmill; eight terrain
+and plant models; four buildings; and nine characters and creatures. Another
+23 garden, furniture and healing/camp props share the same finish. These 52
+upgrades retain their original purchase identities, prices and native behaviors.
+Only local parts animate, leaving saved placement transforms intact.
+
+The five `*-models.js` collection modules (`equipment-prop`,
+`crafted-landscape`, `crafted-character`, `crafted-building` and
+`crafted-furniture`) supply shared model metadata, factories and animations.
+Catalog thumbnails show the actual authored 3D models, packaged in accessible
+SVGs. Run `python3 test/native-crafted-collection.browser.py --write-thumbnails`
+to regenerate them and export category preview sheets. The browser check reports
+shader errors; `test/native-crafted-collection.test.mjs` checks geometry budgets,
+grounding, animation isolation and compatibility with existing catalog offers.
 
 ## Extending the library
 

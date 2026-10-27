@@ -37,6 +37,11 @@ import {createArcadePart,animateArcadePark} from './arcade-park.js';
 import {createHockeyItem} from './hockey-models.js';
 import {PORTAL_MODEL_INFO,createPortalModel,updatePortalModel} from './portal-models.js';
 import {COMMON_PROP_MODEL_INFO,createCommonPropModel,updateCommonPropModel} from './common-prop-models.js';
+import {EQUIPMENT_PROP_MODEL_INFO,createEquipmentPropModel,updateEquipmentPropModel} from './equipment-prop-models.js';
+import {CRAFTED_LANDSCAPE_MODEL_INFO,createCraftedLandscapeModel,updateCraftedLandscapeModel} from './crafted-landscape-models.js';
+import {CRAFTED_CHARACTER_MODEL_INFO,createCraftedCharacterModel,updateCraftedCharacterModel} from './crafted-character-models.js';
+import {CRAFTED_BUILDING_MODEL_INFO,createCraftedBuildingModel,updateCraftedBuildingModel} from './crafted-building-models.js';
+import {CRAFTED_FURNITURE_MODEL_INFO,createCraftedFurnitureModel,updateCraftedFurnitureModel} from './crafted-furniture-models.js';
 
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createBasketballHoop} from './basketball-stadium.js';
@@ -119,7 +124,12 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'spiral-stairs': ['Spiral Stairs', 'A climbable-scale spiral staircase winding around a central column.', [2.1, 2.8, 2.1]],
   archway: ['Archway', 'A masonry passage with two pillars and a curved overhead arch.', [2.4, 2.8, .5]],
   'art-wall': ['Art Wall', 'A gallery wall with a framed colourful abstract artwork.', [2.2, 2.15, .18]],
-  'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]]
+  'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]],
+  ...EQUIPMENT_PROP_MODEL_INFO,
+  ...CRAFTED_LANDSCAPE_MODEL_INFO,
+  ...CRAFTED_CHARACTER_MODEL_INFO,
+  ...CRAFTED_BUILDING_MODEL_INFO,
+  ...CRAFTED_FURNITURE_MODEL_INFO
 });
 
 // Items that carry gameplay roles in the Environment Builder also need a
@@ -318,6 +328,11 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+  if(EQUIPMENT_PROP_MODEL_INFO[id])return createEquipmentPropModel(id);
+  if(CRAFTED_LANDSCAPE_MODEL_INFO[id])return createCraftedLandscapeModel(id);
+  if(CRAFTED_CHARACTER_MODEL_INFO[id])return createCraftedCharacterModel(id);
+  if(CRAFTED_BUILDING_MODEL_INFO[id])return createCraftedBuildingModel(id);
+  if(CRAFTED_FURNITURE_MODEL_INFO[id])return createCraftedFurnitureModel(id);
   if(PORTAL_MODEL_INFO[id])return createPortalModel(id);
   if(COMMON_PROP_MODEL_INFO[id])return createCommonPropModel(id);
   if(PRISON_MODEL_INFO[id])return createPrisonItemModel(id);
@@ -389,13 +404,23 @@ export function createGeneratedAsset(model) {
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return finishGameItem(THREE,root);
 }
 
+function updateCraftedModel(root,elapsed){
+ if(root.userData?.equipmentPropModel){updateEquipmentPropModel(root,elapsed);return true;}
+ if(root.userData?.craftedLandscapeModel){updateCraftedLandscapeModel(root,elapsed);return true;}
+ if(root.userData?.craftedCharacterModel){updateCraftedCharacterModel(root,elapsed);return true;}
+ if(root.userData?.craftedBuildingModel){updateCraftedBuildingModel(root,elapsed);return true;}
+ if(root.userData?.craftedFurnitureModel){updateCraftedFurnitureModel(root,elapsed);return true;}
+ return false;
+}
+
 export function updateBuilderModels(group, elapsed) {
+  if(updateCraftedModel(group,elapsed))return;
   if(group.userData?.portalModel){updatePortalModel(group,elapsed);return;}
   if(group.userData?.commonPropModel){updateCommonPropModel(group,elapsed);return;}
   // Avatar projections supply their native model directly; placed scenery
   // supplies a collection. Both retain the same authored carnival animation.
   if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed);return;}
-  group.children.forEach(root=>{if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(updateCraftedModel(root,elapsed))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

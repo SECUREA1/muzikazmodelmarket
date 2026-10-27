@@ -4312,7 +4312,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnail": "/public/images/native-upgrades/canopy-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4364,8 +4364,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "A dimensional tree that pops directly into the current environment.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ],
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -4511,7 +4515,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/sofa.svg",
+      "thumbnail": "/public/images/native-upgrades/sofa.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4563,8 +4567,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ],
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -5829,7 +5837,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnail": "/public/images/native-upgrades/lamp-post.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5881,8 +5889,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ],
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -6897,7 +6909,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pond.svg",
+      "thumbnail": "/public/images/native-upgrades/pond.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6949,8 +6961,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ],
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -7502,7 +7518,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnail": "/public/images/native-upgrades/spiral-stairs.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7554,8 +7570,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ],
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -9112,7 +9132,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/ancient-oak.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9164,8 +9184,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Ancient Oak from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4.5,
+        6,
+        4.5
+      ],
+      "description": "A broad branching oak with flared roots, ridged bark and a layered spreading crown.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -9177,7 +9201,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/arc-bow.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9229,8 +9253,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Arc Bow from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        1.3,
+        0.12
+      ],
+      "description": "A recurved timber bow with alloy limb tips, tensioned string and luminous aiming inlays.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11480,7 +11508,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/archway.svg",
+      "thumbnail": "/public/images/native-upgrades/archway.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11532,8 +11560,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        2.8,
+        0.5
+      ],
+      "description": "Block-built limestone pillars and an arched passage with a contrasting carved keystone.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11545,7 +11577,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/armchair.svg",
+      "thumbnail": "/public/images/native-upgrades/armchair.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11597,8 +11629,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        0.9,
+        1.02,
+        0.9
+      ],
+      "description": "A tailored lounge chair with upholstered cushions, rounded arms and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11610,7 +11646,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/art-wall.svg",
+      "thumbnail": "/public/images/native-upgrades/art-wall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11662,8 +11698,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.2,
+        2.15,
+        0.18
+      ],
+      "description": "A gallery wall with a walnut and brass frame around a layered geometric composition.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11746,7 +11786,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/battle-axe.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11798,8 +11838,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Battle Axe from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.8,
+        1.5,
+        0.16
+      ],
+      "description": "A curved forged steel axe head with an inset cutting edge, brass rivets and a leather-wrapped haft.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11811,7 +11855,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/bookshelf.svg",
+      "thumbnail": "/public/images/native-upgrades/bookshelf.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11863,8 +11907,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.2,
+        2.05,
+        0.38
+      ],
+      "description": "A walnut bookcase with fitted shelves, individual bound books and a ceramic ornament.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -12964,7 +13012,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/campfire.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13016,8 +13064,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Campfire from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.05,
+        1.05,
+        1.05
+      ],
+      "description": "Charred split logs, glowing embers and layered animated flames in a ring of weathered stone.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13029,7 +13081,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnail": "/public/images/native-upgrades/canopy-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13081,8 +13133,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ],
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13094,7 +13150,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/cave-spider.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13146,8 +13202,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Cave Spider from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.8,
+        0.65,
+        1.6
+      ],
+      "description": "An eight-legged cave hunter with plated chitin, articulated limbs, amber eyes and curved ivory fangs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13159,7 +13219,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/clockwork-knight.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13211,8 +13271,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Clockwork Knight from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.85,
+        1.9,
+        0.65
+      ],
+      "description": "An articulated brass guardian with overlapping steel armour, exposed pivot joints and a luminous visor.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13224,7 +13288,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/coffee-table.svg",
+      "thumbnail": "/public/images/native-upgrades/coffee-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13276,8 +13340,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.25,
+        0.46,
+        0.72
+      ],
+      "description": "A joinery-built walnut table with inset top panels, a lower shelf and brass feet.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13484,7 +13552,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/crystal-staff.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13536,8 +13604,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Crystal Staff from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.3,
+        1.8,
+        0.3
+      ],
+      "description": "A brass-bound carved staff with a faceted amethyst held in an open three-prong crown.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13549,7 +13621,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/desert-cactus.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13601,8 +13673,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Desert Cactus from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.5,
+        3,
+        1.2
+      ],
+      "description": "A ribbed saguaro with curved upright arms, clustered spines and a coral desert blossom.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13614,7 +13690,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/desert-merchant.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13666,8 +13742,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Desert Merchant from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.8,
+        1.75,
+        0.6
+      ],
+      "description": "A robed trader with wrapped headwear, embroidered hems, coin clasps and an expedition satchel.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -14090,7 +14170,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/emerald-slime.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14142,8 +14222,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Emerald Slime from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1,
+        0.8,
+        0.9
+      ],
+      "description": "A glossy, irregular emerald creature with an inset heart crystal, suspended bubbles and a curious face.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -16195,6 +16279,88 @@
       }
     },
     {
+      "assetId": "builder-fitness-basketball-hoop",
+      "name": "Gold Basketball Hoop",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-basketball-hoop",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.6,
+        4.4,
+        2.8
+      ],
+      "priceMzk": 420,
+      "description": "Regulation-height 3.05 m rim, backboard, woven-style net and a weighted gold-trimmed portable stand.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "basketball",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5.5
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Basketball Hoop",
+        "destructible": false
+      }
+    },
+    {
       "assetId": "builder-fitness-bench-press",
       "name": "Gold Bench Press",
       "category": "fitness",
@@ -16416,7 +16582,7 @@
         12.4
       ],
       "priceMzk": 850,
-      "description": "Open-entry training ring with padded gold corners, three ropes and a low canvas apron.",
+      "description": "Championship training ring with four ropes, padded red and blue corners, an open south entrance, shallow access steps and a marked canvas apron.",
       "behavior": "interact",
       "function_data": {
         "active": true,
@@ -17665,6 +17831,162 @@
       }
     },
     {
+      "assetId": "builder-fitness-ring-scoreboard",
+      "name": "Gold Ring Scoreboard",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-ring-scoreboard",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        5,
+        3.4,
+        1.2
+      ],
+      "priceMzk": 240,
+      "description": "Freestanding championship scoreclock with red and blue score panels, round display and a three-minute digital timer.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "boxing-sparring",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Ring Scoreboard",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-ringside-seating",
+      "name": "Gold Ringside Seating",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-ringside-seating",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        8,
+        1.6,
+        3
+      ],
+      "priceMzk": 180,
+      "description": "Three-tier ringside spectator stand with padded seats, gold aisle rails and a clear front approach.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      }
+    },
+    {
       "assetId": "builder-fitness-rower",
       "name": "Gold Rowing Machine",
       "category": "fitness",
@@ -17743,6 +18065,170 @@
         },
         "interactionDistance": 4,
         "prompt": "Train Gold Rowing Machine",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-sprint-gates",
+      "name": "Gold Sprint Gates",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-sprint-gates",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        10,
+        2.6,
+        28
+      ],
+      "priceMzk": 360,
+      "description": "Three-lane sprint and hurdle course with start and finish timing gates, lane markings and low training hurdles.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "sprint",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 15
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Sprint Gates",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-table-tennis",
+      "name": "Gold Table Tennis",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-table-tennis",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        2.74,
+        1.1,
+        1.525
+      ],
+      "priceMzk": 280,
+      "description": "Regulation 2.74 × 1.525 m playing surface at 0.76 m, centre net, folding-style underframe and gold court edging.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "table-tennis",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Table Tennis",
         "destructible": false
       }
     },
@@ -17902,7 +18388,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/floor-lamp.svg",
+      "thumbnail": "/public/images/native-upgrades/floor-lamp.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17954,8 +18440,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        0.62,
+        1.75,
+        0.62
+      ],
+      "description": "A sculpted standing lamp with a brass stem, pleated fabric shade and warm diffuser.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -17967,7 +18457,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/flower-bed.svg",
+      "thumbnail": "/public/images/native-upgrades/flower-bed.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18019,8 +18509,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        0.35,
+        1.2
+      ],
+      "description": "A bordered garden bed filled with leafy stems and individual coloured flowers.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18032,7 +18526,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/forest-ranger.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18084,8 +18578,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Forest Ranger from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.75,
+        1.8,
+        0.55
+      ],
+      "description": "A hooded woodland guide with a layered travelling cloak, fitted leather equipment and a full arrow quiver.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18163,7 +18661,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/friendly-ghost.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18215,8 +18713,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Friendly Ghost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        1.65,
+        0.7
+      ],
+      "description": "A gentle floating spirit with a scalloped sheet silhouette, welcoming arms and a softly glowing smile.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18359,7 +18861,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/garden-rocks.svg",
+      "thumbnail": "/public/images/native-upgrades/garden-rocks.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18411,8 +18913,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        0.75,
+        1.5
+      ],
+      "description": "Layered, weathered garden stones with pale mineral seams and small moss patches.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18424,7 +18930,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/giant-mushrooms.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18476,8 +18982,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Giant Mushrooms from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        2.4,
+        2.2,
+        2
+      ],
+      "description": "A grove of rose-capped mushrooms with real gills, pale stem collars and softly luminous spots.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18690,7 +19200,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/green-bubbles.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18742,8 +19252,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Green Bubble Field from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.6,
+        1.6,
+        1.6
+      ],
+      "description": "A brass-trimmed healing plinth with luminous channels and rising green alchemy bubbles.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19195,7 +19709,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/hedge-corner.svg",
+      "thumbnail": "/public/images/native-upgrades/hedge-corner.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19247,8 +19761,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        1.05,
+        2.4
+      ],
+      "description": "A clipped evergreen corner with a timber edging and dense, varied foliage.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19325,7 +19843,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/hill.svg",
+      "thumbnail": "/public/images/native-upgrades/hill.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19377,8 +19895,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        4.2,
+        1.25,
+        3.6
+      ],
+      "description": "A grassy mound with exposed stone, low meadow plants and a walkable rounded surface.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19390,7 +19912,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/iron-anvil.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19442,8 +19964,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Iron Anvil from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        0.8,
+        0.45
+      ],
+      "description": "A forged anvil with a tapered horn, hardened working face, hardy hole and bolted timber pedestal.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19455,7 +19981,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/kitchen-island.svg",
+      "thumbnail": "/public/images/native-upgrades/kitchen-island.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19507,8 +20033,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        0.94,
+        0.9
+      ],
+      "description": "An inset-panel island with stone worktop, metal sink, curved tap and cabinet handles.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19520,7 +20050,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnail": "/public/images/native-upgrades/lamp-post.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19572,8 +20102,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ],
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -21943,7 +22477,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/market-stall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21995,8 +22529,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Market Stall from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3,
+        2.8,
+        2.2
+      ],
+      "description": "A striped canvas market canopy shelters a board-built counter, woven produce trays and hand-fitted brass details.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22079,7 +22617,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/moss-golem.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22131,8 +22669,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Moss Golem from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.4,
+        2.6,
+        1
+      ],
+      "description": "A weathered stone sentinel with articulated boulder limbs, mineral seams, moss patches and glowing eyes.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22280,7 +22822,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/palm-cluster.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22332,8 +22874,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Palm Cluster from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3.5,
+        5,
+        3.5
+      ],
+      "description": "Three curved ringed palm trunks with hand-shaped pinnate fronds and hanging coconuts.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22345,7 +22891,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/path-tile.svg",
+      "thumbnail": "/public/images/native-upgrades/path-tile.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22397,8 +22943,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.2,
+        0.12,
+        1.2
+      ],
+      "description": "Eight fitted slate pavers set into a chamfered stone border.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22410,7 +22960,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pillow-ring.svg",
+      "thumbnail": "/public/images/native-upgrades/pillow-ring.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22462,8 +23012,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "A gameplay-ready floor seat. Walk close and press E, or use the mobile action, to sit and stand.",
+      "dimensions": [
+        1.5,
+        0.42,
+        1.5
+      ],
+      "description": "An upholstered floor cushion with stitched panels, piping and a recessed centre seat.",
       "behavior": "seat",
       "function_data": {}
     },
@@ -22475,7 +23029,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pine-tree.svg",
+      "thumbnail": "/public/images/native-upgrades/pine-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22527,8 +23081,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.8,
+        5.8,
+        2.8
+      ],
+      "description": "A textured evergreen with layered needle boughs and a bark-covered trunk.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22608,7 +23166,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/planter.svg",
+      "thumbnail": "/public/images/native-upgrades/planter.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22660,8 +23218,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        0.85,
+        1.45,
+        0.85
+      ],
+      "description": "A fluted ceramic vessel with a brass foot and a layered leafy ornamental plant.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22673,7 +23235,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/plasma-sword.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22725,8 +23287,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Plasma Sword from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.25,
+        1.4,
+        0.12
+      ],
+      "description": "A forged alloy hilt with wrapped grip, cyan reactor and a tapered luminous plasma blade.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22738,7 +23304,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pond.svg",
+      "thumbnail": "/public/images/native-upgrades/pond.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22790,8 +23356,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ],
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -23391,7 +23961,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/room-divider.svg",
+      "thumbnail": "/public/images/native-upgrades/room-divider.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23443,8 +24013,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.8,
+        2,
+        0.18
+      ],
+      "description": "A framed timber screen with chamfered vertical slats, brass joints and stable feet.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -24450,7 +25024,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/sci-fi-bunker.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24502,8 +25076,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Sci-fi Bunker from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        7,
+        3,
+        5
+      ],
+      "description": "A segmented expedition bunker with reinforced panel seams, protected glazing, cooling vents and an illuminated entry frame.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25159,7 +25737,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/sky-ray.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25211,8 +25789,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Sky Ray from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3.2,
+        0.55,
+        1.8
+      ],
+      "description": "A soaring ray with sculpted wings, a long curling tail and luminous turquoise markings.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25224,7 +25806,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/sofa.svg",
+      "thumbnail": "/public/images/native-upgrades/sofa.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25276,8 +25858,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ],
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25289,7 +25875,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/spectral-ghost.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25341,8 +25927,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Spectral Ghost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.85,
+        1.7,
+        0.6
+      ],
+      "description": "A translucent hooded spirit with a scalloped spectral robe, luminous eyes and a sheltered soul core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25354,7 +25944,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnail": "/public/images/native-upgrades/spiral-stairs.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25406,8 +25996,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ],
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25419,7 +26013,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/stone-tower.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25471,8 +26065,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Stone Watchtower from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        7,
+        4
+      ],
+      "description": "An open stone entry leads into a block-built watchtower with carved arrow slits, timber bracing and crenellated battlements.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25484,7 +26082,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/street-sign.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25536,8 +26134,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Weathered Signpost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.2,
+        2.4,
+        0.5
+      ],
+      "description": "A cedar wayfinding post with carved arrow boards, iron brackets, brass nails and a warm lantern.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25758,7 +26360,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/terrain-cliff.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25810,8 +26412,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Weathered Cliff from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4.8,
+        3.2,
+        3.5
+      ],
+      "description": "Layered sandstone escarpment with fractured ledges, moss seams and fallen scree.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25823,7 +26429,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/terrain-crater.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25875,8 +26481,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Impact Crater from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        5,
+        0.8,
+        5
+      ],
+      "description": "A scorched impact bowl with a raised fractured rim, mineral seams and scattered ejecta.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25888,7 +26498,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/terrain-river.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25940,8 +26550,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "River Bend from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        6,
+        0.2,
+        3
+      ],
+      "description": "A curved clear-water channel between shaped earthen banks, reeds and rounded river stones.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25953,7 +26567,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/terrain-snowbank.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26005,8 +26619,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Snow Bank from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        1.2,
+        2.4
+      ],
+      "description": "Sculpted snow drifts with swept crests, cool blue ice facets and granular edge rocks.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26594,7 +27212,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/timber-cabin.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26646,8 +27264,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Timber Cabin from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        6,
+        3.6,
+        5
+      ],
+      "description": "A fitted timber cabin with board seams, a shingled pitched roof, framed windows and a brass-latched entrance.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -27129,7 +27751,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/windmill.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27181,8 +27803,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Working Windmill from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        6,
+        2.5
+      ],
+      "description": "A tapered masonry mill with timber balcony, braced canvas sails and a driven iron rotor.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -27259,7 +27885,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/wooden-cart.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27311,8 +27937,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Wooden Cart from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        2.4,
+        1.5,
+        1.2
+      ],
+      "description": "A board-built handcart with iron tyres, open spoked wheels, cross-braced sides and fitted pull shafts.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -30218,7 +30848,7 @@
     }
   ],
   "audit": {
-    "assetCount": 462,
+    "assetCount": 467,
     "generatedCount": 44,
     "warnings": [
       {
