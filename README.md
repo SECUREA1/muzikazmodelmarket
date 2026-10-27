@@ -145,6 +145,16 @@ objects; fitness and casino work contracts count newly completed sets and staff
 favors. Shared quests award room score once and record completion counts and best
 times. Solo routes award local practice score. Hockey and arcade offer their own
 challenges based on live match progress, completed rounds and full ride laps.
+**Crew Dispatch** also carries recurring AI job calls on every explorer map.
+Its **World radio calls** board lists public multiplayer jobs and player help
+requests across destinations. Choose **Travel to call**, then accept the job or
+**Join & help** once you arrive and have the required vehicle. Accepting and
+joining remain explicit; finish or cancel a current assignment before responding.
+Quest leaders can use **Call for help** to open their team and broadcast a
+90-second request, with a 30-second interval between calls. Full teams, expired
+calls and disconnected players disappear from the board; private and solo maps
+never broadcast there. Shared helpers earn score through participation.
+
 Quest cards leave movement available; explicit opening or closing clears held
 controls. WASD resumes movement directly from a quest selector; arrows and Enter
 still select challenges, and conversation fields keep their typing controls.
@@ -240,7 +250,7 @@ Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
-and offers all public destinations. A map introduction plays once per page session after the first player gesture.
+and offers all public destinations. A short guide explains each map on entry, including return visits, after the first player gesture.
 Only new jobs, objective changes and game interactions are then voiced.
 Settings provides independent audio mutes and distance-based spatial sound. NPC and AI speech now uses local neural male/female voices across browsers; choose and preview them in Audio settings. The build prepares the speech model automatically, with no API key. See [map travel and spoken objectives](docs/open-map-travel.md).
 

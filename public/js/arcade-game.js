@@ -1,3 +1,4 @@
+import {mountNativeWorldGuide} from './native-world-guide.js';
 import {arcadeChallenges,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
 import {isGameTypingTarget} from './game-keyboard-input.js';
@@ -23,6 +24,7 @@ import {createArcadeGamePresentation} from './arcade-3d-games.js';
 import {applySportsSurfaces} from './sports-surfaces.js';
 import {createArcadeClock,advanceArcadeClock,arcadePhysicsSteps,arcadePointer,basketballPosition,basketballRelease,arcadeAnimationSpeed} from './arcade-runtime.js';
 import {arcadeSettings,arcadeAttractions,createArcadeSession,enterArcadeAttraction,exitArcadeAttraction,stepArcadeRide,arcadeRidePose,localArcadePoints,isArcadeMap} from './arcade-rules.js';
+const nativeGuide=mountNativeWorldGuide({parent:document.querySelector('.controls')||document.querySelector('.intro')});
 const host=document.documentElement.dataset.arcadeHost||'site';
 let nativeArcadeRounds=0,nativeRideLaps=0,nativeArcadeEpoch=0;
 let startupError='',mapName='Neon Junction — Arcade Park',loaded={},builderScene=null;
@@ -412,6 +414,7 @@ setInterval(()=>{if(document.hidden&&liveGame&&game!==null)updateGame(0);},1000)
 $('#join-game').onclick=()=>joinSharedGame();$('#spectate-game').onclick=()=>joinSharedGame(true);$('#start-round').onclick=()=>startRound();
 for(const button of document.querySelectorAll('[data-game-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);pressed.add(button.dataset.gameKey);requestGameInput();};button.onpointerup=button.onpointercancel=()=>{pressed.delete(button.dataset.gameKey);requestGameInput();};}
 
+if(!startupError)nativeGuide.enter({id:environmentId,name:mapName,game:'arcade'});
 refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
 window.NeonJunction=Object.freeze({snapshot:()=>({challenge:nativeChallenges.snapshot(),mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
 setExploration(cameraMode!=='first-person'?'overview':'walk');
