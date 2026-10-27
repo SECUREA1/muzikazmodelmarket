@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>XR panel action bridge</title><style>body{font:16px system-ui}dialog{width:600px}button,input,select,summary{margin:8px;min-height:32px}label{display:block}.css-hidden{display:none}</style></head>
+<body><main></main><script type="module">
+import {xrPanelActions,getXRPanelActions} from '../../public/js/xr-panel-actions.js';
+import {fullscreenPanel} from '../../public/js/fullscreen-panels.js';
+import {GAME_INPUT_RELEASE_EVENT} from '../../public/js/game-input-release.js';
+window.calls={play:0,input:0,change:0,closed:0,releases:0,first:0,second:0,invoke:0};
+document.addEventListener(GAME_INPUT_RELEASE_EVENT,()=>calls.releases++);
+const panel=document.createElement('section');panel.id='bridge-game';panel.hidden=true;panel.setAttribute('aria-label','Carnival controls');
+panel.innerHTML=`<h3>Choose a game</h3><button id="play">Play round</button><button id="disabled" disabled>Unavailable round</button><button hidden>Hidden action</button><button class="css-hidden">Invisible action</button><span aria-hidden="true"><button>Decorative action</button></span>
+<label>Music <input id="music" type="checkbox"></label><fieldset><legend>Difficulty</legend><label><input id="easy" name="difficulty" type="radio" checked>Easy</label><label><input id="hard" name="difficulty" type="radio">Hard</label></fieldset>
+<label>Bet <input id="bet" type="number" value="2" min="1" max="3" step="1"></label><label>Volume <input id="volume" type="range" value=".5" min="0" max="1" step=".1"></label><label>Fine zoom <input id="fine" type="number" value="1" min="0" max="5" step="any"></label>
+<label>Table <select id="table"><option value="one">One</option><option value="two">Two</option><option value="hidden" hidden>Hidden table</option><optgroup label="Unavailable" disabled><option value="bad">Locked table</option></optgroup></select></label>
+<label>Read-only <input type="number" value="9" readonly></label><fieldset disabled><label>Locked bet <input type="number" value="1"></label><button>Locked game</button></fieldset>
+<label>Card number <input type="number" autocomplete="cc-number" value="1234"></label><label>Wallet address <input type="text" value="wallet-secret-value"></label><label>Password <input type="password" value="private-value"></label><label>Nickname <input type="text" value="Player"></label>
+<div class="market-preview-tuning"><button>Rotate preview</button></div><button data-flame-fire>Hold ignite</button><button data-hold="true">Hold machine</button><button data-hold="0" id="hold-card">Hold ace of spades</button>
+<details id="instructions"><summary>Game instructions</summary><button id="inside-details">Practice action</button></details>
+<article><button id="first">Repeat action</button></article><article><button id="second">Repeat action</button></article>
+<a href="/model-market.html" id="internal-link">Market</a><a href="https://example.invalid/" id="external-link">External</a><a href="javascript:void(0)">Script link</a><a href="/download.json" download>Download</a>
+<p role="status" id="status">Ready for your turn</p>`;
+document.body.append(panel);
+window.screen=fullscreenPanel(panel,{onClose:()=>calls.closed++});
+panel.querySelector('#play').onclick=()=>{calls.play++;panel.querySelector('#status').textContent='Round started';};
+panel.querySelector('#first').onclick=()=>calls.first++;panel.querySelector('#second').onclick=()=>calls.second++;
+panel.querySelector('#hold-card').onclick=event=>event.currentTarget.setAttribute('aria-pressed',event.currentTarget.getAttribute('aria-pressed')!=='true');
+for(const control of panel.querySelectorAll('input,select')){control.addEventListener('input',()=>calls.input++);control.addEventListener('change',()=>calls.change++);}
+window.bridge=xrPanelActions({excludeIds:['funhouse-excluded'],onInvoke:()=>calls.invoke++});
+window.snapshot=()=>{const state=bridge.snapshot();return {...state,items:state.items.map(item=>({id:item.id,label:item.label,keepOpen:item.keepOpen}))};};
+window.invoke=(label,index=0)=>bridge.snapshot().items.filter(item=>item.label===label)[index]?.run();
+window.openPanel=()=>screen.open();
+window.openNested=()=>{const dialog=document.createElement('dialog');dialog.id='nested';dialog.setAttribute('aria-label','Nested confirmation');dialog.innerHTML='<button id="confirm">Confirm selection</button>';document.body.append(dialog);dialog.showModal();return dialog;};
+window.openExcluded=()=>{const dialog=document.createElement('dialog');dialog.innerHTML='<section id="funhouse-excluded"><button>Own immersive control</button></section>';document.body.append(dialog);dialog.showModal();return dialog;};
+window.navigateCalls=[];
+window.withNavigation=()=>{const state=getXRPanelActions(document,{navigate:url=>navigateCalls.push(url)});return {labels:state.items.map(item=>item.label),invoke:label=>state.items.find(item=>item.label===label)?.run()};};
+openPanel();window.ready=true;
+</script></body></html>

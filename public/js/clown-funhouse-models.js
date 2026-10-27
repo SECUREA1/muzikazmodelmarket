@@ -49,10 +49,13 @@ export function createFunhouseModel(id){
   if(height>0){const scale=1.8/height;content.scale.setScalar(scale);content.position.y=-bounds.min.y*scale;}
  }
  root.userData={builderObject:true,modelId:id,funhouseModel:true,label:item.name,description:item.description,dimensions:[...item.dimensions],animated:true};
- root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false)=>content.userData.updateFunhouseEffects?.(elapsed,reducedMotion);
+ root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false,serverTime)=>content.userData.updateFunhouseEffects?.(elapsed,reducedMotion,serverTime);
  root.userData.animateFunhouseStation=(station=stationIds[id]||id,result={})=>content.userData.animateFunhouseStation?.(station,result);
  root.userData.playFunhouse=(result={})=>content.userData.animateFunhouseStation?.(stationIds[id]||id,result);
- root.userData.setFunhouseState=state=>content.userData.setFunhouseState?.(state);
+ root.userData.setFunhouseState=(state,serverTime)=>content.userData.setFunhouseState?.(state,serverTime);
+ root.userData.funhouseInteractionTargets=content.userData.funhouseInteractionTargets||[];
+ root.userData.funhouseRideAnchors=content.userData.funhouseRideAnchors||{};
+ root.userData.funhouseBallTargets=content.userData.funhouseBallTargets||[];
  root.userData.funhouseTargets=(content.userData.funhouseTargets||[]).map(target=>({...target,position:{x:target.position.x-origin[0],y:target.position.y-origin[1],z:target.position.z-origin[2]}}));
  root.traverse(node=>{if(node.isMesh){node.userData.builderRoot=root;node.receiveShadow=true;}});
  return root;

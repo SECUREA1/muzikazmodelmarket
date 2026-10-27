@@ -18,12 +18,12 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,isFishingTool,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
-  currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
+  funhouseVR:{reset,update:reset},funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
@@ -166,6 +166,23 @@ test('jump and shoot ignore early touches and begin dispatching after gameplay r
  }
  assert.equal(context.jump(),false);assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
  context.gameplayStarted=true;context.shootAtReticle();await context.jump();assert.deepEqual(calls,['fire','input','refresh']);
+});
+
+test('a boarded funhouse ride suppresses walking, jumping, sprinting and firing inputs',()=>{
+ const calls=[],{context}=fixture({funhouseRide:()=>({status:'active'}),player:{yaw:1.25},serverCommand:()=>calls.push('command'),localWalkingActive:true,localWalkingView:{jump:()=>calls.push('jump')}});
+ for(const name of ['serverInput','jump']){
+  const start=source.indexOf('  '+(name==='jump'?'function jump()':'function serverInput()'));
+  vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ }
+ assert.deepEqual(JSON.parse(JSON.stringify(context.serverInput())),{side:0,forward:0,lift:0,rudder:0,yaw:1.25,jump:false,sprint:false,firing:false});
+ assert.equal(context.jump(),false);assert.deepEqual(calls,[]);
+});
+
+test('reticle attraction actions consume the primary action before vehicle or weapon firing',()=>{
+ const calls=[],ray={controller:false};
+ const {context}=fixture({funhouseAimRay:()=>ray,useFunhouseWorld:actual=>{assert.equal(actual,ray);calls.push('attraction');return true;},fireAircraft:()=>calls.push('fire')});
+ const start=source.indexOf('  function shootAtReticle()');vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);
+ assert.equal(context.shootAtReticle(),true);assert.deepEqual(calls,['attraction']);
 });
 
 test('failed destination discovery restores current-world readiness without replacing its room',async()=>{

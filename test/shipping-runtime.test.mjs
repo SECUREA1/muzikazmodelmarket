@@ -77,14 +77,14 @@ test('shipping VR primary opens a visible native menu when no cargo action is ac
 });
 
 test('native shipping menus neutralize held helm inputs without cancelling the automatic route',()=>{
- const context=vm.createContext({gameplayControlsReady:()=>true,isWatercraft:()=>true,serverActors:{},serverVehicleId:'boat',renderer:{xr:{isPresenting:true}},activeEnvironment:{id:'hormuz-shipping'},xrGameControls:{menuOpen:true},player:{yaw:.8}}),start=source.indexOf('  function serverInput()');
+ const context=vm.createContext({funhouseRide:()=>null,gameplayControlsReady:()=>true,isWatercraft:()=>true,serverActors:{},serverVehicleId:'boat',renderer:{xr:{isPresenting:true}},activeEnvironment:{id:'hormuz-shipping'},xrGameControls:{menuOpen:true},player:{yaw:.8}}),start=source.indexOf('  function serverInput()');
  vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);const input=context.serverInput();
  assert.equal(input.forward,0);assert.equal(input.side,0);assert.equal(input.rudder,0);assert.equal(input.firing,false);assert.equal(input.jump,false);assert.equal(input.throttle,undefined);assert.equal(input.anchor,undefined);
 });
 
 test('handling heartbeats cannot cancel a new automatic departure while local prediction keeps the dock lock',()=>{
  for(const phase of ['loading','secured','unloading']){
-  const context=vm.createContext({gameplayControlsReady:()=>true,isWatercraft:()=>true,serverActors:{},serverVehicleId:'boat',renderer:{xr:{isPresenting:false}},activeEnvironment:{id:'hormuz-shipping'},serverViewSnapshot:{players:{self:{shipping:{job:{phase}}}}},authoritativeClient:{selfId:'self'},player:{yaw:.8}}),start=source.indexOf('  function serverInput()');
+  const context=vm.createContext({funhouseRide:()=>null,gameplayControlsReady:()=>true,isWatercraft:()=>true,serverActors:{},serverVehicleId:'boat',renderer:{xr:{isPresenting:false}},activeEnvironment:{id:'hormuz-shipping'},serverViewSnapshot:{players:{self:{shipping:{job:{phase}}}}},authoritativeClient:{selfId:'self'},player:{yaw:.8}}),start=source.indexOf('  function serverInput()');
   vm.runInContext(source.slice(start,source.indexOf('\n',start)),context);const delayedInput=context.serverInput();assert.equal(delayedInput.forward,0);assert.equal(delayedInput.side,0);assert.equal(delayedInput.throttle,undefined);assert.equal(delayedInput.anchor,undefined);assert.equal(delayedInput.firing,false);
   const preview=shippingPredictedControls(delayedInput,phase);assert.equal(preview.anchor,true);assert.equal(preview.throttle,0);assert.equal(delayedInput.anchor,undefined,'preview must not mutate the outgoing network packet');
   const boat={id:'boat',modelId:'shipping-feeder',active:true,position:{x:-1030,y:0,z:330},rotation:{y:Math.PI/2},boating:{speed:0,assist:'launch',assistOrigin:{x:-1030,z:330},anchor:false}},environment=shippingWorld(),controls=boatAssistedInput(boat,delayedInput,environment,100000,{boat});
@@ -101,7 +101,7 @@ test('new cargo ship entry tilts toward the deck once and preserves later delibe
 test('shipping default pointer actions cannot ghost fire while the cargo action bar is active',()=>{
  const system={tool:'laser',toolSelected:false};
  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[name]=()=>assert.fail('A cargo action must not fire a weapon.');
- const context=vm.createContext({toxicBubbleSystem:system,fishingUI:{active:()=>false,visible:()=>false},activeEnvironment:{id:'hormuz-shipping'}}),start=source.indexOf("  for(const name of ['handlePointerInteraction'");
+ const context=vm.createContext({funhouseAimRay:()=>null,useFunhouseWorld:()=>false,currentFunhouseEquipment:()=>null,toxicBubbleSystem:system,fishingUI:{active:()=>false,visible:()=>false},activeEnvironment:{id:'hormuz-shipping'}}),start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  for(const method of Object.keys(system))if(typeof system[method]==='function')assert.equal(system[method](),false);
 });
