@@ -1,5 +1,6 @@
 import {isTropicalIslandEnvironment} from '../tropical-island-config.js';
 import {isPrisonEnvironment} from '../prison-config.js';
+import {isFitnessEnvironment} from '../fitness-config.js';
 import {isProvingEnvironment,isCompoundEnvironment} from '../factory-test-config.js';
 import {isFactoryEnvironment} from '../missile-factory-config.js';
 import {isCleanCommonsEnvironment} from '../rad-tox-rules.js';
@@ -104,7 +105,7 @@ export class EnvironmentLoader {
       const authoredSize = authoredBounds.getSize(new THREE.Vector3());
       const authoredFootprint = Math.max(authoredSize.x, authoredSize.z);
       const playableSize = Number(environment.playableSize);
-      if (!isTropicalIslandEnvironment(environment) && !isPrisonEnvironment(environment) && !isBasketballEnvironment(environment) && playableSize > 0 && authoredFootprint > 0) {
+      if (!isTropicalIslandEnvironment(environment) && !isPrisonEnvironment(environment) && !isBasketballEnvironment(environment) && !isFitnessEnvironment(environment) && playableSize > 0 && authoredFootprint > 0) {
         const normalization = THREE.MathUtils.clamp(playableSize / authoredFootprint, 0.01, 100);
         spaceScale *= normalization;
         nextWorld.scale.setScalar(baseScale * spaceScale);

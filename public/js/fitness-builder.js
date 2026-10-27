@@ -1,7 +1,7 @@
-import {FITNESS_ID,FITNESS_STATIONS,FITNESS_LOCATIONS,FITNESS_TRAINERS,FITNESS_RESIDENTS,isFitnessEnvironment} from './fitness-config.js';
+import {FITNESS_ID,FITNESS_STATIONS,FITNESS_LOCATIONS,FITNESS_TRAINERS,FITNESS_RESIDENTS,FITNESS_BOUNDS,FITNESS_EXPANSION_VERSION,isFitnessEnvironment} from './fitness-config.js';
 import {FITNESS_ITEMS} from './fitness-equipment.js';
 
-export const FITNESS_BUILDER_LAYOUT=Object.freeze({name:'Gold Fitness Centre',icon:'◈',description:'A complete gold fitness centre with individually editable gym equipment. Move, rotate, scale, recolour, duplicate or remove each item, then add upgrades from ITEMS → Fitness & gym.',color:0x1a252c,sky:0x101c23,mapSize:80,mapColor:'#d8ad45'});
+export const FITNESS_BUILDER_LAYOUT=Object.freeze({name:'Gold Fitness Centre',icon:'◈',description:'A gold fitness centre with championship boxing, basketball, table tennis and sprint racing. Edit every equipment assembly and add upgrades from ITEMS → Fitness & gym.',color:0x1a252c,sky:0x101c23,mapSize:FITNESS_BOUNDS.mapSize,mapColor:'#d8ad45'});
 const clone=value=>structuredClone(value);
 const point=(x,z,y=0)=>({x,y,z});
 const primary=(kind,approach)=>({fitnessStation:kind,fitnessStationId:'fitness-'+kind,fitnessApproach:{x:0,y:0,z:0,...approach}});
@@ -27,7 +27,14 @@ export const FITNESS_EQUIPMENT_PLACEMENTS=Object.freeze([
  ...Array.from({length:9},(_,index)=>['locker-'+index,'fitness-locker',-32+index*1.7,33.6]),
  ['locker-bench-a','fitness-locker-bench',-28,29],['locker-bench-b','fitness-locker-bench',-20,29],
  ['hydration','fitness-water-station',-13,31],['reception','fitness-reception-counter',0,28],['reception-monitor','fitness-monitor',2,28,0,null,1.42],
- ['coach-maya-board','fitness-coach-board',-6,25.3],['coach-leon-board','fitness-coach-board',7,-10.7]
+ ['coach-maya-board','fitness-coach-board',-6,25.3],['coach-leon-board','fitness-coach-board',7,-10.7],
+ ['primary-boxing-sparring','fitness-ring-scoreboard',-22,-26,0,primary('boxing-sparring',{z:14})],
+ ['primary-basketball','fitness-basketball-hoop',52,-29,0,primary('basketball',{z:12})],
+ ['primary-table-tennis','fitness-table-tennis',65,2,0,primary('table-tennis',{z:3})],
+ ['primary-sprint','fitness-sprint-gates',51,21,0,primary('sprint',{z:2})],
+ ['ringside-seating-west','fitness-ringside-seating',-31,-17,Math.PI/2],
+ ['ringside-seating-north','fitness-ringside-seating',-22,-30],
+ ['competition-seating','fitness-ringside-seating',73,10,Math.PI/2]
 ]);
 
 export function fitnessBuilderObjects(){
@@ -36,7 +43,7 @@ export function fitnessBuilderObjects(){
   return {id:'gym-'+id,modelId,name:item.name,objectType:station?'interactive':'props',asset:{buildAssetId:modelId},position:point(x,z,y),rotation:{x:0,y:rotationY,z:0},scale:{x:1,y:1,z:1},groundOffset:y,materialSettings:{accent:'#d8ad45',useAccent:false},animationState:{enabled:true,speed:1,loop:true,autoplay:true},functionalSettings:{behavior:station?'interact':'decor',fitnessStation:false,active:true,destructible:false,interactionKey:'e',interactionDistance:4,damage:0,...(station?{...station,prompt:'Train '+FITNESS_STATIONS.find(value=>value.kind===station.fitnessStation)?.name}: {})},metadata:{fitnessEquipment:true,upgradeable:true}};
  });
 }
-const settings=source=>({...clone(source||{}),enabled:true,currency:'MZK',editableEquipment:true,editableStations:true,width:72,depth:72,stations:clone(source?.stations||FITNESS_STATIONS),trainers:clone(source?.trainers||FITNESS_TRAINERS)});
+const settings=source=>({...clone(source||{}),enabled:true,currency:'MZK',expansionVersion:FITNESS_EXPANSION_VERSION,editableEquipment:true,editableStations:true,width:FITNESS_BOUNDS.width,depth:FITNESS_BOUNDS.depth,bounds:clone(FITNESS_BOUNDS),stations:clone(source?.stations||FITNESS_STATIONS),trainers:clone(source?.trainers||FITNESS_TRAINERS)});
 function markEditableBase(base){if(!base)return base;const value=clone(base);value.fitness=settings(value.fitness||value.builderScene?.layoutMeta?.fitness);value.builderScene||={};value.builderScene.sourceFitness=settings(value.builderScene.sourceFitness||value.fitness);value.builderScene.layoutMeta={...(value.builderScene.layoutMeta||{}),fitness:settings(value.builderScene.layoutMeta?.fitness)};return value;}
 
 /** Upgrade legacy fixed-gym copies once. Later deletion and movement persist. */
@@ -44,7 +51,7 @@ export function editableFitnessScene(input){
  const scene=clone(input);const fitness=scene.sourceFitness||scene.layoutMeta?.fitness;
  if(!(scene.sourceLayout==='fitness-centre'||scene.layout==='fitness-centre'||fitness?.enabled||isFitnessEnvironment(scene.baseEnvironment)))return scene;
  const converted=fitness?.editableEquipment===true;
- scene.sourceGame='fitness';scene.sourceLayout='fitness-centre';scene.sourceFitness=settings(fitness);scene.sourceSpawn||={x:0,y:.02,z:32,rotationY:0};
+ scene.sourceGame='fitness';scene.sourceLayout='fitness-centre';scene.sourceFitness=settings(fitness);scene.sourceSpawn||={x:0,y:.02,z:32,rotationY:0};scene.mapSize=Math.max(FITNESS_BOUNDS.mapSize,Number(scene.mapSize)||0);
  scene.layoutMeta={...scene.layoutMeta,color:0x1a252c,fitness:settings(fitness),locations:clone(scene.layoutMeta?.locations||FITNESS_LOCATIONS),residents:clone(scene.layoutMeta?.residents||FITNESS_RESIDENTS)};
  scene.gameplay={...scene.gameplay,multiplayer:true,friendlyFire:false,radTox:false,fitness:{enabled:true}};scene.baseEnvironment=markEditableBase(scene.baseEnvironment);
  if(!converted){const kept=(scene.objects||[]).filter(object=>!object.fitnessStation||FITNESS_ITEMS[object.asset?.buildAssetId||object.modelId]);const names=new Set(kept.map(object=>object.id));scene.objects=[...kept,...fitnessBuilderObjects().filter(object=>!names.has(object.id))];}
@@ -52,7 +59,7 @@ export function editableFitnessScene(input){
 }
 
 export function createFitnessBuilderScene({id='custom-fitness-centre',name='Gold Fitness Centre · Custom'}={}){
- return editableFitnessScene({version:3,id,name,layout:'fitness-centre',mapSize:80,weather:'clear',sourceEnvironmentId:FITNESS_ID,sourceLayout:'fitness-centre',sourceGame:'fitness',sourceSpawn:{x:0,y:.02,z:32,rotationY:0},layoutMeta:{color:0x1a252c,fitness:{enabled:true}},objects:[]});
+ return editableFitnessScene({version:3,id,name,layout:'fitness-centre',mapSize:FITNESS_BOUNDS.mapSize,weather:'clear',sourceEnvironmentId:FITNESS_ID,sourceLayout:'fitness-centre',sourceGame:'fitness',sourceSpawn:{x:0,y:.02,z:32,rotationY:0},layoutMeta:{color:0x1a252c,fitness:{enabled:true}},objects:[]});
 }
 
 /** Retain the gym's training metadata when Builder refreshes layout labels. */

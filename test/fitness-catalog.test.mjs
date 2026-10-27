@@ -15,7 +15,7 @@ import {MzkAccountStore} from '../loadout-code-store.mjs';
 
 const assets=JSON.parse(await readFile(new URL('../public/models/backpack-assets.json',import.meta.url),'utf8')).assets;
 test('all gym assemblies are searchable Builder items and independently purchasable upgrades',async()=>{
- assert.equal(Object.keys(FITNESS_ITEMS).length,26);
+ for(const id of ['fitness-basketball-hoop','fitness-table-tennis','fitness-sprint-gates','fitness-ring-scoreboard','fitness-ringside-seating'])assert.ok(FITNESS_ITEMS[id],id+' is available as an expansion upgrade');
  assert.ok(BUILDER_SECTIONS.some(([id])=>id==='fitness'));
  const library=[];
  for(const [id,item]of Object.entries(FITNESS_ITEMS)){
@@ -29,7 +29,7 @@ test('all gym assemblies are searchable Builder items and independently purchasa
   const facets=marketFacets(upgrades[0]);assert.ok(facets.uses.includes('build'));assert.ok(facets.uses.includes('decorate'));
   library.push({id,buildAssetId:id,name:item.name,description:item.description,category:'fitness',procedural:true});
  }
- assert.equal(libraryModels(library,'fitness').length,26);
+ assert.equal(libraryModels(library,'fitness').length,Object.keys(FITNESS_ITEMS).length);
  assert.ok(libraryModels(library,'fitness','bench').some(item=>item.id==='fitness-bench-press'));
 });
 

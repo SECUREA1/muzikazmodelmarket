@@ -4604,7 +4604,7 @@
     {
       "id": "builder-fitness-boxing-ring",
       "name": "Gold Boxing Ring",
-      "description": "Open-entry training ring with padded gold corners, three ropes and a low canvas apron.",
+      "description": "Championship training ring with four ropes, padded red and blue corners, an open south entrance, shallow access steps and a marked canvas apron.",
       "owner": "MUZIKAZ",
       "type": "props",
       "visibility": "public",
@@ -5449,6 +5449,183 @@
       "collection": "Fitness Centre upgrades",
       "productTier": "fitness",
       "priceMzk": 80,
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-basketball-hoop",
+      "name": "Gold Basketball Hoop",
+      "description": "Regulation-height 3.05 m rim, backboard, woven-style net and a weighted gold-trimmed portable stand.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-basketball-hoop",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        3.6,
+        4.4,
+        2.8
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 420,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "basketball",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5.5
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Basketball Hoop",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-table-tennis",
+      "name": "Gold Table Tennis",
+      "description": "Regulation 2.74 × 1.525 m playing surface at 0.76 m, centre net, folding-style underframe and gold court edging.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-table-tennis",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        2.74,
+        1.1,
+        1.525
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 280,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "table-tennis",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Table Tennis",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-sprint-gates",
+      "name": "Gold Sprint Gates",
+      "description": "Three-lane sprint and hurdle course with start and finish timing gates, lane markings and low training hurdles.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-sprint-gates",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        10,
+        2.6,
+        28
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 360,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "sprint",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 15
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Sprint Gates",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-ring-scoreboard",
+      "name": "Gold Ring Scoreboard",
+      "description": "Freestanding championship scoreclock with red and blue score panels, round display and a three-minute digital timer.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-ring-scoreboard",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        5,
+        3.4,
+        1.2
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 240,
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "boxing-sparring",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Ring Scoreboard",
+        "destructible": false
+      },
+      "metadata": {
+        "fitnessEquipment": true,
+        "upgradeable": true
+      }
+    },
+    {
+      "id": "builder-fitness-ringside-seating",
+      "name": "Gold Ringside Seating",
+      "description": "Three-tier ringside spectator stand with padded seats, gold aisle rails and a clear front approach.",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "fitness-ringside-seating",
+      "builderCategory": "fitness",
+      "format": "procedural-3d",
+      "dimensions": [
+        8,
+        1.6,
+        3
+      ],
+      "thumbnailUrl": "/public/images/fitness/equipment.svg",
+      "collection": "Fitness Centre upgrades",
+      "productTier": "fitness",
+      "priceMzk": 180,
       "function_data": {
         "active": true,
         "behavior": "decor",
