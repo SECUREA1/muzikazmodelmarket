@@ -29,3 +29,89 @@
 .world-atlas-live-panel [data-map-theme=gold] .atlas-location-type{color:#e2bd62}
 .world-atlas-live-panel [data-atlas-preview][data-map-theme=gold]{border-color:#b9923c;background:#302819}
 .world-atlas-live-panel [data-map-id][data-map-theme=gold]:hover>rect,.world-atlas-live-panel [data-map-id][data-map-theme=gold]:focus>rect{fill:#674d1c;stroke:#ffe09a}
+
+/* Homepage atlas: a live graphic of the connected world. */
+.world-atlas-live-panel.world-atlas-home{--atlas-line:#29414e;--atlas-muted:#9bb0bb;--atlas-cyan:#8ce8f4;--atlas-lime:#c8fa84;padding:clamp(16px,2.8vw,36px);border-color:#314b58;border-radius:24px;background:radial-gradient(ellipse at 92% 0,#184d503d,transparent 45%),#08121c;box-shadow:0 24px 80px #0005;font-family:Inter,system-ui,sans-serif;color:#edf5f7}
+.world-atlas-home>header{gap:20px;align-items:center;margin-bottom:24px}
+.world-atlas-home .atlas-heading{flex:1;min-width:0}
+.world-atlas-home .atlas-heading>p:first-child{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:var(--atlas-lime);font:800 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:.16em}
+.world-atlas-home .atlas-heading>p:first-child::before{content:'';width:6px;height:6px;flex:none;border-radius:50%;background:var(--atlas-lime);box-shadow:0 0 12px #c8fa8470}
+.world-atlas-home .atlas-heading h2{margin:0;color:#f4f8f5;font:400 clamp(34px,4.4vw,62px)/1.06 Bangers,Impact,sans-serif;letter-spacing:.015em;text-transform:none;text-shadow:none;-webkit-text-stroke:0}
+.world-atlas-home .atlas-heading>p:last-child{max-width:620px;margin:13px 0 0;color:var(--atlas-muted);font:400 13px/1.7 Inter,system-ui,sans-serif;text-transform:none}
+.world-atlas-home button,.world-atlas-home .btn,.world-atlas-home input,.world-atlas-home select{border-color:var(--atlas-line);border-radius:9px;background:#132532;font:650 12px/1.4 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#e8f2f3}
+.world-atlas-home button{width:auto;transition:border-color .15s,background .15s}
+.world-atlas-home button:hover{background:#1c3542;border-color:#658d9a}
+.world-atlas-home>header>.btn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-color:#aada71;background:var(--atlas-lime);color:#15231c;text-decoration:none;box-shadow:none}
+.world-atlas-home>header>.btn::after{content:'\2197';font-size:17px}
+.world-atlas-home .atlas-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0;padding:12px 0;border-top:1px solid var(--atlas-line)}
+.world-atlas-home .atlas-browse-toggle{font-weight:700;background:#132532}
+.world-atlas-home .atlas-browse-toggle[aria-expanded=true]{border-color:#62858e;color:var(--atlas-cyan)}
+.world-atlas-home .atlas-view-switch{display:flex;flex-wrap:nowrap;gap:3px;margin:0 0 0 auto;padding:3px;border:1px solid var(--atlas-line);border-radius:11px;background:#060e16}
+.world-atlas-home .atlas-view-switch button{min-height:36px;padding:8px 14px;border-color:transparent;border-radius:7px;white-space:nowrap;background:transparent;color:var(--atlas-muted)}
+.world-atlas-home .atlas-view-switch button[aria-pressed=true]{border-color:#31545b;background:#17323d;color:#a8f4f7}
+.world-atlas-home .atlas-primary-tools{display:flex;gap:5px;align-items:center}
+.world-atlas-home .atlas-primary-tools [data-atlas-zoom]{width:40px;padding:6px;font:400 22px/1 system-ui}
+.world-atlas-home .atlas-primary-tools [data-atlas-fit]{white-space:nowrap;padding-inline:13px}
+.world-atlas-home>[data-atlas-status]{margin:0 0 15px;color:#91a8b3;font-size:10px;line-height:1.5;letter-spacing:.02em;text-transform:none}
+.world-atlas-home .atlas-workspace{grid-template-columns:minmax(220px,270px) minmax(0,1fr);gap:16px}
+.world-atlas-home .atlas-workspace.atlas-sidebar-closed{grid-template-columns:minmax(0,1fr)}
+.world-atlas-home .atlas-sidebar{padding:14px;border-color:var(--atlas-line);border-radius:15px;background:#0b1924}
+.world-atlas-home .atlas-directory-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:1px 0 14px}
+.world-atlas-home .atlas-directory-heading strong{font-size:13px;letter-spacing:0;color:#e8f3f4}
+.world-atlas-home .atlas-directory-heading span{font-size:10px;color:var(--atlas-cyan);white-space:nowrap}
+.world-atlas-home .atlas-sidebar>input{background:#07121c;font-size:12px;font-weight:400;border-color:#2c4654}
+.world-atlas-home .atlas-sidebar>input::placeholder{color:#8a9eaa;opacity:1}
+.world-atlas-home .atlas-sidebar>label{font-size:10px;color:var(--atlas-muted);margin-bottom:12px}
+.world-atlas-home .atlas-sidebar>label select{font-size:11px;font-weight:500;background:#122632}
+.world-atlas-home .atlas-sidebar [data-atlas-locations]{margin:0;gap:7px;max-height:530px;scrollbar-color:#476475 transparent}
+.world-atlas-home .atlas-sidebar [data-atlas-locations] a{grid-template-columns:42px minmax(0,1fr);gap:4px 9px;padding:11px 8px;border-color:#223b47;border-radius:10px;background:#0f2230;color:#deeaed}
+.world-atlas-home .atlas-sidebar [data-atlas-locations] a:hover{background:#172f3a;border-color:#577a84}
+.world-atlas-home .atlas-sidebar [data-atlas-locations] a[aria-current=true]{border-color:#a1cb79;background:linear-gradient(110deg,#28442c,#142c30);box-shadow:inset 3px 0 var(--atlas-lime)}
+.world-atlas-home .atlas-sidebar .atlas-building-preview{width:42px;height:46px;opacity:.9}
+.world-atlas-home .atlas-sidebar strong{font-size:12px;line-height:1.4}
+.world-atlas-home .atlas-sidebar small{font-size:10px;line-height:1.45;color:#9fb2bc}
+.world-atlas-home .atlas-sidebar .atlas-location-type{font-size:8px;letter-spacing:.07em;color:#9de4e9}
+.world-atlas-home .atlas-map-tools{border-color:var(--atlas-line);border-radius:10px;background:#0e202b;margin:0 0 10px}
+.world-atlas-home .atlas-map-tools>summary{min-height:40px;font-size:11px;color:#b1c5ce}
+.world-atlas-home .atlas-map-tools>.atlas-navigation,.world-atlas-home .atlas-map-tools>.local-map-3d-controls{border-color:var(--atlas-line)}
+.world-atlas-home .atlas-map-caption{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 14px;border:1px solid var(--atlas-line);border-bottom:0;border-radius:13px 13px 0 0;background:#102330}
+.world-atlas-home .atlas-map-caption>span{display:flex;align-items:center;gap:8px;color:#a4d4dc;font-size:9px;font-weight:800;letter-spacing:.13em}
+.world-atlas-home .atlas-map-caption i{width:5px;height:5px;border-radius:50%;background:var(--atlas-cyan);box-shadow:0 0 10px #8ce8f450}
+.world-atlas-home .atlas-map-caption small{font-size:10px;color:#91a8b4;letter-spacing:0;text-transform:none}
+.world-atlas-home .atlas-display .connected-world-map{padding:0;border-color:var(--atlas-line);border-radius:0 0 13px 13px;background:#081722;overflow:hidden}
+.world-atlas-home .connected-world-status{padding:10px 14px 0;margin:0!important;font:500 10px/1.5 Inter,system-ui,sans-serif!important;color:#93afb9}
+.world-atlas-home .connected-world-viewport .local-map-3d-viewport{height:clamp(430px,58vh,650px);border:0;border-radius:0;background:#081722}
+.world-atlas-home .connected-world-map>button{margin:10px 14px 14px;padding:9px 14px;border-color:#486c64;background:#17352f;color:#d4f5c1}
+.world-atlas-home .connected-world-map .local-map-compass{right:14px;top:14px;padding:10px;background:#091621df;color:#d5f5f4;border:1px solid #385660;font:800 12px system-ui}
+.world-atlas-home .local-map-3d-tag{border-color:color-mix(in srgb,var(--tag-color),#28414e 50%);border-radius:6px;background:#081722eb;color:#e1eff0;box-shadow:0 3px 12px #0006;font-size:10px;max-width:145px}
+.world-atlas-home .local-map-3d-tag:hover{background:#1c3a43;color:#fff;z-index:4}
+.world-atlas-home .atlas-world-legend{display:flex;align-items:center;flex-wrap:wrap;gap:8px 17px;margin:12px 2px 16px;font:500 10px/1.5 Inter,system-ui,sans-serif;color:#9fb5be}
+.world-atlas-home .atlas-world-legend span{display:flex;align-items:center;gap:6px}
+.world-atlas-home .atlas-world-legend i{display:inline-block;width:7px;height:7px;border:1px solid #c8fa84;border-radius:2px;background:#36563e}
+.world-atlas-home .atlas-world-legend .atlas-legend-route{width:13px;height:0;border-width:1px 0 0;border-color:#8ce8f4;border-style:dashed;border-radius:0;background:none}
+.world-atlas-home .atlas-world-legend .atlas-legend-live{width:6px;height:6px;border:0;border-radius:50%;background:#ffe891}
+.world-atlas-home .atlas-world-legend small{margin-left:auto;font-size:10px;color:#839fae}
+.world-atlas-home [data-connected-selection]{font-size:11px;line-height:1.6;color:#adc4cc;overflow-wrap:anywhere}
+.world-atlas-home .atlas-display>[data-atlas-enter]{display:flex;justify-content:center;align-items:center;min-height:44px;padding:12px 16px;border-color:#80ac62;background:#bddf8c;color:#14251c;text-decoration:none}
+.world-atlas-home .atlas-display [data-atlas-preview]{padding:14px;border-color:var(--atlas-line);border-radius:13px;background:#0c1e2a}
+.world-atlas-home [data-atlas-preview] h3{font:700 17px/1.3 Inter,system-ui,sans-serif;letter-spacing:0;color:#edf8f3;text-transform:none}
+.world-atlas-home [data-atlas-preview] p{font-size:11px;line-height:1.6;color:#9fb5be;text-transform:none}
+.world-atlas-home [data-atlas-route] a{font-size:10px;min-height:36px;padding:8px 10px;border-color:#2f4c59;background:#122a37;color:#bde7eb;text-decoration:none}
+.world-atlas-home .atlas-advanced{margin-top:20px;border-color:var(--atlas-line);border-radius:11px;background:#0d1c27;color:#adc1cb}
+.world-atlas-home .atlas-advanced>summary{font-size:12px}
+.world-atlas-home>[data-atlas-refresh]{margin-right:12px}
+.world-atlas-home>a[href="environment-builder.html"]{display:inline-flex;margin-top:8px;font-size:12px;color:#b8e795}
+@media(max-width:1050px){.world-atlas-home .atlas-workspace{grid-template-columns:minmax(200px,230px) minmax(0,1fr)}.world-atlas-home .atlas-primary-tools{margin-left:auto}.world-atlas-home .atlas-view-switch{margin-left:0}}
+@media(max-width:760px){.world-atlas-live-panel.world-atlas-home{width:calc(100% - 24px);padding:16px;border-radius:18px}.world-atlas-home>header{align-items:flex-start;gap:16px;margin-bottom:18px}.world-atlas-home>header>.btn{font-size:10px;min-height:40px;padding:9px 12px}.world-atlas-home .atlas-heading>p:last-child{font-size:12px}.world-atlas-home .atlas-workspace{grid-template-columns:minmax(0,1fr)}.world-atlas-home .atlas-sidebar [data-atlas-locations]{max-height:260px}.world-atlas-home .atlas-toolbar{gap:8px}.world-atlas-home .atlas-view-switch{margin-left:auto}.world-atlas-home .atlas-view-switch button{font-size:11px;padding:8px 10px}.world-atlas-home .atlas-primary-tools{margin-left:0}.world-atlas-home .atlas-browse-toggle{font-size:11px}.world-atlas-home .atlas-primary-tools [data-atlas-fit]{font-size:11px}.world-atlas-home .connected-world-viewport .local-map-3d-viewport{height:450px}.world-atlas-home .atlas-map-caption{padding:10px}.world-atlas-home .atlas-map-caption small{font-size:9px}.world-atlas-home .atlas-world-legend{gap:7px 12px;font-size:9px}.world-atlas-home .atlas-world-legend small{display:none}.world-atlas-home .atlas-display [data-atlas-preview]{padding:10px}}
+@media(max-width:420px){.world-atlas-home>header>.btn{width:100%}.world-atlas-home .atlas-heading h2{font-size:37px}.world-atlas-home .atlas-toolbar{justify-content:space-between}.world-atlas-home .atlas-primary-tools{width:100%}.world-atlas-home .atlas-primary-tools [data-atlas-fit]{flex:1}.world-atlas-home .atlas-map-caption small{max-width:140px;text-align:right;line-height:1.5}.world-atlas-home .connected-world-viewport .local-map-3d-viewport{height:430px}.world-atlas-home .atlas-view-switch button{padding-inline:8px}.world-atlas-home .atlas-browse-toggle{padding:8px}.world-atlas-home .atlas-browse-toggle svg{width:16px;height:16px}.world-atlas-home [data-atlas-preview] h3{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.world-atlas-home button{transition:none}}
+.world-atlas-home .atlas-introduction{margin:14px 0;color:var(--atlas-muted)}
+.world-atlas-home .atlas-introduction>summary{min-height:36px;font:600 11px/1.5 Inter,system-ui,sans-serif;color:#a5bac4}
+.world-atlas-home .atlas-introduction>p{font-size:12px;line-height:1.6;color:#99b0ba;max-width:72ch;text-transform:none}
+.world-atlas-home .atlas-fit-world{white-space:nowrap;color:#b9e8eb;border-color:#3a5f6d;background:#142d3a;padding-inline:14px}
+.world-atlas-home .local-map-3d-tag.is-compact{display:flex;align-items:center;justify-content:center;gap:0;box-sizing:border-box;min-width:24px;max-width:26px;width:26px;height:26px;min-height:26px!important;padding:3px!important;border-color:var(--tag-color);border-radius:7px;background:#0a202aeb;color:var(--tag-color)}
+.world-atlas-home .local-map-3d-tag.is-compact>span{display:none}
+.world-atlas-home .local-map-3d-tag.is-compact .atlas-tag-icon{width:18px;height:18px;max-width:18px}
+@media(max-width:420px){.world-atlas-home .atlas-primary-tools{width:auto;margin-left:auto}.world-atlas-home .atlas-fit-world{min-height:40px;padding:8px 12px;font-size:11px}}
+
+.world-atlas-home .atlas-map-caption[hidden],.world-atlas-home .atlas-world-legend[hidden]{display:none!important}
