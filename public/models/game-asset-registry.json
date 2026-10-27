@@ -3095,7 +3095,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-boarding-kiosk.svg",
+      "thumbnail": "/public/images/native-designs/aerie-boarding-kiosk.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3167,7 +3167,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-club-radio.svg",
+      "thumbnail": "/public/images/native-designs/aerie-club-radio.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3239,7 +3239,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-coffee-table.svg",
+      "thumbnail": "/public/images/native-designs/aerie-coffee-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3310,7 +3310,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-executive-screen.svg",
+      "thumbnail": "/public/images/native-designs/aerie-executive-screen.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3382,7 +3382,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-flight-board.svg",
+      "thumbnail": "/public/images/native-designs/aerie-flight-board.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3454,7 +3454,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/aerie-vip-sofa.svg",
+      "thumbnail": "/public/images/native-designs/aerie-vip-sofa.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3535,7 +3535,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-first-aid.svg",
+      "thumbnail": "/public/images/native-designs/alpine-first-aid.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3608,7 +3608,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-lounge-jukebox.svg",
+      "thumbnail": "/public/images/native-designs/alpine-lounge-jukebox.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3680,7 +3680,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-marble-hearth.svg",
+      "thumbnail": "/public/images/native-designs/alpine-marble-hearth.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3751,7 +3751,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-race-board.svg",
+      "thumbnail": "/public/images/native-designs/alpine-race-board.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3823,7 +3823,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-ski-service.svg",
+      "thumbnail": "/public/images/native-designs/alpine-ski-service.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3894,7 +3894,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/alpine-velvet-chaise.svg",
+      "thumbnail": "/public/images/native-designs/alpine-velvet-chaise.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -3975,7 +3975,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/arcade-slot-machine.svg",
+      "thumbnail": "/public/images/native-designs/arcade-slot-machine.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4044,7 +4044,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/artisan-workshop.svg",
+      "thumbnail": "/public/images/native-designs/artisan-workshop.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4109,7 +4109,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/blackjack-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/blackjack-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4178,7 +4178,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/boutique-hotel.svg",
+      "thumbnail": "/public/images/native-designs/boutique-hotel.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4243,7 +4243,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/brick-breaker-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/brick-breaker-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4312,7 +4312,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnail": "/public/images/native-designs/canopy-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4364,8 +4364,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "A dimensional tree that pops directly into the current environment.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ],
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -4377,7 +4381,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/cinema-screen.svg",
+      "thumbnail": "/public/images/native-designs/cinema-screen.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4446,7 +4450,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/civic-bank.svg",
+      "thumbnail": "/public/images/native-designs/civic-bank.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4511,7 +4515,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/sofa.svg",
+      "thumbnail": "/public/images/native-designs/sofa.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4563,8 +4567,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ],
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -4576,7 +4584,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/community-noticeboard.svg",
+      "thumbnail": "/public/images/native-designs/community-noticeboard.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4645,7 +4653,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/community-supermarket.svg",
+      "thumbnail": "/public/images/native-designs/community-supermarket.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4710,7 +4718,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/corner-bakery.svg",
+      "thumbnail": "/public/images/native-designs/corner-bakery.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4775,7 +4783,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/courtyard-cafe.svg",
+      "thumbnail": "/public/images/native-designs/courtyard-cafe.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4895,7 +4903,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/digital-photo-frame.svg",
+      "thumbnail": "/public/images/native-designs/digital-photo-frame.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -4964,7 +4972,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/district-firehouse.svg",
+      "thumbnail": "/public/images/native-designs/district-firehouse.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5029,7 +5037,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/district-police.svg",
+      "thumbnail": "/public/images/native-designs/district-police.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5094,7 +5102,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/dj-mixing-deck.svg",
+      "thumbnail": "/public/images/native-designs/dj-mixing-deck.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5163,7 +5171,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/dusty-saloon.svg",
+      "thumbnail": "/public/images/native-designs/dusty-saloon.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5228,7 +5236,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/fashion-boutique.svg",
+      "thumbnail": "/public/images/native-designs/fashion-boutique.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5293,7 +5301,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/four-in-row-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/four-in-row-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5362,7 +5370,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/freight-warehouse.svg",
+      "thumbnail": "/public/images/native-designs/freight-warehouse.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5427,7 +5435,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/frontier-tavern.svg",
+      "thumbnail": "/public/images/native-designs/frontier-tavern.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5492,7 +5500,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/general-store.svg",
+      "thumbnail": "/public/images/native-designs/general-store.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5557,7 +5565,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/grand-restaurant.svg",
+      "thumbnail": "/public/images/native-designs/grand-restaurant.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5622,7 +5630,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/high-low-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/high-low-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5691,7 +5699,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/item-vending-machine.svg",
+      "thumbnail": "/public/images/native-designs/item-vending-machine.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5760,7 +5768,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/karaoke-machine.svg",
+      "thumbnail": "/public/images/native-designs/karaoke-machine.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5829,7 +5837,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnail": "/public/images/native-designs/lamp-post.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5881,8 +5889,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ],
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -5894,7 +5906,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/lights-out-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/lights-out-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -5963,7 +5975,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/live-music-club.svg",
+      "thumbnail": "/public/images/native-designs/live-music-club.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6028,7 +6040,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/market-atm.svg",
+      "thumbnail": "/public/images/native-designs/market-atm.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6097,7 +6109,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/maze-runner-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/maze-runner-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6166,7 +6178,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/media-boombox.svg",
+      "thumbnail": "/public/images/native-designs/media-boombox.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6235,7 +6247,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/medical-clinic.svg",
+      "thumbnail": "/public/images/native-designs/medical-clinic.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6300,7 +6312,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/memory-match-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/memory-match-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6369,7 +6381,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/mine-sweeper-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/mine-sweeper-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6438,7 +6450,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/motor-garage.svg",
+      "thumbnail": "/public/images/native-designs/motor-garage.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6503,7 +6515,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/neighborhood-center.svg",
+      "thumbnail": "/public/images/native-designs/neighborhood-center.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6568,7 +6580,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/neighborhood-pharmacy.svg",
+      "thumbnail": "/public/images/native-designs/neighborhood-pharmacy.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6633,7 +6645,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/picture-house.svg",
+      "thumbnail": "/public/images/native-designs/picture-house.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6698,7 +6710,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/public-library.svg",
+      "thumbnail": "/public/images/native-designs/public-library.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6763,7 +6775,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/radio-console.svg",
+      "thumbnail": "/public/images/native-designs/radio-console.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6832,7 +6844,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/recording-booth.svg",
+      "thumbnail": "/public/images/native-designs/recording-booth.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6897,7 +6909,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pond.svg",
+      "thumbnail": "/public/images/native-designs/pond.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -6949,8 +6961,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ],
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -6962,7 +6978,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/retro-pong-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/retro-pong-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7031,7 +7047,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/retro-snake-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/retro-snake-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7100,7 +7116,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/roadside-diner.svg",
+      "thumbnail": "/public/images/native-designs/roadside-diner.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7165,7 +7181,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/roadside-motel.svg",
+      "thumbnail": "/public/images/native-designs/roadside-motel.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7230,7 +7246,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/rock-paper-scissors-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/rock-paper-scissors-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7299,7 +7315,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/service-station.svg",
+      "thumbnail": "/public/images/native-designs/service-station.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7364,7 +7380,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/shared-jukebox.svg",
+      "thumbnail": "/public/images/native-designs/shared-jukebox.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7433,7 +7449,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/shared-video-player.svg",
+      "thumbnail": "/public/images/native-designs/shared-video-player.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7502,7 +7518,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnail": "/public/images/native-designs/spiral-stairs.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7554,8 +7570,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ],
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -7567,7 +7587,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/tic-tac-toe-cabinet.svg",
+      "thumbnail": "/public/images/native-designs/tic-tac-toe-cabinet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7636,7 +7656,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-cinema.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-cinema.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7708,7 +7728,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-concierge.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-concierge.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7780,7 +7800,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-daybed.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-daybed.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7861,7 +7881,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-dj-console.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-dj-console.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -7933,7 +7953,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-marble-table.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-marble-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8004,7 +8024,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/resort-products/tideglass-planter.svg",
+      "thumbnail": "/public/images/native-designs/tideglass-planter.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8075,7 +8095,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/building-kit/town-post-office.svg",
+      "thumbnail": "/public/images/native-designs/town-post-office.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8140,7 +8160,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/trivia-terminal.svg",
+      "thumbnail": "/public/images/native-designs/trivia-terminal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8209,7 +8229,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/video-poker-table.svg",
+      "thumbnail": "/public/images/native-designs/video-poker-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8278,7 +8298,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/interactive-devices/video-projector.svg",
+      "thumbnail": "/public/images/native-designs/video-projector.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8347,7 +8367,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/basketball.svg",
+      "thumbnail": "/public/images/native-designs/basketball.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8468,7 +8488,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/basketball-hoop.svg",
+      "thumbnail": "/public/images/native-designs/basketball-hoop.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8534,7 +8554,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/basketball-jersey-away.svg",
+      "thumbnail": "/public/images/native-designs/basketball-jersey-away.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8617,7 +8637,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/basketball-jersey-home.svg",
+      "thumbnail": "/public/images/native-designs/basketball-jersey-home.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -8976,7 +8996,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/builder-pack/alpine-mountain.svg",
+      "thumbnail": "/public/images/native-designs/alpine-mountain.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9047,7 +9067,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/alpine-quad.svg",
+      "thumbnail": "/public/images/native-designs/alpine-quad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9112,7 +9132,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/ancient-oak.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9164,8 +9184,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Ancient Oak from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4.5,
+        6,
+        4.5
+      ],
+      "description": "A broad branching oak with flared roots, ridged bark and a layered spreading crown.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -9177,7 +9201,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/arc-bow.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9229,8 +9253,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Arc Bow from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        1.3,
+        0.12
+      ],
+      "description": "A recurved timber bow with alloy limb tips, tensioned string and luminous aiming inlays.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -9242,7 +9270,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-air-hockey.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9311,7 +9339,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-air-hockey-mallet.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9376,7 +9404,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-arcade-target.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9441,7 +9469,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-basketball.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9510,7 +9538,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-basketball-ball.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9575,7 +9603,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-basketball-hoop.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9640,7 +9668,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-bench.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9705,7 +9733,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-benches.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9770,7 +9798,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-billiard-balls.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9835,7 +9863,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-billiard-cue.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9900,7 +9928,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-billiards.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -9969,7 +9997,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-coaster.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10038,7 +10066,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-coaster-car.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10103,7 +10131,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-coaster-support.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10168,7 +10196,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-fountain.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10233,7 +10261,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-ground.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10298,7 +10326,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-hockey.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10367,7 +10395,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-hockey-goal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10432,7 +10460,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-hockey-puck.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10497,7 +10525,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-lamp.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10562,7 +10590,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-lamps.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10627,7 +10655,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-path.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10692,7 +10720,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-paths.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10757,7 +10785,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-rail-segment.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10822,7 +10850,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-safety-bar.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10887,7 +10915,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-shooting.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -10956,7 +10984,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-sign.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11021,7 +11049,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-signs.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11086,7 +11114,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11155,7 +11183,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-carriage.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11220,7 +11248,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-engine.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11285,7 +11313,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-train-station.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11350,7 +11378,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11415,7 +11443,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/arcade-part-trees.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11480,7 +11508,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/archway.svg",
+      "thumbnail": "/public/images/native-designs/archway.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11532,8 +11560,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        2.8,
+        0.5
+      ],
+      "description": "Block-built limestone pillars and an arched passage with a contrasting carved keystone.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11545,7 +11577,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/armchair.svg",
+      "thumbnail": "/public/images/native-designs/armchair.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11597,8 +11629,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        0.9,
+        1.02,
+        0.9
+      ],
+      "description": "A tailored lounge chair with upholstered cushions, rounded arms and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11610,7 +11646,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/art-wall.svg",
+      "thumbnail": "/public/images/native-designs/art-wall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11662,8 +11698,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.2,
+        2.15,
+        0.18
+      ],
+      "description": "A gallery wall with a walnut and brass frame around a layered geometric composition.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11675,7 +11715,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/bathroom-vanity.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11746,7 +11786,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/battle-axe.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11798,8 +11838,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Battle Axe from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.8,
+        1.5,
+        0.16
+      ],
+      "description": "A curved forged steel axe head with an inset cutting edge, brass rivets and a leather-wrapped haft.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11811,7 +11855,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/bookshelf.svg",
+      "thumbnail": "/public/images/native-designs/bookshelf.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11863,8 +11907,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.2,
+        2.05,
+        0.38
+      ],
+      "description": "A walnut bookcase with fitted shelves, individual bound books and a ceramic ornament.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -11876,7 +11924,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-activity-board.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -11957,7 +12005,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-cabin.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12028,7 +12076,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-canoe-rack.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12099,7 +12147,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-climbing-steps.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12170,7 +12218,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-dock.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12241,7 +12289,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-flag.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12312,7 +12360,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-lake.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12383,7 +12431,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-lantern.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12454,7 +12502,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-log-bench.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12536,7 +12584,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-picnic-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12607,7 +12655,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-supply-pack.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12679,7 +12727,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-target.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12750,7 +12798,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-tent.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12821,7 +12869,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-trail-badge.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12893,7 +12941,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/camp-trail-sign.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -12964,7 +13012,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/campfire.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13016,8 +13064,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Campfire from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.05,
+        1.05,
+        1.05
+      ],
+      "description": "Charred split logs, glowing embers and layered animated flames in a ring of weathered stone.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13029,7 +13081,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/canopy-tree.svg",
+      "thumbnail": "/public/images/native-designs/canopy-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13081,8 +13133,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        3.8,
+        5.2,
+        3.8
+      ],
+      "description": "A spreading shade tree with flared roots, branched timber and layered leaf crowns.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13094,7 +13150,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/cave-spider.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13146,8 +13202,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Cave Spider from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.8,
+        0.65,
+        1.6
+      ],
+      "description": "An eight-legged cave hunter with plated chitin, articulated limbs, amber eyes and curved ivory fangs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13159,7 +13219,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/clockwork-knight.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13211,8 +13271,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Clockwork Knight from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.85,
+        1.9,
+        0.65
+      ],
+      "description": "An articulated brass guardian with overlapping steel armour, exposed pivot joints and a luminous visor.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13224,7 +13288,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/coffee-table.svg",
+      "thumbnail": "/public/images/native-designs/coffee-table.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13276,8 +13340,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.25,
+        0.46,
+        0.72
+      ],
+      "description": "A joinery-built walnut table with inset top panels, a lower shelf and brass feet.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13289,7 +13357,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/connected-suite.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13354,7 +13422,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/construction/construction-steel-beam.svg",
+      "thumbnail": "/public/images/native-designs/construction-steel-beam.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13419,7 +13487,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/aircraft/corsair-aircraft.svg",
+      "thumbnail": "/public/images/native-designs/corsair-aircraft.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13484,7 +13552,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/crystal-staff.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13536,8 +13604,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Crystal Staff from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.3,
+        1.8,
+        0.3
+      ],
+      "description": "A brass-bound carved staff with a faceted amethyst held in an open three-prong crown.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13549,7 +13621,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/desert-cactus.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13601,8 +13673,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Desert Cactus from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.5,
+        3,
+        1.2
+      ],
+      "description": "A ribbed saguaro with curved upright arms, clustered spines and a coral desert blossom.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13614,7 +13690,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/desert-merchant.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13666,8 +13742,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Desert Merchant from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.8,
+        1.75,
+        0.6
+      ],
+      "description": "A robed trader with wrapped headwear, embroidered hems, coin clasps and an expedition satchel.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -13679,7 +13759,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/aircraft/diamond-da40.svg",
+      "thumbnail": "/public/images/native-designs/diamond-da40.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13747,7 +13827,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/dining-set.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13818,7 +13898,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/drive-in-garage.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13889,7 +13969,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/dune-quad.svg",
+      "thumbnail": "/public/images/native-designs/dune-quad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -13954,7 +14034,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/elevator.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14025,7 +14105,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/ember-dragon.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14090,7 +14170,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/emerald-slime.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14142,8 +14222,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Emerald Slime from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1,
+        0.8,
+        0.9
+      ],
+      "description": "A glossy, irregular emerald creature with an inset heart crystal, suspended bubbles and a curious face.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -14155,7 +14239,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/estate-house.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14226,7 +14310,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/estate-yard.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14297,7 +14381,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-assembly-jig.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14383,7 +14467,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-calibration-rig.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14469,7 +14553,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-cargo-rocket.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14545,7 +14629,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-certification-kiosk.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14629,7 +14713,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-conveyor.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14705,7 +14789,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-dispatch-terminal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14791,7 +14875,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-export-terminal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14875,7 +14959,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-fabricator.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -14961,7 +15045,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-freight-crate.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15037,7 +15121,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-loading-bay.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15123,7 +15207,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-procurement-terminal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15209,7 +15293,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory/missile-factory.svg",
+      "thumbnail": "/public/images/native-designs/factory-training-missile.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15285,7 +15369,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/fireplace.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15356,7 +15440,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-bait.svg",
+      "thumbnail": "/public/images/native-designs/fishing-bait.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15430,7 +15514,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-lure.svg",
+      "thumbnail": "/public/images/native-designs/fishing-lure.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15504,7 +15588,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-net.svg",
+      "thumbnail": "/public/images/native-designs/fishing-net.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15578,7 +15662,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-pro-rod.svg",
+      "thumbnail": "/public/images/native-designs/fishing-pro-rod.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15652,7 +15736,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-reel.svg",
+      "thumbnail": "/public/images/native-designs/fishing-reel.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15726,7 +15810,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-rod.svg",
+      "thumbnail": "/public/images/native-designs/fishing-rod.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15800,7 +15884,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fishing/fishing-tackle-box.svg",
+      "thumbnail": "/public/images/native-designs/fishing-tackle-box.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15874,7 +15958,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-agility-ladder.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -15956,7 +16040,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-balance-beam.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16038,7 +16122,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-balance-pad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16120,7 +16204,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-barbell.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16202,7 +16286,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-basketball-hoop.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16284,7 +16368,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-bench-press.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16366,7 +16450,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-bike.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16440,7 +16524,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-boxing-ring.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16522,7 +16606,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-coach-board.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16596,7 +16680,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-cone.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16678,7 +16762,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-deadlift-platform.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16760,7 +16844,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-dumbbell.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16834,7 +16918,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-dumbbell-rack.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16908,7 +16992,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-foam-roller.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -16982,7 +17066,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-heavy-bag.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17064,7 +17148,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-hurdle.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17146,7 +17230,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-jump-rope.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17228,7 +17312,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-locker.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17302,7 +17386,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-locker-bench.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17376,7 +17460,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-monitor.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17450,7 +17534,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-plate-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17524,7 +17608,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-power-rack.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17606,7 +17690,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-reception-counter.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17680,7 +17764,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-recovery-mat.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17754,7 +17838,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-ring-scoreboard.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17836,7 +17920,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-ringside-seating.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17910,7 +17994,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-rower.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -17992,7 +18076,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-sprint-gates.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18074,7 +18158,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-table-tennis.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18156,7 +18240,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-treadmill.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18230,7 +18314,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/fitness/equipment.svg",
+      "thumbnail": "/public/images/native-designs/fitness-water-station.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18304,7 +18388,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/floor-lamp.svg",
+      "thumbnail": "/public/images/native-designs/floor-lamp.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18356,8 +18440,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        0.62,
+        1.75,
+        0.62
+      ],
+      "description": "A sculpted standing lamp with a brass stem, pleated fabric shade and warm diffuser.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18369,7 +18457,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/flower-bed.svg",
+      "thumbnail": "/public/images/native-designs/flower-bed.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18421,8 +18509,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        0.35,
+        1.2
+      ],
+      "description": "A bordered garden bed filled with leafy stems and individual coloured flowers.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18434,7 +18526,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/forest-ranger.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18486,8 +18578,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Forest Ranger from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.75,
+        1.8,
+        0.55
+      ],
+      "description": "A hooded woodland guide with a layered travelling cloak, fitted leather equipment and a full arrow quiver.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18499,7 +18595,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/freight-loading-bay.svg",
+      "thumbnail": "/public/images/native-designs/freight-loading-bay.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18565,7 +18661,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/friendly-ghost.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18617,8 +18713,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Friendly Ghost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        1.65,
+        0.7
+      ],
+      "description": "A gentle floating spirit with a scalloped sheet silhouette, welcoming arms and a softly glowing smile.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18630,7 +18730,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/frontier-pickup.svg",
+      "thumbnail": "/public/images/native-designs/frontier-pickup.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18696,7 +18796,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/garden-courtyard.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18761,7 +18861,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/garden-rocks.svg",
+      "thumbnail": "/public/images/native-designs/garden-rocks.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18813,8 +18913,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        0.75,
+        1.5
+      ],
+      "description": "Layered, weathered garden stones with pale mineral seams and small moss patches.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18826,7 +18930,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/giant-mushrooms.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18878,8 +18982,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Giant Mushrooms from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        2.4,
+        2.2,
+        2
+      ],
+      "description": "A grove of rose-capped mushrooms with real gills, pale stem collars and softly luminous spots.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -18891,7 +18999,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/glass-door.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18962,7 +19070,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/grand-floor.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19027,7 +19135,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/grand-tourer.svg",
+      "thumbnail": "/public/images/native-designs/grand-tourer.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19092,7 +19200,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/green-bubbles.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19144,8 +19252,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Green Bubble Field from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.6,
+        1.6,
+        1.6
+      ],
+      "description": "A brass-trimmed healing plinth with luminous channels and rising green alchemy bubbles.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19157,7 +19269,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/boats/harbor-fishing-boat.svg",
+      "thumbnail": "/public/images/native-designs/harbor-fishing-boat.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19234,7 +19346,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/boats/harbor-patrol.svg",
+      "thumbnail": "/public/images/native-designs/harbor-patrol.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19309,7 +19421,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/boats/harbor-sailboat.svg",
+      "thumbnail": "/public/images/native-designs/harbor-sailboat.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19382,7 +19494,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/boats/harbor-skiff.svg",
+      "thumbnail": "/public/images/native-designs/harbor-skiff.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19455,7 +19567,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/boats/harbor-yacht.svg",
+      "thumbnail": "/public/images/native-designs/harbor-yacht.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19528,7 +19640,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/healing-potion.svg",
+      "thumbnail": "/public/images/native-designs/healing-potion.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19597,7 +19709,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/hedge-corner.svg",
+      "thumbnail": "/public/images/native-designs/hedge-corner.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19649,8 +19761,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.4,
+        1.05,
+        2.4
+      ],
+      "description": "A clipped evergreen corner with a timber edging and dense, varied foliage.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19662,7 +19778,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/hero-spawn.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19727,7 +19843,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/hill.svg",
+      "thumbnail": "/public/images/native-designs/hill.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19779,8 +19895,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        4.2,
+        1.25,
+        3.6
+      ],
+      "description": "A grassy mound with exposed stone, low meadow plants and a walkable rounded surface.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19792,7 +19912,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/iron-anvil.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19844,8 +19964,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Iron Anvil from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.9,
+        0.8,
+        0.45
+      ],
+      "description": "A forged anvil with a tapered horn, hardened working face, hardy hole and bolted timber pedestal.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19857,7 +19981,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/kitchen-island.svg",
+      "thumbnail": "/public/images/native-designs/kitchen-island.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19909,8 +20033,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        0.94,
+        0.9
+      ],
+      "description": "An inset-panel island with stone worktop, metal sink, curved tap and cabinet handles.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19922,7 +20050,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/lamp-post.svg",
+      "thumbnail": "/public/images/native-designs/lamp-post.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -19974,8 +20102,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        0.55,
+        3.4,
+        0.55
+      ],
+      "description": "A cast-metal street lantern with brass trim, glazed panels and a warm luminous core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -19987,8 +20119,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-ancient-forest.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20042,7 +20174,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/arcade.svg",
+      "thumbnail": "/public/images/native-designs/layout-arcade-park.svg",
       "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
@@ -20097,7 +20229,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/basketball-arena.svg",
+      "thumbnail": "/public/images/native-designs/layout-basketball-stadium.svg",
       "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
@@ -20152,8 +20284,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-blacksite.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20207,8 +20339,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-cargo-yard.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20262,8 +20394,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-coastal-cliffs.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20317,8 +20449,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-courtyard.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20372,8 +20504,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-creator-studios.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20427,8 +20559,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-crystal-cavern.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20482,8 +20614,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-deep-mine.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20537,8 +20669,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-desert-airfield.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20592,8 +20724,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-desert-outpost.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20647,8 +20779,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-dune-sea.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20702,8 +20834,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-dungeon-maze.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20757,8 +20889,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-firing-range.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20812,8 +20944,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-hedge-maze.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20867,7 +20999,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/hockey.svg",
+      "thumbnail": "/public/images/native-designs/layout-hockey-arena.svg",
       "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
@@ -20922,8 +21054,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-loft.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -20977,8 +21109,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-market-square.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21032,8 +21164,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-mega-mall.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21087,8 +21219,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-mountain-pass.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21142,8 +21274,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-movie-studio.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21197,8 +21329,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-neon-arena.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21252,8 +21384,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-neon-maze.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21307,7 +21439,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "thumbnail": "/public/images/native-designs/layout-neon-wetlands.svg",
       "generator": "terrain-slab",
       "defaultTransform": {
         "position": [
@@ -21362,8 +21494,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-office-tower.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21417,7 +21549,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "thumbnail": "/public/images/native-designs/layout-railroad-world.svg",
       "generator": "terrain-slab",
       "defaultTransform": {
         "position": [
@@ -21472,8 +21604,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-skyport.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21527,8 +21659,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-sunrise-farm.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21582,8 +21714,8 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
-      "generator": "terrain-slab",
+      "thumbnail": "/public/images/native-designs/layout-vendor-street.svg",
+      "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
           0,
@@ -21637,7 +21769,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/lever-switch.svg",
+      "thumbnail": "/public/images/native-designs/lever-switch.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21706,7 +21838,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/loft-bed.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21777,7 +21909,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-boundary-stake.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21848,7 +21980,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-owned-sign.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21919,7 +22051,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-10000.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21990,7 +22122,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-15000.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22061,7 +22193,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-20000.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22132,7 +22264,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-25000.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22203,7 +22335,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-5000.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22274,7 +22406,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/lot-sale-sign-7500.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22345,7 +22477,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/market-stall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22397,8 +22529,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Market Stall from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3,
+        2.8,
+        2.2
+      ],
+      "description": "A striped canvas market canopy shelters a board-built counter, woven produce trays and hand-fitted brass details.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22410,7 +22546,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/modular-wall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22481,7 +22617,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/moss-golem.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22533,8 +22669,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Moss Golem from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.4,
+        2.6,
+        1
+      ],
+      "description": "A weathered stone sentinel with articulated boulder limbs, mineral seams, moss patches and glowing eyes.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22546,7 +22686,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/open-office.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22617,7 +22757,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/open-studio.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22682,7 +22822,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/palm-cluster.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22734,8 +22874,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Palm Cluster from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3.5,
+        5,
+        3.5
+      ],
+      "description": "Three curved ringed palm trunks with hand-shaped pinnate fronds and hanging coconuts.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22747,7 +22891,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/path-tile.svg",
+      "thumbnail": "/public/images/native-designs/path-tile.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22799,8 +22943,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.2,
+        0.12,
+        1.2
+      ],
+      "description": "Eight fitted slate pavers set into a chamfered stone border.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22812,7 +22960,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pillow-ring.svg",
+      "thumbnail": "/public/images/native-designs/pillow-ring.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22864,8 +23012,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "A gameplay-ready floor seat. Walk close and press E, or use the mobile action, to sit and stand.",
+      "dimensions": [
+        1.5,
+        0.42,
+        1.5
+      ],
+      "description": "An upholstered floor cushion with stitched panels, piping and a recessed centre seat.",
       "behavior": "seat",
       "function_data": {}
     },
@@ -22877,7 +23029,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pine-tree.svg",
+      "thumbnail": "/public/images/native-designs/pine-tree.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22929,8 +23081,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        2.8,
+        5.8,
+        2.8
+      ],
+      "description": "A textured evergreen with layered needle boughs and a bark-covered trunk.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22942,7 +23098,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/aircraft/piper-cub.svg",
+      "thumbnail": "/public/images/native-designs/piper-cub.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23010,7 +23166,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/planter.svg",
+      "thumbnail": "/public/images/native-designs/planter.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23062,8 +23218,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        0.85,
+        1.45,
+        0.85
+      ],
+      "description": "A fluted ceramic vessel with a brass foot and a layered leafy ornamental plant.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -23075,7 +23235,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/plasma-sword.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23127,8 +23287,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Plasma Sword from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.25,
+        1.4,
+        0.12
+      ],
+      "description": "A forged alloy hilt with wrapped grip, cyan reactor and a tapered luminous plasma blade.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -23140,7 +23304,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/pond.svg",
+      "thumbnail": "/public/images/native-designs/pond.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23192,8 +23356,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Landscape piece for the in-game map builder.",
+      "dimensions": [
+        3.4,
+        0.22,
+        2.5
+      ],
+      "description": "A stone-edged ornamental pond with water ripples, reeds and floating water lilies.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -23205,7 +23373,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/portal-door.svg",
+      "thumbnail": "/public/images/native-designs/portal-door.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23274,7 +23442,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/prison/items/prison-chess-set.svg",
+      "thumbnail": "/public/images/native-designs/prison-chess-set.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23353,7 +23521,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/prison/items/prison-earned-trophy.svg",
+      "thumbnail": "/public/images/native-designs/prison-earned-trophy.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23432,7 +23600,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/prison/items/prison-radio.svg",
+      "thumbnail": "/public/images/native-designs/prison-radio.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23515,7 +23683,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/prison/items/prison-supply-crate.svg",
+      "thumbnail": "/public/images/native-designs/prison-supply-crate.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23594,7 +23762,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/quest-scroll.svg",
+      "thumbnail": "/public/images/native-designs/quest-scroll.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23663,7 +23831,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/rad-tox.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23728,7 +23896,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/rogue-bot.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23793,7 +23961,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/room-divider.svg",
+      "thumbnail": "/public/images/native-designs/room-divider.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23845,8 +24013,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        1.8,
+        2,
+        0.18
+      ],
+      "description": "A framed timber screen with chamfered vertical slats, brass joints and stable feet.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -23858,7 +24030,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-blacksite.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -23929,7 +24101,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-cargo-yard.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24000,7 +24172,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-creator-studios.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24071,7 +24243,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-desert-outpost.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24142,7 +24314,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-dungeon-maze.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24213,7 +24385,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-firing-range.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24284,7 +24456,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-hedge-maze.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24355,7 +24527,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-market-square.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24426,7 +24598,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-mega-mall.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24497,7 +24669,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-movie-studio.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24568,7 +24740,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-neon-arena.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24639,7 +24811,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-neon-maze.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24710,7 +24882,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-office-tower.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24781,7 +24953,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/scene-vendor-street.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24852,7 +25024,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/sci-fi-bunker.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24904,8 +25076,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Sci-fi Bunker from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        7,
+        3,
+        5
+      ],
+      "description": "A segmented expedition bunker with reinforced panel seams, protected glazing, cooling vents and an illuminated entry frame.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -24917,7 +25093,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/scout-avatar.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -24982,7 +25158,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/shipping/shipping-container.svg",
+      "thumbnail": "/public/images/native-designs/shipping-container.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25060,7 +25236,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/shipping/shipping-parts-stock.svg",
+      "thumbnail": "/public/images/native-designs/shipping-container-box.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25135,7 +25311,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/shipping/shipping-feeder.svg",
+      "thumbnail": "/public/images/native-designs/shipping-feeder.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25213,7 +25389,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/shipping/hormuz-shipping.svg",
+      "thumbnail": "/public/images/native-designs/shipping-port-crane.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25288,7 +25464,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/shipping/shipping-tanker.svg",
+      "thumbnail": "/public/images/native-designs/shipping-tanker.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25366,7 +25542,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/construction/site-bulldozer.svg",
+      "thumbnail": "/public/images/native-designs/site-bulldozer.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25431,7 +25607,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/construction/site-dumptruck.svg",
+      "thumbnail": "/public/images/native-designs/site-dumptruck.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25496,7 +25672,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/construction/site-excavator.svg",
+      "thumbnail": "/public/images/native-designs/site-excavator.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25561,7 +25737,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/sky-ray.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25613,8 +25789,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Sky Ray from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        3.2,
+        0.55,
+        1.8
+      ],
+      "description": "A soaring ray with sculpted wings, a long curling tail and luminous turquoise markings.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25626,7 +25806,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/sofa.svg",
+      "thumbnail": "/public/images/native-designs/sofa.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25678,8 +25858,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.15,
+        0.9,
+        0.92
+      ],
+      "description": "A tailored three-seat sofa with fitted cushions, piped seams and walnut legs.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25691,7 +25875,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/spectral-ghost.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25743,8 +25927,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Spectral Ghost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.85,
+        1.7,
+        0.6
+      ],
+      "description": "A translucent hooded spirit with a scalloped spectral robe, luminous eyes and a sheltered soul core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25756,7 +25944,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/spiral-stairs.svg",
+      "thumbnail": "/public/images/native-designs/spiral-stairs.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25808,8 +25996,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Interior piece for the in-game map builder.",
+      "dimensions": [
+        2.1,
+        2.8,
+        2.1
+      ],
+      "description": "Timber wedge treads and a continuous handrail around a machined central column.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25821,7 +26013,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/stone-tower.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25873,8 +26065,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Stone Watchtower from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        7,
+        4
+      ],
+      "description": "An open stone entry leads into a block-built watchtower with carved arrow slits, timber bracing and crenellated battlements.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25886,7 +26082,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/street-sign.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25938,8 +26134,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Weathered Signpost from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.2,
+        2.4,
+        0.5
+      ],
+      "description": "A cedar wayfinding post with carved arrow boards, iron brackets, brass nails and a warm lantern.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25951,7 +26151,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/studio-desk.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26022,7 +26222,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/supply-crate.svg",
+      "thumbnail": "/public/images/native-designs/supply-crate.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26091,7 +26291,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/teleport-pad.svg",
+      "thumbnail": "/public/images/native-designs/teleport-pad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26160,7 +26360,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/terrain-cliff.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26212,8 +26412,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Weathered Cliff from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4.8,
+        3.2,
+        3.5
+      ],
+      "description": "Layered sandstone escarpment with fractured ledges, moss seams and fallen scree.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26225,7 +26429,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/terrain-crater.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26277,8 +26481,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Impact Crater from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        5,
+        0.8,
+        5
+      ],
+      "description": "A scorched impact bowl with a raised fractured rim, mineral seams and scattered ejecta.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26290,7 +26498,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/terrain-river.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26342,8 +26550,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "River Bend from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        6,
+        0.2,
+        3
+      ],
+      "description": "A curved clear-water channel between shaped earthen banks, reeds and rounded river stones.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26355,7 +26567,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/terrain-snowbank.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26407,8 +26619,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Snow Bank from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        1.2,
+        2.4
+      ],
+      "description": "Sculpted snow drifts with swept crests, cool blue ice facets and granular edge rocks.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26420,7 +26636,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-blast-door.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26504,7 +26720,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-cargo-platform.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26582,7 +26798,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-containment-core.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26666,7 +26882,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-launch-console.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26750,7 +26966,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-launch-pad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26834,7 +27050,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-range-target.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26912,7 +27128,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/factory-testing/equipment.svg",
+      "thumbnail": "/public/images/native-designs/testing-telemetry-terminal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26996,7 +27212,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/timber-cabin.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27048,8 +27264,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Timber Cabin from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        6,
+        3.6,
+        5
+      ],
+      "description": "A fitted timber cabin with board seams, a shingled pitched roof, framed windows and a brass-latched entrance.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -27061,7 +27281,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/touring-motorcycle.svg",
+      "thumbnail": "/public/images/native-designs/touring-motorcycle.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27126,7 +27346,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/construction/tower-crane.svg",
+      "thumbnail": "/public/images/native-designs/tower-crane.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27191,7 +27411,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/treasure-chest.svg",
+      "thumbnail": "/public/images/native-designs/treasure-chest.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27260,7 +27480,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-upgrades/treasure-crystal.svg",
+      "thumbnail": "/public/images/native-designs/treasure-crystal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27329,7 +27549,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/vehicles/utility-cargo-trailer.svg",
+      "thumbnail": "/public/images/native-designs/utility-cargo-trailer.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27395,7 +27615,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/void-wolf.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27460,7 +27680,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/builder-pack/reusable-item.svg",
+      "thumbnail": "/public/images/native-designs/wardrobe.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27531,7 +27751,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/windmill.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27583,8 +27803,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Working Windmill from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        4,
+        6,
+        2.5
+      ],
+      "description": "A tapered masonry mill with timber balcony, braced canvas sails and a driven iron rotor.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -27596,7 +27820,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/wolf-guardian.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27661,7 +27885,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-designs/wooden-cart.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27713,8 +27937,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Wooden Cart from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        2.4,
+        1.5,
+        1.2
+      ],
+      "description": "A board-built handcart with iron tyres, open spoked wheels, cross-braced sides and fitted pull shafts.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -30633,61 +30861,61 @@
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-loft",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-courtyard",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-hedge-maze",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-neon-maze",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-dungeon-maze",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-vendor-street",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-creator-studios",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-market-square",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-mountain-pass",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-crystal-cavern",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
@@ -30699,31 +30927,31 @@
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-skyport",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-deep-mine",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-sunrise-farm",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-coastal-cliffs",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-ancient-forest",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
@@ -30735,61 +30963,61 @@
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-desert-airfield",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-dune-sea",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-blacksite",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-cargo-yard",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-neon-arena",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-desert-outpost",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-mega-mall",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-office-tower",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-firing-range",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "builder-land-movie-studio",
-        "generator": "terrain-slab"
+        "generator": "extruded-svg"
       },
       {
         "level": "info",

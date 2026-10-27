@@ -30,7 +30,7 @@ let queue=Promise.resolve(),modules;
 const snapshots=new Map(),figureSnapshots=new WeakMap(),previewEpochs=new WeakMap();
 const activeFigure=(figure,epoch)=>figure.isConnected&&figure.dataset.previewReleased!=='true'&&(epoch===undefined||previewEpochs.get(figure)===epoch);
 function snapshotFor(item,figure){
- const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.targetHeight]);let entry=snapshots.get(key);
+ const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.toolId,item.targetHeight]);let entry=snapshots.get(key);
  if(!entry){
   let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});
   entry={promise,figures:new Set(),status:'pending',cancel(){if(entry.status!=='pending')return;entry.status='canceled';if(snapshots.get(key)===entry)snapshots.delete(key);reject(Error('Preview canceled'));}};
@@ -53,16 +53,17 @@ function snapshotFor(item,figure){
 }
 // Match the placement renderer: native definitions remain authoritative even
 // when they also carry a reference GLB URL.
-export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.model?'glb':null;}
+export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.model?'glb':item.toolId?'tool':null;}
 export function disposePreviewModel(root){root?.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[])){for(const value of Object.values(material))if(value?.isTexture)value.dispose();material.dispose();}});}
 export async function loadPreviewModel(item){
- modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/loaders/GLTFLoader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js')]);
- const [THREE,{GLTFLoader},{createBuilderModel},{createBuildingBlock},{prepareAuthoredBuilderModel}]=await modules;
+ modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/loaders/GLTFLoader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
+ const [THREE,{GLTFLoader},{createBuilderModel},{createBuildingBlock},{prepareAuthoredBuilderModel},{createHeldToolModel}]=await modules;
  let root,timer,expired=false;
  try{
   const source=previewModelSource(item);
   if(source==='material')root=createBuildingBlock(THREE,item.materialId);
   else if(source==='native')root=createBuilderModel(item.buildAssetId);
+  else if(source==='tool')root=createHeldToolModel(THREE,item.toolId);
   else if(source==='glb'){
    const pending=new GLTFLoader().loadAsync(item.model).then(gltf=>{if(expired){disposePreviewModel(gltf.scene);throw Error('Preview timed out');}return gltf;});
    const gltf=await Promise.race([pending,new Promise((_,reject)=>timer=setTimeout(()=>{expired=true;reject(Error('Preview timed out'));},12000))]);
@@ -98,7 +99,7 @@ function addDevicePreview(figure,item){
 function loadPreview(figure){
  if(figure.dataset.previewMounted)return;figure.dataset.previewMounted='true';delete figure.dataset.previewReleased;const epoch=(previewEpochs.get(figure)||0)+1;previewEpochs.set(figure,epoch);const active=()=>activeFigure(figure,epoch),item=JSON.parse(figure.dataset.itemPreview);addDevicePreview(figure,item);if(item.entries?.length&&!item.image)return;
  const fallback=()=>{if(!active())return;const failed=()=>{if(active())figure.querySelector('figcaption').textContent='3D preview unavailable · illustration shown';};if(item.image)displayImage(figure,item.image,item.name+' · artwork (3D preview unavailable)',failed,epoch);else failed();};
- const model=()=>{if(!active())return;if(!(item.model||item.buildAssetId||item.materialId)){figure.querySelector('figcaption').textContent=item.toolId?'Tool illustration · '+item.name:'Illustration · '+item.category;return;}
+ const model=()=>{if(!active())return;if(!(item.model||item.buildAssetId||item.materialId||item.toolId)){figure.querySelector('figcaption').textContent=item.toolId?'Tool illustration · '+item.name:'Illustration · '+item.category;return;}
   snapshotFor(item,figure).then(url=>{if(active())displayImage(figure,url,item.name+' · 3D preview',fallback,epoch);}).catch(fallback);
  };
  if(figure.dataset.previewPreferModel==='true'&&previewModelSource(item))model();else if(item.image)displayImage(figure,item.image,item.name+' · item artwork',model,epoch);else model();

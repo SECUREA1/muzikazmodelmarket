@@ -22,6 +22,7 @@ import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
 import {createBasketballStadium} from '../basketball-stadium.js';
 import {constructionCutoutPatches,createConstructionBaseGeometry} from '../construction-terrain.js';
+import {finishNativeWorldDesign} from './native-world-design-finish.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
@@ -30,6 +31,9 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
+    return finishNativeWorldDesign(THREE,createProceduralBuilderLand(environment),environment);
+}
+function createProceduralBuilderLand(environment) {
     if(environment.id==='world-item-factory'||environment.builderScene?.layout==='world-item-factory')return createWorldItemFactoryLand(environment);
     if(isTropicalIslandEnvironment(environment))return createTropicalIslandLand(environment);
     if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);

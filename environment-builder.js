@@ -199,13 +199,13 @@ function addWorldDressing(){
  basketballPreview=null;
  if(baseWorld){worldDressing.visible=false;return;}worldDressing.visible=true;
  disposeSportsDressing(worldDressing);worldDressing.clear();
- if(['hockey-arena','arcade-park'].includes(sceneData.layout)){const root=sceneData.layout==='hockey-arena'?createHockeyArena():createArcadePark(sceneData.gameplay?.arcade).root;root.userData.sportsSurfaceTheme=sceneData.layout==='hockey-arena'?'hockey':'arcade';worldDressing.add(root);terrain.visible=false;finishSportsRoot(root,root.userData.sportsSurfaceTheme,()=>updateSportsTextureCredit(root));return;}
+ if(['hockey-arena','arcade-park'].includes(sceneData.layout)){const root=createBuilderLand({id:'editor-preview',builderScene:{...sceneData,baseTransform:{},objects:[]}});root.userData.sportsSurfaceTheme=sceneData.layout==='hockey-arena'?'hockey':'arcade';worldDressing.add(root);terrain.visible=false;finishSportsRoot(root,root.userData.sportsSurfaceTheme,()=>updateSportsTextureCredit(root));return;}
  const template=createBuilderLand({id:'editor-preview',builderScene:{...sceneData,baseTransform:{},objects:[]}});
  if(['factory-proving-grounds','mountain-compound'].includes(sceneData.sourceLayout||sceneData.layout)||sceneData.sourceLayout==='clown-funhouse'||sceneData.layout==='clown-funhouse'||sceneData.sourceLayout==='missile-factory'||sceneData.layout==='missile-factory'||sceneData.sourceLayout==='ski-resort'||sceneData.sourceLayout==='fitness-centre'||sceneData.layout==='fitness-centre'||sceneData.layoutMeta?.harbor){worldDressing.add(template);terrain.visible=false;return;}
  if(sceneData.layout==='basketball-stadium'){basketballPreview=template;template.traverse(node=>{if(node.name==='ARENA_ROOF_CEILING'||node.name==='ARENA_EXTERIOR_WALL')node.visible=false;});worldDressing.add(template);terrain.visible=false;return;}
  if(!baseWorld)terrain.visible=true;
  for(const child of [...template.children]){
-  if(child.name.startsWith('BUILDER_WALKABLE_FLOOR')){child.geometry.dispose();child.material.map?.dispose();child.material.dispose();continue;}
+  if(child.name.startsWith('BUILDER_WALKABLE_FLOOR')){child.geometry.dispose();if(child.name==='BUILDER_WALKABLE_FLOOR_'+(sceneData.sourceLayout||sceneData.layout)){terrain.material.map?.dispose();terrain.material.dispose();terrain.material=child.material;}else{child.material.map?.dispose();child.material.dispose();}continue;}
   worldDressing.add(child);
  }
 }

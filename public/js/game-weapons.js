@@ -1,3 +1,5 @@
+import {createHeldToolModel} from './held-tool-design-finish.js';
+
 export const EXTRA_WEAPONS = Object.freeze({
   'pulse-pistol': Object.freeze({label:'Pulse Pistol',description:'Light, fast short-range pulse',damage:20,pellets:1,range:20,spread:0,interval:.22,color:0xf3eb69,rays:1,score:1}),
   'twin-blaster': Object.freeze({label:'Twin Blaster',description:'Two energy bolts per shot',damage:24,pellets:2,range:22,spread:.018,interval:.4,color:0xff7adf,rays:2,score:1}),
@@ -37,3 +39,7 @@ export const RANGED_WEAPONS = Object.freeze({
   'rail-cannon':Object.freeze({label:'Rail Cannon',damage:90,pellets:1,range:40,spread:0,interval:.9,color:0xc66bff,rays:1,score:1.5}),
   ...EXTRA_WEAPONS,
 });
+
+export function createRangedWeaponModel(THREE,id){
+ const profile=RANGED_WEAPONS[id];return profile?createHeldToolModel(THREE,id,{color:profile.color}):null;
+}

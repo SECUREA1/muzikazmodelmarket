@@ -3,28 +3,31 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {nativeBuilderItem} from '../public/js/native-builder-items.js';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
+import {nativeDesignThumbnail} from '../public/js/native-design-profile.js';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('builder provides illustrated rideable quad and Corsair aircraft assets', async t => {
   const [builder, quad, corsair] = await Promise.all([
     read('../environment-builder.js'),
-    read('../public/images/builder-pack/dune-quad.svg'), read('../public/images/builder-pack/corsair-aircraft.svg')
+    read('..'+nativeDesignThumbnail('dune-quad')), read('..'+nativeDesignThumbnail('corsair-aircraft'))
   ]);
   assert.match(builder, /from '\.\/public\/js\/native-builder-items\.js'/);
   assert.match(builder, /gameplayModels=GAMEPLAY_BUILDER_ITEMS/);
   for (const [id, mode, animation] of [['dune-quad','drive','vehicleWheel'], ['corsair-aircraft','fly','vehiclePropeller']]) {
     const item=nativeBuilderItem(id),model=createBuilderModel(id),animated=[];
     assert.equal(item.behavior,'vehicle');assert.equal(item.action,mode);
-    assert.equal(item.image,`public/images/builder-pack/${id}.svg`);
+    assert.equal(item.image,nativeDesignThumbnail(id));
     assert.equal(model.userData.modelId,id);assert.equal(model.userData.vehicle.mode,mode);
     assert.equal(model.userData.vehicle.seat.length,3);assert.ok(model.userData.vehicle.seat.every(Number.isFinite));
     model.traverse(part=>{if(part.userData[animation])animated.push(part);});
     assert.ok(animated.length>0,`${id} has its working animated parts`);
     t.after(()=>{const resources=new Set();model.traverse(part=>{if(part.geometry)resources.add(part.geometry);for(const material of [part.material].flat().filter(Boolean))resources.add(material);});for(const resource of resources)resource.dispose();});
   }
-  assert.match(quad, /NO BODY/);
-  assert.match(corsair, /BLACKWING CORSAIR/);
+  assert.match(quad, /Nightcrawler Dune Quad/);
+  assert.match(quad, /bodyless/);
+  assert.match(corsair, /Blackwing Corsair/);
+  for(const artwork of [quad,corsair]){assert.match(artwork,/<title\b/);assert.match(artwork,/<desc\b/);assert.match(artwork,/data:image\/png;base64,/);}
 });
 
 test('game connects the standard vehicle controller to keyboard, rendering and avatar visibility', async () => {
@@ -57,7 +60,7 @@ test('nearby item actions are stable and rate-limited for touch devices', async 
   assert.match(game, /function resolveNearbyAction\((?:key=null)?\)/);
   assert.match(game, /function renderNearbyAction\(next\)/);
   assert.match(game, /now-nearbyActionCheckedAt<100/);
-  assert.match(game, /if\(nearbyActionLocked\)return/);
+  assert.match(game, /if\(!gameplayControlsReady\(\)\|\|gameplayOverlayOpen\(\)\|\|nearbyActionLocked\)return/);
   assert.match(game, /setTimeout\(\(\)=>\{nearbyActionLocked=false;\},180\)/);
   assert.match(game, /bindGameActionButton\(builderActionButton,activateNearbyAction\)/);
   assert.match(actionButton, /button\.addEventListener\('pointerup',up\)/);

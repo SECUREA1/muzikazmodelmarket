@@ -1,3 +1,5 @@
+import {finishNativeSurfaces} from './native-surface-finish.js';
+
 // A small, deterministic chamfer gives procedural props readable highlights.
 // Forty-four triangles per box; no subdivision, external textures or new lights.
 export function bevelledBoxGeometry(THREE,width,height,depth,radius=.035){
@@ -21,15 +23,16 @@ export function bevelledBoxGeometry(THREE,width,height,depth,radius=.035){
 
 export function finishGameItem(THREE,root){
  const replacements=new Map(),materials=new Set();
+ const constructionPiece=node=>{for(let parent=node;parent;parent=parent.parent){if(parent.userData.materialId||parent.userData.materialDesignFinish)return true;if(parent===root)break;}return false;};
  root.traverse(node=>{
   if(!node.isMesh||node.userData.collisionOnly)return;
   const original=node.geometry,p=original?.parameters;
   // Screens keep their exact dimensions and local axes for shared video/game feeds.
-  if(original?.type==='BoxGeometry'&&p&&!node.userData.mediaScreen&&Math.min(p.width,p.height,p.depth)>=.045){
+  if(original?.type==='BoxGeometry'&&p&&!node.userData.mediaScreen&&!constructionPiece(node)&&Math.min(p.width,p.height,p.depth)>=.045){
    if(!replacements.has(original))replacements.set(original,bevelledBoxGeometry(THREE,p.width,p.height,p.depth));node.geometry=replacements.get(original);
   }
   node.frustumCulled=true;node.castShadow=!node.userData.collisionDisabled;node.receiveShadow=true;
   for(const mat of [].concat(node.material||[])){if(materials.has(mat))continue;materials.add(mat);if(mat.isMeshStandardMaterial){mat.roughness=Math.max(.18,Math.min(1,mat.roughness));mat.metalness=Math.max(0,Math.min(.88,mat.metalness));}if(mat.transparent)mat.depthWrite=false;}
  });
- root.userData.visualFinish='mzk-game-items-v2';return root;
+ root.userData.visualFinish='mzk-game-items-v2';finishNativeSurfaces(THREE,root,root.userData.modelId||root.name||'');return root;
 }

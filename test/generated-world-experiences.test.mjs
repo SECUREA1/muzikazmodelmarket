@@ -38,16 +38,22 @@ test('shared park guide, quests, seats, pickups, healing, switches and garden tr
 test('atlas routes and saved entry links retain the selected destination and play mode',async t=>{
  const {atlasPortalRoute}=await import('../public/js/atlas-building-art.js');
  const dir=await mkdtemp(join(tmpdir(),'generated-routes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
- const atlas=new WorldAtlas(join(dir,'atlas.json')),{environments}=await synchronizeWorldDirectory(atlas,[]);
+ const savedMaps=[
+  {id:'saved-atlas-solo',name:'Saved Solo Sandbox',source:'custom-builder',visibility:'public',playable:true,builderScene:{layout:'grand-floor',objects:[],gameplay:{multiplayer:false}}},
+  {id:'saved-atlas-shared',name:'Saved Shared Sandbox',source:'custom-builder',visibility:'public',playable:true,builderScene:{layout:'grand-floor',objects:[],gameplay:{multiplayer:true}}},
+  {id:'saved-atlas-island-solo',name:'Saved Solo Island',source:'custom-builder',visibility:'public',playable:true,builderScene:{layout:'tropical-island',objects:[],gameplay:{multiplayer:false}}}
+ ];
+ const atlas=new WorldAtlas(join(dir,'atlas.json')),{environments}=await synchronizeWorldDirectory(atlas,savedMaps);
  const byId=new Map(environments.map(world=>[world.id,world]));
  const identity={accountId:'route-visitor',username:'Route Visitor'};
  for(const world of environments){
   const url=new URL(world.playUrl,'https://muzikaz.test/');
-  // The native island launches its solo game; shared rooms retain their
-  // Explorer/sports entry. Atlas pins must preserve both launch contracts.
-  const island=isTropicalIslandMap(world),mode=island?'solo':'multiplayer';
-  if(island){assert.equal(url.pathname,'/tropical-island.html');assert.equal(url.searchParams.get('house'),null);}
-  else {assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');}
+  // Public islands use the same shared Explorer entry as other native rooms.
+  // Saved single-player maps keep their explicitly configured solo mode.
+  const island=isTropicalIslandMap(world),mode=world.source==='custom-builder'&&world.builderScene?.gameplay?.multiplayer===false?'solo':'multiplayer';
+  if(island)assert.equal(url.pathname,'/model-explorer.html',world.id+' uses the shared island controller');
+  else assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');
+  assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');
   assert.equal(url.searchParams.get('environment'),world.id,world.id+' keeps its environment');
   assert.equal(url.searchParams.get('autoplay'),'1');assert.equal(url.searchParams.get('mode'),mode);
   const route=atlasPortalRoute({mapId:world.id,districtId:world.districtId});
@@ -61,4 +67,6 @@ test('atlas routes and saved entry links retain the selected destination and pla
  }
  const pins=await atlas.pins(identity);
  assert.equal(new Set(pins.map(pin=>pin.mapId)).size,environments.length,'each selected room keeps its own saved entry');
+ for(const map of savedMaps){const pin=pins.find(pin=>pin.mapId===map.id);assert.ok(pin,map.id+' keeps a saved entry');assert.equal(new URL(pin.playUrl,'https://muzikaz.test').searchParams.get('mode'),map.builderScene.gameplay.multiplayer?'multiplayer':'solo');}
+ await assert.rejects(atlas.pin(savedMaps[0].id,null,null),error=>error.statusCode===401,'saved entries still require an authenticated game session');
 });

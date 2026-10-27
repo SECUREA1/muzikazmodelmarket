@@ -2,8 +2,8 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 487 definitions;
-the economy has 613 SKUs, including 548 native item, material, tool, and layout
+items and their runtime settings. The current library has 492 definitions;
+the economy has 618 SKUs, including 553 native item, material, tool, and layout
 offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
@@ -81,6 +81,39 @@ claim ownership through these fields.
 
 ## Upgraded portals and everyday props
 
+The complete native catalog now uses `crafted-native-v3`. All 492 canonical
+definitions receive the shared surface finish through `createBuilderModel`,
+including every early-return factory and all 130 construction materials.
+Previously authored geometry is retained, with semantic detailing for transport,
+architecture, devices/sports and the remaining world props. Media graphics,
+colliders, paint colours, animation palettes, placement and gameplay settings are
+preserved. Materials use small deterministic surface maps for timber, masonry,
+stone, metal, rubber, fabric, ceramic, glass and other supported surfaces.
+
+`public/js/native-design-system.js` dispatches the design families;
+`native-surface-finish.js` supplies the common material treatment. Catalog records
+declare `visualDesign.version` and a dedicated thumbnail in
+`public/images/native-designs/`. Run `python3 scripts/render-native-designs.py`
+to render every canonical model and regenerate its accessible SVG thumbnail,
+category contact sheets and a render report. `scripts/audit-native-designs.mjs`
+checks the entire library, including actual rendering changes, and can compare
+prices, aliases and functionality with a recorded `--baseline` snapshot.
+`public/models/native-design-coverage.json` records the current per-item audit.
+
+The same design system also covers all 24 held tools and 32 native map templates.
+Together with five historical purchase aliases, these 548 unique designs cover
+all 553 native economy offers. `held-tool-design-finish.js` supplies physical
+models for every tool, including ranged weapons and utility gear that previously
+had no held projection. Existing weapon statistics, aim rays, camera attachments
+and use costs remain unchanged. Markets can show the actual tool model as well
+as its rendered thumbnail.
+
+`environments/native-world-design-finish.js` applies the surface treatment to
+native procedural world constructors, editor previews, and the dedicated arcade
+and hockey renderers. Imported GLBs, private maps and member-created map assets
+retain their authored surface pipeline. Construction pieces keep their original
+collision and walkable geometry; cosmetic hardware does not create obstacles.
+
 Existing `portal-door` and `teleport-pad` copies now use authored metal frames,
 emissive channels and animated energy fields. `portal-arch` adds a stone-and-rune
 gateway; `portal-ring` adds a circular solar gateway. New gateways expose the
@@ -102,6 +135,22 @@ copies own their animated materials so changing one copy does not affect another
 The editor, in-game library and market share dedicated SVG thumbnails under
 `public/images/native-upgrades/`. Regression coverage lives in
 `test/native-asset-designs.test.mjs` and `test/native-asset-designs.browser.py`.
+
+The same crafted finish now covers the remaining original expanded-library
+recipes: four weapons, a cart, anvil, signpost and working windmill; eight terrain
+and plant models; four buildings; and nine characters and creatures. Another
+23 garden, furniture and healing/camp props share the same finish. These 52
+upgrades retain their original purchase identities, prices and native behaviors.
+Only local parts animate, leaving saved placement transforms intact.
+
+The five `*-models.js` collection modules (`equipment-prop`,
+`crafted-landscape`, `crafted-character`, `crafted-building` and
+`crafted-furniture`) supply shared model metadata, factories and animations.
+Catalog thumbnails show the actual authored 3D models, packaged in accessible
+SVGs. Run `python3 test/native-crafted-collection.browser.py --write-thumbnails`
+to regenerate them and export category preview sheets. The browser check reports
+shader errors; `test/native-crafted-collection.test.mjs` checks geometry budgets,
+grounding, animation isolation and compatibility with existing catalog offers.
 
 ## Extending the library
 
