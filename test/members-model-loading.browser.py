@@ -52,6 +52,9 @@ def model_fixture(floor=False):
 async def main():
     os.chdir(ROOT)
     glb, gltf, png = model_fixture()
+    compressed_glb = subprocess.run(['node', '--input-type=module', '-e',
+                                   "import {meshoptTriangleGlb} from './test/fixtures/meshopt-triangle.mjs';process.stdout.write(meshoptTriangleGlb());"],
+                                  check=True, capture_output=True).stdout
     class Frontend(SimpleHTTPRequestHandler):
         def log_message(self, *_args):
             pass
@@ -89,26 +92,42 @@ async def main():
             for name in ['models', 'assets', 'avatars', 'environments']:
                 (data / name).mkdir()
             (data / 'models/probe.glb').write_bytes(glb)
+            (data / 'models/compressed.glb').write_bytes(compressed_glb)
+            (data / 'models/placed-compressed.glb').write_bytes(compressed_glb)
             (data / 'environments/floor.glb').write_bytes(model_fixture(floor=True)[0])
             (data / 'environments.json').write_text(json.dumps([{
                 'id': 'browser-uploaded-floor', 'name': 'Uploaded model game', 'source': 'uploaded', 'visibility': 'public',
                 'storedFilename': 'floor.glb', 'modelUrl': '/uploads/environments/floor.glb', 'scale': 1,
-                'spawn': {'x': -2, 'y': 1, 'z': 2, 'rotationY': 0}, 'collisionMode': 'mesh'}]))
+                'spawn': {'x': -2, 'y': 1, 'z': 2, 'rotationY': 0}, 'collisionMode': 'mesh'}, {
+                'id': 'browser-authored-world', 'name': 'Advanced authored model map', 'visibility': 'public',
+                'builderScene': {'id': 'browser-authored-world', 'layout': 'grand-floor', 'mapSize': 40,
+                    'baseEnvironment': {'id': 'base-floor', 'modelUrl': '/uploads/environments/floor.glb', 'scale': 1,
+                                        'spawn': {'x': -2, 'y': 1, 'z': 2}},
+                    'objects': [{'id': 'authored-1', 'modelId': 'meshopt-fixture', 'position': {'x': -2, 'y': 0, 'z': 0}, 'scale': {'x': 2, 'y': 2, 'z': 2}}],
+                    'placedModels': [{'id': 'meshopt-fixture', 'name': 'Advanced meshopt', 'modelUrl': '/uploads/models/placed-compressed.glb'}]}}]))
+            (data / 'assets/geometry.bin').write_bytes(base64.b64decode(gltf['buffers'][0]['uri'].split(',')[1]))
+            gltf['buffers'][0]['uri'] = 'geometry.bin'
             (data / 'assets/probe.gltf').write_text(json.dumps(gltf))
             (data / 'assets/surface.png').write_bytes(png)
             (data / 'published-models.json').write_text(json.dumps([
                 {'id': 'split-glb', 'name': 'Legacy uploaded GLB', 'status': 'published', 'visibility': 'public', 'modelUrl': '/uploads/models/probe.glb'},
-                {'id': 'split-gltf', 'name': 'Textured uploaded glTF', 'status': 'published', 'visibility': 'public', 'modelUrl': '/uploads/assets/probe.gltf'}]))
+                {'id': 'split-gltf', 'name': 'Textured uploaded glTF', 'status': 'published', 'visibility': 'public', 'modelUrl': '/uploads/assets/probe.gltf'},
+                {'id': 'meshopt', 'name': 'Compressed uploaded GLB', 'status': 'published', 'visibility': 'public', 'modelUrl': '/uploads/models/compressed.glb'},
+                {'id': 'placed-meshopt', 'name': 'Placed compressed GLB', 'status': 'published', 'visibility': 'public', 'modelUrl': '/uploads/models/placed-compressed.glb'}]))
             (data / 'asset-library.json').write_text(json.dumps([
                 {'id': name, 'storedFilename': name, 'status': 'published', 'visibility': 'public', 'publicUrl': '/uploads/assets/' + name}
-                for name in ['probe.gltf', 'surface.png']]))
-            environment = {**os.environ, 'PORT': str(port), 'MUZIKAZ_DATA_DIR': temporary,
+                for name in ['probe.gltf', 'surface.png', 'geometry.bin']]))
+            environment = {**os.environ, 'PORT': str(port), 'MUZIKAZ_DATA_DIR': temporary, 'MUZIKAZ_STATIC_SOURCE': 'repository',
                            'MUZIKAZ_USER_DATABASE_FILE': str(data / 'users.json'), 'MUZIKAZ_ACCOUNTS_FILE': str(data / 'accounts.json'),
                            'MUZIKAZ_PAYMENT_ORDERS_FILE': str(data / 'orders.json'), 'UPLOAD_STORAGE_PATH': str(data / 'models'),
                            'MUZIKAZ_ASSET_UPLOAD_DIR': str(data / 'assets'), 'MUZIKAZ_AVATAR_UPLOAD_DIR': str(data / 'avatars'),
                            'MUZIKAZ_ENVIRONMENT_UPLOAD_DIR': str(data / 'environments'), 'MUZIKAZ_CORS_ORIGINS': front}
             with (data / 'server.log').open('w') as log:
-                server = subprocess.Popen(['node', 'server.mjs'], env=environment, stdout=log, stderr=log)
+                entry = """import {Server} from 'node:http';
+const emit=Server.prototype.emit;
+Server.prototype.emit=function(name,...args){if(name==='request'){const [request,response]=args,started=Date.now();response.once('finish',()=>console.log(JSON.stringify({fixtureRequest:request.url.split('?')[0],status:response.statusCode,milliseconds:Date.now()-started})));}return emit.call(this,name,...args);};
+await import('./server.mjs');"""
+                server = subprocess.Popen(['node', '--input-type=module', '-e', entry], env=environment, stdout=log, stderr=log)
                 try:
                     async with async_playwright() as p:
                         request = await p.request.new_context()
@@ -124,7 +143,7 @@ async def main():
                         browser = await p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox', '--enable-unsafe-swiftshader'])
                         context = await browser.new_context(viewport={'width': 1200, 'height': 850}, device_scale_factor=.5, service_workers='block')
                         page = await context.new_page()
-                        errors, failures, requests, model_requests = [], [], [], []
+                        errors, failures, requests, model_requests, proxy_failures = [], [], [], [], []
                         audit = {'enabled': False}
                         starts = {}
                         page.on('pageerror', lambda error: errors.append(str(error)))
@@ -140,14 +159,27 @@ async def main():
                         page.on('response', response_received)
                         await page.route('https://**/*', lambda route: route.abort())
                         async def proxy(route):
+                            if urlsplit(route.request.url).path == '/api/health':
+                                audit['healthProbes'] = audit.get('healthProbes', 0) + 1
+                                if audit['healthProbes'] <= 2:
+                                    await route.fulfill(status=503, content_type='text/html', body='<html>Deployment starting</html>')
+                                    return
                             target = base + route.request.url[len(HOSTED):]
-                            response = await route.fetch(url=target, timeout=30000)
-                            await route.fulfill(response=response)
+                            try:
+                                response = await route.fetch(url=target, timeout=30000)
+                                await route.fulfill(response=response)
+                            except Exception as error:
+                                # Route.fetch diagnostics contain request headers;
+                                # report only the path and transport error.
+                                detail = str(error).split('Call log:')[0].strip()
+                                proxy_failures.append({'path': urlsplit(target).path, 'error': detail})
+                                await route.abort()
                         await page.route(HOSTED + '/**', proxy)
                         await page.add_init_script("document.addEventListener('DOMContentLoaded',()=>{window.earlyModelApi=import('/public/js/model-api.js');window.earlyModelApi.catch(()=>{});},{once:true});")
                         await page.goto(front + '/members.html', wait_until='domcontentloaded')
                         await page.wait_for_function("document.documentElement.getAttribute('data-api-connected')==='true'")
                         assert await page.evaluate('MUZIKAZ_API.base') == HOSTED
+                        assert audit.get('healthProbes', 0) >= 3, 'Startup must recover automatically after transient deployment failures'
                         # A quota failure must not discard a successful member login.
                         await page.evaluate("""() => {const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(this===localStorage&&key==='muzikazAccountSessionToken')throw new DOMException('Fixture quota','QuotaExceededError');return original.call(this,key,value);};}""")
                         await page.locator('#bottle-login-form [name=username]').fill('BrowserMember')
@@ -181,9 +213,10 @@ async def main():
                           return {username:session.account.username,effectsVolume:settings.settings.effectsVolume,hasBackpack:!!backpack.accountId,loaded,repositoryMeshes};
                         }""")
                         assert result['effectsVolume'] == 42 and result['hasBackpack'], result
-                        assert len(result['loaded']) == 2 and all(model['meshes'] == 1 for model in result['loaded']), result
+                        assert len(result['loaded']) == 4 and all(model['meshes'] == 1 for model in result['loaded']), result
                         assert next(model for model in result['loaded'] if model['id'] == 'split-gltf')['textures'] == 1, result
                         assert result['repositoryMeshes'] == 1, result
+                        assert any(item['path'] == '/uploads/assets/geometry.bin' and item['status'] == 200 for item in model_requests), model_requests
                         await page.goto(front + '/environment-builder.html', wait_until='domcontentloaded')
                         await page.wait_for_function("window.MuzikazEnvironmentBuilder&&document.querySelectorAll('[data-preview-model]').length>20", timeout=60000)
                         await page.get_by_label('Item panel screen', exact=True).select_option('items')
@@ -220,13 +253,28 @@ async def main():
                         else:
                             raise AssertionError({'message': 'The ready multiplayer room did not connect presence/events', 'requests': current, 'pageErrors': errors})
                         assert any(item['path'].endswith('/events') and item['status'] == 200 for item in requests[multiplayer_requests_start:]), 'Multiplayer event stream did not connect'
+                        asset_requested, release_asset = asyncio.Event(), asyncio.Event()
+                        async def delayed_authored_asset(route):
+                            asset_requested.set()
+                            await release_asset.wait()
+                            await route.continue_()
+                        await page.route(base + '/uploads/models/placed-compressed.glb', delayed_authored_asset)
+                        await page.goto(base + '/model-explorer.html?environment=browser-authored-world&mode=solo&autoplay=1', wait_until='domcontentloaded')
+                        await asyncio.wait_for(asset_requested.wait(), timeout=60)
+                        await page.wait_for_function('!!window.MuzikazHouseExplorer')
+                        await page.wait_for_timeout(3000)
+                        assert await page.evaluate('MuzikazHouseExplorer.snapshot().controlsReady===false'), 'Gameplay started before the authored compressed model was ready'
+                        release_asset.set()
+                        await page.wait_for_function("() => {const state=window.MuzikazHouseExplorer?.snapshot();return state?.gameplayStarted&&state.controlsReady&&state.roomId==='browser-authored-world'&&state.player.collisionReady;}", timeout=90000)
                         assert not failures, failures
                         assert not errors, errors
-                        result.update({'apiRequests': len(requests), 'apiErrors': failures, 'pageErrors': errors, 'previewBeforePlacement': True, 'placedItems': 1, 'uploadedModelGameReady': True, 'multiplayerReady': True})
+                        assert not proxy_failures, proxy_failures
+                        result.update({'apiRequests': len(requests), 'apiErrors': failures, 'pageErrors': errors, 'previewBeforePlacement': True, 'placedItems': 1, 'uploadedModelGameReady': True, 'multiplayerReady': True, 'compressedModelsDecoded': True, 'authoredModelReadiness': True})
                         Path('/tmp/members-model-loading-browser-results.json').write_text(json.dumps(result, indent=2))
                         print(json.dumps(result), flush=True)
                         await browser.close()
                 finally:
+                    Path('/tmp/advanced-hosted-server-browser.log').write_text((data / 'server.log').read_text())
                     server.terminate()
                     try:
                         server.wait(timeout=15)

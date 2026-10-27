@@ -34,7 +34,10 @@ export function applyWorldQuality(root, renderer) {
     if (object.isLight) lights += 1;
     if (!object.isMesh) return;
     meshCount++;triangleCount+=Math.floor((object.geometry?.index?.count||object.geometry?.attributes?.position?.count||0)/3)*(object.isInstancedMesh?object.count:1);
-    object.frustumCulled = true;
+    // Skinning moves vertices outside the pose used for the cached bounds.
+    // Keep animated characters visible and retain explicit no-cull flags on
+    // dynamic instance batches; ordinary static meshes retain their culling.
+    if (object.isSkinnedMesh) object.frustumCulled = false;
     object.castShadow = !/floor|ceiling|sky/i.test(object.name || '');
     object.receiveShadow = true;
     const materials = Array.isArray(object.material) ? object.material : [object.material].filter(Boolean);

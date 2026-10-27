@@ -4,7 +4,7 @@
   "private": true,
   "description": "MUZIKAZ WORLD connected creative universe.",
   "scripts": {
-    "build": "npm run build:voices && node scripts/build-static.mjs",
+    "build": "node scripts/prepare-neural-voices.mjs --optional && node scripts/build-static.mjs",
     "start": "node server.mjs",
     "check": "node scripts/check-static.mjs",
     "test": "node --test test/*.test.mjs",

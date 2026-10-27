@@ -41,6 +41,7 @@ import {GAME_ECONOMY,economyItem,ownsEconomyItem,economyInventory,economyBundles
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir,stat,lstat,unlink,rename} from 'node:fs/promises';
 import {createReadStream,createWriteStream} from 'node:fs';
+import {pipeline} from 'node:stream';
 import {extname,join,normalize} from 'node:path';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
@@ -58,8 +59,10 @@ import {LoadoutCodeStore} from './loadout-code-store.mjs';
 import {PaymentOrderStore,MUZIKAZ_PAYMENT_NETWORKS} from './payment-order-store.mjs';
 import {verifyPaymentTransaction} from './payment-verifier.mjs';
 import {DurableSessionStore} from './session-store.mjs';
+import {readRuntimeMessages,writeRuntimeMessages} from './server-runtime-state.mjs';
 
 const root = process.cwd();
+const repositoryStaticSource = process.env.MUZIKAZ_STATIC_SOURCE === 'repository';
 const LAND_PRODUCTS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
 const serviceStartedAt = new Date().toISOString();
 const serviceVersion = process.env.npm_package_version || '1.0.0';
@@ -115,8 +118,15 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.bin':'application/octet-stream','.ktx2':'image/ktx2','.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+function streamFile(res,filePath,options){
+  // File removal or a broken download can fail after the async handler has
+  // returned. Keep those stream errors inside the response, not the process.
+  pipeline(createReadStream(filePath,options),res,error=>{
+    if(error&&error.code!=='ERR_STREAM_PREMATURE_CLOSE')console.error('[File response]',error.code||error.message);
+  });
+}
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
 let paymentRatesCache = null;
@@ -233,8 +243,8 @@ async function exclusiveMasterState(work){
  masterMaintenance=true;
  try{await drainServerState();return await work();}finally{masterMaintenance=false;}
 }
-async function saveMasterRuntime(){await mkdir(dataDir,{recursive:true});await writeFile(masterRuntimeFile,JSON.stringify({chatMessages,supportMessages}),{mode:0o600});}
-async function loadMasterRuntime(){let data;try{data=JSON.parse(await readFile(masterRuntimeFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;data={};}chatMessages.splice(0,chatMessages.length,...(Array.isArray(data.chatMessages)?data.chatMessages.slice(-100):[]));supportMessages.splice(0,supportMessages.length,...(Array.isArray(data.supportMessages)?data.supportMessages.slice(-500):[]));}
+async function saveMasterRuntime(){await writeRuntimeMessages(masterRuntimeFile,{chatMessages,supportMessages});}
+async function loadMasterRuntime(){const data=await readRuntimeMessages(masterRuntimeFile);chatMessages.splice(0,chatMessages.length,...data.chatMessages);supportMessages.splice(0,supportMessages.length,...data.supportMessages);}
 function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.activeWorlds.clear();authoritativeRooms.manifestCache.clear();authoritativeRooms.collision.cache.clear();authoritativeRooms.collision.clearPlacedWorlds();roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
 async function snapshotServer() {
   await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue, deviceMediaUploads.queue]);
@@ -1219,14 +1229,15 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); if(person.accountId!==req.muzikazAuthentication.accountId)return sendJson(res,403,{error:'This chat presence belongs to another account.'});const player=await authoritativeRooms.player(person.roomId,'account:'+req.muzikazAuthentication.accountId);if(!player||player.replacedByRoom||Date.now()-player.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join this multiplayer room before chatting.','chat'); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' });
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
-    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
-    if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
     const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media|models)\/([a-zA-Z0-9._-]+)$/);
+    const modelResource = uploadMatch&&['assets','models'].includes(uploadMatch[1])&&/\.(?:bin|ktx2)$/i.test(uploadMatch[2]);
+    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|tmp)$/i.test(path) || /\.bin$/i.test(path)&&!modelResource) return sendJson(res,404,{error:'Not found'});
+    if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
     let uploadedFile = '',privateUpload=false;
     if (uploadMatch) {
       const [,kind,name] = uploadMatch;
-      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
+      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)&&!modelResource) return sendJson(res,404,{error:'Not found'});
       if (kind === 'assets') {
         const asset = (await readAssets()).find(item => item.storedFilename === name);
         if (!asset) return sendJson(res,404,{error:'Not found'});
@@ -1264,11 +1275,11 @@ const server = createServer(async (req, res) => {
       const info = await lstat(uploadedFile).catch(()=>null);
       if (!info?.isFile() || info.isSymbolicLink()) return sendJson(res,404,{error:'Not found'});
     }
-    const pathsToTry = uploadedFile ? [uploadedFile] : [join(root, 'dist', path), join(root, path)];
-    if (!extname(path)) pathsToTry.push(join(root, 'dist', path + '.html'), join(root, path + '.html'));
+    const pathsToTry = uploadedFile ? [uploadedFile] : repositoryStaticSource ? [join(root,path)] : [join(root, 'dist', path), join(root, path)];
+    if (!extname(path)) pathsToTry.push(...(repositoryStaticSource ? [join(root,path+'.html')] : [join(root, 'dist', path + '.html'), join(root, path + '.html')]));
     let filePath = '';
     for (const possiblePath of pathsToTry) {
-      try { await stat(possiblePath); filePath = possiblePath; break; } catch {}
+      try { if((await stat(possiblePath)).isFile()){filePath = possiblePath; break;} } catch {}
     }
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
@@ -1276,11 +1287,11 @@ const server = createServer(async (req, res) => {
     const cacheControl = staticCacheControl(extension, {privateUpload});
     if(uploadMatch?.[1]==='media'){
       const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
-      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
-      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
+      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return streamFile(res,filePath,{start,end});}
+      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return streamFile(res,filePath);
     }
     res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }, res.muzikazRequestOrigin));
-    createReadStream(filePath).pipe(res);
+    streamFile(res,filePath);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });
 

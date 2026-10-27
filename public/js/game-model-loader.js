@@ -17,7 +17,7 @@ async function waitForApi(api,signal) {
     })]);
   } finally { if (cancel) signal.removeEventListener('abort',cancel); }
 }
-function disposeModel(gltf) {
+export function disposeGameModel(gltf) {
   const resources = new Set();
   gltf?.scene?.traverse(node => {
     if (node.geometry) resources.add(node.geometry);
@@ -27,6 +27,24 @@ function disposeModel(gltf) {
     }
   });
   for (const resource of resources) resource.dispose?.();
+}
+
+function parsedModel(parsing,signal) {
+  if (!signal) return parsing;
+  return new Promise((resolve,reject) => {
+    let cancelled = false;
+    const cleanup = () => signal.removeEventListener('abort',cancel);
+    const cancel = () => { cancelled = true; cleanup(); reject(abortError()); };
+    if (signal.aborted) cancel();
+    else signal.addEventListener('abort',cancel,{once:true});
+    // Decoder workers cannot always be interrupted. Release the caller's
+    // deadline now and dispose any scene that their late result produces.
+    Promise.resolve(parsing).then(gltf => {
+      cleanup();
+      if (cancelled || signal.aborted) { disposeGameModel(gltf); reject(abortError()); }
+      else resolve(gltf);
+    },error => { cleanup(); reject(error); });
+  });
 }
 
 async function assetResponse(url, signal) {
@@ -125,8 +143,12 @@ export async function loadGameModel(loader, value, {onProgress,signal} = {}) {
     let parsing;
     try { loader.requestHeader = {}; parsing = loader.parseAsync(bytes,base); }
     finally { loader.requestHeader = headers; }
-    const gltf = await parsing;
-    if (signal?.aborted) { disposeModel(gltf); throw abortError(); }
+    const gltf = await parsedModel(parsing,signal);
+    if (signal?.aborted) { disposeGameModel(gltf); throw abortError(); }
+    // Avatar and placed-item roots do not pass through world quality setup.
+    // A skinned mesh's cached bounds describe one pose and can otherwise cull
+    // its visible, animated limbs as though the character had disappeared.
+    gltf.scene?.traverse(node=>{if(node.isSkinnedMesh)node.frustumCulled=false;});
     return gltf;
   } finally {
     for (const url of objectUrls) URL.revokeObjectURL(url);
