@@ -9375,7 +9375,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg"
+        "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg"
       },
       "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third.",
       "behavior": "decor",
@@ -27862,7 +27862,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg"
       },
       "description": "Layered sandstone escarpment with fractured ledges, moss seams and fallen scree.",
       "behavior": "decor",
@@ -27935,7 +27935,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg"
       },
       "description": "A scorched impact bowl with a raised fractured rim, mineral seams and scattered ejecta.",
       "behavior": "decor",
@@ -28081,7 +28081,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg"
       },
       "description": "Sculpted snow drifts with swept crests, cool blue ice facets and granular edge rocks.",
       "behavior": "decor",

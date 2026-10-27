@@ -33,9 +33,7 @@ test('authored UVs and texture images remain intact while protected surfaces rec
 
 test('advanced aircraft, ships, landscape, character and material packs have usable native texture coordinates',()=>{
  const ids=['shipping-feeder','shipping-container','shipping-tanker','diamond-da40','piper-cub','harbor-yacht','harbor-patrol','harbor-fishing-boat','harbor-skiff','harbor-sailboat','alpine-mountain','corsair-aircraft','terrain-cliff','terrain-crater','palm-cluster','forest-ranger','desert-merchant','spectral-ghost','friendly-ghost','material:corner-wedge'];
- let generated=0;
- for(const id of ids){const root=createBuilderModel(id);try{const stats=nativeRenderStats(root);assert.ok(stats.meshes&&stats.texturedSurfaces,id+' has actual textured geometry');assert.equal(stats.missingNativeUVs,0,id);assert.equal(stats.invalidNativeUVs,0,id);root.traverse(mesh=>{if(mesh.geometry?.userData.nativeSurfaceUV||mesh.geometry?.userData.vehicleSurfaceUv)generated++;});}finally{disposeNativeAuditModel(root);}}
- assert.ok(generated>=60,'all previously unmapped hull, wing, terrain, frond, robe and material surfaces are covered');
+ for(const id of ids){const root=createBuilderModel(id);try{const stats=nativeRenderStats(root);assert.ok(stats.meshes&&stats.texturedSurfaces&&stats.nativeTexturedMeshes,id+' has actual mapped geometry');assert.equal(stats.missingNativeUVs,0,id);assert.equal(stats.invalidNativeUVs,0,id);root.traverse(mesh=>{const materials=[].concat(mesh.material||[]);if(!mesh.isMesh||mesh.userData.collisionOnly||!materials.some(material=>material?.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION&&(material.map||material.roughnessMap||material.bumpMap||material.normalMap)))return;const uv=mesh.geometry.getAttribute('uv');assert.equal(uv.count,mesh.geometry.getAttribute('position').count,id);assert.ok(uv.array.every(Number.isFinite),id);});}finally{disposeNativeAuditModel(root);}}
 });
 
 test('degenerate or invalid geometry cannot introduce non-finite UV coordinates',()=>{
@@ -50,4 +48,18 @@ test('every generated recipe pack renders current mapped surfaces rather than me
  const registry=JSON.parse(await readFile(new URL('../public/models/game-asset-registry.json',import.meta.url),'utf8')),generated=registry.assets.filter(asset=>asset.generated);
  assert.ok(generated.length>30,'the complete persistent generated pack is included');
  for(const asset of generated){const root=createGeneratedAsset(normalizeCatalogModel(asset,0));try{const stats=nativeRenderStats(root);assert.ok(stats.meshes&&stats.texturedSurfaces,asset.assetId);assert.equal(root.userData.nativeSurfaceFinish.version,NATIVE_DESIGN_VERSION,asset.assetId);assert.equal(stats.missingNativeUVs,0,asset.assetId);assert.equal(stats.invalidNativeUVs,0,asset.assetId);assert.ok([...stats.bounds.min,...stats.bounds.max].every(Number.isFinite),asset.assetId);}finally{disposeNativeAuditModel(root);}}
+});
+
+test('office and police glazing remain glass while native snow, rock and named ice retain their surfaces',()=>{
+ const office=createBuilderModel('construction-site-office'),glazing=[];
+ try{
+  office.traverse(node=>{for(const material of [].concat(node.material||[]))if(material.transparent&&material.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION)glazing.push({name:node.name,surface:material.userData.nativeSurface,texture:material.map?.userData.nativeMaterialSurface});});
+  assert.equal(glazing.length,3,'the real construction office has two finished windows and door glazing');
+  assert.ok(glazing.every(part=>part.surface==='glass'&&part.texture==='glass'),JSON.stringify(glazing));
+ }finally{disposeNativeAuditModel(office);}
+ const root=new THREE.Group();
+ const samples=[['POLICE_WINDOW',true,'glass'],['OFFICE_GLAZING',true,'glass'],['ALPINE_ICE_SHEET',true,'ice'],['GLACIER_EDGE',true,'ice'],['SNOW_PATCH',false,'snow'],['ROCK_FACE',false,'stone'],['SNOW_EDGE_STONE',false,'stone']];
+ for(const [name,transparent]of samples){const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({transparent,opacity:transparent?.4:1}));mesh.name=name;root.add(mesh);}
+ try{finishNativeSurfaces(THREE,root,'construction-and-mountain-materials');for(const [index,[name,,kind]]of samples.entries()){assert.equal(root.children[index].material.userData.nativeSurface,kind,name);assert.equal(root.children[index].material.map.userData.nativeMaterialSurface,kind,name+' uses the intended texture image');}}
+ finally{disposeNativeAuditModel(root);}
 });

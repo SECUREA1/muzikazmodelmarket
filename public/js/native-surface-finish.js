@@ -24,7 +24,7 @@ export function ensureNativeSurfaceUVs(T,geometry){
 }
 function surfaceKind(node,material,id){
  const name=(node.name+' '+(material.name||'')).toLowerCase(),color=material.color;
- if(material.transparent)return /water|pond|river/.test(name+' '+id)?'water':/ice|glacier/.test(name)?'ice':'glass';
+ if(material.transparent)return /water|pond|river/.test(name+' '+id)?'water':/(?:^|[^a-z0-9])(?:ice|glacier)(?:$|[^a-z0-9])/.test(name)?'ice':'glass';
  if(/snow_edge_stone/.test(name))return 'stone';
  if(/snow|powder|drift_crest/.test(name))return 'snow';
  if(/rock_face|rock_cut|rock_ridges|rock_outcrop|sediment|scree/.test(name))return 'stone';
