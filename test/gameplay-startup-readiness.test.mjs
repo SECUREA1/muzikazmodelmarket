@@ -20,13 +20,13 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){},reset},gameplayVoice:{reset},transportActivity:{update:reset},guideAudio:{enter:reset,leave:reset},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
   factoryTestingVR:{reset,receive:reset,visible:()=>false,isActive:()=>false},funhouseVR:{reset,update:reset},resetFunhouseRideView:reset,funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
-  scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),choosePlayAccess:async()=>null,
+  scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),settingsUI:{restore:async()=>{}},choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
   serverMotion:{reset},localWalkingView:{reset},localWalkingActive:false,localVehicleView:{reset},localVehicleActor:null,serverViewSnapshot:null,stickSprinting:false,
   stage:{scrollIntoView:reset},gameStartButton:{disabled:false},gameStartScreen:{classList:{add:reset,remove:reset}},gameLoadStatus:{textContent:''},graphicsContextLost:false,
@@ -345,4 +345,17 @@ test('prison firing cannot open an activity or block movement',()=>{
  context.gameplayStarted=true;context.serverPlayerInitialized=true;context.authoritativeClient={ready:true};
  assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
  overlay=true;assert.equal(context.shootAtReticle(),false);assert.deepEqual(calls,[]);
+});
+
+
+test('login restores saved audio preferences before joining and ignores a superseded map',async()=>{
+ for(const replaced of [false,true]){
+  const preferences=deferred();let connections=0;
+  const client={ready:true,whenReady:async()=>{}};
+  const {context}=fixture({settingsUI:{restore:()=>preferences.promise},connectAuthoritativeRoom:()=>{connections++;return client;}});
+  vm.runInContext(joinRoom,context);
+  const joining=context.startRoomGameplay();await turns();assert.equal(connections,0,'no guide-bearing snapshot before saved settings');
+  if(replaced)context.worldLoadGeneration++;
+  preferences.resolve();assert.equal(await joining,!replaced);assert.equal(connections,replaced?0:1);
+ }
 });

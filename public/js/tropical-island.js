@@ -1,3 +1,4 @@
+import {mountNativeWorldGuide} from './native-world-guide.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {createTropicalIslandWorld, animateTropicalIslandWorld} from './tropical-island-world.js';
 import {createIslandSession,startIslandSession,stepIslandSession,finishIslandSession,consumeIslandDrink,visitIslandExperience,islandEffects} from './tropical-island-rules.js';
@@ -7,6 +8,7 @@ import {mountWorldSupplyUI} from './world-supply-ui.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
 
 const $=selector=>document.querySelector(selector);
+const nativeGuide=mountNativeWorldGuide({parent:document.querySelector('.island-header nav')});
 const descriptions={
   'tiki-bar':['🍹','Beach bar','A tropical refreshment, with or without alcohol.','Visit bar'],
   'sunset-bar':['☀','Beach bar','The best sea view on the east coast.','Visit bar'],
@@ -94,6 +96,7 @@ function makePassport(){
   }
 }
 function start(){
+  nativeGuide.leave();nativeGuide.enter({id:'tropical-island',name:'Palm Coast Resort',game:'tropical-island'},{solo:true});
   clearInput();session=createIslandSession();startIslandSession(session,performance.now());last=sessionAt=performance.now();hasShownResults=false;overview=false;boat=null;activity=null;nearby=null;waypoint=null;waypointRing.visible=false;
   player={x:world.spawn.x,z:world.spawn.z,heading:Math.PI};yaw=0;pitch=-.04;
   for(const item of world.boats){item.root.position.x=item.home.x;item.root.position.z=item.home.z;item.root.rotation.y=item.home.heading;}
