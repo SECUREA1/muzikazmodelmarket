@@ -11,6 +11,7 @@ with socket.socket() as probe:
 base=f'http://127.0.0.1:{port}'
 keys=['muzikazRadToxHiddenRows','muzikazRadToxBackpack','muzikazActiveBackpackItems','muzikazConsumedBackpackItems','muzikazUnlockedAttachmentLoot']
 cases=[('malformed',{**dict.fromkeys(keys,'undefined'),'muzikazDesignatedAvatar':'undefined'}),('old-shapes',{**dict.fromkeys(keys,'{}'),'muzikazRadToxBackpack':'null','muzikazDesignatedAvatar':'[]'})]
+cases.append(('phone',{**dict.fromkeys(keys,'undefined'),'muzikazDesignatedAvatar':'undefined'}))
 
 with tempfile.TemporaryDirectory(prefix='corrupt-game-storage-') as directory:
     with open(Path(directory)/'server.log','w') as log:
@@ -20,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='corrupt-game-storage-') as directory:
                 browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--enable-unsafe-swiftshader'])
                 try:
                     for name,records in cases:
-                        context=browser.new_context(service_workers='block',viewport={'width':800,'height':600})
+                        context=browser.new_context(service_workers='block',viewport={'width':390,'height':844} if name=='phone' else {'width':800,'height':600},is_mobile=name=='phone',has_touch=name=='phone')
                         try:
                             for _ in range(100):
                                 try:

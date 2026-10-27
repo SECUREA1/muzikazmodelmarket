@@ -161,6 +161,14 @@ def main():
                                     try:
                                         value.json()
                                     except Exception as error:
+                                        # Chromium may evict an already-consumed
+                                        # response body from DevTools while a
+                                        # large world is compiling. That is an
+                                        # observer limitation, not a JSON parse
+                                        # failure in the game itself.
+                                        detail = str(error)
+                                        if 'Protocol error (Network.getResponseBody)' in detail or 'Response body is not available for a response that was navigated away from' in detail:
+                                            return
                                         invalid_json.append({'url': value.url, 'contentType': content_type, 'error': str(error)})
                             page.on('response', response_check)
                             page.route('https://**/*', lambda route: route.abort())
@@ -179,7 +187,12 @@ def main():
                                     page.locator('#start').click()
                                     page.wait_for_function('MuzikazHockey.snapshot().running && MuzikazHockey.snapshot().live', timeout=30000)
                                 elif world['id'] == 'neon-junction':
-                                    page.locator('#attractions button').first.click()
+                                    menu = page.get_by_role('button', name='Arcade menu and match lobby', exact=True)
+                                    menu.click()
+                                    page.locator('[data-attraction="billiards"]').click()
+                                    page.wait_for_function('NeonJunction.snapshot().game===4 && NeonJunction.snapshot().gameStarted', timeout=30000)
+                                    menu.click()
+                                    page.locator('#game-mode').select_option('multiplayer')
                                     page.locator('#join-game').click()
                                     page.locator('#start-round').click()
                                     page.wait_for_function('NeonJunction.snapshot().gameStarted && NeonJunction.snapshot().liveGame', timeout=30000)
@@ -189,7 +202,13 @@ def main():
                                 assert not modules, modules
                                 assert not invalid_json, invalid_json
                                 assert not shader_errors, shader_errors
-                                record.update({'passed': True, 'draws': state.get('draws'), 'roomId': (state.get('game') or {}).get('roomId'), 'serverReady': (state.get('game') or {}).get('serverReady')})
+                                game = state.get('game') or {}
+                                hockey = state.get('hockey') or {}
+                                arcade = state.get('arcade') or {}
+                                record.update({'passed': True, 'draws': state.get('draws'), 'roomId': game.get('roomId'), 'serverReady': game.get('serverReady'),
+                                               'controlsReady': game.get('controlsReady', hockey.get('ready', bool(arcade.get('gameStarted')))),
+                                               'gameplayStarted': game.get('gameplayStarted', hockey.get('running', bool(arcade.get('gameStarted')))),
+                                               'contextLost': state.get('contextLost'), 'pageErrors': errors, 'modules': modules, 'invalidJson': invalid_json, 'shaderErrors': shader_errors})
                             except Exception as error:
                                 record.update({'passed': False, 'error': str(error), 'diagnostic': diagnostics(page), 'pageErrors': errors, 'modules': modules, 'invalidJson': invalid_json, 'shaderErrors': shader_errors})
                             finally:
