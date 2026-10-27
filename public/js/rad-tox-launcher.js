@@ -29,7 +29,10 @@
       requested = true;
       var restartUrl = new URL(window.location.href);
       restartUrl.searchParams.set('autoplay', '1');
-      window.location.replace(restartUrl.href);
+      // Replacing an identical URL with a fragment can be a same-document
+      // navigation. Reload explicitly so autoplay links really reset modules.
+      if (restartUrl.href === window.location.href) window.location.reload();
+      else window.location.replace(restartUrl.href);
       return;
     }
     requested = true;

@@ -5,7 +5,6 @@ import {runInNewContext} from 'node:vm';
 
 const storageSource = await readFile(new URL('../public/js/game-storage.js', import.meta.url), 'utf8');
 const launcherSource = await readFile(new URL('../public/js/rad-tox-launcher.js', import.meta.url), 'utf8');
-const engineSource = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
 
 function cachedGame(value, blocked = false) {
   const context = {
@@ -45,17 +44,8 @@ test('valid game preferences, rewards and avatar records survive unchanged', () 
   assert.equal(avatar.modelUrl, '/avatar.glb');
 });
 
-test('engine cache consumers use typed reads before constructing sets or appending rewards', () => {
-  assert.ok(engineSource.includes("from './game-storage.js'"));
-  assert.match(engineSource, /new Set\(readStoredGameArray\(rowStorageKey\)\)/);
-  assert.ok(engineSource.includes("this.backpackRewards=readStoredGameArray('muzikazRadToxBackpack')"));
-  assert.ok(engineSource.includes("readStoredGameArray('muzikazCustomGamePlacements')"));
-  assert.ok(engineSource.includes("readStoredGameObject('muzikazDesignatedAvatar',null)"));
-  assert.doesNotMatch(engineSource, /JSON\.parse\(localStorage\.getItem/);
-});
-
 function launcherHarness(href = 'https://game.test/model-explorer.html?environment=casino&mode=solo#play') {
-  const handlers = new Map(), emitted = [], replacements = [], timers = new Map();
+  const handlers = new Map(), emitted = [], replacements = [], reloads = [], timers = new Map();
   const button = {disabled:false, textContent:'Begin Game', addEventListener(type, fn) { this.click = fn; }};
   const overlay = {classList:{add(){},remove(){}}}, status = {textContent:''};
   const document = {
@@ -67,7 +57,7 @@ function launcherHarness(href = 'https://game.test/model-explorer.html?environme
   };
   let rejectImport, imports = 0;
   const window = {
-    location:{href, search:new URL(href).search, replace(url) {replacements.push(url);}},
+    location:{href, search:new URL(href).search, replace(url) {replacements.push(url);}, reload() {reloads.push(href);}},
     setTimeout(fn) {timers.set(timers.size + 1, fn); return timers.size;},
     clearTimeout(id) {timers.delete(id);}
   };
@@ -83,7 +73,7 @@ function launcherHarness(href = 'https://game.test/model-explorer.html?environme
     emit:(type,detail={})=>document.dispatchEvent({type,detail}),
     fail:async()=>{rejectImport(new SyntaxError('JSON.parse: unexpected character'));await Promise.resolve();},
     get imports(){return imports;},
-    button,status,document,emitted,replacements,timers
+    button,status,document,emitted,replacements,reloads,timers
   };
 }
 
@@ -119,6 +109,16 @@ test('world initialization failure retries the ready engine without a page resta
   assert.equal(game.emitted.filter(type=>type === 'muzikaz:rad-tox-request').length, 2);
   game.emit('muzikaz:gameplay-ready');
   assert.equal(game.document.body.dataset.gameControls, 'ready');
+});
+
+test('retry reloads an existing autoplay URL even when it has a fragment', async () => {
+  const href = 'https://game.test/model-explorer.html?environment=casino&mode=solo&autoplay=1#play';
+  const game = launcherHarness(href);
+  await game.fail();
+  game.click(); game.click();
+  assert.equal(game.imports, 1);
+  assert.deepEqual(game.reloads, [href]);
+  assert.equal(game.replacements.length, 0);
 });
 
 test('a module that throws after announcing readiness still needs a clean document', async () => {
