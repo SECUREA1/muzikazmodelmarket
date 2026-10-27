@@ -12,7 +12,7 @@ export function shippingSceneState(snapshot,selfId,environment){
  const berth=job?.phase==='loading'||job?.phase==='secured'?origin:destination;
  const hazard=sailing&&job?.hazard&&!job.hazard.resolved?job.hazard:null;
  const receiving=job?.phase!=='loading'&&job?.phase!=='secured'?point(job?.receivingBerth):null;
- return {next:next&&point(next),name:next?.name||'',route:sailing?waypoints.slice(index).map(point).filter(Boolean):[],berth:receiving||point(berth?.berth||berth),hazard:hazard?{...hazard,position:point(hazard.position||hazard.point)||point(next)}:null,phase:job?.phase||'ready'};
+ return {next:next&&point(next),observer:point(snapshot.actors?.[self.vehicleId]?.position||self.position),name:next?.name||'',route:sailing?waypoints.slice(index).map(point).filter(Boolean):[],berth:receiving||point(berth?.berth||berth),hazard:hazard?{...hazard,position:point(hazard.position||hazard.point)||point(next)}:null,phase:job?.phase||'ready'};
 }
 
 export function createShippingScene(scene,{createCanvas=()=>globalThis.document?.createElement('canvas')}={}){
@@ -43,7 +43,7 @@ export function createShippingScene(scene,{createCanvas=()=>globalThis.document?
  function update(snapshot,selfId,environment){
   if(disposed)return;state=shippingSceneState(snapshot,selfId,environment);show(root,!!state);show(gate,!!state?.next);show(berth,!!state?.berth);show(hazard,!!state?.hazard?.position);
   if(!state){route.visible=false;return;}
-  if(state.next){gate.position.set(state.next.x,.05,state.next.z);if(state.name!==labelText&&context){labelText=state.name;context.clearRect(0,0,512,80);context.fillStyle='rgba(9,33,45,.9)';context.fillRect(0,0,512,80);context.fillStyle='#fff1bd';context.font='600 25px sans-serif';context.textAlign='center';context.textBaseline='middle';context.fillText(labelText.slice(0,42),256,40,490);texture.needsUpdate=true;}}
+  if(state.next){gate.position.set(state.next.x,.05,state.next.z);if(label&&state.observer){const width=Math.min(34,Math.max(3,Math.hypot(state.next.x-state.observer.x,state.next.z-state.observer.z)*.32));label.scale.set(width,width*80/512,1);}if(state.name!==labelText&&context){labelText=state.name;context.clearRect(0,0,512,80);context.fillStyle='rgba(9,33,45,.9)';context.fillRect(0,0,512,80);context.fillStyle='#fff1bd';context.font='600 25px sans-serif';context.textAlign='center';context.textBaseline='middle';context.fillText(labelText.slice(0,42),256,40,490);texture.needsUpdate=true;}}
   if(state.berth)berth.position.set(state.berth.x,.05,state.berth.z);
   if(state.hazard?.position){hazard.position.set(state.hazard.position.x,.05,state.hazard.position.z);mine.visible=state.hazard.type==='mines';warningSign.visible=state.hazard.type!=='mines';}
   const key=JSON.stringify(state.route);if(key!==routeKey){routeKey=key;route.geometry.dispose();route.geometry=new THREE.BufferGeometry().setFromPoints(state.route.map(p=>new THREE.Vector3(p.x,.16,p.z)));}

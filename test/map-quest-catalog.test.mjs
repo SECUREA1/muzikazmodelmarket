@@ -5,6 +5,10 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {mapQuestOffers} from '../public/js/map-quest-catalog.js';
 import {questCatalog} from '../public/js/quest-catalog.js';
+import {localMapLocations} from '../public/js/local-map-locations.js';
+import {ServerBuilderCollision} from '../server-builder-collision.mjs';
+import {AuthoritativeRooms} from '../authoritative-room.mjs';
+import {SharedRoomStore} from '../shared-room-store.mjs';
 import {airportWorld} from '../airport-world.mjs';
 import {fitnessWorld} from '../fitness-world.mjs';
 import {casinoWorld} from '../casino-world.mjs';
@@ -31,11 +35,11 @@ test('every authored explorer map has discovery and a timed local route with rea
  for(const world of [airportWorld(),fitnessWorld(),casinoWorld(),constructionWorld()])verifyOffers(world);
 });
 
-test('airport tours and briefing use authored local facilities and actual interaction reach',()=>{
+test('airport tours and briefing use canonical local facilities, supported floors and actual interaction reach',()=>{
  const world=airportWorld(),offers=verifyOffers(world),tour=offers.find(offer=>offer.id.endsWith(':tour')),service=offers.find(offer=>offer.kind==='site-job');
  assert.equal(tour.sites[0].name,'Arrival');assert.deepEqual({x:tour.sites[0].x,y:tour.sites[0].y,z:tour.sites[0].z},{x:world.spawn.x,y:world.spawn.y,z:world.spawn.z});
- const locations=world.builderScene.layoutMeta.locations;
- for(const site of tour.sites.slice(1))assert.ok(locations.some(place=>place.id===site.id&&place.name===site.name));
+ const locations=localMapLocations(world),collision=new ServerBuilderCollision();
+ for(const site of tour.sites.slice(1)){const place=locations.find(place=>place.id===site.id&&place.name===site.name);assert.ok(place,'tour uses a registered facility or freight hub');assert.deepEqual({x:site.x,y:site.y,z:site.z},{x:place.x,y:Number(place.y)||0,z:place.z});const floor=collision.groundAt(world,site,{entry:true});assert.ok(floor&&Math.abs(floor.y-site.y)<.3,'tour stop has its actual supported airport floor: '+site.name);}
  assert.equal(new Set(tour.sites.map(site=>site.name)).size,tour.sites.length);
  assert.match(service.title,/Airport/);
  for(const site of service.sites){const item=world.builderScene.objects.find(item=>item.id===site.entityId);assert.ok(item);assert.deepEqual({x:site.x,y:site.y,z:site.z},item.position);assert.equal(site.interactionDistance,item.functionalSettings.interactionDistance);assert.equal(site.action,'interact');}
@@ -135,4 +139,38 @@ test('dock walking quests can reach an overlapping quay without crossing to a di
  assert.ok(offers.find(offer=>offer.kind==='site-job').sites.some(site=>site.entityId==='quay-guide'),'a continuous dock floor reaches its crew briefing');
  assert.ok(offers.flatMap(offer=>offer.sites).some(site=>site.name==='Dock office'));
  assert.equal(offers.flatMap(offer=>offer.sites).some(site=>site.name==='Remote office'),false);
+});
+
+
+test('imported model walking tours ignore implicit roadside freight hubs and still start on real entrance floors',async t=>{
+ const repository=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
+ const dir=await mkdtemp(join(tmpdir(),'imported-foot-freight-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const {environments}=await synchronizeWorldDirectory(new WorldAtlas(join(dir,'atlas.json')),repository.map(world=>({...world,source:'repository'})));
+ const imported=environments.filter(world=>(world.modelUrl||world.modelUrls?.length)&&!world.builderScene);
+ let checked=0;
+ for(const world of imported){
+  const places=localMapLocations(world),implicit=places.filter(place=>place.kind==='freight'&&/^freight-hub-\d+$/.test(place.id));
+  if(!implicit.length)continue;checked++;
+  const ids=new Set(implicit.map(place=>place.id));
+  assert.ok(localMapLocations(world).some(place=>ids.has(place.id)),'transport map retains its freight destinations');
+  for(const offer of mapQuestOffers(world))for(const site of offer.sites)assert.equal(ids.has(site.id),false,world.id+' foot route does not infer imported floors from a road hub');
+ }
+ assert.ok(checked>=9,'the regression covers the imported map category with ambient streets');
+ const world=imported.find(world=>world.id==='muzikaz-upper');assert.ok(world);
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>100000}),identity={accountId:'walker',username:'Walker',stats:{health:100}};let sequence=0;
+ const send=(action,fields={})=>runtime.command(world.id,world,identity,{action,requestId:'imported-foot-'+ ++sequence,...fields});
+ await send('join',{deferRadTox:true,radToxEnabled:false});
+ for(const offer of mapQuestOffers(world)){
+  const state=await send('vehicle-mission',{operation:'start',questId:offer.id}),quest=state.players[state.selfId].vehicleMission;
+  assert.equal(quest.status,'active');assert.ok(quest.checkpoints.length>=2);
+  for(const point of quest.checkpoints){assert.equal(point.siteId.startsWith('freight-hub-'),false);assert.ok(runtime.collision.hasBodyClearance(world,point,.38,{actors:state.actors,objects:state.objects}));}
+  if(offer.challenge)assert.equal(quest.checkpoints.at(-1).siteId,'map-arrival');
+  await send('vehicle-mission',{operation:'cancel'});
+ }
+});
+
+test('an explicitly authored imported-model freight bay remains a local walking destination',()=>{
+ const bay={id:'freight-hub-1',modelId:'freight-loading-bay',name:'Authored loading bay',position:{x:10,y:0,z:0}},place={id:bay.id,name:bay.name,...bay.position,kind:'freight'};
+ const world={id:'authored-model-freight',modelUrl:'/model.glb',spawn:{x:0,y:0,z:0},placementScene:{objects:[bay],layoutMeta:{locations:[place,{id:'local-office',name:'Local office',x:0,z:10}]}}};
+ assert.ok(mapQuestOffers(world).flatMap(offer=>offer.sites).some(site=>site.id===bay.id&&site.name===bay.name));
 });

@@ -17,6 +17,7 @@ const clone=value=>JSON.parse(JSON.stringify(value));
 const uuid=value=>/^[a-f0-9-]{36}$/.test(value||'');
 const terminal=new Set(['delivered','cancelled','expired','failed']);
 const active=job=>job&&!terminal.has(job.phase);
+export const shippingHullHealth=actor=>isShippingVessel(actor)?((actor?.modelId||actor?.asset?.buildAssetId)==='shipping-feeder'?650:1200):null;
 export const shippingHandling=player=>['loading','secured','unloading'].includes(player?.shipping?.job?.phase);
 const defaults=()=>({deliveries:0,unitsDelivered:0,totalEarnedMzk:0,bestQuality:0});
 const stateFor=player=>player.shipping ||= {job:null,stats:defaults(),supplies:{},unlocks:['shipping-feeder'],message:'Board a feeder at the dock to start your shipping induction.'};
@@ -116,7 +117,7 @@ export function shippingCommand(sim,player,environment,command,now){
  if(operation==='cancel'){cancelShipping(player,sim,now);return {message:state.message};}
  if(['radio','escort'].includes(operation)&&!active(state.job))return notify(sim,player,now,'Freight control: board an available feeder at the dock, choose a manifest, alternate port and starboard loads, then Secure and Depart.');
  const boat=currentBoat(sim,player);
- if(operation==='service'){const port=SHIPPING_PORTS.find(port=>atDock(boat,port));if(!port)fail('Stop at a cargo dock and cancel Auto before requesting service.');stopBoat(boat);boat.health=boat.maxHealth||650;player.fuel=100;player.ammo=120;return notify(sim,player,now,port.name+' crew: hull repaired, fuel and ammunition replenished.');}
+ if(operation==='service'){const port=SHIPPING_PORTS.find(port=>atDock(boat,port));if(!port)fail('Stop at a cargo dock and cancel Auto before requesting service.');stopBoat(boat);boat.maxHealth=shippingHullHealth(boat)??boat.maxHealth??650;boat.health=boat.maxHealth;player.fuel=100;player.ammo=120;return notify(sim,player,now,port.name+' crew: hull repaired, fuel and ammunition replenished.');}
  if(operation==='accept'){
   if(active(state.job))fail('Finish or cancel your existing freight contract first.');if(player.vehicleMission?.status==='active'||player.fishing?.session&&['waiting','bite','reeling','caught'].includes(player.fishing.session.status))fail('Finish your current game assignment before loading freight.');
   const route=routeBy(command.contractId);if(!route)fail('Choose a listed freight manifest.',422);const origin=portBy(route.from),cargo=SHIPPING_CARGO.find(item=>item.id===route.cargoId),type=vessel(boat),units=route.units||4;requireDock(boat,origin);if(units>type.slots||cargo.mass*units>type.capacity)fail('This manifest exceeds the vessel capacity. Unlock a larger ship.');

@@ -67,7 +67,12 @@ function buildOffers(environment){
  const objects=Array.isArray(scene?.objects)?scene.objects:[];
  const interactions=objects.map(object=>interactionSite(object,origin)).filter(site=>site&&walkingArea.allows(site)).sort((a,b)=>separation(a,origin)-separation(b,origin));
  const authoredPlaces=!environment.builderScene&&scene?.layoutMeta?(scene.layoutMeta.locations||scene.layoutMeta.commonsLocations||localMapLocations(environment)):localMapLocations(environment);
- const locations=authoredPlaces.filter(finitePoint).map((place,index)=>({id:String(place.id||'location-'+index),name:name(place.name||place.id),...position(place),action:'check-in'})).filter(walkingArea.allows);
+ // Ambient road hubs can be useful transport map entries without having a
+ // floor inside an imported model. Keep its foot orientation on authored
+ // places or measured entrance surveys; explicit loading bays remain eligible.
+ const importedModel=!environment.builderScene&&(environment.modelUrl||environment.modelUrls?.length),authoredIds=new Set([...(scene?.layoutMeta?.locations||scene?.layoutMeta?.commonsLocations||[]).map(place=>String(place.id)),...objects.filter(object=>(object.modelId||object.asset?.buildAssetId)==='freight-loading-bay').map(object=>String(object.id))]);
+ const walkingPlaces=importedModel?authoredPlaces.filter(place=>!(place.kind==='freight'&&/^freight-hub-\d+$/.test(String(place.id))&&!authoredIds.has(String(place.id)))):authoredPlaces;
+ const locations=walkingPlaces.filter(finitePoint).map((place,index)=>({id:String(place.id||'location-'+index),name:name(place.name||place.id),...position(place),action:'check-in'})).filter(walkingArea.allows);
  if(locations.length<3)for(const site of interactions){locations.push({id:site.id,name:site.name,x:site.x,y:site.y,z:site.z,action:'check-in'});}
  const candidates=locations.filter(point=>separation(point,origin)>=5).sort((a,b)=>separation(a,origin)-separation(b,origin));
  const unique=[origin];for(const point of candidates){if(unique.every(other=>separation(point,other)>=5&&point.name!==other.name))unique.push(point);if(unique.length>=5)break;}

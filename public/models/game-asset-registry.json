@@ -17846,6 +17846,72 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-freight-loading-bay",
+      "name": "Freight Loading Bay",
+      "category": "props",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/vehicles/freight-loading-bay.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "freight-loading-bay",
+      "builderCategory": "props",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 180,
+      "description": "Marked loading and shipping station for road freight maps.",
+      "behavior": "interact",
+      "function_data": {}
+    },
+    {
       "assetId": "builder-friendly-ghost",
       "name": "Friendly Ghost",
       "category": "interactive",
@@ -17908,6 +17974,72 @@
       "dimensions": null,
       "description": "Friendly Ghost from the Environment Builder, ready to drop into the running game.",
       "behavior": "decor",
+      "function_data": {}
+    },
+    {
+      "assetId": "builder-frontier-pickup",
+      "name": "Frontier Crew Pickup",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/vehicles/frontier-pickup.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "frontier-pickup",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 800,
+      "description": "Crew-cab pickup with glass cabin, dashboard, four cargo slots, trailer hitch and freight delivery contracts.",
+      "behavior": "vehicle",
       "function_data": {}
     },
     {
@@ -25616,6 +25748,72 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-utility-cargo-trailer",
+      "name": "Frontier Tandem Cargo Trailer",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/vehicles/utility-cargo-trailer.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "utility-cargo-trailer",
+      "builderCategory": "vehicles",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": null,
+      "priceMzk": 350,
+      "description": "Hitchable tandem trailer. Eight crate slots, visible stacking and secured shipping manifests.",
+      "behavior": "interact",
+      "function_data": {}
+    },
+    {
       "assetId": "builder-void-wolf",
       "name": "Void Wolf",
       "category": "enemy",
@@ -28848,7 +29046,7 @@
     }
   ],
   "audit": {
-    "assetCount": 445,
+    "assetCount": 448,
     "generatedCount": 44,
     "warnings": [
       {

@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {UserJsonDatabase} from '../user-json-database.mjs';
 import {GAME_ECONOMY} from '../game-economy.mjs';
 import {MzkAccountStore} from '../loadout-code-store.mjs';
-import {IN_GAME_BUILDING_ITEMS} from '../public/js/in-game-building-catalog.js';
+import {IN_GAME_BUILDING_ITEMS,createBuildingCatalog} from '../public/js/in-game-building-catalog.js';
 
 test('free basics, paid ownership, use charges and member resale form one economy',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'game-economy-'));
@@ -37,7 +37,8 @@ test('free basics, paid ownership, use charges and member resale form one econom
 
 test('every in-game builder option has an upgrade catalog entry',async()=>{
  const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
- assert.match(source,/IN_GAME_BUILDING_ITEMS\.filter\(item=>matchesBuildingCatalogItem\(item,filter\)\)/);
+ assert.match(source,/createBuildingCatalog\(gameEconomy\?\.items\|\|\[\]\)/);
  assert.ok(IN_GAME_BUILDING_ITEMS.length>50);
- for(const asset of IN_GAME_BUILDING_ITEMS)assert.ok(GAME_ECONOMY.some(item=>item.buildAssetId===asset.buildAssetId||asset.materialId&&item.materialId===asset.materialId),asset.id+' has a purchasable upgrade');
+ const catalogue=createBuildingCatalog(GAME_ECONOMY);
+ for(const asset of IN_GAME_BUILDING_ITEMS){const upgrade=GAME_ECONOMY.find(item=>item.buildAssetId===asset.buildAssetId||asset.materialId&&item.materialId===asset.materialId);assert.ok(upgrade,asset.id+' has a purchasable upgrade');assert.ok(catalogue.some(item=>item.buildAssetId===asset.buildAssetId&&item.economySku===upgrade.sku),asset.id+' retains its purchase identity in the live catalogue');}
 });

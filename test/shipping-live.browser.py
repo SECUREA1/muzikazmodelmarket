@@ -121,6 +121,20 @@ with tempfile.TemporaryDirectory(prefix='shipping-live-') as directory:
                 print('Balanced four-container manifest secured; sailing the actual authored induction route.', flush=True)
                 canvas_exposure = page.evaluate('''()=>{const c=document.querySelector('#house-explorer-canvas'),r=c.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width*.5,r.y+r.height*.35);return hit===c;}''')
                 assert canvas_exposure, 'Shipping panel obscures the live water and boat view'
+                if os.environ.get('SHIPPING_SMOKE_ONLY') == '1':
+                    page.wait_for_timeout(10000)
+                    underway = room()
+                    live_boat = underway['actors'][boat_id]
+                    assert underway['players'][self_id]['shipping']['job']['phase'] == 'sailing'
+                    assert live_boat['boating'].get('assist'), 'A delayed handling packet cancelled departure'
+                    assert ((live_boat['position']['x'] - boat['position']['x']) ** 2 + (live_boat['position']['z'] - boat['position']['z']) ** 2) ** .5 > 20, 'Depart did not produce actual ship motion'
+                    page.locator('.house-stage').screenshot(path='/tmp/shipping-smoke-underway.png')
+                    cancelled = command('shipping', operation='cancel')
+                    assert cancelled['players'][self_id]['shipping']['job']['phase'] == 'cancelled'
+                    assert not errors, errors
+                    browser.close()
+                    print('PASS: fresh merged server portal, mobile bridge, balanced loading, secure, depart, ten seconds of real sailing and safe cancellation')
+                    raise SystemExit(0)
                 started = time.monotonic()
                 next_report = 30
                 max_checkpoint = 0

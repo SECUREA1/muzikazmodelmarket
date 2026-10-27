@@ -3,7 +3,7 @@
 export const SHIPPING_ID='hormuz-shipping';
 export const SHIPPING_RULES=Object.freeze({extent:1400,mapSize:2800,dockRadius:48,maxDockSpeed:.8,loadingSeconds:2,dailyRewardCapMzk:400,contractLimitMs:1200000});
 export const SHIPPING_COASTS=Object.freeze([
- {id:'iran-gulf-coast',name:'Iran · northern Gulf coast',x:-400,z:-980,width:1800,depth:700},
+ {id:'iran-gulf-coast',name:'Northern & western Gulf coasts',x:-400,z:-980,width:1800,depth:700},
  {id:'iran-oman-coast',name:'Iran · Gulf of Oman coast',x:950,z:-900,width:600,depth:800},
  {id:'qeshm-island',name:'Qeshm Island',x:-80,z:-390,width:500,depth:130},
  {id:'hormuz-island',name:'Hormuz Island',x:390,z:-260,width:110,depth:100},

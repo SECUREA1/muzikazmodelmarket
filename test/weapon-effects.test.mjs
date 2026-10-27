@@ -7,7 +7,7 @@ import {RANGED_WEAPONS,fireWeapon} from '../public/js/game-weapons.js';
 import {canActivateTool} from '../public/js/game-tool-rules.js';
 import {supportsWorldTools} from '../public/js/rad-tox-rules.js';
 const source=readFileSync('public/js/house-explorer-glb.js','utf8');
-function methods(start,end){return source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start)));}
+function methods(start,end){const from=source.indexOf(start),to=source.indexOf(end,from);assert.ok(from>=0&&to>from,'runtime method boundaries exist: '+start+' to '+end);return source.slice(from,to);}
 function fixture(){
  const context=vm.createContext({THREE,RANGE_WEAPONS:RANGED_WEAPONS,RANGED_WEAPONS,fireWeapon,UTILITY_TOOLS:{},rangeActive:false,activeEnvironment:{},supportsWorldTools,canActivateTool,gameplayOverlayOpen:()=>false});
  const System=vm.runInContext(`(class {${methods('    weaponMuzzle(', '    registerLaserShot(')}${methods('    fireExtraWeapon(', '    fireFlame(')}})`,context);
@@ -39,8 +39,8 @@ test('the first shot waits for audio resume and later user actions can retry a s
   resume(){resumes++;return new Promise(resolve=>{release=()=>{this.state='running';resolve();};});}
   createOscillator(){created++;return {frequency:{},connect:()=>gain(),start(){},stop(){},disconnect(){}};}
  }
- const context=vm.createContext({window:{AudioContext},playerPreferences:{effectsVolume:70},console});
- const System=vm.runInContext(`(class {${methods('    initAudio(){','    rapidPopSound(){')}})`,context),system=new System();system.audioAvailable=true;
+ const context=vm.createContext({window:{AudioContext},effectsVolume:()=>.7,console});
+ const System=vm.runInContext(`(class {${methods('    initAudio(){','    rapidPopSound(')}})`,context),system=new System();system.audioAvailable=true;
  system.tone(340,.06,'square',.035);assert.equal(resumes,1);assert.equal(created,0);release();await system.audioResumePromise;await Promise.resolve();assert.equal(created,1);assert.equal(system.soundGain.gain.value,.7);
  system.audioContext.state='suspended';system.tone(340,.06);assert.equal(resumes,2);release();await system.audioResumePromise;await Promise.resolve();assert.equal(created,2);
 });

@@ -1,4 +1,4 @@
-import {shippingCommand,stepShipping,shippingView,playerShippingView,cancelShipping,applyShippingAccount,applyShippingSettlement,shippingVesselUnlocked,shippingHandling,shippingDefense} from './server-shipping.mjs';
+import {shippingCommand,stepShipping,shippingView,playerShippingView,cancelShipping,applyShippingAccount,applyShippingSettlement,shippingVesselUnlocked,shippingHandling,shippingDefense,shippingHullHealth} from './server-shipping.mjs';
 import {isShippingEnvironment} from './public/js/shipping-config.js';
 import {ensureFreight,cargoCommand,stepCargoTrailers,freightTrailerBlocked} from './server-cargo-hauling.mjs';
 import {fishingCommand,stepFishing,fishingView,playerFishingView,fishingLocked,cancelFishing,applyFishingAccount,applyFishingSettlement} from './server-fishing.mjs';
@@ -162,7 +162,7 @@ export class AuthoritativeRooms {
   if((isFactoryEnvironment(environment)||environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor)&&sim.radTox){for(const [key,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[key];sim.radTox=null;sim.match=null;sim.projectiles={};}
   if(environment.airport?.enabled)sim.airport ||= {runwayHolder:null,expires:0};
   for(const definition of manifest.objects){const aircraft=sim.actors[definition.objectId];if(!isAircraft(aircraft))continue;aircraft.maxHealth=AIRCRAFT_HEALTH;if(aircraft.active!==false&&aircraft.flight?.airborne&&!aircraft.holderId)aircraft.unoccupiedSince??=this.now();else delete aircraft.unoccupiedSince;if((aircraft.destroyedAt&&this.now()-aircraft.destroyedAt>=15000)||(aircraft.unoccupiedSince&&this.now()-aircraft.unoccupiedSince>=15000)){Object.assign(aircraft,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:AIRCRAFT_HEALTH,active:true,holderId:null,flight:{speed:0,phase:'parked',altitude:0,airborne:false}});delete aircraft.destroyedAt;delete aircraft.unoccupiedSince;}}
-  for(const definition of manifest.objects){const boat=sim.actors[definition.objectId];if(!isWatercraft(boat))continue;boat.maxHealth??=isCombatBoat(boat)?650:isFishingBoat(boat)?300:200;if(boat.destroyedAt&&this.now()-boat.destroyedAt>=15000){Object.assign(boat,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:boat.maxHealth||200,active:true,holderId:null});stopBoat(boat);delete boat.destroyedAt;}else if(!boat.holderId&&(Math.abs(boat.boating?.speed||0)>.01||Math.abs(boat.boating?.throttleCommand||0)>.01))stopBoat(boat);}
+  for(const definition of manifest.objects){const boat=sim.actors[definition.objectId];if(!isWatercraft(boat))continue;boat.maxHealth=shippingHullHealth(boat)??boat.maxHealth??(isCombatBoat(boat)?650:isFishingBoat(boat)?300:200);if(boat.destroyedAt&&this.now()-boat.destroyedAt>=15000){Object.assign(boat,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:boat.maxHealth||200,active:true,holderId:null});stopBoat(boat);delete boat.destroyedAt;}else if(!boat.holderId&&(Math.abs(boat.boating?.speed||0)>.01||Math.abs(boat.boating?.throttleCommand||0)>.01))stopBoat(boat);}
   // Retain native identities for catalog assets, including rooms saved before
   // basketball metadata became part of authoritative actor snapshots.
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
@@ -228,7 +228,7 @@ export class AuthoritativeRooms {
    if(isWatercraft(boat)&&boat.active!==false){
     const blocked=boatMovementBlocked(environment,boat,sim.actors,this.collision,room.objects);
     const assistedInput=boatAssistedInput(boat,input,environment,now,sim.actors,blocked);const pose=stepBoatSimulation(boat,(player.fuel??100)>0?assistedInput:{...assistedInput,throttle:0},dt,{environment,now,blocked});
-    Object.assign(boat,pose);boat.maxHealth??=isCombatBoat(boat)?650:isFishingBoat(boat)?300:200;boat.health=Math.max(0,(boat.health??200)-(pose.boating.impactDamage||0));player.fuel=Math.max(0,(player.fuel??100)-dt*Math.abs(pose.boating.throttle)*.02);boat.boating.fuel=player.fuel;
+    Object.assign(boat,pose);boat.maxHealth=shippingHullHealth(boat)??boat.maxHealth??(isCombatBoat(boat)?650:isFishingBoat(boat)?300:200);boat.health=Math.max(0,(boat.health??boat.maxHealth??200)-(pose.boating.impactDamage||0));player.fuel=Math.max(0,(player.fuel??100)-dt*Math.abs(pose.boating.throttle)*.02);boat.boating.fuel=player.fuel;
     if(boat.health<=0){boat.active=false;boat.destroyedAt=now;boat.holderId=null;stopBoat(boat);player.vehicleId=null;player.position=this.collision.safeSpawn(environment,environment.spawn||{x:124,y:0,z:30});player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;continue;}
     player.position={...pose.position,y:.35};player.yaw=pose.rotation.y;player.floor=.35;player.velocityY=0;player.grounded=true;player.locationName=isShippingEnvironment(environment)?(pose.boating.anchor?'Strait cargo berth':'Strait shipping channel'):(pose.boating.phase==='moored'||pose.boating.anchor?'Neon Marina berth':'Neon Harbor waterways');continue;
    }
@@ -317,6 +317,7 @@ export class AuthoritativeRooms {
   // epochs, replays and players who changed rooms still require a new join.
   if(freshInput){if(receivedAt-arrivingPlayer.lastSeen>=15000){
    cancelFishing(arrivingPlayer,room.simulation,receivedAt,'Connection paused. Cast again when ready.');
+   cancelShipping(arrivingPlayer,room.simulation,receivedAt,'Connection paused. Return to port for a new freight manifest.');
    const active=Object.entries(room.simulation.players).filter(([id,p])=>id!==actorId&&!p.basketballAI&&receivedAt-p.lastSeen<15000);
    if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
    arrivingPlayer.input={};
@@ -622,10 +623,10 @@ export class AuthoritativeRooms {
     const modelId=asset.buildAssetId||asset.id,device=deviceDefinition(modelId,asset.function_data||{});
     const settings={damage:0,interactionDistance:3,cooldown:1,...factoryItemSettings(modelId),...(RESORT_PRODUCTS[modelId]?resortProductSettings(RESORT_PRODUCTS[modelId]):{}),...asset.function_data,...asset.interaction_data,...asset.configuration};
     const behavior=settings.behavior||asset.behavior||(device?'interact':['vehicle','vehicles'].includes(asset.assetType)?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:isCombatBoat({asset})?650:isFishingBoat({asset})?300:isWatercraft({asset})?200:clamp(settings.health||100,1,100000);
+    const spawnHealth=shippingHullHealth({asset})??(isAircraft({asset})?AIRCRAFT_HEALTH:isCombatBoat({asset})?650:isFishingBoat({asset})?300:isWatercraft({asset})?200:clamp(settings.health||100,1,100000));
     const definition=normalizeBuilderObject({id:entityId,modelId,objectType:asset.assetType||asset.type,position,rotation,scale,asset,functionalSettings:{...settings,behavior,health:spawnHealth,...(device?{device:settings.device||modelId}:{})},vehicleSettings:asset.vehicleSettings,movementSettings:{speed:1,...settings.movement,...asset.movementSettings},aiSettings:asset.aiSettings,questSettings:asset.questSettings||settings.quest,dialogueSettings:asset.dialogueSettings||settings.dialogue||{text:settings.prompt||''},environmentSettings:asset.environmentSettings,animationState:asset.animationState||{clip:asset.animation},metadata:asset.metadata});
     definition.position={...position};
-    sim.actors[entityId]={id:entityId,modelId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(typeof settings.destructible==='boolean'?{destructible:settings.destructible}:{}),...(isAircraft({asset})?{maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{maxHealth:isCombatBoat({asset})?650:isFishingBoat({asset})?300:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
+    sim.actors[entityId]={id:entityId,modelId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(typeof settings.destructible==='boolean'?{destructible:settings.destructible}:{}),...(isAircraft({asset})?{maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{maxHealth:shippingHullHealth({asset})??(isCombatBoat({asset})?650:isFishingBoat({asset})?300:200),destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
     }
    }
