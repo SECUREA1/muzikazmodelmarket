@@ -207,13 +207,13 @@
       "type": "lands",
       "builderLayoutId": "mountain-pass",
       "builderUrl": "/environment-builder.html?layout=mountain-pass",
-      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass.svg",
+      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg",
       "format": "builder-layout",
       "visibility": "public",
       "description": "High ridges, a winding pass and overlooks for adventure builds.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass.svg"
+        "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg"
       }
     },
     {
@@ -1716,7 +1716,7 @@
       "name": "Alpine Snow Mountain",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg",
+      "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1732,7 +1732,7 @@
       "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg"
+        "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg"
       }
     },
     {
@@ -1740,7 +1740,7 @@
       "name": "Weathered Cliff",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1753,7 +1753,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg"
       }
     },
     {
@@ -1782,7 +1782,7 @@
       "name": "Impact Crater",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1795,7 +1795,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg"
       }
     },
     {
@@ -1803,7 +1803,7 @@
       "name": "Snow Bank",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1816,7 +1816,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg"
       }
     },
     {

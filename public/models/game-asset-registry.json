@@ -9316,7 +9316,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/alpine-mountain.svg",
+      "thumbnail": "/public/images/native-designs/alpine-mountain-mountain-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22402,7 +22402,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": true,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/layout-mountain-pass.svg",
+      "thumbnail": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg",
       "generator": "extruded-svg",
       "defaultTransform": {
         "position": [
@@ -27803,7 +27803,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/terrain-cliff.svg",
+      "thumbnail": "/public/images/native-designs/terrain-cliff-mountain-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -27876,7 +27876,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/terrain-crater.svg",
+      "thumbnail": "/public/images/native-designs/terrain-crater-mountain-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -28022,7 +28022,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/terrain-snowbank.svg",
+      "thumbnail": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg",
       "generator": null,
       "defaultTransform": {
         "position": [

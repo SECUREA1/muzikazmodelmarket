@@ -6,6 +6,7 @@ import {supportsArchitectureDesign,finishArchitectureDesign} from './architectur
 import {supportsDeviceDesign,finishDeviceDesign} from './device-design-finish.js';
 import {finishWorldPropDesign} from './world-prop-design-finish.js';
 import {finishVehicleDesign} from './vehicle-design-system.js';
+import {MOUNTAIN_DESIGN_VERSION,isCraftedMountainModel} from './mountain-design-profile.js';
 
 export {NATIVE_DESIGN_VERSION};
 const craftedFlags=['portalModel','commonPropModel','equipmentPropModel','craftedLandscapeModel','craftedCharacterModel','craftedBuildingModel','craftedFurnitureModel'];
@@ -36,5 +37,6 @@ export function finishNativeDesign(T,root,id){
  });
  root.userData.builderObject=true;root.userData.modelId=id;
  root.userData.nativeDesign={version:NATIVE_DESIGN_VERSION,id,family,materialCount:materials.size,texturedMaterialCount:texturedMaterials.size,geometryCount,detailCount,meshCount};
+ if(isCraftedMountainModel(id))root.userData.mountainDesign={version:MOUNTAIN_DESIGN_VERSION,id,meshCount,texturedMaterialCount:texturedMaterials.size};
  return root;
 }
