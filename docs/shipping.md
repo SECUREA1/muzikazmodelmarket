@@ -21,6 +21,18 @@ Ships have full hull collision, visible working decks, containers or tanker pipi
 
 Fictional pirate launches, mine warnings, floating debris and squalls create cargo challenges. **Escort** protects shipments against pirates; **Radio** requests safe passage or weather guidance. Unresolved hazards and hull damage lower cargo quality and rewards. AI ships follow the shipping lanes in the same multiplayer room. Existing explicitly equipped weapons retain their normal game actions; cargo buttons do not double as weapon triggers.
 
+## Live companies and the Freight League
+
+Gulf Link Logistics, Oman Freight Cooperative and Strait Relief Shipping operate real vessels in the shared map. Their crews alternate balanced loading, secure the cargo, sail ordered channel markers, moor at dedicated commercial terminals, unload and choose a connected return shipment. The live chart shows each captain, cargo, route, progress, destination and estimated arrival. Select a company marker to inspect its voyage while keeping control of your own ship.
+
+Commercial terminal wings have warehouses, dock staff, live dispatch boards and animated cranes. The hook and cargo transfers follow confirmed loading and unloading events. Port stock, imports, exports and outstanding demand change as ships work. A player contract can offer up to 15 extra MZK for a shortage at its destination; the agreed bonus is fixed when you accept, and the starter induction reward stays unchanged.
+
+Join **Strait Freight League** in **Live fleets & league** before accepting a new manifest. Shared rounds run for 20 minutes after a 15-second preparation period. Loading and departure are allowed during preparation; only completed deliveries during the round score. Scoring uses the published route distance, cargo units and delivered quality, so circling or client-reported distances cannot inflate points. AI companies score only after actually unloading their manifests.
+
+The standings freeze when a round ends. Claim 90, 55 or 30 MZK for the first three places, or 15 MZK for completing a scored delivery at a lower rank. Claims remain available for 24 hours and share the existing 400 MZK daily shipping cap. Rewards commit once to the same wallet as delivery rewards, even after reconnecting or retrying a request. The next league starts automatically while the region is active.
+
+AI crews yield to player vessels, use their own commercial loading berths, and cannot be boarded or taken over. A pause or server reload does not instantly finish their journeys or create offline deliveries. Their manifests, warehouse state and standings persist in the shared room.
+
 ## Connected rewards and inventory
 
 MZK rewards are capped at 400 per account per UTC day. Delivery and exchange receipts are idempotent, and progression and stock live outside editable account memory. Port handling, route progress, vessel unlocks and rewards are calculated on the server. Leaving the vessel, defeat, relocation, travel or an expired connection cancels an active contract.

@@ -66,6 +66,52 @@ try:
             dialog.locator('[data-shipping-trade="parts-metal"]').click()
             page.wait_for_function("commands.at(-1).tradeId==='parts-metal'")
             dialog.locator('.game-fullscreen-close').click()
+            # Company focus reads real snapshot poses and routes without issuing
+            # a helm command. League claims keep the server's exact round ID.
+            page.evaluate('liveFleet()')
+            assert '1 live rival crew' in hud.locator('[data-shipping-live-summary]').inner_text()
+            hud.locator('[data-shipping-chart]').click()
+            dialog.locator('[data-shipping-tab="live"]').click()
+            rival=dialog.locator('[data-rival-id="gulf-link"]')
+            assert rival.bounding_box()['height']>=44
+            commands_before=page.evaluate('commands.length')
+            routes_before=page.evaluate('routes.length')
+            rival.click()
+            assert rival.get_attribute('aria-pressed')=='true'
+            assert 'Captain Mina' in dialog.locator('[data-shipping-rival-detail]').inner_text()
+            assert dialog.locator('[data-shipping-rival-route="gulf-link"]').count()==1
+            assert page.evaluate('commands.length')==commands_before
+            assert page.evaluate('routes.length')==routes_before
+            dialog.locator('[data-port]').select_option('jebel-ali')
+            assert '14 stock' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert '6 needed' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert '12 units received' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert '20 units dispatched' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert '1 arrival' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            page.evaluate("snapshot.shipping.rivals[0].waitingFor='commercial berth';snapshot.shipping.rivals[0].job.destinationId='jebel-ali';refresh()")
+            assert 'Dock queue 1' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert 'Waiting for berth' in dialog.locator('[data-rival-id="gulf-link"]').inner_text()
+            page.evaluate("snapshot.shipping.rivals[0].waitingFor='player passage';refresh()")
+            assert 'Dock queue 0' in dialog.locator('[data-shipping-port-economy]').inner_text()
+            assert 'Giving way to a player' in dialog.locator('[data-rival-id="gulf-link"]').inner_text()
+            page.evaluate("snapshot.shipping.rivals[0].waitingFor=null;refresh()")
+            assert 'Gulf Link departed' in dialog.locator('[data-shipping-dispatch]').inner_text()
+            dialog.locator('[data-shipping-join-league]').click()
+            page.wait_for_function("commands.at(-1).operation==='join-league'")
+            assert page.evaluate('commands.at(-1).competitionId')=='current-round'
+            page.wait_for_function('!ui.snapshot().pending')
+            dialog.locator('[data-shipping-claim-league]').click()
+            page.wait_for_function("commands.at(-1).operation==='claim-league'")
+            assert page.evaluate('commands.at(-1).competitionId')=='previous-round'
+            page.wait_for_function('!ui.snapshot().pending')
+            # Reordered updates preserve selection, and a departed company
+            # disappears instead of leaving a clickable stale route.
+            page.evaluate("snapshot.shipping.rivals[0].phase='unloading';snapshot.shipping.rivals[0].job.unloaded=1;refresh()")
+            assert dialog.locator('[data-rival-id="gulf-link"]').get_attribute('aria-pressed')=='true'
+            page.evaluate("snapshot.shipping.rivals=[];refresh()")
+            assert dialog.locator('[data-shipping-rival-route]').count()==0
+            assert dialog.locator('[data-rival-id="gulf-link"]').count()==0
+            dialog.locator('.game-fullscreen-close').click()
             # Disabled-world snapshots must never repeatedly release other games' inputs.
             page.evaluate("snapshot.shipping.enabled=false;refresh()")
             releases=page.evaluate('releases')
@@ -75,6 +121,6 @@ try:
             assert errors==[],errors
             page.close()
         browser.close()
-    print('Shipping mobile HUD, cargo phases, exact chart routes, stock trades and input ownership passed at four sizes.')
+    print('Shipping mobile HUD, cargo phases, exact routes, live rivals, league claims, stock trades and input ownership passed at four sizes.')
 finally:
     server.shutdown()
