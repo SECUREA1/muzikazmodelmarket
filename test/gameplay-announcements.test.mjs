@@ -7,7 +7,7 @@ import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
 function fixture(){const calls=[],voice={announce:(text,options)=>calls.push({text,...options})},announcer=createGameplayAnnouncements({voice}),world={id:'world',name:'Public world'};return {calls,announcer,world};}
 function snapshot(){return {serverTime:100000,players:{p:{position:{x:0,y:0,z:0},quests:{}}},actors:{},construction:{crew:{jobs:[]}}};}
 
-test('introduction happens once per map, while initial jobs and nearby residents stay quiet',()=>{
+test('each map visit receives one guide while initial jobs and nearby residents stay quiet',()=>{
  const {calls,announcer,world}=fixture(),state=snapshot();
  state.players.p.vehicleMission={instanceId:'job',title:'Supply flight',status:'active',index:0,checkpoints:[{name:'Load supplies'},{name:'Fly to camp'}]};
  state.actors.ranger={id:'ranger',active:true,position:{x:2,y:0,z:0},resident:{name:'Rowan',role:'Ranger',task:'Preparing trail supplies.'}};
@@ -16,7 +16,8 @@ test('introduction happens once per map, while initial jobs and nearby residents
  announcer.update(state,'p',world);assert.equal(calls.length,1);assert.equal(calls[0].category,'introduction');assert.equal(calls[0].role,'narrator');assert.equal(calls[0].voice,'World narrator');assert.match(calls[0].text,/Welcome to Public world/);
  announcer.update(state,'p',world);assert.equal(calls.length,1);
  announcer.update(state,'p',{id:'camp',name:'Camp'});assert.equal(calls.length,2);
- announcer.update(state,'p',world);assert.equal(calls.length,2);
+ announcer.update(state,'p',world);assert.equal(calls.length,3);assert.match(calls.at(-1).text,/Welcome to Public world/);
+ announcer.update(state,'p',world);assert.equal(calls.length,3);
  state.players.p.vehicleMission.index=1;announcer.update(state,'p',world);assert.match(calls.at(-1).text,/Fly to camp/);
  assert.equal(calls.at(-1).category,'announcements');
 });
@@ -48,7 +49,7 @@ test('only fresh direct radio calls, live dispatch offers and new walking quests
  state.liveDispatch={id:'expired-dispatch',title:'Expired operation',expires:99999};announcer.update(state,'p',world);assert.equal(calls.length,count);
 });
 
-test('a missing player does not consume the one-time introduction or baseline',()=>{
+test('a missing player does not consume the visit introduction or baseline',()=>{
  const {calls,announcer,world}=fixture(),state=snapshot();announcer.update({...state,players:{}},'p',world);assert.equal(calls.length,0);
  announcer.update(state,'p',world);assert.equal(calls.length,1);
 });
@@ -71,4 +72,37 @@ test('a fresh NPC reply suppresses duplicate interaction narration without silen
  call.role='player';assert.equal(interactionHasDialogue(state,'p','rowan'),false);
  call.role='guide';call.at=90000;assert.equal(interactionHasDialogue(state,'p','rowan'),false);
  call.at=100000;call.recipients=['private'];assert.equal(interactionHasDialogue(state,'p','rowan'),false);
+});
+
+
+test('fresh open player help requests speak once, while own, stale and closed calls stay quiet',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ state.questTeams=[{id:'open'}];
+ state.transportRadio=[
+  {id:1,at:state.serverTime,helpRequest:true,speaker:'Rescuer',speakerId:'h',teamId:'open',expires:190000,text:'Join my rescue team.'},
+  {id:2,at:state.serverTime,helpRequest:true,speakerId:'p',teamId:'open',expires:190000,text:'Own help call'},
+  {id:3,at:state.serverTime,helpRequest:true,speakerId:'h',teamId:'closed',expires:190000,text:'Closed team'},
+  {id:4,at:state.serverTime,helpRequest:true,speakerId:'h',teamId:'open',expires:state.serverTime,text:'Expired help'},
+  {id:5,at:state.serverTime-13000,helpRequest:true,speakerId:'h',teamId:'open',expires:190000,text:'Stale help'}
+ ];
+ announcer.update(state,'p',world);assert.equal(calls.length,2);assert.match(calls.at(-1).text,/Join my rescue team/);
+ announcer.update(state,'p',world);assert.equal(calls.length,2);
+});
+
+
+test('confirmed same-map re-entry resets the guide without replaying the job backlog',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();
+ state.liveDispatch={id:'existing',title:'Old job',expires:190000};
+ announcer.update(state,'p',world);announcer.reset();announcer.update(state,'p',world);
+ assert.equal(calls.length,2);assert.ok(calls.every(call=>call.category==='introduction'));
+ assert.notEqual(calls[0].key,calls[1].key);
+});
+
+test('the first entry guide waits for a player gesture and follows later map entries',()=>{
+ const spoken=[],speech={getVoices:()=>GENERATED_VOICES,speak:utterance=>spoken.push(utterance),cancel(){},resume(){}},voice=createQuestConversationVoice({speech,Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}}),announcer=createGameplayAnnouncements({voice}),state=snapshot();
+ announcer.update(state,'p',{id:'airport',name:'Airport',airport:{enabled:true}});assert.equal(spoken.length,0);
+ announcer.unlock();assert.equal(spoken.length,1);assert.match(spoken[0].text,/Tower radio/);spoken[0].onend();
+ announcer.update(state,'p',{id:'fitness',name:'Fitness',game:'fitness'});assert.equal(spoken.length,2);assert.match(spoken[1].text,/training station/);spoken[1].onend();
+ announcer.update(state,'p',{id:'airport',name:'Airport',airport:{enabled:true}});assert.equal(spoken.length,3);
+ voice.dispose();
 });

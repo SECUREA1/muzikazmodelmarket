@@ -36,7 +36,9 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   }
   clearVoiceWait();
   let call;
-  while(queue.length){const candidate=queue.shift(),ttl=candidate.category==='dialogue'?120000:30000;if(now()-candidate.queuedAt<ttl&&volume(candidate)>0){call=candidate;break;}}
+  // A map welcome may wait through login or a slow load before the first
+  // gesture. Scope changes already discard the previous map's introduction.
+  while(queue.length){const candidate=queue.shift(),ttl=candidate.category==='introduction'?Infinity:candidate.category==='dialogue'?120000:30000;if(now()-candidate.queuedAt<ttl&&volume(candidate)>0){call=candidate;break;}}
   if(!call)return;
   const token=++generation,character=characterFor(call),style=characterSpeechStyle(character,{text:call.text}),spokenText=prepareSpeechText(call.text),available=voices();
   const selected=chooseCharacterVoice(available,character,{language:style.lang,preferredVoiceURI:cast.get(character.id),selectedVoiceURI:preferences.speechVoiceURI,gender:preferences.speechVoiceGender||'auto'});
@@ -76,7 +78,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
  speech?.addEventListener?.('voiceschanged',onVoicesChanged);
  function setScope(worldId){if(scope===worldId)return;stop();seen.clear();scope=worldId;latest=null;}
  function remember(id){if(seen.has(id))return false;seen.add(id);if(seen.size>128)seen.delete(seen.values().next().value);return true;}
- function enqueue(call){latest={...call,queuedAt:now()};if(!blocked(latest)){queue.push(latest);if(queue.length>8)queue.shift()?.onCancelled?.();}play();}
+ function enqueue(call){latest={...call,queuedAt:now()};if(!blocked(latest)){queue.push(latest);if(queue.length>8){const expendable=queue.findIndex(call=>call.category!=='introduction');queue.splice(expendable<0?0:expendable,1)[0]?.onCancelled?.();}}play();}
  const api={
   announce(text,{key=text,worldId=scope,voice='World guide',role='guide',category='announcements',source,entityId,range,personality,mood,voiceProfile}={}){
    if(disposed||!text)return false;setScope(worldId);
