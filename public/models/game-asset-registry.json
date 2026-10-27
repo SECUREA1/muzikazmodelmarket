@@ -16195,6 +16195,88 @@
       }
     },
     {
+      "assetId": "builder-fitness-basketball-hoop",
+      "name": "Gold Basketball Hoop",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-basketball-hoop",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.6,
+        4.4,
+        2.8
+      ],
+      "priceMzk": 420,
+      "description": "Regulation-height 3.05 m rim, backboard, woven-style net and a weighted gold-trimmed portable stand.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "basketball",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5.5
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Basketball Hoop",
+        "destructible": false
+      }
+    },
+    {
       "assetId": "builder-fitness-bench-press",
       "name": "Gold Bench Press",
       "category": "fitness",
@@ -16416,7 +16498,7 @@
         12.4
       ],
       "priceMzk": 850,
-      "description": "Open-entry training ring with padded gold corners, three ropes and a low canvas apron.",
+      "description": "Championship training ring with four ropes, padded red and blue corners, an open south entrance, shallow access steps and a marked canvas apron.",
       "behavior": "interact",
       "function_data": {
         "active": true,
@@ -17665,6 +17747,162 @@
       }
     },
     {
+      "assetId": "builder-fitness-ring-scoreboard",
+      "name": "Gold Ring Scoreboard",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-ring-scoreboard",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        5,
+        3.4,
+        1.2
+      ],
+      "priceMzk": 240,
+      "description": "Freestanding championship scoreclock with red and blue score panels, round display and a three-minute digital timer.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "boxing-sparring",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Ring Scoreboard",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-ringside-seating",
+      "name": "Gold Ringside Seating",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-ringside-seating",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        8,
+        1.6,
+        3
+      ],
+      "priceMzk": 180,
+      "description": "Three-tier ringside spectator stand with padded seats, gold aisle rails and a clear front approach.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "destructible": false
+      }
+    },
+    {
       "assetId": "builder-fitness-rower",
       "name": "Gold Rowing Machine",
       "category": "fitness",
@@ -17743,6 +17981,170 @@
         },
         "interactionDistance": 4,
         "prompt": "Train Gold Rowing Machine",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-sprint-gates",
+      "name": "Gold Sprint Gates",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-sprint-gates",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        10,
+        2.6,
+        28
+      ],
+      "priceMzk": 360,
+      "description": "Three-lane sprint and hurdle course with start and finish timing gates, lane markings and low training hurdles.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "sprint",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 15
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Sprint Gates",
+        "destructible": false
+      }
+    },
+    {
+      "assetId": "builder-fitness-table-tennis",
+      "name": "Gold Table Tennis",
+      "category": "fitness",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/fitness/equipment.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "fitness-table-tennis",
+      "builderCategory": "fitness",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        2.74,
+        1.1,
+        1.525
+      ],
+      "priceMzk": 280,
+      "description": "Regulation 2.74 × 1.525 m playing surface at 0.76 m, centre net, folding-style underframe and gold court edging.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "fitnessStation": "table-tennis",
+        "fitnessApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 3
+        },
+        "interactionDistance": 4,
+        "prompt": "Train Gold Table Tennis",
         "destructible": false
       }
     },
@@ -30218,7 +30620,7 @@
     }
   ],
   "audit": {
-    "assetCount": 462,
+    "assetCount": 467,
     "generatedCount": 44,
     "warnings": [
       {

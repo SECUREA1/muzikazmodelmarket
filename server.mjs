@@ -1,7 +1,7 @@
 import {claimPrisonItem,prisonAccountState,resolvePrisonAsset} from './server-prison-rewards.mjs';
 import {prisonRewardFor} from './public/js/prison-rewards.js';
-import {WorldSupplyService} from './server-world-supply.mjs';
-import {ensureWorldSupply,supplyItem,consumeWorldStock,supplyAvailability} from './world-supply.mjs';
+import {WorldSupplyService,factoryUnitPriceMzk} from './server-world-supply.mjs';
+import {ensureWorldSupply,supplyItem,consumeWorldStock,supplyAvailability,factoryProductionItem} from './world-supply.mjs';
 import {grantShippingReward,shippingAccountState} from './server-shipping.mjs';
 import {bindFactoryShippingVoyage,reconcileFactoryShippingVoyage} from './server-factory-shipping.mjs';
 import {worldPopulation} from './public/js/world-population.js';
@@ -46,6 +46,7 @@ import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
 import {createSpeechService} from './server-speech.mjs';
 import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
+import {normalizeFactoryCatalogItem} from './world-factory-catalog.mjs';
 import {grantFitnessReward,fitnessAccountState} from './server-fitness.mjs';
 import {grantFishingReward,fishingAccountState} from './server-fishing.mjs';
 import {factoryCommand,factoryAccountState,resolveFactoryAsset,assertFactoryDeploymentAvailable} from './server-missile-factory.mjs';
@@ -77,7 +78,11 @@ const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
 const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
 const casinoService = new CasinoService(userDatabase);
-const worldSupply=new WorldSupplyService(userDatabase,{catalog:async()=>[...(await repositoryGameCatalog({includeEnvironments:false})),...(await readModels()).filter(item=>item.status==='published'&&item.visibility!=='private')],maps:combinedEnvironments});
+const worldSupply=new WorldSupplyService(userDatabase,{catalog:factoryCatalog,maps:combinedEnvironments});
+async function factoryCatalog(){
+ const [repository,published,marketplace]=await Promise.all([repositoryGameCatalog({includeEnvironments:false}),readModels(),userDatabase.factoryCatalog()]);
+ return [...repository,...published.filter(item=>item.status==='published')].map(item=>normalizeFactoryCatalogItem(item)).filter(Boolean).concat(marketplace);
+}
 const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_ACCOUNTS_FILE || join(dataDir, 'accounts.json'), { legacyCodesFile: process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes-rust.json'), legacyUsersFile: userDatabaseFile });
 const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDERS_FILE || join(dataDir, 'payment-orders.json'), { verifyTransaction: verifyPaymentTransaction });
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
@@ -258,9 +263,9 @@ async function registerSupplyMap(mapId){
  return environment.id;
 }
 async function consumeSupplyAsset(identity,asset,requestId,environment){
- const mapId=await registerSupplyMap(environment.id);
+ const mapId=await registerSupplyMap(environment.id),items=await userDatabase.factoryCatalog();
  return userDatabase.transaction(data=>{
-  const ledger=ensureWorldSupply(data),key=identity.walletId+':deploy:'+mapId+':'+requestId;
+  const ledger=ensureWorldSupply(data,{items}),key=identity.walletId+':deploy:'+mapId+':'+requestId;
   let item;try{item=supplyItem(data,asset);}catch(error){if(error.statusCode===404)return null;throw error;}
   const signature=JSON.stringify([mapId,item.supplyId,1]),prior=ledger.receipts[key];
   if(prior){if(prior.signature!==signature)throw Object.assign(new Error('This deployment request was used for another item.'),{statusCode:409});return prior;}
@@ -753,7 +758,8 @@ const server = createServer(async (req, res) => {
       const land=[...LAND_PRODUCTS.map(([id,name])=>({id:'land:'+id,worldId:id,name,category:'Land and deeds',source:'land',...LAND_VALUES[id],description:LAND_VALUES[id].size+' m · '+LAND_VALUES[id].type,claimed:deeds[id]?.status==='active',playUrl:deeds[id]?.status==='active'?plotPlayUrl(deeds[id]):null})),...LAND_LOTS.map(lot=>({id:'land:'+lot.id,worldId:lot.id,name:lot.name,category:'Land and deeds',source:'land',priceMzk:lot.priceMzk,size:lot.size,type:'Staked land plot',description:lot.size+' × '+lot.size+' m · '+lot.mapId+' · XYZ '+lot.position.x+', 0, '+lot.position.z,visitUrl:lotVisitUrl(lot),claimed:deeds[lot.id]?.status==='active',playUrl:deeds[lot.id]?.status==='active'?plotPlayUrl(deeds[lot.id]):lotVisitUrl(lot)}))];
       const care=(JSON.parse(await readFile(join(root,'public/models/ioncore-rpg-items.json'),'utf8')).items||[]).map(item=>({...item,id:'care:'+item.id,name:item.name,category:'Care supplies',source:'care',priceMzk:item.price}));
       const rows=[...player,...builder,...upgrades,...nativeCatalog.maps,...models,...land,...care,...economyBundles({items:[]}).map(bundle=>({entries:bundle.entries,id:bundle.id,name:bundle.name,category:'Discount bundles · '+bundle.category,source:'bundle',priceMzk:bundle.priceMzk,discountPercent:bundle.discountPercent}))];
-      const stocked=await userDatabase.transaction(data=>{const ledger=ensureWorldSupply(data,{items:models.map(row=>row.model)});return rows.map(row=>{if(!['upgrade','model','care'].includes(row.source))return row;try{const item=supplyItem(data,row.model||row);return {...row,supplyItemId:item.supplyId,worldStock:ledger.worldStock[item.supplyId],availableStock:supplyAvailability(data,item)};}catch(error){if(error.statusCode===404)return row;throw error;}});});
+      const factoryItems=await factoryCatalog();
+      const stocked=await userDatabase.transaction(data=>{const ledger=ensureWorldSupply(data,{items:factoryItems});return rows.map(row=>{if(!['upgrade','model','care','builder','player'].includes(row.source))return row;try{const item=factoryProductionItem(data,row.model||row,factoryItems),factory={factoryProducible:true,factoryItemId:item.supplyId,factoryUnitPriceMzk:factoryUnitPriceMzk(item)};return ['builder','player'].includes(row.source)?{...row,...factory}:{...row,...factory,supplyItemId:item.supplyId,worldStock:ledger.worldStock[item.supplyId],availableStock:supplyAvailability(data,item)};}catch(error){if([404,409,422].includes(error.statusCode))return {...row,factoryProducible:false};throw error;}});});
       return sendJson(res,200,assetResponse(stocked));
     }
     if(url.pathname==='/api/backpack/use'&&req.method==='POST'){

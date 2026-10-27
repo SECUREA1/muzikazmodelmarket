@@ -10,10 +10,25 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&
 const terminal=new Set(['delivered','cancelled']);
 const activeSeaJob=job=>['loading','secured','sailing','unloading'].includes(job?.phase);
 const portName=id=>SHIPPING_PORTS.find(port=>port.id===id)?.name||id||'Port';
+const originPort=(shipment,route)=>shipment.originPortId||shipment.portTransferTask?.toPortId||route?.from;
+const destinationPort=(shipment,route)=>shipment.destinationPortId||route?.to;
+const productionSource=item=>typeof item?.productionSource==='string'?item.productionSource:item?.productionSource?.label||item?.productionSource?.name||'';
+const inactiveBlueprintMessage='Blueprint no longer listed. Existing stock can still be shipped.';
 const html=(node,value)=>{if(node.dataset.render===value)return;node.dataset.render=value;node.innerHTML=value;};
+export function supplySelectableCatalog(data){
+ const items=new Map((data?.catalog||[]).map(item=>[item.id,item]));
+ for(const item of data?.transferCatalog||[])if(!items.has(item.id))items.set(item.id,{...item,factoryProducible:false});
+ return [...items.values()];
+}
 export function filterSupplyItems(catalog,search=''){
  const words=String(search).trim().toLowerCase().split(/\s+/).filter(Boolean);
- return (catalog||[]).filter(item=>{const text=[item.name,item.id,item.buildAssetId,item.modelUrl,item.category,item.recipe?.name,(item.aliases||[]).join(' '),(item.nativeMaps||[]).map(map=>[map.id,map.name,...(map.aliases||[])].join(' ')).join(' ')].filter(Boolean).join(' ').toLowerCase();return words.every(word=>text.includes(word));});
+ return (catalog||[]).filter(item=>{const text=[item.name,item.id,item.buildAssetId,item.modelUrl,item.category,item.recipe?.name,productionSource(item),item.factoryVariant?'custom blueprint':'',item.renderKind==='image'?'custom artwork':'',item.factoryProducible===false?'unlisted stock transfer only':'',(item.aliases||[]).join(' '),(item.nativeMaps||[]).map(map=>[map.id,map.name,...(map.aliases||[])].join(' ')).join(' ')].filter(Boolean).join(' ').toLowerCase();return words.every(word=>text.includes(word));});
+}
+export function supplyPortTransferText(shipment,route){
+ const task=shipment.portTransferTask;if(!task)return '';
+ const quantity=count(task.quantity),port=portName(originPort(shipment,route));
+ const state=task.phase==='delivered'?'Sea delivery completed':task.phase==='returned'?'Returned to the source warehouse':task.phase==='loading'?'Loading at '+port:'Staged at '+port;
+ return state+' · '+quantity+' units · warehouse → port transfer simulated; sea passage playable.';
 }
 export function supplyShipmentTask(shipment,mapId){
  if(shipment.phase==='delivered')return 'Delivered to destination inventory';
@@ -44,11 +59,11 @@ export function supplyBuildPresentation(job,now){
 export function supplyShipmentAccess(shipment,mapId,self,route){
  if(terminal.has(shipment.phase))return {action:'none',message:supplyShipmentTask(shipment,mapId)};
  if(shipment.jobId||shipment.phase==='reserved')return {action:shipment.jobId&&shipment.jobId===self?.shipping?.job?.id?'continue':'none',message:supplyShipmentTask(shipment,mapId)};
- if(shipment.shippingMapId!==mapId)return {action:'travel',message:'Travel to the shipping map, then board at '+portName(route?.from)+'.'};
+ if(shipment.shippingMapId!==mapId)return {action:'travel',message:'Travel to the shipping map, then board at '+portName(originPort(shipment,route))+'.'};
  if(activeSeaJob(self?.shipping?.job))return {action:'none',message:'Finish or cancel your current sea manifest before taking another shipment.'};
- if(!self?.vehicleId)return {action:self?.shipping?.boardingId?'board':'chart',message:'Board a cargo ship at '+portName(route?.from)+'.'};
+ if(!self?.vehicleId)return {action:self?.shipping?.boardingId?'board':'chart',message:'Board a cargo ship at '+portName(originPort(shipment,route))+'.'};
  const allowed=self?.shipping?.availableContracts;
- if(!Array.isArray(allowed)||!allowed.some(id=>(typeof id==='string'?id:id.id)===shipment.contractId))return {action:'origin',message:'Stop at '+portName(route?.from)+' aboard the required vessel to accept this shipment.'};
+ if(!Array.isArray(allowed)||!allowed.some(id=>(typeof id==='string'?id:id.id)===shipment.contractId))return {action:'origin',message:'Stop at '+portName(originPort(shipment,route))+' aboard the required vessel to accept this shipment.'};
  return {action:'accept',message:'At the origin dock. Accept this item shipment, then load and secure its containers.'};
 }
 
@@ -69,7 +84,8 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
  const pending=new Map(),extraToggles=[];
  let selectedChallengeId='';
  const currentId=()=>environment?.id||'';
- const item=()=>data?.catalog?.find(row=>row.id===selection);
+ const catalog=()=>supplySelectableCatalog(data);
+ const item=()=>catalog().find(row=>row.id===selection);
  const route=()=>data?.routes?.find(row=>row.id===routeId);
  const quantity=()=>Number($('[data-quantity]').value);
  const challengeSelection=()=>({itemId:selection,quantity:quantity(),sourceMapId,destinationMapId:destination,shippingMapId:selectedShippingMap,contractId:routeId});
@@ -84,7 +100,10 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
  function renderControls(){
   const valid=!!item()&&Number.isSafeInteger(quantity())&&quantity()>0&&quantity()<=(data?.rules?.maxQuantity||10000),available=supplySourceStock(data,sourceMapId,selection),capacity=supplyRouteCapacity(item(),route(),data?.rules);
   for(const selector of ['[data-item]','[data-quantity]','[data-search]','[data-destination]','[data-source]','[data-shipping-world]','[data-route]'])$(selector).disabled=busy;
-  $('[data-quote]').disabled=busy||!valid;$('[data-produce]').disabled=busy||!valid||!quote||quoteKey!==selectionKey();
+  const producible=item()?.factoryProducible!==false;
+  $('[data-quote]').disabled=busy||!valid||!producible;$('[data-produce]').disabled=busy||!valid||!producible||!quote||quoteKey!==selectionKey();
+  if(!producible)$('[data-price]').textContent=inactiveBlueprintMessage;
+  else if(!quote&&$('[data-price]').textContent===inactiveBlueprintMessage)$('[data-price]').textContent='Choose an item and request a price.';
   const reason=!valid?'Choose a whole item quantity.':!destination?'Choose a destination.':sourceMapId===destination?'Choose a different destination inventory.':!route()||!selectedShippingMap?'Choose an available shipping map and route.':quantity()>capacity?'This route holds '+count(capacity)+' of this item. Use a smaller batch or a larger manifest.':available<quantity()?'The selected source needs '+count(quantity()-available)+' more units before dispatch.':'';
   $('[data-dispatch]').disabled=busy||!!reason;$('[data-dispatch-reason]').textContent=reason||'Ready to reserve '+count(quantity())+' units for a verified sea delivery.';
   $('[data-max]').disabled=busy||!item()||!route()||Math.min(available,capacity)<1;
@@ -109,24 +128,27 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
   try{const trace=await inventory.api('/api/world-supply/trace?productionId='+encodeURIComponent(id));if(disposed||request!==traceRequest)return;traceData=trace;renderInspector();}catch(error){if(request===traceRequest)status(error.message);}
  }
  async function loadRecipe(){
-  if(!selection)return;const id=selection,request=++recipeRequest;
+  if(!selection||item()?.factoryProducible===false){recipeRequest++;recipeDetails=null;return;}const id=selection,request=++recipeRequest;
   try{const plan=await inventory.api('/api/world-supply/recipe?itemId='+encodeURIComponent(id));if(disposed||request!==recipeRequest||selection!==id)return;recipeDetails=plan;renderRecipe();renderInspector();}catch{}
  }
  function renderRecipe(){
-  const selected=item(),recipe=quoteKey===selectionKey()&&quote?.recipe||recipeDetails?.recipe||selected?.recipe;
-  html($('[data-item-info]'),selected?'<strong>'+esc(selected.name)+'</strong><p class="supply-muted">'+esc([selected.modelUrl?'GLB / 3D model':selected.kind==='care'?'Care supply':'Native world item',selected.category,selected.description].filter(Boolean).join(' · '))+'</p>'+(selected.nativeMaps?.length?'<p class="supply-muted">Used in: '+selected.nativeMaps.map(map=>esc(map.name||map.id)+(map.count?' × '+count(map.count):'')).join(' · ')+'</p>':''):'');
+  const selected=item(),savedRecipe=selected?.factoryProducible===false?data?.production?.find(job=>job.itemId===selected.id&&job.recipe)?.recipe:null,recipe=savedRecipe||quoteKey===selectionKey()&&quote?.recipe||recipeDetails?.recipe||selected?.recipe;
+  const unitPrice=quoteKey===selectionKey()&&quote?.unitPriceMzk||selected?.factoryUnitPriceMzk||selected?.priceMzk;
+  const kind=selected?.renderKind==='image'?'Custom artwork blueprint':selected?.factoryVariant?(selected.modelUrl?'Custom GLB blueprint':'Custom native blueprint'):selected?.modelUrl?'GLB / 3D model':selected?.kind==='care'?'Care supply':'Native world item';
+  const source=productionSource(selected);
+  html($('[data-item-info]'),selected?'<strong>'+esc(selected.name)+'</strong><p class="supply-muted">'+esc([kind,source,selected.category,selected.description].filter(Boolean).join(' · '))+'</p><p data-unit-price>'+(selected.factoryProducible===false?'New production unavailable.':Number.isSafeInteger(unitPrice)&&unitPrice>0?'Factory unit price: '+count(unitPrice)+' MZK before bulk discounts.':'Request a server quote for this item’s factory unit price.')+'</p>'+(selected.priceMzk===0?'<p class="supply-muted">Basic access is free. Factory production has a minimum base cost of 1 MZK per unit before bulk discounts.</p>':'')+(selected.nativeMaps?.length?'<p class="supply-muted">Used in: '+selected.nativeMaps.map(map=>esc(map.name||map.id)+(map.count?' × '+count(map.count):'')).join(' · ')+'</p>':''):'');
   html($('[data-recipe]'),recipe?'<strong>'+esc(recipe.name)+'</strong><p>'+esc(recipe.description||'')+'</p><ol>'+(recipe.stages||[]).map(stage=>'<li><strong>'+esc(stage.name)+'</strong>'+ (stage.description?'<span>'+esc(stage.description)+'</span>':'')+'</li>').join('')+'</ol><small>'+count(recipe.unitsPerContainer)+' units per shipping container. Finished output requires shipping.</small>':'<p>Get a server quote to review this item’s production time and bulk price. Finished output requires shipping.</p>');
  }
  function renderChallenges(){
   html($('[data-challenges]'),(data?.challenges||[]).map(goal=>'<article class="supply-task"><strong>'+esc(goal.name)+'</strong><span>'+esc(goal.description)+'</span><span>'+esc(goal.itemName)+' × '+count(goal.quantity)+' → '+esc(goal.destinationName)+'</span><small>Factory: '+count(goal.availableStock)+' · Destination: '+count(goal.destinationStock)+' · '+count(goal.minimumQuality)+'% quality · Completed deliveries: '+count(goal.completionCount)+'</small><button type="button" data-prepare-challenge="'+esc(goal.id)+'">Prepare challenge</button></article>').join('')||'<p class="supply-muted">No distribution challenges are available in this world directory.</p>');
  }
  function renderCatalog(){
-  const matches=filterSupplyItems(data?.catalog,$('[data-search]').value);$('[data-matches]').textContent=`${matches.length.toLocaleString()} items · Native items, tools, supplies and 3D models`;
+  const matches=filterSupplyItems(catalog(),$('[data-search]').value),transferOnly=matches.filter(row=>row.factoryProducible===false).length;$('[data-matches]').textContent=`${matches.length.toLocaleString()} items · Native items, tools, supplies and 3D models${transferOnly?' · '+transferOnly+' stock transfer only':''}`;
   const previous=selection;if(!matches.some(row=>row.id===selection))selection=matches[0]?.id||'';
-  selectedOptions($('[data-item]'),matches,selection);if(previous!==selection){recipeDetails=null;invalidateQuote();void loadRecipe();}renderRecipe();renderControls();renderStocks();
+  selectedOptions($('[data-item]'),matches.map(row=>row.factoryProducible===false?{...row,name:row.name+' · Stock transfer only'}:row),selection);if(item()?.factoryProducible===false){quote=null;quoteKey='';recipeDetails=null;recipeRequest++;}if(previous!==selection){inspectedProductionId=null;traceData=null;recipeDetails=null;invalidateQuote();void loadRecipe();}renderRecipe();renderControls();renderStocks();
  }
  function renderStocks(){
-  const rows=filterSupplyItems(data?.catalog,$('[data-search]').value),pages=Math.max(1,Math.ceil(rows.length/30));page=Math.max(0,Math.min(page,pages-1));const map=data?.maps?.find(row=>row.id===stockMap);
+  const rows=filterSupplyItems(catalog(),$('[data-search]').value),pages=Math.max(1,Math.ceil(rows.length/30));page=Math.max(0,Math.min(page,pages-1));const map=data?.maps?.find(row=>row.id===stockMap);
   html($('[data-stock]'),rows.slice(page*30,(page+1)*30).map(row=>'<tr><th scope="row">'+esc(row.name)+'<small>'+esc(row.id)+'</small></th><td>'+count(data.worldStock?.[row.id])+'</td><td>'+count(data.factoryStock?.[row.id])+'</td><td>'+count(map?.stock?.[row.id])+'</td></tr>').join('')||'<tr><td colspan="4">No items match your search.</td></tr>');
   $('[data-page]').textContent=`Page ${page+1} of ${pages}`;$('[data-previous]').disabled=page===0;$('[data-next]').disabled=page>=pages-1;
  }
@@ -135,7 +157,7 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
   for(const node of panel.querySelectorAll('[data-build-id]')){const job=data.production?.find(row=>row.id===node.dataset.buildId);if(!job)continue;const view=supplyBuildPresentation(job,now());node.querySelector('[data-build-status]').textContent=view.label;node.querySelector('progress').value=view.progress;}
  }
  function renderTasks(){
-  if(!data)return;const names=new Map((data.catalog||[]).map(row=>[row.id,row.name])),maps=new Map((data.maps||[]).map(row=>[row.id,row.name]));
+  if(!data)return;const names=new Map(catalog().map(row=>[row.id,row.name])),maps=new Map((data.maps||[]).map(row=>[row.id,row.name]));
   const production=[...(data.production||[]).filter(row=>['building','paused'].includes(row.phase)).reverse(),...(data.production||[]).filter(row=>!['building','paused'].includes(row.phase)).slice(-10).reverse()];
   html($('[data-production]'),production.map(row=>'<article class="supply-task" data-build-id="'+esc(row.id)+'"><strong>'+esc(names.get(row.itemId)||row.itemId)+' × '+count(row.quantity)+'</strong><span data-build-status></span><progress max="1" value="0" aria-label="'+esc((names.get(row.itemId)||row.itemId)+' production progress')+'"></progress>'+(row.stages?.length?'<ol class="supply-stages">'+row.stages.map(stage=>'<li data-phase="'+esc(stage.phase)+'"><strong>'+esc(stage.name)+'</strong><span>'+esc(stage.phase==='complete'?'Complete':stage.phase==='processing'?'In progress':'Waiting')+'</span></li>').join('')+'</ol>':'')+'<button type="button" data-inspect-production="'+esc(row.id)+'">Inspect operations & trace</button>'+(row.phase==='building'?'<button type="button" data-pause-production="'+esc(row.id)+'">Pause production</button>':row.phase==='paused'?'<button type="button" data-resume-production="'+esc(row.id)+'">Resume production</button>':'')+(['building','paused'].includes(row.phase)?'<button type="button" data-cancel-production="'+esc(row.id)+'">Cancel production & refund</button>':row.phase==='ready'?'<button type="button" data-ready-dispatch="'+esc(row.id)+'">Prepare shipment</button>':'')+'</article>').join('')||'<p class="supply-muted">No production orders yet.</p>');renderBuildClocks();
   const filter=$('[data-task-filter]').value,all=(data.shipments||[]).filter(row=>filter==='all'||filter==='active'&&!terminal.has(row.phase)||row.phase===filter).slice().reverse(),pages=Math.max(1,Math.ceil(all.length/10));taskPage=Math.max(0,Math.min(taskPage,pages-1));
@@ -144,7 +166,7 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
    const selectedRoute=data.routes?.find(route=>route.id===row.contractId),access=supplyShipmentAccess(row,currentId(),self,selectedRoute),source=row.sourceMapId&&row.sourceMapId!=='factory'?(maps.get(row.sourceMapId)||row.sourceMapId):'Factory output';
    const labels={travel:'Travel to shipping map',board:'Board cargo ship',chart:'Open origin port chart',origin:'Navigate to origin port',accept:'Accept shipping task',continue:'Continue sea delivery'};
    const action=access.action!=='none'?'<button type="button" data-sea-action="'+esc(access.action)+'" data-shipment="'+esc(row.id)+'">'+labels[access.action]+'</button>':'';
-   return '<article class="supply-task"><strong>'+esc(names.get(row.itemId)||row.itemName||row.itemId)+' × '+count(row.quantity)+'</strong><span>From '+esc(source)+' → To '+esc(maps.get(row.destinationMapId)||row.destinationMapId)+'</span><span>'+esc(access.message)+'</span>'+(row.challenge?'<span>'+esc(row.challenge.name)+' · '+(row.challengeResult?esc(row.challengeResult.message):'Requires '+count(row.challenge.minimumQuality)+'% delivered quality')+'</span>':'')+'<small>'+esc(data.shippingMaps?.find(map=>map.id===row.shippingMapId)?.name||row.shippingMapId)+' · '+esc(portName(selectedRoute?.from))+' → '+esc(portName(selectedRoute?.to))+(row.packing?' · '+count(row.packing.containersRequired)+' sealed / '+count(row.packing.containerSlots)+' manifest containers':'')+'</small><div class="supply-buttons">'+action+(row.phase==='queued'&&!row.jobId?'<button type="button" data-cancel-shipment="'+esc(row.id)+'">Return cargo to source</button>':'')+'</div></article>';
+   return '<article class="supply-task"><strong>'+esc(names.get(row.itemId)||row.itemName||row.itemId)+' × '+count(row.quantity)+'</strong><span>From '+esc(source)+' → To '+esc(maps.get(row.destinationMapId)||row.destinationMapId)+'</span><span>'+esc(access.message)+'</span>'+(row.portTransferTask?'<span data-port-transfer>'+esc(supplyPortTransferText(row,selectedRoute))+'</span>':'')+(row.challenge?'<span>'+esc(row.challenge.name)+' · '+(row.challengeResult?esc(row.challengeResult.message):'Requires '+count(row.challenge.minimumQuality)+'% delivered quality')+'</span>':'')+'<small>'+esc(data.shippingMaps?.find(map=>map.id===row.shippingMapId)?.name||row.shippingMapId)+' · '+esc(portName(originPort(row,selectedRoute)))+' → '+esc(portName(destinationPort(row,selectedRoute)))+(row.packing?' · '+count(row.packing.containersRequired)+' sealed / '+count(row.packing.containerSlots)+' manifest containers':'')+'</small><div class="supply-buttons">'+action+(row.phase==='queued'&&!row.jobId?'<button type="button" data-cancel-shipment="'+esc(row.id)+'">Return cargo to source</button>':'')+'</div></article>';
   }).join('')||'<p class="supply-muted">No matching tasks. Dispatch completed stock to create a sea delivery.</p>');
   $('[data-task-page]').textContent=`Page ${taskPage+1} of ${pages}`;$('[data-task-previous]').disabled=taskPage===0;$('[data-task-next]').disabled=taskPage>=pages-1;renderControls();
  }
@@ -192,15 +214,15 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
  $('[data-challenges]').onclick=event=>{const id=event.target.closest('[data-prepare-challenge]')?.dataset.prepareChallenge,goal=data?.challenges?.find(row=>row.id===id);if(!goal||busy)return;selectedChallengeId=goal.id;selection=goal.itemId;recipeDetails=null;inspectedProductionId=null;traceData=null;void loadRecipe();sourceMapId=goal.sourceMapId;destination=goal.destinationMapId;selectedShippingMap=goal.shippingMapId;routeId=goal.contractId;$('[data-search]').value='';$('[data-quantity]').value=goal.quantity;invalidateQuote();render();status('Prepare '+goal.name+'. Build missing units, then dispatch and complete the sea voyage.');$('[data-quote]').scrollIntoView({block:'center'});$('[data-quote]').focus();};
  $('[data-refresh]').onclick=()=>refresh({manual:true});$('[data-previous]').onclick=()=>{page--;renderStocks();};$('[data-next]').onclick=()=>{page++;renderStocks();};
  panel.addEventListener('click',event=>{const pause=event.target.closest('[data-pause-production]'),resume=event.target.closest('[data-resume-production]');if(pause||resume){void run(pause?'pause':'resume',{productionId:pause?.dataset.pauseProduction||resume.dataset.resumeProduction});return;}const stage=event.target.closest('[data-inspect-stage]');if(stage){inspectedStageId=stage.dataset.inspectStage;renderInspector();}});
- $('[data-production]').onclick=event=>{const inspect=event.target.closest('[data-inspect-production]');if(inspect){void inspectProduction(inspect.dataset.inspectProduction);return;}const cancel=event.target.closest('[data-cancel-production]');if(cancel){void run('cancel',{productionId:cancel.dataset.cancelProduction});return;}const ready=event.target.closest('[data-ready-dispatch]'),job=data?.production?.find(row=>row.id===ready?.dataset.readyDispatch);if(job){selectedChallengeId='';selection=job.itemId;recipeDetails=null;void loadRecipe();sourceMapId='factory';$('[data-search]').value='';$('[data-quantity]').value=Math.min(job.quantity,supplyRouteCapacity(data.catalog.find(row=>row.id===job.itemId),route(),data.rules));invalidateQuote();render();$('[data-source]').scrollIntoView({block:'center'});$('[data-source]').focus();}};
+ $('[data-production]').onclick=event=>{const inspect=event.target.closest('[data-inspect-production]');if(inspect){void inspectProduction(inspect.dataset.inspectProduction);return;}const cancel=event.target.closest('[data-cancel-production]');if(cancel){void run('cancel',{productionId:cancel.dataset.cancelProduction});return;}const ready=event.target.closest('[data-ready-dispatch]'),job=data?.production?.find(row=>row.id===ready?.dataset.readyDispatch);if(job){selectedChallengeId='';selection=job.itemId;inspectedProductionId=job.id;traceData=null;recipeDetails=null;void loadRecipe();sourceMapId='factory';$('[data-search]').value='';$('[data-quantity]').value=Math.min(job.quantity,supplyRouteCapacity(item(),route(),data.rules));invalidateQuote();render();$('[data-source]').scrollIntoView({block:'center'});$('[data-source]').focus();}};
  $('[data-shipments]').onclick=async event=>{
   const cancel=event.target.closest('[data-cancel-shipment]');if(cancel){void run('cancel',{shipmentId:cancel.dataset.cancelShipment});return;}
   const action=event.target.closest('[data-sea-action]');if(!action||busy)return;const row=data?.shipments?.find(value=>value.id===action.dataset.shipment);if(!row)return;
   const operation=action.dataset.seaAction,selectedRoute=data.routes?.find(route=>route.id===row.contractId),context=revision;
   if(operation==='travel'){screen.close();if(onNavigate){try{await onNavigate(row.shippingMapId);}catch(error){if(context===revision){open({section:'shipments'});status(error.message);}}}else{const target=new URL('model-explorer.html',location.href);target.searchParams.set('environment',row.shippingMapId);target.searchParams.set('mode','multiplayer');location.assign(target.href);}return;}
-  if(operation==='chart'||operation==='continue'){screen.close();onShipping({portId:selectedRoute?.from});return;}
+  if(operation==='chart'||operation==='continue'){screen.close();onShipping({portId:originPort(row,selectedRoute)});return;}
   busy=true;renderControls();
-  try{if(typeof command!=='function')throw new Error('Join the live shipping map to operate a cargo vessel.');const result=await command(operation==='origin'?'vehicle-navigate':'shipping',operation==='origin'?{destinationId:selectedRoute?.from}:operation==='board'?{operation:'board',entityId:self?.shipping?.boardingId}:{operation:'accept',contractId:row.contractId,shipmentId:row.id});if(!result)throw new Error('Join the live shipping map before accepting a task.');if(context!==revision)return;if(result.players){const id=result.selfId||actorId;self=result.players[id]||self;}if(operation==='board'){renderTasks();status('Vessel boarded. At the origin dock, accept this item shipment.');}else{screen.close();if(operation==='accept')onShipping({portId:selectedRoute?.from});announce(operation==='accept'?'Cargo assigned. Load, secure and sail the manifest to restock its destination.':'Navigating to the shipment’s origin port.');}}
+  try{if(typeof command!=='function')throw new Error('Join the live shipping map to operate a cargo vessel.');const result=await command(operation==='origin'?'vehicle-navigate':'shipping',operation==='origin'?{destinationId:originPort(row,selectedRoute)}:operation==='board'?{operation:'board',entityId:self?.shipping?.boardingId}:{operation:'accept',contractId:row.contractId,shipmentId:row.id});if(!result)throw new Error('Join the live shipping map before accepting a task.');if(context!==revision)return;if(result.players){const id=result.selfId||actorId;self=result.players[id]||self;}if(operation==='board'){renderTasks();status('Vessel boarded. At the origin dock, accept this item shipment.');}else{screen.close();if(operation==='accept')onShipping({portId:originPort(row,selectedRoute)});announce(operation==='accept'?'Cargo assigned. Load, secure and sail the manifest to restock its destination.':'Navigating to the shipment’s origin port.');}}
   catch(error){if(context===revision)status(error.message);}
   finally{if(context===revision){busy=false;renderControls();}}
  };

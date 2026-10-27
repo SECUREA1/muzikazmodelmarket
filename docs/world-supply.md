@@ -1,18 +1,18 @@
 # World item factory and stock supply
 
-Open **World item factory** in the game controls. Search the native, repository GLB/GLTF, published model, or care catalog and inspect each item's world, factory, and destination warehouse count.
+Open **World item factory** in the game controls. Search native assets, repository GLB/GLTF files, published models, care supplies, and eligible active Builder or player marketplace blueprints. Inspect each item's world, factory, and destination warehouse count. The board shows its server-confirmed factory unit price and production source.
 
 Each canonical item starts with **1,000 units across the world**, once. Aliases for the same native item or model share one count. Catalog refreshes, server restarts, and visiting a new map never reset depleted stock. Existing owned items and authored map scenery are preserved.
 
 ## Build and ship
 
-1. Choose an item and whole-unit quantity. Request a server quote. Production costs the catalog unit price, with **20% off batches of 10 or more**. Free catalog items have a base manufacturing cost of 1 MZK per unit before the bulk discount. Every catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.
+1. Choose an item and whole-unit quantity. Request a server quote. Production uses the authoritative catalog MZK price, with **20% off batches of 10 or more**. MZK amounts must be valid whole numbers; USD catalog prices convert at the shared rate of **100 MZK per USD**. Missing, negative or invalid prices cannot silently become cheap production orders. Free catalog items have a minimum base manufacturing cost of **1 MZK per unit before the bulk discount**. A current server quote overrides the earlier lineup price. Every eligible catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.
 2. Start production. The server charges MZK once and runs four timed stages: input preparation, fabrication/assembly, quality checks, and packing. The board shows each stage and its progress. All four must complete before the packed batch enters shared factory stock; no stage replenishes stores immediately. An unfinished batch can be cancelled for its original cost; finished goods cannot be refunded.
 3. Select a destination map warehouse or **World stock · central stores**, a shipping map, and a shipping contract. Dispatch reserves actual factory units. To redistribute existing goods, choose a world or map warehouse as the source instead; transfers debit its stock and never manufacture extra units. Packing capacity depends on the item recipe: materials, tools and care supplies fit up to 1,000 per container; furniture 50; general props and character assets 100; electronics 250; ground vehicles 4; aircraft, boats, structures and world modules 1. The board shows the selected route capacity and a shipment-size control. Larger batches need a larger manifest or several shipments. Dock induction cannot transport world stock.
-4. On the assigned shipping map, board an eligible vessel at the contract's origin port. Open World item factory and accept the shipment task. Its item manifest appears in the shipping loading panel.
+4. Dispatch records the exact origin and destination ports from the server's selected route. A warehouse-to-origin-port staging task identifies the source inventory, shipping map, item, reserved quantity, staging time and **simulated warehouse transfer** mode. On the assigned shipping map, board an eligible vessel at that origin port. Open World item factory and accept the shipment task. Its item manifest appears in the shipping loading panel.
 5. Load and balance every container, secure the cargo, sail the marked route, dock, and unload completely. Only the verified final unload credits the selected inventory. Ordinary freight rewards still apply. The shipping chart links back to factory tasks, with directions to the correct shipping world, origin port and eligible vessel.
 
-The sea leg is playable in Hormuz and copied shipping maps. Warehouse transfers to and from the shipping ports are **simulated in-game freight**, recorded on the shipment's transfer task. This does not arrange real-world production, trade, or shipping. Maps with stores share their map warehouse; maps without stores still receive inventory.
+The sea leg is playable in Hormuz and copied shipping maps. Warehouse transfers to and from the shipping ports are **simulated in-game freight**, recorded on the shipment's transfer tasks. The origin staging task moves from staged to loading and then delivered, or returned after cancellation. Releasing an abandoned voyage stages the same reserved goods again. Dock staging does not create another stock balance or credit the destination. This does not arrange real-world production, trade, or shipping. Maps with stores share their map warehouse; maps without stores still receive inventory.
 
 ## Consumption and restocking
 
@@ -24,17 +24,27 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 ## Implementation
 
-`world-supply.mjs` maintains the canonical ledger in the existing durable user database. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
+`world-supply.mjs` maintains the canonical ledger in the existing durable user database. `world-factory-catalog.mjs` normalizes trusted marketplace records and `world-factory-pricing.mjs` validates their production prices. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
 
 `GET /api/world-supply` exposes the counts, jobs, destinations, and eligible shipping maps. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,dispatch,cancel}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
 
 ## Catalog coverage and verification
 
-Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 47 worlds and 5,435 placed instances: all 618 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 47 worlds and 5,437 placed instances: all 618 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
 
 `public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
 
 Earned-only quest collectibles keep their existing ownership rules. The four Ironwood Prison keepsakes remain earned and account-bound; factory production cannot mint replacement quest licenses. They remain visible in the market with their earning instructions.
+
+## Public marketplace blueprints
+
+Active Builder listings can supply an authored GLB/GLTF file or a supported native asset with its saved game configuration. Active player listings can supply reusable native/model items, configured custom GLBs, and saved custom artwork with its validated PNG image and extrusion settings. Native IDs, model references, behavior, configuration, supported physics/animation metadata and artwork remain part of the saved item blueprint. Invalid deliverables and private or inactive records do not enter new production.
+
+Configured creations have their own stable blueprint supply identities. A customized model that shares a GLB file with a base catalog item retains its own stock and production plan. Selling or relisting that creation does not create another stock identity, and ordinary aliases for an unchanged native or GLB asset still share their canonical count. Each production batch saves an immutable blueprint snapshot, so later listing changes cannot rewrite its completed operations or freight lots.
+
+Unlisting a creation removes it from the current lineup and blocks new recipe quotes or production for that blueprint. Existing paid batches, stock, shipments and historical traces remain available; restocking does not reseed an old zero. Relisting restores access to the same saved supply identity.
+
+Factory output represents counted physical game stock. It does not transfer the seller's unique inventory instance, mint Builder ownership records, issue official Atlas certificates, grant account-bound earned rewards, or create land deeds and access licenses. Bundles remain purchase groupings whose eligible constituent items are manufactured individually. Player resale keeps its existing ownership-transfer rules and does not manufacture or award extra units.
 
 ## World Item Factory map
 

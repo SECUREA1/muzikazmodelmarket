@@ -126,7 +126,7 @@ const profileDetails={
  environments:{components:'authored environment sections and layout components',fixture:'world module assembly fixtures',assembly:'Fit world modules',verification:'authored environment and layout settings',packaging:'individual world freight modules',stations:['World component intake','World module assembly cell','World configuration inspection','World module securing bay']},
  avatars:{components:'catalog character geometry and appearance components',fixture:'character assembly fixtures',assembly:'Fit character assets',verification:'character scale, animation and game behavior',packaging:'labeled character asset cases',stations:['Character component intake','Character assembly cell','Character configuration test bench','Character case packing line']}
 };
-const blueprintFields=['kind','assetType','type','behavior','action','toolId','materialId','builderLayoutId','dimensions','targetHeight','scale','collision','function_data','vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState','effect','configuration'];
+const blueprintFields=['kind','assetType','type','behavior','action','toolId','materialId','builderLayoutId','dimensions','targetHeight','scale','collision','function_data','vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState','effect','configuration','renderKind','creatorId','version','animation_data','collider_data','physics_data','spawn_data','interaction_data','ai_profile','game_function','script_reference'];
 function normalizeRef(value){
  const text=String(value||'').trim();
  try{return decodeURIComponent(text).replace(/^(?:\.\/|\/)+/,'');}catch{return text.replace(/^(?:\.\/|\/)+/,'');}
@@ -154,6 +154,7 @@ export function worldFactoryRecipe(item={}){
  const itemId=sku||(profile.id==='care'&&item.id?'care:'+item.id:String(item.id||item.catalogId||''))||(buildAssetId?'native:'+buildAssetId:modelRef?'model:'+modelRef:'catalog:'+profile.id+':'+fingerprint(String(item.name||profile.id)));
  const itemName=String(item.name||item.title||buildAssetId||item.id||profile.name);
  const blueprint=sortedCopy({itemId,sku:sku||itemId,name:itemName,buildAssetId:buildAssetId||null,modelUrl:modelUrl||null,modelRef:modelRef||null,format:item.format||(modelRef?'authored-model':buildAssetId?'procedural-3d':'catalog-item'),...Object.fromEntries(blueprintFields.filter(key=>item[key]!==undefined).map(key=>[key,item[key]]))});
+ if(item.renderKind==='image')blueprint.thumbnailUrl=String(item.thumbnailUrl||'');
  if(!blueprint.behavior)blueprint.behavior=String(item.function_data?.behavior||item.toolId||'decor');
  const identityFingerprint=fingerprint({recipeVersion:RECIPE_VERSION,profileId:profile.id,blueprint:{...blueprint,modelUrl:modelRef||null}}),itemPlanId='world-factory-v'+RECIPE_VERSION+':'+fingerprint(itemId)+':'+identityFingerprint;
  const qualityChecks=[
