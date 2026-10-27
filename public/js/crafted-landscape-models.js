@@ -38,34 +38,62 @@ function graded(geometry,bottom,top){
  g.setAttribute('color',new THREE.Float32BufferAttribute(data,3));return g;
 }
 const vertexMat=(extra={})=>mat(0xffffff,.92,.02,{vertexColors:true,...extra});
-function loft(root,name,rings,material){
+function terrainSurfaceUvs(geometry,planar=false){
+ geometry.computeBoundingBox();const p=geometry.attributes.position,n=geometry.attributes.normal,bounds=geometry.boundingBox,size=bounds.getSize(new THREE.Vector3()),uv=[];
+ for(let i=0;i<p.count;i++){
+  const axis=planar?1:[Math.abs(n.getX(i)),Math.abs(n.getY(i)),Math.abs(n.getZ(i))].indexOf(Math.max(Math.abs(n.getX(i)),Math.abs(n.getY(i)),Math.abs(n.getZ(i)))),axes=axis===0?[2,1]:axis===1?[0,2]:[0,1];
+  for(const a of axes)uv.push((p.getComponent(i,a)-bounds.min.getComponent(a))/Math.max(.000001,size.getComponent(a)));
+ }
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));return geometry;
+}
+function removeCollapsedTerrainFaces(geometry){
+ const p=geometry.attributes.position,index=geometry.index,clean=[],a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();
+ for(let i=0;i<(index?.count||p.count);i+=3){
+  const vertices=[0,1,2].map(j=>index?index.getX(i+j):i+j);a.fromBufferAttribute(p,vertices[0]);b.fromBufferAttribute(p,vertices[1]);c.fromBufferAttribute(p,vertices[2]);
+  if(b.sub(a).cross(c.sub(a)).lengthSq()>1e-18)clean.push(...vertices);
+ }
+ // These ice facets have one material; the cone generator's old side/cap
+ // ranges must not point past the compacted triangle index.
+ geometry.setIndex(clean);geometry.clearGroups();return geometry;
+}
+function loft(root,name,rings,material,{capBottom=false,capTop=true}={}){
  const positions=[],n=rings[0].length;
  const triangle=(a,b,c)=>positions.push(...a,...b,...c);
  for(let row=0;row<rings.length-1;row++)for(let i=0;i<n;i++){
   const next=(i+1)%n;triangle(rings[row][i],rings[row][next],rings[row+1][i]);triangle(rings[row][next],rings[row+1][next],rings[row+1][i]);
  }
- const top=rings.at(-1),center=top.reduce((sum,p)=>sum.add(new THREE.Vector3(...p)),new THREE.Vector3()).multiplyScalar(1/n).toArray();
- for(let i=0;i<n;i++)triangle(top[i],top[(i+1)%n],center);
+ for(const [ring,enabled,top]of [[rings[0],capBottom,false],[rings.at(-1),capTop,true]]){
+  if(!enabled)continue;const center=ring.reduce((sum,p)=>sum.add(new THREE.Vector3(...p)),new THREE.Vector3()).multiplyScalar(1/n).toArray();
+  for(let i=0;i<n;i++)if(top)triangle(ring[i],ring[(i+1)%n],center);else triangle(ring[i],center,ring[(i+1)%n]);
+ }
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();
- return part(root,name,geometry,material);
+ return part(root,name,terrainSurfaceUvs(geometry),material);
 }
 
 function cliff(root){
  const stone=[mat(0x6b6259),mat(0x93816b),mat(0xa09177),mat(0x827563)],moss=mat(0x5c7350),scree=mat(0x887b6b);
  const n=11,outline=Array.from({length:n},(_,i)=>{const a=-i/n*Math.PI*2,r=1+Math.sin(i*2.7)*.1;return [Math.cos(a)*2.18*r,Math.sin(a)*1.49*r];});
+ const layers=[];let boundary=null;
  for(let layer=0;layer<4;layer++){
   const low=layer*.72,high=low+.76,shrink=1-layer*.075;
-  const lower=outline.map(([x,z],i)=>[x*shrink,low+(layer?Math.sin(i*2.2+layer)*.04:0),z*shrink]);
+  // A sediment boundary belongs to both adjacent layers. Independent height
+  // noise formerly opened gaps and left upper shelves visibly unsupported.
+  const lower=boundary||outline.map(([x,z])=>[x*shrink,low,z*shrink]);
   const upper=outline.map(([x,z],i)=>[x*(shrink-.04)+Math.sin(i+layer)*.08,high+Math.sin(i*1.7+layer)*.14,z*(shrink-.03)]);
-  loft(root,'CLIFF_SEDIMENT_LAYER', [lower,upper],stone[layer]);
+  layers.push(loft(root,'CLIFF_SEDIMENT_LAYER',[lower,upper],stone[layer],{capBottom:layer===0,capTop:layer===3}));boundary=upper;
  }
  for(let i=0;i<10;i++){
   const a=i/10*Math.PI*2,x=Math.cos(a)*2.03,z=Math.sin(a)*1.48,s=.15+(i%3)*.08;
   rock(root,'FALLEN_SCREE',[x,.12,z],[s,s*.64,s*.83],scree);
  }
  for(let i=0;i<6;i++)rock(root,'CLIFF_MOSS_PATCH',[(i-2.5)*.48,2.9+Math.sin(i)*.04,Math.sin(i*2)*.72],[.45,.045,.32],moss,1);
+ root.updateMatrixWorld(true);const ray=new THREE.Raycaster(),forward=new THREE.Vector3(0,0,1);
  for(let i=0;i<5;i++){
-  const x=-1.5+i*.7;branch(root,'CLIFF_MINERAL_SEAM',[[x,.85,-1.23],[x+.09,1.1,-1.2],[x+.05,1.42,-1.18]],.016,stone[2]);
+  const x=-1.5+i*.7,path=new THREE.CatmullRomCurve3([[x,.85,-1.23],[x+.09,1.1,-1.2],[x+.05,1.42,-1.18]].map(p=>new THREE.Vector3(...p))),points=[];
+  // Mineral exposure follows the actual tapered face, including each shared
+  // sediment boundary, rather than hanging at one arbitrary front Z plane.
+  for(let j=0;j<=12;j++){const point=path.getPoint(j/12);ray.set(new THREE.Vector3(point.x,point.y,-4),forward);const hit=ray.intersectObjects(layers,false)[0];if(hit)point.z=hit.point.z-.004;points.push(point);}
+  part(root,'CLIFF_MINERAL_SEAM',new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),24,.016,7,false),stone[2]);
  }
 }
 
@@ -102,11 +130,16 @@ function crater(root){
  const soil=mat(0x75604f),dark=mat(0x382f2b),rim=mat(0x97836a),mineral=mat(0xb4a184),n=56,positions=[],colors=[];
  const rings=[[2.45,0],[2.2,.35],[1.73,.72],[1.43,.49],[.95,.18],[.28,.07],[0,.065]],palette=[0x67584b,0x8d7760,0x9b856c,0x65503f,0x3e342d,0x322c28,0x322c28];
  function point(row,i){const a=-i/n*Math.PI*2,[r,y]=rings[row],noise=row===0||row===6?0:Math.sin(i*1.9)*.055;return [Math.cos(a)*r*(1+noise),y+noise*.5,Math.sin(a)*r*(1+noise)];}
- for(let row=0;row<rings.length-1;row++)for(let i=0;i<n;i++){
+ for(let row=0;row<rings.length-2;row++)for(let i=0;i<n;i++){
   const quad=[point(row,i),point(row,(i+1)%n),point(row+1,i),point(row+1,(i+1)%n)],c0=new THREE.Color(palette[row]),c1=new THREE.Color(palette[row+1]);
   for(const index of [0,1,2,1,3,2]){positions.push(...quad[index]);const c=index<2?c0:c1;colors.push(c.r,c.g,c.b);}
  }
- const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();part(root,'FRACTURED_IMPACT_BOWL',geometry,vertexMat({side:THREE.DoubleSide}));
+ // One fan reaches the floor centre. A collapsed zero-radius quad ring used
+ // to emit a second, zero-area triangle at every one of its56 segments.
+ for(let i=0;i<n;i++)for(const vertex of [point(rings.length-2,i),point(rings.length-2,(i+1)%n),[0,rings.at(-1)[1],0]]){
+  positions.push(...vertex);const color=new THREE.Color(palette.at(-1));colors.push(color.r,color.g,color.b);
+ }
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();part(root,'FRACTURED_IMPACT_BOWL',terrainSurfaceUvs(geometry,true),vertexMat({side:THREE.DoubleSide}));
  for(let i=0;i<15;i++){
   const a=i/15*Math.PI*2,r=i%3===0?2.25:1.75,s=.13+(i%3)*.045;
   rock(root,'CRATER_EJECTA',[Math.cos(a)*r,r>2?.17:.63,Math.sin(a)*r],[s*1.5,s*.65,s],i%3===0?soil:rim);
@@ -119,13 +152,30 @@ function crater(root){
 
 function snow(root){
  const snow=vertexMat(),ice=mat(0x85b5d3,.22,.18,{transparent:true,opacity:.85}),rockMat=mat(0x748994);
- for(const [x,z,r,height]of [[-.8,.12,1.18,.82],[.48,.02,1.32,1.16],[1.36,.09,.67,.48],[-1.42,-.12,.62,.42]]){
+ const drifts=[[-.8,.12,1.18,.82],[.48,.02,1.32,1.16],[1.36,.09,.67,.48],[-1.42,-.12,.62,.42]];
+ for(const [x,z,r,height]of drifts){
   const geometry=graded(new THREE.SphereGeometry(r,28,12,0,Math.PI*2,0,Math.PI/2),0xb5d0df,0xf2fbff),drift=part(root,'SCULPTED_SNOW_DRIFT',geometry,snow,[x,0,z]);drift.scale.set(1,height/r,.72);
  }
  const crest=mat(0xf7fdff);
- branch(root,'WINDSWEPT_DRIFT_CREST',[[-1.55,.29,-.28],[-.9,.77,-.28],[-.35,.96,-.22],[.3,1.15,-.16],[.93,.99,-.1]],.025,crest);
+ const crestPoints=[[-1.55,.29,-.28],[-.9,.77,-.28],[-.35,.96,-.22],[.3,1.15,-.16],[.93,.99,-.1]];
+ branch(root,'WINDSWEPT_DRIFT_CREST',crestPoints,.025,crest);
+ // The narrow swept ridge joins the crest to the overlapping snow lobes.
+ // Its outer edges are buried in the existing drifts, so it creates neither
+ // a hovering tube nor another disconnected slab along the snow surface.
+ const crestCurve=new THREE.CatmullRomCurve3(crestPoints.map(p=>new THREE.Vector3(...p))),positions=[],indices=[],uv=[],steps=48;
+ const snowHeight=(x,z)=>Math.max(0,...drifts.map(([cx,cz,r,h])=>h*Math.sqrt(Math.max(0,1-((x-cx)/r)**2-((z-cz)/(r*.72))**2))));
+ for(let row=0;row<=steps;row++){
+  const t=row/steps,p=crestCurve.getPoint(t),tangent=crestCurve.getTangent(t),cross=new THREE.Vector3(-tangent.z,0,tangent.x).normalize(),lift=Math.max(0,p.y-snowHeight(p.x,p.z));
+  for(let j=0;j<5;j++){
+   const u=(j-2)/2,x=p.x+cross.x*u*.16,z=p.z+cross.z*u*.16,weight=(1-Math.abs(u))**1.6,y=snowHeight(x,z)-.03+weight*(lift+.018);
+   positions.push(x,y,z);uv.push(t,j/4);
+  }
+ }
+ for(let row=0;row<steps;row++)for(let j=0;j<4;j++){const a=row*5+j,b=a+5;indices.push(a,a+1,b,b,a+1,b+1);}
+ const ridgeGeometry=new THREE.BufferGeometry();ridgeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));ridgeGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));ridgeGeometry.setIndex(indices);ridgeGeometry.computeVertexNormals();
+ const ridge=part(root,'GROUNDED_WINDSWEPT_SNOW_RIDGE',graded(ridgeGeometry,0xc7e0ed,0xf2fbff),snow);ridge.userData.collisionDisabled=true;ridge.userData.collider=false;
  for(let i=0;i<6;i++){
-  const shard=part(root,'BLUE_ICE_FACET',new THREE.ConeGeometry(.1+(i%2)*.035,.37,4),ice,[-1.3+i*.46,.13,-.62]);shard.rotation.set(.4,Math.PI/4,i%2?.18:-.13);shard.scale.z=.55;
+  const shard=part(root,'BLUE_ICE_FACET',removeCollapsedTerrainFaces(new THREE.ConeGeometry(.1+(i%2)*.035,.37,4)),ice,[-1.3+i*.46,.13,-.62]);shard.rotation.set(.4,Math.PI/4,i%2?.18:-.13);shard.scale.z=.55;
  }
  for(let i=0;i<5;i++)rock(root,'SNOW_EDGE_STONE',[-1.5+i*.71,.045,.68],[.11,.07,.09],rockMat);
 }

@@ -41,11 +41,22 @@ try:
                 map.update(world);map.updateLive({serverTime:100000,actors:{plane},questOffers:questCatalog(world),players:{pilot:{id:'pilot',username:'Mountain Pilot',position:{...plane.position},vehicleId:plane.id}}},'pilot');
             }''')
             page.locator('.district-map-toggle').click()
-            page.wait_for_selector('[data-vehicle-destination="mountain-runway"]')
-            assert page.locator('[data-vehicle-destination]').count() == 4
+            dialog = page.locator('.district-map-dialog')
+            dialog.wait_for(state='visible')
+            # The current map opens its Map section (3D by default on touch
+            # screens). Exercise the visible plan, location directory and
+            # vehicle tabs instead of waiting on routes in a hidden section.
+            dialog.get_by_role('button', name='2D plan', exact=True).click()
+            page.locator('[data-local-map-plan]').wait_for(state='visible')
             for name in ('Alpine Ridge Campground', 'Alpine Ridge Lodge', 'Alpine Valley Lookout'):
                 assert page.locator('[data-local-map-plan] svg text').filter(has_text=name).count() == 1, name
-                assert page.locator('.local-map-directory-list summary').filter(has_text=name).count() == 1, name
+            dialog.get_by_role('button', name='Locations', exact=True).click()
+            for name in ('Alpine Ridge Campground', 'Alpine Ridge Lodge', 'Alpine Valley Lookout'):
+                location = page.locator('.local-map-directory-list summary').filter(has_text=name)
+                assert location.count() == 1 and location.is_visible(), name
+            dialog.get_by_role('button', name='Vehicles', exact=True).click()
+            page.wait_for_selector('[data-vehicle-destination="mountain-runway"]')
+            assert page.locator('[data-vehicle-destination]').count() == 4
             page.locator('[data-vehicle-destination="mountain-runway"]').click()
             assert page.evaluate('commands.at(-1)') == {'action': 'vehicle-navigate', 'destinationId': 'mountain-runway'}
             assert page.locator('.district-map-dialog').is_visible()

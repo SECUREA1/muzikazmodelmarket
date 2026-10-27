@@ -1,5 +1,6 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
 import {SKI_SIZE,skiHeight,skiRuns,skiRunX,skiLifts,liftPosition,skiCourseGates,skiTimePickups} from '../ski-resort.js';
+import {finishMountainTerrainDesign} from '../mountain-terrain-design.js';
 export function createSkiResortLand(){
  const root=new THREE.Group();root.name='PIXEL_PEAKS_SKI_RESORT';root.userData={proceduralLand:true,layout:'ski-resort',streetHeightAt:skiHeight,cleanSportsWorld:true};
  const mats=new Map(),mat=color=>{if(!mats.has(color))mats.set(color,new THREE.MeshStandardMaterial({color,roughness:.85}));return mats.get(color);};
@@ -57,5 +58,5 @@ for(const {chair,lift,offset}of chairs){const phase=(time/lift.duration+offset)%
  // collision pieces. This cuts mobile draw calls without broad box colliders.
  const batches=new Map();for(const mesh of [...root.children]){if(!mesh.isMesh||mesh.geometry?.type!=='BoxGeometry')continue;mesh.updateMatrix();const size=mesh.geometry.parameters,key=mesh.material;let batch=batches.get(key);if(!batch){batch=[];batches.set(key,batch);}batch.push({mesh,matrix:mesh.matrix.clone().scale(new THREE.Vector3(size.width,size.height,size.depth))});mesh.visible=false;mesh.userData.collider=true;}
  for(const [material,items]of batches){const visual=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),material,items.length);visual.name='SKI_BATCHED_SCENERY';visual.userData.collider=false;for(const [index,item]of items.entries())visual.setMatrixAt(index,item.matrix);visual.castShadow=visual.receiveShadow=true;root.add(visual);}
- root.userData.updateSkiEffects(0);return root;
+ root.userData.updateSkiEffects(0);return finishMountainTerrainDesign(THREE,root,{ridgeNames:['SUMMIT_ROCK_OUTCROP'],walkableSkiUvs:true});
 }

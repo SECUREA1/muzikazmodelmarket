@@ -247,3 +247,32 @@ pre-upgrade collection. The recorded result is
 `public/models/vehicle-design-coverage.json`. The native exporter records both
 native and vehicle design versions and creates a complete vehicle contact sheet
 alongside the other category sheets.
+
+## Mountain and terrain cleanup
+
+`crafted-mountains-v1` covers the Alpine mountain, weathered cliff, crater and
+snowbank. The Alpine ridge is a single closed landform split into two matching
+rock/snow surfaces, with branching buttresses, gullies, flared foothills and an
+irregular integrated snowline. It keeps the existing six-metre footprint,
+five-metre summit and two draw calls, with a bounded 3,500-triangle budget.
+
+The cliff has outward-facing joined sediment layers and fitted mineral seams.
+Collapsed crater and ice-tip faces are removed, the snow crest is supported by
+its drift, and the terrain surfaces have finite texture coordinates. Named
+stone, powder snow and translucent ice receive their own surface finish instead
+of falling through to timber or generic stone heuristics.
+
+The same cleanup replaces 26 decorative mountain-pass, ski-summit and proving
+ground ridges while preserving their mesh identities, transforms, envelopes and
+collision flags. Nineteen compound rock faces keep their excavation geometry.
+All 100 walkable ski tiles retain their original position, normal and index
+buffers and gain continuous world-aligned UVs. Shared height functions, valley
+trails, ski routes, lift pads and the six airport peak placements stay intact.
+
+Run `node scripts/audit-mountain-designs.mjs` for the four native designs and
+four affected worlds. Its optional `--baseline <snapshot.json>` also checks
+original collision envelopes, walkable geometry, economy records and world
+placements. The recorded report is `public/models/mountain-design-coverage.json`.
+Mountain model and template thumbnails use `*-mountain-v1.svg`; legacy terrain
+icons are refreshed from the same actual factory renders. The native exporter
+also creates a dedicated mountain contact sheet.

@@ -1716,7 +1716,7 @@
       "family": "world-props",
       "version": "crafted-native-v3",
       "meshes": 2,
-      "triangles": 96,
+      "triangles": 1832,
       "details": 0,
       "texturedSurfaces": 2,
       "colouredSurfaces": 2
@@ -2916,7 +2916,7 @@
       "family": "crafted-collection",
       "version": "crafted-native-v3",
       "meshes": 25,
-      "triangles": 1862,
+      "triangles": 2470,
       "details": 0,
       "texturedSurfaces": 25,
       "colouredSurfaces": 0
@@ -2936,7 +2936,7 @@
       "family": "crafted-collection",
       "version": "crafted-native-v3",
       "meshes": 23,
-      "triangles": 2312,
+      "triangles": 2256,
       "details": 0,
       "texturedSurfaces": 23,
       "colouredSurfaces": 1
@@ -2945,11 +2945,11 @@
       "id": "terrain-snowbank",
       "family": "crafted-collection",
       "version": "crafted-native-v3",
-      "meshes": 16,
-      "triangles": 3098,
+      "meshes": 17,
+      "triangles": 3458,
       "details": 0,
-      "texturedSurfaces": 16,
-      "colouredSurfaces": 4
+      "texturedSurfaces": 17,
+      "colouredSurfaces": 5
     },
     {
       "id": "ancient-oak",
@@ -5222,7 +5222,7 @@
         "id": "layout:mountain-pass",
         "version": "crafted-native-v3",
         "meshes": 5,
-        "triangles": 12848,
+        "triangles": 13872,
         "texturedSurfaces": 5,
         "details": 0
       },
@@ -6300,7 +6300,7 @@
     {
       "sku": "backpack:builder-land-mountain-pass",
       "designId": "layout:mountain-pass",
-      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass.svg"
+      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg"
     },
     {
       "sku": "backpack:builder-land-crystal-cavern",
@@ -6650,12 +6650,12 @@
     {
       "sku": "backpack:builder-alpine-mountain",
       "designId": "alpine-mountain",
-      "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg"
+      "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg"
     },
     {
       "sku": "backpack:builder-terrain-cliff",
       "designId": "terrain-cliff",
-      "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg"
+      "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg"
     },
     {
       "sku": "backpack:builder-terrain-river",
@@ -6665,12 +6665,12 @@
     {
       "sku": "backpack:builder-terrain-crater",
       "designId": "terrain-crater",
-      "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg"
+      "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg"
     },
     {
       "sku": "backpack:builder-terrain-snowbank",
       "designId": "terrain-snowbank",
-      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg"
+      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg"
     },
     {
       "sku": "backpack:builder-ancient-oak",

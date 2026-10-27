@@ -4,7 +4,10 @@ import {NATIVE_DESIGN_VERSION} from './native-design-profile.js';
 const protectedSurface=node=>node.userData.mediaScreen||node.userData.mediaSurface||node.userData.collisionOnly||node.userData.collisionDisabled&&node.userData.portalEffect||/SCREEN|DISPLAY|TEXT|LETTER|LABEL|SIGN_FACE|SCOREBOARD|DECAL|VIDEO|FEED|LCD|LED_MATRIX/i.test(node.name||'');
 function surfaceKind(node,material,id){
  const name=(node.name+' '+(material.name||'')).toLowerCase(),color=material.color;
- if(material.transparent)return /water|pond|river/.test(name+' '+id)?'water':'glass';
+ if(material.transparent)return /water|pond|river/.test(name+' '+id)?'water':/ice|glacier/.test(name)?'ice':'glass';
+ if(/snow_edge_stone/.test(name))return 'stone';
+ if(/snow|powder|drift_crest/.test(name))return 'snow';
+ if(/rock_face|rock_cut|rock_ridges|rock_outcrop|sediment|scree/.test(name))return 'stone';
  if(/eye|pupil|face|skin|flame|ember|liquid|crystal|gem|soul|glow|light/.test(name))return 'satin';
  if(/fabric|cloth|cushion|shade|mattress|pillow|upholstery|robe|sleeve|tunic|carpet|padding|towel|hat|banner|canvas|shirt|sail|seat_cover/.test(name))return 'fabric';
  if(material.metalness>=.42||/steel|brass|chrome|alloy|metal|rail|fastener|bolt|hinge|pipe/.test(name))return 'metal';
@@ -12,7 +15,7 @@ function surfaceKind(node,material,id){
  if(/marble|porcelain|ceramic|basin/.test(name))return 'marble';
  if(/timber|wood|bark|plank|walnut|oak|shelf|drawer|cabinet|deck_board|log|beam/.test(name))return 'timber';
  if(/leaf|foliage|moss|grass|hedge|bough|frond/.test(name))return 'foliage';
- if(/stone|rock|concrete|cement|foundation|masonry|brick/.test(name))return 'stone';
+ if(/stone|rock|cliff|mineral_(?:seam|vein)|crater|impact_bowl|concrete|cement|foundation|masonry|brick/.test(name))return 'stone';
  if(color&&material.roughness>.75){
   if(color.g>color.r*1.2&&color.g>color.b*1.1)return 'foliage';
   if(!/avatar|knight|ranger|merchant|hero|scout|resident|clown|inmate|ghost|beast|wolf/.test(id)&&color.r>color.g*1.18&&color.g>color.b*1.12)return 'timber';

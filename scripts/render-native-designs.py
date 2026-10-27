@@ -76,6 +76,7 @@ try:
           const {applySportsSurfaces}=await import('/public/js/sports-surfaces.js');
           const {nativeDesignThumbnail}=await import('/public/js/native-design-profile.js');
           const {VEHICLE_DESIGN_IDS}=await import('/public/js/vehicle-design-profile.js');
+          const {MOUNTAIN_PREVIEW_IDS}=await import('/public/js/mountain-design-profile.js');
           const {RANGED_WEAPONS}=await import('/public/js/game-weapons.js');
           const {UTILITY_TOOLS}=await import('/public/js/game-utilities.js');
           const {LAYOUT_SCENES}=await import('/public/js/builder-layout-scenes.js');
@@ -83,6 +84,7 @@ try:
           const readable=id=>id.replaceAll('-',' ').replace(/\\b\\w/g,value=>value.toUpperCase());
           const allItems=new Map(Object.values(NATIVE_BUILDER_ITEMS).map(item=>[item.id,{...item,thumbnailUrl:item.visualDesign?.thumbnailUrl}]));
           const vehicleIds=new Set(VEHICLE_DESIGN_IDS);
+          const mountainIds=new Set(MOUNTAIN_PREVIEW_IDS);
           for(const id of HELD_TOOL_DESIGN_IDS){const config=RANGED_WEAPONS[id]||UTILITY_TOOLS[id]||{};allItems.set('tool:'+id,{id:'tool:'+id,name:config.label||basicToolNames[id]||readable(id),description:config.description||'Detailed native '+(basicToolNames[id]||readable(id))+' with crafted casing, grip and fittings.',category:'held-tools',thumbnailUrl:nativeDesignThumbnail('tool:'+id)});}
           for(const layout of NATIVE_TEMPLATE_LAYOUT_IDS){const spec=LAYOUT_SCENES['scene-'+layout];allItems.set('layout:'+layout,{id:'layout:'+layout,name:spec?.name||readable(layout),description:spec?.description||'Native '+readable(layout)+' map template with crafted architectural and material surfaces.',category:'map-templates',thumbnailUrl:nativeDesignThumbnail('layout:'+layout)});}
           const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
@@ -96,7 +98,7 @@ try:
             window.currentNativeId=id;const item=allItems.get(id),root=id.startsWith('tool:')?createHeldToolModel(T,id.slice(5)):id.startsWith('layout:')?createBuilderLand({id:'native-template-'+id.slice(7),source:'repository',builderScene:{layout:id.slice(7),mapSize:40}}):createBuilderModel(id);
             if(!root)throw Error('Native item has no model: '+id);
             if(id.startsWith('layout:')){let sports=false;root.traverse(node=>{if(node.userData.sportsSurface)sports=true;});if(sports)await applySportsSurfaces(root,{maxResolution:512});}
-            let meshCount=0;root.traverse(node=>{if(node.isMesh&&node.visible!==false)meshCount++;});
+            let meshCount=0,triangleCount=0;root.traverse(node=>{if(node.isMesh&&node.visible!==false){meshCount++;triangleCount+=(node.geometry?.index?.count||node.geometry?.attributes.position?.count||0)/3*(node.isInstancedMesh?node.count:1);}});
             if(!meshCount)throw Error('Native model has no drawable meshes: '+id);
             updateBuilderModels(root,1.75);root.updateMatrixWorld(true);
             const runtimeBounds=new T.Box3().setFromObject(root,true),runtimeSpan=Math.max(...runtimeBounds.getSize(new T.Vector3()));
@@ -125,7 +127,7 @@ try:
             camera.position.copy(center).add(new T.Vector3(.9,.8,-1.4).normalize().multiplyScalar(span*2.25));camera.lookAt(center);
             renderer.render(scene,camera);
             const data=renderer.domElement.toDataURL('image/png');
-            const stats={id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,meshCount,span:runtimeSpan,finish:root.userData.nativeDesign||root.userData.heldToolDesign||root.userData.nativeWorldDesign,...(root.userData.vehicleDesign?{vehicleDesign:root.userData.vehicleDesign}:{}),...(previewSubject!==root?{previewSubject:previewSubject.name,previewSpan:span}:{})};
+            const stats={id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,meshCount,triangleCount,span:runtimeSpan,finish:root.userData.nativeDesign||root.userData.heldToolDesign||root.userData.nativeWorldDesign,...(root.userData.vehicleDesign?{vehicleDesign:root.userData.vehicleDesign}:{}),...(root.userData.mountainDesign?{mountainDesign:root.userData.mountainDesign}:{}),...(root.userData.mountainTerrainDesign?{mountainTerrainDesign:root.userData.mountainTerrainDesign}:{}),...(previewSubject!==root?{previewSubject:previewSubject.name,previewSpan:span}:{})};
             const resources=new Set();scene.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const m of [].concat(node.material||[])){resources.add(m);for(const v of Object.values(m))if(v?.isTexture)resources.add(v);}node.shadow?.map?.dispose();});
             if(!floor.parent){floor.geometry.dispose();floor.material.dispose();}
             for(const resource of resources)resource.dispose();renderer.renderLists.dispose();scene.clear();
@@ -139,7 +141,7 @@ try:
             await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
             window.scrollTo(0,0);
           };
-          return [...allItems.values()].map(item=>({id:item.id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,vehicleOrder:vehicleIds.has(item.id)?VEHICLE_DESIGN_IDS.indexOf(item.id):null}));
+          return [...allItems.values()].map(item=>({id:item.id,name:item.name,description:item.description||item.name,category:item.category||'props',thumbnailUrl:item.thumbnailUrl,vehicleOrder:vehicleIds.has(item.id)?VEHICLE_DESIGN_IDS.indexOf(item.id):null,mountainOrder:mountainIds.has(item.id)?MOUNTAIN_PREVIEW_IDS.indexOf(item.id):null}));
         }''', args.size)
         if selected:
             unknown = selected - {item['id'] for item in catalog}
@@ -208,12 +210,20 @@ try:
             page.set_viewport_size({'width': 1440, 'height': page.evaluate('document.documentElement.scrollHeight')})
             page.evaluate('window.scrollTo(0,0)')
             page.screenshot(path=str(args.output / 'vehicle-design-overview.png'))
+        mountains = sorted((item for item in available if item['mountainOrder'] is not None), key=lambda item: item['mountainOrder'])
+        if mountains:
+            page.set_viewport_size({'width': 1440, 'height': 104 + math.ceil(len(mountains) / 4) * 330})
+            page.evaluate('([title,items])=>showNativeSheet(title,items)', [f'Mountains / {len(mountains)} crafted native designs', mountains])
+            page.set_viewport_size({'width': 1440, 'height': page.evaluate('document.documentElement.scrollHeight')})
+            page.evaluate('window.scrollTo(0,0)')
+            page.screenshot(path=str(args.output / 'mountain-design-overview.png'))
         shader_errors = page.evaluate('nativeShaderErrors')
         report_path = args.output / 'native-design-render-report.json'
         previous = json.loads(report_path.read_text()) if report_path.exists() else {}
         verified = {item['id']: item for item in previous.get('items', [])}
         verified.update({item['id']: item for item in rendered})
-        report = {'catalogCount': len(catalog), 'renderedCount': len(rendered), 'verifiedCount': len(verified), 'availableThumbnails': len(available), 'vehicleDesignCount': sum(bool(item.get('vehicleDesign')) for item in verified.values()), 'selectedIds': sorted(selected) if selected else None, 'items': list(verified.values()), 'failures': failures, 'shaderErrors': shader_errors, 'browserErrors': errors}
+        mountain_ids = {item['id'] for item in catalog if item['mountainOrder'] is not None}
+        report = {'catalogCount': len(catalog), 'renderedCount': len(rendered), 'verifiedCount': len(verified), 'availableThumbnails': len(available), 'vehicleDesignCount': sum(bool(item.get('vehicleDesign')) for item in verified.values()), 'mountainDesignCount': sum(bool(item.get('mountainDesign')) for item in verified.values()), 'mountainPreviewCount': len(mountain_ids & verified.keys()), 'selectedIds': sorted(selected) if selected else None, 'items': list(verified.values()), 'failures': failures, 'shaderErrors': shader_errors, 'browserErrors': errors}
         report_path.write_text(json.dumps(report, indent=2) + '\n')
         browser.close()
         print(f'Native export: {len(rendered)} rendered, {len(available)}/{len(catalog)} thumbnails, {len(failures)} failures, {len(shader_errors)} shader errors, {len(errors)} browser errors.', flush=True)
