@@ -9,7 +9,6 @@ const BASE_DEVICES={
  'cinema-screen':{name:'Cinema Wall',kind:'video',description:'A wide shared screen for community movie sessions.',color:0xad81ff,shape:'cinema'},
  'media-boombox':{name:'Crew Boombox',kind:'audio',description:'A shared audio queue with distance-based volume.',color:0xffc14b,shape:'speaker'},
  'shared-jukebox':{name:'Neon Jukebox',kind:'audio',description:'Queue music and share playback with the room.',color:0xff69a3,shape:'jukebox'},
- 'prison-radio':{name:'Ironwood Portable Radio',kind:'audio',description:'An earned portable radio for sharing a direct audio stream with nearby listeners.',color:0x60dfba,shape:'speaker'},
  'radio-console':{name:'Radio Console',kind:'audio',description:'Tune a direct audio stream for nearby listeners.',color:0x60dfba,shape:'speaker'},
  'dj-mixing-deck':{name:'DJ Mixing Deck',kind:'audio',description:'Control the shared track, seek position and room volume.',color:0xb3f653,shape:'deck'},
  'karaoke-machine':{name:'Karaoke Stage',kind:'audio',description:'Queue backing tracks alongside the existing room voice chat.',color:0xff79e7,shape:'karaoke'},
@@ -22,7 +21,7 @@ const BASE_DEVICES={
 };
 export const INTERACTIVE_DEVICES=Object.freeze({...BASE_DEVICES,...Object.fromEntries(Object.values(RESORT_PRODUCTS).filter(p=>p.device).map(p=>[p.id,{...BASE_DEVICES[p.device],name:p.name,description:p.description}]))});
 export const deviceArtworkUrl=id=>id==='prison-radio'?'/public/images/prison/items/prison-radio.svg':'/public/images/'+(RESORT_PRODUCTS[id]?.device?'resort-products':'interactive-devices')+'/'+id+'.svg';
-export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
+export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||(modelId==='prison-radio'?INTERACTIVE_DEVICES['radio-console']:null);
 export function sharedMediaUrl(value,kind){
  const text=String(value||'').trim();if(text.length>2048)throw Error('Media link is too long.');
  const local=/^\/uploads\/media\/[a-zA-Z0-9-]+\.(mp4|webm|mp3|wav|ogg|png|jpg|webp)$/.test(text);let url;

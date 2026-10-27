@@ -7,14 +7,16 @@ import {createBuilderModel,BUILDER_MODEL_INFO} from '../public/js/builder-models
 import {nativeBuilderItem} from '../public/js/native-builder-items.js';
 import {backpackPlacementModels} from '../public/js/builder-backpack-models.js';
 import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
-import {deviceDefinition,deviceArtworkUrl} from '../public/js/interactive-devices.js';
+import {deviceDefinition,deviceArtworkUrl,INTERACTIVE_DEVICES} from '../public/js/interactive-devices.js';
 import {GAME_ECONOMY,GAME_BUNDLES} from '../game-economy.mjs';
 
 test('all earned prison keepsakes have one canonical catalog identity and cannot enter purchasable bundles',async()=>{
  const catalog=JSON.parse(await readFile(new URL('../public/models/backpack-assets.json',import.meta.url),'utf8'));
+ const registry=JSON.parse(await readFile(new URL('../public/models/game-asset-registry.json',import.meta.url),'utf8'));
  for(const [id,item]of Object.entries(PRISON_ITEMS)){
   const records=catalog.assets.filter(asset=>asset.buildAssetId===id),economy=GAME_ECONOMY.filter(asset=>asset.buildAssetId===id);
   assert.equal(records.length,1,id+' Backpack identity');assert.equal(economy.length,1,id+' economy SKU');
+  const registered=registry.assets.find(asset=>asset.assetId===records[0].id);assert.ok(registered,id+' discovery registry');for(const key of ['earnedOnly','earnedWorld','tradable'])assert.equal(registered[key],item[key],id+' registry preserves '+key);
   assert.equal(nativeBuilderItem(id).name,item.name);assert.equal(BUILDER_MODEL_INFO[id][0],item.name);
   assert.equal(economy[0].earnedOnly,true);assert.equal(economy[0].tradable,false);assert.equal(economy[0].priceMzk,0);assert.equal(economy[0].useCostMzk,0);
   assert.ok(!GAME_BUNDLES.some(bundle=>bundle.entries.some(entry=>entry.sku===economy[0].sku)),id+' excluded from purchases');
@@ -45,6 +47,6 @@ test('the portable radio retains shared audio interaction through Backpack and a
  const saved=JSON.parse(JSON.stringify({id:'custom-home',layout:'grand-floor',objects:[{id:'portable-radio',modelId:model.id,objectType:'props',asset:{buildAssetId:model.buildAssetId},position:{x:2,y:0,z:3},functionalSettings:model.function_data}]}));
  const actor=compileBuilderScene(saved).actors[0];
  assert.equal(actor.gameplay.behavior,'interact');assert.equal(actor.gameplay.device,'radio-console');
- assert.equal(deviceDefinition(id,actor.gameplay).kind,'audio');assert.equal(deviceArtworkUrl(id),PRISON_ITEMS[id].thumbnailUrl);
+ assert.equal(Object.hasOwn(INTERACTIVE_DEVICES,id),false,'earned radio is a lookup alias, not a freely populated lounge cabinet');assert.equal(deviceDefinition(id).kind,'audio');assert.equal(deviceDefinition(id,actor.gameplay).kind,'audio');assert.equal(deviceArtworkUrl(id),PRISON_ITEMS[id].thumbnailUrl);
  assert.equal(actor.gameplay.damage,0);assert.equal(actor.gameplay.destructible,false);
 });

@@ -252,6 +252,8 @@ export function mountPrisonGame(stage,{command,announce=()=>{},getPosition=()=>n
  stage.append(panel);const $=selector=>panel.querySelector(selector),activity=$('[data-activity]');
  let environment=null,selfId=null,view=null,self=null,selected=PRISON_STATIONS[0],nearby=null,busy=false,disposed=false,tab='activities',message='',revision=0,signature='',audioContext=null,oscillator=null,audioTimer=null,lastUpdateAt=0;
  const screen=fullscreenPanel(panel,{onOpen:()=>{document.exitPointerLock?.();onOpen();},onClose:()=>{stopRadio();onClose();}});screen.dialog.classList.add('prison-dialog');
+ const expansionMarkup={contracts:null,packs:null};
+ function renderExpansion(key,markup){if(expansionMarkup[key]===markup)return;expansionMarkup[key]=markup;$('[data-'+key+']').innerHTML=markup;}
  const position=()=>getPosition()||null;
  const enabled=()=>!!self&&isPrisonEnvironment(environment);
  const gap=station=>distance(position(),point(station));
@@ -306,8 +308,8 @@ export function mountPrisonGame(stage,{command,announce=()=>{},getPosition=()=>n
   $('[data-log]').replaceChildren(...(view.events||[]).slice(0,4).map(e=>{const p=document.createElement('p');p.textContent=e.message;return p;}));
   $('[data-challenges]').innerHTML=PRISON_CHALLENGES.map(goal=>'<article class="'+(self.completed?.includes(goal.id)?'complete':'')+'"><span>'+(self.completed?.includes(goal.id)?'✓':'○')+'</span><div><b>'+goal.name+'</b><p>'+goal.description+'</p></div></article>').join('');
   if(tab==='map')renderMap();
-  if(tab==='challenges')$('[data-contracts]').innerHTML=prisonContractsMarkup(self,{atIntake:gap(PRISON_STATIONS[0])<=4,busy});
-  if(tab==='packs')$('[data-packs]').innerHTML=prisonPacksMarkup(self,{atShop:PRISON_STATIONS.some(station=>['intake','meal'].includes(station.kind)&&gap(station)<=4),atIntake:gap(PRISON_STATIONS[0])<=4,busy});
+  if(tab==='challenges')renderExpansion('contracts',prisonContractsMarkup(self,{atIntake:gap(PRISON_STATIONS[0])<=4,busy}));
+  if(tab==='packs')renderExpansion('packs',prisonPacksMarkup(self,{atShop:PRISON_STATIONS.some(station=>['intake','meal'].includes(station.kind)&&gap(station)<=4),atIntake:gap(PRISON_STATIONS[0])<=4,busy}));
   const nextSignature=[selected.id,self.round?.kind,self.round?.index,self.workCount,self.tvChannel,self.role,view.cells?.[selected.cellId]?.locked,view.gateOpen,self.escaped].join(':');
   if(nextSignature!==signature){signature=nextSignature;activity.innerHTML=actionContent();}
   $('[data-station-kind]').textContent=String(selected.kind).toUpperCase()+' / ACTIVITY';$('[data-station-title]').textContent=selected.name;$('[data-station-description]').textContent=selected.description;

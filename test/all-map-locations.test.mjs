@@ -8,6 +8,7 @@ import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {localMapLocations} from '../public/js/local-map-locations.js';
+import {COMPOUND_ID} from '../public/js/factory-test-config.js';
 
 // Exercise the actual server command, collision geometry and populated rooms.
 // A list-only assertion misses destinations whose pin sits inside a solid tower.
@@ -24,16 +25,25 @@ test('every listed public explorer location accepts travel onto clear supported 
  let locationCount=0;
  for(const environment of worlds)await t.test(environment.id,async()=>{
   const file=join(directory,environment.id+'.json'),visitor={accountId:'map-visitor',username:'Map visitor',stats:{health:100}};
-  let runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>100000}),sequence=0;
+  // This geometry matrix visits every floor as an already-cleared member.
+  // The normal and deep access denials remain covered by
+  // authoritative-factory-testing.test.mjs; production keeps its real callbacks.
+  const clearance={compound:true,deep:true};
+  const runtimeOptions={now:()=>100000,
+   testingAccess:async identity=>{assert.equal(identity.accountId,visitor.accountId);return {...clearance};},
+   testingState:async()=>({session:null,progress:{},clearance:{...clearance}})
+  };
+  let runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),...runtimeOptions}),sequence=0;
   const send=(action,fields={})=>runtime.command(environment.id,environment,visitor,{action,requestId:'location-'+ ++sequence,...fields});
   const joined=await send('join',{deferRadTox:true,radToxEnabled:false});
+  if(environment.id===COMPOUND_ID)assert.deepEqual(joined.players[joined.selfId].testing.clearance,clearance,'all-location visitor has earned surface and deep facility access');
   const ids=Object.keys(joined.actors).sort();
   const before=localMapLocations(environment).map(place=>place.id);
   assert.ok(before.length);
   // Reload from the durable room record, just as a returning player does. AI,
   // vehicles and saved objects must not remove or duplicate listed locations.
   runtime.collision.clearPlacedWorlds();
-  runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>100000});
+  runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),...runtimeOptions});
   const rejoined=await send('join',{deferRadTox:true,radToxEnabled:false});
   assert.deepEqual(Object.keys(rejoined.actors).sort(),ids);
   assert.deepEqual(localMapLocations(environment).map(place=>place.id),before);

@@ -119,3 +119,10 @@ test('contract abandonment requires intake and keeps earned scores while removin
  const publicState=prisonView(f.state,f.playerId);publicState.self.contracts.active.goals[0].progress=999;
  assert.equal(f.progress('meal'),0);
 });
+
+
+test('expired disturbance labels cannot advance a peacekeeping contract',()=>{
+ const f=fixture();f.send('role-guard');f.send('contract-accept','intake',{contractId:'keep-the-peace'});
+ const npc=Object.values(f.state.npcs).find(person=>person.role==='prisoner');npc.state='Disturbance';npc.disturbedUntil=f.now-1;
+ assert.equal(f.send('deescalate','gym').ok,true);assert.equal(f.progress('deescalate'),0);
+});
