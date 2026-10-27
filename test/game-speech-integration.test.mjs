@@ -4,7 +4,7 @@ import {createQuestConversationVoice} from '../public/js/quest-conversation-voic
 import {createTowerRadioAudio} from '../public/js/tower-radio-audio.js';
 function fixture(){
  const spoken=[],timers=new Map();let sequence=0,cancellations=0,active=null;
- const speech={getVoices:()=>[],resume(){},speak(call){active=call;spoken.push(call);call.onstart?.();},cancel(){cancellations++;const old=active;active=null;old?.onerror?.({error:'canceled'});}};
+ const speech={getVoices:()=>[{name:'Natural English Integration Voice',voiceURI:'test:integration-english',lang:'en-US',localService:true}],resume(){},speak(call){active=call;spoken.push(call);call.onstart?.();},cancel(){cancellations++;const old=active;active=null;old?.onerror?.({error:'canceled'});}};
  const options={speech,Utterance:class{constructor(text){this.text=text;}},setTimer:callback=>{timers.set(++sequence,callback);return sequence;},clearTimer:id=>timers.delete(id)};
  return {speech,spoken,timers,voice:createQuestConversationVoice(options),tower:createTowerRadioAudio({...options,audioFactory:()=>null}),get cancellations(){return cancellations;}};
 }

@@ -38,6 +38,7 @@ import {createReadStream,createWriteStream} from 'node:fs';
 import {extname,join,normalize} from 'node:path';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
+import {createSpeechService} from './server-speech.mjs';
 import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
 import {grantFitnessReward,fitnessAccountState} from './server-fitness.mjs';
 import {grantFishingReward,fishingAccountState} from './server-fishing.mjs';
@@ -54,6 +55,7 @@ const root = process.cwd();
 const LAND_PRODUCTS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
 const serviceStartedAt = new Date().toISOString();
 const serviceVersion = process.env.npm_package_version || '1.0.0';
+const speechService = createSpeechService();
 const deploymentCommit = process.env.RENDER_GIT_COMMIT || process.env.MUZIKAZ_DEPLOY_COMMIT || process.env.GIT_COMMIT || 'development';
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
@@ -634,6 +636,28 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/designer/drafts'&&['GET','POST'].includes(req.method)){const context=await memberContext(req,res,req.method==='POST');if(!context)return;return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId):await userDatabase.saveDesignerDraft(context.walletId,await bodyJson(req,8500000))));}
     const designerDraft=url.pathname.match(/^\/api\/designer\/drafts\/([^/]+)$/);
     if(designerDraft&&['GET','DELETE'].includes(req.method)){const context=await memberContext(req,res,req.method==='DELETE');if(!context)return;const id=decodeURIComponent(designerDraft[1]);return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId,id):await userDatabase.deleteDesignerDraft(context.walletId,id)));}
+    if(url.pathname==='/api/speech/voices'&&req.method==='GET'||url.pathname==='/api/speech'&&req.method==='POST'){
+      try{speechService.checkRateLimit(req.socket?.remoteAddress);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
+    }
+    if(url.pathname==='/api/speech/voices'&&req.method==='GET'){
+      return sendJson(res,200,{success:true,data:await speechService.voices()});
+    }
+    if(url.pathname==='/api/speech'&&req.method==='POST'){
+      if(!/^application\/json(?:\s*;|$)/i.test(String(req.headers['content-type']||'')))return sendJson(res,415,{success:false,code:'SPEECH_CONTENT_TYPE',message:'Send speech requests as JSON.'});
+      if(Number(req.headers['content-length'])>8192)return sendJson(res,413,{success:false,code:'SPEECH_BODY_TOO_LARGE',message:'Speech request body is too large.'});
+      const input=await bodyJson(req,8192),controller=new AbortController();
+      const abort=()=>controller.abort();res.once('close',abort);
+      try{
+        const bytes=await speechService.generate(input,{rateChecked:true,signal:controller.signal});
+        if(res.destroyed)return;
+        res.writeHead(200,corsHeaders({'Content-Type':'audio/wav','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Request-ID':res.muzikazRequestId},res.muzikazRequestOrigin));
+        return res.end(bytes);
+      }catch(error){
+        if(res.destroyed)return;
+        if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));
+        throw error;
+      }finally{res.removeListener('close',abort);}
+    }
     if(url.pathname==='/api/player/settings'&&['GET','PUT'].includes(req.method)){
       const context=await memberContext(req,res,req.method==='PUT');if(!context)return;
       const settings=req.method==='PUT'?normalizePlayerPreferences((await bodyJson(req)).settings):normalizePlayerPreferences(context.state.memory?.playerSettings);

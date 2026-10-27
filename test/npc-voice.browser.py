@@ -19,6 +19,7 @@ try:
   page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/gameplay-audio.html')
   result = page.evaluate('''async () => {
    const {createQuestConversationVoice} = await import('/public/js/quest-conversation-voice.js');
+   const {GENERATED_VOICES} = await import('/public/js/neural-character-speech.js');
    class Speech extends EventTarget {
     constructor(voices=[]) { super(); this.voices=voices; this.spoken=[]; this.cancelled=0; }
     getVoices() { return this.voices; }
@@ -27,7 +28,7 @@ try:
     resume() {}
     load(voices) { this.voices=voices; this.dispatchEvent(new Event('voiceschanged')); }
    }
-   const basic={voiceURI:'basic-en',name:'Basic English',lang:'en-US',localService:true,default:true};
+   const basic={voiceURI:'local-enhanced-en',name:'Local English Enhanced',lang:'en-US',localService:true,default:true};
    const natural={voiceURI:'natural-en',name:'Microsoft Ava Online (Natural)',lang:'en-US',localService:false};
    const alternative={voiceURI:'natural-gb',name:'Microsoft Ryan Online (Natural)',lang:'en-GB',localService:false};
    const Utterance=class { constructor(text) { this.text=text; } };
@@ -56,9 +57,12 @@ try:
    if(second.voice?.voiceURI!==selected)throw Error('Voice changed when installed voices were reordered');
    if(second.pitch!==first.pitch)throw Error('Neutral character delivery lost its identity');
    second.onend();
-   const longText=Array.from({length:180},()=> 'Please follow the marked route safely.').join(' ');
+   const longText='Please follow the route safely. '.repeat(28);
    voice.ingest([{...call,id:'long',text:longText}],options);
-   if(!delays.some(delay=>delay>22000))throw Error('Long dialogue retains a clipping watchdog');
+   if(delays.at(-1)!==65000)throw Error('Generation did not receive its own timeout');
+   speech.spoken.at(-1).onstart();
+   const playbackWatchdog=delays.at(-1);
+   if(playbackWatchdog<=65000)throw Error('Long playback deadline was not measured after generation');
    const total=speech.spoken.length;
    speech.dispatchEvent(new Event('voiceschanged'));
    if(speech.spoken.length!==total)throw Error('Late voice inventory repeated active speech');
@@ -89,7 +93,18 @@ try:
    active.onstart();active.onerror({error:'network'});
    if(fallbackSpeech.spoken.length!==beforeError)throw Error('Partly spoken dialogue was repeated after error');
    fallback.dispose();
-   return {deferred,selected,rate:first.rate,pitch:first.pitch,normalized:first.text,muted,resetQuiet,localFallback:true,longWatchdog:Math.max(...delays)};
+   const previewSpeech=new Speech(GENERATED_VOICES),previewVoice=createQuestConversationVoice({speech:previewSpeech,Utterance});
+   const male=GENERATED_VOICES.find(candidate=>candidate.gender==='male');
+   const preview=previewVoice.preview({speechVoiceGender:'male',speechVoiceURI:male.voiceURI});
+   if(previewSpeech.spoken[0]?.voice?.voiceURI!==male.voiceURI)throw Error('Explicit generated voice preview did not use the selected male profile');
+   previewSpeech.spoken[0].onstart();
+   const previewStatus=await preview;if(!previewStatus.includes(male.name))throw Error('Preview did not confirm actual playback');
+   previewVoice.dispose();
+   const rejectedSpeech=new Speech([{name:'eSpeak English',voiceURI:'espeak:en',lang:'en-US'}]),rejected=createQuestConversationVoice({speech:rejectedSpeech,Utterance});
+   const unavailableStatus=await rejected.preview();
+   if(rejectedSpeech.spoken.length||!/unavailable/i.test(unavailableStatus))throw Error('Rejected native voice fell through to a hidden browser default');
+   rejected.dispose();
+   return {deferred,selected,rate:first.rate,pitch:first.pitch,normalized:first.text,muted,resetQuiet,localFallback:true,longWatchdog:playbackWatchdog,previewStatus,noHiddenDefault:true};
   }''')
   assert result['deferred'] and result['muted'] and result['resetQuiet'],result
   assert not errors,errors

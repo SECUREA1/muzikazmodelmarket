@@ -13,7 +13,7 @@ Service type: Web Service
 Runtime: Node
 Branch: main
 Root Directory: leave blank
-Build Command: npm ci && npm run build
+Build Command: ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
 Start Command: node server.mjs
 Health Check Path: /api/health
 ```
@@ -239,7 +239,7 @@ waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
 and offers all public destinations. A map introduction plays once per page session after the first player gesture.
 Only new jobs, objective changes and game interactions are then voiced.
-Settings provides independent audio mutes and distance-based spatial sound. See [map travel and spoken objectives](docs/open-map-travel.md).
+Settings provides independent audio mutes and distance-based spatial sound. NPC and AI speech now uses local neural male/female voices across browsers; choose and preview them in Audio settings. The build prepares the speech model automatically, with no API key. See [map travel and spoken objectives](docs/open-map-travel.md).
 
 ## In-game camera views
 

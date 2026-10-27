@@ -4,7 +4,7 @@
   "private": true,
   "description": "MUZIKAZ WORLD connected creative universe.",
   "scripts": {
-    "build": "node scripts/build-static.mjs",
+    "build": "npm run build:voices && node scripts/build-static.mjs",
     "start": "node server.mjs",
     "check": "node scripts/check-static.mjs",
     "test": "node --test test/*.test.mjs",
@@ -15,12 +15,15 @@
     "check:environments": "node scripts/check-environments.mjs",
     "build:asset-registry": "node scripts/build-game-asset-registry.mjs",
     "export:graphics": "python3 scripts/export-graphics-pack.py",
-    "check:asset-registry": "node scripts/build-game-asset-registry.mjs && git diff --exit-code -- public/models/game-asset-registry.json"
+    "check:asset-registry": "node scripts/build-game-asset-registry.mjs && git diff --exit-code -- public/models/game-asset-registry.json",
+    "build:voices": "node scripts/prepare-neural-voices.mjs"
   },
   "engines": {
     "node": ">=20 <25"
   },
   "dependencies": {
-    "ethers": "6.17.0"
+    "ethers": "6.17.0",
+    "onnxruntime-node": "1.23.2",
+    "phonemizer": "1.2.1"
   }
 }
