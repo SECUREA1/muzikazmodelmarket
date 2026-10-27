@@ -48,7 +48,10 @@ export function stepCargoTrailers(sim,environment,dt,collision,objects={}){
 }
 export function freightTrailerBlocked(sim,truck,from,to,yaw,collision,environment,objects={}){
  const trailer=sim.actors[truck.trailerId];if(!trailer)return false;const pose=trailerPose({...truck,position:to,rotation:{y:yaw}},trailer,.05),others={...sim.actors,[truck.id]:{...truck,active:false},[trailer.id]:{...trailer,active:false}};
- for(const side of [-.9,0,.9])for(const end of [-1.6,1.6]){const p={x:pose.position.x+Math.cos(pose.rotation.y)*side+Math.sin(pose.rotation.y)*end,y:pose.position.y,z:pose.position.z-Math.sin(pose.rotation.y)*side+Math.cos(pose.rotation.y)*end},floor=collision.groundAt(environment,p,{actors:others,objects});if(!floor||Math.abs(floor.y-to.y)>.65||!collision.hasBodyClearance(environment,floor,.2,{actors:others,objects}))return true;}return false;
+ const probe=()=>{for(const side of [-.9,0,.9])for(const end of [-1.6,1.6]){const p={x:pose.position.x+Math.cos(pose.rotation.y)*side+Math.sin(pose.rotation.y)*end,y:pose.position.y,z:pose.position.z-Math.sin(pose.rotation.y)*side+Math.cos(pose.rotation.y)*end},floor=collision.groundAt(environment,p,{actors:others,objects});if(!floor||Math.abs(floor.y-to.y)>.65||!collision.hasBodyClearance(environment,floor,.2,{actors:others,objects}))return true;}return false;};
+ // The six footprint samples share one proposed pose and actor membership.
+ // Classify its candidates once, including when called inside a truck substep.
+ return collision.withActorCandidates?collision.withActorCandidates(others,probe):probe();
 }
 export function freightRoute(environment,fromHub,toHub){const network=roadNetwork(environment);return roadPath(network,nearestRoadNode(network,fromHub),nearestRoadNode(network,toHub));}
 export function stepFreightCrew(sim,npc,environment,now,dt,collision,objects,follow){

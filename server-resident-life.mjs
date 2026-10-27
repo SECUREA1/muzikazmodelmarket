@@ -54,6 +54,7 @@ export function archiveResidentIntelligence(sim,npc,environment,now,{despawn=tru
  if(!npc?.resident||npc.resident.casino)return;const life=lifeState(sim,environment,now),info=npc.resident;if(!info.personalityId)return;
  const progress={};for(const key of progressFields)if(info[key]!==undefined)progress[key]=structuredClone(info[key]);life.archive[info.personalityId]={scope:info.personalityId,name:info.name,savedAt:now,progress};
  const entries=Object.entries(life.archive).sort((a,b)=>b[1].savedAt-a[1].savedAt);life.archive=Object.fromEntries(entries.slice(0,64));
+ if(despawn&&life.objectivePlans)delete life.objectivePlans[npc.id];
  if(despawn)for(const conversation of life.conversations)if(conversation.status==='active'&&conversation.participants.includes(npc.id)){conversation.status='interrupted';conversation.completedAt=now;for(const id of conversation.participants){const other=sim.actors?.[id];if(other?.resident){delete other.resident.conversationId;other.resident.socialCooldownUntil=now+8000;}}}
 }
 export function ensureResidentIntelligence(sim,npc,environment,now){
@@ -64,7 +65,7 @@ export function ensureResidentIntelligence(sim,npc,environment,now){
   const changedScope=info.personalityId&&info.personalityId!==profile.id;
   if(changedScope){archiveResidentIntelligence(sim,npc,environment,now);for(const key of progressFields)delete info[key];}
   const saved=life.archive[profile.id];if(saved)for(const key of progressFields)if(info[key]===undefined&&saved.progress[key]!==undefined)info[key]=structuredClone(saved.progress[key]);
-  if(changedScope||changedContext){delete info.objective;delete info.sharedTask;}
+  if(changedScope||changedContext){delete info.objective;delete info.sharedTask;if(life.objectivePlans)delete life.objectivePlans[npc.id];}
   if(changedContext){archiveResidentIntelligence(sim,npc,environment,now);delete info.practice;delete info.work;}
   info.name=profile.name;info.identityVersion=1;info.identity={...profile.identity};info.form=profile.identity.form;info.ambition=profile.identity.ambition;info.quirk=profile.identity.quirk;info.socialStyle=profile.identity.socialStyle;info.personalityId=profile.id;info.personality=profile.temperament;info.backstory=profile.backstory;info.preferences={...profile.preferences};info.traits={...profile.traits};info.appearance={...profile.appearance};info.context={...profile.context};info.placeName=profile.context.placeName;info.role=profile.role;info.duty=profile.duty;info.uniform=profile.uniform;info.prop=profile.prop;info.color=profile.appearance.outfit;info.skin=profile.appearance.skin;info.workLabel=profile.work;info.practiceLabel=profile.practice;info.practiceSteps=[...profile.practiceSteps];info.tip=profile.tip;info.intelligenceVersion=1;info.goal=null;delete info.conversationId;
   npc.name=info.name+' · '+info.role;if(npc.definition){npc.definition.name=info.name;if(npc.definition.gameplay)npc.definition.gameplay.prompt='Talk / local activities · '+info.name;}
@@ -97,7 +98,14 @@ function publicHome(environment,npc,collision,sim,objects){
  for(const candidate of candidates.sort((a,b)=>distance(a,source)-distance(b,source))){const point=safePoint(environment,npc,candidate,collision,sim,objects,{clearPeople:true});if(!point)continue;npc.position={...point};npc.resident.home={...point};npc.resident.goal=null;npc.resident.safetyRelocated=true;return true;}
  npc.resident.activitySuspended=true;npc.resident.goal=null;return false;
 }
-function clearSegment(environment,npc,from,to,collision,sim,objects){const length=distance(from,to),count=Math.max(1,Math.ceil(length/.65));let previous={...from};for(let i=1;i<=count;i++){const t=i/count,point={x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t,z:from.z+(to.z-from.z)*t},floor=safePoint(environment,npc,point,collision,sim,objects);if(!floor)return false;const next=collision?.resolve?collision.resolve(environment,previous,floor,sim.actors,objects):floor;if(!next||distance(next,floor)>.15)return false;previous=next;}return true;}
+function clearSegment(environment,npc,from,to,collision,sim,objects,progress={},budget={remaining:Infinity}){
+ const length=distance(from,to),count=Math.max(1,Math.ceil(length/.65));progress.index??=1;progress.previous??={...from};
+ for(;progress.index<=count;progress.index++){
+  if(budget.remaining<=0)return;budget.remaining--;
+  const t=progress.index/count,point={x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t,z:from.z+(to.z-from.z)*t},floor=safePoint(environment,npc,point,collision,sim,objects);
+  if(!floor)return false;const next=collision?.resolve?collision.resolve(environment,progress.previous,floor,sim.actors,objects):floor;if(!next||distance(next,floor)>.15)return false;progress.previous=next;
+ }return true;
+}
 function chooseTarget(sim,npc,environment,kind,now,collision,objects){
  const info=npc.resident,home=info.home,seed=residentHash(info.personalityId+':'+kind+':'+(info.goalSequence||0)),candidates=[];
  if(kind==='social'){const friend=Object.values(sim.actors).filter(other=>generic(other)&&other!==npc&&sameFloor(other.position,npc.position)&&distance(other.position,npc.position)<8&&gap(other.position,npc.position)<9).sort((a,b)=>distance(a.position,npc.position)-distance(b.position,npc.position))[0];if(friend){const dx=friend.position.x-npc.position.x,dz=friend.position.z-npc.position.z,span=Math.hypot(dx,dz);if(span>2.4){const step=Math.min(span-2.2,2);candidates.push({x:npc.position.x+dx/span*step,y:home.y,z:npc.position.z+dz/span*step});}else candidates.push({...npc.position});}}
@@ -136,14 +144,22 @@ export function residentLifeView(sim){const life=sim.residentLife;if(!life)retur
 export function stepResidentLife(sim,environment,now,dt,{collision,objects={}}={}){
  if(environment?.game==='casino'||environment?.id==='muzikaz-casino'||environment?.builderScene?.layout==='casino')return;sim.actors||={};sim.players||={};const life=lifeState(sim,environment,now),cast=Object.values(sim.actors).filter(generic);for(const npc of cast)ensureResidentIntelligence(sim,npc,environment,now);if(life.updatedAt===now)return;life.updatedAt=now;
  const players=Object.values(sim.players).filter(player=>player.health>0&&!player.replacedByRoom&&now-player.lastSeen<15000);stepConversations(sim,now);
+ // Share a fixed amount of route validation across the full resident cast.
+ // Movement, greetings and live player input continue between planning slices.
+ const planningStart=(life.planningCursor||0)%Math.max(1,cast.length),planningShare=Math.floor(64/Math.max(1,cast.length)),planningExtra=64%Math.max(1,cast.length);
+ const planningAllowances=new Map(cast.map((npc,index)=>[npc.id,planningShare+((index-planningStart+cast.length)%cast.length<planningExtra?1:0)]));
+ life.planningCursor=(planningStart+Math.max(1,planningExtra))%Math.max(1,cast.length);
+ const planningRevision=JSON.stringify(Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]));
+ if(life.objectivePlans)for(const id of Object.keys(life.objectivePlans))if(!sim.actors[id]?.resident||sim.actors[id].active===false)delete life.objectivePlans[id];
  for(const npc of cast){const info=npc.resident;if(info.conversationId&&!life.conversations.some(c=>c.id===info.conversationId&&c.status==='active')){delete info.conversationId;info.interaction=null;}info.speaking=now<info.speechUntil;if(!info.speaking)info.speech='';const elapsed=Math.max(0,Math.min(2,(now-info.lastNeedsAt)/1000));info.lastNeedsAt=now;info.needs.energy=residentClamp(info.needs.energy-elapsed*(info.moving?.07:.035));info.needs.social=residentClamp(info.needs.social-elapsed*.085);info.needs.purpose=residentClamp(info.needs.purpose-elapsed*.07);info.needs.curiosity=residentClamp(info.needs.curiosity-elapsed*.065);info.mood=info.needs.energy<25?'ready for a rest':info.needs.social<30?'seeking company':info.needs.curiosity<30?'curious':'settled';info.moving=false;
   if(npc.aiTask?.status==='active'||info.machineWork?.status==='active'){info.activitySuspended=false;continue;}
   if(!publicHome(environment,npc,collision,sim,objects))continue;info.activitySuspended=false;
   const nearby=players.find(player=>sameFloor(player.position,npc.position)&&gap(player.position,npc.position)<5);if(nearby&&!info.sharedTask&&info.objective?.status!=='active'&&now>(nearby.residentGreetAt||0)+45000&&!info.conversationId){nearby.residentGreetAt=now;const known=info.relationships.some(relation=>relation.id===nearby.actorId);say(npc,(known?'Good to see you again, ':'Hello ')+nearby.username+'. I can help with '+info.context.label+' and local directions.',now,{gesture:'greet',duration:4000,target:{...nearby.position,y:nearby.position.y+1.5}});relate(info,nearby.actorId,1,now);remember(info,'greeting',nearby.actorId,(known?'Recognized ':'Met ')+nearby.username+' near '+info.placeName+'.',now);nearby.residentNearby={id:npc.id,name:info.name,placeName:info.placeName,ask:info.ask};info.pauseUntil=now+2200;}
   if(nearby&&nearby.health<35&&now>(info.reactionAt||0)+30000&&!info.speaking){say(npc,'You look ready for a break. Find a clear public spot and take care of yourself before the next activity.',now,{target:nearby.position});info.reactionAt=now;}
   if(info.conversationId||now<(info.pauseUntil||0))continue;
-  const navigation={safePoint:point=>safePoint(environment,npc,point,collision,sim,objects),clearSegment:(from,to)=>clearSegment(environment,npc,from,to,collision,sim,objects)};
-  if(!info.sharedTask)planResidentObjective(sim,npc,environment,now,navigation);
+  const navigation={safePoint:point=>safePoint(environment,npc,point,collision,sim,objects),clearSegment:(from,to,progress,budget)=>clearSegment(environment,npc,from,to,collision,sim,objects,progress,budget),budget:{remaining:planningAllowances.get(npc.id)},revision:planningRevision};
+  if(info.sharedTask){if(life.objectivePlans)delete life.objectivePlans[npc.id];}else planResidentObjective(sim,npc,environment,now,navigation);
+  if(life.objectivePlans?.[npc.id]?.phase==='connect')continue;
   if(stepResidentObjective(sim,npc,environment,now,{...navigation,move:target=>move(sim,npc,environment,target,now,dt,collision,objects,cast,players)}))continue;
   if(!info.sharedTask&&((!info.goal&&now>=(info.nextThinkAt||0))||info.goal?.status==='blocked'&&now>=info.nextThinkAt))chooseGoal(sim,npc,environment,now,collision,objects);stepGoal(sim,npc,environment,now,dt,collision,objects,cast,players);
   if(!info.sharedTask&&now>=(info.nextSocialAt||0)&&now>=(info.socialCooldownUntil||0)&&!info.speaking&&!info.moving&&!(info.practice?.phase==='trying'||info.practice?.phase==='reviewing')&&!(info.goal?.kind==='practice'&&info.practice?.phase==='preparing')){const friend=cast.filter(other=>other!==npc&&!unavailable(other)&&!other.resident.conversationId&&!other.resident.moving&&sameFloor(other.position,npc.position)&&other.resident.speechUntil<=now&&now>=(other.resident.socialCooldownUntil||0)&&gap(other.position,npc.position)<8).sort((a,b)=>gap(a.position,npc.position)-gap(b.position,npc.position)||a.id.localeCompare(b.id))[0];if(friend)startConversation(sim,npc,friend,now);info.nextSocialAt=now+9000;}

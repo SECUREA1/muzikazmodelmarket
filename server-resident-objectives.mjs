@@ -19,43 +19,91 @@ const descriptions={
 
 // Resident quests use public landmarks, verified walking routes and their own
 // journal. Live player quests, vehicle ownership and rewards remain authoritative.
-export function planResidentObjective(sim,npc,environment,now,{safePoint,clearSegment}){
- const info=npc.resident;
- info.nextObjectiveAt??=now+8000+residentHash(npc.id)%10000;
- if(now<info.nextObjectiveAt||info.objective?.status==='active'||info.sharedTask||info.conversationId||info.speaking||now<(info.pauseUntil||0)||info.needs.energy<30||info.factory||info.fitness)return false;
- info.nextObjectiveAt=now+30000+residentHash(npc.id+now)%15000;
- const places=localMapLocations(environment).filter(place=>finite(place)&&Math.abs((place.y||0)-npc.position.y)<1.2&&distance(place,info.home)>6&&distance(place,info.home)<32);
- if(!places.length)return false;
- const seed=residentHash(info.personalityId+':objective:'+ (info.objectiveSequence||0)),ordered=places.map(place=>({place,rank:residentHash(seed+':'+(place.id||place.name))})).sort((a,b)=>a.rank-b.rank);
- let destination=null,route=null,source=null;
- for(const {place}of ordered.slice(0,6)){
-  for(const radius of [2.5,4,6]){
-   for(let i=0;i<8;i++){
-    const angle=(seed%6283)/1000+i*Math.PI/4,point=safePoint({x:place.x+Math.cos(angle)*radius,y:npc.position.y,z:place.z+Math.sin(angle)*radius});
-    if(!point||distance(point,info.home)<5||distance(point,info.home)>36)continue;
-    const path=routeBetween(npc.position,point,{safePoint,clearSegment});
-    if(path){destination=point;route=path;source=place;break;}
-   }if(route)break;
-  }if(route)break;
+const planningPoint=point=>({x:point.x,y:point.y||0,z:point.z});
+const takePlanningWork=budget=>{if(budget.remaining<=0)return false;budget.remaining--;return true;};
+const routeOffsets=[2.5,-2.5,5,-5,8,-8];
+function routeSearch(from,to){return {from:planningPoint(from),to:planningPoint(to),phase:'direct',offset:0,segment:{}};}
+// Undefined means that the current work allowance was used. Progress contains
+// only plain data so room snapshots, saving and process restarts retain it.
+function advanceRoute(search,{safePoint,clearSegment,budget}){
+ while(budget.remaining>0){
+  if(search.phase==='direct'){
+   const clear=clearSegment(search.from,search.to,search.segment,budget);if(clear===undefined)return;
+   if(clear)return [{...search.to}];search.phase='via';search.segment={};
+  }
+  if(search.phase==='via'){
+   if(search.offset>=routeOffsets.length)return null;
+   if(!takePlanningWork(budget))return;
+   const dx=search.to.x-search.from.x,dz=search.to.z-search.from.z,length=Math.hypot(dx,dz);
+   if(!length)return [{...search.to}];
+   const offset=routeOffsets[search.offset];search.via=safePoint({x:(search.from.x+search.to.x)/2-dz/length*offset,y:search.from.y,z:(search.from.z+search.to.z)/2+dx/length*offset});
+   if(!search.via){search.offset++;continue;}search.phase='out';search.segment={};
+  }
+  if(search.phase==='out'){
+   const clear=clearSegment(search.from,search.via,search.segment,budget);if(clear===undefined)return;
+   if(!clear){search.offset++;search.phase='via';continue;}search.phase='in';search.segment={};
+  }
+  if(search.phase==='in'){
+   const clear=clearSegment(search.via,search.to,search.segment,budget);if(clear===undefined)return;
+   if(clear)return [{...search.via},{...search.to}];search.offset++;search.phase='via';search.segment={};
+  }
  }
- if(!route)return false;
- const home=safePoint({...info.home});if(!home)return false;
- const returnRoute=routeBetween(destination,home,{safePoint,clearSegment});if(!returnRoute)return false;
- const [title,first,last]=descriptions[info.context.kind]||['Local discovery round','Check local activity information','Share the route notes at home'];
- info.objectiveSequence=(info.objectiveSequence||0)+1;
- const objective=info.objective={id:info.personalityId+':round:'+info.objectiveSequence,worldId:environment.id,title,kind:'landmark-round',status:'active',index:0,startedAt:now,deadline:now+180000,skill:info.context.primarySkill,checkpoints:[{name:first+' · '+source.name,position:destination,placeId:source.id||source.name,sourcePosition:{x:source.x,y:source.y||0,z:source.z},route,dwell:3000},{name:last+' · '+info.placeName,position:home,route:returnRoute,dwell:2500}]};
- info.goal={kind:'objective',reason:title,target:{...route[0]},status:'planned',startedAt:now,objectiveId:objective.id};
- info.navigation={attempts:0,blockedAt:0};info.task='heading out for '+title.toLowerCase();
- return true;
 }
 
-function routeBetween(from,to,{safePoint,clearSegment}){
- if(clearSegment(from,to))return [{...to}];
- const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(!length)return [{...to}];
- for(const offset of [2.5,-2.5,5,-5,8,-8]){
-  const via=safePoint({x:(from.x+to.x)/2-dz/length*offset,y:from.y,z:(from.z+to.z)/2+dx/length*offset});
-  if(via&&clearSegment(from,via)&&clearSegment(via,to))return [via,{...to}];
- }return null;
+export function planResidentObjective(sim,npc,environment,now,{safePoint,clearSegment,budget={remaining:64},revision=''}){
+ const info=npc.resident;sim.residentLife||={};const plans=sim.residentLife.objectivePlans||={};
+ info.nextObjectiveAt??=now+8000+residentHash(npc.id)%10000;
+ if(info.objective?.status==='active'||info.sharedTask||info.needs.energy<30||info.factory||info.fitness){delete plans[npc.id];return false;}
+ if(info.conversationId||info.speaking||now<(info.pauseUntil||0))return false;
+ if(!plans[npc.id]&&(now<info.nextObjectiveAt||budget.remaining<=0))return false;
+ const places=localMapLocations(environment).filter(place=>finite(place)&&Math.abs((place.y||0)-npc.position.y)<1.2&&distance(place,info.home)>6&&distance(place,info.home)<32);
+ const signature=JSON.stringify([environment.id,info.personalityId,info.context.kind,environment.contentUpdatedAt||environment.updatedAt||'',revision,info.home,places]);
+ let plan=plans[npc.id];
+ if(plan&&(plan.signature!==signature||distance(plan.origin,npc.position)>8||Math.abs(plan.origin.y-npc.position.y)>.4)){delete plans[npc.id];plan=null;}
+ if(!plan){
+  if(now<info.nextObjectiveAt||budget.remaining<=0)return false;
+  info.nextObjectiveAt=now+30000+residentHash(npc.id+now)%15000;
+  if(!places.length)return false;
+  const seed=residentHash(info.personalityId+':objective:'+ (info.objectiveSequence||0)),ordered=places.map(place=>({place,rank:residentHash(seed+':'+(place.id||place.name))})).sort((a,b)=>a.rank-b.rank).slice(0,6).map(({place})=>({id:place.id,name:place.name,...planningPoint(place)}));
+  plan=plans[npc.id]={signature,seed,places:ordered,origin:planningPoint(npc.position),home:planningPoint(info.home),candidate:0,phase:'search'};
+ }
+ const navigation={safePoint,clearSegment,budget};
+ while(budget.remaining>0){
+  if(plan.phase==='search'){
+   if(plan.candidate>=plan.places.length*24)break;
+   if(!plan.search){
+    if(!takePlanningWork(budget))return false;
+    const source=plan.places[Math.floor(plan.candidate/24)],radius=[2.5,4,6][Math.floor(plan.candidate%24/8)],angle=(plan.seed%6283)/1000+plan.candidate%8*Math.PI/4;
+    const point=safePoint({x:source.x+Math.cos(angle)*radius,y:plan.origin.y,z:source.z+Math.sin(angle)*radius});
+    if(!point||distance(point,plan.home)<5||distance(point,plan.home)>36){plan.candidate++;continue;}
+    plan.destination=point;plan.source=source;plan.search=routeSearch(plan.origin,point);
+   }
+   const route=advanceRoute(plan.search,navigation);if(route===undefined)return false;
+   if(!route){delete plan.search;plan.candidate++;continue;}plan.route=route;plan.phase='home';delete plan.search;
+  }
+  if(plan.phase==='home'){
+   if(!takePlanningWork(budget))return false;
+   const home=safePoint({...plan.home});if(!home)break;plan.home=home;plan.search=routeSearch(plan.destination,home);plan.phase='return';
+  }
+  if(plan.phase==='return'){
+   const route=advanceRoute(plan.search,navigation);if(route===undefined)return false;if(!route)break;plan.returnRoute=route;plan.search=routeSearch(npc.position,plan.origin);plan.phase='connect';
+  }
+  if(plan.phase==='connect'){
+   // Ordinary life can continue during the full landmark search. Validate the
+   // short connection from the resident's current position before committing.
+   const route=advanceRoute(plan.search,navigation);if(route===undefined)return false;if(!route)break;
+   if(distance(plan.search.from,plan.origin)>.2)plan.route=[...route,...plan.route];plan.phase='complete';
+  }
+  if(plan.phase==='complete'){
+   const [title,first,last]=descriptions[info.context.kind]||['Local discovery round','Check local activity information','Share the route notes at home'];
+   info.objectiveSequence=(info.objectiveSequence||0)+1;
+   const objective=info.objective={id:info.personalityId+':round:'+info.objectiveSequence,worldId:environment.id,title,kind:'landmark-round',status:'active',index:0,startedAt:now,deadline:now+180000,skill:info.context.primarySkill,checkpoints:[{name:first+' · '+plan.source.name,position:plan.destination,placeId:plan.source.id||plan.source.name,sourcePosition:planningPoint(plan.source),route:plan.route,dwell:3000},{name:last+' · '+info.placeName,position:plan.home,route:plan.returnRoute,dwell:2500}]};
+   info.goal={kind:'objective',reason:title,target:{...plan.route[0]},status:'planned',startedAt:now,objectiveId:objective.id};
+   info.navigation={attempts:0,blockedAt:0};info.task='heading out for '+title.toLowerCase();delete plans[npc.id];return true;
+  }
+ }
+ if(budget.remaining<=0)return false;
+ delete plans[npc.id];info.nextObjectiveAt=now+30000+residentHash(npc.id+now)%15000;return false;
 }
 
 function finish(sim,npc,now,status,message){
