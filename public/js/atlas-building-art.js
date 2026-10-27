@@ -1,6 +1,7 @@
 import {destinationColor,isFitnessDestination} from './atlas-destinations.js';
 export function atlasDestinationPath(place){
  const label=`${place.mapId||place.id||''} ${place.name||''}`;
+ if(/tropical-island|island.adventure|tropical.resort/i.test(label))return 'M8 85Q60 62 112 85M51 74Q66 45 56 29M56 30Q29 13 12 40Q36 30 56 30ZM56 30Q84 10 109 39Q80 31 56 30ZM56 30Q53 5 36 12M56 30Q77 4 90 15';
  if(isFitnessDestination(place))return 'M12 86V28H108V86ZM24 39H35V69H24ZM85 39H96V69H85ZM35 49H85V59H35ZM15 46H24V62H15ZM96 46H105V62H96ZM44 86V73H76V86';
  if(/pixel.?peak|ski|alpine/i.test(label))return 'M6 86L38 30L54 54L76 12L114 86ZM62 40L76 12L90 40L77 34ZM20 86V68H48V86M26 68L34 58L43 68';
  if(/marina|dock|yacht|harbou?r/i.test(label))return 'M10 64H108L96 82H28ZM32 64V46H86V64M48 46V32H72V46M60 32V12M8 90Q20 82 32 90T56 90T80 90T110 90';
@@ -20,6 +21,6 @@ export function createAtlasPreview(place,doc=document){
  const sky=doc.createElementNS(ns,'rect');for(const [key,value]of Object.entries({width:120,height:100,rx:12,fill:'#142a36'}))sky.setAttribute(key,value);root.append(sky);
  const path=doc.createElementNS(ns,'path');for(const [key,value]of Object.entries({d:atlasDestinationPath(place),fill:destinationColor(place),stroke:'#e8fff2','stroke-width':2,'stroke-linejoin':'round'}))path.setAttribute(key,value);root.append(path);
  if(isFitnessDestination(place))return root;
- if(/pixel.?peak|ski|alpine|marina|dock|yacht|harbou?r|airport|airfield|runway|basketball/i.test(`${place.mapId||''} ${place.name||''}`))return root;
+ if(/tropical-island|island.adventure|tropical.resort|pixel.?peak|ski|alpine|marina|dock|yacht|harbou?r|airport|airfield|runway|basketball/i.test(`${place.mapId||''} ${place.name||''}`))return root;
  const portal=doc.createElementNS(ns,'ellipse');for(const [key,value]of Object.entries({cx:56,cy:73,rx:10,ry:16,fill:'#0b172a',stroke:'#c8f5ff','stroke-width':3}))portal.setAttribute(key,value);root.append(portal);return root;
 }
