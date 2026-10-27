@@ -66,10 +66,15 @@ const files = await walk(publicRoot);
 const actual = new Set(files.map(webPath));
 const records = new Map();
 const warnings = [];
+const excludedModelPaths=new Set();
+const publicPath=value=>{let path=String(value||'').split(/[?#]/)[0];try{path=decodeURIComponent(path);}catch{}return '/'+path.replace(/^\/+/, '');};
 for (const manifest of manifests) {
   const json = JSON.parse(await readFile(resolve(root, manifest), 'utf8'));
   for (const raw of (Array.isArray(json) ? json : json.assets || json.models || [])) {
-    if (raw.visibility === 'private' || raw.status === 'inactive') continue;
+    if (raw.visibility === 'private' || raw.status === 'inactive') {
+      for(const path of [raw.modelUrl,raw.modelPath,...(raw.modelUrls||[])].filter(Boolean))excludedModelPaths.add(publicPath(path));
+      continue;
+    }
     if (raw.buildAssetId) {
       // Native models are real reusable assets too. Preserve their supported
       // builder identity and functional defaults instead of inventing a GLB.
@@ -82,6 +87,7 @@ for (const manifest of manifests) {
         assetType: normalized?.type || 'prop', basketballTeam: normalized?.basketballTeam || null,
         format: 'procedural-3d', native: true, dimensions: raw.dimensions || null,
         priceMzk: raw.priceMzk, description: raw.description || '',
+        ...Object.fromEntries(['earnedOnly','earnedWorld','tradable'].filter(key=>Object.hasOwn(raw,key)).map(key=>[key,raw[key]])),
         behavior: normalized?.behavior || settings.behavior || raw.behavior || 'decor', function_data: settings,
         collision: {enabled: true, shape: normalized?.type === 'terrain' ? 'mesh' : 'bounds'},
         ...compatibility(normalized?.type || 'prop'),
@@ -107,6 +113,7 @@ for (const manifest of manifests) {
 }
 for (const path of files.filter(path => /\.(glb|gltf)$/i.test(path))) {
   const modelPath = webPath(path), assetId = id(relative(publicRoot, path));
+  if(excludedModelPaths.has(modelPath))continue;
   if ([...records.values()].some(item => item.modelPath === modelPath)) continue;
   const item = metadata({ id: assetId, name: path.split(sep).at(-1).replace(/\.(glb|gltf)$/i, '').replaceAll('_', ' ') }, 'project-discovery', modelPath, '', false);
   records.set(item.assetId, item);

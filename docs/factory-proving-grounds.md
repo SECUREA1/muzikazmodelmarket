@@ -1,5 +1,8 @@
 # Atlas Proving Grounds and Mountain Nuclear Research Compound
 
+The [factory supply chain](factory-supply-chain.md) connects official tests to
+transferable model certificates, MZK sales, sealed freight and shipping rewards.
+
 The proving grounds expand the existing missile factory with a connected outdoor
 test map and a locked underground mountain facility. Both use the same account,
 Backpack, multiplayer rooms, world atlas, local maps, Builder and markets.

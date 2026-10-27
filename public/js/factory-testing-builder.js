@@ -1,3 +1,4 @@
+import {editableFactoryLogisticsScene} from './factory-logistics-builder.js';
 import {PROVING_ID,COMPOUND_ID,PROVING_STATIONS,COMPOUND_STATIONS,PROVING_TARGETS,isProvingEnvironment,isCompoundEnvironment,testingStations,testingTargets} from './factory-test-config.js';
 import {FACTORY_TESTING_ITEMS,factoryTestingItemSettings} from './factory-testing-items.js';
 
@@ -42,7 +43,7 @@ export function editableFactoryTestingScene(input){
   if(scene.baseEnvironment){const base=scene.baseEnvironment;base.factoryTesting=clone(scene.sourceFactoryTesting);base.builderScene={...base.builderScene,sourceFactoryTesting:clone(scene.sourceFactoryTesting),layoutMeta:{...base.builderScene?.layoutMeta,factoryTesting:clone(scene.sourceFactoryTesting)}};}
   if(!converted&&!(scene.objects||[]).some(object=>FACTORY_TESTING_ITEMS[object.asset?.buildAssetId||object.modelId]))scene.objects=[...(scene.objects||[]),...testingBuilderObjects(kind)];
  }
- scene.layoutMeta=testingBuilderLayoutMeta(scene,scene.layoutMeta);return scene;
+ scene.layoutMeta=testingBuilderLayoutMeta(scene,scene.layoutMeta);return editableFactoryLogisticsScene(scene);
 }
 export function createFactoryTestingBuilderScene({kind='proving',id='custom-'+(kind==='compound'?'mountain-compound':'factory-proving-grounds'),name}={}){
  const layout=kind==='compound'?'mountain-compound':'factory-proving-grounds',definition=FACTORY_TESTING_BUILDER_LAYOUTS[layout];

@@ -1,3 +1,4 @@
+import {catalogSupplyMetadata} from './catalog-supply.js';
 export const catalogId=value=>String(value||'catalog-item').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export function normalizeCatalogModel(raw,index){
  const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||raw.glb_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),generated=Boolean(raw.generated&&raw.generator);
@@ -17,6 +18,6 @@ export function normalizeCatalogModel(raw,index){
  questSettings:raw.configuration?.questSettings||raw.questSettings||functionData.quest,
  dialogueSettings:raw.configuration?.dialogueSettings||raw.dialogueSettings||functionData.dialogue,
  environmentSettings:raw.configuration?.environmentSettings||raw.environmentSettings||functionData.environment,
- interaction_data:raw.interaction_data,economySku:raw.economySku||raw.sku,native:raw.native,nativeMaps:raw.nativeMaps,
+ interaction_data:raw.interaction_data,economySku:raw.economySku||raw.sku,native:raw.native,nativeMaps:raw.nativeMaps,...catalogSupplyMetadata(raw),
  scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:raw.targetHeight||(type==='avatar'?1.8:null),assetKind:generated?'generated-procedural':buildAssetId?'premade':'catalog-glb',registry:raw,source:raw.source||'repository'};
 }

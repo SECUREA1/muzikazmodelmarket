@@ -130,6 +130,16 @@ export function createMissileFactoryLand(environment={}){
  if(!editableEquipment)for(const [x,text]of [[-32,'01 / PROCUREMENT'],[-30,'02 / FABRICATION'],[0,'03 / ASSEMBLY'],[27,'04 / CALIBRATION'],[30,'06 / DISPATCH']]){const z=x===-32||x===30?28:0;sign(root,text,x,5.9,z-5.6,x===0?18:13,2,'#ef8b45');}
  for(const [x,z]of [[-60,40],[-60,48]]){box(root,'CREW_REST_BENCH',x,.55,z,5,.15,1.2,'#9b7c59');for(const dx of [-1.8,1.8])box(root,'BENCH_LEG',x+dx,.25,z,.14,.5,1,'steel');}
  sign(root,'PLANT & CREW YARD',-63,4.5,30,18,2,'#d9ebdd','EXISTING VEHICLES  /  SHARED CONTROLS');
+ // An open warehouse leaves the established production walking aisle clear.
+ // Export desks and freight crates are independent authored Builder objects.
+ box(root,'EXPORT_WAREHOUSE_APRON',-31,.012,51,32,.024,24,'#344e56',false);
+ for(const x of [-47,-15])for(const z of [40,62]){box(root,'EXPORT_WAREHOUSE_POST',x,2.7,z,.35,5.4,.35,'steel');for(const y of [.5,1,1.5])box(root,'EXPORT_POST_HAZARD',x,y,z+.19,.37,.18,.025,'yellow',false);}
+ for(const z of [40,51,62]){box(root,'EXPORT_WAREHOUSE_RAFTER',-31,5.4,z,32.5,.35,.4,'steel',false);box(root,'EXPORT_WAREHOUSE_LED',-31,5.18,z,28,.055,.1,mat('white',true),false);}
+ for(const x of [-47,-15])box(root,'EXPORT_WAREHOUSE_ROOFLINE',x,5.4,51,.25,.3,22,'orange',false);
+ for(const z of [43,55]){box(root,'EXPORT_STORAGE_SHELF',-43,.65,z,5,.16,3,'steel');for(const x of [-45,-41])box(root,'EXPORT_STORAGE_LEG',x,.3,z,.12,.6,2.8,'dark');}
+ for(const x of [-45,-17])box(root,'EXPORT_APRON_EDGE',x,.035,52,.1,.02,20,'teal',false);
+ sign(root,'MZK TRADE & EXPORT',-31,6.4,63,29,2.5,'#efb583','CRAFT  /  CERTIFY  /  TRADE  /  SHIP');
+ sign(root,'SHIPPING TRANSFER →',-18,3.6,61.5,18,1.5,'#79d9ce','ATLAS FREIGHT  ·  HORMUZ SHIPPING ACADEMY');
  const previews=new Map();if(!editableEquipment){const production=new T.Group();production.name='FACTORY_LIVE_WORK_ORDER';production.position.set(-10,0,-20);production.rotation.y=Math.PI/2;production.userData.collisionDisabled=true;root.add(production);
  for(const [id,model]of [['training-missile',createFactoryModel('factory-training-missile')],['cargo-rocket',createFactoryModel('factory-cargo-rocket')]]){model.visible=false;previews.set(id,model);production.add(model);}
  sign(root,'LIVE WORK ORDER',-10,4.8,-27,14,1.5,'#53d4d0','SHARED PRODUCTION PROGRESS');}

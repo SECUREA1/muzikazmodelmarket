@@ -145,6 +145,16 @@ objects; fitness and casino work contracts count newly completed sets and staff
 favors. Shared quests award room score once and record completion counts and best
 times. Solo routes award local practice score. Hockey and arcade offer their own
 challenges based on live match progress, completed rounds and full ride laps.
+**Crew Dispatch** also carries recurring AI job calls on every explorer map.
+Its **World radio calls** board lists public multiplayer jobs and player help
+requests across destinations. Choose **Travel to call**, then accept the job or
+**Join & help** once you arrive and have the required vehicle. Accepting and
+joining remain explicit; finish or cancel a current assignment before responding.
+Quest leaders can use **Call for help** to open their team and broadcast a
+90-second request, with a 30-second interval between calls. Full teams, expired
+calls and disconnected players disappear from the board; private and solo maps
+never broadcast there. Shared helpers earn score through participation.
+
 Quest cards leave movement available; explicit opening or closing clears held
 controls. WASD resumes movement directly from a quest selector; arrows and Enter
 still select challenges, and conversation fields keep their typing controls.
@@ -214,6 +224,16 @@ in the existing wallet. Enter from the world menu's **Fitness** category or open
 `model-explorer.html?environment=muzikaz-fitness-centre&house=muzikaz-fitness-centre&mode=multiplayer&autoplay=1`.
 See [gym controls and rewards](docs/fitness-centre.md). The map entry is gold. Builder includes a **Gold Fitness Centre** template with 58 editable equipment assemblies, and all 26 gym item types are available in **ITEMS → Fitness & gym** and **Marketplace → All game items → Fitness & gym upgrades**.
 
+## Ironwood Prison
+
+The permanent **Ironwood Prison** is a large walkable secure facility with two
+cell blocks, a cafeteria and kitchen, recreation room, exercise yard, guard
+control and work areas. Meals, lockable cells, guards and prisoners, non-lethal
+fights, theft, entertainment and escape challenges connect through the prison
+activities menu. Enter from the world menu’s **Prison & escape** category or open
+`model-explorer.html?environment=ironwood-prison&house=ironwood-prison&mode=multiplayer&autoplay=1`.
+See [prison controls and challenges](docs/prison-world.md). Six role-specific daily contracts add saved ranks and token rewards. Four supply packets stock a portable prison pouch, and milestone rewards can be collected into the account Backpack and placed in other worlds. Versioned room messages and durable earned-item receipts protect purchases, ownership and reconnects.
+
 ## Map travel and vehicle loading
 
 The permanent **MUZIKAZ Missile & Rocket Factory** shares the existing server,
@@ -236,11 +256,18 @@ the **Mountain Nuclear Research Compound**; its symbolic containment puzzle open
 bunker. Seven reusable testing assets and two editable templates are available
 in markets and Map Builder. See [testing and compound access](docs/factory-proving-grounds.md).
 
+The connected [factory supply chain](docs/factory-supply-chain.md) adds transferable
+test certificates, MZK listings for finished production, sealed deliveries to
+the range and compound, and an Atlas Export voyage from Jebel Ali to Fujairah.
+Delivered shipping parts exchange for 20 MZK credits toward new production.
+Export terminals, certification kiosks and freight crates are sold through the
+same MZK markets and remain editable in Builder.
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
-and offers all public destinations. A map introduction plays once per page session after the first player gesture.
+and offers all public destinations. A short guide explains each map on entry, including return visits, after the first player gesture.
 Only new jobs, objective changes and game interactions are then voiced.
 Settings provides independent audio mutes and distance-based spatial sound. NPC and AI speech now uses local neural male/female voices across browsers; choose and preview them in Audio settings. The build prepares the speech model automatically, with no API key. See [map travel and spoken objectives](docs/open-map-travel.md).
 
@@ -378,3 +405,8 @@ Game Market and Builder Market use the same public `/api/market/catalog` to list
 Native map templates now include component quantities linked to purchasable items. Native item searches also match their functions and source maps. The editor, markets and placement runtimes share native behavior, vehicle, AI, quest, dialogue and animation settings, including restored defaults for previously owned items. See [native market integration](docs/native-market-integration.md) for the item/function breakdown and extension workflow.
 
 The shared header stays one row, switches to labeled icons when width is constrained, and places navigation in the hamburger menu on narrow screens. Wordmark Print remains in the product catalog/designer and appears in the retail grid only when it shares a row with another product.
+
+
+## World item factory and shipping supply
+
+Open **World item factory** in the explorer, arcade or hockey controls to build native and GLB catalog stock with bulk discounts. Each item begins with 1,000 global units once; purchases and physical deployments deplete stock. Dispatch completed batches through Hormuz or copied shipping maps, then finish the server-verified cargo voyage to restock a destination map warehouse or central world stores. Map stores share their warehouse inventory. See [world supply](docs/world-supply.md) for production, restocking, cancellation, and simulated onward transfers.

@@ -12,7 +12,7 @@ function controller(name, ready=true) {
   const handlers = {}, windowHandlers = {}, resetters = new Set(), knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
   let shots = 0, jumps = 0, captures = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({gameplayControlsReady:()=>ready,isAircraft,isWatercraft,isRoadVehicle,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(type,fn){windowHandlers[type]=fn;}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, thumbstickResetters:resetters, safelyCapturePointer(){captures++;}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({gameplayControlsReady:()=>ready,gameplayOverlayOpen:()=>false,isAircraft,isWatercraft,isRoadVehicle,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(type,fn){windowHandlers[type]=fn;}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, thumbstickResetters:resetters, safelyCapturePointer(){captures++;}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
   return {input, flushes, setReady:value=>{ready=value;}, captures:()=>captures, reset:()=>{for(const reset of resetters)reset(false);}, windowSend:(type,pointerId=1)=>windowHandlers[type]({type,pointerId}), send: (type,x,y,fields={}) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){},...fields}), shots: () => shots, jumps: () => jumps};
@@ -34,7 +34,7 @@ test('touches before world readiness neither capture nor own a drag, and the nex
     c.send('pointerdown',50,50,{pointerId:7});
     c.send('pointermove',70,20,{pointerId:7});
     assert.equal(c.captures(),1);
-    assert.equal(c.shots()+c.jumps(),1);
+    assert.equal(c.shots()+c.jumps(),0,'ready movement gestures must not invoke item actions');
     assert.ok(c.input[name+'Y']<0,'a new ready gesture must steer');
     c.send('pointerup',70,20,{pointerId:7});
     assert.equal(c.input[name+'Y'],0);
@@ -56,24 +56,24 @@ test('walking uses a small center dead zone while the look stick retains fine li
   assert.equal(left.input.leftY,-1);assert.equal(right.input.rightY,-1);
   left.send('pointercancel',50,0);right.send('pointercancel',50,0);
   assert.equal(left.input.leftY,0);assert.equal(right.input.rightY,0);
-  assert.equal(left.shots(),1);assert.equal(right.jumps(),1);
+  assert.equal(left.shots(),0);assert.equal(right.jumps(),0);
 });
 test('pressing an off-center left-stick direction walks immediately without requiring an extra drag', () => {
   const left = controller('left');
   left.send('pointerdown', 30, 20);
   assert.ok(left.input.leftX<-.5);assert.ok(left.input.leftY<-.5);
   assert.ok(Math.hypot(left.input.leftX,left.input.leftY)<=1);
-  assert.equal(left.shots(),1);
+  assert.equal(left.shots(),0);
   left.send('pointermove',50,34.34);
   assert.ok(Math.abs(left.input.leftY+.5)<1e-10);
   left.send('pointerup', 30, 1.5);
-  assert.equal(left.shots(), 1);
+  assert.equal(left.shots(), 0);
   const right = controller('right');
   right.send('pointerdown', 50, 35.5);
   assert.ok(Math.abs(right.input.rightY + .5) < 1e-10);
-  assert.equal(right.jumps(),1);
+  assert.equal(right.jumps(),0);
   right.send('pointerup', 50, 35.5);
-  assert.equal(right.jumps(), 1);
+  assert.equal(right.jumps(), 0);
 });
 test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
   const movement = source.slice(source.indexOf('move.copy(forward).multiplyScalar(input.y)'), source.indexOf('    if(!player.onGround&&!jetpackThrust)', source.indexOf('  function updatePlayer(delta)')));
@@ -115,7 +115,7 @@ test('left stick supports strafe, reverse, bounded diagonal movement, and captur
   c.send('lostpointercapture',100,0);
   assert.equal(c.input.leftX,0);
   assert.equal(c.input.leftY,0);
-  assert.equal(c.shots(),1);
+  assert.equal(c.shots(),0);
 });
 
 test('left-stick presses, steering changes and releases flush immediately', () => {
@@ -136,7 +136,7 @@ test('a fresh primary touch recovers a gesture whose release was discarded',()=>
     c.send('pointerdown',50,50,{pointerId:7,isPrimary:true});
     c.send('pointermove',50,20,{pointerId:7});
     assert.ok(c.input[name+'Y']<0,'a new finger must steer without reloading');
-    assert.equal(c.shots()+c.jumps(),2,'the fresh touch can use its action again');
+    assert.equal(c.shots()+c.jumps(),0,'fresh touches recover steering without invoking actions');
     c.send('pointerup',50,20,{pointerId:7});
     assert.equal(c.input[name+'Y'],0);
   }

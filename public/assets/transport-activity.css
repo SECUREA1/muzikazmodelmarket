@@ -29,3 +29,10 @@
 .transport-activity .transport-radio-toggle svg{display:block;width:24px;height:24px;margin:0;flex:none}
 .transport-activity .transport-radio-toggle[aria-expanded=true]{border-color:#ffe09b;background:#294b48!important}
 .transport-radio-panel li{font:12px/1.4 system-ui}
+
+.world-radio-call-list{display:grid;gap:8px}
+.transport-radio-panel .world-radio-call{padding:8px;border:1px solid #50736d;border-left:3px solid #8ad5c5;border-radius:8px}
+.world-radio-call[data-type=player]{border-left-color:#f5d38a}
+.world-radio-calls button{margin:4px 5px 0 0}
+
+.transport-radio-audio .native-world-guide-audio{grid-column:1/-1}.transport-radio-audio .native-world-guide-audio button{flex:1}

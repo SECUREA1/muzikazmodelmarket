@@ -20,8 +20,8 @@ const BASE_DEVICES={
  'video-poker-table':{name:'Video Poker Table',kind:'poker',description:'Deal, hold and draw a five-card hand using practice credits.',color:0x69df9a,shape:'table'}
 };
 export const INTERACTIVE_DEVICES=Object.freeze({...BASE_DEVICES,...Object.fromEntries(Object.values(RESORT_PRODUCTS).filter(p=>p.device).map(p=>[p.id,{...BASE_DEVICES[p.device],name:p.name,description:p.description}]))});
-export const deviceArtworkUrl=id=>'/public/images/'+(RESORT_PRODUCTS[id]?.device?'resort-products':'interactive-devices')+'/'+id+'.svg';
-export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
+export const deviceArtworkUrl=id=>id==='prison-radio'?'/public/images/prison/items/prison-radio.svg':'/public/images/'+(RESORT_PRODUCTS[id]?.device?'resort-products':'interactive-devices')+'/'+id+'.svg';
+export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||(modelId==='prison-radio'?INTERACTIVE_DEVICES['radio-console']:null);
 export function sharedMediaUrl(value,kind){
  const text=String(value||'').trim();if(text.length>2048)throw Error('Media link is too long.');
  const local=/^\/uploads\/media\/[a-zA-Z0-9-]+\.(mp4|webm|mp3|wav|ogg|png|jpg|webp)$/.test(text);let url;

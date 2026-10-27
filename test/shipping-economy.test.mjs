@@ -37,9 +37,10 @@ test('empty stock has no ownership and cannot be consumed as a health supply',()
  assert.match(row.status,/0 stock units/);assert.equal(row.actionLabel,'Exchange at shipping port');
 });
 
-test('every port stock exchange supplies an existing usable tool or building material',()=>{
+test('port stock exchanges supply existing tools, building materials or a durable factory credit',()=>{
  for(const trade of SHIP_STOCK_TRADES){
   assert.ok(SHIPPING_STOCK_ITEMS.some(stock=>stock.id===trade.stockId));
+  if(trade.productionCreditMzk){assert.equal(trade.id,'parts-production');assert.equal(trade.productionCreditMzk,20);assert.equal(trade.quantity,1);assert.equal(trade.cost,1);continue;}
   const target=GAME_ECONOMY.find(item=>item.sku===trade.sku);
   assert.ok(target,trade.sku);assert.ok(['tool','material'].includes(target.kind));
   assert.ok(Number.isSafeInteger(trade.quantity)&&trade.quantity>0);

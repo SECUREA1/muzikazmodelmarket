@@ -1,13 +1,18 @@
+import {prisonRewardFor} from './public/js/prison-rewards.js';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { economyItem, ownsEconomyItem, economyInventory, GAME_BUNDLES, economyBundleQuote, economyBundles } from './game-economy.mjs';
+import {ensureWorldSupply,consumeWorldStock,canonicalSupplyId,supplyAvailability} from './world-supply.mjs';
 import { MEMBER_REWARDS } from './public/js/member-reward-rules.js';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
+import {migrateGameplayWallet} from './gameplay-wallet-migration.mjs';
+import {ownedFactoryModel,transferFactoryModel,factoryModelCertification,factoryModelTestLocked} from './factory-item-provenance.mjs';
+import {itemLocked} from './public/js/factory-logistics-config.js';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
 const RPG_CATALOG=JSON.parse(await readFile(new URL('./public/models/ioncore-rpg-items.json',import.meta.url),'utf8')).items;
 
@@ -16,6 +21,8 @@ const EMPTY_DATABASE = { schemaVersion: SCHEMA_VERSION, users: {}, trades: [], m
 const BUILDER_CATEGORIES = new Set(['WORLD', 'BUILDINGS', 'PROPS', 'TERRAIN', 'NPC', 'AI', 'VEHICLES', 'GAME SYSTEMS', 'FUNCTIONS', 'AUDIO', 'EFFECTS', 'SCRIPTS', 'INTERACTIVE', 'UTILITIES']);
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function prisonReceipt(data,wallet,itemId){return (data.transactions||[]).find(row=>row.type==='PRISON_ITEM_EARNED'&&row.walletId===wallet&&row.itemId===itemId&&prisonRewardFor(row.buildAssetId));}
+function prisonBoundItem(data,wallet,item){return item&&(item.source==='prison-earned'||prisonRewardFor(item.buildAssetId)||prisonReceipt(data,wallet,item.id));}
 function plainObject(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
 function cleanWallet(value) {
   const wallet = String(value || '').trim().toLowerCase();
@@ -53,6 +60,22 @@ function appendTransaction(data, transaction) {
   data.transactions.push(record);
   return record;
 }
+const factoryModelLike=item=>item?.type==='factory-model'||['factory-training-missile','factory-cargo-rocket'].includes(item?.buildAssetId);
+function marketFactoryProof(data,wallet,item){
+ const proof=ownedFactoryModel(data,wallet,item?.id);
+ if(factoryModelLike(item)&&!proof)throw Object.assign(Error('A factory model requires a verified production or purchase receipt.'),{statusCode:403});
+ return proof;
+}
+function assertFactoryTradeAvailable(data,wallet,item,now=Date.now()){
+ const proof=marketFactoryProof(data,wallet,item);
+ if(itemLocked(data,wallet,item.id,now)||factoryModelTestLocked(data,proof,now))throw Object.assign(Error('Finish or cancel this item’s active launch or freight manifest before trading it.'),{statusCode:409});
+ return proof;
+}
+function modelMarketMetadata(data,proof){
+ if(!proof)return {};
+ const certificate=factoryModelCertification(data,proof);
+ return {buildAssetId:proof.buildAssetId,factoryModel:true,profileId:proof.profileId,certified:Boolean(certificate),certification:certificate?{id:certificate.id,score:certificate.score,grade:certificate.grade,issuedAt:certificate.issuedAt,sourceEnvironmentId:certificate.sourceEnvironmentId,transferable:true}:null};
+}
 
 export class UserJsonDatabase {
   constructor(file) { this.file = file; this.queue = Promise.resolve(); }
@@ -82,6 +105,7 @@ export class UserJsonDatabase {
     const run = this.queue.then(async () => {
       await this.initialize();
       const data = await this.read();
+      ensureWorldSupply(data);
       const result = await operation(data);
       await this.write(data);
       return clone(result);
@@ -175,6 +199,7 @@ export class UserJsonDatabase {
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
       if (wallet !== accountKey && data.users[accountKey]) {
+        migrateGameplayWallet(data,accountKey,wallet);
         for(const deed of Object.values(data.landDeeds||{}))if(deed.ownerId===accountKey){deed.ownerId=wallet;deed.updatedAt=now;}
         const fields=['walletId','counterpartyId','buyerId','sellerId','from','to','owner_id','ownerId','seller_id','buyer_id','creator','user_id','creatorId'];
         const migrate=entry=>{for(const field of fields)if(entry[field]===accountKey)entry[field]=wallet;};
@@ -208,17 +233,18 @@ export class UserJsonDatabase {
   async marketListings() {
     await this.initialize();
     const data = await this.read();
+    const proofs=new Map(),proofFor=(wallet,itemId)=>{const key=wallet+'\n'+itemId;if(!proofs.has(key))proofs.set(key,ownedFactoryModel(data,wallet,itemId));return proofs.get(key);};
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code').map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
         thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
-        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item'
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...modelMarketMetadata(data,proofFor(sellerId,item.id))
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }
@@ -232,7 +258,9 @@ export class UserJsonDatabase {
       const item = user.items.find((entry) => entry.id === itemId);
       if (!item) throw new Error('Pack not found in this Backpack.');
       if(item.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
+      if(prisonBoundItem(data,wallet,item))throw Object.assign(Error('Earned prison collectibles are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(item.shippingSupplyId||item.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403});
+      if(active)assertFactoryTradeAvailable(data,wallet,item);
       item.listing = { active: Boolean(active), priceMzk: amount, updatedAt: new Date().toISOString() };
       user.updatedAt = item.listing.updatedAt;
       return item;
@@ -250,9 +278,11 @@ export class UserJsonDatabase {
       const buyerUser = data.users[buyer]; const sellerUser = data.users[seller];
       if (!buyerUser || !sellerUser) throw new Error('Both members must have a market profile.');
       const index = sellerUser.items.findIndex((item) => item.id === itemId);
-      const item = sellerUser.items[index];if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
+      const item = sellerUser.items[index];if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
       if(item?.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
+      const factoryProof=assertFactoryTradeAvailable(data,seller,item);
+      if(buyerUser.items.some(owned=>owned.id===item.id))throw Object.assign(Error('You already own an item with this inventory identity.'),{statusCode:409});
       if (expectedPriceMzk !== undefined && Number(expectedPriceMzk) !== price) throw new Error('The listing price changed. Refresh the market before buying.');
       if(item.economySku&&buyerUser.items.some(owned=>owned.economySku===item.economySku))throw new Error('You already own this upgrade.');
       const balance = Number(buyerUser.tokens?.MZK || 0);
@@ -264,6 +294,7 @@ export class UserJsonDatabase {
       sellerUser.items.splice(index, 1); item.listing = { ...item.listing, active: false };
       buyerUser.items.push(item);
       const now = new Date().toISOString(); buyerUser.updatedAt = now; sellerUser.updatedAt = now;
+      transferFactoryModel(data,factoryProof,seller,buyer,now);
       if(item.type==='land-deed'){const deed=data.landDeeds?.[item.worldId];if(!deed||deed.ownerId!==seller||deed.status!=='active')throw new Error('The seller does not hold this land deed.');deed.ownerId=buyer;deed.updatedAt=now;}
       buyerUser.revision = Number(buyerUser.revision || 0) + 1; sellerUser.revision = Number(sellerUser.revision || 0) + 1;
       const trade = { id: `trade-${data.trades.length + 1}`, requestId: id, buyerId: buyer, sellerId: seller, itemId, itemName: String(item.name || item.title || item.id), priceMzk: price, createdAt: now };
@@ -292,9 +323,19 @@ export class UserJsonDatabase {
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
   }
 
-  async economy(walletId){
-    const state=await this.get(walletId);
+  async economy(walletId,mapId){
+    const wallet=cleanWallet(walletId);
+    const snapshot=await this.transaction(data=>{
+      const state=data.users[wallet]||{tokens:{MZK:0},items:[],memory:{}},factoryMetadata={};
+      for(const item of state.items){
+        const proof=ownedFactoryModel(data,wallet,item.id);
+        if(proof)factoryMetadata[item.id]={name:proof.name,...modelMarketMetadata(data,proof),freightReserved:itemLocked(data,wallet,item.id,Date.now()),testingReserved:factoryModelTestLocked(data,proof)};
+      }
+      return {state,supply:ensureWorldSupply(data),factoryMetadata};
+    });
+    const {state,supply,factoryMetadata}=snapshot;
     const ownedAssets=state.items.map(item=>{
+      if(factoryMetadata[item.id])return {...item,...factoryMetadata[item.id]};
       if(item.type==='land-entitlement')return {...item,assetType:'lands',requiresReveal:true};
       if(item.type==='land-deed')return {...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)};
       const catalog=economyItem(item.economySku||item.sku);
@@ -307,11 +348,48 @@ export class UserJsonDatabase {
       }
       return asset;
     });
-    return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),bundles:economyBundles(state),ownedAssets};
+    const items=economyInventory(state).map(item=>{
+      const id=canonicalSupplyId(item),worldStock=supply.worldStock[id];
+      if(worldStock===undefined)return item;
+      const availableStock=supplyAvailability({worldSupply:supply},item,{mapId});
+      return {...item,worldStock,availableStock,supplyItemId:id,...(mapId?{supplyMapId:mapId}:{})};
+    });
+    return {balance:Number(state.tokens.MZK||0),items,bundles:economyBundles(state),ownedAssets};
   }
-  economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(item.earnedOnly)throw Object.assign(new Error('Earn shipping stock through a verified freight delivery and exchange it at a dock.'),{statusCode:403});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;const cost=prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(prepaid)user.memory.materialCredits[sku]--;if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
+  economyAction(walletId,action,sku,requestId,mapId){
+    const wallet=cleanWallet(walletId),item=economyItem(sku);
+    if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});
+    if(!['buy','use'].includes(action))throw Object.assign(new Error('Choose buy or use.'),{statusCode:400});
+    const prisonReward=prisonRewardFor(item.buildAssetId);
+    if(item.earnedOnly&&(!prisonReward||action!=='use'))throw Object.assign(new Error(prisonReward?'Earn this collectible in Ironwood Prison and collect it at intake.':'Earn shipping stock through a verified freight delivery and exchange it at a dock.'),{statusCode:403});
+    if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');
+    return this.transaction(data=>{
+      const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';
+      const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);
+      if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}
+      const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
+      // Legacy inventory fields cannot replace an earned collectible receipt.
+      const owned=prisonReward?user.items.some(owned=>prisonReceipt(data,wallet,owned.id)?.buildAssetId===prisonReward.id):ownsEconomyItem(user,item);
+      if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});
+      if(action==='use'&&!owned)throw Object.assign(new Error(prisonReward?'Earn and collect this prison item before using it.':'Purchase this upgrade before using it.'),{statusCode:403});
+      const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;
+      const cost=prisonReward||prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;
+      if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});
+      // A purchased asset grants its durable license; each later deployment
+      // consumes another physical unit. Purchased material credits already hold
+      // their units, and durable tool actions do not consume another tool.
+      // Earned-only keepsakes are outside the finite depot catalog, matching
+      // world-supply's exclusion; ordinary deployment units remain finite.
+      if(!prisonReward&&(action==='buy'||!prepaid&&['asset','material'].includes(item.kind)))consumeWorldStock(data,item,1,{mapId});
+      user.tokens.MZK-=cost;if(prepaid)user.memory.materialCredits[sku]--;
+      if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}
+      if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});
+      user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;
+      return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,...(mapId?{mapId}:{}),reason:item.name});
+    });
+  }
 
-  buyMaterialBulk(walletId,sku,quantity,expectedPriceMzk,requestId){
+  buyMaterialBulk(walletId,sku,quantity,expectedPriceMzk,requestId,mapId){
     const wallet=cleanWallet(walletId),item=economyItem(sku),quote=materialBulkQuote(item,quantity);
     if(!/^[\w-]{1,140}$/.test(String(requestId||'')))throw Object.assign(Error('A bulk purchase request ID is required.'),{statusCode:400});
     return this.transaction(data=>{
@@ -320,13 +398,14 @@ export class UserJsonDatabase {
       if(expectedPriceMzk!==quote.priceMzk)throw Object.assign(Error('Material price changed. Review your order again.'),{statusCode:409});
       const user=data.users[wallet];if(!user)throw Error('Member wallet not found.');
       if(Number(user.tokens.MZK||0)<quote.priceMzk)throw Object.assign(Error('Not enough MZK for these materials.'),{statusCode:409});
+      consumeWorldStock(data,item,quantity,{mapId});
       if(!ownsEconomyItem(user,item)){if(user.items.length>=10000)throw Object.assign(Error('Backpack is full.'),{statusCode:409});user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});}
       user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+quantity;user.tokens.MZK-=quote.priceMzk;user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;
       return appendTransaction(data,{type:'MATERIAL_BULK_PURCHASE',walletId:wallet,requestId,...quote,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,stock:user.memory.materialCredits[sku],reason:item.name+' × '+quantity});
     });
   }
 
-  buyEconomyBundle(walletId,bundleId,expectedPriceMzk,requestId){
+  buyEconomyBundle(walletId,bundleId,expectedPriceMzk,requestId,mapId){
     const wallet=cleanWallet(walletId),bundle=GAME_BUNDLES.find(bundle=>bundle.id===bundleId);
     if(!bundle)throw Object.assign(Error('This bundle is no longer available. Refresh the marketplace.'),{statusCode:404});
     if(!/^[\w-]{1,140}$/.test(String(requestId||'')))throw Object.assign(Error('A purchase request ID is required.'),{statusCode:400});
@@ -340,6 +419,7 @@ export class UserJsonDatabase {
       if(Number(user.tokens.MZK||0)<quote.priceMzk)throw Object.assign(Error('Not enough MZK for this bundle.'),{statusCode:409});
       const count=quote.entries.reduce((sum,entry)=>sum+entry.quantity,0);
       if(user.items.length+count>10000)throw Object.assign(Error('Backpack is full.'),{statusCode:409});
+      for(const entry of quote.entries)consumeWorldStock(data,entry.kind==='care'?{sku:'care:'+entry.catalogId}:economyItem(entry.sku),entry.quantity,{mapId});
       const acquiredAt=new Date().toISOString();
       for(const entry of quote.entries)for(let index=0;index<entry.quantity;index++){
         if(entry.kind==='care')user.items.push({id:'ioncore-'+randomUUID(),catalogId:entry.catalogId,name:entry.name,type:'rpg-consumable',source:'ioncore-market',acquiredAt});
@@ -350,12 +430,14 @@ export class UserJsonDatabase {
     });
   }
 
-  purchaseStoreModels(walletId,items,amountMzk,requestId){
+  purchaseStoreModels(walletId,items,amountMzk,requestId,mapId){
     const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');
     if(!Number.isSafeInteger(amountMzk)||amountMzk<0)throw new Error('Invalid checkout amount.');
     return this.transaction(data=>{
       const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='STORE_PURCHASE'&&item.requestId===requestId);if(duplicate)return duplicate;
       const user=data.users[wallet];if(!user||Number(user.tokens.MZK)<amountMzk)throw new Error('Not enough MZK for this purchase.');
+      ensureWorldSupply(data,{items});
+      for(const item of items)consumeWorldStock(data,item,item.quantity,{mapId});
       const acquiredAt=new Date().toISOString(),granted=[];
       for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),catalogId:item.catalogId||item.id,quantity:1,source:'mzk-store',acquiredAt});
       user.tokens.MZK-=amountMzk;user.items.push(...granted);user.updatedAt=acquiredAt;user.revision=Number(user.revision||0)+1;
@@ -371,6 +453,10 @@ export class UserJsonDatabase {
     return this.transaction(data=>{
       const prior=data.transactions.find(item=>item.type==='VERIFIED_STORE_PURCHASE'&&item.requestId===order.orderId);if(prior){if(prior.accountId!==order.memberAccountId&&prior.walletId!==wallet)throw Object.assign(new Error('This order belongs to another member.'),{statusCode:403});return prior;}
       const user=data.users[wallet];if(!user||user.memory?.account?.accountId!==order.memberAccountId)throw Object.assign(new Error('The payment belongs to another member account.'),{statusCode:403});
+      // A paid order remains pending fulfillment if stock is exhausted; the
+      // transaction commits neither a partial entitlement nor an extra debit.
+      ensureWorldSupply(data,{items});
+      for(const item of items)consumeWorldStock(data,item,item.quantity,{mapId:order.metadata?.mapId});
       const now=new Date().toISOString(),granted=[];
       for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),quantity:1,source:'verified-store',orderId:order.orderId,acquiredAt:now});
       user.items.push(...granted);user.updatedAt=now;user.revision=Number(user.revision||0)+1;
@@ -594,7 +680,7 @@ export class UserJsonDatabase {
     });
   }
 
-  rpgAction(walletId, action, itemId, requestId) {
+  rpgAction(walletId, action, itemId, requestId, mapId) {
     const wallet=cleanWallet(walletId),request=String(requestId||'').trim();
     if(!request||request.length>140) throw new Error('A request ID is required.');
     return this.transaction(data=>{
@@ -606,6 +692,7 @@ export class UserJsonDatabase {
         item=RPG_CATALOG.find(entry=>entry.id===itemId);if(!item)throw new Error('Unknown RPG supply.');
         if(Number(user.tokens.MZK||0)<item.price)throw new Error('Insufficient MZK balance.');
         if(user.items.length>=10000)throw new Error('Backpack is full.');
+        consumeWorldStock(data,{sku:'care:'+item.id},1,{mapId});
         user.tokens.MZK-=item.price;
         user.items.push({id:'ioncore-'+randomUUID(),catalogId:item.id,name:item.name,type:'rpg-consumable',source:'ioncore-market'});
       }else if(action==='use'){

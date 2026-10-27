@@ -1,3 +1,4 @@
+import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
 import {HOCKEY_ITEMS} from './hockey-models.js';
 import {ARCADE_PARTS} from './arcade-rules.js';
 import {BUILDER_MODEL_INFO} from './builder-models-3d.js';
@@ -67,7 +68,7 @@ export const EXPANDED_BUILDER_ITEMS=[
 
 // The resident factory also exists outside the editor's original starter lists.
 // Make its reusable character model available without copying live residents.
-export const RUNTIME_BUILDER_ITEMS=[...Object.keys(FUNHOUSE_ITEMS).map(id=>({id,...funhouseNativeItem(id)})),{id:'world-resident',name:'World Resident',description:'A reusable resident character with configurable dialogue for your map.',type:'avatar',category:'characters',behavior:'talk',animation:'idle',targetHeight:1.8,dimensions:[.7,1.9,.5],procedural:true,assetKind:'premade',function_data:{prompt:'Talk to resident'}}];
+export const RUNTIME_BUILDER_ITEMS=[...Object.keys(PRISON_ITEMS).map(id=>prisonNativeItem(id)),...Object.keys(FUNHOUSE_ITEMS).map(id=>({id,...funhouseNativeItem(id)})),{id:'world-resident',name:'World Resident',description:'A reusable resident character with configurable dialogue for your map.',type:'avatar',category:'characters',behavior:'talk',animation:'idle',targetHeight:1.8,dimensions:[.7,1.9,.5],procedural:true,assetKind:'premade',function_data:{prompt:'Talk to resident'}}];
 const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS,...PORTAL_ITEMS,...COMMON_PROP_ITEMS].map(item=>[item.id,item]));
 const definitions=[];
 for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])){

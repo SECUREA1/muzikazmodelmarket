@@ -74,3 +74,42 @@ test('builder purchases keep the same request ID after an ambiguous response',as
  await client.builderBuy('listing-1');assert.equal(requests[0].body.request_id,requests[1].body.request_id);
  assert.equal(requests[0].path,'/api/builder/listings/listing-1/purchase');
 });
+
+test('in-game upgrade and care checkout keep the supplied inventory map or current telemetry map',async()=>{
+ const previous={window:globalThis.window,document:globalThis.document,fetch:globalThis.fetch};
+ const {SharedGameInventory}=await import('../public/js/shared-game-inventory.js');
+ const {createGameMarketplace}=await import('../public/js/in-game-market.js');
+ try{
+  for(const provided of [false,true]){
+   const handlers=new Map(),nodes=new Map(),calls=[];
+   const node=()=>({textContent:'',innerHTML:'',value:'',before(){},append(){},setAttribute(){},removeAttribute(){},querySelectorAll(){return [];}});
+   const dialog={...node(),open:false,querySelector(selector){if(!nodes.has(selector))nodes.set(selector,node());return nodes.get(selector);},addEventListener(name,fn){handlers.set(name,fn);},showModal(){this.open=true;},close(){this.open=false;}};
+   let currentMap='stock-map-a';
+   globalThis.window={addEventListener(){},dispatchEvent(){},MUZIKAZ_API:{async fetch(path,options={}){
+    calls.push({path,options});let data;
+    if(path==='/api/market/session')data={owner_id:'account:map-buyer',account:{accountId:'map-buyer'},csrfToken:'map-token'};
+    else if(path==='/api/wallet/state')data={tokens:{MZK:500},items:[]};
+    else if(path.startsWith('/api/economy?'))data={balance:500,items:[{id:'scanner',sku:'tool:scanner',name:'Scanner',kind:'tool',category:'Tools',priceMzk:50,useCostMzk:0,owned:false,availableStock:1}]};
+    else if(path==='/api/economy/buy')data={id:'map-upgrade-receipt'};
+    else if(path==='/api/rpg/state')data={balance:500,stats:{health:80},history:[],items:[]};
+    else if(path==='/api/rpg/telemetry')data={};
+    else if(path==='/api/rpg/purchases')data={id:'map-care-receipt'};
+    else throw Error('Unexpected map checkout request '+path);
+    return {ok:true,json:async()=>({success:true,data})};
+   }}};
+   globalThis.document={createElement:()=>dialog,body:{append(){}},documentElement:{classList:{add(){},remove(){}}},querySelector:()=>null};
+   globalThis.fetch=async()=>({ok:true,json:async()=>({items:[{id:'health-vial',name:'Health vial',description:'Restore health',price:25}]})});
+   const inventory=provided?new SharedGameInventory({getMapId:()=>currentMap}):null;
+   const market=createGameMarketplace({inventory,telemetry:()=>({health:80,world:provided?'unused-telemetry-map':currentMap})});
+   market.open('upgrades');await new Promise(resolve=>setTimeout(resolve,10));
+   assert.ok(calls.some(call=>call.path==='/api/economy?mapId=stock-map-a'));
+   handlers.get('click')({target:{closest(selector){return selector==='[data-market-upgrade]'?{dataset:{marketUpgrade:'0'}}:null;}}});
+   await new Promise(resolve=>setTimeout(resolve,10));
+   const upgrade=calls.find(call=>call.path==='/api/economy/buy');assert.ok(upgrade);assert.equal(JSON.parse(upgrade.options.body).mapId,'stock-map-a');
+   currentMap='stock-map-b';market.open('care');await new Promise(resolve=>setTimeout(resolve,10));
+   handlers.get('click')({target:{closest(selector){return selector==='[data-market-care-buy]'?{dataset:{marketCareBuy:'0'}}:null;}}});
+   await new Promise(resolve=>setTimeout(resolve,10));
+   const care=calls.find(call=>call.path==='/api/rpg/purchases');assert.ok(care);assert.equal(JSON.parse(care.options.body).mapId,'stock-map-b','care checkout uses the map at the time of purchase');assert.equal(care.options.headers['X-CSRF-Token'],'map-token');
+  }
+ }finally{Object.assign(globalThis,previous);}
+});

@@ -3,8 +3,11 @@ import {createYachtBilliards} from './yacht-billiards.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
 import {createShippingVessel} from './shipping-models.js';
+import {createResortBoat} from './resort-boat-models.js';
 
 export const HARBOR_HELM_POSES=Object.freeze({
+ 'resort-paddle-boat':Object.freeze({position:Object.freeze([.3,1.28,.25]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
+ 'resort-pontoon':Object.freeze({position:Object.freeze([.9,1.9,-1.6]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,Object.freeze({position:spec.seat,lookForward:Object.freeze([0,0,-1]),near:.025,fov:78})])),
  'harbor-fishing-boat':Object.freeze({position:Object.freeze([.39,1.50,-.1]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-patrol':Object.freeze({position:Object.freeze([.42,1.43,1.15]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
@@ -40,6 +43,7 @@ function sailGeometry(front,top,rear){
  for(let i=0;i<segments;i++)for(let j=0;j<6;j++){const a=i*7+j,b=a+7;indices.push(a,b,a+1,b,b+1,a+1);}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;
 }
 export function createHarborBoat(id){
+ if(id==='resort-paddle-boat'||id==='resort-pontoon')return createResortBoat(id,HARBOR_HELM_POSES[id]);
  if(SHIPPING_VESSELS[id])return createShippingVessel(id);
  if(id==='harbor-yacht')return createSuperyacht();
  const sailboat=id==='harbor-sailboat',root=new THREE.Group();root.name=sailboat?'SEA_GLASS_COASTAL_SLOOP':'NEON_MARINA_SPORT_LAUNCH';
@@ -88,7 +92,7 @@ export function updateHarborBoat(root,state={},elapsed=0){
  if(rig.radar)rig.radar.rotation.y=time*.6;
  if(rig.cargoSlots){const cargo=Math.max(0,Math.floor(finite(state.cargoCount))),sides={port:0,starboard:0},bySide=Number.isFinite(state.cargoPortCount)&&Number.isFinite(state.cargoStarboardCount);rig.cargoSlots.forEach((slot,index)=>{const side=slot.userData.shippingSide;slot.visible=bySide?sides[side]++<Math.max(0,state[side==='port'?'cargoPortCount':'cargoStarboardCount']):index<cargo;});}
  if(rig.cargoIndicator)rig.cargoIndicator.scale.y=.03+THREE.MathUtils.clamp(finite(state.cargoCount)/Math.max(1,finite(state.cargoCapacity,root.userData.boatRig.cargoSlots.length)),0,1)*.97;
- rig.wheel.rotation.z=-rudder*2.6;rig.throttle.rotation.x=-throttle*.65;if(rig.rudder)rig.rudder.rotation.y=-rudder*.44;if(rig.propeller)rig.propeller.rotation.z=time*rpm*.08;if(rig.boom)rig.boom.rotation.y=(.05+trim*.28)*(finite(state.windSide,1)<0?-1:1);if(rig.sail)rig.sail.scale.x=.72+power*.28;rig.flag.rotation.y=Math.sin(time*2.8)*.12+rudder*.05;
+ rig.wheel.rotation.z=-rudder*2.6;rig.throttle.rotation.x=-throttle*.65;if(rig.rudder)rig.rudder.rotation.y=-rudder*.44;if(rig.propeller)rig.propeller.rotation.z=time*rpm*.08;if(rig.paddleWheel)rig.paddleWheel.rotation.x=-time*speed*1.7;if(rig.boom)rig.boom.rotation.y=(.05+trim*.28)*(finite(state.windSide,1)<0?-1:1);if(rig.sail)rig.sail.scale.x=.72+power*.28;rig.flag.rotation.y=Math.sin(time*2.8)*.12+rudder*.05;
  for(const needle of rig.needles){const kind=needle.userData.instrument;needle.rotation.z=kind==='speed'?-2.2+Math.min(1,Math.abs(speed)/14)*4.4:kind==='rpm'?-2.2+Math.min(1,rpm/6000)*4.4:-finite(state.heading)*Math.PI/180;}
  const strength=THREE.MathUtils.clamp(finite(state.wakeStrength,Math.abs(speed)/10),0,1);rig.wake.visible=strength>.025;rig.foam.forEach((mesh,index)=>{const phase=(time*.6+index/rig.foam.length)%1;const design=root.userData.wakeDesign||{stern:2.05,length:3.3,width:.7};mesh.position.set(0,-.165,design.stern+phase*design.length);mesh.scale.set(design.width+phase*(2.8+strength),1,.65+phase*1.6);mesh.material.opacity=strength*(1-phase)*.34;});
  root.userData.boatAnimationState={speed,throttle,rudder,rpm,sailTrim:trim,sailPower:power,wakeStrength:strength};root.userData.boatAnimatedAt=time;
