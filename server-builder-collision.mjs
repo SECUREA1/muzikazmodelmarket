@@ -50,16 +50,24 @@ function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(ind
 
 function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)&&!isConstructionMachine(actor)&&!actor.constructionManaged));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
+const wallTriangleCache=new WeakMap();
 function wallTriangles(mesh){
  const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
  if(!positions)return triangles;
+ const matrix=mesh.matrixWorld.elements,objectId=builderObjectId(mesh),instances=mesh.instanceMatrix;
+ const cached=wallTriangleCache.get(mesh);
+ if(cached&&cached.geometry===geometry&&cached.positions===positions&&cached.positionVersion===positions.version&&cached.index===index&&cached.indexVersion===index?.version&&cached.instanced===mesh.isInstancedMesh&&cached.instances===instances&&cached.instanceVersion===instances?.version&&cached.instanceCount===mesh.count&&cached.objectId===objectId&&matrix.every((value,i)=>value===cached.matrix[i]))return cached.triangles;
  const count=index?index.count:positions.count;
  for(const matrix of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
   const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(matrix));
   const [a,b,c]=vertices,normal=new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize();
   if(Math.abs(normal.y)>=.55)continue;
-  triangles.push({a,b,c,mesh,objectId:builderObjectId(mesh),minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
+  triangles.push({a,b,c,mesh,objectId,minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
  }
+ // A route can ask about an unchanged craft hundreds of times in one room
+ // update. Retain its exact physical faces; movement or edited geometry always
+ // invalidates them before the next collision query.
+ wallTriangleCache.set(mesh,{geometry,positions,positionVersion:positions.version,index,indexVersion:index?.version,instanced:mesh.isInstancedMesh,instances,instanceVersion:instances?.version,instanceCount:mesh.count,objectId,matrix:[...matrix],triangles});
  return triangles;
 }
 function boxSegments(box){const {min,max}=box;return [[min.x,min.z,max.x,min.z],[max.x,min.z,max.x,max.z],[max.x,max.z,min.x,max.z],[min.x,max.z,min.x,min.z]].map(([ax,az,bx,bz])=>({a:{x:ax,z:az},b:{x:bx,z:bz}}));}
@@ -77,6 +85,30 @@ function queryIndex(index,minX,maxX,minZ,maxZ){
  for(let x=Math.floor(minX/WALL_GRID_SIZE);x<=Math.floor(maxX/WALL_GRID_SIZE);x++)for(let z=Math.floor(minZ/WALL_GRID_SIZE);z<=Math.floor(maxZ/WALL_GRID_SIZE);z++)for(const triangle of index.cells.get(x+':'+z)||[])nearby.add(triangle);
  return nearby;
 }
+const wallGroupCache=new WeakMap(),combinedWallCache=new WeakMap();
+function indexedGroupWalls(group){
+ // Mesh face arrays change only when physical geometry or its world pose
+ // changes. Index those exact faces once, including moving craft and lifts.
+ const sets=group.meshes.map(wallTriangles),cached=wallGroupCache.get(group);
+ if(cached&&cached.sets.length===sets.length&&sets.every((set,i)=>set===cached.sets[i])){group.wallTriangles=cached.triangles;return cached;}
+ const triangles=sets.flat(),entry={sets,triangles,index:indexWalls(triangles),order:new Map(triangles.map((triangle,i)=>[triangle,i]))};
+ group.wallTriangles=triangles;
+ wallGroupCache.set(group,entry);return entry;
+}
+function combinedGroupWalls(entry,groups){
+ const sets=groups.map(group=>indexedGroupWalls(group).triangles),cached=combinedWallCache.get(entry);
+ if(cached&&sets.every((set,i)=>set===cached.sets[i]))return cached.triangles;
+ const triangles=sets.flat();combinedWallCache.set(entry,{sets,triangles});return triangles;
+}
+function nearbyGroupWalls(groups,minX,maxX,minZ,maxZ){
+ const triangles=[];
+ for(const group of groups){
+  const indexed=indexedGroupWalls(group),nearby=[...queryIndex(indexed.index,minX,maxX,minZ,maxZ)].filter(triangle=>triangle.maxX>=minX&&triangle.minX<=maxX&&triangle.maxZ>=minZ&&triangle.minZ<=maxZ);
+  // Preserve the original full-scan face order for equal-time sweep contacts.
+  nearby.sort((a,b)=>indexed.order.get(a)-indexed.order.get(b));triangles.push(...nearby);
+ }
+ return triangles;
+}
 function nearbyWalls(world,minX,maxX,minZ,maxZ){
  if(!world)return [];
  if(!world.wallIndex)return world.triangles||world.floors.flatMap(wallTriangles);
@@ -85,7 +117,7 @@ function nearbyWalls(world,minX,maxX,minZ,maxZ){
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
- constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));}
+ constructor({maxPlacedWorlds=20,maxPlacedVariants=8}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));this.maxPlacedVariants=Math.min(8,Math.max(1,Math.floor(maxPlacedVariants)||8));}
  withActorCandidates(actors,callback){
   const previous=this.actorCandidateScope,scope={actors,stable:Object.create(null),traffic:Object.create(null),construction:Object.create(null)};
   // Resident movement issues many floor/clearance queries against the same
@@ -132,20 +164,21 @@ export class ServerBuilderCollision {
   const scope=environment?.id||'__unscoped__',version=JSON.stringify([environment?.contentUpdatedAt||environment?.updatedAt||'',environment?.builderScene?.baseTransform||{}]);let entry=this.placedWorlds.get(scope);
   if(entry&&entry.version!==version){disposePlacedWorldEntry(entry);entry=null;}
   if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
-  // Each simulation room keeps its own native craft and moving hulls. The
-  // actors-only query and the query including saved pieces also alternate
-  // during one tick, so retain one current geometry set for each variant.
+  // Collision probes alternate between saved pieces and actor-only views, and
+  // each vehicle excludes its own body while checking a proposed movement.
+  // Retain a bounded set of those physical memberships per room rather than
+  // disposing and rebuilding every native vehicle on each footprint sample.
   this.placedWorlds.delete(scope);this.placedWorlds.set(scope,entry);
   if(this.placedWorlds.size>this.maxPlacedWorlds){const [oldScope,old]=this.placedWorlds.entries().next().value;disposePlacedWorldEntry(old);this.placedWorlds.delete(oldScope);}
   const candidates=this.actorCandidateScope?.actors===actors?this.actorCandidateScope:null;
   const stableActors=candidates?.stable||Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
   const objectState=Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),actorState=Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[[actor.id,actor.modelId,actor.asset?.id,actor.asset?.buildAssetId,actor.asset?.modelUrl,actor.asset?.renderKind,actor.asset?.configuration,actor.asset?.targetHeight,actor.placementRevision,actor.active,actor.holderId],actor.position,actor.rotation,actor.scale]);
   const key=JSON.stringify([objectState,actorState]),geometryKey=JSON.stringify([objectState,actorState.map(actor=>actor[0])]);
-  const variant=Object.keys(objects).length>0?'with-objects':'actors';let cached=entry.variants.get(variant);
-  if(cached?.key!==key){
-   if(cached?.geometryKey===geometryKey){updatePlacedCollisionPoses(cached.world,stableActors);cached.key=key;}
-   else{cached?.world.root.removeFromParent();disposePlacedCollision(cached?.world);cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};entry.variants.set(variant,cached);}
-  }
+  const variant=(Object.keys(objects).length>0?'with-objects:':'actors:')+geometryKey;let cached=entry.variants.get(variant);
+  if(!cached)cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};
+  else if(cached.key!==key){updatePlacedCollisionPoses(cached.world,stableActors);cached.key=key;}
+  entry.variants.delete(variant);entry.variants.set(variant,cached);
+  if(entry.variants.size>this.maxPlacedVariants){const [oldKey,old]=entry.variants.entries().next().value;old.world.root.removeFromParent();disposePlacedCollision(old.world);entry.variants.delete(oldKey);}
   const world=cached.world;
   entry.construction=syncConstructionCollision(entry.construction,candidates?.construction||actors);entry.traffic=syncTrafficCollision(entry.traffic,candidates?.traffic||actors);
   for(const child of [...entry.root.children])if(child!==world.root&&child!==entry.traffic.root&&child!==entry.construction.root)entry.root.remove(child);
@@ -164,7 +197,8 @@ export class ServerBuilderCollision {
     ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
     ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
    ];},
-   get triangles(){return [...(world.wallTriangles ||= world.meshes.flatMap(wallTriangles)),...traffic.meshes.flatMap(wallTriangles),...construction.meshes.flatMap(wallTriangles)];}
+   nearbyTriangles(minX,maxX,minZ,maxZ){return nearbyGroupWalls([world,traffic,construction],minX,maxX,minZ,maxZ);},
+   get triangles(){return combinedGroupWalls(entry,[world,traffic,construction]);}
   };
  }
  stackAsset(environment,asset,position,rotation,scale,actors={},objects={}){
@@ -250,7 +284,7 @@ export class ServerBuilderCollision {
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
-  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
+  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).nearbyTriangles(point.x-radius,point.x+radius,point.z-radius,point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
@@ -391,7 +425,7 @@ export class ServerBuilderCollision {
    }
    return embedded.get(group);
   };
-  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles.filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
+  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.nearbyTriangles(minX,maxX,minZ,maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
   const sweep=step=>{
    // Gravity is applied before this sweep. While the previous pose has floor
    // support, that provisional downward endpoint must not expose buried floor
