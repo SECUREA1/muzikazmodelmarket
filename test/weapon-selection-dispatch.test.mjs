@@ -11,7 +11,7 @@ const source=readFileSync('public/js/house-explorer-glb.js','utf8');
 function fixture(){
  const sent=[],calls=[],system={tool:'laser',sprayMode:'paintball',sprayColorIndex:0,initAudio:()=>{},placeBrick:()=>calls.push('brick')};
  for(const method of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[method]=()=>calls.push(method);
- const context=vm.createContext({THREE,UTILITY_TOOLS,isFishingTool,fishingUI:{active:()=>false,visible:()=>false,open:()=>{calls.push('fishing');return true;}},setStatus:()=>{},isAircraft,supportsWorldTools,gameplayControlsReady:()=>true,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
+ const context=vm.createContext({THREE,UTILITY_TOOLS,isFishingTool,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>calls.push('water-blaster'),fishingUI:{active:()=>false,visible:()=>false,open:()=>{calls.push('fishing');return true;}},setStatus:()=>{},isAircraft,supportsWorldTools,gameplayControlsReady:()=>true,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,gameplayOverlayOpen:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
  const start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  return {context,system,sent,calls};
@@ -27,6 +27,11 @@ test('paintball and solid drawing work with combat off; menus block activation',
 });
 test('XR uses the selected tool and shared drawing action',()=>{
  const {system,sent}=fixture();system.tool='spray';system.sprayMode='draw';system.handleXRInteraction({getWorldQuaternion:()=>new THREE.Quaternion()});assert.equal(sent.at(-1).action,'draw-paint');
+});
+test('a carried carnival water blaster uses harmless splash controls instead of a combat weapon',()=>{
+ const {context,system,sent,calls}=fixture();context.currentFunhouseEquipment=()=>({tool:'water'});
+ system.handlePointerInteraction({}, {centre:true});system.handleXRInteraction({});
+ assert.deepEqual(calls,['water-blaster','water-blaster']);assert.equal(sent.length,0);
 });
 test('training routes every firearm through its real ammo and cooldown handler, while paint bypasses scoring',()=>{
  const called=[],system={tool:'laser',fireExtraWeapon:()=>called.push('ranged'),fireFlame:()=>called.push('flame'),useUtility:()=>called.push('utility')};

@@ -14,16 +14,22 @@ export function disposeProjection(root) {
  root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay||object.name==='CABINET_ARTWORK')material.map?.dispose();material.dispose();}});
 }
 
-export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=Date.now()}) {
- const url=peer.modelUrl||'';
+export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,isCurrent,now=Date.now()}) {
+ const nativeId=peer.avatarBuildAssetId||'',url=nativeId?'':peer.modelUrl||'',key=nativeId?'native:'+nativeId:url;
  const state=root.userData;
- if(state.serverAvatarUrl!==url){
-  state.serverAvatarUrl=url;state.serverAvatarRequest=null;state.serverAvatarRetryAt=0;
+ if(state.serverAvatarUrl!==key){
+  state.serverAvatarUrl=key;state.serverAvatarRequest=null;state.serverAvatarRetryAt=0;
   state.serverMixer?.stopAllAction();state.serverMixer?.uncacheRoot(state.serverAvatarModel);state.serverMixer=null;
   if(state.serverAvatarModel)disposeProjection(state.serverAvatarModel);
   state.serverAvatarModel=null;state.serverBody.visible=true;
  }
- if(!url||state.serverAvatarModel||state.serverAvatarRequest||now<(state.serverAvatarRetryAt||0))return;
+ if(!key||state.serverAvatarModel||state.serverAvatarRequest||now<(state.serverAvatarRetryAt||0))return;
+ if(nativeId){
+  const value=createNative?.(nativeId);if(!value){state.serverAvatarRetryAt=now+5000;return;}
+  if(!isCurrent()){disposeProjection(value);return;}
+  const model=prepare(value,{targetHeight:1.8});root.add(model);state.serverAvatarModel=model;state.serverBody.visible=false;
+  model.userData.nativeAvatar=true;model.traverse(node=>{node.userData.collisionDisabled=true;});return;
+ }
  const request={};state.serverAvatarRequest=request;
  loader.load(url,gltf=>{
   if(!isCurrent()||state.serverAvatarRequest!==request){disposeProjection(gltf.scene);return;}

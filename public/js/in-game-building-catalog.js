@@ -24,7 +24,7 @@ const CATEGORY_LABELS={
  buildings:'Buildings',interior:'Furniture & interiors',landscape:'Landscape & gardens',
  plants:'Trees & plants',terrain:'Terrain & water',props:'Props & utilities',
  interactive:'Interactive devices',sports:'Sports',arcade:'Arcade & games',
- fitness:'Fitness & gym',factory:'Factory & engineering',vehicles:'Vehicles',
+ funhouse:'Clown funhouse & carnival',fitness:'Fitness & gym',factory:'Factory & engineering',vehicles:'Vehicles',
  characters:'Characters',creatures:'Creatures',weapons:'Weapons & pickups',wearables:'Wearables',
  environments:'GLB maps & environments','summer-camp':'Summer camp',audio:'Music & audio',
  video:'Screens & media',services:'Shops & services',tools:'Tools & equipment'

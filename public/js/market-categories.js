@@ -4,13 +4,14 @@ import {UTILITY_TOOLS} from './game-utilities.js';
 import {FISHING_GEAR} from './fishing-config.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['shipping','Shipping & port supplies'],['flight','Flight & mobility'],
- ['fitness','Fitness & gym upgrades'],['factory','Factory & engineering'],['arcade','Arcade & card machines'],['sports','Sports & equipment'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
+ ['funhouse','Clown funhouse & carnival'],['fitness','Fitness & gym upgrades'],['factory','Factory & engineering'],['arcade','Arcade & card machines'],['sports','Sports & equipment'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
  ['avatars','Characters & avatars'],['vehicles','Vehicles'],['pets','Pets & creatures'],
  ['wearables','Clothing & wearables'],['lands','Land & worlds'],['props','Props & models'],['care','Care supplies'],['other','Other items']
 ].map(([id,label])=>({id,label})));
 export function marketCategory(item={},section='upgrades'){
  if(item.shippingSupplyId||item.kind==='stock'||item.type==='shipping-stock')return 'shipping';
  const reference=item.function_data?.device||item.asset?.function_data?.device||item.buildAssetId||item.asset?.buildAssetId,skuReference=String(item.sku||item.economySku||item.itemId||item.id||''),nativeId=reference||[...Object.keys(INTERACTIVE_DEVICES),...Object.keys(ENTERABLE_BUILDINGS)].find(id=>skuReference.endsWith(id));
+ if(String(nativeId||'').startsWith('funhouse-')||/^(?:economy:)?native:funhouse-/.test(skuReference)||item.worldId==='muzikaz-clown-funhouse'||String(item.category||item.collection||'').toLowerCase().includes('funhouse'))return 'funhouse';
  if(String(nativeId||'').startsWith('fitness-')||String(item.category||item.collection||'').toLowerCase().includes('fitness'))return 'fitness';
  if(String(nativeId||'').startsWith('factory-')||String(item.category||item.collection||'').toLowerCase().includes('factory'))return 'factory';
  const device=INTERACTIVE_DEVICES[nativeId];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';

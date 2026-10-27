@@ -1,5 +1,6 @@
 import * as T from '../vendor/three/three.module.min.js';
 import {updateFitnessResident} from './fitness-resident-model.js';
+import {createFunhouseModel,updateFunhouseModel} from './clown-funhouse-models.js';
 import {RESIDENT_FORMS} from './resident-personalities.js';
 
 // Speech remains legible nearby without turning a character into a fullscreen
@@ -114,6 +115,29 @@ export function createWorldResident(){
  return root;
 }
 
+function updateFunhouseResidentAppearance(root,state,time,{height,build}){
+ const body=root.userData.residentParts.body,themed=state.funhouseClown===true;
+ let visual=root.userData.funhouseResidentVisual;
+ if(themed&&!visual){
+  const id=String(state.funhouseClownModelId||'');
+  const model=createFunhouseModel(/^funhouse-(ringmaster|juggler|greeter|driver|scare-clown)-avatar$/.test(id)?id:'funhouse-scare-clown-avatar');
+  model.name='FUNHOUSE_RESIDENT_CLOWN';
+  const arms=[];model.traverse(node=>{node.userData.collisionDisabled=true;if(node.name==='FUNHOUSE_CLOWN_ARM')arms.push(node);});
+  root.add(model);visual={model,arms};root.userData.funhouseResidentVisual=visual;
+ }
+ body.visible=!themed;
+ if(!visual)return;
+ visual.model.visible=themed;if(!themed)return;
+ visual.model.scale.set(build,height,build);updateFunhouseModel(visual.model,time);
+ visual.model.position.y=state.moving?Math.abs(Math.sin(time*6))*.025:0;
+ visual.arms.forEach((arm,index)=>{
+  const side=index%2?1:-1;
+  if(state.moving)arm.rotation.x=-Math.sin(time*6+side*Math.PI/2)*.35;
+  else if(['wave','greet','cheer'].includes(state.gesture))arm.rotation.x=-2.1+Math.sin(time*6)*.14;
+  else if(state.speaking)arm.rotation.x=-.45+Math.sin(time*3+side)*.14;
+ });
+}
+
 export function updateWorldResident(root,time){
  const state=root.userData.residentState||{},moving=state.moving,gesture=state.gesture||'work',parts=root.userData.residentParts,head=parts.head;
  const {appearance,uniform}=residentVisualStyle(state),casino=Boolean(state.casino),materials=root.userData.residentMaterials;
@@ -152,4 +176,5 @@ export function updateWorldResident(root,time){
   label.texture.needsUpdate=true;
  }
  updateFitnessResident(root,time);
+ updateFunhouseResidentAppearance(root,state,time,{height,build});
 }

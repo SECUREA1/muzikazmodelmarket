@@ -8,3 +8,6 @@ dist/
 
 # Local scratch files and runtime fixtures.
 /work/
+
+# Python preview/export tooling caches.
+__pycache__/

@@ -2,13 +2,22 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 393 definitions;
-the economy has 515 SKUs, including 453 native item, material, tool, and layout
-offers. This includes the nine factory assets and all verified repository model
+items and their runtime settings. The current library has 465 definitions;
+the economy has 591 SKUs, including 526 native item, material, tool, and layout
+offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
 Resident character model also has a market SKU; live world residents remain
 managed by their existing world simulation.
+
+**Clown funhouse** includes five playable clown avatars, wearable hats and shoes,
+a harmless water blaster, functional attractions, and carnival scenery. The map's
+market entry lists all 28 component types, marking parts included within a larger
+assembly. Builder copies keep major assemblies editable without placing those
+contained parts a second time. Owned clown avatars use the existing avatar
+selection and persistent account identity; costume and water-blaster controls
+validate ownership in shared rooms. Placed attractions retain their controls and
+timed games after moving them to another map.
 
 ## Item and function breakdown
 

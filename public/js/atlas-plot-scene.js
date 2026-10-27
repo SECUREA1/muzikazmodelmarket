@@ -19,7 +19,9 @@ export async function loadAtlasPlotScene(environment,snapshot,renderer,{current=
    object.userData.atlasServerOffset={x:object.position.x-(position[0]||0),y:object.position.y-(position[1]||0),z:object.position.z-(position[2]||0)};decor.add(object);};
   const prepared=await prepareGameItems([...sources.values()],async item=>{
    if(item.active===false||item.deleted||item.loot||item.holderId&&!isWatercraft(item)&&!['corsair-aircraft','diamond-da40','piper-cub'].includes(item.modelId))return;
-   const definition=definitions.get(item.modelId),asset=item.asset||{};let object=customModels.has(item.modelId)?createSavedCustomModel(customModels.get(item.modelId)):createBuilderModel(asset.buildAssetId||definition?.buildAssetId||item.modelId);
+   const definition=definitions.get(item.modelId),asset=item.asset||{},modelId=asset.buildAssetId||definition?.buildAssetId||item.modelId;
+   // Gameplay-only actors, such as range targets, may have no item model.
+   let object=customModels.has(item.modelId)?createSavedCustomModel(customModels.get(item.modelId)):modelId?createBuilderModel(modelId):null;
    if(!object&&definition?.generated)object=createGeneratedAsset(definition);
    if(!object&&asset.renderKind==='paint-stroke')object=createSolidPaint(THREE,asset);
    const url=definition?.modelUrl||asset.modelUrl;

@@ -65,7 +65,8 @@ test('public native market links map components to canonical purchases and prese
   for (const template of templates) {
     const map = environments.find(map => map.id === template.worldId);
     assert.ok(map,'each template identifies its live public environment');
-    assert.equal(template.itemCount,(map.builderScene || map.placementScene)?.objects?.length || 0);
+    const scene=map.builderScene || map.placementScene || {};
+    assert.equal(template.itemCount,scene.objects?.length || (scene.nativeComponents || []).reduce((sum,part)=>sum+(Number(part.count)||1),0));
     assert.equal(template.components.reduce((sum,item) => sum+item.count,0),template.itemCount,'component quantities cover every object in '+template.worldId);
     for (const component of template.components) {
       if (!component.sku) {

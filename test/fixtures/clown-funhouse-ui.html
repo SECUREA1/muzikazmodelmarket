@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funhouse UI regression fixture</title><style>body{margin:0;background:#181027;color:#fff;font:14px system-ui}main{position:relative;height:100dvh}</style></head>
+<body><main></main><script type="module">
+import {mountClownFunhouseUI} from '../../public/js/clown-funhouse-ui.js';
+import {FUNHOUSE_ID,FUNHOUSE_STATIONS} from '../../public/js/clown-funhouse-config.js';
+
+window.fixtureNow=100000;
+Date.now=()=>window.fixtureNow;
+window.environment={id:FUNHOUSE_ID};
+window.actors={};
+window.position={x:-30,y:.02,z:12};
+window.commands=[];window.pending=[];window.receivedStates=[];window.effects=[];window.announcements=[];
+window.ui=mountClownFunhouseUI({stage:document.querySelector('main'),getEnvironment:()=>environment,getPosition:()=>position,getActors:()=>actors,
+ send:(action,fields)=>{commands.push({action,...fields});return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
+ onState:state=>receivedStates.push(structuredClone(state)),onEffect:(station,effect)=>effects.push({station:station.id,...effect}),announce:text=>announcements.push(text)});
+window.round=(patch={})=>({id:'water-round',status:'active',startedAt:90000,endsAt:130000,targetId:0,hits:0,shots:0,score:0,...patch});
+window.snapshot=(sequence,patch={},events=[])=>({sequence,serverTime:fixtureNow,selfId:'me',actors:structuredClone(actors),players:{me:{funhouse:{stamps:[],costume:{hat:false,shoes:false},bestScore:0,round:null,...patch}}},events});
+window.publish=(sequence,patch={},events=[])=>ui.receive(snapshot(sequence,patch,events),'me');
+window.resolveNext=(sequence,patch={},events=[])=>pending.shift().resolve(snapshot(sequence,patch,events));
+window.rejectNext=message=>pending.shift().reject(new Error(message));
+window.setup=kind=>{ui.reset();actors={};environment={id:FUNHOUSE_ID};position={...FUNHOUSE_STATIONS.find(station=>station.kind===kind).position};commands.length=effects.length=receivedStates.length=announcements.length=0;ui.update();};
+window.ready=true;
+</script></body></html>

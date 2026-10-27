@@ -11,9 +11,10 @@ test('VibeVerse exposes a compact searchable function menu', async () => {
 
   assert.match(html, /id="explorer-options-toggle"[^>]+aria-expanded="false"/);
   assert.match(html, /id="explorer-options-search"[^>]+type="search"/);
-  assert.equal((html.match(/data-option-keywords=/g) || []).length, 16);
+  assert.equal((html.match(/data-option-keywords=/g) || []).length, 17);
   assert.match(html,/environment=muzikaz-missile-factory/);
   assert.match(html,/environment=muzikaz-fitness-centre/);
+  assert.match(html,/environment=muzikaz-clown-funhouse/);
   assert.match(html, /href="arcade\.html\?environment=neon-junction&amp;mode=solo"/);
   assert.match(html, /Customize Neon Junction/);
   assert.match(script, /terms\.every\(\(term\) => searchableText\.includes\(term\)\)/);

@@ -19,6 +19,7 @@ export function destinationIcon(place) {
   if (place.basketball || /basketball/i.test(label)) return '🏀';
   if (/fitness|gym/i.test(label)) return '🏋';
   if (/hockey/i.test(label)) return '🏒';
+  if (/funhouse|clown|carnival/i.test(label)) return '🤡';
   if (/range/i.test(label)) return '🎯';
   if (/pixel.?peak|ski|alpine/i.test(label)) return '⛷';
   if (/marina|dock|yacht|harbou?r/i.test(label)) return '⚓';
