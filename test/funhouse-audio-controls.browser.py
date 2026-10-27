@@ -27,9 +27,12 @@ try:
             page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/clown-funhouse-ui.html')
             page.wait_for_function('window.ready')
             page.evaluate("setup('welcome');publish(1)")
+            page.evaluate("(()=>{const toolbar=document.createElement('div');toolbar.className='game-display-flow-views';toolbar.style.cssText='position:absolute;top:8px;right:8px;z-index:27';toolbar.innerHTML='<button aria-label=\"Open map markers\" style=\"width:44px;height:44px\">Map</button>';document.querySelector('main').append(toolbar);})()")
+            assert page.get_by_role('button',name='Clown audio settings',exact=True).evaluate('(node)=>{const r=node.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===node;}'), 'the sound entry must stay clear of the global view toolbar'
             page.get_by_role('button', name='Clown audio settings', exact=True).click()
             booth = page.locator('.funhouse-audio-popover')
             booth.wait_for(state='visible')
+            assert booth.evaluate('(node)=>{const a=document.querySelector(\".funhouse-audio-toggle\").getBoundingClientRect(),b=node.getBoundingClientRect();return b.bottom<a.top && b.top>=64;}'), 'the popup must leave its sound entry reachable'
             assert not page.evaluate('ui.visible()'), 'audio settings must remain a companion to the playable scene'
             assert booth.get_attribute('data-gameplay-blocking') == 'false'
             assert booth.locator('[data-funhouse-audio-output="music"]').inner_text() == '35%'
