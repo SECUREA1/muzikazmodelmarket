@@ -19,7 +19,7 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},factoryTestingUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
@@ -94,10 +94,10 @@ test('world navigation stays disabled through joining and restores only for a co
 });
 
 test('resetting a room clears facility gates and machine controls before a retry',()=>{
- const panels=new Set(['factory','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0,costumeClears=0;
+ const panels=new Set(['factory','testing','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0,costumeClears=0;
  const facility=name=>({visible:()=>panels.has(name),update(snapshot){if(!snapshot)panels.delete(name);}});
  const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true,stop(){stops++;}},
-  fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},factoryUI:facility('factory'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
+  fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},factoryUI:facility('factory'),factoryTestingUI:facility('testing'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
   skiResortControls:{update:()=>panels.delete('ski')},deviceUI:{reset:()=>panels.delete('device')},landSaleUI:{reset:()=>panels.delete('land')},casinoUI:{reset:()=>panels.delete('casino')},funhouseUI:{reset:()=>panels.delete('funhouse')},clearFunhouseCostume:()=>{costumeClears++;},yachtGames:{reset:()=>panels.delete('yacht')}
  });
  context.resetRoomConnection();
