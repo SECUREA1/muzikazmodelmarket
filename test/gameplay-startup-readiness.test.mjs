@@ -20,7 +20,7 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  islandUI:{reset(){},update(){}},islandBuzz:{reset(){}},console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
@@ -235,15 +235,10 @@ test('native game redirects retain a selected atlas meeting point and play mode'
  }
 });
 
-test('the island explorer entry opens the native solo resort before loading a shared room',async()=>{
- let destination;
- const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id,game:'tropical-island'})},canonicalWorldId:id=>id,location:{href:'http://localhost/model-explorer.html?mode=multiplayer',assign:url=>{destination=new URL(url);}}});
- vm.runInContext(loadWorld,context);
- await context.loadById('tropical-island');
- assert.equal(destination.pathname,'/tropical-island.html');
- assert.equal(destination.searchParams.get('environment'),'tropical-island');
- assert.equal(destination.searchParams.get('mode'),'solo');
- assert.equal(context.multiplayerWorldLoading,false);
+test('the resort stays in the native explorer and its shared world systems',()=>{
+ assert.doesNotMatch(source,/if\(isTropicalIslandMap\(env\)\)/);
+ assert.match(source,/islandUI\.update\(snapshot,selfId,activeEnvironment\)/);
+ assert.match(source,/setIslandState\?\.\(snapshot\.island\)/);
 });
 
 test('choosing multiplayer from a ready solo map validates the current room before changing transport mode',async()=>{

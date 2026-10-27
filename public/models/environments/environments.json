@@ -67788,8 +67788,8 @@
   {
     "id": "tropical-island",
     "name": "Island Adventure · Tropical Resort",
-    "label": "Tropical resort · explore at your own pace",
-    "description": "A complete tropical resort island with cabanas, two beach bars, beach balls, a volleyball court, small paddle boats, a lagoon course and pontoon cruises. Explore on foot or by boat for as long as you like in this solo island adventure. Optional fictional drinks stack a temporary arcade buzz and beer-goggle effect. Each drink digests and fades independently within 120 seconds of consumption; a new drink adds its own effect without resetting earlier drinks.",
+    "label": "Shared tropical resort · explore at your own pace",
+    "description": "A complete tropical resort in the shared MUZIKAZ world: cabanas, two beach bars, beach balls, a volleyball court, small paddle boats, a lagoon course and pontoon cruises. Explore for as long as you like with the same controls, connected maps, multiplayer room, AI residents, conversations, inventory and local quests as the rest of the world. Optional fictional drinks stack a temporary arcade buzz and beer-goggle effect. Each drink digests and fades independently within 120 seconds of consumption; a new drink never resets earlier drinks.",
     "category": "Island adventures",
     "game": "tropical-island",
     "worldId": "neon-docks",
@@ -67799,21 +67799,21 @@
     "source": "repository",
     "visibility": "public",
     "playable": true,
-    "multiplayer": false,
-    "sharedWorld": false,
+    "multiplayer": true,
+    "sharedWorld": true,
     "canDelete": false,
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
     "scale": 1,
     "spaceScale": 1,
-    "playableSize": 180,
+    "playableSize": 480,
     "mapColor": "#48d7ba",
     "mapTheme": "tropical",
     "thumbnailUrl": "/public/images/tropical-island.svg",
     "spawn": {
       "x": 0,
-      "y": 0.02,
+      "y": 0.38,
       "z": 24,
       "rotationY": 0
     },
@@ -67826,7 +67826,7 @@
     "buzzSeconds": 120,
     "unlimitedExploration": true,
     "roomId": "tropical-island",
-    "playUrl": "tropical-island.html?environment=tropical-island&mode=solo&autoplay=1",
+    "playUrl": "model-explorer.html?environment=tropical-island&house=tropical-island&mode=multiplayer&autoplay=1",
     "aliases": [
       "island-adventure",
       "tropical-resort"
@@ -67834,13 +67834,475 @@
     "builderScene": {
       "layout": "tropical-island",
       "mapSize": 180,
-      "objects": [],
+      "objects": [
+        {
+          "id": "island-station-tiki-bar",
+          "name": "Tiki Tide Bar · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": -15,
+            "y": 0.36,
+            "z": 9
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "tiki-bar",
+            "interactionDistance": 4.3,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Tiki Tide Bar · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Meet the beach host and choose an optional island beer, cocktail or alcohol-free refreshment. Each alcoholic drink wears off independently after two minutes."
+          }
+        },
+        {
+          "id": "island-station-sunset-bar",
+          "name": "Sunset Sips · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": 23,
+            "y": 0.36,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "sunset-bar",
+            "interactionDistance": 4.3,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Sunset Sips · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "A beach bar with ocean views, friendly resort hosts and optional refreshments."
+          }
+        },
+        {
+          "id": "island-station-cabanas",
+          "name": "Cabana Cove · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": -25,
+            "y": 0.36,
+            "z": 7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "cabanas",
+            "interactionDistance": 4.5,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Cabana Cove · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Relax in a shaded beach cabana beside the palm-lined resort paths."
+          }
+        },
+        {
+          "id": "island-station-beach-ball",
+          "name": "Beach Ball Rally · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": 9,
+            "y": 0.36,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "beach-ball",
+            "interactionDistance": 4,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Beach Ball Rally · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Meet other visitors and kick the colorful beach balls across the sand."
+          }
+        },
+        {
+          "id": "island-station-paddle-boat",
+          "name": "Paddle Pier · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": 43,
+            "y": 0.36,
+            "z": 10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "paddle-boat",
+            "interactionDistance": 4.5,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Paddle Pier · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Board a small paddle boat at the pier and explore the lagoon with the shared helm controls."
+          }
+        },
+        {
+          "id": "island-station-pontoon",
+          "name": "Pontoon Club · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": 43,
+            "y": 0.36,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "pontoon",
+            "interactionDistance": 4.5,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Pontoon Club · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Board a pontoon for a coastal cruise, take the helm or use the shared boat navigation controls."
+          }
+        },
+        {
+          "id": "island-station-snorkel",
+          "name": "Reef Explorer · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": -22,
+            "y": 0.36,
+            "z": -23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "snorkel",
+            "interactionDistance": 4,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Reef Explorer · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Visit the snorkeling stand and discover the nearby coral garden."
+          }
+        },
+        {
+          "id": "island-station-lookout",
+          "name": "Horizon Point · Resort information",
+          "modelId": "street-sign",
+          "objectType": "interactive",
+          "position": {
+            "x": 1,
+            "y": 0.36,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "islandStation": "lookout",
+            "interactionDistance": 4,
+            "interactionKey": "e",
+            "cooldown": 0,
+            "destructible": false,
+            "prompt": "Visit Horizon Point · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "Take in the island panorama from the northern lookout deck."
+          }
+        },
+        {
+          "id": "island-paddle-boat",
+          "modelId": "resort-paddle-boat",
+          "name": "Lagoon Paddle Boat",
+          "objectType": "vehicle",
+          "position": {
+            "x": 49.5,
+            "y": 0,
+            "z": 10
+          },
+          "rotation": {
+            "x": 0,
+            "y": -1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "islandStation": "paddle-boat",
+            "interactionKey": "e",
+            "interactionDistance": 7,
+            "prompt": "Board Lagoon Paddle Boat · E / Use",
+            "health": 200,
+            "destructible": false
+          }
+        },
+        {
+          "id": "island-paddle-boat-blue",
+          "modelId": "resort-paddle-boat",
+          "name": "Blue Lagoon Paddle Boat",
+          "objectType": "vehicle",
+          "position": {
+            "x": 50.5,
+            "y": 0,
+            "z": 5.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": -1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "islandStation": "paddle-boat",
+            "interactionKey": "e",
+            "interactionDistance": 7,
+            "prompt": "Board Blue Lagoon Paddle Boat · E / Use",
+            "health": 200,
+            "destructible": false
+          }
+        },
+        {
+          "id": "island-pontoon",
+          "modelId": "resort-pontoon",
+          "name": "Palm Coast Pontoon",
+          "objectType": "vehicle",
+          "position": {
+            "x": 51,
+            "y": 0,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": -1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "islandStation": "pontoon",
+            "interactionKey": "e",
+            "interactionDistance": 7,
+            "prompt": "Board Palm Coast Pontoon · E / Use",
+            "health": 200,
+            "destructible": false
+          }
+        }
+      ],
       "gameplay": {
-        "multiplayer": false,
-        "buzzSeconds": 120
+        "multiplayer": true,
+        "buzzSeconds": 120,
+        "radTox": false,
+        "friendlyFire": false,
+        "tropicalIsland": {
+          "enabled": true
+        }
+      },
+      "version": 3,
+      "name": "Island Adventure · Tropical Resort",
+      "streets": [],
+      "weather": "clear",
+      "layoutMeta": {
+        "color": 9354606,
+        "sky": 10016975,
+        "locations": [
+          {
+            "id": "island-tiki-bar",
+            "name": "Tiki Tide Bar",
+            "x": -15,
+            "y": 0.36,
+            "z": 9,
+            "width": 10,
+            "depth": 8,
+            "description": "Meet the beach host and choose an optional island beer, cocktail or alcohol-free refreshment. Each alcoholic drink wears off independently after two minutes."
+          },
+          {
+            "id": "island-sunset-bar",
+            "name": "Sunset Sips",
+            "x": 23,
+            "y": 0.36,
+            "z": -8,
+            "width": 10,
+            "depth": 8,
+            "description": "A beach bar with ocean views, friendly resort hosts and optional refreshments."
+          },
+          {
+            "id": "island-cabanas",
+            "name": "Cabana Cove",
+            "x": -25,
+            "y": 0.36,
+            "z": 7,
+            "width": 10,
+            "depth": 8,
+            "description": "Relax in a shaded beach cabana beside the palm-lined resort paths."
+          },
+          {
+            "id": "island-beach-ball",
+            "name": "Beach Ball Rally",
+            "x": 9,
+            "y": 0.36,
+            "z": 21,
+            "width": 10,
+            "depth": 8,
+            "description": "Meet other visitors and kick the colorful beach balls across the sand."
+          },
+          {
+            "id": "island-paddle-boat",
+            "name": "Paddle Pier",
+            "x": 43,
+            "y": 0.36,
+            "z": 10,
+            "width": 6,
+            "depth": 4,
+            "description": "Board a small paddle boat at the pier and explore the lagoon with the shared helm controls."
+          },
+          {
+            "id": "island-pontoon",
+            "name": "Pontoon Club",
+            "x": 43,
+            "y": 0.36,
+            "z": 20,
+            "width": 6,
+            "depth": 4,
+            "description": "Board a pontoon for a coastal cruise, take the helm or use the shared boat navigation controls."
+          },
+          {
+            "id": "island-snorkel",
+            "name": "Reef Explorer",
+            "x": -22,
+            "y": 0.36,
+            "z": -23,
+            "width": 10,
+            "depth": 8,
+            "description": "Visit the snorkeling stand and discover the nearby coral garden."
+          },
+          {
+            "id": "island-lookout",
+            "name": "Horizon Point",
+            "x": 1,
+            "y": 0.36,
+            "z": -25,
+            "width": 10,
+            "depth": 8,
+            "description": "Take in the island panorama from the northern lookout deck."
+          }
+        ],
+        "tropicalIsland": {
+          "enabled": true,
+          "buzzSeconds": 120
+        }
       }
     },
-    "contentUpdatedAt": "2026-10-27T13:00:00.000Z"
+    "contentUpdatedAt": "2026-10-27T16:00:00.000Z",
+    "streets": [],
+    "indoor": false,
+    "outdoor": true,
+    "tropicalIsland": {
+      "enabled": true,
+      "buzzSeconds": 120,
+      "unlimitedExploration": true
+    }
   },
   {
     "id": "ironwood-prison",

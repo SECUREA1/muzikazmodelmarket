@@ -1,6 +1,7 @@
 import {localMapLocations} from './local-map-locations.js';
 import {builderBaseSpawn} from './environments/builder-base.js';
 import {harborLandPatches} from './harbor-water.js';
+import {isTropicalIslandEnvironment} from './tropical-island-config.js';
 
 const cache=new WeakMap();
 const finitePoint=point=>point&&Number.isFinite(Number(point.x))&&Number.isFinite(Number(point.z));
@@ -28,6 +29,7 @@ function harborWalkingArea(environment,origin){
 }
 
 function mapTheme(environment){
+ if(isTropicalIslandEnvironment(environment))return {tour:'Palm Coast resort discovery',challenge:'Island passport route',service:'Resort welcome and activity briefing'};
  if(environment.airport?.enabled||environment.game==='airport')return {tour:'Airport ground discovery',challenge:'Airport ground route challenge',service:'Airport ground-service briefing'};
  if(environment.game==='shipping'||environment.builderScene?.layoutMeta?.shipping)return {tour:'Cargo terminal orientation',challenge:'Dock checkpoint challenge',service:'Shipping crew briefing'};
  if(environment.builderScene?.layoutMeta?.harbor)return {tour:'Waterfront discovery walk',challenge:'Waterfront checkpoint challenge',service:'Harbor services briefing'};

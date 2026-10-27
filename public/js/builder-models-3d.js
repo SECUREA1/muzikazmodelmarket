@@ -67,6 +67,8 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   ...Object.fromEntries(Object.entries(ROAD_VEHICLES).map(([id,c])=>[id,[c.name,c.siteOnly?'Animated construction machine with hydraulic controls, detailed cab and synchronized instruments.':'Premium driveable road vehicle with detailed cockpit and live instruments.',[c.width,c.height||1.7,c.length]]])),
   'construction-steel-beam':['Structural Steel I-Beam','An eighteen metre S355 steel I-beam with reinforced ends and lifting shackles.',[18,.73,.44]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
+  'resort-paddle-boat':['Resort Paddle Boat','Pedal and steer a two-seat lagoon boat with the shared helm controls.',[1.9,1.5,3.4]],
+  'resort-pontoon':['Palm Coast Pontoon','Board the covered resort pontoon and explore the coast with the shared helm controls.',[3.7,3.25,6.5]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
   ...ALPINE_MOUNTAIN_MODEL_INFO,
@@ -324,7 +326,7 @@ export function createBuilderModel(id,options={}) {
   if(id==='harbor-patrol')return createPatrolBoat();
   if(id==='harbor-fishing-boat')return createFishingBoat();
   if(FISHING_GEAR.some(item=>item.id===id))return createFishingGear(id);
-  if(['harbor-skiff','harbor-sailboat','harbor-yacht',...Object.keys(SHIPPING_VESSELS)].includes(id))return createHarborBoat(id);
+  if(['harbor-skiff','harbor-sailboat','harbor-yacht','resort-paddle-boat','resort-pontoon',...Object.keys(SHIPPING_VESSELS)].includes(id))return createHarborBoat(id);
   if(id==='shipping-container-box')return createShippingContainer();
   if(id==='shipping-port-crane')return createShippingPortCrane();
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
