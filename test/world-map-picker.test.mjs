@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {filterWorlds, filterWorldCategory, sortWorlds} from '../public/js/world-map-picker.js';
+import {mapSectorKind,mapWheelSvg} from '../public/js/map-wheel-svg.js';
 test('world map filtering keeps full registry results and matches all search terms',()=>{
  const worlds=[{env:{id:'neon',name:'Neon Docks',category:'City',description:'Social multiplayer space'},count:2},{env:{id:'forest',name:'Echo Gardens',category:'Nature'},count:0}];
  assert.equal(filterWorlds(worlds,'').length,2);
@@ -37,3 +38,15 @@ test('main activity spaces stay on the first page ahead of busy scenery maps',()
 });
 
 test('generated harbour appears with the featured docks',()=>{const harbour={env:{id:'public-docks-map',builderScene:{layoutMeta:{harbor:{}}}},count:0};assert.equal(sortWorlds([{env:{id:'forest'},count:100},harbour])[0],harbour);assert.equal(filterWorldCategory([harbour],'harbor').length,1);});
+
+test('the Strait and copied shipping maps have a distinct searchable featured list without changing their join identities',()=>{
+ const worlds=[{env:{id:'forest'},count:100},{env:{id:'neon-docks'},count:0},{env:{id:'hormuz-shipping',name:'Strait of Hormuz',builderScene:{layoutMeta:{harbor:{},shipping:{enabled:true}}}},count:0},{env:{id:'creator-sea',name:'Creator Cargo World',builderScene:{layoutMeta:{shipping:{enabled:true},harbor:{}}}},count:0}];
+ assert.deepEqual(filterWorldCategory(worlds,'shipping').map(row=>row.env.id),['hormuz-shipping','creator-sea']);
+ assert.deepEqual(filterWorldCategory(worlds,'harbor').map(row=>row.env.id),['neon-docks']);
+ assert.deepEqual(filterWorlds(worlds,'shipping supply').map(row=>row.env.id),['hormuz-shipping','creator-sea']);
+ assert.equal(sortWorlds(worlds)[0].env.id,'hormuz-shipping');
+ assert.equal(mapSectorKind(worlds[2].env),'shipping');
+ const wheel=mapWheelSvg([worlds[2]],'hormuz-shipping');
+ assert.match(wheel,/data-world-id="hormuz-shipping" data-kind="shipping"/);assert.match(wheel,/Hormuz Shipping/);assert.doesNotMatch(wheel,/Docks &amp; Yacht/);
+ assert.equal(worlds[0].env.id,'forest','display sorting leaves the shared registry unchanged');
+});

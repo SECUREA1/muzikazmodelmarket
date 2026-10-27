@@ -25,9 +25,9 @@ Static map footprints retain their DOM elements between snapshots. Occupancy
 updates do not reorder and replace vehicle buttons during a tap. Touch boarding
 dispatches once on pointer release and suppresses the delayed compatibility click.
 
-Spoken audio starts after the player's first gesture. Each map has one short
-introduction per page session. Returning to a previously visited map does not
-replay it. Initial snapshots establish the job baseline without reading existing work
+Spoken audio starts after the player's first gesture. Each map visit has one short
+guide explaining its activities and how to find jobs or help. Returning to a
+previously visited map plays its guide again; repeated snapshots stay quiet. Initial snapshots establish the job baseline without reading existing work
 or past traffic aloud. Subsequent new jobs, changed objectives, completions,
 walking quests and requested game interactions are announced once. Nearby NPCs
 and periodic traffic chatter remain visible without automatic speech. Private

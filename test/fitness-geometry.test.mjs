@@ -21,9 +21,9 @@ test('gym activity approaches and both trainer homes stand on clear physical flo
  dispose(collision.world(map).root);
 });
 
-test('all seven gym games are reachable by walking from reception through connected aisles',()=>{
+test('all eleven gym games are reachable by walking from reception through connected aisles',()=>{
  const map=fitnessWorld(),collision=new ServerBuilderCollision();
- const paths={boxing:[[6,32],[6,21],[0,21],[0,-7],[-22,-7],[-22,-14]],'bench-press':[[6,32],[6,21],[6,-7],[18,-7],[18,-18]],deadlift:[[6,32],[6,21],[6,-7],[29,-7]],agility:[[6,32],[6,21],[6,7],[19,7]],'jump-rope':[[6,32],[6,21],[6,6],[-11,6]],rowing:[[6,32],[6,21],[-20,21],[-20,15],[-24,15]],balance:[[6,32],[6,21],[21,21],[21,23]]};
+ const paths={boxing:[[6,32],[6,21],[0,21],[0,-7],[-22,-7],[-22,-14]],'bench-press':[[6,32],[6,21],[6,-7],[18,-7],[18,-18]],deadlift:[[6,32],[6,21],[6,-7],[29,-7]],agility:[[6,32],[6,21],[6,7],[19,7]],'jump-rope':[[6,32],[6,21],[6,6],[-11,6]],rowing:[[6,32],[6,21],[-20,21],[-20,15],[-24,15]],balance:[[6,32],[6,21],[21,21],[21,23]],'boxing-sparring':[[6,32],[6,21],[0,21],[0,-7],[-22,-7],[-22,-12]],basketball:[[6,32],[6,21],[6,-7],[52,-7],[52,-17]],'table-tennis':[[6,32],[6,21],[40,21],[65,21],[65,5]],sprint:[[6,32],[6,21],[40,21],[51,21],[51,23]]};
  for(const station of FITNESS_STATIONS){
   let position={...map.spawn};
   for(const [x,z]of paths[station.kind]){
@@ -38,8 +38,24 @@ test('all seven gym games are reachable by walking from reception through connec
 
 test('gym overview has an exposed roofline, visible equipment and bounded decorative animations',()=>{
  const root=createFitnessLand();root.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(root);
- assert.equal(bounds.max.x-bounds.min.x,80);assert.ok(bounds.max.y<9,'rafters remain below nine metres');
+ assert.equal(bounds.max.x-bounds.min.x,120);assert.equal(bounds.max.z-bounds.min.z,80);assert.ok(bounds.max.y<9,'rafters remain below nine metres');
  for(const name of ['FITNESS_BOXING_RING_CANVAS','FITNESS_PRIMARY_BENCH','FITNESS_PRIMARY_ROWER','FITNESS_BALANCE_BEAM','FITNESS_RECEPTION_COUNTER'])assert.ok(root.getObjectByName(name),name);
  assert.equal(root.getObjectByName('FITNESS_CEILING'),undefined,'no opaque full ceiling covers the top-down view');
  assert.doesNotThrow(()=>{for(const time of [0,1,10000])root.userData.updateFitnessEffects(time);});dispose(root);
+});
+
+
+test('competition wing doors, ring entrance and three sport approaches have real body clearance',()=>{
+ const map=fitnessWorld(),collision=new ServerBuilderCollision();
+ for(const z of [-7,21]){let position={x:32,y:.02,z};for(let i=0;i<60;i++){const next=collision.resolve(map,position,{...position,x:position.x+.2});position={...next,y:next.floorY??next.y};}assert.ok(position.x>43.8,'old east partition has an open cross-aisle at z='+z);}
+ const root=collision.world(map).root;
+ for(const name of ['FITNESS_CHAMPIONSHIP_RING','FITNESS_RING_SPECTACLE','FITNESS_OFFICIALS_CLOCK','FITNESS_RINGSIDE_SEATING','FITNESS_COMPETITION_BASKETBALL_HOOP','FITNESS_COMPETITION_TABLE_TENNIS','FITNESS_COMPETITION_SPRINT_GATES'])assert.ok(root.getObjectByName(name),name);
+ assert.ok(collision.groundAt(map,{x:76,y:.02,z:30}),'east wing has continuous floor');
+ const closed=collision.resolve(map,{x:76,y:.02,z:0},{x:80,y:.02,z:0});assert.ok(closed.x<78,'new exterior wall contains players');dispose(root);
+});
+
+test('native ring clocks display authoritative player bout scores without a DOM',()=>{
+ const root=createFitnessLand();root.userData.updateFitnessEffects(2,{red:{fitness:{kind:'boxing-sparring',status:'active',startedAt:200,endsAt:Date.now()+85000,competition:{playerPoints:12,opponentPoints:9,round:2}}}});
+ for(const name of ['FITNESS_OFFICIALS_CLOCK','FITNESS_OVERHEAD_RING_CLOCK']){const clock=root.getObjectByName(name);assert.equal(clock.getObjectByName('FITNESS_SCORE_RED_TENS').userData.scoreValue,1);assert.equal(clock.getObjectByName('FITNESS_SCORE_RED_UNITS').userData.scoreValue,2);assert.equal(clock.getObjectByName('FITNESS_SCORE_BLUE_UNITS').userData.scoreValue,9);assert.equal(clock.getObjectByName('FITNESS_SCORE_ROUND_UNITS').userData.scoreValue,2);}
+ dispose(root);
 });

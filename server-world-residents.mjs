@@ -1,3 +1,4 @@
+import {isPrisonEnvironment} from './public/js/prison-config.js';
 import {isFunhouseEnvironment} from './public/js/clown-funhouse-config.js';
 import {residentIdentity} from './public/js/resident-personalities.js';
 import {stepCommunityLife} from './server-community-life.mjs';
@@ -90,6 +91,7 @@ export function residentCommand(sim,player,environment,command,now,{collision,ob
  line(sim,player,npc,now,reply);if(intent==='confirm'&&player.residentTask?.status==='completed')info.gesture='cheer';return info.name+' replied.';
 }
 export function stepWorldResidents(sim,environment,now,dt,{collision,objects={}}={}){
+ if(isPrisonEnvironment(environment))return;
  applyFunhouseResidentTheme(sim,environment);
  if(sim.residentUpdatedAt!=null&&now-sim.residentUpdatedAt<150)return;dt=Math.min(.25,sim.residentUpdatedAt==null?dt:(now-sim.residentUpdatedAt)/1000);sim.residentUpdatedAt=now;
  if(isCasinoEnvironment(environment)){stepCasinoResidents(sim,environment,now,dt,{collision,objects});return;}

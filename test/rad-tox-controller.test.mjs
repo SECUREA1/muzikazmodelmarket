@@ -62,3 +62,12 @@ test('an off-center sports walking press moves immediately, including a second f
 test('small sports walking adjustments use a proportional dead zone rather than eight fixed pixels',t=>{
  const f=controllerFixture(t);f.send(f.left,'pointerdown',{clientX:106,clientY:100});f.frame();assert.ok(f.movement.x>.05);f.send(f.left,'pointerup');assert.deepEqual(f.movement,{x:0,y:0});
 });
+
+
+test('explorer movement-only sticks have a separate jump control and no action hints',()=>{
+ const markup=radToxStickMarkup({left:'Move',movementOnly:true});
+ assert.equal((markup.match(/class="thumbstick-base"/g)||[]).length,2);
+ assert.match(markup,/data-mobile-move="jump" aria-label="Jump"/);
+ assert.doesNotMatch(markup,/press to shoot|tap to jump|tap for view/);
+ assert.match(radToxStickMarkup(),/press to shoot/,'native sports controller retains its existing explicit mode');
+});

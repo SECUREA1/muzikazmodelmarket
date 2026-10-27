@@ -2,31 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {FITNESS_ITEMS} from '../public/js/fitness-equipment.js';
-import {createFitnessBuilderScene,editableFitnessScene,fitnessBuilderLayoutMeta} from '../public/js/fitness-builder.js';
-import {FITNESS_STATIONS,fitnessStations} from '../public/js/fitness-config.js';
+import {createFitnessBuilderScene,editableFitnessScene,fitnessBuilderLayoutMeta,FITNESS_EQUIPMENT_PLACEMENTS} from '../public/js/fitness-builder.js';
+import {FITNESS_STATIONS,FITNESS_LOCATIONS,FITNESS_RESIDENTS,FITNESS_TRAINERS,fitnessStations} from '../public/js/fitness-config.js';
 import {fitnessWorld} from '../fitness-world.mjs';
 import {editableMapScene,nativeItemGameplay} from '../public/js/editable-map-import.js';
 import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 import {createFitnessLand} from '../public/js/environments/fitness-land.js';
 
+const expandedKinds=['boxing-sparring','basketball','table-tennis','sprint'];
+const expandedItems=['fitness-basketball-hoop','fitness-table-tennis','fitness-sprint-gates','fitness-ring-scoreboard','fitness-ringside-seating'];
 const world=scene=>({id:scene.id,game:'fitness',fitness:scene.sourceFitness,builderScene:scene});
 
-test('fitness template includes all 26 gym items as independent editable assemblies and seven playable approaches',()=>{
+test('fitness template includes all gym items as editable assemblies and every expanded activity',()=>{
  const scene=createFitnessBuilderScene({id:'builder-gym'}),models=new Set(scene.objects.map(object=>object.modelId));
- assert.equal(models.size,26);for(const id of Object.keys(FITNESS_ITEMS))assert.ok(models.has(id),id+' has an editable template object');
+ assert.equal(models.size,Object.keys(FITNESS_ITEMS).length);assert.equal(scene.objects.length,FITNESS_EQUIPMENT_PLACEMENTS.length);for(const id of expandedItems)assert.ok(models.has(id),id+' is included in the expanded template');for(const id of Object.keys(FITNESS_ITEMS))assert.ok(models.has(id),id+' has an editable template object');
  assert.ok(scene.objects.every(object=>object.asset.buildAssetId===object.modelId&&object.metadata.upgradeable));
  assert.ok(scene.sourceFitness.editableStations&&scene.sourceFitness.editableEquipment);
  assert.ok(scene.objects.filter(object=>object.functionalSettings.fitnessStation).every(object=>object.functionalSettings.active===true),'primary stations stay active through Builder migration');
  assert.ok(scene.objects.filter(object=>object.functionalSettings.behavior==='decor').every(object=>object.functionalSettings.fitnessStation===false),'decorative copies override library training defaults');
- const stations=fitnessStations(world(scene));assert.equal(stations.length,7);
+ const stations=fitnessStations(world(scene));assert.equal(stations.length,FITNESS_STATIONS.length);for(const kind of expandedKinds)assert.ok(stations.some(station=>station.kind===kind),kind+' has an editable primary station');
  for(const station of stations){const canonical=FITNESS_STATIONS.find(value=>value.kind===station.kind);assert.equal(station.position.x,canonical.position.x);assert.equal(station.position.z,canonical.position.z);}
- const manifest=compileBuilderScene(scene);assert.equal(manifest.actors.filter(actor=>actor.gameplay.fitnessStation).length,7);
+ const manifest=compileBuilderScene(scene);assert.equal(manifest.actors.filter(actor=>actor.gameplay.fitnessStation).length,FITNESS_STATIONS.length);
 });
 
 test('copying the native gym upgrades only the draft to editable equipment',()=>{
  const source=fitnessWorld(),original=structuredClone(source),copy=editableMapScene(source,{id:'my-gold-gym'});
- assert.deepEqual(source,original,'authored gym remains unchanged');assert.equal(source.builderScene.objects.length,7);
+ assert.deepEqual(source,original,'authored gym remains unchanged');assert.equal(source.builderScene.objects.length,FITNESS_STATIONS.length);
  assert.ok(copy.objects.length>50);assert.ok(copy.objects.every(object=>!object.fitnessStation));
  assert.ok(copy.baseEnvironment.fitness.editableEquipment);assert.ok(copy.baseEnvironment.builderScene.layoutMeta.fitness.editableEquipment);
  const bench=copy.objects.find(object=>object.functionalSettings.fitnessStation==='bench-press');bench.position.x+=8;bench.scale.z=1.5;
@@ -42,7 +44,7 @@ test('editable gym backdrop retains architecture without a second equipment copy
  assert.ok(root.getObjectByName('FITNESS_WALKABLE_FLOOR'));assert.ok(root.getObjectByName('FITNESS_BACK_WALL'));
  for(const name of ['FITNESS_PRIMARY_BENCH','FITNESS_PRIMARY_ROWER','FITNESS_BOXING_RING_APRON','FITNESS_BALANCE_BEAM','FITNESS_LOCKER','FITNESS_RECEPTION_COUNTER','FITNESS_ACTIVITY_RING'])assert.equal(root.getObjectByName(name),undefined,name+' belongs to editable objects');
  assert.equal(root.userData.editableEquipment,true);
- const meta=fitnessBuilderLayoutMeta(scene,{name:'Gold Fitness Centre'});assert.ok(meta.fitness.editableEquipment);assert.equal(meta.locations.length,8);assert.equal(meta.residents.length,8);
+ const meta=fitnessBuilderLayoutMeta(scene,{name:'Gold Fitness Centre'});assert.ok(meta.fitness.editableEquipment);assert.equal(meta.locations.length,FITNESS_LOCATIONS.length);assert.equal(meta.residents.length,FITNESS_RESIDENTS.length);assert.equal(meta.residents.length,18);assert.equal(meta.residents.filter(resident=>resident.duty==='trainer').length,FITNESS_TRAINERS.length);
 });
 
 test('fitness library metadata makes added equipment configurable and training capable',()=>{
@@ -55,4 +57,22 @@ test('editable template uses physical equipment without blocking activity approa
  const scene=createFitnessBuilderScene(),map={...world(scene),spawn:scene.sourceSpawn,proceduralLand:true},collision=new ServerBuilderCollision();
  assert.deepEqual(collision.safeSpawn(map,map.spawn),{x:0,y:.02,z:32});
  for(const station of fitnessStations(map)){const floor=collision.groundAt(map,station.position,{entry:true});assert.ok(floor,station.kind+' has real floor');assert.ok(collision.hasBodyClearance(map,floor),station.kind+' approach remains clear of its editable equipment');}
+});
+
+
+test('restoring a legacy edited gym twice preserves moved, disabled and deleted equipment without adding expansion items',()=>{
+ const scene=createFitnessBuilderScene({id:'legacy-edited-gym'});
+ scene.mapSize=80;
+ scene.sourceFitness.stations=scene.sourceFitness.stations.filter(station=>!expandedKinds.includes(station.kind));
+ scene.layoutMeta.fitness.stations=structuredClone(scene.sourceFitness.stations);
+ scene.objects=scene.objects.filter(object=>!expandedItems.includes(object.modelId)&&!expandedKinds.includes(object.functionalSettings.fitnessStation)&&object.functionalSettings.fitnessStation!=='boxing');
+ const bench=scene.objects.find(object=>object.functionalSettings.fitnessStation==='bench-press');
+ bench.position={x:-7,y:.4,z:12};bench.rotation={x:.1,y:Math.PI/2,z:0};bench.scale={x:1.4,y:.8,z:1.2};bench.materialSettings.accent='#7c4ab3';
+ const rower=scene.objects.find(object=>object.functionalSettings.fitnessStation==='rowing');rower.functionalSettings.active=false;
+ scene.objects.push({id:'my-custom-sign',modelId:'street-sign',position:{x:3,y:0,z:5},functionalSettings:{behavior:'decor'},metadata:{ownerNote:'Keep my custom layout'}});
+ const saved=structuredClone(scene),once=editableFitnessScene(scene),twice=editableFitnessScene(once);
+ assert.deepEqual(scene,saved,'restoration leaves the saved document untouched');assert.deepEqual(once.objects,saved.objects);assert.deepEqual(twice.objects,saved.objects,'the second restore does not inject new or deleted assemblies');
+ const stations=fitnessStations(world(twice));assert.ok(!stations.some(station=>['boxing','rowing',...expandedKinds].includes(station.kind)),'deleted, disabled and never-added activities stay absent');
+ assert.ok(!twice.objects.some(object=>expandedItems.includes(object.modelId)),'expansion upgrades remain opt-in for an edited legacy gym');
+ assert.equal(twice.objects.find(object=>object.id===bench.id).materialSettings.accent,'#7c4ab3');
 });

@@ -1,8 +1,10 @@
 import {freightHubs} from './cargo-hauling.js';
 import {builderBaseSpawn} from './environments/builder-base.js';
 import {FACTORY_STATIONS,factoryStations,isFactoryEnvironment} from './missile-factory-config.js';
+import {isTropicalIslandEnvironment,ISLAND_EXPERIENCES} from './tropical-island-config.js';
 export function localMapLocations(environment){
  const meta=environment?.builderScene?.layoutMeta||{};const places=meta.locations||meta.commonsLocations||[];
+ if(isTropicalIslandEnvironment(environment)&&!places.length)return ISLAND_EXPERIENCES.map(place=>({id:'island-'+place.id,name:place.label,x:place.x,y:place.y,z:place.z,width:place.type==='boat'?6:10,depth:place.type==='boat'?4:8,description:place.description}));
  if(isFactoryEnvironment(environment)){
   const stations=factoryStations(environment),ids=new Set(FACTORY_STATIONS.map(station=>station.id));
   const retained=places.filter(place=>!ids.has(place.id)&&!place.factoryStationId&&!String(place.id).startsWith('factory-instance:'));

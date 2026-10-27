@@ -1,5 +1,6 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function layoutHeight(layout, x, z) {
+      if(layout==='world-item-factory')return 0;
       if(layout==='basketball-stadium'||layout==='basketball-arena'||layout==='firing-range')return 0;
       if(layout.startsWith('urban-')||layout.startsWith('camp-'))return 0;
       const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);

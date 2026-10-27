@@ -8,6 +8,7 @@ import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {questCatalog} from '../public/js/quest-catalog.js';
+import {COMPOUND_ID} from '../public/js/factory-test-config.js';
 
 test('every explorer destination offers local tours and timed routes on real clear floors',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'site-quest-world-matrix-'));t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -18,9 +19,16 @@ test('every explorer destination offers local tours and timed routes on real cle
  assert.ok(worlds.some(world=>world.id==='public-commons'));assert.ok(worlds.some(world=>world.airport?.enabled));assert.ok(worlds.some(world=>world.builderScene?.layoutMeta?.harbor));assert.ok(worlds.some(world=>world.modelUrl&&!world.builderScene));
  t.diagnostic(`${worlds.length} authored, generated, imported and specialist destinations use the same physical site checks.`);
  for(const environment of worlds)await t.test(environment.id,async()=>{
-  let now=100000,request=0;const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,environment.id+'.json')),now:()=>now}),user={accountId:'site-visitor',username:'Site visitor',stats:{health:100}};
+  let now=100000,request=0;const user={accountId:'site-visitor',username:'Site visitor',stats:{health:100}},clearance={compound:true,deep:true};
+  // Traverse the compound's real tour floors as a member who earned both
+  // clearances. Unauthorized entry and deep access have their own gate tests.
+  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,environment.id+'.json')),now:()=>now,
+   testingAccess:async identity=>{assert.equal(identity.accountId,user.accountId);return {...clearance};},
+   testingState:async()=>({session:null,progress:{},clearance:{...clearance}})
+  });
   const send=(action,fields={})=>runtime.command(environment.id,environment,user,{action,requestId:'site-matrix-'+ ++request,...fields});
   const joined=await send('join',{deferRadTox:true,radToxEnabled:false}),offers=questCatalog(environment).filter(offer=>offer.siteQuest);
+  if(environment.id===COMPOUND_ID)assert.deepEqual(joined.players[joined.selfId].testing.clearance,clearance,'compound tour visitor has earned deep access');
   assert.ok(offers.some(offer=>offer.kind==='site-tour'&&!offer.challenge),'local discovery tour exists');assert.ok(offers.some(offer=>offer.challenge),'timed local route exists');
   for(const offer of offers){
    const state=await send('vehicle-mission',{operation:'start',questId:offer.id}),quest=state.players[joined.selfId].vehicleMission;

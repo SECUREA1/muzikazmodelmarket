@@ -10,6 +10,13 @@ import {filterWorldCategory,filterWorlds,sortWorlds} from '../public/js/world-ma
 import {mapSectorKind,mapWheelSvg} from '../public/js/map-wheel-svg.js';
 import {destinationColor,destinationTheme,destinationIcon,FITNESS_MAP_GOLD} from '../public/js/atlas-destinations.js';
 import {WORLD_DISTRICTS} from '../world-districts.mjs';
+import {FITNESS_STATIONS,FITNESS_RESIDENTS,FITNESS_TRAINERS,FITNESS_BOUNDS} from '../public/js/fitness-config.js';
+import {FITNESS_ITEMS} from '../public/js/fitness-equipment.js';
+import {FITNESS_EQUIPMENT_PLACEMENTS} from '../public/js/fitness-builder.js';
+import {fitnessWorld} from '../fitness-world.mjs';
+import * as THREE from '../public/vendor/three/three.module.min.js';
+import {EnvironmentLoader} from '../public/js/environments/environment-loader.js';
+import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 import {outdoorProfile} from '../public/js/environments/outdoor-scenery.js';
 
 const FITNESS_ID='muzikaz-fitness-centre';
@@ -58,9 +65,9 @@ test('Builder copies preserve fitness stations and settings independently from t
  assert.equal(copy.sourceGame,'fitness');assert.equal(copy.sourceLayout,'fitness-centre');
  assert.ok(copy.sourceFitness.editableEquipment&&copy.sourceFitness.editableStations);
  assert.deepEqual(copy.sourceFitness.stations,source.fitness.stations,'explicit source station metadata is retained in the editable draft');
- assert.equal(copy.objects.length,58);assert.equal(new Set(copy.objects.map(object=>object.modelId)).size,26);
- assert.equal(copy.objects.filter(object=>object.functionalSettings.fitnessStation).length,7,'editable primary equipment replaces the seven fixed markers');
- assert.ok(copy.objects.every(object=>!object.fitnessStation));assert.equal(source.builderScene.objects.length,7,'the native map markers are untouched');
+ assert.equal(copy.objects.length,FITNESS_EQUIPMENT_PLACEMENTS.length);assert.equal(new Set(copy.objects.map(object=>object.modelId)).size,Object.keys(FITNESS_ITEMS).length);
+ assert.equal(copy.objects.filter(object=>object.functionalSettings.fitnessStation).length,FITNESS_STATIONS.length,'editable primary equipment replaces the native fixed markers');
+ assert.ok(copy.objects.every(object=>!object.fitnessStation));assert.equal(source.builderScene.objects.length,FITNESS_STATIONS.length,'the native map markers are untouched');
  copy.sourceFitness.stations[0].position.x=99;assert.equal(source.fitness.stations[0].position.x,4);
  copy.objects[0].position.x=99;assert.notEqual(source.builderScene.objects[0].position.x,99);
  assert.equal(outdoorProfile({builderScene:{layout:'repository-my-gym',sourceLayout:copy.sourceLayout}}),null,'copied gyms retain an indoor environment');
@@ -81,4 +88,24 @@ test('gym gold takes precedence over district colours throughout map presentatio
  assert.equal(destinationColor({...place,mapColor:'not-a-color'}),FITNESS_MAP_GOLD);
  assert.equal(destinationColor({mapId:'forest',districtColor:'#7bea99'}),'#7bea99');
  const wheel=mapWheelSvg([{env:world,count:0}],FITNESS_ID);assert.match(wheel,/stop-color="#d8ad45"/);assert.match(wheel,/data-kind="fitness"/);
+});
+
+
+test('expanded native map metadata and registry retain all activities and the full gym population',()=>{
+ assert.deepEqual(world,fitnessWorld(),'the published gym record matches the native world definition');
+ for(const kind of ['boxing-sparring','basketball','table-tennis','sprint'])assert.ok(world.fitness.stations.some(station=>station.kind===kind),kind+' is declared in the public map');
+ assert.equal(world.fitness.stations.length,FITNESS_STATIONS.length);assert.equal(world.builderScene.layoutMeta.residents.length,FITNESS_RESIDENTS.length);assert.equal(FITNESS_RESIDENTS.length,18);assert.equal(FITNESS_TRAINERS.length,2);
+ const half=world.builderScene.mapSize/2;assert.ok(half>=Math.max(Math.abs(FITNESS_BOUNDS.minX),Math.abs(FITNESS_BOUNDS.maxX)),'all east-wing coordinates fit Builder and atlas extents');
+ assert.equal(world.playableSize,FITNESS_BOUNDS.width);assert.notEqual(world.contentUpdatedAt,'2026-10-23T12:00:00.000Z','content revision invalidates existing native map caches');
+});
+
+test('a legacy playable-size hint cannot shrink the browser gym away from authoritative station coordinates',async()=>{
+ const map={...fitnessWorld(),playableSize:80},renderer={extensions:{has:()=>false},capabilities:{isWebGL2:true,getMaxAnisotropy:()=>1}};
+ const loader=new EnvironmentLoader({scene:new THREE.Scene(),renderer,serverAuthoritative:()=>true});
+ try{
+  const result=await loader.load(map);assert.equal(result.scale,1,'fitness geometry keeps its authored metre scale even with an old size hint');
+  const server=new ServerBuilderCollision(),browserBounds=new THREE.Box3().setFromObject(result.world.getObjectByName('MUZIKAZ_FITNESS_CENTRE')),serverBounds=new THREE.Box3().setFromObject(server.world(map).root.getObjectByName('MUZIKAZ_FITNESS_CENTRE'));
+  assert.deepEqual(browserBounds.min.toArray(),serverBounds.min.toArray());assert.deepEqual(browserBounds.max.toArray(),serverBounds.max.toArray());
+  for(const station of FITNESS_STATIONS)assert.ok(browserBounds.containsPoint(new THREE.Vector3(station.position.x,station.position.y,station.position.z)),station.kind+' remains inside the rendered gym');
+ }finally{loader.unload();}
 });

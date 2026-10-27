@@ -1,3 +1,4 @@
+import {isPrisonEnvironment} from './prison-config.js';
 import {questCatalog,questPoint} from './quest-catalog.js';
 import {isAircraft} from './aircraft-flight.js';
 import {armedAircraft} from './aircraft-types.js';
@@ -56,7 +57,7 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
  let world=null,snapshot=null,self=null,environment=null,offers=[],selection='',busy=false,mode='offers',result=null,lastMissionKey='',seenResults=new Set(),arrivalShown=false,disposed=false,renderKey='',requestVersion=0;
  const button=(label,run)=>{const node=document.createElement('button');node.type='button';node.textContent=label;node.addEventListener('click',run);return node;};
  const paragraph=(value,className)=>{const node=document.createElement('p');node.textContent=value;if(className)node.className=className;return node;};
- function open({automatic=false,view}={}){if(view)mode=view;const changed=panel.hidden;panel.hidden=false;launcher.setAttribute('aria-expanded','true');if(changed&&!automatic){requestGameInputRelease('quests-open',document);document.exitPointerLock?.();close.focus({preventScroll:true});}render();}
+ function open({automatic=false,view}={}){if(isPrisonEnvironment(environment))return;if(view)mode=view;const changed=panel.hidden;panel.hidden=false;launcher.setAttribute('aria-expanded','true');if(changed&&!automatic){requestGameInputRelease('quests-open',document);document.exitPointerLock?.();close.focus({preventScroll:true});}render();}
  function hide(){if(panel.hidden)return;requestGameInputRelease('quests-close',document);panel.hidden=true;launcher.setAttribute('aria-expanded','false');if(panel.contains(document.activeElement))launcher.focus({preventScroll:true});}
  function setFeedback(value){feedback.textContent=value||'';}
  async function request(operation,fields={}){
@@ -120,6 +121,7 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
  }
  function update(nextSnapshot,selfId,nextEnvironment){
   if(disposed)return;snapshot=nextSnapshot||{};environment=nextEnvironment||{};self=snapshot.players?.[selfId];if(self&&!self.id)self={...self,id:selfId};
+  const prison=isPrisonEnvironment(environment);launcher.hidden=prison;root.hidden=prison;if(prison){hide();return;}
   if(world!==environment.id){world=environment.id;requestVersion++;busy=false;arrivalShown=false;seenResults=new Set();lastMissionKey='';result=null;selection='';mode='offers';setFeedback('');panel.hidden=true;launcher.setAttribute('aria-expanded','false');}
   offers=[...(snapshot.questOffers?.length?snapshot.questOffers:questCatalog(environment))].sort((a,b)=>Number(!!b.siteQuest)-Number(!!a.siteQuest));
   const mission=self?.vehicleMission,missionKey=mission&&(mission.instanceId||mission.questId||mission.startedAt);

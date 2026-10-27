@@ -1,6 +1,10 @@
+import {createWorldItemFactoryLand} from '../world-item-factory-scene.js';
+import {createPrisonLand} from '../prison-world.js';
 import {createFactoryProvingGroundsLand,createMountainCompoundLand} from '../factory-testing-model.js';
 import {createMissileFactoryLand} from '../missile-factory-model.js';
 import {createFitnessLand} from './fitness-land.js';
+import {createTropicalIslandLand} from './tropical-island-land.js';
+import {isTropicalIslandEnvironment} from '../tropical-island-config.js';
 import {createClownFunhouseLand} from './clown-funhouse-land.js';
 import {createCasinoLand} from './casino-land.js';
 import {createSkiResortLand} from './ski-resort-land.js';
@@ -8,7 +12,7 @@ import {createHarborLand} from './harbor-land.js';
 import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
-import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
+import {layoutHeight,layoutSize,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
 import {isCleanSportsEnvironment} from '../sports-worlds.js';
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
@@ -26,6 +30,9 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
+    if(environment.id==='world-item-factory'||environment.builderScene?.layout==='world-item-factory')return createWorldItemFactoryLand(environment);
+    if(isTropicalIslandEnvironment(environment))return createTropicalIslandLand(environment);
+    if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);
     const testingLayout=environment.builderScene?.sourceLayout||environment.builderScene?.layout||environment.layout;
     if(environment.id==='muzikaz-factory-proving-grounds'||testingLayout==='factory-proving-grounds')return createFactoryProvingGroundsLand(environment);
     if(environment.id==='muzikaz-mountain-compound'||testingLayout==='mountain-compound')return createMountainCompoundLand(environment);
@@ -44,7 +51,7 @@ export function createBuilderLand(environment) {
     if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
-    const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,Math.max(40,Math.min(512,Number(built.mapSize)||40)),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
+    const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,layoutSize(built.mapSize),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
     const terrain=new THREE.Mesh(geometry,layout==='firing-range'?createFiringRangeFloorMaterial(built.mapSize):createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;

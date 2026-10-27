@@ -7,6 +7,7 @@ import {WorldAtlas} from '../world-atlas.mjs';
 import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
+import {COMPOUND_ID} from '../public/js/factory-test-config.js';
 
 test('every public explorer world retains walking and jumping after sustained traversal',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'world-traversal-matrix-'));
@@ -27,9 +28,15 @@ test('every public explorer world retains walking and jumping after sustained tr
 
  for(const environment of worlds)await t.test(environment.id,async()=>{
   let now=100000;
-  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,environment.id+'.json')),now:()=>now});
-  const visitor={accountId:'traversal-visitor',username:'Traversal visitor',stats:{health:100}};
+  const visitor={accountId:'traversal-visitor',username:'Traversal visitor',stats:{health:100}},clearance={compound:true,deep:true};
+  // Exercise movement inside the real gated facility as an already-cleared
+  // visitor. Separate authoritative tests retain unauthorized access coverage.
+  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(directory,environment.id+'.json')),now:()=>now,
+   testingAccess:async identity=>{assert.equal(identity.accountId,visitor.accountId);return {...clearance};},
+   testingState:async()=>({session:null,progress:{},clearance:{...clearance}})
+  });
   const joined=await runtime.command(environment.id,environment,visitor,{action:'join',requestId:'join',deferRadTox:true,radToxEnabled:false});
+  if(environment.id===COMPOUND_ID)assert.deepEqual(joined.players[joined.selfId].testing.clearance,clearance,'compound traversal visitor has earned deep access');
   const id=joined.selfId,epoch=joined.result.inputEpoch;
   let previous=joined.players[id].position,travel=0,rise=0,lastSequence=joined.sequence;
   for(let index=0;index<320;index++){

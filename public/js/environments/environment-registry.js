@@ -1,4 +1,3 @@
-import {isTropicalIslandMap} from '../tropical-island-destination.js';
 import { fetchEnvironmentList, fetchEnvironment, deleteEnvironment } from './environment-api.js';
 
 export class EnvironmentRegistry {
@@ -19,7 +18,7 @@ export function normalizeEnvironmentList(records) {
     const modelUrls = Array.isArray(record.modelUrls) && record.modelUrls.length ? record.modelUrls : [record.modelUrl].filter(Boolean);
     return {
       ...record,
-      sharedWorld:!isTropicalIslandMap(record)&&(record.sharedWorld===true||(record.source==='repository'&&record.visibility!=='private'&&record.playable!==false)),
+      sharedWorld:record.sharedWorld===true||(record.source==='repository'&&record.visibility!=='private'&&record.playable!==false),
       modelUrls,
       modelUrl: record.modelUrl || modelUrls[0] || '',
       spawn: { x: 0, y: 1, z: 2, rotationY: 0, ...(record.spawn || {}) },

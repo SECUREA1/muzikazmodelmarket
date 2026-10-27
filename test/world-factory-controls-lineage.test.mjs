@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {UserJsonDatabase} from '../user-json-database.mjs';
+import {WorldSupplyService} from '../server-world-supply.mjs';
+import {SHIPPING_RULES,SHIPPING_ROUTES} from '../public/js/shipping-config.js';
+
+test('pause, resume, split freight reservations and verified stock receipts preserve the exact saved batch',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'factory-trace-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const database=new UserJsonDatabase(join(dir,'users.json')),wallet='account:trace-builder';await database.put(wallet,{tokens:{MZK:100000},items:[]});
+ let now=100000;const maps=[{id:'hormuz-shipping'},{id:'receiving-map'}],options={now:()=>now,maps:async()=>maps},service=new WorldSupplyService(database,options),itemId='tool:scanner';
+ const production=await service.action(wallet,'produce',{itemId,quantity:10,requestId:'build'}),balance=(await database.get(wallet)).tokens.MZK;
+ now=production.stages[0].operations[0].startedAt+100;const pause={productionId:production.id,requestId:'pause'};
+ const paused=await service.action(wallet,'pause',pause);assert.equal(paused.phase,'paused');assert.equal((await service.action(wallet,'pause',pause)).progress,paused.progress);
+ now+=3600000;const reopened=new WorldSupplyService(new UserJsonDatabase(database.file),options);
+ let state=await reopened.state();assert.equal(state.production[0].progress,paused.progress);assert.equal(state.factoryStock[itemId]||0,0);
+ await assert.rejects(reopened.action('account:someone-else','resume',{productionId:production.id,requestId:'steal'}));
+ const resumed=await reopened.action(wallet,'resume',{productionId:production.id,requestId:'resume'});assert.equal(resumed.progress,paused.progress);assert.equal((await database.get(wallet)).tokens.MZK,balance);
+ now=resumed.readyAt;state=await reopened.state();assert.equal(state.factoryStock[itemId],10);assert.equal(state.lots.length,1);assert.equal(state.lots[0].productionId,production.id);
+ assert.match(state.lots[0].packingReceipt.sealHash,/^[a-f0-9]{64}$/);
+ const dispatch=(quantity,id)=>reopened.action(wallet,'dispatch',{itemId,quantity,destinationMapId:'receiving-map',shippingMapId:'hormuz-shipping',contractId:'gulf-gateway',requestId:id});
+ const shipment=await dispatch(6,'ship-six'),cancelled=await dispatch(4,'ship-four');
+ await reopened.action(wallet,'cancel',{shipmentId:cancelled.id,requestId:'return-four'});
+ let trace=await reopened.trace({productionId:production.id});assert.equal(trace.lots[0].availableQuantity,4);assert.equal(trace.shipments.length,2);
+ const environment=maps[0],identity={walletId:wallet},player={shipping:{job:null}},route=SHIPPING_ROUTES.find(route=>route.id==='gulf-gateway'),startedAt=now;
+ await reopened.shippingAction(identity,{},player,environment,{operation:'reserve',shipmentId:shipment.id,contractId:route.id},now);
+ player.shipping.job={id:'verified-voyage',contractId:route.id,environmentId:environment.id,phase:'loading',deadline:now+SHIPPING_RULES.contractLimitMs};
+ await reopened.shippingAction(identity,{},player,environment,{operation:'bind',shipmentId:shipment.id,jobId:player.shipping.job.id},now);
+ now+=120000;const result={type:'delivery',shipmentId:shipment.id,jobId:player.shipping.job.id,deliveryId:player.shipping.job.id,contractId:route.id,cargoId:route.cargoId,units:route.units||4,quality:100,startedAt,departedAt:startedAt+10000,deliveredAt:now};
+ await reopened.deliver(identity,result,environment,now);await reopened.deliver(identity,result,environment,now);
+ trace=await reopened.trace({shipmentId:shipment.id});assert.equal(trace.production[0].id,production.id);assert.equal(trace.stockReceipts.length,1);assert.equal(trace.stockReceipts[0].quantity,6);
+ assert.equal(trace.allocations[0].lots[0].lotId,trace.lots[0].id);
+ state=await reopened.state();assert.equal(state.worldStock[itemId],1000);assert.equal(state.maps.find(map=>map.id==='receiving-map').stock[itemId],6);assert.equal(state.factoryStock[itemId],4);
+});
