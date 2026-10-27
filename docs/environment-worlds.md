@@ -102,3 +102,49 @@ Explicit Builder links resolve their map through `/api/environments/:id` rather
 than racing the full world list against a five-second timeout. Live rooms serve
 cached map metadata immediately while one background directory refresh runs;
 a cold or unknown destination waits for that shared refresh.
+
+### Island Adventure · Tropical Resort
+
+`tropical-island` is a permanent solo resort destination in the same native
+world directory as basketball and the Strait of Hormuz. Its district building,
+atlas entry, saved pins and explorer map picker open
+`tropical-island.html?environment=tropical-island&mode=solo&autoplay=1`.
+The entry carries the dedicated tropical island illustration and remains listed
+when uploaded map lists are empty. Return through `index.html#world-map`.
+
+This map runs its complete resort scene locally in the browser, with unlimited
+exploration of cabanas, beach bars, beach balls, paddle boats and pontoon rides.
+The two-minute duration applies only to each optional fictional drink’s buzz,
+not the visit. End the visit explicitly to see its summary. It does not advertise
+a live multiplayer round or server rewards. Destination selection lives in
+`public/js/tropical-island-destination.js`; the directory and atlas share that
+routing so an ordinary explorer fallback cannot replace the authored resort.
+
+Run `node --test test/tropical-island-destination.test.mjs test/world-directory.test.mjs`
+to verify registration, atlas reachability, native launch URLs, solo metadata,
+search/filter discovery and saved pin routing.
+
+Open `tropical-island.html` through the app or a local HTTP server. The scene
+uses the same bundled Three.js runtime, saved first-person/top-down camera
+preference and RAD-TOX twin-stick controller as the other native games. WASD or
+arrow keys walk/paddle, E/Space interacts, dragging looks around, and V changes
+view. M opens the complete island overview; the map button offers the same view.
+A live minimap and eight passport waypoints guide exploration. Bar visits
+stamp the passport without requiring alcohol; each unique experience gives 100
+local points. Collecting all eight stamps completes the passport goal. The pontoon
+circles the coast automatically; E returns boat riders to their original pier.
+
+The visit clock shows unbounded elapsed time, including menus and hidden tabs.
+Each alcoholic drink independently rises through digestion, adds to camera sway,
+soft focus and double vision, and fully fades 120 seconds after it was consumed.
+New drinks stack their own effects without resetting or extending earlier
+drinks. Waiting 120 seconds after the last alcoholic drink fully clears the buzz
+while exploration continues. Water and mocktails add no alcohol and do not
+instantly sober the player. Ending or restarting the visit clears effects;
+reduced visuals respect the system motion preference and can also be selected
+in settings. This is an accelerated fictional arcade simulation, with
+no real blood-alcohol estimate or persistent economy rewards.
+
+Run `node --test test/tropical-island*.test.mjs` for the map and rules contracts,
+`python3 test/tropical-island.browser.py` for offline desktop/mobile play, and
+`npm run build && npm run check` for the packaged static site.

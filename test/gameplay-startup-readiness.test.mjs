@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {isFishingTool,FISHING_TOOL_IDS} from '../public/js/game-tool-rules.js';
+import {isTropicalIslandMap,tropicalIslandPlayUrl} from '../public/js/tropical-island-destination.js';
 
 const source=readFileSync(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
@@ -18,7 +19,7 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
-  console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
+  console,URL,Promise,queueMicrotask,performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){}},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
@@ -209,6 +210,17 @@ test('native game redirects retain a selected atlas meeting point and play mode'
   assert.equal(destination.searchParams.get('mode'),'solo');
   assert.equal(destination.searchParams.get('meet'),'meet-4-2');
  }
+});
+
+test('the island explorer entry opens the native solo resort before loading a shared room',async()=>{
+ let destination;
+ const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id,game:'tropical-island'})},canonicalWorldId:id=>id,location:{href:'http://localhost/model-explorer.html?mode=multiplayer',assign:url=>{destination=new URL(url);}}});
+ vm.runInContext(loadWorld,context);
+ await context.loadById('tropical-island');
+ assert.equal(destination.pathname,'/tropical-island.html');
+ assert.equal(destination.searchParams.get('environment'),'tropical-island');
+ assert.equal(destination.searchParams.get('mode'),'solo');
+ assert.equal(context.multiplayerWorldLoading,false);
 });
 
 test('choosing multiplayer from a ready solo map validates the current room before changing transport mode',async()=>{

@@ -15,6 +15,7 @@ const requiredFiles = [
   'dist/builder-market.css',
   'dist/environment-builder.js',
   'dist/environment-builder.css',
+  ...['tropical-island.html','public/assets/tropical-island.css','public/images/tropical-island.svg','public/js/tropical-island.js','public/js/tropical-island-world.js','public/js/tropical-island-rules.js','public/js/tropical-island-destination.js'].map(file => `dist/${file}`),
   ...['arcade.html','public/assets/arcade.css','public/images/arcade.svg','public/js/arcade-game.js','public/js/arcade-park.js','public/js/arcade-rules.js','public/js/arcade-runtime.js','public/js/arcade-builder-runtime.js','public/js/arcade-3d-games.js','public/js/arcade-navigation.js','public/js/sports-surfaces.js','public/js/hockey-camera.js','public/js/game-camera.js','public/js/explorer-camera.js','public/assets/sports-surfaces/ice.svg','public/assets/sports-surfaces/wood.svg','public/assets/sports-surfaces/felt.svg','public/assets/sports-surfaces/court.svg','public/assets/sports-surfaces/metal.svg','public/assets/sports-surfaces/paving.svg'].map(file => `dist/${file}`),
   'dist/admin.html',
   'dist/admin.js',
