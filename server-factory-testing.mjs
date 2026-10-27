@@ -51,11 +51,14 @@ function onFoot(player,{allowHeld=false}={}){if(player.health<=0||player.replace
 function stationAt(player,stations,kind,id){const station=id?stations.find(value=>value.id===id&&value.kind===kind):stations.filter(value=>value.kind===kind).find(value=>near(player.position,value.position,value.interactionDistance));if(!station)fail('Walk to an active '+kind.replaceAll('-',' ')+' station.');if(!near(player.position,station.position,station.interactionDistance))fail('Move closer to '+station.name+'.');return station;}
 function assertSession(state,input,environment){const session=state.session;if(!session||session.id!==input.sessionId)fail('This test session is no longer current. Refresh telemetry.');if(session.environmentId!==environment.id)fail('Return to the map where this test was configured.');return session;}
 function matchesItem(actor,player,proof){
+ // Purchased catalogue identities and SKUs repeat across wallets. Another
+ // player's independent display must not block this owner's test or recall.
+ if(actor.ownerId&&actor.ownerId!==player.actorId)return false;
  if(actor.asset?.id===proof.id)return true;
  // Economy deployment can carry the catalog id rather than its owned id.
  // Crafted models retain their distinct instance ids; another owned model of
  // the same design must remain on display when this instance is recalled.
- if(!proof.sku)return false;
+ if(!proof.sku||actor.ownerId!==player.actorId)return false;
  return actor.asset?.sku===proof.sku||actor.asset?.economySku===proof.sku||actor.ownerId===player.actorId&&actor.asset?.id===GAME_ECONOMY.find(item=>item.sku===proof.sku)?.id&&actor.asset?.buildAssetId===proof.buildAssetId;
 }
 function itemInWorld(sim,player,proof){return Object.values(sim.actors||{}).some(actor=>actor.active!==false&&(actor.health===undefined||actor.health>0)&&!actor.testingSessionId&&matchesItem(actor,player,proof));}

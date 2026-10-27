@@ -6,9 +6,16 @@ import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
 // equipment. Only trusted catalog metadata selects a recipe; saved/requested
 // recipe names, durations and container capacities are never read from items.
 const watercraft=new Set(['harbor-skiff','harbor-sailboat','harbor-yacht','harbor-patrol','harbor-fishing-boat',...Object.keys(SHIPPING_VESSELS)]);
+const rocketCollectibles=new Set(['factory-training-missile','factory-cargo-rocket']);
 const phaseIds=['sourcing','assembly','quality','packing'];
 const recipe=(id,name,description,unitsPerContainer,unitBuildMs,minimumBuildMs,phases,weights=[20,45,20,15])=>Object.freeze({id,name,description,unitsPerContainer,unitBuildMs,minimumBuildMs,stages:Object.freeze(phases.map(([name,description],index)=>Object.freeze({id:phaseIds[index],name,description,weight:weights[index]})))});
 const recipes={
+ rocketCollectibles:recipe('rocket-collectibles','Rocket model assembly','Assemble fictional display modules, verify their game presentation and secure each collectible individually.',1,8000,16000,[
+  ['Stage display modules','Prepare the catalog collectible sections and display fixtures.'],
+  ['Assemble collectible models','Fit the fictional model sections and their game display cradles.'],
+  ['Verify collectible configuration','Check the game scale, appearance and configured display animation.'],
+  ['Crate models individually','Secure one complete collectible and its cradle in each freight container.']
+ ],[20,40,30,10]),
  materials:recipe('materials','Material processing','Prepare, form and grade construction materials before palletizing them.',1000,10,8000,[
   ['Source feedstock','Collect the catalog material inputs and prepare the processing line.'],
   ['Form material pieces','Process and form the batch into matching construction pieces.'],
@@ -88,6 +95,7 @@ const includes=(values,choices)=>values.some(value=>choices.includes(value));
 export function worldFactoryRecipe(item={}){
  item ||= {};
  const id=lower(item.buildAssetId||item.modelId||''),kind=lower(item.kind),types=[item.assetType,item.type].map(lower),categories=[item.category,item.builderCategory].map(lower),behavior=lower(item.behavior||item.function_data?.behavior),mode=lower(item.vehicleSettings?.mode||item.function_data?.vehicleMode||item.action||item.function_data?.action);
+ if(rocketCollectibles.has(id))return recipes.rocketCollectibles;
  if(kind==='material'||item.materialId)return recipes.materials;
  if(kind==='care'||String(item.sku||item.supplyId||'').startsWith('care:')||item.effect&&typeof item.effect==='object')return recipes.care;
  if(kind==='tool'||item.toolId||includes(types,['tool','tools']))return recipes.tools;
