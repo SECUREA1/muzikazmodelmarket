@@ -1,3 +1,4 @@
+import {funhouseRideCue} from '../funhouse-experience-rules.js';
 import * as T from '../../vendor/three/three.module.min.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import {createCreepyClownFace} from '../creepy-clown-face.js';
@@ -14,7 +15,12 @@ export function createClownFunhouseLand(environment={}) {
  const lamp=material('#ffe7a0',{emissive:'#ffd269',emissiveIntensity:1.4}),pink=material('#ef5cbd',{emissive:'#c53490',emissiveIntensity:.6}),cyan=material('#56d9e8',{emissive:'#37b8ce',emissiveIntensity:.6}),mirror=material('#8cabb5',{metalness:1,roughness:.14,emissive:'#204454',emissiveIntensity:.2});
  const clownPallor=material('#e7e4dc'),clownCrimson=material('#68152f'),clownPlum=material('#30162e'),clownInk=material('#18111e'),clownIvory=material('#f8edd2'),clownIris=material('#e4b96e',{emissive:'#9a452f',emissiveIntensity:.18});
  const clownFaceMaterials={pallor:clownPallor,ink:clownInk,crimson:clownCrimson,ivory:clownIvory,iris:clownIris};
- const animations=[],targets=[],jackPops=[],performers=[],balloons=[],bulbs=[],bursts=[];
+ const animations=[],targets=[],jackPops=[],performers=[],balloons=[],bulbs=[],bursts=[],interactionTargets=[],ballTargets=[],tossBalls=[];
+ const rideAnchors={},balanceControls=[];
+ let hornCue=null;
+ let galleryRoot=null,splashRay=null,tossRay=null;
+ let experienceState={},experienceTime=0,experienceReceivedAt=0,ballTarget=-1,tossTargetId=0,tossUntil=-1;
+ const liveLabels={};
  let lastTime=0,spinnerUntil=-1,carUntil=-1,jackUntil=-1,splashUntil=-1,ballUntil=-1,dressUntil=-1,activeTarget=-1,splashTargetId=0;
  const timed=new Map(),stations=new Map(),seenEffects=new Map();
  const ballMats=[red,yellow,blue,mint,pink,cream],passengers=[];
@@ -24,6 +30,30 @@ export function createClownFunhouseLand(environment={}) {
  const cylinder=(parent,name,x,y,z,r,h,mat,solid=false,segments=24)=>mesh(parent,new T.CylinderGeometry(r,r,h,segments),mat,name,x,y,z,solid);
  const sphere=(parent,name,x,y,z,r,mat)=>mesh(parent,new T.SphereGeometry(r,16,12),mat,name,x,y,z);
  function group(parent,name,x=0,z=0,y=0){const node=new T.Group();node.name=name;node.position.set(x,y,z);parent.add(node);return node;}
+ function action(node,{id,stationId,kind,operation,targetId,radius=.45,offset={x:0,y:0,z:0}}){
+  const descriptor={id,stationId,kind,operation,...(targetId!==undefined?{targetId}:{}),root:node,radius,offset};
+  node.userData.funhouseAction={id,stationId,kind,operation,...(targetId!==undefined?{targetId}:{})};node.userData.dynamicDecoration=true;
+  interactionTargets.push(descriptor);return node;
+ }
+ function control(parent,name,x,y,z,text,stationId,kind,operation,mat=cyan){
+  const panel=box(parent,name,x,y,z,1.2,.64,.08,mat);action(panel,{id:name,stationId,kind,operation,radius:.48});
+  sign(parent,text,x,y,z+.05,1.1,.42);return panel;
+ }
+ function liveSign(kind,parent,x,y,z,w,h,title){const face=sign(parent,title,x,y,z,w,h);face.userData.funhouseStatus='';liveLabels[kind]=face;return face;}
+ function updateLiveSign(kind,title,subtitle=''){
+  const face=liveLabels[kind];if(!face)return;const key=title+'|'+subtitle;if(face.userData.funhouseStatus===key)return;face.userData.funhouseStatus=key;
+  const map=face.material.map,canvas=map?.image,ctx=canvas?.getContext?.('2d');if(!ctx)return;
+  ctx.fillStyle='#191425';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#8adfcc';ctx.lineWidth=8;ctx.strokeRect(8,8,canvas.width-16,canvas.height-16);ctx.textAlign='center';ctx.fillStyle='#fff0c8';ctx.font='bold 70px system-ui';ctx.fillText(title,canvas.width/2,subtitle?115:157,canvas.width-50);if(subtitle){ctx.fillStyle='#8debe1';ctx.font='36px system-ui';ctx.fillText(subtitle,canvas.width/2,196,canvas.width-50);}map.needsUpdate=true;
+ }
+ function localRay(parent,result,distance=12){
+  const source=result?.origin,direction=result?.direction;if(!source||!Array.isArray(direction)||direction.length!==3)return null;
+  const origin=Array.isArray(source)?new T.Vector3(...source):new T.Vector3(Number(source.x),Number(source.y),Number(source.z)),aim=new T.Vector3(...direction);if(![...origin,...aim].every(Number.isFinite)||aim.lengthSq()<.001)return null;
+  aim.normalize();root.updateWorldMatrix(true,true);const cast=new T.Raycaster(origin,aim,.02,distance),hit=cast.intersectObject(root,true).find(value=>{
+   for(let node=value.object;node;node=node.parent)if(node.visible===false||node.userData.collisionDisabled===true)return false;
+   return [].concat(value.object.material||[]).some(material=>material?.visible!==false);
+  });
+  const end=origin.clone().addScaledVector(aim,hit?.distance||distance);return {origin:parent.worldToLocal(origin.clone()),end:parent.worldToLocal(end)};
+ }
  function texture(width,height,paint){if(typeof document==='undefined')return null;const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d');if(!ctx)return null;paint(ctx,width,height);const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return map;}
  function sign(parent,text,x,y,z,w=5,h=.8,sub='',color='#f4dfae',rotation=0){
   const map=texture(1024,256,(ctx,W,H)=>{ctx.fillStyle='#191425';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#cfa34f';ctx.lineWidth=9;ctx.strokeRect(10,10,W-20,H-20);ctx.textAlign='center';ctx.fillStyle=color;ctx.font='bold '+(sub?72:90)+'px Georgia,serif';ctx.fillText(text,W/2,sub?119:155,W-60);if(sub){ctx.font='29px system-ui,sans-serif';ctx.fillStyle='#d0bfcc';ctx.fillText(sub,W/2,194,W-65);}});
@@ -37,7 +67,7 @@ export function createClownFunhouseLand(environment={}) {
  function floorInlay(text,x,z,w=6,color='#e7c878') {const map=texture(1024,160,(ctx,W,H)=>{ctx.clearRect(0,0,W,H);ctx.fillStyle=color;ctx.textAlign='center';ctx.font='bold 68px Georgia';ctx.fillText(text,W/2,109,W-20);});const plane=mesh(root,new T.PlaneGeometry(w,1),new T.MeshBasicMaterial({map,color:map?'#ffffff':color,transparent:true,depthWrite:false}),'FUNHOUSE_FLOOR_LABEL_'+text,x,.035,z);plane.rotation.x=-Math.PI/2;}
 
  function waterGun(parent,x,y,z,rotation=0){const gun=group(parent,'FUNHOUSE_WATER_GUN',x,z,y);gun.rotation.y=rotation;box(gun,'FUNHOUSE_WATER_GUN_BODY',0,0,0,.29,.35,.76,mint);const barrel=cylinder(gun,'FUNHOUSE_WATER_GUN_BARREL',0,.04,-.62,.11,.6,blue);barrel.rotation.x=Math.PI/2;cylinder(gun,'FUNHOUSE_WATER_GUN_NOZZLE',0,.04,-.95,.07,.12,yellow).rotation.x=Math.PI/2;box(gun,'FUNHOUSE_WATER_GUN_GRIP',0,-.26,.16,.16,.44,.21,red);sphere(gun,'FUNHOUSE_WATER_GUN_TANK',0,.25,.16,.24,cyan);torus(gun,'FUNHOUSE_WATER_GUN_TRIGGER',0,-.22,-.18,.14,.025,yellow,Math.PI/2);return gun;}
- function jackBox(x,z,index){const base=group(root,'FUNHOUSE_JACK_IN_THE_BOX_'+index,x,z);stripedBox(base,'FUNHOUSE_JACK_BOX',0,1.2,0,2.9,2.4,2.9);for(const dx of [-1.5,1.5])for(const dz of [-1.5,1.5])cylinder(base,'FUNHOUSE_JACK_BOX_CORNER',dx,1.25,dz,.09,2.5,yellow);const lid=group(base,'FUNHOUSE_JACK_LID',0,-1.5,2.45);box(lid,'FUNHOUSE_JACK_LID_PANEL',0,0,1.5,3.1,.17,3.1,blue);const arm=cylinder(base,'FUNHOUSE_JACK_CRANK_STEM',1.75,1.15,0,.06,.6,steel);arm.rotation.z=Math.PI/2;box(base,'FUNHOUSE_JACK_CRANK',2.03,1.45,0,.07,.65,.08,steel);sphere(base,'FUNHOUSE_JACK_CRANK_HANDLE',2.05,1.8,0,.14,red);const surprise=clown(base,'FUNHOUSE_POPUP_CLOWN_'+index,0,0,.95,index%2?blue:plum);surprise.position.y=1.2;const spring=mesh(base,new T.TubeGeometry(new T.CatmullRomCurve3(Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*12;return new T.Vector3(Math.cos(a)*.32,2+i/64*1.8,Math.sin(a)*.32);})),64,.05,6,false),steel,'FUNHOUSE_JACK_SPRING');spring.visible=false;spring.userData.dynamicDecoration=true;surprise.visible=false;jackPops.push({base,lid,surprise,spring});return base;}
+ function jackBox(x,z,index){const base=group(root,'FUNHOUSE_JACK_IN_THE_BOX_'+index,x,z);stripedBox(base,'FUNHOUSE_JACK_BOX',0,1.2,0,2.9,2.4,2.9);for(const dx of [-1.5,1.5])for(const dz of [-1.5,1.5])cylinder(base,'FUNHOUSE_JACK_BOX_CORNER',dx,1.25,dz,.09,2.5,yellow);const lid=group(base,'FUNHOUSE_JACK_LID',0,-1.5,2.45);box(lid,'FUNHOUSE_JACK_LID_PANEL',0,0,1.5,3.1,.17,3.1,blue);const crank=group(base,'FUNHOUSE_JACK_CRANK_ASSEMBLY',0,1.75,1.15);const arm=cylinder(crank,'FUNHOUSE_JACK_CRANK_STEM',0,0,0,.06,.6,steel);arm.rotation.x=Math.PI/2;box(crank,'FUNHOUSE_JACK_CRANK',.28,.3,.3,.07,.65,.08,steel);const handle=sphere(crank,'FUNHOUSE_JACK_CRANK_HANDLE',.3,.65,.3,.14,red);action(handle,{id:'jack-wind-'+index,stationId:'funhouse-jack-box',kind:'jackbox',operation:'wind',radius:.5});const surprise=clown(base,'FUNHOUSE_POPUP_CLOWN_'+index,0,0,.95,index%2?blue:plum);surprise.position.y=1.2;action(surprise,{id:'jack-catch-'+index,stationId:'funhouse-jack-box',kind:'jackbox',operation:'catch',radius:.75,offset:{x:0,y:2.1,z:0}});const spring=mesh(base,new T.TubeGeometry(new T.CatmullRomCurve3(Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*12;return new T.Vector3(Math.cos(a)*.32,2+i/64*1.8,Math.sin(a)*.32);})),64,.05,6,false),steel,'FUNHOUSE_JACK_SPRING');spring.visible=false;spring.userData.dynamicDecoration=true;surprise.visible=false;jackPops.push({base,lid,surprise,spring,crank});return base;}
  function stall(name,x,z,frontMat,label,sub){const g=group(root,name,x,z);stripedBox(g,'FUNHOUSE_MIDWAY_STALL',0,1.2,0,7,2.4,3.6);box(g,'FUNHOUSE_STALL_COUNTER',0,2.45,2,7.8,.18,1,wood,true);for(const dx of [-3.6,3.6])cylinder(g,'FUNHOUSE_STALL_POLE',dx,3,1.8,.09,6,yellow,true);mesh(g,new T.ConeGeometry(5.3,2.5,4),frontMat,'FUNHOUSE_STALL_ROOF',0,6.3,0).rotation.y=Math.PI/4;sign(g,label,0,4.2,2.15,7.7,1.5,sub);return g;}
  function balloonBunch(x,z){const g=group(root,'FUNHOUSE_BALLOON_BUNCH',x,z);cylinder(g,'FUNHOUSE_BALLOON_WEIGHT',0,.14,0,.24,.28,yellow,true);for(let i=0;i<5;i++){const a=i*2.4,dx=Math.cos(a)*.65,dz=Math.sin(a)*.55,h=3.1+(i%3)*.45;line(g,'FUNHOUSE_BALLOON_STRING',[[0,.2,0],[dx*.4,h*.5,dz*.4],[dx,h,dz]],cream);const b=sphere(g,'FUNHOUSE_HELIUM_BALLOON',dx,h+.4,dz,.46,ballMats[i]);b.scale.set(.85,1.2,.85);b.userData.dynamicDecoration=true;animations.push(t=>b.position.x=dx+Math.sin(t*.65+i)*.08);}}
  function bunting(x1,z1,x2,z2,y){const points=[];for(let i=0;i<=16;i++){const f=i/16;points.push([x1+(x2-x1)*f,y-Math.sin(f*Math.PI)*1.15,z1+(z2-z1)*f]);}line(root,'FUNHOUSE_BUNTING_CABLE',points,black);for(let i=1;i<16;i++){const f=i/16,x=x1+(x2-x1)*f,z=z1+(z2-z1)*f,h=y-Math.sin(f*Math.PI)*1.15;const flag=mesh(root,new T.ConeGeometry(.42,.8,3),ballMats[i%ballMats.length],'FUNHOUSE_BUNTING_FLAG',x,h-.35,z);flag.rotation.z=Math.PI;flag.scale.z=.06;bulb(root,x,h+.08,z,i%2?lamp:pink,.075);}}
@@ -109,6 +139,7 @@ export function createClownFunhouseLand(environment={}) {
  }
  sign(root,'CROOKED MIRRORS',-13.5,4.4,-13.8,15,1.2,'FIND THE EXIT BELL');
  sign(root,'MONSTER PLAYROOM',13.5,4.4,-13.8,15,1.2,'NOTHING HERE BITES… MUCH');
+ control(root,'FUNHOUSE_MAZE_START_BUTTON',-8,1.35,-19,'START MAZE','funhouse-mirror-maze','mirrors','start',cyan);
  }
  if(full)sign(root,'THIS WAY… MAYBE',-13,2.7,-23.76,8,.8,'RIGHT AROUND THE MIRRORS','#76e3e1');
  if(full)sign(root,'KEEP LAUGHING',-13,2.7,-32.76,8,.8,'LEFT, THEN TOWARD THE BELL','#76e3e1');
@@ -116,7 +147,9 @@ export function createClownFunhouseLand(environment={}) {
  sign(root,'THE EXIT BELL',-18,3.8,-43.7,8,1,'YOU MADE IT!','#ffe2a2');
  bell=group(root,'FUNHOUSE_MAZE_EXIT_BELL',-18,-41.8);
  cylinder(bell,'FUNHOUSE_BELL_POST',0,1.5,0,.12,3,red,true);box(bell,'FUNHOUSE_BELL_ARM',0,3,0,2,.14,.2,yellow);
- mesh(bell,new T.CylinderGeometry(.26,.52,.7,16,1,true),yellow,'FUNHOUSE_EXIT_BELL',.6,2.7,0);sphere(bell,'FUNHOUSE_BELL_CLAPPER',.6,2.3,0,.12,steel);
+ const bellBody=mesh(bell,new T.CylinderGeometry(.26,.52,.7,16,1,true),yellow,'FUNHOUSE_EXIT_BELL',.6,2.7,0);sphere(bell,'FUNHOUSE_BELL_CLAPPER',.6,2.3,0,.12,steel);
+ action(bellBody,{id:'maze-exit-bell',stationId:'funhouse-maze-finish',kind:'maze-finish',operation:'ring',radius:.7});
+ sign(bell,'RING TO FINISH',0,1.6,.18,3,.6,'AIM + USE / TRIGGER');
  stations.set('funhouse-maze-finish',bell);
 
  }
@@ -153,9 +186,10 @@ export function createClownFunhouseLand(environment={}) {
  if(part('funhouse-water-gallery')||assetId==='funhouse-clown-target') {
  // The water gallery has real squirt-gun models, clown targets and splash jets.
  const gallery=group(root,'FUNHOUSE_WATER_GALLERY',-30,3);
+ galleryRoot=gallery;
  if(part('funhouse-water-gallery')){
- stripedBox(gallery,'FUNHOUSE_GALLERY_COUNTER',0,1.05,4.5,17,2.1,1.4);
- box(gallery,'FUNHOUSE_GALLERY_COUNTER_TOP',0,2.15,4.5,17.6,.16,1.7,wood,true);
+ stripedBox(gallery,'FUNHOUSE_GALLERY_COUNTER',0,.6,4.5,17,1.2,1.4);
+ box(gallery,'FUNHOUSE_GALLERY_COUNTER_TOP',0,1.25,4.5,17.6,.16,1.7,wood,true);
  box(gallery,'FUNHOUSE_GALLERY_BACKDROP',0,2.4,-.3,19,4.8,.35,blue,true);
  for(const x of [-9.5,9.5]){cylinder(gallery,'FUNHOUSE_GALLERY_POLE',x,3,2,.14,6,red,true);cylinder(gallery,'FUNHOUSE_GALLERY_POLE_RING',x,1.4,2,.2,.28,cream);}
  box(gallery,'FUNHOUSE_GALLERY_CANOPY',0,5.7,1.8,20,.35,8,plum);
@@ -163,7 +197,7 @@ export function createClownFunhouseLand(environment={}) {
  sign(gallery,'SPLASH THE CLOWNS',0,5.1,5.95,18,1.6,'WATER GUNS • HIT THE MOVING TARGETS','#a0f5f0');
  for(let x=-9;x<=9;x+=.65)bulb(gallery,x,6.08,5.98);
 
- for(const x of [-5,0,5]){cylinder(gallery,'FUNHOUSE_SQUIRTER_MOUNT',x,2.36,4.5,.14,.35,steel);waterGun(gallery,x,2.63,4.5);}
+ for(const x of [-5,0,5]){cylinder(gallery,'FUNHOUSE_SQUIRTER_MOUNT',x,1.39,4.5,.14,.35,steel);waterGun(gallery,x,1.63,4.5);}
  }
  for(let i=0;i<6;i++){
   if(assetId==='funhouse-clown-target'&&i!==0)continue;
@@ -173,13 +207,17 @@ export function createClownFunhouseLand(environment={}) {
   const cap=mesh(target,new T.ConeGeometry(.48,.7,12),i%2?blue:yellow,'FUNHOUSE_TARGET_HAT',0,1.3,-.03);sphere(target,'FUNHOUSE_TARGET_HAT_BOBBLE',0,1.7,-.03,.12,lamp);
   cylinder(target,'FUNHOUSE_TARGET_STEM',0,-.6,-.03,.06,1.6,steel);
   const highlight=torus(target,'FUNHOUSE_TARGET_HIGHLIGHT',0,.48,.01,.96,.045,cyan);highlight.visible=false;highlight.userData.dynamicDecoration=true;
-  target.userData.baseY=target.position.y;targets.push({id:i,position:{x:-30+x,y:target.position.y+.5,z:3},root:target,highlight});
+  target.userData.baseY=target.position.y;targets.push({id:i,position:{x:-30+x,y:target.position.y+.5,z:3},root:target,highlight,radius:.8});
+  action(target,{id:'water-target-'+i,stationId:'funhouse-water-gallery',kind:'water',operation:'squirt',targetId:i,radius:.8,offset:{x:0,y:.45,z:0}});
  }
  if(part('funhouse-water-gallery')){
  const jetMaterial=new T.MeshBasicMaterial({color:'#8ceeff',transparent:true,opacity:.76});
- for(let i=0;i<15;i++){const jet=sphere(gallery,'FUNHOUSE_WATER_JET',0,2.65,4.1,.07,jetMaterial);jet.visible=false;jet.userData.dynamicDecoration=true;bursts.push(jet);}
+ for(let i=0;i<15;i++){const jet=sphere(gallery,'FUNHOUSE_WATER_JET',0,1.65,4.1,.07,jetMaterial);jet.visible=false;jet.userData.dynamicDecoration=true;bursts.push(jet);}
  stations.set('funhouse-water-gallery',gallery);
  floorInlay('WATER-GUN GALLERY',-30,15,13,'#80e3e5');
+ control(gallery,'FUNHOUSE_GALLERY_START_BUTTON',-5,1.3,8.4,'START SPLASH','funhouse-water-gallery','water','start',cyan);
+ sign(gallery,'AIM AT THE GLOWING CLOWN',0,3.1,8.7,12,.8,'CLICK / TRIGGER TO SPLASH');
+ liveSign('water',gallery,0,4.35,.18,8,.9,'SPLASH THE CLOWNS');
  }
 
  }
@@ -205,11 +243,17 @@ export function createClownFunhouseLand(environment={}) {
  for(const x of [-1.08,1.08])cylinder(car,'FUNHOUSE_CLOWN_CAR_WINDSCREEN_POST',x,1.9,-.42,.035,1.1,steel);
  const glass=box(car,'FUNHOUSE_CLOWN_CAR_WINDSCREEN',0,1.96,-.42,2.1,.9,.04,new T.MeshPhysicalMaterial({color:'#98e5e4',transparent:true,opacity:.28,roughness:.1,metalness:0}));
  const steering=torus(car,'FUNHOUSE_CLOWN_CAR_STEERING_WHEEL',-.65,1.82,-.21,.3,.04,steel,.5);cylinder(car,'FUNHOUSE_CLOWN_CAR_STEERING_COLUMN',-.65,1.5,-.25,.04,.65,steel);
- const horn=cylinder(car,'FUNHOUSE_CLOWN_CAR_HORN',1.17,1.6,-.9,.16,.42,yellow);horn.rotation.z=Math.PI/2;sphere(car,'FUNHOUSE_CLOWN_CAR_HORN_BULB',.95,1.6,-.9,.19,black);
+ const dashHorn=sphere(car,'FUNHOUSE_CLOWN_CAR_DASH_HORN',-.65,1.75,-.12,.15,red);action(dashHorn,{id:'clown-car-dash-horn',stationId:'funhouse-clown-car',kind:'car',operation:'honk',radius:.24});
+ hornCue=torus(car,'FUNHOUSE_CLOWN_CAR_HORN_CUE',-.65,1.75,-.1,.23,.035,cyan);hornCue.visible=false;hornCue.userData.dynamicDecoration=true;
+ const horn=cylinder(car,'FUNHOUSE_CLOWN_CAR_HORN',1.17,1.6,-.9,.16,.42,yellow);horn.rotation.z=Math.PI/2;const hornBulb=sphere(car,'FUNHOUSE_CLOWN_CAR_HORN_BULB',.95,1.6,-.9,.19,black);
+ action(hornBulb,{id:'clown-car-horn',stationId:'funhouse-clown-car',kind:'car',operation:'honk',radius:.42});
  sign(car,'HONK!',0,.8,-2.19,1.1,.4,'','#251b32');
  propellerHat(car,0,2.12,.65,1.2);
+ liveSign('car',car,0,1.57,-.33,1.9,.36,'HONK ON THE CUE');
  for(let i=0;i<5;i++){const p=clown(court,'FUNHOUSE_CAR_SURPRISE_CLOWN_'+i,(i-2)*1.4,-3.8,.72,i%2?blue:plum);p.visible=false;passengers.push(p);}
  sign(root,'IMPOSSIBLE CLOWN CAR',28,4.6,19.1,14,1.5,'HOW MANY CLOWNS FIT INSIDE?');
+ control(court,'FUNHOUSE_CAR_BOARD_BUTTON',-4,1.3,2.6,'TAKE A SEAT','funhouse-clown-car','car','ride',yellow);
+ rideAnchors.car={stationId:'funhouse-clown-car',kind:'car',root:car,feetOffset:{x:-.65,y:.6,z:.55},eyeHeight:1.15,exit:{x:24,y:.02,z:28}};
  stations.set('funhouse-clown-car',court);
 
  }
@@ -221,9 +265,11 @@ export function createClownFunhouseLand(environment={}) {
  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;bulb(spinner,Math.cos(a)*7.1,.15,Math.sin(a)*7.1,i%2?cyan:pink,.12);}
  cylinder(spinner,'FUNHOUSE_SPINNER_CENTRE',0,1.7,0,.45,3.4,red,true);
  spinning=group(spinner,'FUNHOUSE_SPINNER_TURNTABLE',0,0,2.9);
- for(let i=0;i<6;i++){const a=i/6*Math.PI*2,arm=box(spinning,'FUNHOUSE_SPINNER_ARM',Math.cos(a)*2.5,0,Math.sin(a)*2.5,5,.14,.18,i%2?yellow:mint);arm.rotation.y=-a;const cup=group(spinning,'FUNHOUSE_SPINNER_CUP',Math.cos(a)*4.8,Math.sin(a)*4.8,-1.9);cylinder(cup,'FUNHOUSE_SPINNER_CUP_BODY',0,0,0,.7,.8,i%2?red:blue);torus(cup,'FUNHOUSE_SPINNER_CUP_RIM',0,.42,0,.69,.06,yellow,Math.PI/2);sphere(cup,'FUNHOUSE_SPINNER_CUP_SEAT',0,.05,0,.4,plum);}
+ for(let i=0;i<6;i++){const a=i/6*Math.PI*2,arm=box(spinning,'FUNHOUSE_SPINNER_ARM',Math.cos(a)*2.5,0,Math.sin(a)*2.5,5,.14,.18,i%2?yellow:mint);arm.rotation.y=-a;const cup=group(spinning,'FUNHOUSE_SPINNER_CUP',Math.cos(a)*4.8,Math.sin(a)*4.8,-1.9);cylinder(cup,'FUNHOUSE_SPINNER_CUP_BODY',0,0,0,.7,.8,i%2?red:blue);torus(cup,'FUNHOUSE_SPINNER_CUP_RIM',0,.42,0,.69,.06,yellow,Math.PI/2);sphere(cup,'FUNHOUSE_SPINNER_CUP_SEAT',0,.05,0,.4,plum);if(i===0){rideAnchors.spinner={stationId:'funhouse-spinner',kind:'spinner',root:cup,feetOffset:{x:0,y:-.6,z:0},eyeHeight:1.15,exit:{x:24,y:.02,z:2}};action(cup,{id:'spinner-seat',stationId:'funhouse-spinner',kind:'spinner',operation:'ride',radius:.85,offset:{x:0,y:.15,z:0}});for(let side=0;side<2;side++){const handle=sphere(cup,'FUNHOUSE_SPINNER_BALANCE_HANDLE_'+side,-.5,.55,side?-.42:.42,.13,side?pink:cyan);action(handle,{id:'spinner-balance-'+side,stationId:'funhouse-spinner',kind:'spinner',operation:'balance',targetId:side,radius:.22});const highlight=torus(cup,'FUNHOUSE_SPINNER_BALANCE_CUE',-.49,.55,side?-.42:.42,.21,.035,lamp);highlight.rotation.y=Math.PI/2;highlight.visible=false;highlight.userData.dynamicDecoration=true;balanceControls.push({targetId:side,root:handle,highlight});}}}
  const spinnerHat=propellerHat(spinner,0,3.3,0,4.3);
  sign(root,'DIZZY HAT SPINNER',28,5.2,4,15,1.5,'A LITTLE SPIN • A LOT OF LAUGHTER');
+ control(spinner,'FUNHOUSE_SPINNER_BOARD_BUTTON',-4,1.3,5.6,'RIDE SPINNER','funhouse-spinner','spinner','ride',cyan);
+ liveSign('spinner',spinner,-4,2.1,5.6,3.8,.62,'TAKE A GENTLE SPIN');
  stations.set('funhouse-spinner',spinner);
 
  }
@@ -243,6 +289,8 @@ export function createClownFunhouseLand(environment={}) {
  shoe(dress,-2.6,.06,1.6,2.4,red);shoe(dress,2.6,.06,1.6,2.4,yellow);
  for(let i=0;i<4;i++){const x=-6+i*4;box(dress,'FUNHOUSE_HANGING_BOWTIE',x,3.4,-2.45,1.2,.5,.12,i%2?blue:red);sphere(dress,'FUNHOUSE_BOWTIE_KNOT',x,3.4,-2.27,.18,yellow);}
  dressClown=clown(dress,'FUNHOUSE_COSTUME_ASSISTANT',9.6,1.4,1.1,blue);
+ control(dress,'FUNHOUSE_DRESS_HAT_BUTTON',-.85,1.3,4.8,'TRY HAT','funhouse-dressup','dressup','hat',yellow);
+ control(dress,'FUNHOUSE_DRESS_SHOES_BUTTON',.85,1.3,4.8,'BIG SHOES','funhouse-dressup','dressup','shoes',pink);
  stations.set('funhouse-dressup',dress);
 
  }
@@ -253,7 +301,19 @@ export function createClownFunhouseLand(environment={}) {
  torus(pit,'FUNHOUSE_BALL_PIT_SOFT_RIM',0,.4,0,4.45,.35,mint,Math.PI/2);
  for(let i=0;i<110;i++){const a=i*2.399963,r=Math.sqrt((i+.5)/110)*3.9,x=Math.cos(a)*r,z=Math.sin(a)*r;const b=sphere(pit,'FUNHOUSE_BALL_PIT_BALL',x,.23+(i%3)*.12,z,.29,ballMats[i%ballMats.length]);b.userData.baseY=b.position.y;b.userData.dynamicDecoration=true;balloons.push(b);}
  for(const side of [-1,1]){const eye=sphere(pit,'FUNHOUSE_BALL_PIT_MONSTER_EYE',side*1.7,1.4,-4.2,.75,cream);sphere(pit,'FUNHOUSE_BALL_PIT_MONSTER_PUPIL',side*1.7,1.43,-3.5,.31,black);}
- sign(root,'MONSTER BALL PIT',13,3.4,-18,12,1.1,'BOUNCE INTO A SEA OF COLOUR');
+ const hoopMaterials=[red,yellow,cyan,plum];
+ for(let i=0;i<4;i++){
+  const target=group(pit,'FUNHOUSE_BALL_TOSS_TARGET_'+i,[-2.4,-.8,.8,2.4][i],-1.6,[1.1,1.4,1.4,1.1][i]);
+  torus(target,'FUNHOUSE_BALL_TOSS_HOOP',0,0,0,.48,.07,hoopMaterials[i]);
+  cylinder(target,'FUNHOUSE_BALL_TOSS_POST',0,-.6,0,.04,1.2,yellow);
+  const highlight=torus(target,'FUNHOUSE_BALL_TOSS_HIGHLIGHT',0,0,.02,.62,.045,cyan);highlight.visible=false;highlight.userData.dynamicDecoration=true;
+  action(target,{id:'ball-toss-'+i,stationId:'funhouse-ball-pit',kind:'ballpit',operation:'toss',targetId:i,radius:.58});
+  ballTargets.push({id:i,root:target,highlight});
+ }
+ const thrown=sphere(pit,'FUNHOUSE_THROWN_CARNIVAL_BALL',-4,1.2,2.5,.2,yellow);thrown.visible=false;thrown.userData.dynamicDecoration=true;tossBalls.push({root:thrown,parent:pit});
+ control(pit,'FUNHOUSE_BALL_PIT_START_BUTTON',-4,1.3,2.1,'START TOSS','funhouse-ball-pit','ballpit','start',yellow);
+ liveSign('ballpit',pit,0,2.7,-2.9,6,.7,'FOLLOW THE LIT HOOP');
+ sign(root,'MONSTER BALL PIT',13,3.4,-18,12,1.1,'START • AIM AT THE LIT HOOP • TOSS');
  stations.set('funhouse-ball-pit',pit);
 
  }
@@ -261,7 +321,9 @@ export function createClownFunhouseLand(environment={}) {
  // Hand-cranked jack-in-the-boxes use a spring and a hinged lid.
 
  jackBox(16,-38,0);if(full)jackBox(20,-29,1);
- sign(root,'JACK IN THE FRIGHT BOX',14,4.2,-43.7,15,1.4,'TURN THE HANDLE… IF YOU DARE');
+ sign(root,'JACK IN THE FRIGHT BOX',14,4.2,-43.7,15,1.4,'WIND THREE TIMES • CATCH THE CLOWN');
+ control(root,'FUNHOUSE_JACK_START_BUTTON',14,1.3,-36.65,'START FRIGHT','funhouse-jack-box','jackbox','start',pink);
+ liveSign('jackbox',root,14,2.2,-36.65,3.8,.65,'WIND THE HANDLE');
  stations.set('funhouse-jack-box',jackPops[0].base);
 
  }
@@ -316,23 +378,37 @@ export function createClownFunhouseLand(environment={}) {
  function splashTarget(id){const i=typeof id==='number'?id:Number(String(id).replace(/^clown-/,'')),target=targets[i];if(target){timed.set(target.id,lastTime+1);splashTargetId=i;}splashUntil=lastTime+.65;}
  root.userData.funhouseStations=stations;
  root.userData.funhouseTargets=targets;
+ root.userData.funhouseInteractionTargets=interactionTargets;
+ root.userData.funhouseRideAnchors=rideAnchors;
+ root.userData.funhouseBallTargets=ballTargets;
  root.userData.splashFunhouseTarget=splashTarget;
  root.userData.animateFunhouseStation=(id,result={})=>{
   if(id==='funhouse-clown-car')carUntil=lastTime+7;
   else if(id==='funhouse-spinner')spinnerUntil=lastTime+4;
   else if(id==='funhouse-jack-box')jackUntil=lastTime+5;
-  else if(id==='funhouse-ball-pit')ballUntil=lastTime+4;
+  else if(id==='funhouse-ball-pit'){ballUntil=lastTime+4;if(result.kind==='toss'){if(ballTargets[result.targetId])tossTargetId=result.targetId;tossUntil=lastTime+.65;tossRay=tossBalls[0]?localRay(tossBalls[0].parent,result,10):null;if(result.hit&&ballTargets[result.targetId])timed.set('ball-'+result.targetId,lastTime+.5);}}
   else if(id==='funhouse-dressup')dressUntil=lastTime+5;
-  else if(id==='funhouse-water-gallery'){splashUntil=lastTime+.7;const index=Number(String(result.targetId??result.target??Number.NaN).replace(/^clown-/,''));if(targets[index]){splashTargetId=index;if(result.hit!==false)splashTarget(index);}}
+  else if(id==='funhouse-water-gallery'){splashUntil=lastTime+.7;splashRay=galleryRoot?localRay(galleryRoot,result):null;const index=Number(String(result.targetId??result.target??Number.NaN).replace(/^clown-/,''));if(targets[index]){splashTargetId=index;if(result.hit!==false)splashTarget(index);}}
   else if(id==='funhouse-maze-finish')timed.set('bell',lastTime+3);
  };
- root.userData.setFunhouseState=(state={})=>{
-  const value=state?.funhouse||state||{},round=value.round;
-  activeTarget=round?.status==='active'&&Number.isInteger(round.targetId)?round.targetId:-1;
-  for(const [id,effect]of Object.entries(value.effects||{}))if(effect?.at&&seenEffects.get(id)!==effect.at){seenEffects.set(id,effect.at);if(Number(effect.until)>Date.now())root.userData.animateFunhouseStation(id,effect);}
+ function sceneOwner(){for(let node=root;node;node=node.parent)if(node.userData?.builderObjectId)return String(node.userData.builderObjectId);return null;}
+ function localActivity(value){return value&&(value.objectId||null)===sceneOwner();}
+ function stateFrames(){const value=experienceState.funhouse||experienceState;return [value,...Object.values(experienceState.players||{}).map(player=>player.funhouse).filter(Boolean)];}
+ function activity(kind,field){const values=stateFrames().map(value=>value?.[field]).filter(value=>value&&value.kind===kind&&localActivity(value));return values.find(value=>value.status==='active')||values[0]||null;}
+ function serverClock(explicit){if(Number.isFinite(explicit))return explicit;const now=typeof performance==='undefined'?Date.now():performance.now();return experienceTime+(now-experienceReceivedAt);}
+ root.userData.setFunhouseState=(state={},serverTime=Date.now())=>{
+  experienceState=state||{};experienceTime=Number.isFinite(serverTime)?serverTime:Date.now();experienceReceivedAt=typeof performance==='undefined'?Date.now():performance.now();
+  const round=stateFrames().map(value=>value.round).find(value=>value?.status==='active'&&localActivity(value));
+  activeTarget=round?.status==='active'&&localActivity(round)&&Number.isInteger(round.targetId)?round.targetId:-1;
+  const challenge=activity('ballpit','challenge');ballTarget=challenge?.status==='active'&&Number.isInteger(challenge.targetId)?challenge.targetId:-1;
+  for(const frame of stateFrames())for(const [id,effect]of Object.entries(frame.effects||{}))if(effect?.at&&localActivity(effect)&&seenEffects.get(id)!==effect.at){seenEffects.set(id,effect.at);if(Number(effect.until)>experienceTime)root.userData.animateFunhouseStation(effect.canonicalStationId||id,effect);}
+  while(seenEffects.size>256)seenEffects.delete(seenEffects.keys().next().value);
  };
- root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false)=>{
-  const time=Number.isFinite(elapsed)?elapsed:0;lastTime=time;
+ root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false,serverTime)=>{
+  const time=Number.isFinite(elapsed)?elapsed:0;lastTime=time;const now=serverClock(serverTime);
+  const projectRide=ride=>ride?{...ride,...funhouseRideCue(ride,now)}:null;
+  const carRide=projectRide(activity('car','ride')),spinnerRide=projectRide(activity('spinner','ride')),jackGame=activity('jackbox','challenge'),ballGame=activity('ballpit','challenge');
+  const ridingCar=carRide?.status==='active'&&now<carRide.endsAt,ridingSpinner=spinnerRide?.status==='active'&&now<spinnerRide.endsAt;
   if(!reducedMotion)for(const animate of animations)animate(time);
   for(let i=0;i<performers.length;i++){const c=performers[i];c.rotation.z=reducedMotion?0:Math.sin(time*1.25+i)*.025;const left=c.getObjectByName('FUNHOUSE_CLOWN_ARM');if(left)left.rotation.x=reducedMotion?0:Math.sin(time*1.8+i)*.18;}
   for(const [i,target]of targets.entries()){
@@ -341,15 +417,32 @@ export function createClownFunhouseLand(environment={}) {
    target.root.rotation.z=hit?-.45:0;
    target.root.position.y=target.root.userData.baseY+(hit?-.7:reducedMotion?0:Math.sin(time*.9+i*.8)*.2);
   }
-  if(spinning)spinning.rotation.y=reducedMotion?0:time*((spinnerUntil>time)?1.15:.08);
-  if(car)car.rotation.z=reducedMotion?0:carUntil>time?Math.sin(time*8)*.045:0;
-  if(car)car.position.y=carUntil>time&&!reducedMotion?Math.abs(Math.sin(time*4))*.15:0;
-  passengers.forEach((p,i)=>{p.visible=carUntil>time;p.position.y=!reducedMotion&&carUntil>time?Math.abs(Math.sin(time*2+i))*.2:0;});
-  for(const pop of jackPops){const active=jackUntil>time;pop.lid.rotation.x=active?-1.45:0;pop.surprise.visible=pop.spring.visible=active;pop.surprise.position.y=3+(active&&!reducedMotion?Math.sin(time*6)*.2:0);}
+  // The platform is the physical seat frame. Its server phase stays exact even
+  // when a rider chooses a fixed-heading comfort view; decorative motion stops.
+  if(spinning)spinning.rotation.y=ridingSpinner?Math.max(0,now-spinnerRide.startedAt)/1000*.4:reducedMotion?0:time*((spinnerUntil>time)?1.15:.08);
+  const carShow=carUntil>time||ridingCar;
+  // Keep the occupied cockpit in the same metre frame as its authoritative
+  // seat. The passengers provide the ride's comic motion around the rider.
+  if(car)car.rotation.z=reducedMotion||ridingCar?0:carShow?Math.sin(time*8)*.045:0;
+  if(car)car.position.y=carShow&&!ridingCar&&!reducedMotion?Math.abs(Math.sin(time*4))*.15:0;
+  passengers.forEach((p,i)=>{p.visible=carShow;p.position.y=!reducedMotion&&carShow?Math.abs(Math.sin(time*2+i))*.2:0;});
+  if(hornCue)hornCue.visible=Boolean(ridingCar&&now>=carRide.nextCueAt&&now<=carRide.cueUntil&&carRide.lastCueHit!==carRide.cueIndex);
+  for(const button of balanceControls)button.highlight.visible=Boolean(ridingSpinner&&button.targetId===spinnerRide.targetId&&spinnerRide.lastCueHit!==spinnerRide.cueIndex);
+  const jackReady=jackGame?.status==='active'&&jackGame.phase==='ready'&&now>=jackGame.readyAt&&now<=jackGame.catchUntil;
+  const caught=jackGame?.status==='complete'&&jackGame.hits>0&&now-(jackGame.finishedAt||0)<1500;
+  for(const pop of jackPops){const active=jackGame?jackReady||caught:jackUntil>time;pop.lid.rotation.x=active?-1.45:0;pop.surprise.visible=pop.spring.visible=active;pop.surprise.position.y=3+(active&&!reducedMotion?Math.sin(time*6)*.2:0);pop.crank.rotation.z=-Number(jackGame?.windCount||0)*Math.PI*2/3;}
   for(const [i,b]of balloons.entries())b.position.y=b.userData.baseY+(ballUntil>time&&!reducedMotion?Math.abs(Math.sin(time*4+i))*.65:0);
-  for(let i=0;i<bursts.length;i++){const drop=bursts[i],active=splashUntil>time;drop.visible=active;if(active){const f=(time*2.6+i/bursts.length)%1,target=targets[splashTargetId]||targets[0];drop.position.set((target.position.x+30)*f+Math.sin(i)*.05,2.65+(target.position.y-2.65)*f+Math.sin(f*Math.PI)*.35,4.1*(1-f));}}
+  for(const target of ballTargets)target.highlight.visible=target.id===ballTarget||(timed.get('ball-'+target.id)||-1)>time;
+  for(const thrown of tossBalls){const active=tossUntil>time;thrown.root.visible=active;if(active){const f=1-(tossUntil-time)/.65,target=ballTargets[tossTargetId];if(tossRay){thrown.root.position.lerpVectors(tossRay.origin,tossRay.end,f);thrown.root.position.y+=Math.sin(f*Math.PI)*.35;}else if(target){const point=target.root.position;thrown.root.position.set(-4+(point.x+4)*f,1.2+(point.y-1.2)*f+Math.sin(f*Math.PI)*1.2,2.5+(point.z-2.5)*f);}}}
+  for(let i=0;i<bursts.length;i++){const drop=bursts[i],active=splashUntil>time;drop.visible=active;if(active){const f=(time*2.6+i/bursts.length)%1,target=targets[splashTargetId]||targets[0];if(splashRay){drop.position.lerpVectors(splashRay.origin,splashRay.end,f);drop.position.x+=Math.sin(i)*.025;drop.position.y-=f*f*.15;}else drop.position.set((target.position.x+30)*f+Math.sin(i)*.05,1.65+(target.position.y-1.65)*f+Math.sin(f*Math.PI)*.35,4.1*(1-f));}}
   if(bell)bell.rotation.z=(timed.get('bell')||-1)>time&&!reducedMotion?Math.sin(time*7)*.055:0;
   if(dressClown)dressClown.rotation.y=dressUntil>time&&!reducedMotion?time*.8:0;
+  const round=stateFrames().map(value=>value.round).find(value=>value?.status==='active'&&localActivity(value));
+  updateLiveSign('water',round?'SCORE '+round.score+' · '+Math.max(0,Math.ceil((round.endsAt-now)/1000))+'s':'SPLASH THE CLOWNS',round?'AIM AT THE GLOWING TARGET':'START · AIM · CLICK / TRIGGER');
+  updateLiveSign('car',ridingCar?hornCue?.visible?'HONK NOW!':'WAIT FOR THE LIGHT':'TAKE A SEAT',ridingCar?'SCORE '+carRide.score:'AIM + USE / TRIGGER');
+  updateLiveSign('spinner',ridingSpinner?'BALANCE '+(spinnerRide.targetId===0?'LEFT':'RIGHT'):'TAKE A GENTLE SPIN',ridingSpinner?'SCORE '+spinnerRide.score:'AIM + USE / TRIGGER');
+  updateLiveSign('ballpit',ballGame?.status==='active'?'SCORE '+ballGame.score+' · '+Math.max(0,Math.ceil((ballGame.endsAt-now)/1000))+'s':'FOLLOW THE LIT HOOP','START · AIM · TOSS');
+  updateLiveSign('jackbox',jackReady?'CATCH THE CLOWN!':jackGame?.status==='active'?'WIND '+jackGame.windCount+' / 3':'WIND THE HANDLE',jackGame?.phase==='ready'&&!jackReady?'WAIT FOR THE POP':'AIM + USE / TRIGGER');
  };
  // Batch static sibling decorations by material. Animated groups keep their
  // own coordinate system, and physical meshes remain individually queryable.

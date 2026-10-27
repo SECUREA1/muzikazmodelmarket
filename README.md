@@ -101,7 +101,10 @@ oversized shoes, surprise box, ball pit and water-gun gallery. Open it from
 Explorer options or the world directory. Its Game Market and Builder Market
 listing includes an editable template and 28 individual props, attractions,
 costumes, tools and playable clown characters with canonical MZK purchases and
-Backpack delivery. See [funhouse controls and market items](docs/clown-funhouse.md).
+Backpack delivery. First-person play includes aimed water shots and ball tosses,
+seated car and spinner timing games, a catch challenge and a checkpoint maze;
+WebXR controllers use physical targets and floating action controls. See
+[funhouse controls and market items](docs/clown-funhouse.md).
 
 Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
 fishing grounds, tackle in the existing tools and markets, saved catches, MZK
