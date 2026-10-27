@@ -18882,7 +18882,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/healing-potion.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -18934,8 +18934,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Healing Potion from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.7,
+        1,
+        0.7
+      ],
+      "description": "Rose restorative in a glass flask with brass fittings and a healing emblem.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -20987,7 +20991,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/lever-switch.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -21039,8 +21043,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Lever Switch from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.8,
+        1.1,
+        0.5
+      ],
+      "description": "A pivoting brass control lever with a guarded base and luminous status lamps.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22551,7 +22559,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/portal-door.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22603,8 +22611,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Portal Door from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.5,
+        2.5,
+        0.5
+      ],
+      "description": "Machined alloy gateway with a violet vortex, luminous edge rails and a reinforced threshold.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -22616,7 +22628,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/quest-scroll.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -22668,8 +22680,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Quest Scroll from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1,
+        0.3,
+        0.76
+      ],
+      "description": "Rolled parchment, handwritten ink and a stamped wax quest seal.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25040,7 +25056,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/supply-crate.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25092,8 +25108,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Supply Crate from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.1,
+        1,
+        1.1
+      ],
+      "description": "Individual timber boards, reinforced corners, iron straps and recessed handles.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -25105,7 +25125,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/teleport-pad.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -25157,8 +25177,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Teleport Pad from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        2.2,
+        0.2,
+        2.2
+      ],
+      "description": "Low-profile transport disc with concentric energy channels, segmented plating and an animated core.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26201,7 +26225,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/treasure-chest.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26253,8 +26277,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Treasure Chest from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        1.2,
+        0.8,
+        0.7
+      ],
+      "description": "An arched oak chest with fitted brass bands, rivets and a keyhole lock.",
       "behavior": "decor",
       "function_data": {}
     },
@@ -26266,7 +26294,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "thumbnail": "/public/images/native-upgrades/treasure-crystal.svg",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -26318,8 +26346,12 @@
       "basketballTeam": null,
       "format": "procedural-3d",
       "native": true,
-      "dimensions": null,
-      "description": "Energy Crystal from the Environment Builder, ready to drop into the running game.",
+      "dimensions": [
+        0.98,
+        1.32,
+        0.98
+      ],
+      "description": "Cut cyan crystal shards held in a machined luminous plinth.",
       "behavior": "decor",
       "function_data": {}
     },

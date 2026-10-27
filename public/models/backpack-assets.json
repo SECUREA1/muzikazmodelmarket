@@ -1075,48 +1075,68 @@
       "name": "Quest Scroll",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/quest-scroll.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "quest-scroll",
-      "description": "Quest Scroll from the Environment Builder, ready to drop into the running game."
+      "description": "Rolled parchment, handwritten ink and a stamped wax quest seal.",
+      "dimensions": [
+        1,
+        0.3,
+        0.76
+      ]
     },
     {
       "id": "builder-treasure-crystal",
       "name": "Energy Crystal",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/treasure-crystal.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "treasure-crystal",
-      "description": "Energy Crystal from the Environment Builder, ready to drop into the running game."
+      "description": "Cut cyan crystal shards held in a machined luminous plinth.",
+      "dimensions": [
+        0.98,
+        1.32,
+        0.98
+      ]
     },
     {
       "id": "builder-healing-potion",
       "name": "Healing Potion",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/healing-potion.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "healing-potion",
-      "description": "Healing Potion from the Environment Builder, ready to drop into the running game."
+      "description": "Rose restorative in a glass flask with brass fittings and a healing emblem.",
+      "dimensions": [
+        0.7,
+        1,
+        0.7
+      ]
     },
     {
       "id": "builder-portal-door",
       "name": "Portal Door",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/portal-door.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "portal-door",
-      "description": "Portal Door from the Environment Builder, ready to drop into the running game."
+      "description": "Machined alloy gateway with a violet vortex, luminous edge rails and a reinforced threshold.",
+      "dimensions": [
+        1.5,
+        2.5,
+        0.5
+      ]
     },
     {
       "id": "builder-campfire",
@@ -1159,36 +1179,51 @@
       "name": "Lever Switch",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/lever-switch.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "lever-switch",
-      "description": "Lever Switch from the Environment Builder, ready to drop into the running game."
+      "description": "A pivoting brass control lever with a guarded base and luminous status lamps.",
+      "dimensions": [
+        0.8,
+        1.1,
+        0.5
+      ]
     },
     {
       "id": "builder-treasure-chest",
       "name": "Treasure Chest",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/treasure-chest.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "treasure-chest",
-      "description": "Treasure Chest from the Environment Builder, ready to drop into the running game."
+      "description": "An arched oak chest with fitted brass bands, rivets and a keyhole lock.",
+      "dimensions": [
+        1.2,
+        0.8,
+        0.7
+      ]
     },
     {
       "id": "builder-teleport-pad",
       "name": "Teleport Pad",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/teleport-pad.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "interactive",
       "buildAssetId": "teleport-pad",
-      "description": "Teleport Pad from the Environment Builder, ready to drop into the running game."
+      "description": "Low-profile transport disc with concentric energy channels, segmented plating and an animated core.",
+      "dimensions": [
+        2.2,
+        0.2,
+        2.2
+      ]
     },
     {
       "id": "builder-windmill",
@@ -1371,12 +1406,17 @@
       "name": "Supply Crate",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/assets/muzikaz-world-map.svg",
+      "thumbnailUrl": "/public/images/native-upgrades/supply-crate.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "props",
       "buildAssetId": "supply-crate",
-      "description": "Supply Crate from the Environment Builder, ready to drop into the running game."
+      "description": "Individual timber boards, reinforced corners, iron straps and recessed handles.",
+      "dimensions": [
+        1.1,
+        1,
+        1.1
+      ]
     },
     {
       "id": "builder-wooden-cart",
@@ -1597,7 +1637,7 @@
     },
     {
       "id": "builder-arcade-part-hockey",
-      "name": "Neon Junction \u00b7 Ice hockey",
+      "name": "Neon Junction · Ice hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1617,7 +1657,7 @@
     },
     {
       "id": "builder-arcade-part-shooting",
-      "name": "Neon Junction \u00b7 Shooting arcade",
+      "name": "Neon Junction · Shooting arcade",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1637,7 +1677,7 @@
     },
     {
       "id": "builder-arcade-part-basketball",
-      "name": "Neon Junction \u00b7 Basketball",
+      "name": "Neon Junction · Basketball",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1657,7 +1697,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey",
-      "name": "Neon Junction \u00b7 Air hockey",
+      "name": "Neon Junction · Air hockey",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1677,7 +1717,7 @@
     },
     {
       "id": "builder-arcade-part-billiards",
-      "name": "Neon Junction \u00b7 Billiards",
+      "name": "Neon Junction · Billiards",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1697,7 +1737,7 @@
     },
     {
       "id": "builder-arcade-part-train",
-      "name": "Neon Junction \u00b7 Park express",
+      "name": "Neon Junction · Park express",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1717,7 +1757,7 @@
     },
     {
       "id": "builder-arcade-part-coaster",
-      "name": "Neon Junction \u00b7 Skyline coaster",
+      "name": "Neon Junction · Skyline coaster",
       "owner": "MUZIKAZ",
       "type": "interactive",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1737,7 +1777,7 @@
     },
     {
       "id": "builder-arcade-part-ground",
-      "name": "Neon Junction \u00b7 Park foundation",
+      "name": "Neon Junction · Park foundation",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1749,7 +1789,7 @@
     },
     {
       "id": "builder-arcade-part-paths",
-      "name": "Neon Junction \u00b7 Walkway network",
+      "name": "Neon Junction · Walkway network",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1761,7 +1801,7 @@
     },
     {
       "id": "builder-arcade-part-trees",
-      "name": "Neon Junction \u00b7 Tree planting",
+      "name": "Neon Junction · Tree planting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1773,7 +1813,7 @@
     },
     {
       "id": "builder-arcade-part-lamps",
-      "name": "Neon Junction \u00b7 Park lighting",
+      "name": "Neon Junction · Park lighting",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1785,7 +1825,7 @@
     },
     {
       "id": "builder-arcade-part-fountain",
-      "name": "Neon Junction \u00b7 Central fountain",
+      "name": "Neon Junction · Central fountain",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1797,7 +1837,7 @@
     },
     {
       "id": "builder-arcade-part-benches",
-      "name": "Neon Junction \u00b7 Park seating",
+      "name": "Neon Junction · Park seating",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1809,7 +1849,7 @@
     },
     {
       "id": "builder-arcade-part-train-station",
-      "name": "Neon Junction \u00b7 Train station",
+      "name": "Neon Junction · Train station",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1821,7 +1861,7 @@
     },
     {
       "id": "builder-arcade-part-signs",
-      "name": "Neon Junction \u00b7 Park entrance sign",
+      "name": "Neon Junction · Park entrance sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1833,7 +1873,7 @@
     },
     {
       "id": "builder-arcade-part-tree",
-      "name": "Neon Junction \u00b7 Individual tree",
+      "name": "Neon Junction · Individual tree",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1845,7 +1885,7 @@
     },
     {
       "id": "builder-arcade-part-lamp",
-      "name": "Neon Junction \u00b7 Individual lamp",
+      "name": "Neon Junction · Individual lamp",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1857,7 +1897,7 @@
     },
     {
       "id": "builder-arcade-part-bench",
-      "name": "Neon Junction \u00b7 Individual bench",
+      "name": "Neon Junction · Individual bench",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1869,7 +1909,7 @@
     },
     {
       "id": "builder-arcade-part-path",
-      "name": "Neon Junction \u00b7 Path tile",
+      "name": "Neon Junction · Path tile",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1881,7 +1921,7 @@
     },
     {
       "id": "builder-arcade-part-sign",
-      "name": "Neon Junction \u00b7 Arcade sign",
+      "name": "Neon Junction · Arcade sign",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1893,7 +1933,7 @@
     },
     {
       "id": "builder-arcade-part-train-carriage",
-      "name": "Neon Junction \u00b7 Train passenger carriage",
+      "name": "Neon Junction · Train passenger carriage",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1905,7 +1945,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-car",
-      "name": "Neon Junction \u00b7 Coaster car",
+      "name": "Neon Junction · Coaster car",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1917,7 +1957,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-hoop",
-      "name": "Neon Junction \u00b7 Basketball hoop",
+      "name": "Neon Junction · Basketball hoop",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1929,7 +1969,7 @@
     },
     {
       "id": "builder-arcade-part-basketball-ball",
-      "name": "Neon Junction \u00b7 Basketball ball",
+      "name": "Neon Junction · Basketball ball",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1941,7 +1981,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-goal",
-      "name": "Neon Junction \u00b7 Hockey goal",
+      "name": "Neon Junction · Hockey goal",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1953,7 +1993,7 @@
     },
     {
       "id": "builder-arcade-part-hockey-puck",
-      "name": "Neon Junction \u00b7 Hockey puck",
+      "name": "Neon Junction · Hockey puck",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1965,7 +2005,7 @@
     },
     {
       "id": "builder-arcade-part-air-hockey-mallet",
-      "name": "Neon Junction \u00b7 Air hockey mallet",
+      "name": "Neon Junction · Air hockey mallet",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1977,7 +2017,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-cue",
-      "name": "Neon Junction \u00b7 Billiard cue",
+      "name": "Neon Junction · Billiard cue",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -1989,7 +2029,7 @@
     },
     {
       "id": "builder-arcade-part-billiard-balls",
-      "name": "Neon Junction \u00b7 Billiard ball set",
+      "name": "Neon Junction · Billiard ball set",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2001,7 +2041,7 @@
     },
     {
       "id": "builder-arcade-part-arcade-target",
-      "name": "Neon Junction \u00b7 Arcade target",
+      "name": "Neon Junction · Arcade target",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2013,7 +2053,7 @@
     },
     {
       "id": "builder-arcade-part-train-engine",
-      "name": "Neon Junction \u00b7 Train locomotive",
+      "name": "Neon Junction · Train locomotive",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2025,7 +2065,7 @@
     },
     {
       "id": "builder-arcade-part-rail-segment",
-      "name": "Neon Junction \u00b7 Straight rail segment",
+      "name": "Neon Junction · Straight rail segment",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2037,7 +2077,7 @@
     },
     {
       "id": "builder-arcade-part-coaster-support",
-      "name": "Neon Junction \u00b7 Coaster support",
+      "name": "Neon Junction · Coaster support",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2049,7 +2089,7 @@
     },
     {
       "id": "builder-arcade-part-safety-bar",
-      "name": "Neon Junction \u00b7 Coaster safety restraint",
+      "name": "Neon Junction · Coaster safety restraint",
       "owner": "MUZIKAZ",
       "type": "props",
       "thumbnailUrl": "/public/images/arcade.svg",
@@ -2479,7 +2519,7 @@
     },
     {
       "id": "backpack-courtyard-cafe",
-      "name": "Courtyard Caf\u00e9",
+      "name": "Courtyard Café",
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "courtyard-cafe",
@@ -4324,7 +4364,7 @@
     },
     {
       "id": "builder-lot-sale-sign-5000",
-      "name": "Land Sale Sign \u00b7 5000 MZK",
+      "name": "Land Sale Sign · 5000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4342,7 +4382,7 @@
     },
     {
       "id": "builder-lot-sale-sign-7500",
-      "name": "Land Sale Sign \u00b7 7500 MZK",
+      "name": "Land Sale Sign · 7500 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4360,7 +4400,7 @@
     },
     {
       "id": "builder-lot-sale-sign-10000",
-      "name": "Land Sale Sign \u00b7 10000 MZK",
+      "name": "Land Sale Sign · 10000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4378,7 +4418,7 @@
     },
     {
       "id": "builder-lot-sale-sign-15000",
-      "name": "Land Sale Sign \u00b7 15000 MZK",
+      "name": "Land Sale Sign · 15000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4396,7 +4436,7 @@
     },
     {
       "id": "builder-lot-sale-sign-20000",
-      "name": "Land Sale Sign \u00b7 20000 MZK",
+      "name": "Land Sale Sign · 20000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -4414,7 +4454,7 @@
     },
     {
       "id": "builder-lot-sale-sign-25000",
-      "name": "Land Sale Sign \u00b7 25000 MZK",
+      "name": "Land Sale Sign · 25000 MZK",
       "description": "A timber lot sign with a clearly displayed MZK price.",
       "dimensions": [
         1.5,
@@ -5512,7 +5552,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open CNC Shell Fabricator \u00b7 E / Use",
+        "prompt": "Open CNC Shell Fabricator · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -5552,7 +5592,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Rocket Assembly Jig \u00b7 E / Use",
+        "prompt": "Open Rocket Assembly Jig · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -5592,7 +5632,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Systems Calibration Rig \u00b7 E / Use",
+        "prompt": "Open Systems Calibration Rig · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -5632,7 +5672,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Procurement Terminal \u00b7 E / Use",
+        "prompt": "Open Procurement Terminal · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -5672,7 +5712,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Factory Dispatch Terminal \u00b7 E / Use",
+        "prompt": "Open Factory Dispatch Terminal · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -5743,7 +5783,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Open Factory Freight Loading Bay \u00b7 E / Use",
+        "prompt": "Open Factory Freight Loading Bay · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6227,7 +6267,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 8,
-        "prompt": "Use Atlas Test Launch Pad \u00b7 E / Use",
+        "prompt": "Use Atlas Test Launch Pad · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6266,7 +6306,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Use Range Launch Console \u00b7 E / Use",
+        "prompt": "Use Range Launch Console · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6338,7 +6378,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Use Range Telemetry Terminal \u00b7 E / Use",
+        "prompt": "Use Range Telemetry Terminal · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6377,7 +6417,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Use Compound Blast Door \u00b7 E / Use",
+        "prompt": "Use Compound Blast Door · E / Use",
         "destructible": false,
         "damage": 0
       },
@@ -6416,7 +6456,7 @@
         },
         "interactionKey": "e",
         "interactionDistance": 6,
-        "prompt": "Use Luminous Containment Core \u00b7 E / Use",
+        "prompt": "Use Luminous Containment Core · E / Use",
         "destructible": false,
         "damage": 0
       },

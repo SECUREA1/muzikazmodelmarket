@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-labelledby="title desc"><title id="title">Solar Gate Ring</title><desc id="desc">A futuristic circular portal with a segmented titanium frame, amber illuminated inlays and an open solar energy field.</desc><defs>
+<radialGradient id="bg"><stop stop-color="#243653"/><stop offset="1" stop-color="#090f1d"/></radialGradient>
+<linearGradient id="steel" x2=".8" y2="1"><stop stop-color="#a3b7c5"/><stop offset=".28" stop-color="#52687b"/><stop offset=".55" stop-color="#273746"/><stop offset="1" stop-color="#14202d"/></linearGradient>
+<linearGradient id="edge" x2="0" y2="1"><stop stop-color="#d5e1eb"/><stop offset=".38" stop-color="#657e90"/><stop offset="1" stop-color="#354455"/></linearGradient>
+<linearGradient id="gold" x2=".7" y2="1"><stop stop-color="#fff1b4"/><stop offset=".3" stop-color="#d9b461"/><stop offset=".63" stop-color="#a16a30"/><stop offset="1" stop-color="#5d3d22"/></linearGradient>
+<linearGradient id="wood" x2="0" y2="1"><stop stop-color="#b57e4e"/><stop offset=".5" stop-color="#85502c"/><stop offset="1" stop-color="#482a22"/></linearGradient>
+<linearGradient id="stone" x2=".9" y2="1"><stop stop-color="#7b8b95"/><stop offset=".45" stop-color="#465561"/><stop offset="1" stop-color="#253644"/></linearGradient>
+<linearGradient id="parchment" x2=".6" y2="1"><stop stop-color="#fff0c4"/><stop offset=".45" stop-color="#e8cc8f"/><stop offset="1" stop-color="#aa7f48"/></linearGradient>
+<linearGradient id="violet" x2=".8" y2="1"><stop stop-color="#efccff"/><stop offset=".25" stop-color="#a58bff"/><stop offset=".7" stop-color="#5f42be"/><stop offset="1" stop-color="#23265d"/></linearGradient>
+<linearGradient id="cyan" x2=".8" y2="1"><stop stop-color="#efffff"/><stop offset=".25" stop-color="#80efff"/><stop offset=".65" stop-color="#2895bb"/><stop offset="1" stop-color="#184769"/></linearGradient>
+<linearGradient id="pink" x2=".6" y2="1"><stop stop-color="#ffcadc"/><stop offset=".35" stop-color="#fd679e"/><stop offset="1" stop-color="#971c61"/></linearGradient>
+<linearGradient id="blue" x2=".6" y2="1"><stop stop-color="#b9f9ff"/><stop offset=".35" stop-color="#448cfa"/><stop offset="1" stop-color="#2f347e"/></linearGradient>
+<radialGradient id="field"><stop stop-color="#080d22"/><stop offset=".48" stop-color="#25194c"/><stop offset=".8" stop-color="#6b43ac"/><stop offset="1" stop-color="#c5a3ff"/></radialGradient>
+<filter id="glow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="5"/></filter>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#020611" flood-opacity=".8"/></filter>
+</defs>
+<rect width="360" height="300" rx="24" fill="url(#bg)"/>
+<path d="M20 236H340M42 262H318M88 282H272" stroke="#e9b66e" stroke-opacity=".065"/>
+<ellipse cx="180" cy="252" rx="113" ry="18" fill="#030811" opacity=".65"/>
+
+<g filter="url(#shadow)">
+<path d="M111 254L129 218H231L249 254Z" fill="url(#steel)" stroke="#a7b9c8"/>
+<circle cx="180" cy="145" r="101" fill="url(#steel)" stroke="#9faec1" stroke-width="2"/>
+<circle cx="180" cy="145" r="81" fill="#231b25" stroke="#674a33" stroke-width="2"/>
+<circle cx="180" cy="145" r="76" fill="#1d202d" stroke="#ffc56e" stroke-width="4"/>
+<circle cx="180" cy="145" r="77" fill="none" stroke="#f4a94b" stroke-width="13" opacity=".6" filter="url(#glow)"/>
+<path d="M139 184C208 211 253 124 207 98C169 76 130 118 153 148C177 180 217 145 193 124" fill="none" stroke="#f1b95b" stroke-width="2"/>
+<circle cx="180" cy="145" r="92" fill="none" stroke="#b38c56" stroke-width="3" stroke-dasharray="40 15"/>
+<path d="M176 43H184V65H176ZM176 225H184V247H176ZM78 141H100V149H78ZM260 141H282V149H260Z" fill="url(#gold)" stroke="#f4d28b"/>
+<path d="M112 76L124 88M236 202L248 214M112 214L124 202M236 88L248 76" stroke="#ffe3a4" stroke-width="6"/>
+<path d="M143 243H217M162 249H198" stroke="#ffc16c" stroke-width="3"/>
+<path d="M147 130h3m54 50h3m-34-76h3m44 42h3" stroke="#ffe4b8" stroke-width="2"/>
+</g>
+<path d="M24 40V24H40M320 24H336V40M24 260V276H40M320 276H336V260" fill="none" stroke="#e9b66e" stroke-opacity=".3" stroke-width="2"/>
+</svg>
