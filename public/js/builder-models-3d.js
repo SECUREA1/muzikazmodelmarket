@@ -1,3 +1,5 @@
+import {PRISON_MODEL_INFO} from './prison-items.js';
+import {createPrisonItemModel} from './prison-item-models.js';
 import {FACTORY_LOGISTICS_MODEL_INFO,createFactoryLogisticsModel,updateFactoryLogisticsModel} from './factory-logistics-props.js';
 import {FUNHOUSE_MODEL_INFO,createFunhouseModel,updateFunhouseModel} from './clown-funhouse-models.js';
 import {createFreightModel,updateFreightVisual} from './freight-models.js';
@@ -46,6 +48,7 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,[spec.name,'Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.',[spec.beam,spec.height,spec.length]]])),
   'shipping-container-box':['Intermodal Cargo Container','Corrugated steel container with locking bars and corner castings.',[2.4,2.6,6]],
   'shipping-port-crane':['Ship-to-Shore Gantry Crane','Container terminal gantry with boom, lift cables, trolley and spreader.',[14,26,40]],
+  ...PRISON_MODEL_INFO,
   ...FUNHOUSE_MODEL_INFO,
   ...FACTORY_MODEL_INFO,
   ...FITNESS_MODEL_INFO,
@@ -309,6 +312,7 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+  if(PRISON_MODEL_INFO[id])return createPrisonItemModel(id);
   if(FUNHOUSE_MODEL_INFO[id])return createFunhouseModel(id);
   if(id==='world-resident')return createWorldResident();
   if(CONSTRUCTION_MODEL_IDS.includes(id))return createConstructionModel(id);

@@ -1,3 +1,4 @@
+import {prisonRewardFor} from './public/js/prison-rewards.js';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
@@ -19,6 +20,8 @@ const EMPTY_DATABASE = { schemaVersion: SCHEMA_VERSION, users: {}, trades: [], m
 const BUILDER_CATEGORIES = new Set(['WORLD', 'BUILDINGS', 'PROPS', 'TERRAIN', 'NPC', 'AI', 'VEHICLES', 'GAME SYSTEMS', 'FUNCTIONS', 'AUDIO', 'EFFECTS', 'SCRIPTS', 'INTERACTIVE', 'UTILITIES']);
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function prisonReceipt(data,wallet,itemId){return (data.transactions||[]).find(row=>row.type==='PRISON_ITEM_EARNED'&&row.walletId===wallet&&row.itemId===itemId&&prisonRewardFor(row.buildAssetId));}
+function prisonBoundItem(data,wallet,item){return item&&(item.source==='prison-earned'||prisonRewardFor(item.buildAssetId)||prisonReceipt(data,wallet,item.id));}
 function plainObject(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
 function cleanWallet(value) {
   const wallet = String(value || '').trim().toLowerCase();
@@ -232,7 +235,7 @@ export class UserJsonDatabase {
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
@@ -253,6 +256,7 @@ export class UserJsonDatabase {
       const item = user.items.find((entry) => entry.id === itemId);
       if (!item) throw new Error('Pack not found in this Backpack.');
       if(item.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
+      if(prisonBoundItem(data,wallet,item))throw Object.assign(Error('Earned prison collectibles are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(item.shippingSupplyId||item.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403});
       if(active)assertFactoryTradeAvailable(data,wallet,item);
       item.listing = { active: Boolean(active), priceMzk: amount, updatedAt: new Date().toISOString() };
@@ -272,7 +276,7 @@ export class UserJsonDatabase {
       const buyerUser = data.users[buyer]; const sellerUser = data.users[seller];
       if (!buyerUser || !sellerUser) throw new Error('Both members must have a market profile.');
       const index = sellerUser.items.findIndex((item) => item.id === itemId);
-      const item = sellerUser.items[index];if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
+      const item = sellerUser.items[index];if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
       if(item?.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
       const factoryProof=assertFactoryTradeAvailable(data,seller,item);
@@ -354,23 +358,27 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId),item=economyItem(sku);
     if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});
     if(!['buy','use'].includes(action))throw Object.assign(new Error('Choose buy or use.'),{statusCode:400});
-    if(item.earnedOnly)throw Object.assign(new Error('Earn shipping stock through a verified freight delivery and exchange it at a dock.'),{statusCode:403});
+    const prisonReward=prisonRewardFor(item.buildAssetId);
+    if(item.earnedOnly&&(!prisonReward||action!=='use'))throw Object.assign(new Error(prisonReward?'Earn this collectible in Ironwood Prison and collect it at intake.':'Earn shipping stock through a verified freight delivery and exchange it at a dock.'),{statusCode:403});
     if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');
     return this.transaction(data=>{
       const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';
       const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);
       if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}
       const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
-      const owned=ownsEconomyItem(user,item);
+      // Legacy inventory fields cannot replace an earned collectible receipt.
+      const owned=prisonReward?user.items.some(owned=>prisonReceipt(data,wallet,owned.id)?.buildAssetId===prisonReward.id):ownsEconomyItem(user,item);
       if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});
-      if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});
+      if(action==='use'&&!owned)throw Object.assign(new Error(prisonReward?'Earn and collect this prison item before using it.':'Purchase this upgrade before using it.'),{statusCode:403});
       const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;
-      const cost=prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;
+      const cost=prisonReward||prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;
       if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});
       // A purchased asset grants its durable license; each later deployment
       // consumes another physical unit. Purchased material credits already hold
       // their units, and durable tool actions do not consume another tool.
-      if(action==='buy'||!prepaid&&['asset','material'].includes(item.kind))consumeWorldStock(data,item,1,{mapId});
+      // Earned-only keepsakes are outside the finite depot catalog, matching
+      // world-supply's exclusion; ordinary deployment units remain finite.
+      if(!prisonReward&&(action==='buy'||!prepaid&&['asset','material'].includes(item.kind)))consumeWorldStock(data,item,1,{mapId});
       user.tokens.MZK-=cost;if(prepaid)user.memory.materialCredits[sku]--;
       if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}
       if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});

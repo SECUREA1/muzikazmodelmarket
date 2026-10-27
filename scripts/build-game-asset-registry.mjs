@@ -87,6 +87,7 @@ for (const manifest of manifests) {
         assetType: normalized?.type || 'prop', basketballTeam: normalized?.basketballTeam || null,
         format: 'procedural-3d', native: true, dimensions: raw.dimensions || null,
         priceMzk: raw.priceMzk, description: raw.description || '',
+        ...Object.fromEntries(['earnedOnly','earnedWorld','tradable'].filter(key=>Object.hasOwn(raw,key)).map(key=>[key,raw[key]])),
         behavior: normalized?.behavior || settings.behavior || raw.behavior || 'decor', function_data: settings,
         collision: {enabled: true, shape: normalized?.type === 'terrain' ? 'mesh' : 'bounds'},
         ...compatibility(normalized?.type || 'prop'),

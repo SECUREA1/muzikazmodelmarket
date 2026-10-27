@@ -18,6 +18,8 @@ import {factoryProvingGroundsWorld,mountainCompoundWorld} from '../factory-testi
 import {fitnessWorld} from '../fitness-world.mjs';
 import {shippingWorld} from '../shipping-world.mjs';
 import {landFieldWorlds} from '../land-field-worlds.mjs';
+import {PRISON_ID} from '../public/js/prison-config.js';
+import {createPrisonLand} from '../public/js/prison-world.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const normalizedPath=value=>{try{return decodeURIComponent(String(value||'').split(/[?#]/)[0]).replace(/^\/+/, '');}catch{return String(value||'').replace(/^\/+/, '');}};
@@ -68,6 +70,15 @@ export async function auditWorldItems(){
   catch(error){unrenderableNativeItems.push(item.id+': '+error.message);}
   finally{model?.traverse(part=>{part.geometry?.dispose();for(const material of Array.isArray(part.material)?part.material:[part.material])material?.dispose();});}
  }
+ const invalidWorldRenderers=[];
+ const prison=worlds.find(world=>world.id===PRISON_ID);
+ // Ironwood's complete manifest drives a monolithic renderer, rather than a
+ // second world factory or editable native component inventory. Keep its
+ // security fixtures/actors inside that renderer and audit its actual geometry.
+ let prisonLand;
+ try{prisonLand=prison&&createPrisonLand(prison);if(!prisonLand?.children.length||prisonLand.userData.prisonId!==PRISON_ID)invalidWorldRenderers.push(PRISON_ID);}
+ catch(error){invalidWorldRenderers.push(PRISON_ID+': '+error.message);}
+ finally{prisonLand?.traverse(part=>{part.geometry?.dispose();for(const material of Array.isArray(part.material)?part.material:[part.material])material?.dispose();});}
  const unresolvedWorldItems=catalog.maps.flatMap(map=>map.components.filter(component=>!component.sku).map(component=>({worldId:map.worldId,...component})));
  const snapshot={};ensureWorldSupply(snapshot);
  const missingSupplyItems=[];
@@ -75,10 +86,12 @@ export async function auditWorldItems(){
   try{const definition=supplyItem(snapshot,item);if(snapshot.worldSupply.worldStock[definition.supplyId]!==1000)missingSupplyItems.push(item.sku);}
   catch{missingSupplyItems.push(item.sku);}
  }
+ const earnedCollectibles=GAME_ECONOMY.filter(item=>item.earnedOnly&&item.kind!=='stock');
+ const unexpectedEarnedSupplyItems=earnedCollectibles.filter(item=>Object.values(snapshot.worldSupply.catalog).some(definition=>definition.buildAssetId===item.buildAssetId)).map(item=>item.sku);
  const used=new Set(catalog.maps.flatMap(map=>map.components.map(component=>component.sku).filter(Boolean)));
  return {
-  counts:{worlds:worlds.length,publicMapInstances:catalog.maps.reduce((sum,map)=>sum+map.itemCount,0),worldMarketItems:used.size,builderModels:Object.keys(BUILDER_MODEL_INFO).length,nativeDefinitions:Object.keys(NATIVE_BUILDER_ITEMS).length,marketItems:GAME_ECONOMY.length,authoredModelFiles:files.length,modelFilesOutsidePublic:files.filter(path=>!path.startsWith('public/')).length,finiteSupplyItems:Object.keys(snapshot.worldSupply.catalog).length},
-  missingBuilderItems,missingNativeItems,missingModelFiles,missingDiscoveryFiles,invalidModelFiles,unrenderableNativeItems,unresolvedWorldItems,missingSupplyItems,
+  counts:{worlds:worlds.length,publicMapInstances:catalog.maps.reduce((sum,map)=>sum+map.itemCount,0),worldMarketItems:used.size,builderModels:Object.keys(BUILDER_MODEL_INFO).length,nativeDefinitions:Object.keys(NATIVE_BUILDER_ITEMS).length,marketItems:GAME_ECONOMY.length,authoredModelFiles:files.length,modelFilesOutsidePublic:files.filter(path=>!path.startsWith('public/')).length,finiteSupplyItems:Object.keys(snapshot.worldSupply.catalog).length,earnedCollectibles:earnedCollectibles.length,runtimeWorldRenderers:prisonLand?1:0},
+  missingBuilderItems,missingNativeItems,missingModelFiles,missingDiscoveryFiles,invalidModelFiles,unrenderableNativeItems,invalidWorldRenderers,unresolvedWorldItems,missingSupplyItems,unexpectedEarnedSupplyItems,
   worlds:catalog.maps.map(map=>({id:map.worldId,name:map.name,instances:map.itemCount,marketItems:map.components.filter(component=>component.sku).length,glbInstances:map.components.filter(component=>component.modelUrl).reduce((sum,component)=>sum+component.count,0)}))
  };
 }

@@ -67841,5 +67841,641 @@
       }
     },
     "contentUpdatedAt": "2026-10-27T13:00:00.000Z"
+  },
+  {
+    "id": "ironwood-prison",
+    "name": "Ironwood Prison",
+    "label": "Cells · guards · prison life · escape challenges",
+    "description": "Explore a large secure prison with two furnished cell blocks, a cafeteria and kitchen, exercise yard, recreation room, security control, laundry and workshop. Meet guards and prisoners, manage daily routines and meals, lock cell doors, watch TV, listen to the radio, play video games, try non-lethal fights and theft challenges, and solve escape objectives while managing security heat.",
+    "category": "Prison & escape",
+    "game": "prison",
+    "layout": "prison",
+    "worldId": "skyline-deck",
+    "mapColor": "#e9a34b",
+    "mapTheme": "prison",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "roomId": "ironwood-prison",
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-27T14:00:00.000Z",
+    "indoor": false,
+    "outdoor": true,
+    "playableSize": 240,
+    "scale": 1,
+    "spaceScale": 1,
+    "collisionMode": "auto",
+    "thumbnailUrl": "/public/images/prison.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 88,
+      "rotationY": 0
+    },
+    "streets": [],
+    "prison": {
+      "enabled": true,
+      "stations": [
+        {
+          "interactionDistance": 4,
+          "id": "intake",
+          "kind": "intake",
+          "name": "Intake & daily challenges",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 83
+          },
+          "description": "Choose your role and start a day at Ironwood."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n1",
+          "kind": "cell",
+          "name": "Block A · N1",
+          "cellId": "a-n1",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n2",
+          "kind": "cell",
+          "name": "Block A · N2",
+          "cellId": "a-n2",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n3",
+          "kind": "cell",
+          "name": "Block A · N3",
+          "cellId": "a-n3",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n4",
+          "kind": "cell",
+          "name": "Block A · N4",
+          "cellId": "a-n4",
+          "position": {
+            "x": -58,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n5",
+          "kind": "cell",
+          "name": "Block A · N5",
+          "cellId": "a-n5",
+          "position": {
+            "x": -46,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-n6",
+          "kind": "cell",
+          "name": "Block A · N6",
+          "cellId": "a-n6",
+          "position": {
+            "x": -34,
+            "y": 0,
+            "z": 21
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s1",
+          "kind": "cell",
+          "name": "Block A · S1",
+          "cellId": "a-s1",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s2",
+          "kind": "cell",
+          "name": "Block A · S2",
+          "cellId": "a-s2",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s3",
+          "kind": "cell",
+          "name": "Block A · S3",
+          "cellId": "a-s3",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s4",
+          "kind": "cell",
+          "name": "Block A · S4",
+          "cellId": "a-s4",
+          "position": {
+            "x": -58,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s5",
+          "kind": "cell",
+          "name": "Block A · S5",
+          "cellId": "a-s5",
+          "position": {
+            "x": -46,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-a-s6",
+          "kind": "cell",
+          "name": "Block A · S6",
+          "cellId": "a-s6",
+          "position": {
+            "x": -34,
+            "y": 0,
+            "z": 33
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n1",
+          "kind": "cell",
+          "name": "Block B · N1",
+          "cellId": "b-n1",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n2",
+          "kind": "cell",
+          "name": "Block B · N2",
+          "cellId": "b-n2",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n3",
+          "kind": "cell",
+          "name": "Block B · N3",
+          "cellId": "b-n3",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n4",
+          "kind": "cell",
+          "name": "Block B · N4",
+          "cellId": "b-n4",
+          "position": {
+            "x": -58,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n5",
+          "kind": "cell",
+          "name": "Block B · N5",
+          "cellId": "b-n5",
+          "position": {
+            "x": -46,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-n6",
+          "kind": "cell",
+          "name": "Block B · N6",
+          "cellId": "b-n6",
+          "position": {
+            "x": -34,
+            "y": 0,
+            "z": -36
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s1",
+          "kind": "cell",
+          "name": "Block B · S1",
+          "cellId": "b-s1",
+          "position": {
+            "x": -94,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s2",
+          "kind": "cell",
+          "name": "Block B · S2",
+          "cellId": "b-s2",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s3",
+          "kind": "cell",
+          "name": "Block B · S3",
+          "cellId": "b-s3",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s4",
+          "kind": "cell",
+          "name": "Block B · S4",
+          "cellId": "b-s4",
+          "position": {
+            "x": -58,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s5",
+          "kind": "cell",
+          "name": "Block B · S5",
+          "cellId": "b-s5",
+          "position": {
+            "x": -46,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "cell-b-s6",
+          "kind": "cell",
+          "name": "Block B · S6",
+          "cellId": "b-s6",
+          "position": {
+            "x": -34,
+            "y": 0,
+            "z": -24
+          },
+          "description": "Operate this cell lock or rest in your bunk."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "meal",
+          "kind": "meal",
+          "name": "Cafeteria meal service",
+          "position": {
+            "x": 43,
+            "y": 0,
+            "z": 16
+          },
+          "description": "A hot tray restores your energy."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "tv",
+          "kind": "tv",
+          "name": "Common-room television",
+          "position": {
+            "x": 45,
+            "y": 0,
+            "z": -38
+          },
+          "description": "Watch a show and relax with the other prisoners."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "radio",
+          "kind": "radio",
+          "name": "Radio corner",
+          "position": {
+            "x": 69,
+            "y": 0,
+            "z": -45
+          },
+          "description": "Tune in to the Ironwood station."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "arcade",
+          "kind": "arcade",
+          "name": "Video-game tournament",
+          "position": {
+            "x": 84,
+            "y": 0,
+            "z": -16
+          },
+          "description": "Test your timing at the arcade machines."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "gym",
+          "kind": "gym",
+          "name": "Yard boxing & fitness",
+          "position": {
+            "x": -66,
+            "y": 0,
+            "z": -83
+          },
+          "description": "Train, spar or settle a non-graphic rivalry."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "work",
+          "kind": "work",
+          "name": "Workshop shift",
+          "position": {
+            "x": 84,
+            "y": 0,
+            "z": -91
+          },
+          "description": "Complete a shift to earn credits and trust."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "stash",
+          "kind": "stash",
+          "name": "Laundry supply stash",
+          "position": {
+            "x": 55,
+            "y": 0,
+            "z": 78
+          },
+          "description": "Search the laundry supplies for a useful item."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "security",
+          "kind": "security",
+          "name": "Security control room",
+          "position": {
+            "x": 89,
+            "y": 0,
+            "z": 77
+          },
+          "description": "Patrol orders, CCTV and restricted security controls."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "vent",
+          "kind": "vent",
+          "name": "Maintenance passage",
+          "position": {
+            "x": 79,
+            "y": 0,
+            "z": 101
+          },
+          "description": "A restricted service passage connects to the outer gate."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "gate",
+          "kind": "gate",
+          "name": "South service gate",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 104
+          },
+          "description": "The last security obstacle before the escape finish."
+        },
+        {
+          "interactionDistance": 4,
+          "id": "escape",
+          "kind": "escape",
+          "name": "Escape finish",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 116
+          },
+          "description": "Reach the marked finish after clearing the service gate."
+        }
+      ]
+    },
+    "builderScene": {
+      "version": 3,
+      "layout": "prison",
+      "mapSize": 240,
+      "streets": [],
+      "objects": [],
+      "layoutMeta": {
+        "color": 5858144,
+        "prison": {
+          "enabled": true
+        },
+        "locations": [
+          {
+            "id": "prison-arrival",
+            "name": "Intake & visiting",
+            "x": 0,
+            "z": 83,
+            "width": 28,
+            "depth": 24,
+            "description": "Arrival, daily challenges and connected return gateways."
+          },
+          {
+            "id": "prison-block-a",
+            "name": "Cell Block A",
+            "x": -62,
+            "z": 27,
+            "width": 78,
+            "depth": 46,
+            "description": "Twelve furnished cells with individual barred doors."
+          },
+          {
+            "id": "prison-block-b",
+            "name": "Cell Block B",
+            "x": -62,
+            "z": -30,
+            "width": 78,
+            "depth": 46,
+            "description": "Twelve secure cells with prisoner routines and guard patrols."
+          },
+          {
+            "id": "prison-cafeteria",
+            "name": "Cafeteria & kitchen",
+            "x": 62,
+            "z": 31,
+            "width": 78,
+            "depth": 52,
+            "description": "Meal counter, kitchen equipment and communal dining tables."
+          },
+          {
+            "id": "prison-recreation",
+            "name": "Recreation room",
+            "x": 62,
+            "z": -31,
+            "width": 78,
+            "depth": 52,
+            "description": "Television, radio, pool table and playable arcade cabinets."
+          },
+          {
+            "id": "prison-yard",
+            "name": "Exercise yard",
+            "x": -19,
+            "z": -83,
+            "width": 154,
+            "depth": 40,
+            "description": "Exercise, non-lethal boxing and prisoner rivalries."
+          },
+          {
+            "id": "prison-security",
+            "name": "Security & control",
+            "x": 89,
+            "z": 78,
+            "width": 20,
+            "depth": 30,
+            "description": "Guards, CCTV, cell controls and security response."
+          },
+          {
+            "id": "prison-infirmary",
+            "name": "Infirmary",
+            "x": -66,
+            "z": 77,
+            "width": 62,
+            "depth": 30,
+            "description": "Recovery beds and a quiet place within the prison."
+          },
+          {
+            "id": "prison-laundry",
+            "name": "Laundry",
+            "x": 55,
+            "z": 78,
+            "width": 36,
+            "depth": 30,
+            "description": "Work machines and a supply stash for escape puzzles."
+          },
+          {
+            "id": "prison-workshop",
+            "name": "Workshop",
+            "x": 84,
+            "z": -87,
+            "width": 34,
+            "depth": 28,
+            "description": "Complete a shift to earn credits and trust."
+          },
+          {
+            "id": "prison-maintenance",
+            "name": "Maintenance passage",
+            "x": 79,
+            "z": 101,
+            "width": 12,
+            "depth": 10,
+            "description": "A restricted service passage near the outer perimeter."
+          },
+          {
+            "id": "prison-gate",
+            "name": "South service gate",
+            "x": 0,
+            "z": 104,
+            "width": 18,
+            "depth": 12,
+            "description": "The final checkpoint before the marked escape finish."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "prison": {
+          "enabled": true
+        },
+        "building": {
+          "enabled": false
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=ironwood-prison&house=ironwood-prison&mode=multiplayer&autoplay=1"
   }
 ]

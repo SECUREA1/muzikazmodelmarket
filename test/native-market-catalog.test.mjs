@@ -6,12 +6,12 @@ import {NATIVE_BUILDER_ITEMS} from '../public/js/native-builder-items.js';
 import {nativeMarketCatalog} from '../native-market-catalog.mjs';
 import {mainMarketEntries,filterMainMarket} from '../public/js/main-market-filters.js';
 
-test('every native item and function has a purchasable or basic canonical SKU',()=>{
+test('every native item and function has a purchasable, earned or basic canonical SKU',()=>{
  assert.equal(new Set(GAME_ECONOMY.map(item=>item.sku)).size,GAME_ECONOMY.length);
  for(const native of Object.values(NATIVE_BUILDER_ITEMS)){
   const item=GAME_ECONOMY.find(item=>item.buildAssetId===native.buildAssetId);
   assert.ok(item,native.id);assert.equal(item.native,true);assert.equal(item.function_data.behavior,native.behavior,native.id);
-  assert.equal(item.nativeFunction,native.behavior);assert.ok(item.basic||item.priceMzk>0);
+  assert.equal(item.nativeFunction,native.behavior);assert.ok(item.basic||item.earnedOnly||item.priceMzk>0);if(item.earnedOnly)assert.notEqual(item.basic,true,'earned rewards do not become the free basic kit');
  }
  for(const id of ['hockey-stick','hockey-skates','hockey-puck','hockey-net','hockey-player','hockey-goalie','hockey-referee','hockey-linesman'])assert.ok(GAME_ECONOMY.some(item=>item.sku==='native:'+id));
 });

@@ -8,6 +8,7 @@ import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
+import {isTropicalIslandMap} from '../public/js/tropical-island-destination.js';
 
 test('all generated districts have distinct playable experiences and renderable content',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'generated-vibes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
@@ -34,7 +35,7 @@ test('shared park guide, quests, seats, pickups, healing, switches and garden tr
  state=await use('garden-switch');assert.equal(state.actors['public-experience-garden-switch'].switched,true);
  state=await use('garden-pad');assert.equal(state.players[actorId].position.z,48);state=await use('return-pad');assert.equal(state.players[actorId].position.z,14);
 });
-test('atlas routes and saved entry links retain the selected shared destination',async t=>{
+test('atlas routes and saved entry links retain the selected destination and play mode',async t=>{
  const {atlasPortalRoute}=await import('../public/js/atlas-building-art.js');
  const dir=await mkdtemp(join(tmpdir(),'generated-routes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const atlas=new WorldAtlas(join(dir,'atlas.json')),{environments}=await synchronizeWorldDirectory(atlas,[]);
@@ -42,18 +43,21 @@ test('atlas routes and saved entry links retain the selected shared destination'
  const identity={accountId:'route-visitor',username:'Route Visitor'};
  for(const world of environments){
   const url=new URL(world.playUrl,'https://muzikaz.test/');
-  assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');
+  // The native island launches its solo game; shared rooms retain their
+  // Explorer/sports entry. Atlas pins must preserve both launch contracts.
+  const island=isTropicalIslandMap(world),mode=island?'solo':'multiplayer';
+  if(island){assert.equal(url.pathname,'/tropical-island.html');assert.equal(url.searchParams.get('house'),null);}
+  else {assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');}
   assert.equal(url.searchParams.get('environment'),world.id,world.id+' keeps its environment');
-  assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');
-  assert.equal(url.searchParams.get('autoplay'),'1');assert.equal(url.searchParams.get('mode'),'multiplayer');
+  assert.equal(url.searchParams.get('autoplay'),'1');assert.equal(url.searchParams.get('mode'),mode);
   const route=atlasPortalRoute({mapId:world.id,districtId:world.districtId});
   assert.equal(route[0],'public-commons');assert.equal(route.at(-1),world.id);
   assert.equal(new Set(route).size,route.length);
   for(const id of route)assert.ok(byId.has(id),world.id+' route target '+id+' exists');
   const pin=await atlas.pin(world.id,null,identity),entry=new URL(pin.playUrl,'https://muzikaz.test/');
-  assert.equal(pin.mapId,world.id);assert.equal(entry.searchParams.get('environment'),world.id);
+  assert.equal(pin.mapId,world.id);assert.equal(entry.pathname,url.pathname,world.id+' pin retains its native game entry');assert.equal(entry.searchParams.get('environment'),world.id);
   assert.equal(entry.searchParams.get('house'),world.id);assert.equal(entry.searchParams.get('autoplay'),'1');
-  assert.equal(entry.searchParams.get('mode'),'multiplayer');
+  assert.equal(entry.searchParams.get('mode'),mode);
  }
  const pins=await atlas.pins(identity);
  assert.equal(new Set(pins.map(pin=>pin.mapId)).size,environments.length,'each selected room keeps its own saved entry');

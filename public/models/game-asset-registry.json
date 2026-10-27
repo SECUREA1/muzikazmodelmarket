@@ -22853,6 +22853,326 @@
       "function_data": {}
     },
     {
+      "assetId": "builder-prison-chess-set",
+      "name": "Ironwood Chess Set",
+      "category": "prison",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/prison/items/prison-chess-set.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "prison-chess-set",
+      "builderCategory": "prison",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.92,
+        0.43,
+        0.95
+      ],
+      "priceMzk": 0,
+      "description": "A workshop-made folding chessboard with thirty-two individual pieces, a brass clasp and timber edging. An earned display collectible for your home or custom map.",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-chess-set"
+      }
+    },
+    {
+      "assetId": "builder-prison-earned-trophy",
+      "name": "Ironwood Escape Cup",
+      "category": "prison",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/prison/items/prison-earned-trophy.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "prison-earned-trophy",
+      "builderCategory": "prison",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.71,
+        1.22,
+        0.54
+      ],
+      "priceMzk": 0,
+      "description": "A polished brass escape-challenge trophy on an engraved dark plinth. Earn it by completing the prison escape, then display it in any of your worlds.",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-earned-trophy"
+      }
+    },
+    {
+      "assetId": "builder-prison-radio",
+      "name": "Ironwood Portable Radio",
+      "category": "prison",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/prison/items/prison-radio.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "prison-radio",
+      "builderCategory": "prison",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.94,
+        1.15,
+        0.39
+      ],
+      "priceMzk": 0,
+      "description": "An earned portable radio with a folding handle, tuning dial and telescopic aerial. Place it in another world to share a direct audio stream.",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-radio",
+        "device": "radio-console",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "prompt": "Use Ironwood Portable Radio · E / Use"
+      }
+    },
+    {
+      "assetId": "builder-prison-supply-crate",
+      "name": "Ironwood Workshop Crate",
+      "category": "prison",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/prison/items/prison-supply-crate.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "prison-supply-crate",
+      "builderCategory": "prison",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.19,
+        0.9,
+        0.92
+      ],
+      "priceMzk": 0,
+      "description": "A reusable workshop-crafted keepsake crate with timber slats, steel corners, handles and a stamped inventory panel. This display collectible does not grant consumable supplies.",
+      "earnedOnly": true,
+      "earnedWorld": "ironwood-prison",
+      "tradable": false,
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "damage": 0,
+        "destructible": false,
+        "prisonCollectible": "prison-supply-crate"
+      }
+    },
+    {
       "assetId": "builder-quest-scroll",
       "name": "Quest Scroll",
       "category": "interactive",
@@ -29866,7 +30186,7 @@
     }
   ],
   "audit": {
-    "assetCount": 458,
+    "assetCount": 462,
     "generatedCount": 44,
     "warnings": [
       {

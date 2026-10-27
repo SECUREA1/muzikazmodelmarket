@@ -2,8 +2,8 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 475 definitions;
-the economy has 601 SKUs, including 536 native item, material, tool, and layout
+items and their runtime settings. The current library has 479 definitions;
+the economy has 605 SKUs, including 540 native item, material, tool, and layout
 offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
@@ -107,14 +107,15 @@ The 2026-10-27 audit found:
 
 | Coverage | Count |
 | --- | ---: |
-| Public worlds: 36 bundled/current authored worlds plus Commons and eight districts | 45 |
-| Placed native and whole GLB model instances | 5,287 |
+| Public worlds: 37 bundled/current authored worlds plus Commons and eight districts | 46 |
+| Placed native and whole GLB model instances | 5,288 |
 | Distinct market items used by those worlds | 207 |
-| Renderer metadata model IDs | 256 |
-| Shared native definitions, including materials and gameplay items | 475 |
-| Existing economy SKUs | 601 |
+| Renderer metadata model IDs | 260 |
+| Shared native definitions, including materials and gameplay items | 479 |
+| Existing economy SKUs | 605 |
 | Authored GLB/GLTF files across the repository | 46 |
 | Canonical finite supply items, including care supplies | 590 |
+| Earned Ironwood collectibles with protected ownership receipts, excluded from factory supply | 4 |
 | Missing native definitions, market entries, discovered files, or supply registrations | 0 |
 | Invalid model headers or unrenderable procedural definitions | 0 |
 
@@ -128,3 +129,13 @@ paths, so those files cannot reappear as newly discovered public items.
 `test/world-item-catalog-audit.test.mjs` keeps the world and finite supply coverage
 exhaustive as authored items change. Registry changes can be refreshed with
 `npm run build:asset-registry`; inspect its generated catalog before committing.
+
+
+Ironwood Prison is covered through its complete public manifest and actual
+`createPrisonLand` renderer; it has no separate runtime world constructor or
+editable native component list. Security fixtures and live prisoners remain
+part of that world. Its four portable keepsakes have one canonical earned
+Backpack/economy identity each. They retain their milestone receipts, zero use
+cost, and non-tradable status. They are excluded from purchasable bundles and
+factory production/stock recipes, so manufacturing cannot duplicate an earned
+radio, chess set, escape trophy, or workshop keepsake crate.
