@@ -1,5 +1,7 @@
+import {FACTORY_LOGISTICS_MODEL_INFO,createFactoryLogisticsModel,updateFactoryLogisticsModel} from './factory-logistics-props.js';
 import {FUNHOUSE_MODEL_INFO,createFunhouseModel,updateFunhouseModel} from './clown-funhouse-models.js';
 import {createFreightModel,updateFreightVisual} from './freight-models.js';
+import {TESTING_MODEL_INFO,createTestingModel,updateTestingModel} from './factory-testing-props.js';
 import {FACTORY_MODEL_INFO,createFactoryModel,updateFactoryModel} from './missile-factory-model.js';
 import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness-equipment.js';
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
@@ -39,6 +41,8 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...FACTORY_LOGISTICS_MODEL_INFO,
+  ...TESTING_MODEL_INFO,
   ...Object.fromEntries(Object.entries(SHIPPING_VESSELS).map(([id,spec])=>[id,[spec.name,'Cargo vessel with a live bridge, working helm, load stowage and shared port-to-port navigation.',[spec.beam,spec.height,spec.length]]])),
   'shipping-container-box':['Intermodal Cargo Container','Corrugated steel container with locking bars and corner castings.',[2.4,2.6,6]],
   'shipping-port-crane':['Ship-to-Shore Gantry Crane','Container terminal gantry with boom, lift cables, trolley and spreader.',[14,26,40]],
@@ -325,7 +329,9 @@ export function createBuilderModel(id,options={}) {
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
 
   let root;
-  if(FACTORY_MODEL_INFO[id])root=createFactoryModel(id);
+  if(FACTORY_LOGISTICS_MODEL_INFO[id])root=createFactoryLogisticsModel(id);
+  else if(TESTING_MODEL_INFO[id])root=createTestingModel(id);
+  else if(FACTORY_MODEL_INFO[id])root=createFactoryModel(id);
   else if(FITNESS_ITEMS[id])root=createFitnessEquipment(id);
   else if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
   else if(id==='alpine-mountain')root=createAlpineMountain(THREE);
@@ -375,7 +381,7 @@ export function updateBuilderModels(group, elapsed) {
   // Avatar projections supply their native model directly; placed scenery
   // supplies a collection. Both retain the same authored carnival animation.
   if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed);return;}
-  group.children.forEach(root=>{if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

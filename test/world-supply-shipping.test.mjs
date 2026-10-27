@@ -121,3 +121,9 @@ test('dock exchanges debit finite destination stock atomically, reject shortages
  await assert.rejects(grantShippingReward(f.database,f.identity.walletId,{...trade,exchangeId:randomUUID()},{now}),/out of stock/);
  data=await f.database.read();assert.equal(data.shipping.accounts[f.identity.walletId].supplies['shipping-parts-stock'],3);assert.equal(data.users[f.identity.walletId].memory.materialCredits['material:metal'],5);
 });
+
+test('one voyage cannot bind both bulk supply goods and a private certified Atlas model',async t=>{
+ const calls=[],f=await setup(t,{supplyAction:async()=>{calls.push('bulk');},shippingBind:async()=>{calls.push('certified');}});
+ for(const fields of [{manifestId:'certified-model',contractId:'gulf-gateway'},{factoryManifestId:'certified-model',contractId:'gulf-gateway'},{contractId:'atlas-export'}])await assert.rejects(f.send('accept',{shipmentId:'bulk-batch',...fields}),/one factory cargo manifest/);
+ assert.deepEqual(calls,[]);const room=await f.runtime.store.get(f.environment.id);assert.equal(room.simulation.players[f.identity.walletId].shipping.job,null);
+});

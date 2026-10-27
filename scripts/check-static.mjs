@@ -15,6 +15,7 @@ const requiredFiles = [
   'dist/builder-market.css',
   'dist/environment-builder.js',
   'dist/environment-builder.css',
+  ...['tropical-island.html','public/assets/tropical-island.css','public/images/tropical-island.svg','public/js/tropical-island.js','public/js/tropical-island-world.js','public/js/tropical-island-rules.js','public/js/tropical-island-destination.js'].map(file => `dist/${file}`),
   ...['arcade.html','public/assets/arcade.css','public/images/arcade.svg','public/js/arcade-game.js','public/js/arcade-park.js','public/js/arcade-rules.js','public/js/arcade-runtime.js','public/js/arcade-builder-runtime.js','public/js/arcade-3d-games.js','public/js/arcade-navigation.js','public/js/sports-surfaces.js','public/js/hockey-camera.js','public/js/game-camera.js','public/js/explorer-camera.js','public/assets/sports-surfaces/ice.svg','public/assets/sports-surfaces/wood.svg','public/assets/sports-surfaces/felt.svg','public/assets/sports-surfaces/court.svg','public/assets/sports-surfaces/metal.svg','public/assets/sports-surfaces/paving.svg'].map(file => `dist/${file}`),
   'dist/admin.html',
   'dist/admin.js',
@@ -178,9 +179,14 @@ for (const directory of excludedBuildDirectories) {
   }
 }
 
+const eventAudioGamePages = new Set(['index.html', 'model-explorer.html', 'model-market.html']);
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : page === 'environment-builder.html' ? ['styles.css', 'environment-builder.css', 'environment-builder.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  let requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : page === 'environment-builder.html' ? ['styles.css', 'environment-builder.css', 'environment-builder.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  if (eventAudioGamePages.has(page)) {
+    requiredAssets = requiredAssets.filter(asset => asset !== 'battle-theme.js');
+    if (html.includes('battle-theme.js')) throw new Error(`${page} must keep automatic background synthesis out of spoken gameplay.`);
+  }
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {

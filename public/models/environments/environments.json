@@ -55954,8 +55954,8 @@
   {
     "id": "muzikaz-missile-factory",
     "name": "Atlas Missile & Rocket Factory",
-    "label": "MZK crafting · machines · crew · freight jobs",
-    "description": "Build detailed missile and cargo rocket game items in a working industrial factory. Spend MZK on an order, operate component fabrication, robotic assembly and quality systems, ask the four AI crew members for assistance, then use the existing freight truck to haul your creation from loading to dispatch. Completed models are saved in your Backpack. Explore the warehouse, production hall and vehicle yard with shared server progress, local maps, quests, jobs and existing machine controls.",
+    "label": "MZK crafting · certified trade · warehouse & shipping",
+    "description": "Build detailed missile and cargo rocket game items in a working industrial factory. Spend MZK on an order, operate component fabrication, robotic assembly and quality systems, ask the four AI crew members for assistance, then use the existing freight truck to haul your creation from loading to dispatch. Completed models are saved in your Backpack. The export warehouse links certified model trades, receiving jobs and the real Shipping Academy through the shared MZK economy. Explore the warehouse, production hall and vehicle yard with shared server progress, local maps, quests, jobs and existing machine controls.",
     "category": "Factory & engineering",
     "game": "missile-factory",
     "mapColor": "#ef8b45",
@@ -56281,6 +56281,23 @@
         }
       }
     },
+    "factoryLogistics": {
+      "enabled": true,
+      "stations": [
+        {
+          "id": "factory-export",
+          "kind": "export",
+          "name": "Factory export & market desk",
+          "mapId": "muzikaz-missile-factory",
+          "position": {
+            "x": -31,
+            "y": 0.02,
+            "z": 48
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
     "permanent": true,
     "publicDestination": true,
     "proceduralLand": true,
@@ -56292,7 +56309,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-24T01:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T04:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
     "thumbnailUrl": "/public/images/factory/missile-factory.svg",
@@ -56709,6 +56726,255 @@
             "behavior": "decor",
             "destructible": false
           }
+        },
+        {
+          "id": "factory-proving-gate",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "East gate · Factory Proving Grounds",
+          "position": {
+            "x": 74,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "testingStation": false,
+            "destructible": false,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Enter Factory Proving Grounds · E / Use",
+            "action": "teleport",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-factory-proving-grounds"
+            }
+          }
+        },
+        {
+          "id": "factory-export",
+          "modelId": "factory-export-terminal",
+          "name": "Factory export & market desk",
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          },
+          "objectType": "interactive",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -34.5,
+            "y": 0,
+            "z": 48
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "logisticsStation": "export",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Factory export & market desk · E / Use",
+            "destructible": false,
+            "damage": 0,
+            "logisticsStationId": "factory-export"
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-missile-factory-0",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -43,
+            "y": 0.73,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0.73,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-missile-factory-1",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -43,
+            "y": 0.73,
+            "z": 55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0.73,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "factory-shipping-gateway",
+          "modelId": "factory-export-terminal",
+          "name": "Atlas gateway · Hormuz Shipping Academy",
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          },
+          "objectType": "interactive",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": 58
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "logisticsStation": false,
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Travel to Atlas Shipping · E / Use",
+            "destructible": false,
+            "damage": 0,
+            "action": "teleport",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "hormuz-shipping"
+            }
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
         }
       ],
       "streets": [
@@ -57072,6 +57338,23 @@
             }
           }
         },
+        "factoryLogistics": {
+          "enabled": true,
+          "stations": [
+            {
+              "id": "factory-export",
+              "kind": "export",
+              "name": "Factory export & market desk",
+              "mapId": "muzikaz-missile-factory",
+              "position": {
+                "x": -31,
+                "y": 0.02,
+                "z": 48
+              },
+              "interactionDistance": 6
+            }
+          ]
+        },
         "locations": [
           {
             "id": "factory-procurement",
@@ -57135,6 +57418,34 @@
             "width": 16,
             "depth": 64,
             "description": "Keep the truck route clear between loading and dispatch."
+          },
+          {
+            "id": "factory-export",
+            "name": "Factory export & market desk",
+            "x": -31,
+            "y": 0.02,
+            "z": 48,
+            "width": 22,
+            "depth": 16,
+            "description": "MZK trade counter and export warehouse. Certify a completed game model before trade, delivery or shipping."
+          },
+          {
+            "id": "factory-shipping-gateway",
+            "name": "Atlas Shipping gateway",
+            "x": -14,
+            "z": 58,
+            "width": 12,
+            "depth": 12,
+            "description": "Travel to the real Hormuz Shipping Academy export desk."
+          },
+          {
+            "id": "factory-proving-gate",
+            "name": "East gate · Factory Proving Grounds",
+            "x": 70,
+            "z": 35,
+            "width": 14,
+            "depth": 12,
+            "description": "Walk through the neighboring test range gate with your completed factory model."
           },
           {
             "id": "factory-steel-yard",
@@ -57257,8 +57568,8 @@
   {
     "id": "hormuz-shipping",
     "name": "Strait of Hormuz · Shipping Academy",
-    "label": "Gulf shipping · live rivals, cargo terminals & convoy challenges",
-    "description": "A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Connected commercial terminals have open warehouses, cargo supervisors, moving cranes and live AI shipments. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Compete with rival shipping companies while completing rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.",
+    "label": "Atlas factory exports · live rivals, cargo terminals & convoy challenges",
+    "description": "A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Connected commercial terminals have open warehouses, cargo supervisors, moving cranes and live AI shipments. The Atlas factory export and eastern receiving desks connect certified production models to real balanced cargo voyages; delivered machine parts can fund future factory orders. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Compete with rival shipping companies while completing rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.",
     "category": "Shipping & transport",
     "game": "shipping",
     "worldId": "neon-docks",
@@ -57277,7 +57588,7 @@
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 2800,
-    "contentUpdatedAt": "2026-10-27T00:00:00.000Z",
+    "contentUpdatedAt": "2026-10-27T07:00:00.000Z",
     "thumbnailUrl": "/public/images/shipping/hormuz-shipping.svg",
     "spawn": {
       "x": -1030,
@@ -57288,7 +57599,7 @@
     "streets": [],
     "shipping": {
       "enabled": true,
-      "version": 2,
+      "version": 3,
       "ports": [
         {
           "id": "jebel-ali",
@@ -58406,6 +58717,72 @@
           ],
           "rewardMzk": 60,
           "hazard": "storm"
+        },
+        {
+          "id": "atlas-export",
+          "name": "Atlas certified factory export",
+          "from": "jebel-ali",
+          "to": "fujairah",
+          "cargoId": "factory-models",
+          "units": 4,
+          "requiredVessel": "shipping-feeder",
+          "minSlots": 4,
+          "mass": 8,
+          "waypoints": [
+            {
+              "x": -1130,
+              "z": 330,
+              "name": "Pull clear of the quay"
+            },
+            {
+              "x": -1030,
+              "z": 220,
+              "name": "Clear the Atlas export basin"
+            },
+            {
+              "x": -700,
+              "z": 40,
+              "name": "Outbound Gulf lane"
+            },
+            {
+              "x": -250,
+              "z": 90,
+              "name": "Approach the strait"
+            },
+            {
+              "x": 170,
+              "z": 140,
+              "name": "Musandam traffic channel"
+            },
+            {
+              "x": 430,
+              "z": 210,
+              "name": "Hormuz east checkpoint"
+            },
+            {
+              "x": 700,
+              "z": 280,
+              "name": "Gulf of Oman"
+            },
+            {
+              "x": 1030,
+              "z": 560,
+              "name": "Fujairah factory receiving approach"
+            },
+            {
+              "x": 1130,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · align with berth"
+            },
+            {
+              "x": 1030,
+              "z": 675,
+              "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+            }
+          ],
+          "rewardMzk": 65,
+          "hazard": "traffic",
+          "factoryExport": true
         }
       ],
       "cargo": [
@@ -58458,6 +58835,17 @@
           "stockUnits": 6,
           "color": "#d59578",
           "lesson": "Secure each load before leaving port. A safe detour protects cargo and crew."
+        },
+        {
+          "id": "factory-models",
+          "name": "Sealed Atlas factory models",
+          "mass": 2,
+          "stockId": "shipping-parts-stock",
+          "stockSku": "stock:shipping-parts-stock",
+          "stockUnits": 4,
+          "color": "#80d9c9",
+          "factoryExport": true,
+          "lesson": "Stage a certified factory model at the Atlas export desk before accepting this voyage. The sealed model returns to Backpack after verified unloading."
         }
       ],
       "vessels": [
@@ -58483,6 +58871,9 @@
           "unlockDeliveries": 5
         }
       ]
+    },
+    "factoryLogistics": {
+      "enabled": true
     },
     "builderScene": {
       "version": 3,
@@ -62372,6 +62763,289 @@
           }
         },
         {
+          "id": "logistics-jebel-export",
+          "modelId": "factory-export-terminal",
+          "name": "Atlas factory export desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1004,
+            "y": 0,
+            "z": 386.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "logisticsStation": "shipping",
+            "logisticsStationId": "logistics-jebel-export",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Atlas factory export desk · E / Use"
+          },
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          }
+        },
+        {
+          "id": "shipping-east-receiving",
+          "modelId": "factory-export-terminal",
+          "name": "Atlas eastern receiving desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1005,
+            "y": 0,
+            "z": 724.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "logisticsStation": "receiving",
+            "logisticsStationId": "shipping-east-receiving",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Open Atlas eastern receiving desk · E / Use"
+          },
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          }
+        },
+        {
+          "id": "shipping-atlas-sealed-crate-0",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed reusable-model freight crate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1012,
+            "y": 0,
+            "z": 397
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          }
+        },
+        {
+          "id": "shipping-atlas-sealed-crate-1",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed reusable-model freight crate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1004,
+            "y": 0,
+            "z": 397
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          }
+        },
+        {
+          "id": "shipping-atlas-sealed-crate-2",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed reusable-model freight crate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -996,
+            "y": 0,
+            "z": 397
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          }
+        },
+        {
+          "id": "shipping-atlas-sealed-crate-3",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed reusable-model freight crate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 996,
+            "y": 0,
+            "z": 732
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          }
+        },
+        {
+          "id": "shipping-atlas-sealed-crate-4",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed reusable-model freight crate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1005,
+            "y": 0,
+            "z": 732
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          }
+        },
+        {
+          "id": "shipping-atlas-export-guide",
+          "modelId": "street-sign",
+          "name": "Atlas production and sea freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -994,
+            "y": 0,
+            "z": 397
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Atlas production and sea freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Factory dispatch → qualifying proving-ground test → certification → sealed export manifest → Atlas export desk → balanced ship loading → channel checkpoints → verified Fujairah unloading. Your reusable model stays in Backpack and unlocks after receipt settlement. Trade delivered machine parts for a 20 MZK factory production credit."
+          }
+        },
+        {
+          "id": "shipping-atlas-factory-gateway",
+          "modelId": "archway",
+          "name": "Atlas factory freight gateway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -987,
+            "y": 0,
+            "z": 390
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 5,
+            "destructible": false,
+            "prompt": "Return to Atlas Missile & Rocket Factory",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-missile-factory",
+              "ownerName": "MUZIKAZ",
+              "color": "#80d9c9"
+            }
+          }
+        },
+        {
           "id": "shipping-starter-feeder",
           "modelId": "shipping-feeder",
           "name": "Gulf Runner · public training feeder",
@@ -62585,7 +63259,7 @@
         "color": 11770474,
         "sky": 9092296,
         "harbor": {
-          "version": 2,
+          "version": 3,
           "mainIsland": false,
           "extent": 1400,
           "islands": [
@@ -63015,7 +63689,7 @@
         },
         "shipping": {
           "enabled": true,
-          "version": 2,
+          "version": 3,
           "ports": [
             {
               "id": "jebel-ali",
@@ -64133,6 +64807,72 @@
               ],
               "rewardMzk": 60,
               "hazard": "storm"
+            },
+            {
+              "id": "atlas-export",
+              "name": "Atlas certified factory export",
+              "from": "jebel-ali",
+              "to": "fujairah",
+              "cargoId": "factory-models",
+              "units": 4,
+              "requiredVessel": "shipping-feeder",
+              "minSlots": 4,
+              "mass": 8,
+              "waypoints": [
+                {
+                  "x": -1130,
+                  "z": 330,
+                  "name": "Pull clear of the quay"
+                },
+                {
+                  "x": -1030,
+                  "z": 220,
+                  "name": "Clear the Atlas export basin"
+                },
+                {
+                  "x": -700,
+                  "z": 40,
+                  "name": "Outbound Gulf lane"
+                },
+                {
+                  "x": -250,
+                  "z": 90,
+                  "name": "Approach the strait"
+                },
+                {
+                  "x": 170,
+                  "z": 140,
+                  "name": "Musandam traffic channel"
+                },
+                {
+                  "x": 430,
+                  "z": 210,
+                  "name": "Hormuz east checkpoint"
+                },
+                {
+                  "x": 700,
+                  "z": 280,
+                  "name": "Gulf of Oman"
+                },
+                {
+                  "x": 1030,
+                  "z": 560,
+                  "name": "Fujairah factory receiving approach"
+                },
+                {
+                  "x": 1130,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · align with berth"
+                },
+                {
+                  "x": 1030,
+                  "z": 675,
+                  "name": "Fujairah · Gulf of Oman gateway · stop alongside"
+                }
+              ],
+              "rewardMzk": 65,
+              "hazard": "traffic",
+              "factoryExport": true
             }
           ],
           "cargo": [
@@ -64185,6 +64925,17 @@
               "stockUnits": 6,
               "color": "#d59578",
               "lesson": "Secure each load before leaving port. A safe detour protects cargo and crew."
+            },
+            {
+              "id": "factory-models",
+              "name": "Sealed Atlas factory models",
+              "mass": 2,
+              "stockId": "shipping-parts-stock",
+              "stockSku": "stock:shipping-parts-stock",
+              "stockUnits": 4,
+              "color": "#80d9c9",
+              "factoryExport": true,
+              "lesson": "Stage a certified factory model at the Atlas export desk before accepting this voyage. The sealed model returns to Backpack after verified unloading."
             }
           ],
           "vessels": [
@@ -64210,6 +64961,9 @@
               "unlockDeliveries": 5
             }
           ]
+        },
+        "factoryLogistics": {
+          "enabled": true
         },
         "locations": [
           {
@@ -64501,6 +65255,37 @@
             "description": "Delivered cargo becomes durable supply stock. Trade food, parts and tools through the marketplace and Shipping panel."
           },
           {
+            "id": "logistics-jebel-export",
+            "name": "Atlas factory export desk",
+            "x": -1004,
+            "y": 0.02,
+            "z": 390,
+            "width": 12,
+            "depth": 10,
+            "logisticsStationId": "logistics-jebel-export",
+            "description": "Stage a certified Atlas model, then board a feeder and sail Atlas certified factory export. Recover interrupted sealed cargo here."
+          },
+          {
+            "id": "shipping-east-receiving",
+            "name": "Atlas eastern receiving desk",
+            "x": 1005,
+            "y": 0.02,
+            "z": 728,
+            "width": 12,
+            "depth": 10,
+            "logisticsStationId": "shipping-east-receiving",
+            "description": "Review verified factory export arrivals and the connected MZK supply exchange."
+          },
+          {
+            "id": "shipping-factory-gateway",
+            "name": "Atlas factory freight gateway",
+            "x": -987,
+            "z": 390,
+            "width": 6,
+            "depth": 5,
+            "description": "Travel between the factory export yard and the shipping port with your sealed manifest."
+          },
+          {
             "id": "shipping-sea-portal",
             "name": "Sea portal · return to Neon Harbor",
             "x": -1042,
@@ -64522,8 +65307,8 @@
   {
     "id": "muzikaz-clown-funhouse",
     "name": "Midnight Laughs Funhouse",
-    "label": "Horror house · clown carnival & splash games",
-    "description": "A complete spooky clown carnival with a giant grinning horror house, crooked mirror maze, monster ball pit, surprise jack-in-the-box, impossible clown car, dizzy hat spinner, propeller hats, giant clown shoes and a playable water-gun gallery. Explore the neon midway with friends and meet the clown hosts.",
+    "label": "Haunted adventure · interactive clown carnival",
+    "description": "A complete spooky clown carnival with a giant grinning horror house, crooked mirror maze, monster ball pit, surprise jack-in-the-box, impossible clown car, dizzy hat spinner, propeller hats, giant clown shoes and a playable water-gun gallery. Follow the six-clue Lost Laugh Trail through a lantern-lit midway, whispering wardrobe, clockwork theatre and haunted playroom. Play every attraction with clear first-person views and tracked VR controls, then brave the crooked passages for the final lantern.",
     "category": "Funhouse & carnival",
     "game": "funhouse",
     "indoor": true,
@@ -64654,7 +65439,100 @@
           },
           "prompt": "Wind up the surprise box · E / Use"
         }
-      ]
+      ],
+      "adventure": {
+        "start": {
+          "id": "funhouse-adventure",
+          "name": "The Lost Laugh Trail",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 40
+          },
+          "interactionDistance": 5
+        },
+        "clues": [
+          {
+            "id": "ticket-trick",
+            "name": "The Vanishing Ticket",
+            "position": {
+              "x": 38,
+              "y": 0.02,
+              "z": 36
+            },
+            "interactionDistance": 3.2,
+            "hint": "Search beside Tickets & Tricks on the east midway.",
+            "discovery": "A ticket unfolds by itself: “The costume keeper heard the next laugh.”",
+            "scare": "ticket"
+          },
+          {
+            "id": "wardrobe-whisper",
+            "name": "The Whispering Wardrobe",
+            "position": {
+              "x": -38,
+              "y": 0.02,
+              "z": 34
+            },
+            "interactionDistance": 3.2,
+            "hint": "Find the whispering wardrobe beside the clown dressing room.",
+            "discovery": "The wardrobe answers with a giggle: “Follow the splashes to a drowned mask.”",
+            "scare": "wardrobe"
+          },
+          {
+            "id": "drowned-mask",
+            "name": "The Drowned Mask",
+            "position": {
+              "x": -30,
+              "y": 0.02,
+              "z": 15
+            },
+            "interactionDistance": 3.2,
+            "hint": "Look for the dripping mask near the water-gun gallery.",
+            "discovery": "The mask bubbles: “A shadow is waiting beside the giant spinner hat.”",
+            "scare": "mask"
+          },
+          {
+            "id": "spinner-shadow",
+            "name": "The Shadow Under the Hat",
+            "position": {
+              "x": 36,
+              "y": 0.02,
+              "z": 3
+            },
+            "interactionDistance": 3.2,
+            "hint": "Search the moonlit side of the dizzy spinner.",
+            "discovery": "A second shadow points toward the monster playroom inside the house.",
+            "scare": "shadow"
+          },
+          {
+            "id": "playroom-secret",
+            "name": "The Playroom Secret",
+            "position": {
+              "x": 10,
+              "y": 0.02,
+              "z": -16
+            },
+            "interactionDistance": 3.2,
+            "hint": "Enter the grinning doorway and inspect the playroom secret on the right.",
+            "discovery": "A toy chest opens: “Take the crooked mirror passages to the final laugh.”",
+            "scare": "chest"
+          },
+          {
+            "id": "last-laugh",
+            "name": "The Last Laugh Lantern",
+            "position": {
+              "x": -18,
+              "y": 0.02,
+              "z": -38
+            },
+            "interactionDistance": 3.2,
+            "hint": "Follow the mirror maze passages to the lantern near the exit bell.",
+            "discovery": "The lantern fills with six lost laughs. The midway has its voice again!",
+            "scare": "lantern"
+          }
+        ],
+        "durationMs": 600000
+      }
     },
     "builderScene": {
       "version": 3,
@@ -64950,5 +65828,2018 @@
       }
     },
     "playUrl": "model-explorer.html?environment=muzikaz-clown-funhouse&house=muzikaz-clown-funhouse&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "muzikaz-factory-proving-grounds",
+    "name": "Atlas Factory Proving Grounds",
+    "category": "Factory & engineering",
+    "game": "factory-proving",
+    "mapColor": "#ef8b45",
+    "mapTheme": "industrial",
+    "worldId": "skyline-deck",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-27T04:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playUrl": "model-explorer.html?environment=muzikaz-factory-proving-grounds&house=muzikaz-factory-proving-grounds&autoplay=1&mode=multiplayer",
+    "adjacentTo": "muzikaz-missile-factory",
+    "label": "VR control decks · live launches · mountain access",
+    "description": "The neighboring factory test range connects your crafted training missiles and cargo rockets to shared launch-pad challenges. Three walkable VR dashboard bays provide a preparation deck, launch supervision desk and flight telemetry station with animated screens and range overview boards. Prepare a saved model, deploy it on the pad, arm a countdown from the control bunker or supervision desk, and watch a synchronized scripted flight, target pulse or cargo touchdown. Telemetry records the score and grants mountain-facility clearance. The certification and receiving apron turns completed tests into certified MZK trades and booked factory deliveries. The locked hatch leads into an underground power-containment game compound.",
+    "indoor": false,
+    "outdoor": true,
+    "testing": {
+      "enabled": true,
+      "kind": "proving",
+      "stations": [
+        {
+          "id": "proving-setup",
+          "kind": "setup",
+          "name": "Test preparation & telemetry",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-pad",
+          "kind": "pad",
+          "name": "Shared launch pad",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -10
+          },
+          "interactionDistance": 8
+        },
+        {
+          "id": "proving-control",
+          "kind": "control",
+          "name": "Arm & launch control",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 18
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-hatch",
+          "kind": "hatch",
+          "name": "Mountain facility access hatch",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 25
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-vr-setup",
+          "kind": "setup",
+          "name": "VR preparation deck",
+          "position": {
+            "x": -52,
+            "y": 0.56,
+            "z": 65
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "setup",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "kind": "control",
+          "name": "VR launch supervision desk",
+          "position": {
+            "x": 20,
+            "y": 0.74,
+            "z": 55
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "launch",
+          "deck": {
+            "height": 0.72,
+            "width": 22,
+            "depth": 16
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "kind": "control",
+          "name": "VR flight telemetry desk",
+          "position": {
+            "x": 35,
+            "y": 0.56,
+            "z": -28
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "telemetry",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        }
+      ],
+      "targets": [
+        {
+          "id": "target-alpha",
+          "kind": "accuracy",
+          "profileId": "accuracy",
+          "name": "Alpha practice target",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -70
+          },
+          "radius": 8
+        },
+        {
+          "id": "cargo-zone",
+          "kind": "cargo",
+          "profileId": "cargo",
+          "name": "Cargo touchdown platform",
+          "position": {
+            "x": 35,
+            "y": 0.02,
+            "z": -60
+          },
+          "radius": 10
+        }
+      ]
+    },
+    "factoryTesting": {
+      "enabled": true,
+      "kind": "proving",
+      "stations": [
+        {
+          "id": "proving-setup",
+          "kind": "setup",
+          "name": "Test preparation & telemetry",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-pad",
+          "kind": "pad",
+          "name": "Shared launch pad",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -10
+          },
+          "interactionDistance": 8
+        },
+        {
+          "id": "proving-control",
+          "kind": "control",
+          "name": "Arm & launch control",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 18
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-hatch",
+          "kind": "hatch",
+          "name": "Mountain facility access hatch",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 25
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "proving-vr-setup",
+          "kind": "setup",
+          "name": "VR preparation deck",
+          "position": {
+            "x": -52,
+            "y": 0.56,
+            "z": 65
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "setup",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "kind": "control",
+          "name": "VR launch supervision desk",
+          "position": {
+            "x": 20,
+            "y": 0.74,
+            "z": 55
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "launch",
+          "deck": {
+            "height": 0.72,
+            "width": 22,
+            "depth": 16
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "kind": "control",
+          "name": "VR flight telemetry desk",
+          "position": {
+            "x": 35,
+            "y": 0.56,
+            "z": -28
+          },
+          "interactionDistance": 6,
+          "testingDashboard": "telemetry",
+          "deck": {
+            "height": 0.54,
+            "width": 22,
+            "depth": 14
+          }
+        }
+      ],
+      "targets": [
+        {
+          "id": "target-alpha",
+          "kind": "accuracy",
+          "profileId": "accuracy",
+          "name": "Alpha practice target",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -70
+          },
+          "radius": 8
+        },
+        {
+          "id": "cargo-zone",
+          "kind": "cargo",
+          "profileId": "cargo",
+          "name": "Cargo touchdown platform",
+          "position": {
+            "x": 35,
+            "y": 0.02,
+            "z": -60
+          },
+          "radius": 10
+        }
+      ]
+    },
+    "factoryLogistics": {
+      "enabled": true,
+      "stations": [
+        {
+          "id": "range-certification",
+          "kind": "certify",
+          "name": "Official model certification",
+          "mapId": "muzikaz-factory-proving-grounds",
+          "position": {
+            "x": -56,
+            "y": 0.02,
+            "z": 5
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "range-receiving",
+          "kind": "receiving",
+          "name": "Proving-ground supply receiving",
+          "mapId": "muzikaz-factory-proving-grounds",
+          "position": {
+            "x": -64,
+            "y": 0.02,
+            "z": 24
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "thumbnailUrl": "/public/images/factory/proving-grounds.svg",
+    "spawn": {
+      "x": -65,
+      "y": 0.02,
+      "z": 35,
+      "rotationY": -1.5707963267948966
+    },
+    "streets": [
+      {
+        "id": "proving-service-road",
+        "name": "Atlas Test Range Service Road",
+        "from": {
+          "x": -105,
+          "z": 96
+        },
+        "to": {
+          "x": 105,
+          "z": 96
+        },
+        "width": 10
+      }
+    ],
+    "builderScene": {
+      "version": 3,
+      "layout": "factory-proving-grounds",
+      "mapSize": 220,
+      "objects": [
+        {
+          "id": "proving-setup",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Test preparation & telemetry",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -42,
+            "y": 0,
+            "z": 31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "setup",
+            "testingStationId": "proving-setup",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Test preparation & telemetry · E / Use"
+          }
+        },
+        {
+          "id": "proving-pad",
+          "modelId": "testing-launch-pad",
+          "asset": {
+            "buildAssetId": "testing-launch-pad"
+          },
+          "name": "Shared launch pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 8,
+            "testingStation": "pad",
+            "testingStationId": "proving-pad",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Open Shared launch pad · E / Use"
+          }
+        },
+        {
+          "id": "proving-control",
+          "modelId": "testing-launch-console",
+          "asset": {
+            "buildAssetId": "testing-launch-console"
+          },
+          "name": "Arm & launch control",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 14.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-control",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Arm & launch control · E / Use"
+          }
+        },
+        {
+          "id": "proving-hatch",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Mountain facility access hatch",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 50,
+            "y": 0,
+            "z": 21.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "hatch",
+            "testingStationId": "proving-hatch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Mountain facility access hatch · E / Use"
+          }
+        },
+        {
+          "id": "proving-vr-setup",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "VR preparation deck",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -52,
+            "y": 0.54,
+            "z": 61.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "setup",
+            "testingStationId": "proving-vr-setup",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "setup",
+            "prompt": "Open VR preparation deck · E / Use"
+          }
+        },
+        {
+          "id": "proving-vr-launch",
+          "modelId": "testing-launch-console",
+          "asset": {
+            "buildAssetId": "testing-launch-console"
+          },
+          "name": "VR launch supervision desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 20,
+            "y": 0.72,
+            "z": 51.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-vr-launch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "launch",
+            "prompt": "Open VR launch supervision desk · E / Use"
+          }
+        },
+        {
+          "id": "proving-vr-telemetry",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "VR flight telemetry desk",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 35,
+            "y": 0.54,
+            "z": -31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "control",
+            "testingStationId": "proving-vr-telemetry",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "testingDashboard": "telemetry",
+            "prompt": "Open VR flight telemetry desk · E / Use"
+          }
+        },
+        {
+          "id": "target-alpha",
+          "modelId": "testing-range-target",
+          "asset": {
+            "buildAssetId": "testing-range-target"
+          },
+          "name": "Alpha practice target",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "testingTarget": "accuracy",
+            "testingTargetApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Alpha practice target"
+          }
+        },
+        {
+          "id": "cargo-zone",
+          "modelId": "testing-cargo-platform",
+          "asset": {
+            "buildAssetId": "testing-cargo-platform"
+          },
+          "name": "Cargo touchdown platform",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 35,
+            "y": 0,
+            "z": -60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "testingTarget": "cargo",
+            "testingTargetApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 0
+            },
+            "prompt": "Cargo touchdown platform"
+          }
+        },
+        {
+          "id": "proving-factory-return",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Return to Atlas Factory",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -74,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false,
+            "action": "teleport",
+            "prompt": "Return to Atlas Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-missile-factory"
+            }
+          }
+        },
+        {
+          "id": "range-certification",
+          "modelId": "factory-certification-kiosk",
+          "name": "Official model certification",
+          "asset": {
+            "buildAssetId": "factory-certification-kiosk"
+          },
+          "objectType": "interactive",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -56,
+            "y": 0,
+            "z": 1.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "logisticsStation": "certify",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Official model certification · E / Use",
+            "destructible": false,
+            "damage": 0,
+            "logisticsStationId": "range-certification"
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "range-receiving",
+          "modelId": "factory-export-terminal",
+          "name": "Proving-ground supply receiving",
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          },
+          "objectType": "interactive",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -64,
+            "y": 0,
+            "z": 20.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "logisticsStation": "receiving",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Proving-ground supply receiving · E / Use",
+            "destructible": false,
+            "damage": 0,
+            "logisticsStationId": "range-receiving"
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-factory-proving-grounds-0",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-factory-proving-grounds-1",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-factory-proving-grounds-2",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -48,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        }
+      ],
+      "streets": [
+        {
+          "id": "proving-service-road",
+          "name": "Atlas Test Range Service Road",
+          "from": {
+            "x": -105,
+            "z": 96
+          },
+          "to": {
+            "x": 105,
+            "z": 96
+          },
+          "width": 10
+        }
+      ],
+      "layoutMeta": {
+        "color": 5398882,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "proving",
+          "stations": [
+            {
+              "id": "proving-setup",
+              "kind": "setup",
+              "name": "Test preparation & telemetry",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": 35
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "proving-pad",
+              "kind": "pad",
+              "name": "Shared launch pad",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -10
+              },
+              "interactionDistance": 8
+            },
+            {
+              "id": "proving-control",
+              "kind": "control",
+              "name": "Arm & launch control",
+              "position": {
+                "x": -24,
+                "y": 0.02,
+                "z": 18
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "proving-hatch",
+              "kind": "hatch",
+              "name": "Mountain facility access hatch",
+              "position": {
+                "x": 50,
+                "y": 0.02,
+                "z": 25
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "proving-vr-setup",
+              "kind": "setup",
+              "name": "VR preparation deck",
+              "position": {
+                "x": -52,
+                "y": 0.56,
+                "z": 65
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "setup",
+              "deck": {
+                "height": 0.54,
+                "width": 22,
+                "depth": 14
+              }
+            },
+            {
+              "id": "proving-vr-launch",
+              "kind": "control",
+              "name": "VR launch supervision desk",
+              "position": {
+                "x": 20,
+                "y": 0.74,
+                "z": 55
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "launch",
+              "deck": {
+                "height": 0.72,
+                "width": 22,
+                "depth": 16
+              }
+            },
+            {
+              "id": "proving-vr-telemetry",
+              "kind": "control",
+              "name": "VR flight telemetry desk",
+              "position": {
+                "x": 35,
+                "y": 0.56,
+                "z": -28
+              },
+              "interactionDistance": 6,
+              "testingDashboard": "telemetry",
+              "deck": {
+                "height": 0.54,
+                "width": 22,
+                "depth": 14
+              }
+            }
+          ],
+          "targets": [
+            {
+              "id": "target-alpha",
+              "kind": "accuracy",
+              "profileId": "accuracy",
+              "name": "Alpha practice target",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -70
+              },
+              "radius": 8
+            },
+            {
+              "id": "cargo-zone",
+              "kind": "cargo",
+              "profileId": "cargo",
+              "name": "Cargo touchdown platform",
+              "position": {
+                "x": 35,
+                "y": 0.02,
+                "z": -60
+              },
+              "radius": 10
+            }
+          ]
+        },
+        "factoryLogistics": {
+          "enabled": true,
+          "stations": [
+            {
+              "id": "range-certification",
+              "kind": "certify",
+              "name": "Official model certification",
+              "mapId": "muzikaz-factory-proving-grounds",
+              "position": {
+                "x": -56,
+                "y": 0.02,
+                "z": 5
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "range-receiving",
+              "kind": "receiving",
+              "name": "Proving-ground supply receiving",
+              "mapId": "muzikaz-factory-proving-grounds",
+              "position": {
+                "x": -64,
+                "y": 0.02,
+                "z": 24
+              },
+              "interactionDistance": 6
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "range-certification",
+            "name": "Official model certification",
+            "x": -56,
+            "y": 0.02,
+            "z": 5,
+            "width": 20,
+            "depth": 16,
+            "description": "Official certification for completed factory-model tests. Use your model in MZK trade and freight contracts."
+          },
+          {
+            "id": "range-receiving",
+            "name": "Proving-ground supply receiving",
+            "x": -64,
+            "y": 0.02,
+            "z": 24,
+            "width": 20,
+            "depth": 16,
+            "description": "Receive a booked certified model delivery from the factory."
+          },
+          {
+            "id": "proving-setup",
+            "name": "Test preparation & telemetry",
+            "x": -42,
+            "y": 0.02,
+            "z": 35,
+            "width": 14,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-pad",
+            "name": "Shared launch pad",
+            "x": 0,
+            "y": 0.02,
+            "z": -10,
+            "width": 18,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-control",
+            "name": "Arm & launch control",
+            "x": -24,
+            "y": 0.02,
+            "z": 18,
+            "width": 14,
+            "depth": 14,
+            "description": "Use a saved factory-crafted model in the shared proving-ground challenge."
+          },
+          {
+            "id": "proving-hatch",
+            "name": "Mountain facility access hatch",
+            "x": 50,
+            "y": 0.02,
+            "z": 25,
+            "width": 14,
+            "depth": 14,
+            "description": "Locked mountain-facility entrance. Complete both accuracy and cargo tests to earn access."
+          },
+          {
+            "id": "proving-vr-setup",
+            "name": "VR preparation deck",
+            "x": -52,
+            "y": 0.56,
+            "z": 65,
+            "width": 22,
+            "depth": 14,
+            "testingDashboard": "setup",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
+          },
+          {
+            "id": "proving-vr-launch",
+            "name": "VR launch supervision desk",
+            "x": 20,
+            "y": 0.74,
+            "z": 55,
+            "width": 22,
+            "depth": 16,
+            "testingDashboard": "launch",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
+          },
+          {
+            "id": "proving-vr-telemetry",
+            "name": "VR flight telemetry desk",
+            "x": 35,
+            "y": 0.56,
+            "z": -28,
+            "width": 22,
+            "depth": 14,
+            "testingDashboard": "telemetry",
+            "description": "Climb the south stairs to this walkable VR control bay. Use the dashboard to prepare, supervise or review your shared factory test."
+          },
+          {
+            "id": "target-alpha",
+            "name": "Alpha practice target",
+            "x": 0,
+            "z": -70,
+            "width": 16,
+            "depth": 16,
+            "description": "Visible practice target for the training accuracy challenge."
+          },
+          {
+            "id": "cargo-zone",
+            "name": "Cargo touchdown platform",
+            "x": 35,
+            "z": -60,
+            "width": 20,
+            "depth": 20,
+            "description": "Scripted cargo landing target with a marked touchdown apron."
+          },
+          {
+            "id": "proving-factory-gate",
+            "name": "Factory west gate",
+            "x": -74,
+            "z": 35,
+            "width": 12,
+            "depth": 12,
+            "description": "Walk back through the neighboring factory gate at any time."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "proving"
+        }
+      }
+    }
+  },
+  {
+    "id": "muzikaz-mountain-compound",
+    "name": "Mountain Nuclear Research Compound",
+    "category": "Factory & engineering",
+    "game": "mountain-compound",
+    "mapColor": "#8f9bdf",
+    "mapTheme": "industrial",
+    "worldId": "skyline-deck",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-27T04:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playUrl": "model-explorer.html?environment=muzikaz-mountain-compound&house=muzikaz-mountain-compound&autoplay=1&mode=multiplayer",
+    "adjacentTo": "muzikaz-factory-proving-grounds",
+    "label": "Locked underground facility · containment puzzle · deep bunker",
+    "description": "Enter an underground mountain game facility with an entry checkpoint, reinforced blast doors, illuminated access corridors, observation gallery, control room and a nuclear-themed containment power-core hall. Factory proving-ground clearance unlocks the surface hatch; a symbolic three-channel power puzzle unlocks the deep bunker. All systems are fictional game interactions. An accessible service and supply hall accepts certified factory deliveries before the deep-access boundary. Return to the proving grounds from the surface lift at any time.",
+    "indoor": true,
+    "outdoor": false,
+    "testing": {
+      "enabled": true,
+      "kind": "compound",
+      "stations": [
+        {
+          "id": "compound-return",
+          "kind": "return",
+          "name": "Surface return lift",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-containment",
+          "kind": "containment",
+          "name": "Power containment puzzle",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 8
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-deep-hatch",
+          "kind": "deep-hatch",
+          "name": "Deep bunker access",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -20
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "factoryTesting": {
+      "enabled": true,
+      "kind": "compound",
+      "stations": [
+        {
+          "id": "compound-return",
+          "kind": "return",
+          "name": "Surface return lift",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 35
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-containment",
+          "kind": "containment",
+          "name": "Power containment puzzle",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 8
+          },
+          "interactionDistance": 6
+        },
+        {
+          "id": "compound-deep-hatch",
+          "kind": "deep-hatch",
+          "name": "Deep bunker access",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": -20
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "factoryLogistics": {
+      "enabled": true,
+      "stations": [
+        {
+          "id": "compound-receiving",
+          "kind": "compound",
+          "name": "Mountain facility receiving",
+          "mapId": "muzikaz-mountain-compound",
+          "position": {
+            "x": 24,
+            "y": 0.02,
+            "z": 31
+          },
+          "interactionDistance": 6
+        }
+      ]
+    },
+    "compound": {
+      "enabled": true,
+      "locked": true,
+      "deepBoundaryZ": -26
+    },
+    "thumbnailUrl": "/public/images/factory/mountain-compound.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 35,
+      "rotationY": 0
+    },
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "mountain-compound",
+      "mapSize": 160,
+      "objects": [
+        {
+          "id": "compound-return",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Surface return lift",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 31.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "return",
+            "testingStationId": "compound-return",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Return to the proving grounds · E / Use",
+            "action": "teleport",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-factory-proving-grounds"
+            }
+          }
+        },
+        {
+          "id": "compound-containment",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Power containment puzzle",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 4.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "containment",
+            "testingStationId": "compound-containment",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Power containment puzzle · E / Use"
+          }
+        },
+        {
+          "id": "compound-deep-hatch",
+          "modelId": "testing-telemetry-terminal",
+          "asset": {
+            "buildAssetId": "testing-telemetry-terminal"
+          },
+          "name": "Deep bunker access",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -23.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": "deep-hatch",
+            "testingStationId": "compound-deep-hatch",
+            "testingApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "prompt": "Open Deep bunker access · E / Use"
+          }
+        },
+        {
+          "id": "compound-core",
+          "modelId": "testing-containment-core",
+          "asset": {
+            "buildAssetId": "testing-containment-core"
+          },
+          "name": "Mountain containment power core",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        },
+        {
+          "id": "compound-vault-door",
+          "modelId": "testing-blast-door",
+          "asset": {
+            "buildAssetId": "testing-blast-door"
+          },
+          "name": "Containment checkpoint blast door",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        },
+        {
+          "id": "compound-deep-door",
+          "modelId": "testing-blast-door",
+          "asset": {
+            "buildAssetId": "testing-blast-door"
+          },
+          "name": "Deep bunker blast door",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "testingStation": false
+          }
+        },
+        {
+          "id": "compound-receiving",
+          "modelId": "factory-export-terminal",
+          "name": "Mountain facility receiving",
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          },
+          "objectType": "interactive",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 24,
+            "y": 0,
+            "z": 27.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "logisticsStation": "compound",
+            "logisticsApproach": {
+              "x": 0,
+              "y": 0.02,
+              "z": 3.5
+            },
+            "interactionKey": "e",
+            "interactionDistance": 6,
+            "prompt": "Mountain facility receiving · E / Use",
+            "destructible": false,
+            "damage": 0,
+            "logisticsStationId": "compound-receiving"
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-mountain-compound-0",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 31,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        },
+        {
+          "id": "logistics-freight-muzikaz-mountain-compound-1",
+          "modelId": "factory-freight-crate",
+          "name": "Atlas sealed freight crate",
+          "asset": {
+            "buildAssetId": "factory-freight-crate"
+          },
+          "objectType": "props",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 31,
+            "y": 0,
+            "z": 36
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "groundOffset": 0,
+          "materialSettings": {
+            "accent": "#efad72",
+            "useAccent": false
+          },
+          "animationState": {
+            "enabled": true,
+            "speed": 1,
+            "loop": true,
+            "autoplay": true
+          },
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "logisticsStation": false,
+            "destructible": false,
+            "damage": 0
+          },
+          "metadata": {
+            "factoryLogisticsEquipment": true,
+            "upgradeable": true
+          }
+        }
+      ],
+      "streets": [],
+      "layoutMeta": {
+        "color": 2111044,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "compound",
+          "stations": [
+            {
+              "id": "compound-return",
+              "kind": "return",
+              "name": "Surface return lift",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 35
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "compound-containment",
+              "kind": "containment",
+              "name": "Power containment puzzle",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 8
+              },
+              "interactionDistance": 6
+            },
+            {
+              "id": "compound-deep-hatch",
+              "kind": "deep-hatch",
+              "name": "Deep bunker access",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": -20
+              },
+              "interactionDistance": 6
+            }
+          ]
+        },
+        "factoryLogistics": {
+          "enabled": true,
+          "stations": [
+            {
+              "id": "compound-receiving",
+              "kind": "compound",
+              "name": "Mountain facility receiving",
+              "mapId": "muzikaz-mountain-compound",
+              "position": {
+                "x": 24,
+                "y": 0.02,
+                "z": 31
+              },
+              "interactionDistance": 6
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "compound-receiving",
+            "name": "Mountain facility receiving",
+            "x": 24,
+            "y": 0.02,
+            "z": 31,
+            "width": 28,
+            "depth": 24,
+            "description": "Accessible supply receiving hall. Deliver a certified factory model without entering the deep core area."
+          },
+          {
+            "id": "compound-arrival",
+            "name": "Mountain entry checkpoint & return lift",
+            "x": 0,
+            "z": 35,
+            "width": 18,
+            "depth": 16,
+            "description": "Authenticated entry checkpoint. The surface return lift remains available throughout your visit."
+          },
+          {
+            "id": "compound-containment",
+            "name": "Containment control console",
+            "x": 0,
+            "z": 8,
+            "width": 18,
+            "depth": 14,
+            "description": "Solve the fictional blue, violet and gold power-circuit puzzle to earn deep-bunker clearance."
+          },
+          {
+            "id": "compound-observation",
+            "name": "Observation & telemetry gallery",
+            "x": 24,
+            "z": -20,
+            "width": 22,
+            "depth": 28,
+            "description": "Explore the observation gallery and its illuminated SVG telemetry displays."
+          },
+          {
+            "id": "compound-deep-hatch",
+            "name": "Deep bunker security hatch",
+            "x": 0,
+            "z": -20,
+            "width": 16,
+            "depth": 12,
+            "description": "A second clearance gate separates the main corridor from the deep power hall."
+          },
+          {
+            "id": "compound-core-hall",
+            "name": "Underground power-core hall",
+            "x": -18,
+            "z": -35,
+            "width": 28,
+            "depth": 24,
+            "description": "A luminous symbolic containment core, coolant pipes, service platforms and independent power channels."
+          },
+          {
+            "id": "compound-deep-lift",
+            "name": "Deep access landing",
+            "x": 0,
+            "z": -42,
+            "width": 14,
+            "depth": 12,
+            "description": "Deep-bunker arrival point. Return through the main corridor to the surface lift."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "factoryTesting": {
+          "enabled": true,
+          "kind": "compound"
+        }
+      }
+    }
+  },
+  {
+    "id": "tropical-island",
+    "name": "Island Adventure · Tropical Resort",
+    "label": "Tropical resort · explore at your own pace",
+    "description": "A complete tropical resort island with cabanas, two beach bars, beach balls, a volleyball court, small paddle boats, a lagoon course and pontoon cruises. Explore on foot or by boat for as long as you like in this solo island adventure. Optional fictional drinks stack a temporary arcade buzz and beer-goggle effect. Each drink digests and fades independently within 120 seconds of consumption; a new drink adds its own effect without resetting earlier drinks.",
+    "category": "Island adventures",
+    "game": "tropical-island",
+    "worldId": "neon-docks",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": false,
+    "sharedWorld": false,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 180,
+    "mapColor": "#48d7ba",
+    "mapTheme": "tropical",
+    "thumbnailUrl": "/public/images/tropical-island.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 24,
+      "rotationY": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "buzzSeconds": 120,
+    "unlimitedExploration": true,
+    "roomId": "tropical-island",
+    "playUrl": "tropical-island.html?environment=tropical-island&mode=solo&autoplay=1",
+    "aliases": [
+      "island-adventure",
+      "tropical-resort"
+    ],
+    "builderScene": {
+      "layout": "tropical-island",
+      "mapSize": 180,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": false,
+        "buzzSeconds": 120
+      }
+    },
+    "contentUpdatedAt": "2026-10-27T13:00:00.000Z"
   }
 ]

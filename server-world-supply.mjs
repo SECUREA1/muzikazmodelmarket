@@ -7,7 +7,7 @@ export const WORLD_SUPPLY_RULES=Object.freeze({initialStock:1000,bulkMinimum:10,
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
 const own=(object,key)=>Object.hasOwn(object,key);
 const activePhases=new Set(['loading','secured','sailing','unloading']);
-const routes=SHIPPING_ROUTES.filter(route=>route.from!==route.to);
+const routes=SHIPPING_ROUTES.filter(route=>route.from!==route.to&&!route.factoryExport);
 function quantity(value){if(!Number.isSafeInteger(value)||value<1||value>WORLD_SUPPLY_RULES.maxQuantity)fail('Choose 1 to 10,000 whole items.',422);return value;}
 function quoteFor(item,count){
  const subtotalMzk=Math.max(1,Math.round(Number(item.priceMzk??Number(item.priceUsd??item.price)*100)||1))*quantity(count),discountPercent=count>=WORLD_SUPPLY_RULES.bulkMinimum?WORLD_SUPPLY_RULES.bulkDiscountPercent:0;

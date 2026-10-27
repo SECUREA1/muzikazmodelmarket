@@ -1,4 +1,9 @@
-"""Real gameplay, vehicle actions and recovery while full maps stay open."""
+"""Desktop gameplay, vehicle actions and recovery while companion maps stay open.
+
+A wide touch-capable viewport retains the desktop companion layout and verifies
+keyboard plus controller input. Mobile maps intentionally cover gameplay controls
+for full-screen browsing; their sizing and scrolling are covered separately.
+"""
 from pathlib import Path
 import argparse
 import asyncio
@@ -190,8 +195,9 @@ async def vehicle(page, rows, world):
 
 
 async def exercise(browser, base, world, index, page_fullscreen, raster_scale=1):
-    context = await browser.new_context(viewport={'width':390,'height':844},device_scale_factor=raster_scale,is_mobile=True,has_touch=True,service_workers='block',reduced_motion='reduce')
+    context = await browser.new_context(viewport={'width':1280,'height':900},device_scale_factor=raster_scale,is_mobile=True,has_touch=True,service_workers='block',reduced_motion='reduce')
     page = await context.new_page()
+    assert not await page.evaluate("matchMedia('(max-width:600px), (pointer:coarse) and (max-width:1024px)').matches"), 'Gameplay-while-open coverage requires the desktop companion layout.'
     page.set_default_timeout(30000)
     if page_fullscreen:
         await page.add_init_script('Element.prototype.requestFullscreen=()=>Promise.reject(new DOMException("Page fallback test.","NotSupportedError"));')
@@ -220,7 +226,7 @@ async def exercise(browser, base, world, index, page_fullscreen, raster_scale=1)
             await route.fulfill(status=503,content_type='application/json',body=json.dumps({'success':False,'message':'Transient map-open connection test.'}));fired.set()
         else:await route.continue_()
     await page.route('**/api/rooms/*/gameplay',fail_current_input)
-    report={'id':world,'passed':False,'phases':[],'rasterScale':raster_scale}
+    report={'id':world,'passed':False,'phases':[],'rasterScale':raster_scale,'viewport':{'width':1280,'height':900}}
     started=time.monotonic()
     try:
         await page.goto(base+'/model-explorer.html?environment='+world+'&autoplay=1&mode=multiplayer',wait_until='domcontentloaded',timeout=90000)

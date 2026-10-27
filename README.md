@@ -13,7 +13,7 @@ Service type: Web Service
 Runtime: Node
 Branch: main
 Root Directory: leave blank
-Build Command: npm ci && npm run build
+Build Command: ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
 Start Command: node server.mjs
 Health Check Path: /api/health
 ```
@@ -101,7 +101,15 @@ oversized shoes, surprise box, ball pit and water-gun gallery. Open it from
 Explorer options or the world directory. Its Game Market and Builder Market
 listing includes an editable template and 28 individual props, attractions,
 costumes, tools and playable clown characters with canonical MZK purchases and
-Backpack delivery. See [funhouse controls and market items](docs/clown-funhouse.md).
+Backpack delivery. First-person play includes aimed water shots and ball tosses,
+seated car and spinner timing games, a catch challenge and a checkpoint maze;
+WebXR controllers use physical targets and floating action controls. See
+[funhouse controls and market items](docs/clown-funhouse.md).
+
+The optional Lost Laugh Trail adds six discoveries across the detailed midway
+and haunted house, with story hints, theatrical surprises and a timed score.
+Compact controls keep the scenery visible, and seated rides retain free look
+with calibrated headset height and safe standing-view restoration.
 
 Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
 fishing grounds, tackle in the existing tools and markets, saved catches, MZK
@@ -218,13 +226,30 @@ All nine factory item types are available in Marketplace and Builder's
 roles, crew, vehicle jobs and local maps connected after moving or removing items.
 See [factory controls and production](docs/missile-factory.md).
 
+The factory's east gate now connects to **Atlas Proving Grounds**, where players
+can set up, deploy and launch their owned training missiles and cargo rockets
+with shared animations and SVG telemetry.
+Three walkable control bays add headset dashboards for preparation, launch
+supervision and live telemetry, with controller-ray buttons and shared test state.
+Passing both test profiles unlocks
+the **Mountain Nuclear Research Compound**; its symbolic containment puzzle opens the deeper
+bunker. Seven reusable testing assets and two editable templates are available
+in markets and Map Builder. See [testing and compound access](docs/factory-proving-grounds.md).
+
+The connected [factory supply chain](docs/factory-supply-chain.md) adds transferable
+test certificates, MZK listings for finished production, sealed deliveries to
+the range and compound, and an Atlas Export voyage from Jebel Ali to Fujairah.
+Delivered shipping parts exchange for 20 MZK credits toward new production.
+Export terminals, certification kiosks and freight crates are sold through the
+same MZK markets and remain editable in Builder.
+
 Public maps keep travel and vehicle selection available during connection
 recovery. Selecting a vehicle immediately shows a nonblocking loading display,
 waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
 and offers all public destinations. A map introduction plays once per page session after the first player gesture.
 Only new jobs, objective changes and game interactions are then voiced.
-Settings provides independent audio mutes and distance-based spatial sound. See [map travel and spoken objectives](docs/open-map-travel.md).
+Settings provides independent audio mutes and distance-based spatial sound. NPC and AI speech now uses local neural male/female voices across browsers; choose and preview them in Audio settings. The build prepares the speech model automatically, with no API key. See [map travel and spoken objectives](docs/open-map-travel.md).
 
 ## In-game camera views
 

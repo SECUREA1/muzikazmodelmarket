@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGameplayAnnouncements,interactionHasDialogue} from '../public/js/gameplay-announcements.js';
 import {createQuestConversationVoice} from '../public/js/quest-conversation-voice.js';
+import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
 
 function fixture(){const calls=[],voice={announce:(text,options)=>calls.push({text,...options})},announcer=createGameplayAnnouncements({voice}),world={id:'world',name:'Public world'};return {calls,announcer,world};}
 function snapshot(){return {serverTime:100000,players:{p:{position:{x:0,y:0,z:0},quests:{}}},actors:{},construction:{crew:{jobs:[]}}};}
@@ -53,7 +54,7 @@ test('a missing player does not consume the one-time introduction or baseline',(
 });
 
 test('audio starts at a gesture, defaults to enabled, respects mute and shares deduplicated calls',()=>{
- const spoken=[],speech={speak:utterance=>spoken.push(utterance),cancel(){},resume(){}},voice=createQuestConversationVoice({speech,Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ const spoken=[],speech={getVoices:()=>GENERATED_VOICES,speak:utterance=>spoken.push(utterance),cancel(){},resume(){}},voice=createQuestConversationVoice({speech,Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
  voice.announce('Boarding ready.',{worldId:'airport',key:'board'});assert.equal(spoken.length,0);voice.unlock();assert.equal(spoken[0].text,'Boarding ready.');
  voice.announce('Boarding ready.',{worldId:'airport',key:'board'});assert.equal(voice.state.pending,0);spoken[0].onend();
  voice.setMuted(true);voice.announce('Muted objective.',{worldId:'airport',key:'muted'});assert.equal(spoken.length,1);

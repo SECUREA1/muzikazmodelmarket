@@ -12,7 +12,7 @@ const source=readFileSync(new URL('../public/js/house-explorer-glb.js',import.me
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
 
 test('live fishing selects the actual first-person camera and restores the saved overhead preference',()=>{
- const context=vm.createContext({fishingViewEnabled:false,gameCameraMode:'broadcast',renderer:{xr:{isPresenting:false}},camera:{id:'boat'},overviewCamera:{id:'overhead'}});
+ const context=vm.createContext({fishingViewEnabled:false,funhouseRideCamera:false,gameCameraMode:'broadcast',renderer:{xr:{isPresenting:false}},camera:{id:'boat'},overviewCamera:{id:'overhead'}});
  vm.runInContext(section('  function isTopDownView()','  function syncCameraToggle()'),context);
  assert.equal(context.displayCamera().id,'overhead');context.fishingViewEnabled=true;
  assert.equal(context.displayCamera().id,'boat');assert.equal(context.gameCameraMode,'broadcast');

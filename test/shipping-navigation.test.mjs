@@ -16,6 +16,10 @@ function voyage(route){
  const actors=Object.fromEntries(world.builderScene.objects.filter(isWatercraft).map(actor=>[actor.id,{...structuredClone(actor),active:Math.hypot(actor.position.x-origin.x,actor.position.z-origin.z)>1,health:1200,boating:{speed:0,anchor:true}}]));actors[boat.id]=boat;
  let now=100000;
  const player={actorId:'pilot',username:'Pilot',vehicleId:boat.id,health:100,position:{...boat.position,y:.35},input:{},grounded:true,lastSeen:now,movementRevision:0,shipping:{job:null,unlocks:['shipping-feeder','shipping-container','shipping-tanker'],stats:{},supplies:{}}},sim={actors,players:{pilot:player},events:[]},blocked=boatMovementBlocked(world,boat,actors,collision,{});
+ // This geometry/physics fixture begins with an authorized cargo handoff.
+ // Durable certification, staging and reward binding run end-to-end separately
+ // in factory-shipping-chain.test.mjs.
+ if(route.factoryExport)player.shipping.factoryExport={manifestId:'staged-physics-fixture',status:'staged'};
  const send=(operation,fields={})=>shippingCommand(sim,player,world,{operation,...fields},now);
  send('accept',{contractId:route.id});
  for(let unit=0;unit<player.shipping.job.units;unit++){send('load',{side:unit%2?'starboard':'port'});now+=2000;player.lastSeen=now;}

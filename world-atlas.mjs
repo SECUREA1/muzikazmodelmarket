@@ -4,6 +4,7 @@ import {generatedExperience,GENERATED_EXPERIENCE_VERSION} from './generated-worl
 import {WORLD_DISTRICTS,DISTRICT_PAGE_SIZE,districtMapId,districtFor} from './world-districts.mjs';
 import {isHockeyMap} from './public/js/hockey-rules.js';
 import {isArcadeMap} from './public/js/arcade-rules.js';
+import {isTropicalIslandMap,tropicalIslandPlayUrl} from './public/js/tropical-island-destination.js';
 import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -12,6 +13,7 @@ const names=['Cedar','Willow','Harbor','Maple','Aurora','Garden','Orchard','Juni
 const hash=value=>createHash('sha256').update(String(value)).digest().readUInt32BE();
 const fail=(message,statusCode=400)=>{throw Object.assign(new Error(message),{statusCode});};
 function mapPlayUrl(map){
+ if(isTropicalIslandMap(map))return tropicalIslandPlayUrl(map);
  if(map.playUrl)return map.playUrl;
  const page=isHockeyMap(map)?'hockey.html':isArcadeMap(map)?'arcade.html':'model-explorer.html';
  const solo=map.source==='custom-builder'&&map.builderScene?.gameplay?.multiplayer===false;
@@ -35,7 +37,7 @@ export function generatedStreet(mapId,index,from,to,width=5){return {id:'street-
 export function defaultStreets(id,size){const edge=size/2-2;return [-size/4,0,size/4].flatMap((offset,index)=>[generatedStreet(id,index*2,{x:-edge,z:offset},{x:edge,z:offset}),generatedStreet(id,index*2+1,{x:offset,z:-edge},{x:offset,z:edge})]);}
 // Activity maps reserve physical working areas. Their roads are authored around
 // those areas, including when the map has been copied into a Builder draft.
-const dedicatedStreetLayout=map=>Boolean(map.game==='funhouse'||map.builderScene?.layout==='clown-funhouse'||map.builderScene?.sourceLayout==='clown-funhouse'||map.game==='shipping'||map.builderScene?.layoutMeta?.shipping?.enabled||['factory','missile-factory'].includes(map.game)||map.factory?.enabled||map.builderScene?.layout==='missile-factory'||map.builderScene?.sourceLayout==='missile-factory'||map.builderScene?.layoutMeta?.factory?.enabled||map.airport?.enabled||map.game==='casino'||map.builderScene?.layout==='casino'||map.game==='fitness'||map.builderScene?.layout==='fitness-centre'||map.builderScene?.sourceLayout==='fitness-centre'||map.builderScene?.sourceFitness?.enabled||map.builderScene?.layoutMeta?.fitness?.enabled||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
+const dedicatedStreetLayout=map=>Boolean(['factory-proving','mountain-compound'].includes(map.game)||map.factoryTesting?.enabled||map.builderScene?.sourceFactoryTesting?.enabled||map.builderScene?.layoutMeta?.factoryTesting?.enabled||map.game==='funhouse'||map.builderScene?.layout==='clown-funhouse'||map.builderScene?.sourceLayout==='clown-funhouse'||map.game==='shipping'||map.builderScene?.layoutMeta?.shipping?.enabled||['factory','missile-factory'].includes(map.game)||map.factory?.enabled||map.builderScene?.layout==='missile-factory'||map.builderScene?.sourceLayout==='missile-factory'||map.builderScene?.layoutMeta?.factory?.enabled||map.airport?.enabled||map.game==='casino'||map.builderScene?.layout==='casino'||map.game==='fitness'||map.builderScene?.layout==='fitness-centre'||map.builderScene?.sourceLayout==='fitness-centre'||map.builderScene?.sourceFitness?.enabled||map.builderScene?.layoutMeta?.fitness?.enabled||map.game==='ski'||map.game==='construction'||map.construction?.enabled||map.builderScene?.layoutMeta?.construction?.enabled||map.builderScene?.sourceConstruction?.enabled);
 const authoredStreets=map=>map.builderScene?.streets||map.streets||[];
 const activityStreets=(map,existing=[])=>structuredClone([...new Map([...authoredStreets(map),...existing.filter(street=>street.createdBy)].map(street=>[street.id,street])).values()]);
 function publicPlazaObjects(){
@@ -85,6 +87,15 @@ export function connectAtlasDestinations(data){
  }
 }
 function allocateCell(atlas,data,map,generated=false){
+ const neighbor=map.adjacentTo&&Object.values(data.cells).find(cell=>cell.mapId===map.adjacentTo);
+ if(neighbor){
+  // Prefer an adjoining lot without relocating an existing destination or pin.
+  for(let radius=1;radius<=32;radius++){
+   const offsets=[[radius,0],[0,radius],[-radius,0],[0,-radius]];
+   for(let x=1;x<radius;x++)for(const sx of [-1,1])for(const sz of [-1,1])offsets.push([sx*x,sz*(radius-x)]);
+   for(const [dx,dz]of offsets){const column=neighbor.column+dx,row=neighbor.row+dz;if(Math.abs(column)>32||Math.abs(row)>32||data.cells[column+','+row])continue;return atlas.add(data,column,row,map,generated);}
+  }
+ }
  for(let radius=1;radius<=32;radius++)for(let row=-radius;row<=radius;row++)for(let column=-radius;column<=radius;column++)if((Math.abs(column)===radius||Math.abs(row)===radius)&&!data.cells[column+','+row])return atlas.add(data,column,row,map,generated);
  fail('The public atlas has reached its district limit.',409);
 }

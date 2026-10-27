@@ -1,3 +1,4 @@
+import {editableFactoryLogisticsScene} from './factory-logistics-builder.js';
 import {FACTORY_ID,FACTORY_STATIONS,FACTORY_RECIPES,FACTORY_CREW,FACTORY_LOCATIONS,isFactoryEnvironment,factoryStations,factoryCrew} from './missile-factory-config.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './missile-factory-items.js';
 
@@ -35,7 +36,7 @@ export function editableFactoryScene(input){
  scene.gameplay={...scene.gameplay,factory:{enabled:true},radTox:false};
  if(native){scene.sourceGame='missile-factory';scene.sourceLayout='missile-factory';scene.sourceSpawn||={x:0,y:.02,z:56,rotationY:0};scene.sourceConstruction=clone(scene.sourceConstruction||scene.layoutMeta.construction||FACTORY_BUILDER_CONSTRUCTION);scene.layoutMeta.construction=clone(scene.sourceConstruction);scene.baseEnvironment=editableBase(scene.baseEnvironment,scene.sourceFactory);}
  if(native&&!converted){const supplied=factoryBuilderObjects(),defaults=new Map(supplied.map(object=>[object.id,object]));scene.objects=(scene.objects||[]).map(object=>{const template=defaults.get(object.id);if(!template)return object;return {...template,...object,functionalSettings:{...template.functionalSettings,...object.functionalSettings,...(template.functionalSettings.factoryStation?{factoryStation:template.functionalSettings.factoryStation,factoryApproach:clone(object.functionalSettings?.factoryApproach||template.functionalSettings.factoryApproach)}:{})}};});const ids=new Set(scene.objects.map(object=>object.id));scene.objects.push(...supplied.filter(object=>!ids.has(object.id)));}
- scene.layoutMeta=factoryBuilderLayoutMeta(scene,scene.layoutMeta);return scene;
+ scene.layoutMeta=factoryBuilderLayoutMeta(scene,scene.layoutMeta);return editableFactoryLogisticsScene(scene);
 }
 
 export function createFactoryBuilderScene({id='custom-missile-factory',name='Missile & Rocket Factory · Custom'}={}){

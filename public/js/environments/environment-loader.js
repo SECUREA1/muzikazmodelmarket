@@ -1,3 +1,4 @@
+import {isProvingEnvironment,isCompoundEnvironment} from '../factory-test-config.js';
 import {isFactoryEnvironment} from '../missile-factory-config.js';
 import {isCleanCommonsEnvironment} from '../rad-tox-rules.js';
 import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
@@ -29,8 +30,8 @@ export class EnvironmentLoader {
   disposeMaterial(material,materials=new Set(),textures=new Set()) { if(!material||materials.has(material))return;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose?.(); }
 
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
-  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isFactoryEnvironment(this.activeEnvironment)&&!isCleanCommonsEnvironment(this.activeEnvironment)&&!this.activeEnvironment?.airport?.enabled&&!this.activeEnvironment?.builderScene?.layoutMeta?.harbor&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
-  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion);this.world?.userData.updateHarborEffects?.(elapsed,reducedMotion);this.world?.userData.updateCasinoEffects?.(elapsed,reducedMotion);this.world?.userData.updateFunhouseEffects?.(elapsed,reducedMotion);this.world?.userData.updateFactoryEffects?.(elapsed,reducedMotion); }
+  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isProvingEnvironment(this.activeEnvironment)&&!isCompoundEnvironment(this.activeEnvironment)&&!isFactoryEnvironment(this.activeEnvironment)&&!isCleanCommonsEnvironment(this.activeEnvironment)&&!this.activeEnvironment?.airport?.enabled&&!this.activeEnvironment?.builderScene?.layoutMeta?.harbor&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
+  updateEffects(elapsed, reducedMotion=false,serverTime=Date.now()) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion);this.world?.userData.updateHarborEffects?.(elapsed,reducedMotion);this.world?.userData.updateCasinoEffects?.(elapsed,reducedMotion);this.world?.userData.updateFunhouseEffects?.(elapsed,reducedMotion,serverTime);this.world?.userData.updateFactoryEffects?.(elapsed,reducedMotion);this.world?.userData.updateTestingEffects?.(elapsed,reducedMotion,serverTime); }
   unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1;this.clearFloorEffects();if(this.world){this.scene.remove(this.world);this.disposeWorld(this.world,this.mixers);}else this.mixers.forEach(m=>m.stopAllAction());this.mixers=[];this.meshes=[];this.collisionMeshes=[];this.floorMeshes=[];this.supplementalCollisionRoots=[];this.world=null;this.octree=new Octree();this.localCollisionReady=false;this.renderer.renderLists?.dispose?.(); }
 
   async loadOne(url, index, count) {
@@ -88,7 +89,7 @@ export class EnvironmentLoader {
     nextWorld.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);
     const nextMixers = [];
     try {
-      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['updateFactoryEffects','setFactoryState','updateFitnessEffects','updateSkiEffects','updateHarborEffects','updateCasinoEffects','animateCasinoStation','updateFunhouseEffects','setFunhouseState','animateFunhouseStation','basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
+      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['updateFactoryTestingEffects','setFactoryTestingState','updateTestingEffects','setTestingState','updateFactoryEffects','setFactoryState','updateFitnessEffects','updateSkiEffects','updateHarborEffects','updateCasinoEffects','animateCasinoStation','updateFunhouseEffects','setFunhouseState','animateFunhouseStation','basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
 
       else if (!urls.length) throw new Error('This environment has neither a 3D model nor a playable builder land definition.');
       for (let i = 0; i < urls.length; i += 1) {

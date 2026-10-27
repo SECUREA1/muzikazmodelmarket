@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funhouse immersive controls fixture</title></head><body><main></main><script type="module">
+import * as T from '../../public/vendor/three/three.module.min.js';
+import {createFunhouseVR} from '../../public/js/funhouse-vr.js';
+import {mountXRGameControls} from '../../public/js/xr-game-controls.js';
+import {FUNHOUSE_ID,FUNHOUSE_STATIONS} from '../../public/js/clown-funhouse-config.js';
+import {createFunhouseModel} from '../../public/js/clown-funhouse-models.js';
+import {funhouseInteractionTargets} from '../../public/js/funhouse-scene-actions.js';
+import {createClownFunhouseLand} from '../../public/js/environments/clown-funhouse-land.js';
+import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES} from '../../public/js/funhouse-adventure-rules.js';
+import {funhouseRidePose} from '../../public/js/funhouse-experience-rules.js';
+
+const scene=new T.Scene(),rig=new T.Group(),camera=new T.PerspectiveCamera(68,1,.05,100);scene.add(rig);rig.add(camera);
+const sources=['left','right'].map(handedness=>({handedness,gamepad:{axes:[0,0,0,0],buttons:Array.from({length:6},()=>({pressed:false,value:0}))}}));
+const controllers=[new T.Group(),new T.Group()],session=new T.EventDispatcher(),xr=new T.EventDispatcher();
+session.visibilityState='visible';session.inputSources=sources;session.requestReferenceSpace=async()=>({});
+xr.isPresenting=true;xr.setReferenceSpaceType=()=>{};xr.getController=index=>controllers[index];xr.getCamera=()=>camera;xr.getSession=()=>session;
+session.end=async()=>{xr.isPresenting=false;xr.dispatchEvent({type:'sessionend'});};
+Object.defineProperty(navigator,'xr',{configurable:true,value:{isSessionSupported:async()=>true}});
+const gallery=createFunhouseModel('funhouse-water-gallery');gallery.position.set(-30,0,3);scene.add(gallery);
+const ballpit=createFunhouseModel('funhouse-ball-pit');ballpit.position.set(14,0,-23.5);scene.add(ballpit);
+const car=createFunhouseModel('funhouse-clown-car');car.position.set(28,0,25);scene.add(car);
+const spinner=createFunhouseModel('funhouse-dizzy-spinner');spinner.position.set(28,0,-4);scene.add(spinner);
+const roots=[gallery,ballpit,car,spinner];let adventureLand=null;
+function showAdventureScene(visible){if(visible&&!adventureLand){adventureLand=createClownFunhouseLand({id:FUNHOUSE_ID});scene.add(adventureLand);roots.push(adventureLand);}if(adventureLand)adventureLand.visible=visible;for(const root of [gallery,ballpit,car,spinner])root.visible=!visible;scene.updateMatrixWorld(true);}
+scene.updateMatrixWorld(true);
+window.commands=[];window.pending=[];window.notices=[];window.deferred=false;window.combatCalls=0;window.releases=[];window.movements=[];window.reducedMotion=true;
+let sequence=0,environment={id:FUNHOUSE_ID},position={x:-30,y:.02,z:12},state={stamps:[],costume:{hat:false,shoes:false},round:null,ride:null,challenge:null};
+const snapshot=()=>({sequence:++sequence,serverTime:Date.now(),selfId:'me',players:{me:{position:{...position},health:100,funhouse:structuredClone(state)}},actors:{},events:[]});
+function respond(action,fields){
+ const now=Date.now();
+ if(action==='funhouse-start')state.round={id:'fixture-water',stationId:fields.stationId,kind:'water',status:'active',startedAt:now,endsAt:now+30000,targetId:2,hits:0,shots:0,score:0};
+ if(action==='funhouse-squirt'){state.round.shots++;if(fields.targetId===state.round.targetId){state.round.hits++;state.round.score+=10;}state.round.targetId=(state.round.targetId+1)%6;}
+ if(action==='funhouse-stop'&&state.round)state.round.status='cancelled';
+ if(action==='funhouse-ride'){const station=FUNHOUSE_STATIONS.find(station=>station.id===fields.stationId);state.ride={id:'fixture-ride',kind:station?.kind,stationId:fields.stationId,status:'active',startedAt:now,endsAt:now+20000,durationMs:20000,hits:0,score:0,nextCueAt:now,cueIndex:0,targetId:0,gentle:true};state.ride.pose=funhouseRidePose(state.ride,station,now);position={...state.ride.pose.position};camera.position.set(position.x,position.y+state.ride.pose.eyeHeight,position.z);scene.updateMatrixWorld(true);}
+ if(action==='funhouse-ride-exit'&&state.ride){state.ride.status='cancelled';position={...FUNHOUSE_STATIONS.find(station=>station.id===state.ride.stationId).position};camera.position.set(position.x,position.y+1.65,position.z);scene.updateMatrixWorld(true);}
+ if(action==='funhouse-challenge'){const station=FUNHOUSE_STATIONS.find(station=>station.id===fields.stationId);state.challenge={id:'fixture-challenge',kind:station.kind,stationId:fields.stationId,status:'active',phase:station.kind==='jackbox'?'winding':'playing',startedAt:now,endsAt:now+20000,targetId:2,hits:0,shots:0,score:0,windCount:0,checkpointIndex:0};}
+ if(action==='funhouse-action'&&fields.operation==='wind'){state.challenge.windCount++;if(state.challenge.windCount>=3){state.challenge.phase='ready';state.challenge.readyAt=now;state.challenge.catchUntil=now+1500;}}
+ if(action==='funhouse-action'&&fields.operation==='catch'){state.challenge.status='complete';state.challenge.score=50;}
+ if(action==='funhouse-action'&&fields.operation==='gentle')state.ride.gentle=fields.enabled;
+ if(action==='funhouse-dress')state.costume={hat:fields.hat,shoes:fields.shoes};
+ if(action==='funhouse-adventure'&&fields.operation==='start')state.adventure={id:'fixture-adventure',status:'active',startedAt:now,endsAt:now+600000,durationMs:600000,clueIndex:0,found:[],score:0,hint:FUNHOUSE_ADVENTURE_CLUES[0].hint,message:'Find the first clue.'};
+ if(action==='funhouse-adventure'&&fields.operation==='inspect'){state.adventure.found.push(fields.clueId);state.adventure.clueIndex++;state.adventure.score+=25;state.adventure.hint=FUNHOUSE_ADVENTURE_CLUES[state.adventure.clueIndex]?.hint||'';}
+ if(action==='funhouse-adventure'&&fields.operation==='stop')state.adventure.status='cancelled';
+ return snapshot();
+}
+const vr=createFunhouseVR({scene,camera,getEnvironment:()=>environment,getPosition:()=>position,getActors:()=>({}),getRoots:()=>roots,getPresenting:()=>xr.isPresenting,getReducedMotion:()=>reducedMotion,onStatus:value=>notices.push(value),onInputRelease:reason=>releases.push(reason),send:(action,fields={})=>{commands.push({action,...fields});if(deferred)return new Promise((resolve,reject)=>pending.push({resolve,reject,action,fields}));return Promise.resolve(respond(action,fields));}});
+const controls=mountXRGameControls({renderer:{xr},scene,camera,rig,parent:document.querySelector('main'),menuOnEnter:()=>false,menuItems:()=>vr.menuItems(),onMove:value=>movements.push({...value}),onTrigger:(_hand,ray,controller)=>{if(!vr.trigger(ray,controller))combatCalls++;},onTriggerEnd:(_hand,_ray,controller)=>vr.pointerUp(controller),onInputRelease:reason=>{releases.push(reason);vr.release();},onExit:()=>vr.reset(),status:value=>notices.push(value)});
+controllers.forEach((controller,index)=>controller.dispatchEvent({type:'connected',data:sources[index]}));xr.dispatchEvent({type:'sessionstart'});
+const settle=async()=>{await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));};
+function aim(point,index=1){const origin=camera.getWorldPosition(new T.Vector3()),direction=point.clone().sub(origin).normalize();controllers[index].position.copy(origin);controllers[index].quaternion.setFromUnitVectors(new T.Vector3(0,0,-1),direction);scene.updateMatrixWorld(true);return {origin,direction};}
+window.setup=async kind=>{vr.reset();state={stamps:[],costume:{hat:false,shoes:false},round:null,ride:null,challenge:null,adventure:null};showAdventureScene(kind==='adventure');position={...(kind==='adventure'?FUNHOUSE_ADVENTURE_START:FUNHOUSE_STATIONS.find(station=>station.kind===kind)).position};camera.position.set(position.x,position.y+1.65,position.z);camera.rotation.set(0,0,0);scene.updateMatrixWorld(true);commands.length=notices.length=pending.length=0;vr.update(snapshot(),'me');vr.setVisible(true);await settle();return vr.snapshot();};
+window.pressButton=async(id,index=1)=>{const button=vr.snapshot().buttons.find(button=>button.id===id);if(!button)throw Error('No spatial button '+id);const point=vr.root.localToWorld(new T.Vector3(...button.position));aim(point,index);sources[index].gamepad.buttons[0]={pressed:true,value:1};controllers[index].dispatchEvent({type:'selectstart'});await settle();return vr.snapshot();};
+window.releaseTrigger=async(index=1)=>{sources[index].gamepad.buttons[0]={pressed:false,value:0};controllers[index].dispatchEvent({type:'selectend'});await settle();};
+window.aimAtTarget=async(id,index=1,kind='water')=>{vr.setVisible(false);const target=funhouseInteractionTargets(roots).find(target=>target.kind===kind&&target.targetId===id);if(!target)throw Error('No actual world target '+id+' '+kind);aim(target.position,index);controllers[index].dispatchEvent({type:'selectstart'});await settle();};
+window.aimAtControl=async(kind,operation,index=1,clueId=null)=>{vr.setVisible(false);const target=funhouseInteractionTargets(roots).find(target=>target.kind===kind&&target.operation===operation&&(!clueId||target.clueId===clueId));if(!target)throw Error('No actual world control '+kind+' '+operation);aim(target.position,index);controllers[index].dispatchEvent({type:'selectstart'});await settle();};
+window.visitAdventureClue=index=>{position={...FUNHOUSE_ADVENTURE_CLUES[index].position};camera.position.set(position.x,position.y+1.65,position.z+2);scene.updateMatrixWorld(true);return FUNHOUSE_ADVENTURE_CLUES[index].id;};
+window.aimMiss=async(index=1)=>{vr.setVisible(false);aim(camera.getWorldPosition(new T.Vector3()).add(new T.Vector3(0,8,0)),index);controllers[index].dispatchEvent({type:'selectstart'});await settle();};
+window.resolvePending=async()=>{const next=pending.shift();next.resolve(respond(next.action,next.fields));await settle();};
+window.rawTrigger=async(index=1)=>{controllers[index].dispatchEvent({type:'selectstart'});await settle();};
+window.moveStick=(x,y)=>{sources[0].gamepad.axes=[0,0,x,y];controls.update(.016);};
+window.publish=()=>vr.update(snapshot(),'me');
+window.endSession=()=>session.end();window.headPosition=()=>camera.getWorldPosition(new T.Vector3()).toArray();window.vr=vr;window.controls=controls;window.xr=xr;window.scene=scene;window.ready=true;
+</script></body></html>

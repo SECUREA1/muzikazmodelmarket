@@ -1,11 +1,11 @@
 import * as T from '../vendor/three/three.module.min.js';
 import {createFunhouseModel} from './clown-funhouse-models.js';
 
-export function updateFunhouseWaterGun(root,state,{firstPerson=false}={}){
+export function updateFunhouseWaterGun(root,state,{firstPerson=false,controller=false}={}){
  let gun=root.getObjectByName('CARRIED_FUNHOUSE_WATER_GUN');
  if(state?.tool!=='water'){if(gun)gun.visible=false;return;}
  if(!gun){gun=createFunhouseModel('funhouse-water-gun');if(!gun)return;gun.name='CARRIED_FUNHOUSE_WATER_GUN';gun.traverse(node=>{node.userData.collisionDisabled=true;node.raycast=()=>{};});root.add(gun);}
- gun.visible=true;gun.scale.setScalar(firstPerson?.6:.65);gun.position.set(...(firstPerson?[.3,-.42,-.72]:[.42,.88,-.25]));
+ gun.visible=true;gun.scale.setScalar(firstPerson ? .28 : controller ? .45 : .65);gun.position.set(...(controller?[0,-.1,-.08]:firstPerson?[.26,-.4,-.72]:[.42,.88,-.25]));
 }
 export function createFunhouseWaterEffects(scene){
  const geometry=new T.SphereGeometry(.04,6,4),material=new T.MeshBasicMaterial({color:'#84f5ff',transparent:true,opacity:.8}),mesh=new T.InstancedMesh(geometry,material,128),matrix=new T.Matrix4(),rotation=new T.Quaternion(),scale=new T.Vector3(1,1,1),point=new T.Vector3();

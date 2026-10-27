@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createTowerRadioAudio} from '../public/js/tower-radio-audio.js';
 import {createAircraftCannonTrigger} from '../public/js/aircraft-cannon-trigger.js';
+import {speechTimeout} from '../public/js/character-voice-profile.js';
+const fixtureVoice={name:'Natural English Test Voice',voiceURI:'test:english',lang:'en-US',localService:true};
 function clock(){let time=0,id=0;const timers=new Map();return {now:()=>time,setTimer:(run,delay)=>{timers.set(++id,{run,at:time+delay});return id;},clearTimer:key=>timers.delete(key),advance(delta){const target=time+delta;for(let count=0;count<1000;count++){const next=[...timers].filter(([,timer])=>timer.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;time=next[1].at;timers.delete(next[0]);next[1].run();}time=target;}};}
-function radioFixture(){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={speak:utterance=>spoken.push(utterance),cancel(){},resume(){}};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory:()=>null});return {time,spoken,captions,states,tones,radio};}
+function radioFixture(){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={getVoices:()=>[fixtureVoice],speak:utterance=>spoken.push(utterance),cancel(){},resume(){}};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory:()=>null});return {time,spoken,captions,states,tones,radio};}
 test('tower audio waits for a gesture, then prioritizes audible stall calls and replaces stale queued speech',()=>{
  const f=radioFixture();f.radio.call('Tower. Request your clearance.',{key:'ready'});assert.equal(f.spoken.length,0);assert.equal(f.captions.length,1);f.radio.unlock();assert.equal(f.spoken[0].text,'Tower. Request your clearance.');
  f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);f.time.advance(1000);f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);
@@ -41,6 +43,9 @@ test('tower chooses a stable natural voice while captions retain original game s
  assert.ok(spoken[0].rate>=.88&&spoken[0].rate<=1.12);assert.ok(spoken[0].pitch>=.9&&spoken[0].pitch<=1.1);
  spoken[0].onend();voices.reverse();radio.call('Tower. Continue approach.',{key:'next'});assert.equal(spoken[1].voice,natural);
  spoken[1].onend();radio.call('Continue along the marked route. '.repeat(20),{key:'long'});
+ assert.equal(timers.at(-1).delay,65000,'generation gets its own bounded startup watchdog');
+ const long=spoken.at(-1);long.onstart();
+ assert.equal(timers.at(-1).delay,speechTimeout(long.text,long.rate),'actual playback watchdog starts only when audio becomes audible');
  assert.ok(timers.at(-1).delay>22000,'long calls have enough time to finish naturally');radio.dispose();
 });
 
@@ -54,11 +59,18 @@ test('tower retries an unavailable natural voice once before speech starts witho
  spoken[1].onstart();spoken[1].onerror({error:'network'});assert.equal(spoken.length,2,'never repeat a sentence after speech began');assert.equal(radio.state.speechAvailable,false);radio.dispose();
 });
 
-test('tower falls back to the browser default when no local voice is installed',()=>{
- const spoken=[],natural={name:'English Natural',voiceURI:'online',lang:'en-US',localService:false};
- const radio=createTowerRadioAudio({speech:{getVoices:()=>[natural],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,setTimer:()=>1,clearTimer(){}});
+test('tower keeps captions instead of using a hidden default when no real fallback voice is installed',()=>{
+ const spoken=[],captions=[],natural={name:'English Natural',voiceURI:'online',lang:'en-US',localService:false};
+ const radio=createTowerRadioAudio({speech:{getVoices:()=>[natural],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,setTimer:()=>1,clearTimer(){},onCaption:text=>captions.push(text)});
  radio.call('Tower. Continue approach.');radio.unlock();spoken[0].onerror({error:'voice-unavailable'});
- assert.equal(spoken.length,2);assert.equal(spoken[1].voice,undefined);spoken[1].onerror({error:'synthesis-failed'});assert.equal(spoken.length,2,'fallback is bounded to one attempt');assert.equal(radio.state.speechAvailable,false);radio.dispose();
+ assert.equal(spoken.length,1,'a missing fallback must never select an unlisted browser voice');
+ assert.equal(captions.at(-1),'Tower. Continue approach.');assert.equal(radio.state.speechAvailable,false);assert.equal(radio.state.speaking,false);radio.dispose();
+});
+
+test('an intentionally empty voice inventory stays caption-only without synthesizing a hidden default',()=>{
+ const spoken=[],captions=[],radio=createTowerRadioAudio({speech:{getVoices:()=>[],speak:u=>spoken.push(u),cancel(){},resume(){}},Utterance:class{constructor(text){this.text=text;}},audioFactory:()=>null,setTimer:()=>1,clearTimer(){},onCaption:text=>captions.push(text)});
+ radio.call('Tower. Hold short of the runway.');radio.unlock();
+ assert.equal(spoken.length,0);assert.equal(captions.at(-1),'Tower. Hold short of the runway.');assert.equal(radio.state.speaking,false);radio.dispose();
 });
 
 test('tower never retries a natural voice after the call becomes audible',()=>{

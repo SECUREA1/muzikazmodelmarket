@@ -45,15 +45,47 @@ relative to the camera, with distance falloff and orientation updates as you
 move or look around. NPC browser voices use distance-based volume; browser speech
 synthesis does not expose a Web Audio source for stereo positioning. Map
 introductions and radio-style objectives stay clear regardless of distance.
-NPCs and AI contacts prefer natural, neural or enhanced voices installed in the
-browser, with a stable voice per character and restrained personality-based
-pacing at the voice’s native pitch. The welcome uses a neutral narrator at normal
-speed, with direct speech and no added reverb, delay or spatial processing.
-Speech ownership prevents radio, NPC and optional chat voices from competing;
-passive gestures do not trigger an extra tower introduction. Voice loading is
-allowed a brief grace period; an unavailable online voice can fall back locally. Spoken game shorthand is expanded without changing
-captions, and long replies receive enough time to finish. Voice quality depends
-on the voices available on the player's device.
+NPCs, AI contacts, map introductions and optional chat reading use two app-owned
+neural voices: **MUZIKAZ Natural Female** and **MUZIKAZ Natural Male**. The server
+generates speech with the local Kokoro model; phones and browsers play the same
+24 kHz WAV output even when they have no installed voices. No speech API key or
+external speech provider is needed. These are generated voices, not recordings
+or clones of players. Model and speaker attribution is in
+[voice-engine/NOTICE.md](../voice-engine/NOTICE.md).
+
+In **Settings → Audio settings**, choose **Automatic**, **Female** or **Male**,
+select a generated voice, and use **Preview voice** to hear it. Optional real
+device voices remain selectable. Known robotic engines, unavailable selections
+and wrong-language fallbacks are excluded; the app does not silently use the
+browser's unknown default. Preview reports errors while captions remain visible.
+Changes preview immediately and save to the member account with the other audio
+preferences.
+
+Playback stays at native pitch through a direct gain path with no added reverb,
+delay or HRTF on speech. NPC distance changes adjust volume. The unrelated
+continuous battle synthesizer is removed from all pages that host the NPC game.
+One speech owner prevents radio, NPC and chat voices from competing, and passive
+gestures do not trigger an extra tower introduction. Generation and playback
+have separate deadlines so model startup cannot clip a short reply.
+
+`npm run build` prepares a checksum-pinned 109 MB model from the official Kokoro
+release using `curl`, then builds the site. Models stay in `.speech-models/`
+(outside Git and public assets); `MUZIKAZ_SPEECH_MODEL_DIR` can select another
+cache directory. The build converts signed convolution tensors to mathematically
+equivalent unsigned tensors for the CPU runtime. The CPU-only Node inference
+process serializes work, recycles after two jobs, and stops when idle. Typical
+short replies generate in several seconds; repeated text is cached in bounded
+private server memory. Public speech requests have text, queue, deadline and
+rate limits. Hosting must run the Node server rather than only serve static
+files. Render's build command prepares the model automatically and skips CUDA.
+
+Static samples are available at
+[`female-preview.wav`](../public/audio/voices/female-preview.wav) and
+[`male-preview.wav`](../public/audio/voices/male-preview.wav). Run
+`MUZIKAZ_TEST_NEURAL_VOICES=1 node --test test/neural-voice-engine.test.mjs` for
+real inference/cancellation checks, and `python3 test/neural-speech.browser.py`
+for real inference → HTTP → browser audio playback. Controlled voice-list tests
+only test selection and lifecycle; the real tests validate generated waveforms.
 
 Disabling spatial audio centers world sounds and removes distance falloff.
 Browsers without speech retain visible captions and status; those without a

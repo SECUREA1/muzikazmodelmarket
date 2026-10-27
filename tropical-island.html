@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#113c35">
+  <meta name="description" content="Explore a complete MUZIKAZ tropical resort at your own pace. Kick beach balls, paddle the lagoon, cruise on a pontoon, and enjoy optional beach-bar drinks with a stacking two-minute buzz per drink.">
+  <title>Island Adventure · MUZIKAZ World</title>
+  <link rel="icon" href="public/assets/app-icons/favicon-32.png">
+  <link rel="stylesheet" href="public/assets/tropical-island.css">
+</head>
+<body>
+  <main id="island-app">
+    <div id="world" aria-label="Interactive 3D tropical island resort"></div>
+    <div id="goggle-tint" aria-hidden="true"></div>
+    <header class="island-header">
+      <a class="wordmark" href="index.html#world-map" aria-label="MUZIKAZ world maps"><span class="brand-bolt">ϟ</span> MUZIKAZ<span class="wordmark-world">WORLD / ISLAND 08</span></a>
+      <nav aria-label="Island controls">
+        <button id="view-button" title="Change camera view (V)">Top down <span>V</span></button>
+        <button id="sound-button" aria-pressed="false" title="Toggle island sounds">Sound off</button>
+        <button id="settings-button" aria-label="Settings and controls">⚙</button>
+        <a class="map-link" href="index.html#world-map">All maps ↗</a>
+      </nav>
+    </header>
+    <section id="round-hud" class="round-hud" hidden aria-label="Island visit progress">
+      <div><span class="eyebrow">ISLAND TIME · NO LIMIT</span><strong id="time-left">0:00</strong><div class="time-track"><i id="time-fill"></i></div></div>
+      <div class="stamp-score"><span class="eyebrow">RESORT PASSPORT</span><strong><span id="stamp-count">0</span><small> / 8</small></strong><span id="score">000 PTS</span></div>
+    </section>
+    <aside id="passport" class="passport" hidden>
+      <button id="passport-toggle" aria-expanded="true">Your island passport <span id="passport-progress">0 / 8</span><b>−</b></button>
+      <div id="destinations"></div>
+      <p>Eight experiences. Take your time.</p>
+    </aside>
+    <section id="buzz-panel" class="buzz-panel" hidden aria-label="Fictional arcade buzz effects">
+      <div><span class="eyebrow">BEER GOGGLES</span><b id="buzz-label">Clear</b></div>
+      <div class="buzz-track"><i id="buzz-fill"></i><i id="pending-fill"></i></div>
+      <p id="buzz-description">Optional drinks at either beach bar.</p>
+      <div id="buzz-timers" class="buzz-timers" hidden><span id="active-drink-count"></span><b id="sober-time"></b></div>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <section id="interaction" class="interaction" hidden>
+      <div><span id="interaction-type" class="eyebrow">EXPLORE THE ISLAND</span><strong id="interaction-label">Welcome to paradise</strong><p id="interaction-hint">WASD / arrows to move · drag to look · V for view</p></div>
+      <button id="interact-button">Interact <kbd>E</kbd></button>
+    </section>
+    <aside id="minimap" class="minimap" hidden aria-label="Live resort map">
+      <div><button id="map-overview-button" aria-pressed="false" title="Show the complete island (M)">RESORT MAP ⤢</button><span>N ↑</span></div>
+      <canvas id="map-canvas" width="360" height="300" aria-label="Map with your position, resort destinations and boats"></canvas>
+      <small id="waypoint-label">Select a passport stop to set a waypoint.</small>
+    </aside>
+    <div id="crosshair" hidden aria-hidden="true">+</div>
+    <section id="welcome" class="welcome sheet">
+      <div class="welcome-copy">
+        <span class="chapter"><i></i> MUZIKAZ WORLD · A NEW MAP TO EXPLORE</span>
+        <h1>ISLAND<br><em>ADVENTURE.</em></h1>
+        <p class="intro">A little sun. A little sea.<br>A whole island of possibilities.</p>
+        <div class="trip-meta"><span>◷ &nbsp; STAY AWHILE</span><span>⌖ &nbsp; 8 EXPERIENCES</span><span>↗ &nbsp; FREE EXPLORATION</span></div>
+        <p class="trip-description">Collect resort passport stamps. Discover palm-lined beaches and cabanas, kick a beach ball, paddle the lagoon, or take the pontoon out for a spin.</p>
+        <button id="start-button" class="primary" disabled>Preparing your island… <span class="direction-arrow" aria-hidden="true"></span></button>
+        <p class="welcome-footnote">Optional drinks add a fictional buzz lasting two minutes each.<br>New drinks stack. Each fades on its own. Stay as long as you like.</p>
+        <div class="control-hint"><kbd>W A S D</kbd> move <span>·</span><kbd>E</kbd> interact <span>·</span><kbd>V</kbd> view</div>
+      </div>
+      <div class="island-caption"><span>THE PALM COAST RESORT</span><b>Your own little<br>piece of paradise.</b><small>24° N &nbsp; / &nbsp; SOMEWHERE SUNNY</small></div>
+    </section>
+    <dialog id="bar-dialog" class="island-dialog" aria-labelledby="bar-title">
+      <button class="close-dialog" data-close aria-label="Close beach bar">×</button>
+      <span class="eyebrow">THE GOOD TIMES ARE OPTIONAL</span><h2 id="bar-title">The Tiki Bar</h2>
+      <p>Each drink builds a little buzz, then fades over two minutes. Order another and the effects stack. There’s no time limit on the island.</p>
+      <div class="drink-menu">
+        <button data-drink="beer"><span>🍺</span><b>Island beer</b><small>A light arcade buzz</small></button>
+        <button data-drink="cocktail"><span>🍹</span><b>Sunset cocktail</b><small>A stronger arcade buzz</small></button>
+        <button data-drink="mocktail"><span>🥥</span><b>Coconut cooler</b><small>All tropical. No alcohol.</small></button>
+        <button data-drink="water"><span>💧</span><b>Still water</b><small>A fresh island break</small></button>
+      </div>
+      <p id="bar-status" role="status"></p>
+      <section id="drink-timers" class="drink-timers" hidden aria-label="Individual drink timers"><h3>YOUR DRINKS · EACH FADES IN TWO MINUTES</h3><div id="active-drink-list"></div></section>
+      <small class="disclaimer">Accelerated arcade effects, not a real alcohol or sobriety model. Drinks do not earn points. Only time reduces the buzz.</small>
+    </dialog>
+    <dialog id="settings-dialog" class="island-dialog" aria-labelledby="settings-title">
+      <button class="close-dialog" data-close aria-label="Close settings">×</button>
+      <span class="eyebrow">MAKE YOURSELF AT HOME</span><h2 id="settings-title">Island controls</h2>
+      <dl class="controls-list"><dt>Walk / paddle</dt><dd>WASD or arrow keys / left stick</dd><dt>Look around</dt><dd>Drag the scene / right stick</dd><dt>Interact / return to dock</dt><dd>E or Space / Interact button</dd><dt>Camera</dt><dd>V / camera button</dd><dt>Complete island map</dt><dd>M / Resort map button</dd><dt>Passport waypoint</dt><dd>Select a destination on the left</dd></dl>
+      <label class="setting-check"><input id="reduce-effects" type="checkbox"> Reduce motion and beer-goggle visuals</label>
+      <label class="setting-check"><input id="show-controller" type="checkbox"> Show RAD-TOX touch controller</label>
+      <p>Explore for as long as you like and collect all eight passport stamps. Bar stops count without drinking. Every alcoholic drink has its own two-minute buzz timer, including time spent in menus or away from the tab.</p>
+      <button id="end-visit-button" class="primary" hidden>Finish visit &amp; view passport <span class="direction-arrow" aria-hidden="true"></span></button>
+    </dialog>
+    <section id="results" class="results sheet" hidden aria-label="Visit complete">
+      <div class="results-card"><span class="chapter">PALM COAST RESORT · CHECKED OUT</span><h2>That’s island time.</h2><p id="result-message"></p><div class="result-stats"><div><strong id="final-stamps">0 / 8</strong><span>EXPERIENCES</span></div><div><strong id="final-score">000</strong><span>ISLAND POINTS</span></div></div><div id="result-stamps"></div><button id="replay-button" class="primary">A fresh island visit <span class="direction-arrow" aria-hidden="true"></span></button><a href="index.html#world-map">Back to all maps ↗</a></div>
+    </section>
+    <p id="load-error" role="alert" hidden></p>
+    <noscript>This 3D island needs JavaScript. Enable it to explore the resort.</noscript>
+  </main>
+  <script type="module" src="public/js/tropical-island.js"></script>
+</body>
+</html>

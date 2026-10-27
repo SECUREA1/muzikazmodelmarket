@@ -68,9 +68,20 @@ try:
    assert page.get_by_role('button', name='More view controls', exact=True).is_visible()
 
    def complete_map():
+    # Section choices switch content; select Map and then its 2D plan.
+    dialog.get_by_role('button', name='Map', exact=True).click()
+    assert dialog.get_attribute('data-map-section') == 'map'
+    assert dialog.locator('[data-map-directory]').is_hidden()
+    nav = dialog.get_by_role('navigation', name='Browse map sections', exact=True)
+    if height <= 500 and width <= 1024:
+     # Short mobile screens share one fixed row between the tabs and Close.
+     assert nav.evaluate('node=>{const r=node.getBoundingClientRect(),header=node.closest("header"),h=header.getBoundingClientRect(),close=header.querySelector(":scope>button").getBoundingClientRect();return Math.abs(r.left-h.left)<=1&&r.right<=close.left&&Math.abs(close.right-h.right)<=1&&Math.abs(r.top+r.height/2-close.top-close.height/2)<=1;}')
+    else:
+     assert nav.evaluate('node=>{const r=node.getBoundingClientRect(),h=node.closest("header").getBoundingClientRect();return r.width<=Math.min(420,h.width)+1&&Math.abs(r.right-h.right)<=1;}')
+    dialog.get_by_role('button', name='2D plan', exact=True).click()
     page.wait_for_function(r'''()=>{const svg=document.querySelector('.district-map-dialog [data-local-map-plan]>svg');if(!svg)return false;const [x,z,w,h]=svg.getAttribute('viewBox').split(/\s+/).map(Number);return x<=-128&&z<=-128&&x+w>=128&&z+h>=128;}''')
     assert page.locator('[data-local-map-plan]').is_visible()
-    assert not page.evaluate('blocked()'), 'Full companion map should retain gameplay input'
+    assert page.evaluate('blocked()') == (width <= 1024), 'Mobile full-screen maps block gameplay; desktop companion maps retain it'
 
    primary.click()
    dialog = page.locator('.district-map-dialog')

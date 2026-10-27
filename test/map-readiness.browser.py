@@ -1,7 +1,9 @@
 """Real map widgets wait for CSS/gameplay and discard previous-world work.
 
 Hold each actual stylesheet independently, then exercise the actual 2D/3D map
-against a small shared THREE mesh. No server room or generated world is needed.
+against a small shared THREE mesh. Mobile maps fill the viewport even when
+vehicle controls grow, with modal mobile input and independently scrolling
+directory views. No server room or generated world is needed.
 """
 import asyncio
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -54,6 +56,8 @@ async def open_map(page):
     index = await page.evaluate('atlasRequests.length')
     await page.locator('.district-map-toggle').click()
     await page.wait_for_function('(count)=>map.dialog.open&&atlasRequests.length===count+1', arg=index)
+    assert await page.locator('.district-map-dialog').get_attribute('data-map-section') == 'map'
+    assert await page.locator('[data-map-directory]').is_hidden()
     return index
 
 
@@ -62,9 +66,24 @@ async def close_map(page):
     await page.wait_for_function('!map.dialog.open&&map.button.getAttribute("aria-expanded")==="false"')
 
 
+async def assert_full_viewport_map(page):
+    await page.wait_for_function('''()=>{
+        const bounds=map.dialog.getBoundingClientRect(),viewport=visualViewport;
+        return Math.abs(bounds.left-(viewport?.offsetLeft||0))<=1&&
+            Math.abs(bounds.top-(viewport?.offsetTop||0))<=1&&
+            Math.abs(bounds.width-(viewport?.width||innerWidth))<=1&&
+            Math.abs(bounds.height-(viewport?.height||innerHeight))<=1;
+    }''')
+    assert 'is-compact' not in await page.locator('.district-map-dialog').get_attribute('class')
+    assert await page.locator('.district-map-dialog>header').get_by_role('button', name='Close', exact=True).evaluate('''node=>{
+        const rect=node.getBoundingClientRect(),hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
+        return hit===node||node.contains(hit);
+    }''')
+
+
 async def assert_mini_toggle_uncovered(page):
     await page.wait_for_function('''()=>{
-        const toggle=document.querySelector('.live-local-map [data-collapse]'),rect=toggle.getBoundingClientRect();
+        const shell=document.querySelector('.live-local-map'),toggle=shell.querySelector(shell.classList.contains('is-collapsed')?'[data-collapse]':'[data-popup-close]'),rect=toggle.getBoundingClientRect();
         const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
         return toggle===hit||toggle.contains(hit);
     }''', timeout=3000)
@@ -144,7 +163,7 @@ async def run(base):
         # map must live inside that host rather than underneath it on body.
         await page.evaluate('''()=>Object.assign(document.querySelector('.house-explorer-shell').style,{position:'fixed',inset:'0',zIndex:'2147483000',isolation:'isolate',background:'#182534'})''')
 
-        # The mini's ordinary expand action must open a 2D map without treating
+        # The mini's ordinary expand action opens the mobile 3D map without treating
         # its click event as a location or silently opening quest information.
         # The real crew radio lives above the mini in the top toolbar. Both mini
         # states must move below that button and accept an ordinary touch tap.
@@ -152,7 +171,7 @@ async def run(base):
         await mini.locator('[data-collapse]').tap()
         assert 'is-collapsed' not in await mini.get_attribute('class')
         await assert_mini_toggle_uncovered(page)
-        await mini.locator('[data-collapse]').tap()
+        await mini.locator('[data-popup-close]').tap()
         assert 'is-collapsed' in await mini.get_attribute('class')
         await assert_mini_toggle_uncovered(page)
         await mini.locator('[data-collapse]').tap()
@@ -164,67 +183,63 @@ async def run(base):
         assert await page.locator('.district-map-dialog').evaluate('node=>node.parentElement===document.querySelector(".house-explorer-shell")')
         assert await page.locator('.district-map-dialog>header').get_by_role('button', name='Close', exact=True).evaluate('''node=>{const r=node.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===node||node.contains(hit)}''')
         assert await page.locator('.local-map-quest-toggle').get_attribute('aria-expanded') == 'false'
+        assert await page.get_by_role('button', name='3D map', exact=True).get_attribute('aria-pressed') == 'true'
+        assert await page.locator('.district-map-dialog').get_attribute('data-map-section') == 'map'
+        assert await page.locator('[data-map-directory]').is_hidden()
+        await assert_full_viewport_map(page)
         await resolve_atlas(page, pending)
         await page.locator('.district-map-dialog>header').get_by_role('button', name='Close', exact=True).focus()
         await page.keyboard.press('Space')
         await page.wait_for_function('!map.dialog.open&&map.button.getAttribute("aria-expanded")==="false"')
         assert await page.evaluate('mapKeys.splice(0)') == [], 'Focused map buttons retain native Space activation without jumping.'
 
-        # Selecting a real mini-map pin carries its location into the full map.
+        # A marker stays in its popup until expanded, carrying its selection into
+        # the full mobile map. Switch to 2D only for its coordinate assertion.
+        await mini.locator('[data-collapse]').click()
         pending = await page.evaluate('atlasRequests.length')
         await mini.get_by_role('button', name='Basketball Court', exact=True).click()
+        assert not await page.locator('.district-map-dialog').evaluate('node=>node.open')
+        await mini.locator('[data-expand]').click()
         await page.wait_for_function('(count)=>map.dialog.open&&atlasRequests.length===count+1', arg=pending)
         assert 'Basketball Court' in await page.locator('.local-map-selected h3').inner_text()
         assert await page.get_by_role('button', name='Go to Basketball Court', exact=True).is_visible()
         assert await page.locator('.local-map-quest-toggle').get_attribute('aria-expanded') == 'false'
-        assert await page.get_by_role('button', name='2D plan', exact=True).get_attribute('aria-pressed') == 'true'
+        assert await page.get_by_role('button', name='3D map', exact=True).get_attribute('aria-pressed') == 'true'
+        await page.get_by_role('button', name='2D plan', exact=True).click()
         await page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
         x, z, width, height = map(float, (await page.locator('[data-local-map-plan]>svg').get_attribute('viewBox')).split())
-        assert abs(z + height / 2 - 15) < .01, (x, z, width, height)
+        assert x <= 15 <= x + width and z <= 15 <= z + height, (x, z, width, height)
         await resolve_atlas(page, pending)
 
-        # The companion map leaves game keys, stage actions, and the controller
-        # dock outside the stage usable while it remains open.
-        assert not await page.locator('.district-map-dialog').evaluate('node=>node.matches(":modal")')
-        assert not await page.evaluate('gameplayOverlayOpen()')
+        # The full mobile map owns the top layer and blocks gameplay input
+        # while browsing, even inside an isolated fullscreen game host.
+        assert await page.locator('.district-map-dialog').evaluate('node=>node.matches(":modal")')
+        assert await page.evaluate('gameplayOverlayOpen()')
         await page.locator('.district-map-dialog>header').get_by_role('button', name='Close', exact=True).focus()
         await page.keyboard.press('w')
-        assert await page.evaluate('mapKeys.splice(0)') == ['w'], 'Focused map buttons still allow walking keys.'
-        await page.get_by_role('button', name='Game pad', exact=True).focus()
-        await page.keyboard.press('w')
-        await page.keyboard.press('Space')
-        assert await page.evaluate('mapKeys.splice(0)') == ['w', ' ']
-        await page.get_by_role('button', name='Game pad', exact=True).click()
-        await page.get_by_role('button', name='Fire', exact=True).click()
-        assert await page.evaluate('gameClicks') == ['pad', 'fire']
-        assert await page.locator('.district-map-dialog').evaluate('node=>node.open')
-        assert await page.get_by_role('button', name='Fire', exact=True).evaluate('node=>node===document.activeElement')
+        assert await page.evaluate('mapKeys.splice(0)') == [], 'Mobile map browsing must not move the player.'
         assert await page.evaluate('mapBlurEvents') == 0
-        assert await page.evaluate('''()=>{
-            const mapBounds=map.dialog.getBoundingClientRect(),topControls=document.querySelector('.game-display-flow-views').getBoundingClientRect(),bottomControls=document.querySelector('.game-display-flow').getBoundingClientRect();
-            return mapBounds.top>=topControls.bottom+8&&mapBounds.bottom<=bottomControls.top-8;
-        }'''), 'The map must fit between actual top and bottom gameplay controls.'
+        await assert_full_viewport_map(page)
 
-        # The live aircraft panel grows upward to y366. A static bottom reserve
-        # used to leave its cannon at y488 covered by the open map.
-        collapsed_height = (await page.locator('.district-map-dialog').bounding_box())['height']
+        # Expanding the live aircraft panel must no longer shrink the mobile
+        # map into a small companion window. Its fitted outer frame keeps Close
+        # reachable while each selected directory owns its own scrolling.
         await page.locator('.airport-flight-controls').evaluate('node=>node.hidden=false')
-        await page.wait_for_function('''()=>map.dialog.getBoundingClientRect().bottom<=document.querySelector('.game-display-flow').getBoundingClientRect().top-8''')
-        assert 'is-compact' in await page.locator('.district-map-dialog').get_attribute('class')
-        await page.get_by_role('button', name='Aircraft cannon', exact=True).click()
-        await page.get_by_role('button', name='Camera', exact=True).click()
-        await page.get_by_role('button', name='Game pad', exact=True).click()
-        assert await page.evaluate('gameClicks.slice(-3)') == ['cannon', 'camera', 'pad']
-        assert await page.evaluate('map.dialog.open')
+        await page.wait_for_timeout(100)
+        await assert_full_viewport_map(page)
+        await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop=node.scrollHeight')
+        assert await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop===0'), 'The fitted outer map frame must not scroll.'
+        await assert_full_viewport_map(page)
         await page.locator('.airport-flight-controls').evaluate('node=>node.hidden=true')
-        await page.wait_for_function('(height)=>map.dialog.getBoundingClientRect().height>=height', arg=collapsed_height)
+        await page.locator('.district-map-dialog').evaluate('node=>node.scrollTop=0')
+        await assert_full_viewport_map(page)
 
-        # A transient link interruption preserves both maps and the expanded
-        # mini. Server travel waits for the live connection without closing UI.
+        # A transient link interruption preserves the full map and its closed
+        # marker popup. Server travel waits for the live connection without closing UI.
         await page.evaluate('map.setReady(false)')
         assert await page.locator('.district-map-dialog').evaluate('node=>node.open')
         assert await page.locator('.district-map-toggle').is_enabled()
-        assert await mini.is_visible() and 'is-collapsed' not in await mini.get_attribute('class')
+        assert await mini.is_visible() and 'is-collapsed' in await mini.get_attribute('class')
         await page.get_by_role('button', name='Go to Basketball Court', exact=True).click()
         assert await page.evaluate('mapCommands.length') == 1
         await page.evaluate('map.setReady(true)')
@@ -237,8 +252,11 @@ async def run(base):
 
         # Automatic routes also wait for readiness and stay open after success.
         await page.evaluate('''()=>map.updateLive({players:{self:{id:'self',vehicleId:'plane',position:{x:0,y:0,z:0}}},actors:{plane:{id:'plane',modelId:'piper-cub',position:{x:0,y:0,z:0}}}},'self')''')
+        await page.get_by_role('navigation', name='Browse map sections', exact=True).get_by_role('button', name='Vehicles', exact=True).click()
         route = page.get_by_role('button', name='Fly to Test runway', exact=True)
         await route.wait_for(state='attached')
+        assert await page.locator('.district-map-dialog').get_attribute('data-map-section') == 'vehicles'
+        assert await page.locator('.local-map-visual').is_hidden()
         await page.evaluate('map.setReady(false)')
         await route.click()
         assert await page.evaluate('mapCommands.length') == 3
@@ -247,6 +265,8 @@ async def run(base):
         await page.wait_for_function('mapCommands.length===4')
         assert await page.locator('.district-map-dialog').evaluate('node=>node.open')
 
+        await page.get_by_role('navigation', name='Browse map sections', exact=True).get_by_role('button', name='Map', exact=True).click()
+        assert await page.locator('[data-map-directory]').is_hidden()
         await page.get_by_role('button', name='3D map', exact=True).click()
         await page.locator('.local-map-3d-viewport canvas').wait_for(state='visible')
         await page.evaluate('''()=>{
@@ -257,9 +277,8 @@ async def run(base):
         await page.evaluate('map.setReady(false)')
         await page.wait_for_timeout(50)
         assert await page.evaluate('map.dialog.open&&previousMapCanvas.isConnected&&!previousMapContext.isContextLost()')
-        assert 'is-collapsed' not in await mini.get_attribute('class')
-        await page.get_by_role('button', name='Game pad', exact=True).click()
-        assert await page.evaluate('map.dialog.open')
+        assert 'is-collapsed' in await mini.get_attribute('class')
+        await assert_full_viewport_map(page)
         await page.evaluate('map.setReady(true)')
         assert await page.evaluate('document.querySelector(".local-map-3d-viewport canvas")===previousMapCanvas')
 
@@ -271,14 +290,15 @@ async def run(base):
         assert await page.evaluate('sourceMesh.parent===sourceRoot&&sourceMesh.geometry.attributes.position.count>0')
         await assert_available(page)
 
-        # A mini pin also selects the 2D location after the previous visit used
-        # the 3D view; it must not reopen a quest panel or an unrelated camera.
+        # Expanding a selected mini pin restores the mobile 3D view after the
+        # previous visit; it must not reopen quest information.
         await page.evaluate('map.update(oldWorld);map.setReady(true)')
         await mini.locator('[data-collapse]').click()
         pending = await page.evaluate('atlasRequests.length')
         await mini.get_by_role('button', name='Basketball Court', exact=True).click()
+        await mini.locator('[data-expand]').click()
         await page.wait_for_function('(count)=>map.dialog.open&&atlasRequests.length===count+1', arg=pending)
-        assert await page.get_by_role('button', name='2D plan', exact=True).get_attribute('aria-pressed') == 'true'
+        assert await page.get_by_role('button', name='3D map', exact=True).get_attribute('aria-pressed') == 'true'
         assert 'Basketball Court' in await page.locator('.local-map-selected h3').inner_text()
         assert await page.locator('.local-map-quest-toggle').get_attribute('aria-expanded') == 'false'
         await resolve_atlas(page, pending)
@@ -288,6 +308,7 @@ async def run(base):
 
         # Old live players disappear immediately when a new environment arrives.
         await page.evaluate('''()=>map.updateLive({players:{self:{id:'self',position:{x:-25,y:0,z:-25}},guest:{id:'guest',username:'Old guest',position:{x:0,y:0,z:0}}},actors:{}},'self')''')
+        await mini.locator('[data-collapse]').click()
         await mini.get_by_role('button', name='Old guest', exact=True).wait_for(state='visible')
         await page.evaluate('map.update(nextWorld)')
         assert await mini.get_by_role('button', name='Old guest', exact=True).count() == 0
@@ -317,6 +338,13 @@ async def run(base):
         await resolve_atlas(page, current, 'Current world deed')
         await page.locator('.district-map-dialog').get_by_text('Current world deed', exact=True).wait_for(state='attached')
         assert await page.locator('.local-map-status').inner_text() == '1 recorded deeds · 1 connected destinations'
+        await page.get_by_role('navigation', name='Browse map sections', exact=True).get_by_role('button', name='Destinations', exact=True).click()
+        assert await page.locator('.district-map-dialog').get_attribute('data-map-section') == 'destinations'
+        assert await page.locator('.district-map-dialog').get_by_text('Current world deed', exact=True).is_visible()
+        assert await page.locator('.local-map-directory-list').evaluate("node=>getComputedStyle(node).overflowY==='auto'")
+        assert await page.locator('.district-map-dialog').evaluate("node=>getComputedStyle(node).overflowY==='hidden'")
+        await assert_full_viewport_map(page)
+        assert await page.locator('.local-map-visual').is_hidden()
         assert await page.evaluate('mapCommands.map(command=>command.action)') == ['map-access', 'map-access', 'vehicle-navigate', 'vehicle-navigate']
         assert not errors, errors
         await page.evaluate('map.dispose()')
@@ -329,7 +357,7 @@ server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
 Thread(target=server.serve_forever, daemon=True).start()
 try:
     asyncio.run(run(f'http://127.0.0.1:{server.server_port}'))
-    print('Companion maps preserve gameplay, touch controls and 2D/3D views through link interruptions; CSS-independent browsing, travel, world teardown and stale replies pass.')
+    print('Full mobile maps preserve viewport bounds, sticky Close and 2D/3D views through vehicle-panel growth and link interruptions; CSS-independent browsing, travel, world teardown and stale replies pass.')
 finally:
     server.shutdown()
     server.server_close()

@@ -11,7 +11,7 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 
 test('all nine factory assets are offered by the shared Backpack catalog and Factory builder category',async()=>{
  const manifest=JSON.parse(await readFile(new URL('../public/models/backpack-assets.json',import.meta.url))),models=manifest.assets.map(normalizeCatalogModel).filter(Boolean),factory=libraryModels(models,'factory');
- assert.ok(BUILDER_SECTIONS.some(([id])=>id==='factory'));assert.equal(factory.length,9);assert.equal(libraryCounts(models).factory,9);
+ assert.ok(BUILDER_SECTIONS.some(([id])=>id==='factory'));assert.equal(factory.filter(model=>FACTORY_ITEMS[model.buildAssetId]).length,9);assert.equal(libraryCounts(models).factory,factory.length);
  for(const [id,item]of Object.entries(FACTORY_ITEMS)){const record=manifest.assets.find(value=>value.buildAssetId===id),model=factory.find(value=>value.buildAssetId===id);assert.ok(record&&model,id+' can be selected for placement');assert.equal(record.collection,'Factory & engineering');assert.equal(model.priceMzk,item.priceMzk);assert.deepEqual(record.dimensions,item.dimensions);assert.equal(model.category,'factory');assert.deepEqual(model.function_data,factoryItemSettings(id));}
  assert.equal(libraryModels(models,'factory','loading bay')[0].buildAssetId,'factory-loading-bay');
 });

@@ -1,16 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createQuestConversationVoice} from '../public/js/quest-conversation-voice.js';
+import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
 
-function fixture(){
+function fixture({voices=GENERATED_VOICES}={}){
  let time=1000,cancels=0;
- const spoken=[],timers=new Map();let sequence=0;
+ const spoken=[],timers=new Map(),delays=[];let sequence=0;
  const voice=createQuestConversationVoice({
-  speech:{speak:call=>spoken.push(call),cancel:()=>cancels++,resume(){},getVoices:()=>[]},
+  speech:{speak:call=>spoken.push(call),cancel:()=>cancels++,resume(){},getVoices:()=>voices},
   Utterance:class{constructor(text){this.text=text;}},now:()=>time,
-  setTimer:call=>{timers.set(++sequence,call);return sequence;},clearTimer:id=>timers.delete(id)
+  setTimer:(call,delay)=>{delays.push(delay);timers.set(++sequence,call);return sequence;},clearTimer:id=>timers.delete(id)
  });
- return {voice,spoken,timers,advance:ms=>time+=ms,get cancels(){return cancels;}};
+ return {voice,spoken,timers,delays,advance:ms=>time+=ms,get cancels(){return cancels;}};
 }
 const announce=(voice,text,category='announcements',extra={})=>voice.announce(text,{worldId:'map',key:text,category,...extra});
 
@@ -78,7 +79,7 @@ test('failed online natural voice retries once locally without allowing old call
 });
 
 test('an error after speech begins never repeats the NPC sentence',()=>{
- const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>[],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
  voice.unlock();announce(voice,'Please follow the marked route.','dialogue');spoken[0].onstart();spoken[0].onerror({error:'network'});
  assert.equal(spoken.length,1);assert.equal(voice.state.speaking,false);voice.dispose();
 });
@@ -97,4 +98,47 @@ test('introductions use a clear centered narrator without character pitch or dis
  voice.unlock();voice.announce('Welcome to the world.',{worldId:'map',category:'introduction',entityId:'npc',source:{x:0,y:0,z:0},voiceProfile:{pitch:.5,rate:1.8}});
  assert.equal(spoken[0].voice,us);assert.equal(spoken[0].pitch,1);assert.equal(spoken[0].rate,1);assert.equal(spoken[0].volume,.85);
  voice.setScene({listener:{x:500,y:0,z:0}});assert.equal(voice.state.speaking,true);assert.equal(spoken[0].volume,.85);voice.dispose();
+});
+
+test('preview selects the real generated gender and URI and reports playback only after onstart',async()=>{
+ const {voice,spoken,timers,delays}=fixture(),male=GENERATED_VOICES.find(candidate=>candidate.gender==='male');
+ const preview=voice.preview({speechVoiceGender:'male',speechVoiceURI:male.voiceURI});
+ assert.equal(spoken.length,1);assert.equal(spoken[0].voice,male);assert.equal(spoken[0].pitch,1);assert.equal(spoken[0].rate,1);
+ assert.equal(delays.at(-1),65000,'generation gets its own initial timeout');
+ let reported=false;preview.then(()=>reported=true);await Promise.resolve();assert.equal(reported,false,'requesting generation is not proof of audible playback');
+ spoken[0].onstart();assert.equal(await preview,'Playing '+male.name+'.');assert.equal(timers.size,1);assert.ok(delays.at(-1)<65000,'actual playback watchdog replaces generation deadline once audio starts');
+ spoken[0].onend();assert.equal(voice.state.speaking,false);voice.dispose();
+});
+
+test('changing the selected generated voice clears an earlier character cast',async()=>{
+ const {voice,spoken}=fixture(),female=GENERATED_VOICES.find(candidate=>candidate.gender==='female'),male=GENERATED_VOICES.find(candidate=>candidate.gender==='male');
+ const first=voice.preview({speechVoiceGender:'female',speechVoiceURI:female.voiceURI});assert.equal(spoken[0].voice,female);spoken[0].onstart();await first;spoken[0].onend();
+ voice.setPreferences({speechVoiceGender:'male',speechVoiceURI:male.voiceURI});announce(voice,'A new response from the same guide.','dialogue');assert.equal(spoken.at(-1).voice,male);voice.dispose();
+});
+
+test('unavailable or rejected voices stay silent rather than using a hidden browser default',async()=>{
+ for(const voices of [[],[{name:'eSpeak English',voiceURI:'espeak:en',lang:'en-US',localService:true}]]){
+  const {voice,spoken}=fixture({voices});
+  const status=await voice.preview();assert.match(status,/unavailable/i);assert.equal(spoken.length,0);assert.equal(voice.state.speaking,false);
+  announce(voice,'This visible line remains available.','dialogue');assert.equal(spoken.length,0);voice.dispose();
+ }
+});
+
+test('preview respects saved master and NPC conversation mutes',async()=>{
+ const {voice,spoken}=fixture();
+ assert.match(await voice.preview({masterMuted:true}),/Unmute/);assert.equal(spoken.length,0);
+ assert.match(await voice.preview({dialogueMuted:true}),/Unmute/);assert.equal(spoken.length,0);voice.dispose();
+});
+
+test('a failed selected voice has no anonymous default-voice retry',()=>{
+ const spoken=[],remote={name:'Online Natural',lang:'en-US',voiceURI:'online',localService:false};
+ const voice=createQuestConversationVoice({speech:{getVoices:()=>[remote],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ voice.unlock();announce(voice,'Your message is still visible.','dialogue');spoken[0].onerror({error:'network'});
+ assert.equal(spoken.length,1);assert.equal(voice.state.speaking,false);voice.dispose();
+});
+
+test('long speech receives its full playback budget after generation finishes',()=>{
+ const {voice,spoken,delays,timers}=fixture();voice.unlock();
+ const long='Training guidance and safe navigation. '.repeat(25);announce(voice,long,'dialogue');
+ assert.equal(delays.at(-1),65000);spoken[0].onstart();assert.ok(delays.at(-1)>65000,'long playback is measured after audio begins');assert.equal(timers.size,1);voice.dispose();
 });
