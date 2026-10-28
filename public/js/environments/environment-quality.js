@@ -64,6 +64,11 @@ export function configureRenderer(renderer, presetName = 'auto') {
   return preset;
 }
 
+// Texture objects own their upload version. Moving a cached surface to a new
+// world does not change its pixels, and Three uploads it for each new renderer
+// automatically. Re-marking it dirty would invalidate existing GPU uploads.
+const preparedTextures=new WeakSet();
+
 export function applyWorldQuality(root, renderer) {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy?.() || 1;
   let lights = 0,meshCount=0,triangleCount=0;
@@ -76,7 +81,12 @@ export function applyWorldQuality(root, renderer) {
     // Keep animated characters visible and retain explicit no-cull flags on
     // dynamic instance batches; ordinary static meshes retain their culling.
     if (object.isSkinnedMesh) object.frustumCulled = false;
-    object.castShadow = !/floor|ceiling|sky/i.test(object.name || '');
+    let shadowOptOut=false;
+    if(object.castShadow===false)for(let node=object;node;node=node.parent){
+      if(node.userData.collisionDisabled||node.userData.collider===false||node.userData.nativeDesignDetail||node.userData.vehicleDesignDetail){shadowOptOut=true;break;}
+      if(node===root)break;
+    }
+    object.castShadow = !shadowOptOut&&!/floor|ceiling|sky/i.test(object.name || '');
     object.receiveShadow = true;
     const materials = Array.isArray(object.material) ? object.material : [object.material].filter(Boolean);
     materials.forEach((material) => {
@@ -84,11 +94,10 @@ export function applyWorldQuality(root, renderer) {
       materialsSeen.add(material);
       for (const value of Object.values(material)) if (value?.isTexture && !texturesSeen.has(value)) {
         texturesSeen.add(value);
-        value.anisotropy = Math.min(8, maxAnisotropy);
-        // Upload each shared texture once per world, rather than once per mesh.
-        // Explicitly flag texture updates; Firefox otherwise may retain a stale
-        // upload after a GLB material is cloned or moved between worlds.
-        value.needsUpdate = true;
+        const anisotropy=Math.min(8,maxAnisotropy);
+        if(!preparedTextures.has(value)||value.anisotropy!==anisotropy){
+          value.anisotropy=anisotropy;value.needsUpdate=true;preparedTextures.add(value);
+        }
       }
       if (material.transparent) material.depthWrite = false;
     });

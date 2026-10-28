@@ -197,7 +197,7 @@ function updateSportsTextureCredit(root){
 }
 function disposeSportsDressing(root){
  const geometries=new Set(),materials=new Set(),textures=new Set();
- root.traverse(node=>{if(node.geometry&&!geometries.has(node.geometry)){geometries.add(node.geometry);node.geometry.dispose();}for(const material of [].concat(node.material||[])){if(materials.has(material))continue;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose();}});
+ root.traverse(node=>{if(node.geometry&&!geometries.has(node.geometry)){geometries.add(node.geometry);node.geometry.dispose();}for(const material of [].concat(node.material||[])){if(materials.has(material))continue;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!value.userData.nativeSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose();}});
 }
 function addWorldDressing(){
  basketballPreview=null;

@@ -47,35 +47,56 @@ function surfaceKind(node,material,id){
 // Give every opaque native surface an authored finish while preserving graphics,
 // media, paint colour, transparency, emission and all pre-existing texture maps.
 export function finishNativeSurfaces(T,root,id=''){
- const localMaterials=new Map(),textures=new Map();let materialCount=0,texturedMaterialCount=0;
- const protectedMaterials=new Set();
- root.traverse(node=>{if(node.isMesh&&protectedSurface(node))for(const material of [].concat(node.material||[]))protectedMaterials.add(material);});
- const textureFor=(kind,key)=>{
-  const name=kind+':'+key;if(!textures.has(name))textures.set(name,nativeSurfaceTextures(T,kind)[key].clone());return textures.get(name);
- };
+ const pendingMaterials=new Map(),protectedMaterials=new Set(),missingUVs=new Map();
+ // Factories and their enclosing map/vehicle finishers can visit the same
+ // assembly. Collect only unfinished materials in one pass, while retaining
+ // protection for materials shared by an ordinary mesh and a live display.
  root.traverse(node=>{
-  if(!node.isMesh||protectedSurface(node))return;
-  const transform=source=>{
-   if(!source?.isMeshStandardMaterial||protectedMaterials.has(source)||source.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION)return source;
-   if(localMaterials.has(source))return localMaterials.get(source);
+  if(!node.isMesh)return;
+  const sources=Array.isArray(node.material)?node.material:[node.material];
+  let isProtected;
+  if(node.geometry&&!node.geometry.getAttribute('uv')){
+   isProtected=protectedSurface(node);
+   if(!isProtected){
+    let materials=missingUVs.get(node.geometry);if(!materials){materials=new Set();missingUVs.set(node.geometry,materials);}
+    for(const material of sources)materials.add(material);
+   }
+  }
+  for(const material of sources){
+   if(!material?.isMeshStandardMaterial||material.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION)continue;
+   if(isProtected===undefined)isProtected=protectedSurface(node);
+   if(isProtected)protectedMaterials.add(material);
+   else if(!pendingMaterials.has(material))pendingMaterials.set(material,node);
+  }
+ });
+ let materialCount=0,texturedMaterialCount=0;
+ for(const [material,node]of pendingMaterials){
+   if(protectedMaterials.has(material))continue;
    // Keep the factory's material object: animation closures, resident palettes
    // and live controls can hold it directly. Editor copies get isolated material
    // instances through cloneBuilderRuntime; this pass changes no paint colours.
-   const material=source,kind=surfaceKind(node,material,id);localMaterials.set(source,material);
+   const kind=surfaceKind(node,material,id);
    if(!material.userData.nativeMaterialDesign){
-    if(!material.map){material.map=textureFor(kind,'map');texturedMaterialCount++;}
-    if(!material.roughnessMap)material.roughnessMap=textureFor(kind,'roughnessMap');
-    if(!material.bumpMap&&!material.normalMap&&!['satin','glass','water'].includes(kind)){
-     material.bumpMap=textureFor(kind,'bumpMap');material.bumpScale=kind==='fabric'?.0015:kind==='metal'?.0007:.0025;
+    const addMap=!material.map,addRoughness=!material.roughnessMap,addBump=!material.bumpMap&&!material.normalMap&&!['satin','glass','water'].includes(kind);
+    const textures=addMap||addRoughness||addBump?nativeSurfaceTextures(T,kind):null;
+    if(addMap){material.map=textures.map;texturedMaterialCount++;}
+    if(addRoughness)material.roughnessMap=textures.roughnessMap;
+    if(addBump){
+     material.bumpMap=textures.bumpMap;material.bumpScale=kind==='fabric'?.0015:kind==='metal'?.0007:.0025;
     }
    }else if(material.map)texturedMaterialCount++;
    material.userData={...material.userData,nativeSurfaceVersion:NATIVE_DESIGN_VERSION,nativeSurface:kind};
-   material.needsUpdate=true;materialCount++;return material;
-  };
-  node.material=Array.isArray(node.material)?node.material.map(transform):transform(node.material);
-  if([].concat(node.material||[]).some(material=>material?.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION&&(material.map||material.roughnessMap||material.bumpMap||material.normalMap)))ensureNativeSurfaceUVs(T,node.geometry);
- });
+   material.needsUpdate=true;materialCount++;
+ }
+ // New geometry can share an already-finished material (for example a
+ // composed vehicle hull). Supply its coordinates without another tree walk.
+ for(const [geometry,sources]of missingUVs){
+  for(const material of sources)if(material?.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION&&(material.map||material.roughnessMap||material.bumpMap||material.normalMap)){
+   ensureNativeSurfaceUVs(T,geometry);break;
+  }
+ }
  const previous=root.userData.nativeSurfaceFinish;
+ if(!materialCount&&previous?.version===NATIVE_DESIGN_VERSION)return root;
  root.userData.nativeSurfaceFinish={version:NATIVE_DESIGN_VERSION,materialCount:(previous?.materialCount||0)+materialCount,texturedMaterialCount:(previous?.texturedMaterialCount||0)+texturedMaterialCount};
  return root;
 }

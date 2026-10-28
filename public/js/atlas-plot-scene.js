@@ -1,3 +1,4 @@
+import {disposeModelResources} from './game-graphics-resources.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {EnvironmentLoader} from './environments/environment-loader.js';
 import {createBuilderModel,createGeneratedAsset} from './builder-models-3d.js';
@@ -7,7 +8,7 @@ import {placementBounds} from './placed-item-collision.js';
 import {createSolidPaint} from './solid-paint.js';
 import {prepareGameItems} from './game-load-work.js';
 import {isWatercraft} from './harbor-water.js';
-export function disposeAtlasObject(root){root?.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[])){for(const value of Object.values(material||{}))if(value?.isTexture&&!value.userData?.sportsSurfaceShared)value.dispose();material?.dispose();}});root?.clear();}
+export function disposeAtlasObject(root){disposeModelResources(root);root?.clear();}
 const xyz=(value,fallback=0)=>Array.isArray(value)?value:[value?.x??fallback,value?.y??fallback,value?.z??fallback];
 export async function loadAtlasPlotScene(environment,snapshot,renderer,{current=()=>true}={}){
  const scene=new THREE.Scene(),loader=new EnvironmentLoader({scene,renderer,serverAuthoritative:()=>true}),root=new THREE.Group(),decor=new THREE.Group(),missing=[];

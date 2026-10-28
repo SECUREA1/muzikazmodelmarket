@@ -87,7 +87,9 @@ function surfaceTextures(T,kind){
   texture.magFilter=T.LinearFilter;texture.minFilter=T.LinearMipmapLinearFilter;texture.generateMipmaps=true;
   texture.colorSpace=index===0?T.SRGBColorSpace:T.NoColorSpace;texture.needsUpdate=true;
   texture.name='NATIVE_CRAFTED_'+kind.toUpperCase()+['_ALBEDO','_HEIGHT','_ROUGHNESS'][index];
-  texture.userData={nativeMaterialSurface:kind};return texture;
+  // These immutable maps belong to the module's surface library, rather than
+  // an individual placed item. World/preview disposal must retain them.
+  texture.userData={nativeMaterialSurface:kind,nativeSurfaceShared:true};return texture;
  });
  const result={map:textures[0],bumpMap:textures[1],roughnessMap:textures[2]};library.set(kind,result);return result;
 }

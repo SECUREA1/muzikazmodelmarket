@@ -17,8 +17,8 @@
       "family": "road",
       "version": "crafted-vehicles-v1",
       "details": 58,
-      "meshes": 185,
-      "triangles": 31372,
+      "meshes": 181,
+      "triangles": 18060,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -27,8 +27,8 @@
       "family": "road",
       "version": "crafted-vehicles-v1",
       "details": 42,
-      "meshes": 166,
-      "triangles": 29416,
+      "meshes": 162,
+      "triangles": 16632,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -37,8 +37,8 @@
       "family": "road",
       "version": "crafted-vehicles-v1",
       "details": 59,
-      "meshes": 182,
-      "triangles": 30940,
+      "meshes": 178,
+      "triangles": 17852,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -47,8 +47,8 @@
       "family": "road",
       "version": "crafted-vehicles-v1",
       "details": 28,
-      "meshes": 107,
-      "triangles": 16608,
+      "meshes": 105,
+      "triangles": 10176,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -58,7 +58,7 @@
       "version": "crafted-vehicles-v1",
       "details": 29,
       "meshes": 59,
-      "triangles": 19624,
+      "triangles": 9176,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -67,8 +67,8 @@
       "family": "air-marine",
       "version": "crafted-vehicles-v1",
       "details": 36,
-      "meshes": 278,
-      "triangles": 22598,
+      "meshes": 276,
+      "triangles": 19046,
       "uvMissing": 0,
       "uvGeometries": 6
     },
@@ -77,8 +77,8 @@
       "family": "air-marine",
       "version": "crafted-vehicles-v1",
       "details": 36,
-      "meshes": 130,
-      "triangles": 14080,
+      "meshes": 128,
+      "triangles": 10368,
       "uvMissing": 0,
       "uvGeometries": 3
     },
@@ -87,8 +87,8 @@
       "family": "air-marine",
       "version": "crafted-vehicles-v1",
       "details": 36,
-      "meshes": 228,
-      "triangles": 14028,
+      "meshes": 226,
+      "triangles": 10348,
       "uvMissing": 0,
       "uvGeometries": 3
     },
@@ -98,7 +98,7 @@
       "version": "crafted-vehicles-v1",
       "details": 13,
       "meshes": 163,
-      "triangles": 17438,
+      "triangles": 15566,
       "uvMissing": 0,
       "uvGeometries": 1
     },
@@ -108,7 +108,7 @@
       "version": "crafted-vehicles-v1",
       "details": 14,
       "meshes": 173,
-      "triangles": 20540,
+      "triangles": 18828,
       "uvMissing": 0,
       "uvGeometries": 3
     },
@@ -118,7 +118,7 @@
       "version": "crafted-vehicles-v1",
       "details": 35,
       "meshes": 270,
-      "triangles": 36414,
+      "triangles": 34462,
       "uvMissing": 0,
       "uvGeometries": 1
     },
@@ -128,7 +128,7 @@
       "version": "crafted-vehicles-v1",
       "details": 29,
       "meshes": 196,
-      "triangles": 22289,
+      "triangles": 17969,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -138,7 +138,7 @@
       "version": "crafted-vehicles-v1",
       "details": 31,
       "meshes": 306,
-      "triangles": 27155,
+      "triangles": 22771,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -148,7 +148,7 @@
       "version": "crafted-vehicles-v1",
       "details": 13,
       "meshes": 42,
-      "triangles": 5074,
+      "triangles": 3026,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -158,7 +158,7 @@
       "version": "crafted-vehicles-v1",
       "details": 16,
       "meshes": 81,
-      "triangles": 8018,
+      "triangles": 5650,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -168,7 +168,7 @@
       "version": "crafted-vehicles-v1",
       "details": 22,
       "meshes": 159,
-      "triangles": 16112,
+      "triangles": 11680,
       "uvMissing": 0,
       "uvGeometries": 1
     },
@@ -178,7 +178,7 @@
       "version": "crafted-vehicles-v1",
       "details": 26,
       "meshes": 217,
-      "triangles": 20664,
+      "triangles": 15656,
       "uvMissing": 0,
       "uvGeometries": 1
     },
@@ -188,7 +188,7 @@
       "version": "crafted-vehicles-v1",
       "details": 24,
       "meshes": 137,
-      "triangles": 17600,
+      "triangles": 10592,
       "uvMissing": 0,
       "uvGeometries": 1
     },
@@ -198,7 +198,7 @@
       "version": "crafted-vehicles-v1",
       "details": 10,
       "meshes": 667,
-      "triangles": 33076,
+      "triangles": 31348,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -207,8 +207,8 @@
       "family": "industrial-rides",
       "version": "crafted-vehicles-v1",
       "details": 28,
-      "meshes": 428,
-      "triangles": 33776,
+      "meshes": 422,
+      "triangles": 27024,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -218,7 +218,7 @@
       "version": "crafted-vehicles-v1",
       "details": 25,
       "meshes": 239,
-      "triangles": 14244,
+      "triangles": 10564,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -228,7 +228,7 @@
       "version": "crafted-vehicles-v1",
       "details": 26,
       "meshes": 258,
-      "triangles": 15040,
+      "triangles": 11648,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -238,7 +238,7 @@
       "version": "crafted-vehicles-v1",
       "details": 11,
       "meshes": 48,
-      "triangles": 6480,
+      "triangles": 3920,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -248,7 +248,7 @@
       "version": "crafted-vehicles-v1",
       "details": 5,
       "meshes": 72,
-      "triangles": 7288,
+      "triangles": 6008,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -257,8 +257,8 @@
       "family": "industrial-rides",
       "version": "crafted-vehicles-v1",
       "details": 6,
-      "meshes": 30,
-      "triangles": 2316,
+      "meshes": 22,
+      "triangles": 2188,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -267,8 +267,8 @@
       "family": "industrial-rides",
       "version": "crafted-vehicles-v1",
       "details": 2,
-      "meshes": 188,
-      "triangles": 55082,
+      "meshes": 176,
+      "triangles": 54634,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -278,7 +278,7 @@
       "version": "crafted-vehicles-v1",
       "details": 52,
       "meshes": 239,
-      "triangles": 31646,
+      "triangles": 20798,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -288,7 +288,7 @@
       "version": "crafted-vehicles-v1",
       "details": 9,
       "meshes": 156,
-      "triangles": 11496,
+      "triangles": 9576,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -298,7 +298,7 @@
       "version": "crafted-vehicles-v1",
       "details": 16,
       "meshes": 26,
-      "triangles": 6372,
+      "triangles": 3204,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -308,7 +308,7 @@
       "version": "crafted-vehicles-v1",
       "details": 12,
       "meshes": 23,
-      "triangles": 6642,
+      "triangles": 3186,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -318,7 +318,7 @@
       "version": "crafted-vehicles-v1",
       "details": 9,
       "meshes": 17,
-      "triangles": 2540,
+      "triangles": 1004,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -327,8 +327,8 @@
       "family": "industrial-rides",
       "version": "crafted-vehicles-v1",
       "details": 5,
-      "meshes": 36,
-      "triangles": 4008,
+      "meshes": 28,
+      "triangles": 2856,
       "uvMissing": 0,
       "uvGeometries": 0
     },
@@ -337,8 +337,8 @@
       "family": "industrial-rides",
       "version": "crafted-vehicles-v1",
       "details": 5,
-      "meshes": 40,
-      "triangles": 4232,
+      "meshes": 32,
+      "triangles": 3080,
       "uvMissing": 0,
       "uvGeometries": 0
     }

@@ -1,3 +1,4 @@
+import {disposeModelResources} from './game-graphics-resources.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {mountDeviceDemo} from './device-demos.js';
 import {toolPreviewArt} from './tool-preview-art.js';
@@ -54,7 +55,7 @@ function snapshotFor(item,figure){
 // Match the placement renderer: native definitions remain authoritative even
 // when they also carry a reference GLB URL.
 export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.model?'glb':item.toolId?'tool':null;}
-export function disposePreviewModel(root){root?.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[])){for(const value of Object.values(material))if(value?.isTexture)value.dispose();material.dispose();}});}
+export function disposePreviewModel(root){disposeModelResources(root);}
 export async function loadPreviewModel(item){
  modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/loaders/GLTFLoader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
  const [THREE,{GLTFLoader},{createBuilderModel},{createBuildingBlock},{prepareAuthoredBuilderModel},{createHeldToolModel}]=await modules;

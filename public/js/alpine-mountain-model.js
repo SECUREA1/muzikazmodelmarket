@@ -2,10 +2,21 @@ export const ALPINE_MOUNTAIN_MODEL_INFO=Object.freeze({
  'alpine-mountain':['Alpine Snow Mountain','A sculpted alpine ridge with flared stone foothills, branching rock buttresses and snow-filled gullies beneath a pointed summit.',[6,5,5.5]]
 });
 
+const mountainShapes=new WeakMap();
+export function createAlpineMountain(THREE){
+ let shape=mountainShapes.get(THREE);
+ if(!shape){shape=buildAlpineMountain(THREE);mountainShapes.set(THREE,shape);}
+ // Generate the deterministic ridge once, then copy its small buffers. Each
+ // placement owns its resources, so editor changes/unload cannot alter peers.
+ const root=shape.clone(true);
+ root.traverse(node=>{if(node.isMesh){node.geometry=node.geometry.clone();node.material=node.material.clone();}});
+ return root;
+}
+
 // One closed landform is split at its snowline, rather than assembling cones,
 // ledges or a second snow shell. Every snow/stone boundary uses the same cached
 // edge intersections, including where a snow tongue crosses a diagonal face.
-export function createAlpineMountain(THREE){
+function buildAlpineMountain(THREE){
  const root=new THREE.Group(),segments=56,peak=[-.3,5,-.1],rock=[],snow=[];
  const levels=[
   [1,0],[.945,.10],[.87,.40],[.785,.85],[.70,1.35],

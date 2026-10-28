@@ -1,7 +1,10 @@
 // Cosmetic vehicle details use the original factory's coordinate system and rig
 // parents. The original precise envelope remains the placement/collision limit.
 export function createVehicleDesignKit(T,root,id){
- root.updateMatrixWorld(true);
+ // A direct world constructor can finish a nested vehicle before its enclosing
+ // scene has ever updated. Establish the same ancestor transforms for both the
+ // original envelope and each later candidate fit.
+ root.updateWorldMatrix(true,true);
  const bounds=new T.Box3().setFromObject(root,true),source=[];
  root.traverse(node=>{if(!node.userData.vehicleDesignDetail)source.push(node);});
  const palette=new Map(),retained=new Set(source.filter(n=>n.isMesh).map(n=>n.geometry));
@@ -15,7 +18,11 @@ export function createVehicleDesignKit(T,root,id){
   const discard=()=>{node.removeFromParent();if(node.geometry&&!retained.has(node.geometry))node.geometry.dispose();rejected++;return false;};
   if(!parent||meshes>=kit.detailMeshBudget)return discard();
   node.name=name;node.userData={...node.userData,vehicleDesignDetail:true,nativeDesignDetail:true,collisionDisabled:true,collider:false,builderRoot:root};
-  node.castShadow=false;node.receiveShadow=true;parent.add(node);root.updateMatrixWorld(true);
+  node.castShadow=false;node.receiveShadow=true;parent.add(node);
+  // Only the candidate's ancestor chain can affect its world-space fit. A full
+  // root update here revisits every hull, cabin and rig mesh for each small
+  // fitting. Box3 updates the candidate/subtree itself below.
+  parent.updateWorldMatrix(true,false);
   const fitted=new T.Box3().setFromObject(node,true),epsilon=1e-5;
   if(fitted.isEmpty()||!['x','y','z'].every(axis=>Number.isFinite(fitted.min[axis])&&Number.isFinite(fitted.max[axis])&&fitted.min[axis]>=bounds.min[axis]-epsilon&&fitted.max[axis]<=bounds.max[axis]+epsilon))return discard();
   retained.add(node.geometry);meshes++;details+=node.isInstancedMesh?node.count:1;return true;
@@ -23,7 +30,7 @@ export function createVehicleDesignKit(T,root,id){
  kit.box=(parent,size,position,material,name,rotation=[0,0,0])=>{
   const node=new T.Mesh(new T.BoxGeometry(...size),material);node.position.set(...position);node.rotation.set(...rotation);kit.add(parent,node,name);return node.parent?node:null;
  };
- kit.tube=(parent,from,to,radius,material,name,segments=10)=>{
+ kit.tube=(parent,from,to,radius,material,name,segments=8)=>{
   const a=new T.Vector3(...from),b=new T.Vector3(...to),direction=b.clone().sub(a);
   if(direction.lengthSq()<1e-12)return null;
   const node=new T.Mesh(new T.CylinderGeometry(radius,radius,direction.length(),segments),material);
@@ -31,10 +38,10 @@ export function createVehicleDesignKit(T,root,id){
   kit.add(parent,node,name);return node.parent?node:null;
  };
  kit.torus=(parent,radius,tube,position,material,name,rotation=[0,0,0])=>{
-  const node=new T.Mesh(new T.TorusGeometry(radius,tube,6,32),material);node.position.set(...position);node.rotation.set(...rotation);kit.add(parent,node,name);return node.parent?node:null;
+  const node=new T.Mesh(new T.TorusGeometry(radius,tube,4,20),material);node.position.set(...position);node.rotation.set(...rotation);kit.add(parent,node,name);return node.parent?node:null;
  };
  kit.cylinder=(parent,radiusTop,radiusBottom,height,position,material,name,rotation=[0,0,0])=>{
-  const node=new T.Mesh(new T.CylinderGeometry(radiusTop,radiusBottom,height,24),material);node.position.set(...position);node.rotation.set(...rotation);kit.add(parent,node,name);return node.parent?node:null;
+  const node=new T.Mesh(new T.CylinderGeometry(radiusTop,radiusBottom,height,12),material);node.position.set(...position);node.rotation.set(...rotation);kit.add(parent,node,name);return node.parent?node:null;
  };
  kit.batchBoxes=(parent,boxes,material,name)=>{
   if(!boxes.length)return null;
