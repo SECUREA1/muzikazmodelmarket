@@ -3017,7 +3017,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     publishGameStage('connecting-room', 'Joining the game server…');
     const connectingClient=authoritativeClient;
     try {
-      await connectingClient.whenReady(30000);
+      await connectingClient.whenReady();
       if(loadGeneration!==worldLoadGeneration||authoritativeClient!==connectingClient)return false;
       updateLevelLoader(98,'Connected. Preparing the player…');
       window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-room-ready',{detail:{roomId:activeEnvironment.id}}));

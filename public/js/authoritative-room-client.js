@@ -56,14 +56,21 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  }
  const client={
   ready:false, selfId:null,
-  whenReady(timeoutMs=15000) {
+  // Allow session setup and proof refresh as well as the 25s initial join,
+  // rather than cancelling valid requests with a shorter startup deadline.
+  whenReady(timeoutMs=45000) {
    if (client.ready) return Promise.resolve(client);
    if (stopped) return Promise.reject(failure || Error('Room closed.'));
    return new Promise((resolve,reject)=>{
-    const waiter={resolve,reject,timer:setTimeout(()=>{
-     const error=Error('The game server did not accept the room connection. Select Try again.');
+    const startedAt=performance.now();let grace=false;
+    const expire=()=>{
+     // Match the request deadline's rendering grace: a completed fetch must
+     // get a turn before an overdue main-thread timer cancels a valid join.
+     if(!grace&&performance.now()-startedAt>timeoutMs+250){grace=true;waiter.timer=setTimeout(expire,1000);return;}
+     const error=Object.assign(Error('The game server connection timed out. Select Try again.'),{code:'ROOM_CONNECTION_TIMEOUT'});
      if(confirmedOnce){waiters.delete(waiter);reject(error);onStatus?.(error.message);}else{close(error);onStatus?.(error.message);onError?.(error);}
-    },timeoutMs)};
+    };
+    const waiter={resolve,reject,timer:setTimeout(expire,timeoutMs)};
     waiters.add(waiter);
    });
   },
