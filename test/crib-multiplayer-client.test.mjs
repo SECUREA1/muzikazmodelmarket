@@ -7,10 +7,11 @@ const source=await readFile(new URL('../public/js/crib-multiplayer.js',import.me
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 
-function harness({discovery=false}={}) {
+function harness({discovery=false,microphone=false,pendingAudio=false,capture}={}) {
   class Target {
     listeners=new Map();
     addEventListener(name,handler){const list=this.listeners.get(name)||[];list.push(handler);this.listeners.set(name,list);}
+    removeEventListener(name,handler){this.listeners.set(name,(this.listeners.get(name)||[]).filter(item=>item!==handler));}
     fire(name,event={}){return Promise.all((this.listeners.get(name)||[]).map(handler=>handler({type:name,preventDefault(){},stopPropagation(){},...event})));}
     dispatchEvent(event){this.fire(event.type,event).catch(error=>{throw error;});return true;}
   }
@@ -24,6 +25,7 @@ function harness({discovery=false}={}) {
     querySelectorAll(){return [];}
     replaceChildren(...nodes){this.children=nodes;}
     append(...nodes){this.children.push(...nodes);}
+    play(){this.playCalls=(this.playCalls||0)+1;return Promise.resolve();}
     focus(){}
     remove(){}
   }
@@ -47,9 +49,32 @@ function harness({discovery=false}={}) {
   class EventSource extends Target {constructor(url,options){super();this.url=url;this.options=options;this.closed=false;streams.push(this);}close(){this.closed=true;}}
   window.EventSource=EventSource;
   const navigator={language:'en',sendBeacon:()=>true};
-  const context=vm.createContext({window,document,navigator,location:{href:'https://frontend.example/model-explorer.html'},localStorage:storage,crypto:{randomUUID:()=> 'client-session'},URL,Map,Set,Date,JSON,Promise,Error,DOMException,AbortController,console,EventSource,CustomEvent:class{constructor(type,init={}){this.type=type;this.detail=init.detail;}},setInterval:(callback,ms)=>{const id=++nextTimer;intervals.set(id,{callback,ms});return id;},clearInterval:id=>intervals.delete(id),setTimeout,clearTimeout});
+  const captured=[],audioContexts=[],voicePeers=[],gainTransitions=[];
+  if(microphone){
+    class AudioContext extends Target {
+      state='suspended';resumeCalls=0;currentTime=0;gains=[];
+      constructor(){super();audioContexts.push(this);}
+      resume(){this.resumeCalls++;if(pendingAudio)return new Promise(()=>{});this.state='running';return Promise.resolve();}
+      createMediaStreamSource(){return {connect(){},disconnect(){}};}
+      createAnalyser(){return {connect(){},disconnect(){},getByteTimeDomainData(){}};}
+      createStereoPanner(){return {connect(){},disconnect(){},pan:{setTargetAtTime(){}}};}
+      createGain(){const gain={value:1,setValueAtTime(value){this.value=value;gainTransitions.push({value,nativeMuted:nodes.get('crib-social').children.filter(item=>item.srcObject).every(item=>item.muted)});},setTargetAtTime(value){this.setValueAtTime(value);}};this.gains.push(gain);return {connect(){},disconnect(){},gain};}
+      close(){return Promise.resolve();}
+    }
+    window.AudioContext=AudioContext;window.RTCPeerConnection=class{
+      constructor(){voicePeers.push(this);}
+      addTransceiver(){}
+      async setRemoteDescription(description){this.remoteDescription=description;}
+      async createAnswer(){return {type:'answer',sdp:'fixture'};}
+      async setLocalDescription(description){this.localDescription=description;}
+      close(){}
+    };
+    navigator.mediaDevices={getUserMedia:constraints=>{captured.push(constraints);return capture?capture():Promise.resolve(microphoneStream());}};
+  }
+  const context=vm.createContext({window,document,navigator,RTCPeerConnection:window.RTCPeerConnection,location:{href:'https://frontend.example/model-explorer.html'},localStorage:storage,crypto:{randomUUID:()=> 'client-session'},URL,Map,Set,Date,JSON,Promise,Error,DOMException,AbortController,console,EventSource,CustomEvent:class{constructor(type,init={}){this.type=type;this.detail=init.detail;}},setInterval:(callback,ms)=>{const id=++nextTimer;intervals.set(id,{callback,ms});return id;},clearInterval:id=>intervals.delete(id),setTimeout,clearTimeout});
   vm.runInContext(source,context,{importModuleDynamically:()=>Promise.reject(new Error('Speech modules are not required by this social transport test.'))});
-  return {window,snapshot,nodes,requests,streams,response,
+  function microphoneStream(){const track=new Target();track.kind='audio';track.stopped=false;track.stop=()=>{track.stopped=true;};const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};captured.stream=stream;captured.track=track;return stream;}
+  return {window,document,snapshot,nodes,requests,streams,response,captured,audioContexts,voicePeers,gainTransitions,microphoneStream,
     setFetcher:handler=>{fetcher=handler;},discover:()=>{base='https://api.example';discovered.resolve();},
     ready:roomId=>window.fire('muzikaz:multiplayer-room-ready',{detail:{roomId}}),
     change:roomId=>{snapshot.roomId=roomId;snapshot.serverReady=false;window.MUZIKAZ_HOUSE_TRACKING.roomId=roomId;return window.fire('muzikaz:multiplayer-world-change',{detail:{roomId}});},
@@ -114,4 +139,51 @@ test('server room-membership errors remain visible and do not open a social stre
   await h.ready('world-a');
   assert.match(h.nodes.get('crib-chat-status').textContent,/Join the authoritative room/);
   assert.equal(h.streams.length,0);assert.equal(h.requests.length,1);
+});
+
+test('microphone capture and room presence work while output resume remains pending',async()=>{
+  const h=harness({microphone:true,pendingAudio:true});h.snapshot.serverHostedRoom=true;h.snapshot.serverReady=true;await h.ready('world-a');
+  const mic=h.nodes.get('crib-mic-toggle');const click=mic.fire('click');await settle();
+  assert.equal(h.captured.length,1,'the microphone request starts without awaiting speaker activation');
+  assert.equal(h.captured[0].video,false);assert.equal(h.captured[0].audio.echoCancellation,true);
+  await click;
+  assert.equal(mic['aria-pressed'],'true');assert.equal(h.captured.track.stopped,false);
+  assert.ok(h.requests.some(request=>request.path.endsWith('/presence')&&request.body.voiceEnabled));
+  assert.match(h.nodes.get('crib-voice-status').textContent,/Mic live/);
+  await h.document.fire('pointerdown');await h.document.fire('pointerdown');
+  assert.equal(h.audioContexts[0].resumeCalls,3,'a later user gesture retries a suspended output context');
+  await mic.fire('click');assert.equal(h.captured.track.stopped,true);assert.equal(mic['aria-pressed'],'false');
+});
+
+test('a microphone granted after room travel stops instead of broadcasting into the next room',async()=>{
+  const grant=deferred(),h=harness({microphone:true,capture:()=>grant.promise});h.snapshot.serverHostedRoom=true;h.snapshot.serverReady=true;await h.ready('world-a');
+  const click=h.nodes.get('crib-mic-toggle').fire('click');await settle();assert.equal(h.captured.length,1);
+  await h.change('world-b');const stream=h.microphoneStream();grant.resolve(stream);await click;
+  assert.equal(h.captured.track.stopped,true);assert.equal(h.nodes.get('crib-mic-toggle')['aria-pressed'],'false');
+  assert.ok(h.requests.every(request=>!request.body?.voiceEnabled),'late permission never publishes a live microphone');
+});
+
+test('microphone denial stays off and the same button can retry successfully',async()=>{
+  let attempts=0;const h=harness({microphone:true,capture:()=>++attempts===1?Promise.reject(new DOMException('Denied','NotAllowedError')):Promise.resolve(h.microphoneStream())});
+  h.snapshot.serverHostedRoom=true;h.snapshot.serverReady=true;await h.ready('world-a');const mic=h.nodes.get('crib-mic-toggle');
+  await mic.fire('click');assert.equal(mic.disabled,false);assert.equal(mic['aria-pressed'],'false');assert.match(h.nodes.get('crib-voice-status').textContent,/Allow microphone access/);
+  await mic.fire('click');assert.equal(mic['aria-pressed'],'true');assert.equal(h.captured.track.stopped,false);await mic.fire('click');
+});
+
+test('incoming room voice uses native playback until the spatial audio context resumes',async()=>{
+  const h=harness({microphone:true,pendingAudio:true});h.snapshot.serverHostedRoom=true;h.snapshot.serverReady=true;
+  h.setFetcher(async(path)=>h.response(path.endsWith('/presence')?{users:[{sessionId:'remote',roomId:'world-a',voiceEnabled:true}]}:path.endsWith('/voice/signal')?{signals:[{from:'remote',to:'client-session',roomId:'world-a',kind:'offer',payload:{type:'offer',sdp:'fixture'}}]}:{csrfToken:'fixture',messages:[]}));
+  await h.ready('world-a');await h.document.fire('pointerdown');await h.tick(1000);
+  const stream=h.microphoneStream();h.voicePeers[0].ontrack({streams:[stream]});
+  const audio=h.nodes.get('crib-social').children.find(item=>item.srcObject===stream);
+  assert.equal(h.audioContexts[0].state,'suspended');assert.equal(audio.muted,false,'a suspended panner must not silence native room audio');
+  const gain=h.audioContexts[0].gains[0];assert.equal(gain.value,0,'spatial gain is closed throughout native fallback');
+  h.audioContexts[0].state='running';assert.equal(gain.value,0,'the audio thread cannot double the voice before the statechange handler');await h.audioContexts[0].fire('statechange');
+  assert.equal(audio.muted,true,'native playback mutes once spatial playback can actually run');
+  assert.equal(gain.value,1);assert.ok(h.gainTransitions.filter(item=>item.value>0).every(item=>item.nativeMuted),'native playback is always muted before opening the spatial path');
+  h.audioContexts[0].state='interrupted';await h.audioContexts[0].fire('statechange');assert.equal(audio.muted,false);assert.equal(gain.value,0);
+  const plays=audio.playCalls;await h.document.fire('pointerdown');assert.equal(audio.playCalls,plays+1,'native output retries synchronously even while context resume hangs');
+  h.audioContexts[0].state='running';await h.tick(80);assert.equal(audio.muted,true);assert.equal(gain.value,1,'a meter tick before statechange follows the same safe handover');
+  h.window.MUZIKAZ_AUDIO_PREFERENCES={masterMuted:true};await h.window.fire('muzikaz:audio-preferences');
+  assert.equal(audio.muted,true,'native fallback still respects master mute');assert.equal(gain.value,0);
 });

@@ -36,5 +36,14 @@ test('public speech API lists generated voices and returns private WAV with boun
   let limited;
   for(let index=0;index<31;index++){const response=await post({text:'Public welcome',voice:'female'});await response.arrayBuffer();if(response.status===429){limited=response;break;}}
   assert.ok(limited);assert.ok(Number(limited.headers.get('retry-after'))>0);
+  const spoofed=await post({text:'Public welcome',voice:'female'},{'X-User-Id':'another-player','X-Forwarded-For':'192.0.2.10'});assert.equal(spoofed.status,429);await spoofed.arrayBuffer();
+  async function player(username){
+   const response=await fetch(base+'/api/access/free-play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:'speech-isolation-test-password'})});
+   assert.equal(response.status,200);await response.arrayBuffer();return response.headers.get('set-cookie').split(';')[0];
+  }
+  const firstPlayer=await player('SpeechPlayerOne'),secondPlayer=await player('SpeechPlayerTwo');
+  for(let index=0;index<30;index++){const line=await post({text:'Public welcome',voice:'female'},{Cookie:firstPlayer});assert.equal(line.status,200,'A player must not inherit the hosting proxy or another player speech quota');await line.arrayBuffer();}
+  const playerLimit=await post({text:'Public welcome',voice:'female'},{Cookie:firstPlayer});assert.equal(playerLimit.status,429);await playerLimit.arrayBuffer();
+  const otherPlayer=await post({text:'Public welcome',voice:'female'},{Cookie:secondPlayer});assert.equal(otherPlayer.status,200,'A second account behind the same proxy must still speak');await otherPlayer.arrayBuffer();
  }finally{if(server)await new Promise(resolve=>server.close(resolve));process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
 });

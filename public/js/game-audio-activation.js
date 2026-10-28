@@ -1,5 +1,6 @@
 import {gameSpeech} from './neural-character-speech.js';
 import {questConversationVoice} from './quest-conversation-voice.js';
+import {normalizePlayerPreferences} from './player-preferences.js';
 
 // This small module loads with the launch button, before the deferred 3D engine.
 // The original Begin gesture must reach Web Audio before any asynchronous import.
@@ -14,7 +15,7 @@ export function mountGameAudioActivation({parent=document.querySelector('.house-
  const button=document.createElement('button');button.type='button';button.dataset.gameAudioEnable='';
  const status=document.createElement('span');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  root.append(button,status);parent.append(root);
- let preferences=globalThis.MUZIKAZ_AUDIO_PREFERENCES||{},disposed=false;
+ let preferences=normalizePlayerPreferences(globalThis.MUZIKAZ_AUDIO_PREFERENCES||{}),disposed=false;
  function render(){
   if(disposed)return;
   const state=speech?.state||{},muted=!!preferences.masterMuted,voiceMuted=!!voice?.state?.muted;
@@ -25,9 +26,19 @@ export function mountGameAudioActivation({parent=document.querySelector('.house-
  }
  function activate({unmute=false,previewIfIdle=false}={}){
   if(disposed)return;
-  if(unmute)voice.setMuted(false);
+  if(unmute){
+   // This button explicitly promises audio. Clear saved category mutes as well
+   // as the separate radio switch, and keep the choice through a late account
+   // settings response. Ordinary world/control gestures still honor all mutes.
+   const overrides={masterMuted:false,introductionMuted:false,announcementsMuted:false,dialogueMuted:false,effectsMuted:false,mediaMuted:false,effectsVolume:preferences.effectsVolume===0?100:preferences.effectsVolume};
+   globalThis.MUZIKAZ_AUDIO_SESSION_OVERRIDES=overrides;
+   preferences={...preferences,...overrides};globalThis.MUZIKAZ_AUDIO_PREFERENCES=preferences;
+   voice.setPreferences?.(preferences);voice.setMuted(false);
+   events?.dispatchEvent?.(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));
+  }
   const result=voice.unlock();render();
   if(result?.then)Promise.resolve(result).then(render,render);
+  if(unmute)voice.resumeIntroduction?.();
   // An explicit sound check gives audible confirmation before the world is
   // loaded. A waiting map guide keeps its place and plays instead of a preview.
   if(previewIfIdle&&!preferences.masterMuted&&!preferences.dialogueMuted&&!voice.state?.speaking&&!voice.state?.pending){

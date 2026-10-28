@@ -57,3 +57,25 @@ test('map changes interrupt an old team objective and repeated accomplishments k
  assert.equal(sim.communityLife.completed,20);assert.equal(cast[0].resident.completedCommunityTasks,20);assert.ok(cast[0].resident.communityHistory.length<=6);assert.ok(sim.communityLife.history.length<=12);assert.ok(cast[0].resident.memory.length<=8);assert.ok(cast[0].resident.relationships.length<=8);assert.ok(cast[0].resident.relationships[0].affinity<=100);
  assert.equal(sim.players,undefined,'teamwork does not manufacture players or player rewards');
 });
+
+test('a blocked team approach releases both residents to ordinary activities instead of freezing until its deadline',async()=>{
+ const {ensureResidentIntelligence,stepResidentLife}=await import('../server-resident-life.mjs');
+ const environment={id:'blocked-team-garden',name:'Garden',builderScene:{mapSize:80,layout:'grand-floor',objects:[],layoutMeta:{locations:[{id:'garden',name:'Garden',x:0,y:0,z:0}]}}};
+ const {sim,cast}=team('park');
+ const collision={groundAt:(_environment,p)=>({...p}),hasBodyClearance:()=>true,resolve:(_environment,from,to)=>from.x>5&&to.x<from.x?{...from}:{...to}};
+ for(const actor of cast){actor.resident.locationIndex=0;ensureResidentIntelligence(sim,actor,environment,100000);}
+ stepCommunityLife(sim,cast,100000,.25);
+ const taskId=cast[0].resident.sharedTask.id,target={...cast[1].resident.sharedTask.workPosition};
+ cast[1].position.x=8;
+ for(let index=1;index<=40;index++){
+  const now=100000+index*250;stepCommunityLife(sim,cast,now,.25);stepResidentLife(sim,environment,now,.25,{collision});
+  const goal=cast[1].resident.goal;
+  if(goal?.familyTaskId===taskId)assert.deepEqual(goal.target,target,'the team work position never becomes an unrelated detour');
+ }
+ for(const actor of cast){
+  assert.equal(actor.resident.sharedTask,undefined,'an unreachable partner no longer owns the activity slot');
+  assert.ok(actor.resident.communityHistory.some(item=>item.id===taskId&&item.status==='interrupted'));
+  assert.notEqual(actor.resident.goal?.familyTaskId,taskId);
+  assert.equal(actor.resident.completedCommunityTasks,undefined,'a failed route earns no accomplishment');
+ }
+});

@@ -32,8 +32,10 @@ and suspended tabs. Each map visit has one short
 guide explaining its activities and how to find jobs or help. Returning to a
 previously visited map plays its guide again; repeated snapshots stay quiet. Initial snapshots establish the job baseline without reading existing work
 or past traffic aloud. Subsequent new jobs, changed objectives, completions,
-walking quests and requested game interactions are announced once. Nearby NPCs
-and periodic traffic chatter remain visible without automatic speech. Private
+walking quests and requested game interactions are announced once. Fresh
+conversations between nearby AI residents are audible when the guide and direct
+replies are idle. Existing conversations, distant residents, other floors and
+periodic work or traffic captions stay quiet. Private
 calls stay restricted to their recipients, and stale or muted calls are discarded.
 
 Open **Settings → Audio settings** to mute all audio or independently mute world
@@ -48,6 +50,8 @@ relative to the camera, with distance falloff and orientation updates as you
 move or look around. NPC browser voices use distance-based volume; browser speech
 synthesis does not expose a Web Audio source for stereo positioning. Map
 introductions and radio-style objectives stay clear regardless of distance.
+NPC voice distance is measured from your avatar, so an overhead camera does
+not mute a resident standing beside you.
 NPCs, AI contacts, map introductions and optional chat reading use two app-owned
 neural voices: **MUZIKAZ Natural Female** and **MUZIKAZ Natural Male**. All 38
 authored map introductions, Public Commons and eight public districts ship as
@@ -60,9 +64,10 @@ and speaker attribution is in
 
 In **Settings → Audio settings**, choose **Automatic**, **Female** or **Male**,
 select a generated voice, and use **Preview voice** to hear it. Optional real
-device voices remain selectable. Known robotic engines, unavailable selections
-and wrong-language fallbacks are excluded; the app does not silently use the
-browser's unknown default. Preview reports errors while captions remain visible.
+device voices remain selectable. If a saved device voice is missing or fails
+before speaking, playback uses a named generated voice with the selected gender.
+Known robotic engines and wrong-language voices are excluded; the app does not
+use the browser's unknown default. Preview reports errors while captions remain visible.
 Changes preview immediately and save to the member account with the other audio
 preferences.
 
@@ -73,6 +78,21 @@ changes. A blocked first gesture leaves the unheard guide queued for the next
 tap. The audio control is visible outside the collapsed radio panel. Explicit
 voice preview also clears a local radio mute while honoring saved master and
 NPC conversation mutes.
+The stage **Enable audio** button explicitly clears all mute switches for the
+current session, including a late account-settings response. Save in Settings
+to keep that choice. Passive taps and movement continue to respect saved mutes.
+
+Solo worlds run a private AI resident simulation alongside local movement and
+walking quests. Residents walk, work and converse without joining a public room.
+Use **People and AI** to talk to a resident nearby. These practice conversations
+do not write public-world rewards, wallet balances or member progress. Replies
+are delivered to speech even while the People panel is closed.
+
+The room **Mic** control shares your microphone with human players in a shared
+room. Turning it on requests microphone permission directly from the tap;
+output resume cannot block that request. Later gestures can resume interrupted
+output. A browser permission error remains visible with retry instructions.
+AI voices and introductions do not require your microphone to be on.
 
 Playback stays at native pitch through a direct gain path with no added reverb,
 delay or HRTF on speech. NPC distance changes adjust volume. The unrelated
@@ -122,6 +142,11 @@ audio playback, together with the complete packaged map guide.
 male/female previews while every API request fails.
 `python3 test/game-audio-entrypoint.browser.py` exercises the actual full game
 page using one Begin click and the autoplay audio control.
+`python3 test/voice-device-recovery.browser.py` checks missing device voices,
+late settings and explicit unmute with the speech API unavailable.
+`python3 test/room-microphone.browser.py` checks real browser capture and output
+recovery. `python3 test/resident-conversation-audio.browser.py` checks audible
+generated male and female voices for fresh nearby resident exchanges.
 `python3 test/voice-unlock-recovery.browser.py` checks a rejected first
 gesture and suspended-output recovery using stored neural WAVs and real Web
 Audio. Controlled voice-list tests

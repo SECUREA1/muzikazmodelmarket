@@ -116,6 +116,42 @@ test('changing the selected generated voice clears an earlier character cast',as
  voice.setPreferences({speechVoiceGender:'male',speechVoiceURI:male.voiceURI});announce(voice,'A new response from the same guide.','dialogue');assert.equal(spoken.at(-1).voice,male);voice.dispose();
 });
 
+test('a saved voice missing on this device uses the named generated voice of the selected gender',()=>{
+ for(const gender of ['female','male']){
+  const {voice,spoken}=fixture();voice.setPreferences({speechVoiceURI:'a-device-voice-from-another-computer',speechVoiceGender:gender});
+  announce(voice,'Welcome on this device.','introduction');voice.unlock();
+  assert.equal(spoken.length,1);assert.equal(spoken[0].voice,GENERATED_VOICES.find(candidate=>candidate.gender===gender));
+  assert.equal(spoken[0].recordedIntroduction,true,'the portable fallback still uses the bundled map recording');
+  spoken[0].onstart();spoken[0].onend();voice.unlock();assert.equal(spoken.length,1);voice.dispose();
+ }
+});
+
+test('a selected device voice that fails before speaking retries once with generated speech',()=>{
+ const installed={name:'Installed Natural Female',voiceURI:'device:natural',lang:'en-US',gender:'female',localService:true};
+ const {voice,spoken}=fixture({voices:[...GENERATED_VOICES,installed]});
+ voice.setPreferences({speechVoiceURI:installed.voiceURI,speechVoiceGender:'female'});voice.unlock();announce(voice,'Welcome with a clear voice.','introduction');
+ assert.equal(spoken[0].voice,installed);spoken[0].onerror({error:'synthesis-failed'});
+ assert.equal(spoken.length,2);assert.equal(spoken[1].voice,GENERATED_VOICES[0]);assert.equal(spoken[1].recordedIntroduction,true);
+ spoken[0].onend();assert.equal(voice.state.speaking,true,'the failed device attempt cannot finish the generated fallback');
+ spoken[1].onerror({error:'synthesis-unavailable'});assert.equal(spoken.length,2,'failed output cannot loop retries');voice.dispose();
+});
+
+test('late account voice preferences retain a welcome whose audio has not started',()=>{
+ const {voice,spoken}=fixture();voice.unlock();announce(voice,'The pending map welcome.','introduction');
+ const beforeSettings=spoken[0];voice.setPreferences({speechVoiceGender:'male',speechVoiceURI:'muzikaz:neural-male'});
+ assert.equal(spoken.length,2);assert.equal(spoken[1].text,beforeSettings.text);assert.equal(spoken[1].voice.gender,'male');
+ beforeSettings.onend();beforeSettings.onerror({error:'canceled'});assert.equal(voice.state.speaking,true);
+ spoken[1].onstart();spoken[1].onend();voice.unlock();assert.equal(spoken.length,2,'the finished introduction is not repeated');voice.dispose();
+});
+
+test('late account voice preferences retain a queued welcome but never restart audible introductions',()=>{
+ const queued=fixture();announce(queued.voice,'A waiting welcome.','introduction');
+ queued.voice.setPreferences({speechVoiceGender:'male'});assert.equal(queued.voice.state.pending,1);queued.voice.unlock();
+ assert.equal(queued.spoken.length,1);assert.equal(queued.spoken[0].text,'A waiting welcome.');assert.equal(queued.spoken[0].voice.gender,'male');queued.voice.dispose();
+ const playing=fixture();playing.voice.unlock();announce(playing.voice,'An audible welcome.','introduction');playing.spoken[0].onstart();
+ playing.voice.setPreferences({speechVoiceGender:'male'});assert.equal(playing.spoken.length,1);assert.equal(playing.voice.state.pending,0);playing.voice.dispose();
+});
+
 test('unavailable or rejected voices stay silent rather than using a hidden browser default',async()=>{
  for(const voices of [[],[{name:'eSpeak English',voiceURI:'espeak:en',lang:'en-US',localService:true}]]){
   const {voice,spoken}=fixture({voices});
@@ -187,6 +223,18 @@ test('a denied audio unlock preserves the unheard welcome until the next gesture
  voice.unlock();assert.equal(spoken.length,2);assert.equal(spoken[1].text,spoken[0].text);
  spoken[0].onend();assert.equal(voice.state.speaking,true,'the failed attempt cannot finish the retry');
  spoken[1].onstart();spoken[1].onend();voice.unlock();assert.equal(spoken.length,2,'a completed guide is never replayed by movement');voice.dispose();
+});
+
+test('explicit audio recovery can play a muted unheard guide once without replaying it on later gestures',()=>{
+ const {voice,spoken}=fixture();voice.setPreferences({masterMuted:true,introductionMuted:true});voice.unlock();
+ announce(voice,'The current map introduction.','introduction');assert.equal(spoken.length,0);
+ assert.equal(voice.resumeIntroduction(),false,'saved mute is respected until explicitly cleared');
+ voice.setPreferences({masterMuted:false,introductionMuted:false});voice.unlock();
+ assert.equal(spoken.length,0,'ordinary gestures do not resurrect muted history');
+ assert.equal(voice.resumeIntroduction(),true);assert.equal(spoken.length,1);
+ assert.equal(voice.resumeIntroduction(),true);assert.equal(spoken.length,1,'a pending introduction is not duplicated');
+ spoken[0].onstart();spoken[0].onend();assert.equal(voice.resumeIntroduction(),false);assert.equal(spoken.length,1);
+ voice.reset();assert.equal(voice.resumeIntroduction(),false,'reset cannot restore the previous map');voice.dispose();
 });
 
 test('a denied NPC line retains its queued follow-up and mute can still discard both',()=>{

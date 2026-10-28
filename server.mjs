@@ -35,6 +35,7 @@ import {EthereumMemberAuth} from './ethereum-member-auth.mjs';
 import {ServerBackups} from './server-backups.mjs';
 import {WorldAtlas,attachAtlas} from './world-atlas.mjs';
 import {AuthoritativeRooms} from './authoritative-room.mjs';
+import {PrivateResidentRooms} from './server-private-residents.mjs';
 import {memberPlotEnvironment,plotSpaceId,plotPlayUrl} from './member-plots.mjs';
 import {SharedRoomStore} from './shared-room-store.mjs';
 import {GAME_ECONOMY,economyItem,ownsEconomyItem,economyInventory,economyBundles} from './game-economy.mjs';
@@ -252,12 +253,14 @@ async function snapshotServer() {
   return serverBackups.snapshot();
 }
 const hockeyRooms=new HockeyRooms();
+const privateResidents=new PrivateResidentRooms();
 const arcadeRooms=new ArcadeRooms();
 setInterval(()=>arcadeRooms.tick(),50).unref();
 setInterval(()=>hockeyRooms.tick(),50).unref();
 const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,fishingReward:(identity,result)=>grantFishingReward(userDatabase,identity.walletId,result),fishingState:identity=>fishingAccountState(userDatabase,identity.walletId),shippingReward:(identity,result)=>grantShippingReward(userDatabase,identity.walletId,result),shippingState:identity=>shippingAccountState(userDatabase,identity.walletId),supplyAction:(...args)=>worldSupply.shippingAction(...args),supplyDelivery:(...args)=>worldSupply.deliver(...args),consumeAsset:consumeSupplyAsset,shippingBind:(identity,player,command,now)=>bindFactoryShippingVoyage(userDatabase,identity.walletId,player,command,now),shippingReturn:(identity,player,now)=>reconcileFactoryShippingVoyage(userDatabase,identity.walletId,player,now),resolveDestination:async id=>Boolean(await roomEnvironment(id)),fitnessReward:(identity,result)=>grantFitnessReward(userDatabase,identity.walletId,result),fitnessState:identity=>fitnessAccountState(userDatabase,identity.walletId),logisticsState:(identity,now,environment,sim)=>logisticsAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),logisticsAction:(identity,sim,player,environment,command,now)=>logisticsCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryState:(identity,now,environment,sim)=>factoryAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),prisonState:identity=>prisonAccountState(userDatabase,identity.walletId),prisonClaim:(identity,sim,player,environment,command,now)=>claimPrisonItem(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),testingState:(identity,now,environment,sim)=>testingAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),testingAccess:(identity,options)=>assertCompoundAccess(userDatabase,identity.walletId,options),testingAction:(identity,sim,player,environment,command,now)=>testingCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryAction:(identity,sim,player,environment,command,now)=>factoryCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{await assertFactoryDeploymentAvailable(userDatabase,identity.walletId,command);const prisonAsset=await resolvePrisonAsset(userDatabase,identity.walletId,command.itemId);if(prisonAsset)return prisonAsset;const factoryAsset=await resolveFactoryAsset(userDatabase,identity.walletId,command.itemId);if(factoryAsset)return factoryAsset;const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);const candidate=state.items.find(item=>item.id===command.itemId);if(String(candidate?.id||'').startsWith('prison-item:')||candidate?.source==='prison-earned'||prisonRewardFor(candidate?.buildAssetId)||prisonRewardFor(catalog?.buildAssetId))return null;if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&(item.modelUrl||isRoadVehicle({asset:item})));if(purchased)return {...purchased,behavior:isRoadVehicle({asset:purchased})?'vehicle':'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {...owned,id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',function_data:config,behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:async(identity,sku,requestId,environment)=>{const mapId=environment?.id;if(mapId)await registerSupplyMap(mapId);return userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId,mapId);},telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
 setInterval(()=>backgroundJob(()=>sharedRooms.flush()),1000).unref();
 setInterval(()=>backgroundJob(()=>authoritativeRooms.tickActive()),50).unref();
+setInterval(()=>backgroundJob(()=>privateResidents.tickActive()),150).unref();
 
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 let roomEnvironmentRefresh=null;
@@ -684,7 +687,15 @@ const server = createServer(async (req, res) => {
     // Readiness polling is passive; it must not spend the quota for spoken
     // lines while an engine is being prepared or another player checks status.
     if(url.pathname==='/api/speech'&&req.method==='POST'){
-      try{speechService.checkRateLimit(req.socket?.remoteAddress);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
+      // Hosting proxies can give every player the same socket address. Use a
+      // verified account/game proof so one busy player cannot mute the room.
+      // Anonymous previews retain their address limit; claimed user IDs and
+      // forwarding headers cannot select a different speech allowance.
+      let authentication=await resolveAccountSession(req);
+      const proof=String(req.headers['x-game-session']||'');
+      if(!authentication&&proof)authentication=await recoverRoomSession(accountSessionStore,gameSessionStore,proof);
+      const client=authentication?.accountId?'account:'+authentication.accountId:'address:'+String(req.socket?.remoteAddress||'unknown');
+      try{speechService.checkRateLimit(client);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
     }
     if(url.pathname==='/api/speech/voices'&&req.method==='GET'){
       return sendJson(res,200,{success:true,data:await speechService.voices()});
@@ -1090,6 +1101,12 @@ const server = createServer(async (req, res) => {
       if(command.action==='join'){arcadeRooms.leave('account:'+identity.accountId);for(const [roomId,room]of hockeyRooms.rooms)if(roomId!==id&&room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
       return sendJson(res,200,assetResponse(snapshot));
 
+    }
+    const soloResidents=url.pathname.match(/^\/api\/rooms\/([^/]+)\/residents$/);
+    if(soloResidents&&req.method==='POST'){
+      const environment=await roomEnvironment(decodeURIComponent(soloResidents[1]));if(!environment)return sendJson(res,404,{message:'Map not found.'});
+      const command=await bodyJson(req,4000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
+      return sendJson(res,200,assetResponse(privateResidents.command(environment,identity,command)));
     }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const environment=await roomEnvironment(decodeURIComponent(roomGameplay[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(compactRoomSnapshot(snapshot,command,environment)));}
