@@ -20,14 +20,16 @@ try:
         page.evaluate('''async()=>{
           const {mountWorldRadioPanel}=await import('/public/js/world-radio-panel.js');
           document.body.replaceChildren();window.requests=[];window.routes=[];window.spoken=[];window.fetches=0;window.failure=false;
-          window.feed=[{id:'airport:dispatch-1',type:'ai',worldId:'airport',worldName:'Airport',questId:'supply',title:'Supply flight',mode:'aircraft',at:100000,expires:190000,speaker:'Dispatch'}];
+          window.feed=[{id:'airport:dispatch-1',type:'ai',worldId:'airport',worldName:'Airport',questId:'supply',title:'Supply flight',description:'Load the aircraft and follow the flight beacons.',mode:'aircraft',at:100000,expires:190000,speaker:'Dispatch'}];
           window.MUZIKAZ_API={fetch:async()=>{fetches++;if(failure)throw Error('offline');return new Response(JSON.stringify({data:{calls:feed}}));}};
           window.world={id:'commons',name:'Commons'};
-          window.state={authoritative:true,serverTime:100000,players:{p:{health:100,position:{x:0,y:0,z:0}}},actors:{},liveDispatch:{id:'dispatch-2',questId:'walk',title:'Supply walk',mode:'foot',at:100000,expires:190000},questTeams:[{id:'crew',leaderId:'other',leader:'Alex',title:'Help the crew',mode:'road',members:1,at:100000,expires:190000}]};
+          window.state={authoritative:true,serverTime:100000,players:{p:{health:100,position:{x:0,y:0,z:0}}},actors:{},questOffers:[{id:'walk',mode:'foot',description:'Meet the crew and carry supplies to the marked place.'}],liveDispatch:{id:'dispatch-2',questId:'walk',title:'Supply walk',mode:'foot',at:100000,expires:190000},questTeams:[{id:'crew',leaderId:'other',leader:'Alex',title:'Help the crew',mode:'road',members:1,at:100000,expires:190000}]};
           window.ui=mountWorldRadioPanel(document.body,{command:async(action,fields)=>{requests.push({action,...fields});return {result:{message:'Confirmed'}};},onNavigate:async id=>routes.push(id),voice:{announce:(text,options)=>spoken.push({text,...options}),unlock(){}}});
           ui.update(state,'p',world);await ui.refresh();
         }''')
         assert page.get_by_role('button',name='Accept job · Supply walk · Commons',exact=True).is_enabled()
+        assert page.get_by_text('AI dispatch · Commons · On foot — Meet the crew and carry supplies to the marked place.',exact=True).is_visible()
+        assert page.get_by_text('AI dispatch · Airport · Aircraft — Load the aircraft and follow the flight beacons.',exact=True).is_visible()
         helper=page.get_by_role('button',name='Join & help · Help the crew · Commons',exact=True)
         assert helper.is_disabled()
         assert page.get_by_text('Board your own road vehicle to respond.',exact=True).is_visible()

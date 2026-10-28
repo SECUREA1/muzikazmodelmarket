@@ -19,6 +19,7 @@ for(const environment of [casinoWorld(),fitnessWorld(),missileFactoryWorld()])te
  stepJobDispatch(sim,environment,100000);
  const first=sim.liveDispatch,call=sim.transportRadio[0];
  assert.equal(first.questId,offers[0].id);
+ assert.equal(first.description,offers[0].description,'the informational call explains an actual map activity');
  assert.equal(first.worldId,environment.id);
  assert.equal(first.worldName,environment.name);
  assert.equal(first.type,'ai');

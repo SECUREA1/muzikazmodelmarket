@@ -4,7 +4,7 @@ import {worldGuideIntroduction} from './world-guide.js';
 // Snapshots establish a baseline. Only changes observed while visiting a map
 // become announcements. Each new visit receives a short orientation guide.
 export function createGameplayAnnouncements({voice=questConversationVoice()}={}){
- let scope=null,radio=0,ready=false,visit=0;const states=new Map();
+ let scope=null,radio=0,ready=false,visit=0;const states=new Map(),informationMessages=new Set();
  const say=(text,key,options={})=>voice.announce(text,{key,worldId:scope,category:'announcements',...options});
  function changed(key,signature){const previous=states.get(key);states.set(key,signature);return {previous,changed:previous!==signature};}
  function task(task,label){
@@ -13,13 +13,40 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
   if(task.status==='active')say((state.previous?'Next objective. ':'Assignment. ')+(task.title||label)+'. '+(point?.name||task.message||task.description||'Follow the live map marker.')+(point?.action?' '+point.action+'.':''),key+':'+signature);
   else if(state.previous)say((task.title||label)+'. '+(task.message||task.status||'Updated.'),key+':'+signature);
  }
+ function informationTask(job,label,{index=job?.stepIndex??job?.checkpointIndex,point,voice='Dispatch',role='dispatcher',silent=false}={}){
+  if(!job||job.environmentId&&job.environmentId!==scope)return;
+  const key='information:'+label+':'+(job.id||job.instanceId||job.startedAt),signature=JSON.stringify([job.status||job.phase,index,point?.name]),state=changed(key,signature);
+  if(!ready||!state.changed||silent)return;
+  const instruction=job.message||point?.name||job.status||job.phase;
+  if(!instruction)return;
+  informationMessages.add(instruction);
+  const title=job.title||job.name||job.itemName;
+  say(voice+'. '+label+'. '+(title?title+'. ':'')+instruction+(point?.name&&!instruction.includes(point.name)?' Next: '+point.name+'.':''),key+':'+signature,{voice,role});
+ }
  return {update(snapshot,selfId,environment){
-  if(!snapshot||!selfId)return;const self=snapshot.players?.[selfId];if(!self)return;
+  informationMessages.clear();if(!snapshot||!selfId)return;const self=snapshot.players?.[selfId];if(!self)return;
   const worldId=environment?.id||snapshot.worldId||'world';
   if(scope!==worldId){scope=worldId;radio=0;ready=false;states.clear();say(worldGuideIntroduction(environment||{id:worldId},{solo:snapshot.localQuests===true||snapshot.authoritative===false}),'arrival:'+ ++visit,{category:'introduction',voice:'World narrator',role:'narrator'});}
   task(self.vehicleMission,'Vehicle job');task(self.urbanMission,'Local job');task(self.residentTask,'Resident favor');task(self.casinoTask,'Local objective');
+  // These personal orders use their real server stages. Autonomous traffic
+  // and AI production are kept out of the player's task announcements.
+  informationTask(self.factory?.job,'Factory order',{point:self.factory?.job?.steps?.[self.factory.job.stepIndex]});
+  informationTask(self.testing?.session,'Model test');
+  const shipping=self.shipping?.job,shippingPoint=shipping?.waypoints?.[shipping.checkpointIndex];
+  // Freight control already radios most explicit actions. Track those stages
+  // silently so the same update is not read twice, but speak route changes.
+  const freightRadio=(snapshot.transportRadio||[]).some(call=>call.recipients?.includes(selfId)&&!call.conversation&&call.text===shipping?.message&&snapshot.serverTime-call.at>=0&&snapshot.serverTime-call.at<12000);
+  informationTask(shipping,'Shipping manifest',{point:shippingPoint,silent:freightRadio});
+  for(const conversation of [self.vehicleMission,self.npcConversation]){
+   const work=conversation?.aiWork,context=conversation?.aiWorkContext;if(!work||!context||work.requested!==true)continue;
+   const reply=(conversation.conversation||[]).some(call=>call.conversation&&call.role!=='player'&&(!call.recipients||call.recipients.includes(selfId))&&call.text===work.message&&snapshot.serverTime-call.at>=0&&snapshot.serverTime-call.at<5000);
+   informationTask({...work,id:work.id||context.kind+':'+context.workerId,title:work.machineName||work.targetName||'Requested work'},'AI work',{index:work.phase,voice:work.workerName||conversation.contact||'AI crew',role:'worker',silent:reply});
+  }
   const dispatch=snapshot.liveDispatch,dispatchState=changed('live-dispatch',dispatch?.id||null);
-  if(ready&&dispatchState.changed&&dispatch?.id&&(!dispatch.expires||dispatch.expires>snapshot.serverTime))say('New local job. '+dispatch.title+'. Open Crew Dispatch to volunteer.','dispatch:'+dispatch.id);
+  if(ready&&dispatchState.changed&&dispatch?.id&&(!dispatch.expires||dispatch.expires>snapshot.serverTime)){
+   const offer=snapshot.questOffers?.find(offer=>offer.id===dispatch.questId),description=dispatch.description||offer?.description;
+   say((dispatch.speaker||'Dispatch')+'. New local job. '+dispatch.title+'. '+(description?description+' ':'')+'Open Crew Dispatch to volunteer.','dispatch:'+dispatch.id,{voice:dispatch.speaker||'Dispatch',role:'dispatcher'});
+  }
   // Periodic traffic reports remain captions in Crew Dispatch. Only a direct
   // call, an open help request or a requested interaction is spoken.
   for(const call of snapshot.transportRadio||[]){
@@ -42,7 +69,7 @@ export function createGameplayAnnouncements({voice=questConversationVoice()}={})
    if(board)say((board.name||board.functionalSettings.quest.title)+'. '+(status==='complete'?'Objective complete.':board.dialogueSettings?.text||'Objective accepted. Follow the marked collection route.'),key+':'+status,{source:board.position});
   }
   ready=true;if(states.size>160)for(const key of [...states.keys()].slice(0,40))states.delete(key);
- },reset(){scope=null;radio=0;ready=false;states.clear();},say:(text,key=text,options={})=>say(text,'action:'+key,options),unlock:()=>voice.unlock(),setMuted:value=>voice.setMuted(value),replay:()=>voice.replay()};
+ },reset(){scope=null;radio=0;ready=false;states.clear();informationMessages.clear();},say:(text,key=text,options={})=>informationMessages.has(text)?false:say(text,'action:'+key,options),unlock:()=>voice.unlock(),setMuted:value=>voice.setMuted(value),replay:()=>voice.replay()};
 }
 
 // An NPC reply is already spoken by the conversation player. Keep the generic

@@ -106,3 +106,65 @@ test('the first entry guide waits for a player gesture and follows later map ent
  announcer.update(state,'p',{id:'airport',name:'Airport',airport:{enabled:true}});assert.equal(spoken.length,3);
  voice.dispose();
 });
+
+test('AI dispatch explains the actual map offer and does not repeat it on heartbeats',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ state.questOffers=[{id:'rescue',description:'Board an aircraft, fly the marked beacons and land to recover the crew.'}];
+ state.liveDispatch={id:'dispatch',questId:'rescue',title:'Crew rescue',speaker:'Tower',expires:190000};
+ announcer.update(state,'p',world);
+ assert.equal(calls.length,2);assert.match(calls.at(-1).text,/Board an aircraft, fly the marked beacons and land/);assert.equal(calls.at(-1).voice,'Tower');
+ announcer.update(state,'p',world);assert.equal(calls.length,2);
+});
+
+test('factory orders and tests announce new server stages once and remain local to their map',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();
+ state.players.p.factory={job:{id:'old-order',environmentId:world.id,status:'processing',stepIndex:0,name:'Cargo model',steps:[{name:'Fabrication'},{name:'Assembly'}],message:'Fabrication running.'}};
+ state.players.p.testing={session:{id:'old-test',environmentId:world.id,status:'configured',itemName:'Training model',message:'Test configured.'}};
+ announcer.update(state,'p',world);assert.equal(calls.length,1,'entry establishes the existing order baseline');
+ const job=state.players.p.factory.job;job.status='awaiting';job.stepIndex=1;job.message='Continue at assembly.';
+ announcer.update(state,'p',world);assert.equal(calls.length,2);assert.match(calls.at(-1).text,/Factory order.*Continue at assembly.*Next: Assembly/);
+ announcer.say(job.message,'factory-action-response');assert.equal(calls.length,2,'the explicit action response does not repeat the snapshot instruction');
+ state.players.p.testing.session.status='deployed';state.players.p.testing.session.message='Model deployed. Arm the pad when ready.';
+ announcer.update(state,'p',world);assert.equal(calls.length,3);assert.match(calls.at(-1).text,/Model test.*Arm the pad/);
+ announcer.say(state.players.p.testing.session.message,'proving-action-response');assert.equal(calls.length,3,'the explicit test action is already explained');
+ announcer.update(state,'p',world);assert.equal(calls.length,3);
+ job.environmentId='another-factory';job.status='ready';job.message='Foreign order';
+ announcer.update(state,'p',world);assert.equal(calls.length,3,'saved work from another map is not an available local task');
+});
+
+test('shipping information follows checkpoints without duplicating freight-control calls',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ const job=state.players.p.shipping={job:{id:'manifest',environmentId:world.id,title:'Supply voyage',phase:'loading',checkpointIndex:0,waypoints:[{name:'Harbor gate'},{name:'Receiving dock'}],message:'Manifest accepted. Load the containers.'}};
+ state.transportRadio=[{id:1,at:state.serverTime,speaker:'Freight control',recipients:['p'],text:job.job.message}];
+ announcer.update(state,'p',world);assert.equal(calls.length,2);assert.match(calls.at(-1).key,/radio:/);
+ job.job.phase='sailing';job.job.checkpointIndex=1;job.job.message='Checkpoint confirmed. Follow the marked lane.';
+ announcer.update(state,'p',world);assert.equal(calls.length,3);assert.match(calls.at(-1).text,/Shipping manifest.*Receiving dock/);
+ announcer.update(state,'p',world);assert.equal(calls.length,3);
+});
+
+test('requested AI work reports useful phase changes without reading progress ticks or ambient jobs',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ state.factory={crewWork:{job:{id:'ambient',status:'working',message:'Ambient machine running.'}}};
+ const conversation=state.players.p.npcConversation={contact:'Maya',aiWorkContext:{kind:'world',workerId:'maya'},aiWork:{id:'request',requested:true,workerName:'Maya',status:'active',phase:'walking',machineName:'Beacon switch',message:'Walking to the beacon.',progress:0}};
+ announcer.update(state,'p',world);assert.equal(calls.length,2);assert.match(calls.at(-1).text,/Maya.*AI work.*Walking to the beacon/);assert.equal(calls.at(-1).voice,'Maya');
+ conversation.aiWork.progress=.5;announcer.update(state,'p',world);assert.equal(calls.length,2);
+ conversation.aiWork.status='completed';conversation.aiWork.phase='done';conversation.aiWork.message='Beacon restored.';
+ announcer.update(state,'p',world);assert.equal(calls.length,3);assert.match(calls.at(-1).text,/Beacon restored/);
+ assert.ok(calls.every(call=>!call.text.includes('Ambient machine')));
+ const previousKey=calls[1].key;conversation.aiWork={...conversation.aiWork,id:'second-request',status:'active',phase:'walking',message:'Walking to the beacon.'};
+ announcer.update(state,'p',world);assert.equal(calls.length,4);assert.notEqual(calls.at(-1).key,previousKey,'another requested job can repeat the same phase');
+});
+
+test('AI task information remains in its direct reply when that response is already voiced',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ state.players.p.npcConversation={aiWorkContext:{kind:'world',workerId:'maya'},aiWork:{id:'request',requested:true,workerName:'Maya',status:'active',phase:'walking',message:'Walking to the beacon.'},conversation:[{conversation:true,role:'guide',at:state.serverTime,recipients:['p'],text:'Walking to the beacon.'}]};
+ announcer.update(state,'p',world);assert.equal(calls.length,1);
+ announcer.update(state,'p',world);assert.equal(calls.length,1);
+});
+
+test('meeting a working AI contact does not subscribe to autonomous or other-player jobs',()=>{
+ const {calls,announcer,world}=fixture(),state=snapshot();announcer.update(state,'p',world);
+ state.players.p.npcConversation={aiWorkContext:{kind:'factory',workerId:'worker'},aiWork:{id:'ambient-production',requested:false,status:'processing',phase:'processing',message:'Ambient machine running.'}};
+ announcer.update(state,'p',world);assert.equal(calls.length,1);
+ state.players.p.npcConversation.aiWork.status='completed';announcer.update(state,'p',world);assert.equal(calls.length,1);
+});

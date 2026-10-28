@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {isFishingTool,FISHING_TOOL_IDS} from '../public/js/game-tool-rules.js';
 import {isTropicalIslandMap,tropicalIslandPlayUrl} from '../public/js/tropical-island-destination.js';
+import {freshWorldUrl} from '../public/js/world-navigation.js';
 
 const source=readFileSync(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
@@ -22,7 +23,7 @@ function fixture(extra={}){
  const context=vm.createContext({
   islandUI:{reset(){},update(){}},islandBuzz:{reset(){}},console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){},reset},gameplayVoice:{reset},transportActivity:{update:reset},guideAudio:{enter:reset,leave:reset},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
-  location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
+  location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},freshWorldUrl,
   gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
   serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},serverActors:{},soloResidentClient:null,soloResidentSnapshot:null,residentConversationAudio:{reset,update:reset},residentUI:{open:reset,report:reset,update:reset},prepareQuestConversation:reset,
   factoryTestingVR:{reset,receive:reset,visible:()=>false,isActive:()=>false},funhouseVR:{reset,update:reset},funhouseAudio:{reset,receive:reset,update:reset,pause:reset},resetFunhouseRideView:reset,funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
@@ -82,11 +83,11 @@ function worldHandoffFixture(){
  return {...f,destination,oldClient,connections,trace,asset,begin,environmentReady,connected,loadResult:{scale:1,spawn:{position:point(),rotationY:0}},confirm(){const {options,client,joined}=connections.at(-1);options.render({roomId:options.roomId},'self');client.ready=true;joined.resolve(client);}};
 }
 
-test('in-place map travel retires the old room and activates only after fresh join, begin and environment readiness',async()=>{
+test('internal startup deployment retires the old room and activates only after fresh join, begin and environment readiness',async()=>{
  for(const sameMap of [false,true]){
   const f=worldHandoffFixture(),{context,trace,connections,events,controls}=f;
   if(sameMap)context.activeEnvironment=f.destination;
-  const loading=context.loadById(f.destination.id);
+  const loading=context.loadById(f.destination.id,{startup:true});
   assert.equal(context.worldLoadGeneration,2);assert.equal(context.authoritativeClient,null);assert.equal(context.startEnvironment,f.destination.id);
   assert.equal(context.serverVehicleId,null);assert.equal(context.serverMovementRevision,null);
   assert.ok(trace.indexOf('old-stop')<trace.indexOf('load'));assert.ok(trace.indexOf('muzikaz:multiplayer-world-change')<trace.indexOf('load'));
@@ -108,7 +109,7 @@ test('in-place map travel retires the old room and activates only after fresh jo
 
 test('failed room, gameplay or environment initialization cannot publish arrival readiness',async()=>{
  for(const phase of ['join','begin','environment']){
-  const f=worldHandoffFixture(),loading=f.context.loadById(f.destination.id);
+  const f=worldHandoffFixture(),loading=f.context.loadById(f.destination.id,{startup:true});
   const failed=assert.rejects(loading,/Destination initialization failed/);
   f.asset.resolve(f.loadResult);await Promise.race([f.connected.promise,loading.then(()=>assert.fail('The destination completed without joining its room.'))]);
   if(phase==='join')f.connections[0].joined.reject(Error('Destination initialization failed'));
@@ -310,6 +311,34 @@ test('native game redirects retain a selected atlas meeting point and play mode'
   assert.equal(destination.searchParams.get('mode'),'solo');
   assert.equal(destination.searchParams.get('meet'),'meet-4-2');
  }
+});
+
+test('map selections open a fresh document before loading geometry or starting an in-page room',async()=>{
+ let destination,unloads=0,joins=0;
+ const client={ready:true,stop(){throw Error('The current room belongs to the current document.');}};
+ const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:client,registry:{find:id=>({id,name:'New map'})},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,envLoader:{unload(){unloads++;}},startRoomGameplay(){joins++;},location:{href:'http://localhost/model-explorer.html?environment=old&house=old&mode=multiplayer&meet=old&useItem=one-time#house-explorer-canvas',assign:url=>{destination=new URL(url);}}});
+ vm.runInContext(loadWorld,context);
+ assert.equal(await context.loadById('new-map',{meetingId:'meet-4-2'}),true);
+ assert.equal(destination.searchParams.get('environment'),'new-map');
+ assert.equal(destination.searchParams.get('house'),'new-map');
+ assert.equal(destination.searchParams.get('autoplay'),'1');
+ assert.equal(destination.searchParams.get('mode'),'multiplayer');
+ assert.equal(destination.searchParams.get('meet'),'meet-4-2');
+ assert.equal(destination.searchParams.has('useItem'),false);
+ assert.equal(destination.hash,'');
+ assert.equal(unloads,0);assert.equal(joins,0);
+ assert.equal(context.worldLoadGeneration,1);
+ assert.equal(context.authoritativeClient,client);
+});
+
+test('reopening the current map reloads the document even when only the canvas fragment changes',async()=>{
+ let reloaded=0,replaced;
+ const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id})},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,replaceGameLocation:url=>{replaced=url;},location:{href:'http://localhost/model-explorer.html?environment=my-map&house=my-map&autoplay=1&mode=multiplayer#house-explorer-canvas',assign(){throw Error('Same-document fragment navigation would not restart the game.');},reload(){reloaded++;}}});
+ vm.runInContext(loadWorld,context);
+ assert.equal(await context.loadById('my-map'),true);
+ assert.equal(reloaded,1);assert.equal(replaced.hash,'');
+ assert.equal(replaced.searchParams.get('environment'),'my-map');
+ assert.equal(context.worldLoadGeneration,1);
 });
 
 test('the resort stays in the native explorer and its shared world systems',()=>{

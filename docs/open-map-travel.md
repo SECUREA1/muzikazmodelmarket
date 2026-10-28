@@ -1,18 +1,19 @@
 # Map travel, vehicle loading and spoken objectives
 
+Opening a destination from Maps, the map list, or a world exit launches a fresh
+page with automatic gameplay startup. Reopening the current map also reloads it.
+Each launch prepares the selected scene and joins its server room with a new
+client, so an earlier connection or initialization cannot leave only the map
+loaded. The destination activates after its server confirms the player and game
+systems. Previous room chat, camera, conversations and pending controls close.
+Previous meeting links and one-time item deployments are cleared unless
+a new meeting is selected. Account progress and shared room contents remain saved.
+
 The public-map directory lists public destinations across all districts. The
 local map remains available while styles or a previously joined connection
 recover. An unavailable connection keeps the selection pending for a bounded
 reconnection period; failure leaves a visible retry message instead of hiding
 controls or permanently closing the room.
-
-Selecting a destination from the world menu rebuilds the local scene and joins
-its room server with fresh snapshots and movement controls. Selecting the
-current map also refreshes its connection. The previous room's chat, live
-camera, conversations and pending controls close as the transition begins.
-The destination activates only after its server confirms the player and its
-game systems are ready; late replies from the previous room are ignored.
-This refresh preserves shared world progress and other players' sessions.
 
 Vehicle, route and location selections show an immediate, indeterminate loading
 display. It never captures pointer or keyboard input. Boarding waits for the
@@ -41,8 +42,13 @@ button or startup voice preview. Saved mute choices remain in effect. Each map v
 guide explaining its activities and how to find jobs or help. Returning to a
 previously visited map plays its guide again; repeated snapshots stay quiet. Initial snapshots establish the job baseline without reading existing work
 or past traffic aloud. Subsequent new jobs, changed objectives, completions,
-walking quests and requested game interactions are announced once. Fresh
-conversations between nearby AI residents are audible when the guide and direct
+walking quests and requested game interactions are announced once.
+AI dispatch calls include the instructions from the map's actual offered job.
+Personal factory orders, model tests, shipping checkpoints and requested AI work
+also report new stages through the radio voice. Existing freight-control calls
+and spoken NPC replies supply their own information without a duplicate reading;
+progress ticks and autonomous production remain quiet.
+Fresh conversations between nearby AI residents are audible when the guide and direct
 replies are idle. Existing conversations, distant residents, other floors and
 periodic work or traffic captions stay quiet. Private
 calls stay restricted to their recipients, and stale or muted calls are discarded.
