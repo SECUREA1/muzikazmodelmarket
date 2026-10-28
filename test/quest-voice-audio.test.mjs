@@ -130,6 +130,13 @@ test('preview respects saved master and NPC conversation mutes',async()=>{
  assert.match(await voice.preview({dialogueMuted:true}),/Unmute/);assert.equal(spoken.length,0);voice.dispose();
 });
 
+test('explicit voice preview clears a local radio mute and uses a packaged recording',async()=>{
+ const {voice,spoken}=fixture();voice.setMuted(true);
+ const preview=voice.preview({speechVoiceGender:'male'});
+ assert.equal(spoken.length,1);assert.equal(spoken[0].audioURL,'/public/audio/voices/male-preview.wav');assert.equal(voice.state.muted,false);
+ spoken[0].onstart();assert.match(await preview,/Playing/);voice.dispose();
+});
+
 test('a failed selected voice has no anonymous default-voice retry',()=>{
  const spoken=[],remote={name:'Online Natural',lang:'en-US',voiceURI:'online',localService:false};
  const voice=createQuestConversationVoice({speech:{getVoices:()=>[remote],speak:call=>spoken.push(call),resume(){},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});

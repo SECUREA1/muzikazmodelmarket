@@ -21,9 +21,14 @@ os.chdir(root)
 with socket.socket() as available:
  available.bind(('127.0.0.1',0)); node_port=available.getsockname()[1]
 responses=[]
+static_recordings=[]
+manifest=json.loads((root/'public/audio/voices/world/manifest.json').read_text())
+recorded_text={clip['url']:clip['text'] for clip in manifest['clips']}
 class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args): pass
  def do_GET(self):
+  if self.path.startswith('/public/audio/voices/world/'):
+   static_recordings.append(self.path)
   if self.path!='/api/health': return super().do_GET()
   with urlopen(f'http://127.0.0.1:{node_port}/api/health',timeout=10) as response:
    data=response.read(); self.send_response(response.status)
@@ -57,7 +62,9 @@ with TemporaryDirectory(prefix='muzikaz-real-neural-browser-') as data_dir:
     if process.poll() is not None: raise RuntimeError(log_path.read_text())
     try:
      with urlopen(f'http://127.0.0.1:{node_port}/api/speech/voices',timeout=1) as response:
-      readiness=json.load(response)['data']; break
+      readiness=json.load(response)['data']
+      if readiness.get('available') and readiness.get('modelReady'): break
+      time.sleep(1)  # Voice metadata shares a bounded public request budget.
     except (URLError,TimeoutError,ConnectionError): time.sleep(.05)
    assert readiness and readiness['available'] and readiness['modelReady'],readiness
    with sync_playwright() as p:
@@ -91,7 +98,7 @@ with TemporaryDirectory(prefix='muzikaz-real-neural-browser-') as data_dir:
      realVoice.setScene({listener:{x:0,y:0,z:0},actors:{guide:{position:{x:1,y:0,z:0},resident:{name:'Island guide',role:'Guide'}}}});
      window.realGuides=createGameplayAnnouncements({voice:realVoice});
      const now=Date.now();
-     const environment={id:'tropical-island',name:'Tropical Island',game:'tropical-island'};
+     const environment={id:'tropical-island',name:'Island Adventure · Tropical Resort',game:'tropical-island'};
      window.realIntroText=prepareSpeechText(worldGuideIntroduction(environment));
      realGuides.update({serverTime:now,players:{p:{quests:{}}}},'p',environment);
      const button=document.createElement('button');button.textContent='Enter world';button.onclick=()=>realGuides.unlock();document.body.append(button);
@@ -107,19 +114,20 @@ with TemporaryDirectory(prefix='muzikaz-real-neural-browser-') as data_dir:
      window.measureRealPeak=async(duration=600)=>{let peak=0;const end=performance.now()+duration,samples=new Float32Array(analyser.fftSize);while(performance.now()<end){analyser.getFloatTimeDomainData(samples);for(const sample of samples)peak=Math.max(peak,Math.abs(sample));await new Promise(resolve=>setTimeout(resolve,20));}return peak;};
     }''')
     assert page.evaluate('realVoice.state.pending')==1
-    assert not responses,'Map introduction generated before a user gesture'
+    assert not responses and not static_recordings,'Map introduction requested before a user gesture'
     page.get_by_role('button',name='Enter world',exact=True).click()
     page.wait_for_function("realSpeechReport.starts.length === 1 || window.realSpeechError",timeout=120000)
     assert not page.evaluate('window.realSpeechError'),page.evaluate('window.realSpeechError')
     introduction_peak=page.evaluate('measureRealPeak()')
     assert introduction_peak>.0001,introduction_peak
-    assert 'Welcome to Tropical Island' in responses[0]['body']['text'],responses[0]['body']
-    # Allow every real generated segment to finish: one utterance start and all
-    # of the authored orientation must survive buffering, prefetch and playback.
+    assert static_recordings and recorded_text[static_recordings[0]]=='Welcome to Island Adventure, Tropical Resort.',static_recordings
+    assert not responses,'An authored introduction must not wait for the live synthesis service'
+    # Packaged neural recordings must carry the complete authored orientation
+    # while dynamic AI replies below still exercise real server inference.
     page.wait_for_function('!realSpeech.speaking && !realSpeech.pending && !realVoice.state.speaking || window.realSpeechError',timeout=120000)
     assert not page.evaluate('window.realSpeechError'),page.evaluate('window.realSpeechError')
-    intro_count=len(responses)
-    introduction_text=' '.join(response['body']['text'] for response in responses)
+    intro_count=len(static_recordings)
+    introduction_text=' '.join(recorded_text[url] for url in static_recordings)
     assert introduction_text==page.evaluate('realIntroText'),introduction_text
     assert len(introduction_text)>300,'Exercise the full authored guide, not a short adapter-only sentence'
     assert len(page.evaluate('realSpeechReport.starts'))==1,'Segment boundaries must not restart the utterance'
@@ -150,7 +158,7 @@ with TemporaryDirectory(prefix='muzikaz-real-neural-browser-') as data_dir:
     page.wait_for_function('realVoiceContext.state === "closed"')
     assert not errors,errors
     browser.close()
-   assert len(responses)==intro_count+2,[{key:value for key,value in response.items() if key!='audio'} for response in responses]
+   assert len(responses)==2,[{key:value for key,value in response.items() if key!='audio'} for response in responses]
    recordings=[]
    for response in responses:
     assert response['status']==200 and response['contentType']=='audio/wav',{key:value for key,value in response.items() if key!='audio'}
@@ -158,7 +166,7 @@ with TemporaryDirectory(prefix='muzikaz-real-neural-browser-') as data_dir:
      recordings.append({'voice':response['body']['voice'],'status':response['status'],'contentType':response['contentType'],'bytes':len(response['audio']),'sampleRate':audio.getframerate(),'seconds':round(audio.getnframes()/audio.getframerate(),3),'generationSeconds':response['generationSeconds'],'sha256':hashlib.sha256(response['audio']).hexdigest()})
     assert recordings[-1]['sampleRate']==24000
    assert recordings[-2]['sha256']!=recordings[-1]['sha256'],'Male and female generated the same PCM'
-   print(json.dumps({'realGeneration':True,'sharedApiConnection':True,'gameplayControllers':True,'nativeSynthesisCalls':report['nativeCalls'],'introductionSegments':intro_count,'introductionPeak':introduction_peak,'femalePeak':female_peak,'malePeak':male_peak,'mutedPeak':muted_peak,'cancelledPeak':canceled_peak,'starts':report['starts'],'recordings':recordings}))
+   print(json.dumps({'realGeneration':True,'sharedApiConnection':True,'gameplayControllers':True,'nativeSynthesisCalls':report['nativeCalls'],'packagedIntroductionSegments':intro_count,'introductionPeak':introduction_peak,'femalePeak':female_peak,'malePeak':male_peak,'mutedPeak':muted_peak,'cancelledPeak':canceled_peak,'starts':report['starts'],'recordings':recordings}))
   finally:
    server.shutdown();server.server_close()
    if process.poll() is None:

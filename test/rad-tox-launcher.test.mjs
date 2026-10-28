@@ -2,22 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-const source=(await readFile(new URL('../public/js/rad-tox-launcher.js',import.meta.url),'utf8')).replace('import(enginePath)','loadEngine(enginePath)');
+const source=(await readFile(new URL('../public/js/rad-tox-launcher.js',import.meta.url),'utf8')).replace(/^import .*game-audio-activation\.js';\n/m,'').replace('import(enginePath)','loadEngine(enginePath)');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const flush=async()=>{for(let n=0;n<5;n++)await Promise.resolve();};
 function fixture(query='?environment=world-item-factory&mode=multiplayer&house=world-item-factory#yard'){
  const listeners=new Map(),clicks=[],timers=new Map(),scheduled=[],imports=[],navigations=[],requests=[];
- let timerId=0;
+ let timerId=0;const activations=[];
  const button={disabled:false,textContent:'Begin',addEventListener:(name,handler)=>clicks.push(handler)},status={textContent:''},classes=new Set(),overlay={classList:{add:value=>classes.add(value),remove:value=>classes.delete(value)}};
  const document={body:{dataset:{}},querySelector:()=>button,getElementById:id=>id==='house-game-start'?overlay:status,addEventListener:(name,handler)=>{const group=listeners.get(name)||[];group.push(handler);listeners.set(name,group);},dispatchEvent:event=>{if(event.type==='muzikaz:rad-tox-request')requests.push(event);for(const callback of listeners.get(event.type)||[])callback(event);}};
  const location=new URL('https://muzikaz.com/model-explorer.html'+query);location.replace=value=>navigations.push(value);
- const context={document,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},URL,URLSearchParams,Date,encodeURIComponent,Boolean,window:{location,setTimeout:(callback,delay)=>{const id=++timerId;timers.set(id,callback);scheduled.push({id,callback,delay});return id;},clearTimeout:id=>timers.delete(id)},loadEngine:path=>{const task=deferred();imports.push({path,...task});return task.promise;}};
+ const context={activateGameAudio(){activations.push(imports.length);},mountGameAudioActivation(){},document,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},URL,URLSearchParams,Date,encodeURIComponent,Boolean,window:{location,setTimeout:(callback,delay)=>{const id=++timerId;timers.set(id,callback);scheduled.push({id,callback,delay});return id;},clearTimeout:id=>timers.delete(id)},loadEngine:path=>{const task=deferred();imports.push({path,...task});return task.promise;}};
  vm.runInNewContext(source,context);
- return {button,status,classes,imports,navigations,requests,timers,scheduled,document,click:()=>clicks[0]({preventDefault(){}}),emit:(type,detail)=>document.dispatchEvent({type,detail})};
+ return {activations,button,status,classes,imports,navigations,requests,timers,scheduled,document,click:()=>clicks[0]({preventDefault(){}}),emit:(type,detail)=>document.dispatchEvent({type,detail})};
 }
 
 test('the initial start remains lazy, and a failed module gets a clean explicit retry preserving the selected game',async()=>{
- const f=fixture();assert.equal(f.imports.length,0);f.click();assert.equal(f.imports.length,1);assert.equal(f.scheduled[0].delay,30000);
+ const f=fixture();assert.equal(f.imports.length,0);f.click();assert.deepEqual(f.activations,[0],'the first Begin gesture activates audio before loading the heavy engine');assert.equal(f.imports.length,1);assert.equal(f.scheduled[0].delay,30000);
  f.imports[0].reject(Error('Dependency failed'));await flush();assert.match(f.status.textContent,/Dependency failed/);assert.equal(f.button.textContent,'Try again');assert.equal(f.timers.size,0);assert.deepEqual(f.navigations,[]);
  f.click();assert.equal(f.navigations.length,1);assert.equal(f.imports.length,1,'never evaluate a second half-mounted engine in this document');
  const target=new URL(f.navigations[0]);assert.equal(target.pathname,'/model-explorer.html');assert.equal(target.searchParams.get('environment'),'world-item-factory');assert.equal(target.searchParams.get('house'),'world-item-factory');assert.equal(target.searchParams.get('mode'),'multiplayer');assert.equal(target.searchParams.get('autoplay'),'1');assert.ok(target.searchParams.get('gameRecovery'));assert.equal(target.hash,'#yard');

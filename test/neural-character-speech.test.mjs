@@ -1,20 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createNeuralCharacterSpeech,GameSpeechUtterance,GENERATED_VOICES} from '../public/js/neural-character-speech.js';
+import {splitBundledSpeech,bundledVoiceURL} from '../public/js/bundled-character-voices.js';
 
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
-function fixture({request,decode,nativeVoices=[]}={}){
- const calls=[],sources=[],gains=[],timers=new Map(),intervals=new Map(),nativeCalls=[];let serial=0,contexts=0;
+function fixture({request,audioRequest,decode,nativeVoices=[]}={}){
+ const calls=[],audioCalls=[],sources=[],gains=[],timers=new Map(),intervals=new Map(),nativeCalls=[];let serial=0,contexts=0;
  const context={state:'suspended',currentTime:2,destination:{name:'speakers'},resume(){this.state='running';return Promise.resolve();},close(){this.state='closed';return Promise.resolve();},decodeAudioData:decode||(()=>Promise.resolve({duration:2.5})),
   createBufferSource(){const source={buffer:null,playbackRate:{value:5},connected:[],started:0,stopped:0,disconnected:0,connect(target){this.connected.push(target);},start(){this.started++;},stop(){this.stopped++;},disconnect(){this.disconnected++;}};sources.push(source);return source;},
   createGain(){const gain={gain:{value:0,setValueAtTime(value){this.value=value;}},connected:[],disconnected:0,connect(target){this.connected.push(target);},disconnect(){this.disconnected++;}};gains.push(gain);return gain;},
   createConvolver(){throw Error('Voices must stay dry');},createPanner(){throw Error('Voices must not use a world panner');}
  };
  const native={getVoices:()=>nativeVoices,speak:utterance=>nativeCalls.push(utterance),cancelled:0,cancel(){this.cancelled++;},resume(){},addEventListener(){},removeEventListener(){}};
- const engine=createNeuralCharacterSpeech({fetch:async(path,options)=>{calls.push({path,options});return request?request(path,options):{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)};},audioFactory:()=>{contexts++;return context;},nativeSpeech:native,NativeUtterance:class{constructor(text){this.text=text;}},
+ const engine=createNeuralCharacterSpeech({fetch:async(path,options)=>{calls.push({path,options});return request?request(path,options):{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)};},fetchAudio:async(path,options)=>{audioCalls.push({path,options});return audioRequest?audioRequest(path,options):{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)};},audioFactory:()=>{contexts++;return context;},nativeSpeech:native,NativeUtterance:class{constructor(text){this.text=text;}},
   setTimer:(fn,ms)=>{timers.set(++serial,{fn,ms});return serial;},clearTimer:id=>timers.delete(id),setInterval:fn=>{intervals.set(++serial,fn);return serial;},clearInterval:id=>intervals.delete(id)});
- return {engine,calls,sources,gains,timers,intervals,native,nativeCalls,context,get contexts(){return contexts;}};
+ return {engine,calls,audioCalls,sources,gains,timers,intervals,native,nativeCalls,context,get contexts(){return contexts;}};
 }
 
 test('the app supplies actual generated male/female profiles without native voices or eager audio creation',()=>{
@@ -109,4 +110,39 @@ test('canceling a segmented guide stops current audio and aborts its prefetched 
  f.engine.speak(utterance);await tick();assert.equal(f.calls.length,2);assert.equal(starts,1);
  const successor=f.calls[1].options.signal;f.engine.cancel();assert.equal(successor.aborted,true);assert.equal(f.sources[0].stopped,1);assert.equal(f.sources[0].onended,null);
  pending.resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(48)});await tick();assert.equal(f.sources.length,1);assert.equal(f.engine.speaking,false);assert.equal(f.timers.size,0);f.engine.dispose();
+});
+
+test('packaged male and female voice previews play without requesting the synthesis service',async()=>{
+ for(const gender of ['male','female']){
+  const f=fixture({request:()=>{throw Error('Voice generation is offline');}}),utterance=new GameSpeechUtterance('Hello. This is your selected voice. You are ready to explore the world.');
+  utterance.voice=GENERATED_VOICES.find(voice=>voice.gender===gender);utterance.audioURL='/public/audio/voices/'+gender+'-preview.wav';
+  await f.engine.resume();f.engine.speak(utterance);await tick();
+  assert.equal(f.calls.length,0);assert.equal(f.audioCalls.length,1);assert.equal(f.audioCalls[0].path,utterance.audioURL);assert.equal(f.audioCalls[0].options.method,'GET');assert.equal(f.sources[0].started,1);f.engine.dispose();
+ }
+});
+
+test('a complete authored guide plays its exact recordings while the synthesis API is unavailable',async()=>{
+ const f=fixture({request:()=>{throw Error('Backend is unavailable');}}),text='Welcome to MUZIKAZ Main Floor. Use the local map to find nearby places and Quests to choose a walking route or activity. Open Quests for local practice objectives.';
+ const utterance=new GameSpeechUtterance(text);utterance.recordedIntroduction=true;utterance.voice=GENERATED_VOICES[0];let starts=0,ends=0;
+ utterance.onstart=()=>starts++;utterance.onend=()=>ends++;
+ await f.engine.resume();f.engine.speak(utterance);await tick();
+ while(f.engine.speaking){f.sources.at(-1).onended();await tick();}
+ assert.equal(f.calls.length,0);assert.deepEqual(f.audioCalls.map(call=>call.path),splitBundledSpeech(text).map(line=>bundledVoiceURL(line,'female')));
+ assert.equal(starts,1);assert.equal(ends,1);assert.ok(f.sources.every(source=>source.started===1));f.engine.dispose();
+});
+
+test('custom map sentences still generate their actual words instead of using another map recording',async()=>{
+ const f=fixture(),utterance=new GameSpeechUtterance('Welcome to A Newly Created Map. Open Quests for local practice objectives.');utterance.recordedIntroduction=true;
+ await f.engine.resume();f.engine.speak(utterance);await tick();
+ assert.equal(f.calls.length,1);assert.equal(JSON.parse(f.calls[0].options.body).text,'Welcome to A Newly Created Map.');
+ assert.equal(f.audioCalls[0].path,bundledVoiceURL('Open Quests for local practice objectives.','female'));f.engine.dispose();
+});
+
+test('a delivered recording is not abandoned by a network timer while the 3D page delays decoding',async()=>{
+ const decoding=deferred(),f=fixture({decode:()=>decoding.promise});
+ const utterance=new GameSpeechUtterance('Hello. This is your selected voice. You are ready to explore the world.');utterance.audioURL='/public/audio/voices/female-preview.wav';
+ await f.engine.resume();f.engine.speak(utterance);await tick();
+ assert.equal(f.audioCalls.length,1);assert.equal(f.sources.length,0);assert.equal(f.engine.pending,true);
+ assert.equal(f.timers.size,0,'The completed file request cannot leave a network deadline racing the audio decoder.');
+ decoding.resolve({duration:7});await tick();assert.equal(f.sources[0].started,1);assert.equal(f.engine.lastError,null);f.engine.dispose();
 });

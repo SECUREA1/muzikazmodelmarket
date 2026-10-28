@@ -1,7 +1,8 @@
 """A rejected first unlock and a suspended tab retain unheard real voice audio.
 
 Production guide controls, quest queue and Web Audio playback are exercised.
-The generation route returns licensed neural preview recordings; the first
+The generation route returns licensed neural preview recordings for custom
+map text; known guide sections use packaged MP3 recordings. The first
 resume rejection models a browser requiring touch release for activation.
 """
 from pathlib import Path
@@ -13,12 +14,19 @@ import json, os
 root=Path(__file__).resolve().parents[1]
 os.chdir(root)
 requests=[]
+speech_requests=[]
+recorded_text={clip['url']:clip['text'] for clip in json.loads((root/'public/audio/voices/world/manifest.json').read_text())['clips']}
 class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args): pass
+ def do_GET(self):
+  if self.path.startswith('/public/audio/voices/world/'):
+   speech_requests.append({'text':recorded_text[self.path],'source':'recording'})
+  return super().do_GET()
  def do_POST(self):
   if self.path!='/api/speech': self.send_error(404);return
   payload=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
   requests.append(payload)
+  speech_requests.append(payload)
   data=(root/'public/audio/voices'/f"{payload['voice']}-preview.wav").read_bytes()
   self.send_response(200);self.send_header('Content-Type','audio/wav');self.send_header('Content-Length',str(len(data)));self.end_headers()
   try:self.wfile.write(data)
@@ -50,13 +58,13 @@ try:
   }''')
   page.dispatch_event('body','pointerdown')
   page.wait_for_function("recoverySpeech.lastError?.code==='not-allowed' && recoveryVoice.state.pending===1")
-  assert not requests,'Rejected activation must not consume a generation request'
+  assert not speech_requests,'Rejected activation must not consume a voice request'
   assert page.get_by_role('button',name='Enable guide audio',exact=True).is_enabled()
   page.get_by_role('button',name='Enable guide audio',exact=True).click()
   page.wait_for_function('recoverySpeech.speaking')
   first_peak=page.evaluate('recoveryPeak()')
   assert first_peak>.0001,first_peak
-  assert 'Welcome to Public Commons' in requests[0]['text'],requests
+  assert 'Welcome to Public Commons' in speech_requests[0]['text'],speech_requests
   guide_requests=len(requests)
   page.evaluate('recoverySpeech.cancel()')
   page.evaluate('recoveryContext.suspend()')

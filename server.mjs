@@ -46,6 +46,7 @@ import {extname,join,normalize} from 'node:path';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
 import {createSpeechService} from './server-speech.mjs';
+import {startVoiceRuntime} from './server-voice-runtime.mjs';
 import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
 import {normalizeFactoryCatalogItem} from './world-factory-catalog.mjs';
 import {grantFitnessReward,fitnessAccountState} from './server-fitness.mjs';
@@ -680,7 +681,9 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/designer/drafts'&&['GET','POST'].includes(req.method)){const context=await memberContext(req,res,req.method==='POST');if(!context)return;return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId):await userDatabase.saveDesignerDraft(context.walletId,await bodyJson(req,8500000))));}
     const designerDraft=url.pathname.match(/^\/api\/designer\/drafts\/([^/]+)$/);
     if(designerDraft&&['GET','DELETE'].includes(req.method)){const context=await memberContext(req,res,req.method==='DELETE');if(!context)return;const id=decodeURIComponent(designerDraft[1]);return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId,id):await userDatabase.deleteDesignerDraft(context.walletId,id)));}
-    if(url.pathname==='/api/speech/voices'&&req.method==='GET'||url.pathname==='/api/speech'&&req.method==='POST'){
+    // Readiness polling is passive; it must not spend the quota for spoken
+    // lines while an engine is being prepared or another player checks status.
+    if(url.pathname==='/api/speech'&&req.method==='POST'){
       try{speechService.checkRateLimit(req.socket?.remoteAddress);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
     }
     if(url.pathname==='/api/speech/voices'&&req.method==='GET'){
@@ -1314,4 +1317,4 @@ await loadMasterRuntime();
 const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayments()),30000);storeDeliveryTimer.unref();
 const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
 backgroundJob(()=>snapshotServer());
-server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
+server.listen(port, () => {console.log(`MUZIKAZ shared house server running on http://localhost:${port}`);startVoiceRuntime().catch(()=>{});});

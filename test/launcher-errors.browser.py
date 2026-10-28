@@ -10,7 +10,7 @@ class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
 server=ThreadingHTTPServer(('127.0.0.1',0),Handler);Thread(target=server.serve_forever,daemon=True).start()
 base=f'http://127.0.0.1:{server.server_port}'
-HTML='''<!doctype html><html><body><section id="house-game-start"><button data-house-start>Begin</button><p id="house-game-load-status"></p></section><script>window.documentEpoch=Date.now()+':'+Math.random();window.engineMounts=0;window.requestCount=0;</script><script src="/public/js/rad-tox-launcher.js?v=startup-recovery-test"></script></body></html>'''
+HTML='''<!doctype html><html><body><section id="house-game-start"><button data-house-start>Begin</button><p id="house-game-load-status"></p></section><script>window.documentEpoch=Date.now()+':'+Math.random();window.engineMounts=0;window.requestCount=0;</script><script type="module" src="/public/js/rad-tox-launcher.js?v=startup-recovery-test"></script></body></html>'''
 SUCCESS='''window.engineMounts++;document.addEventListener('muzikaz:rad-tox-request',function(){window.requestCount++;document.getElementById('house-game-load-status').textContent='Fixture gameplay ready';document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));});document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));'''
 try:
  with sync_playwright() as p:

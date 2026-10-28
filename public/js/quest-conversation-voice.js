@@ -53,6 +53,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    try{
     utterance=new Utterance(spokenText);
     if(voice)utterance.voice=voice;
+    if(voice?.generated){utterance.recordedIntroduction=call.category==='introduction';if(call.preview)utterance.audioURL='/public/audio/voices/'+voice.gender+'-preview.wav';}
     utterance.lang=voice?.lang||style.lang;utterance.rate=style.rate;utterance.pitch=style.pitch;utterance.volume=volume(call);
     const watchdog=()=>{if(token!==generation||attemptId!==attempt)return;call.onError?.('Voice playback took too long. Please try again.');cancelCurrent();play();};
     utterance.onstart=()=>{if(attemptId!==attempt||token!==generation)return;started=true;clearTimer(timer);timer=setTimer(watchdog,speechTimeout(spokenText,style.rate));call.onStarted?.(voice);};
@@ -111,10 +112,13 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();queue.push(replay);api.unlock();return true;},
   preview(value=preferences){
    api.setPreferences(value);
-   if(blocked({category:'dialogue'}))return Promise.resolve('Unmute all audio and NPC conversations to preview the voice.');
+   if(preferences.masterMuted||preferences.dialogueMuted)return Promise.resolve('Unmute all audio and NPC conversations to preview the voice.');
+   // Preview and Enable all audio are explicit actions. A local World radio
+   // mute must not override their newly enabled preference switches.
+   muted=false;
    stop();api.unlock();
    return new Promise(resolve=>{let settled=false;const done=status=>{if(!settled){settled=true;resolve(status);}};
-    enqueue({id:'voice-preview:'+ ++previewSequence,text:'Hello. This is your selected voice. You are ready to explore the world.',voice:'Voice preview',role:'narrator',category:'dialogue',
+    enqueue({id:'voice-preview:'+ ++previewSequence,text:'Hello. This is your selected voice. You are ready to explore the world.',voice:'Voice preview',role:'narrator',category:'dialogue',preview:true,
      onStarted:voice=>done('Playing '+(voice?.name||'your selected voice')+'.'),onFinished:()=>done('Voice preview finished.'),onError:done,onCancelled:()=>done('Voice preview stopped.')});
    });
   },

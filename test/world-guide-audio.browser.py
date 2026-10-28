@@ -1,6 +1,7 @@
 """Verify real Web Audio for queued map guides, travel, mute and replay.
 
-The fixture returns repository-generated voice WAVs for /api/speech. The guide,
+Unknown custom-map welcomes use a generated WAV fixture; authored guide sections
+use the actual packaged MP3 recordings. The guide,
 voice queue, decoder, gain nodes and browser audio clock use production code.
 """
 from pathlib import Path
@@ -12,12 +13,19 @@ import json, os
 root = Path(__file__).resolve().parents[1]
 os.chdir(root)
 requests = []
+speech_requests = []
+recorded_text={clip['url']:clip['text'] for clip in json.loads((root/'public/audio/voices/world/manifest.json').read_text())['clips']}
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, *args): pass
+    def do_GET(self):
+        if self.path.startswith('/public/audio/voices/world/'):
+            speech_requests.append({'text':recorded_text[self.path],'source':'recording'})
+        return super().do_GET()
     def do_POST(self):
         if self.path != '/api/speech': self.send_error(404); return
         payload = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         requests.append(payload)
+        speech_requests.append(payload)
         data = (root/'public/audio/voices'/f"{payload['voice']}-preview.wav").read_bytes()
         self.send_response(200)
         self.send_header('Content-Type', 'audio/wav')
@@ -53,21 +61,21 @@ try:
           arrive('commons','Public Commons');
         }''')
         assert page.evaluate('voice.state.pending') == 1
-        assert requests == [], 'An introduction must wait for a browser gesture'
+        assert speech_requests == [], 'An introduction must wait for a browser gesture'
         page.get_by_role('button', name='Enter world', exact=True).click()
         page.wait_for_function('speech.speaking || speech.lastError')
         assert page.evaluate('speech.speaking'), page.evaluate('speech.lastError')
         first_peak = page.evaluate('peak()')
         assert first_peak > .0001, first_peak
-        assert 'Public Commons' in requests[0]['text']
-        first_guide_requests = len(requests)
+        assert 'Public Commons' in speech_requests[0]['text']
+        first_guide_requests = len(speech_requests)
         page.evaluate("arrive('commons','Public Commons')")
-        assert len(requests) == first_guide_requests, 'Unchanged snapshots repeated the map guide'
+        assert len(speech_requests) == first_guide_requests, 'Unchanged snapshots repeated the map guide'
         page.evaluate("arrive('airport','MUZIKAZ Airport',{airport:{enabled:true}})")
         page.wait_for_function("speech.speaking && speech.status.startsWith('Playing')")
         page.wait_for_function("voice.state.speaking && !speech.pending")
-        assert len(requests) > first_guide_requests
-        assert 'MUZIKAZ Airport' in requests[first_guide_requests]['text']
+        assert len(speech_requests) > first_guide_requests
+        assert 'MUZIKAZ Airport' in speech_requests[first_guide_requests]['text']
         travel_peak = page.evaluate('peak()')
         assert travel_peak > .0001, travel_peak
         page.evaluate('voice.setMuted(true)')
