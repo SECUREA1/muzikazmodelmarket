@@ -7,6 +7,8 @@ import io
 import json
 import math
 import shlex
+import subprocess
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +38,20 @@ def load(path):
 
 def manifest_digest(manifest):
     return hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
+
+
+def javascript_json_strings(values):
+    """Preserve the production harness's JSON.stringify hashing/equality rules."""
+    script = 'const fs=require("node:fs");const values=JSON.parse(fs.readFileSync(0,"utf8"));process.stdout.write(JSON.stringify(values.map(value=>JSON.stringify(value))));'
+    try:
+        result = subprocess.run(['node', '-e', script], input=json.dumps(values, allow_nan=False),
+                                text=True, capture_output=True, check=True, timeout=10)
+        encoded = json.loads(result.stdout)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise ValueError('Cannot verify production JSON serialization for recorded recovery state') from error
+    if not isinstance(encoded, list) or len(encoded) != len(values) or any(not isinstance(value, str) for value in encoded):
+        raise ValueError('Recovery JSON serialization returned inconsistent values')
+    return encoded
 
 
 def validate_source_identity(source, label):
@@ -150,6 +166,13 @@ def validate_bound_evidence(standard, report, label):
     actual_source = report.get('source') or {}
     validate_source_identity(expected_source, 'Regression')
     validate_source_identity(actual_source, label)
+    if standard.get('executionScope') == 'selected':
+        # Selected checks can capture the same staged bytes immediately before
+        # their commit. Preserve both commit labels, but require identical code,
+        # assets, helpers, runner, guard and declared selected commands.
+        if any(actual_source.get(key) != value for key, value in expected_source.items() if key not in ('sourceCommit', 'fingerprint')):
+            raise ValueError(label + ' differs from the selected regression application or execution identity')
+        return
     for key in ('runtimeSHA256', 'node', 'guardSHA256', 'runnerSHA256', 'fingerprint'):
         if not expected_source.get(key) or actual_source.get(key) != expected_source[key]:
             raise ValueError(label + ' source does not match standard evidence: ' + key)
@@ -185,17 +208,19 @@ def validate_browser_regressions(standard, report):
     actual_source = report.get('source') or {}
     expected_manifest = expected_source.get('runtimeManifest') or {}
     actual_manifest = actual_source.get('runtimeManifest') or {}
+    selected = standard.get('executionScope') == 'selected'
     checks = report.get('checks') or []
     hashes = actual_source.get('testHashes') or {}
     names = [check.get('name') for check in checks]
-    if not checks or len(set(names)) != len(names) or set(names) != set(hashes):
+    selected = standard.get('executionScope') == 'selected'
+    if not checks or len(set(names)) != len(names) or (not set(names).issubset(hashes) if selected else set(names) != set(hashes)):
         raise ValueError('Browser checks must cover the unique declared test hashes')
     if any(not isinstance(name, str) or name != Path(name).name or not name.endswith('.browser.py') for name in names):
         raise ValueError('Browser checks must identify standalone <name>.browser.py fixtures')
     if not expected_manifest or not actual_manifest:
         raise ValueError('Browser binding requires complete standard and browser manifests')
     for key, value in expected_source.items():
-        if key not in ('runtimeManifest', 'runtimeSHA256', 'fingerprint') and actual_source.get(key) != value:
+        if key not in ('runtimeManifest', 'runtimeSHA256', 'fingerprint', *(('sourceCommit',) if selected else ())) and actual_source.get(key) != value:
             raise ValueError('Browser source does not match standard evidence: ' + key)
     # Browser runners append metadata after computing the base Node fingerprint.
     # Recompute both base identities before permitting any fixture-only changes.
@@ -206,6 +231,8 @@ def validate_browser_regressions(standard, report):
         if source.get('runtimeSHA256') != manifest_hash or source.get('fingerprint') != fingerprint:
             raise ValueError('Browser/standard source manifest or fingerprint is inconsistent')
     fixture_paths = {'test/' + name for name in names}
+    if selected and expected_manifest != actual_manifest:
+        raise ValueError('Selected browser and Node checks must use identical application/assets/helper bytes')
     differences = []
     for path in sorted(set(expected_manifest) | set(actual_manifest)):
         old, new = expected_manifest.get(path), actual_manifest.get(path)
@@ -470,10 +497,364 @@ def plot_http(stages, report, baseline):
     return svg.replace('<svg ', '<svg role="img" aria-label="Measured HTTP response latency and input delivery compared with baseline" ', 1)
 
 
+def validate_release_regressions(workflow, report):
+    """Bind a completed correctness campaign to an HTTP-only release run."""
+    if not report or not report.get('finishedAt') or report.get('runtimeChangedDuringRun') is not False:
+        raise ValueError('Release regressions must be complete with source verified unchanged')
+    source = report.get('source') or {}
+    manifest = validate_source_identity(source, 'Release regression')
+    if manifest != workflow['runtimeManifest'] or source.get('runtimeSHA256') != workflow.get('runtimeSourceSHA256'):
+        raise ValueError('Release HTTP and regression campaigns must use the exact full application/assets/helper manifest')
+    for path, digest in {**workflow['runtimeManifest'], **workflow.get('harnesses', {})}.items():
+        if manifest.get(path) != digest:
+            raise ValueError('Release regression differs from HTTP runtime or harness: ' + path)
+    declared, tests = source.get('testCommands') or {}, report.get('tests') or {}
+    selected_scope = report.get('executionScope') == 'selected' or source.get('executionScope') == 'selected'
+    if not declared or not tests or len(tests) != report.get('requestedFiles') or (not set(tests).issubset(declared) if selected_scope else set(declared) != set(tests)):
+        raise ValueError('Release regressions must cover every declared per-file command')
+    if selected_scope:
+        names, available = report.get('selectedTestFiles') or [], report.get('availableTestFiles')
+        if report.get('executionScope') != 'selected' or source.get('executionScope') != 'selected' or report.get('complete') is not False or source.get('complete') is not False:
+            raise ValueError('Selected regressions must explicitly retain incomplete full-suite coverage')
+        if not isinstance(available, int) or isinstance(available, bool) or available < len(tests) or source.get('availableTestFiles') != available or len(declared) != available:
+            raise ValueError('Selected regression available-file counts are inconsistent')
+        if len(names) != len(set(names)) or set(names) != set(tests) or source.get('selectedTestFiles') != names:
+            raise ValueError('Selected regression coverage differs from the executed files')
+    outcomes, totals, complete_summaries = Counter(), Counter(), 0
+    keys = ('tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo')
+    for name, record in tests.items():
+        if record.get('status') not in ('passed', 'failed', 'timeout', 'interrupted', 'runner-error') or not record.get('finishedAt'):
+            raise ValueError('Release regression has no completed final status: ' + name)
+        if any(record.get(key) != declared[name].get(key) for key in ('argv', 'testTimeoutMs', 'outerTimeoutSeconds')):
+            raise ValueError('Release regression command or deadline differs from its declaration: ' + name)
+        if not isinstance(record.get('testSHA256'), str) or len(record['testSHA256']) != 64:
+            raise ValueError('Release regression is missing its test hash: ' + name)
+        outcomes[record['status']] += 1
+        footer = (record.get('testCases') or {}).get('footer')
+        if footer:
+            if any(not isinstance(footer.get(key), int) or isinstance(footer[key], bool) or footer[key] < 0 for key in keys):
+                raise ValueError('Release regression TAP summary is invalid: ' + name)
+            if footer['tests'] != sum(footer[key] for key in keys[1:]):
+                raise ValueError('Release regression TAP counts do not add up: ' + name)
+            totals.update({key: footer[key] for key in keys})
+            complete_summaries += 1
+        if record['status'] == 'passed' and (record.get('exitCode') != 0 or not footer or not footer['tests'] or footer['fail'] or footer['cancelled']):
+            raise ValueError('Release regression pass disagrees with its exit code or TAP summary: ' + name)
+    summary = report.get('summary') or {}
+    if any(summary.get(key, 0) != value for key, value in outcomes.items()) or any(value != outcomes.get(key, 0) for key, value in summary.items()):
+        raise ValueError('Release regression file totals disagree with the recorded outcomes')
+    if set(report.get('testCaseTotals') or {}) != set(keys) or any(report['testCaseTotals'][key] != totals[key] for key in keys) or report.get('filesWithCompleteTestCaseSummary') != complete_summaries:
+        raise ValueError('Release regression case totals disagree with the per-file TAP summaries')
+
+
+def validate_release_recovery(recovery):
+    """Check the corrected pre-kill boundary without changing failed outcomes."""
+    checks = ('sessionSurvived', 'balancePreserved', 'walletReceiptsPreserved', 'movementBalanceReconciles',
+              'inventoryPreserved', 'publishedMapPreserved', 'checkpointPreserved')
+    if not recovery or recovery.get('status') != 'completed':
+        preservation_checks = tuple(key for key in checks if key != 'movementBalanceReconciles')
+        if recovery and any(recovery.get(key) is True for key in ('pass', *preservation_checks)):
+            raise ValueError('Incomplete release recovery cannot claim a preservation pass')
+        return
+    ledgers = [recovery.get(key) for key in ('preMovementLedger', 'preKillLedger', 'postRestartLedger')]
+    if any(not isinstance(ledger, dict) or not isinstance(ledger.get('receipts'), list) or
+           ledger.get('receiptCount') != len(ledger['receipts']) or not isinstance(ledger.get('receiptSHA256'), str) or
+           len(ledger['receiptSHA256']) != 64 for ledger in ledgers):
+        raise ValueError('Completed release recovery requires complete recorded wallet ledgers')
+    before_movement, before_kill, after_restart = [recovery.get(key) for key in ('preMovementBalanceMzk', 'beforeKillBalanceMzk', 'afterRestartBalanceMzk')]
+    values = [before_movement, before_kill, after_restart, recovery.get('movementNetMzk'), *(ledger.get('balanceMzk') for ledger in ledgers)]
+    if any(not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) for value in values):
+        raise ValueError('Completed release recovery requires finite recorded balances')
+    if any(not isinstance(receipt, dict) or not isinstance(receipt.get('id'), str) or not receipt['id'] or
+           not isinstance(receipt.get('amountMzk'), (int, float)) or isinstance(receipt['amountMzk'], bool) or
+           not math.isfinite(receipt['amountMzk']) for ledger in ledgers for receipt in ledger['receipts']):
+        raise ValueError('Release recovery receipts must have nonempty string IDs and finite signed amounts')
+    encoded = javascript_json_strings([*(ledger['receipts'] for ledger in ledgers),
+                                      recovery.get('beforeKillInventory'), recovery.get('afterRestartInventory'),
+                                      recovery.get('savedPosition'), recovery.get('restoredPosition')])
+    if any(hashlib.sha256(value.encode()).hexdigest() != ledger['receiptSHA256'] for value, ledger in zip(encoded, ledgers)):
+        raise ValueError('Release recovery receipt digest differs from its recorded receipt array')
+    counts = [Counter(receipt.get('id') for receipt in ledger['receipts']) for ledger in ledgers]
+    valid_ids = all(isinstance(receipt.get('id'), str) and receipt['id'] for ledger in ledgers[1:] for receipt in ledger['receipts'])
+    same_receipts = encoded[1] == encoded[2]
+    duplicates = {key for count in counts[1:] for key, value in count.items() if value > 1}
+    expected_missing = {key for key, value in counts[1].items() if counts[2].get(key, 0) < value}
+    expected_extra = {key for key, value in counts[2].items() if value > counts[1].get(key, 0)}
+    if set(recovery.get('missingReceiptIds', [])) != expected_missing or set(recovery.get('unexpectedReceiptIds', [])) != expected_extra or set(recovery.get('duplicatedReceiptIds', [])) != duplicates:
+        raise ValueError('Release recovery receipt diagnostics disagree with the recorded ledgers')
+    expected_balance = before_kill == after_restart == ledgers[1]['balanceMzk'] == ledgers[2]['balanceMzk']
+    if recovery.get('balancePreserved') is not expected_balance or recovery.get('walletReceiptsPreserved') is not (valid_ids and not duplicates and same_receipts):
+        raise ValueError('Release recovery preservation flags disagree with the saved balances or receipts')
+    if recovery.get('preMovementBalanceEqualAfterRestart') is not (before_movement == after_restart):
+        raise ValueError('Release recovery pre-movement diagnostic is inconsistent')
+    if before_movement != ledgers[0]['balanceMzk']:
+        raise ValueError('Release recovery pre-movement API and durable ledger balances differ')
+    previous_ids = {receipt['id'] for receipt in ledgers[0]['receipts']}
+    movement = [receipt for receipt in ledgers[1]['receipts'] if receipt['id'] not in previous_ids]
+    net = sum(receipt['amountMzk'] for receipt in movement)
+    credits = sum(max(0, receipt['amountMzk']) for receipt in movement)
+    debits = sum(min(0, receipt['amountMzk']) for receipt in movement)
+    if recovery.get('movementReceipts') != movement or recovery['movementNetMzk'] != net or recovery.get('movementCreditsMzk') != credits or recovery.get('movementDebitsMzk') != debits or recovery.get('movementBalanceDeltaMzk') != before_kill - before_movement:
+        raise ValueError('Release recovery movement diagnostics differ from the signed ledger changes')
+    expected_reconciliation = before_kill == before_movement + recovery['movementNetMzk']
+    if recovery.get('movementBalanceReconciles') is not expected_reconciliation:
+        raise ValueError('Release recovery movement reconciliation is inconsistent')
+    before_inventory, after_inventory = recovery.get('beforeKillInventory'), recovery.get('afterRestartInventory')
+    expected_inventory = isinstance(before_inventory, list) and bool(before_inventory) and encoded[3] == encoded[4]
+    if recovery.get('inventoryPreserved') is not expected_inventory:
+        raise ValueError('Release recovery inventory outcome disagrees with the recorded inventories')
+    finite_point = lambda point: isinstance(point, dict) and all(isinstance(point.get(axis), (int, float)) and not isinstance(point[axis], bool) and math.isfinite(point[axis]) for axis in ('x', 'y', 'z'))
+    expected_position = finite_point(recovery.get('savedPosition')) and finite_point(recovery.get('restoredPosition')) and encoded[5] == encoded[6]
+    if recovery.get('checkpointPreserved') is not expected_position:
+        raise ValueError('Release recovery position outcome disagrees with the recorded checkpoint')
+    if any(not isinstance(recovery.get(key), bool) for key in checks) or recovery.get('pass') is not all(recovery[key] for key in checks):
+        raise ValueError('Release recovery overall outcome disagrees with the individual checks')
+
+
+def bound_workspace_json(relative_path, expected_digest, label):
+    root = Path(__file__).resolve().parents[1]
+    path = (root / str(relative_path)).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise ValueError(label + ' must exist inside the repository workspace')
+    raw = path.read_bytes()
+    if not isinstance(expected_digest, str) or hashlib.sha256(raw).hexdigest() != expected_digest:
+        raise ValueError(label + ' digest differs from its recorded artifact')
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError(label + ' must contain a JSON object')
+    return value
+
+
+def validate_verification_resume(workflow, final, result_path, report):
+    """Keep the original command outcome distinct from a fixture-only resume."""
+    if not report or not report.get('finishedAt') or report.get('runtimeChangedDuringRun') is not False:
+        raise ValueError('Verification resume must be complete with application source verified unchanged')
+    source = report.get('source') or {}
+    validate_source_identity(source, 'Verification resume')
+    if source.get('fingerprint') != final['source'].get('fingerprint') or report.get('sourceAfterFingerprint') != source.get('fingerprint'):
+        raise ValueError('Verification resume changed the application, runner, guard or declared commands')
+    if report.get('executionMatchesDeclaredReruns') is not True or report.get('testHashesMatchDeclaredReruns') is not True:
+        raise ValueError('Verification resume did not verify its executed fixtures and hashes')
+    if hashlib.sha256(result_path.read_bytes()).hexdigest() != report.get('finalResultsSHA256'):
+        raise ValueError('Verification resume does not identify the supplied final checkpoint')
+    original = bound_workspace_json(report.get('originalWorkflowPath'), report.get('originalWorkflowSHA256'), 'Original verification workflow')
+    before = bound_workspace_json(report.get('sourceCheckpointBefore'), report.get('sourceCheckpointBeforeSHA256'), 'Archived pre-resume checkpoint')
+    validate_release_regressions(workflow, before)
+    if before['source'].get('fingerprint') != source['fingerprint'] or not original.get('finishedAt'):
+        raise ValueError('Verification resume does not follow a complete identical-source campaign')
+    node_commands = [item for item in original.get('commands', []) if item.get('name') == 'node-regressions']
+    initial, command = report.get('initialNodeCommand') or {}, report.get('command') or {}
+    if len(node_commands) != 1 or node_commands[0] != initial:
+        raise ValueError('Verification resume original Node command differs from the archived workflow')
+    for label, item in [('Original Node command', initial), ('Fixture resume command', command)]:
+        if not item.get('finishedAt') or item.get('status') not in ('passed', 'failed', 'timeout') or not isinstance(item.get('exitCode'), int) or isinstance(item['exitCode'], bool):
+            raise ValueError(label + ' must retain its completed status and exit code')
+        if (item['status'] == 'passed') is not (item['exitCode'] == 0):
+            raise ValueError(label + ' status disagrees with its exit code')
+    if initial['exitCode'] == 0 and before.get('summary', {}).get('passed') != before.get('requestedFiles'):
+        raise ValueError('Original Node command cannot claim success over a non-passing checkpoint')
+    if command['exitCode'] == 0 and final.get('summary', {}).get('passed') != final.get('requestedFiles'):
+        raise ValueError('Fixture resume command cannot claim success over a non-passing final checkpoint')
+    if command.get('argv') != initial.get('argv'):
+        raise ValueError('Fixture resume does not execute the same source-bound runner command')
+    try:
+        parse = lambda value: datetime.fromisoformat(value.replace('Z', '+00:00'))
+        if parse(command['startedAt']) < parse(original['finishedAt']) or parse(command['finishedAt']) < parse(command['startedAt']):
+            raise ValueError('Fixture resume overlaps the original workflow or has reversed timestamps')
+    except (KeyError, AttributeError, TypeError, ValueError) as error:
+        raise ValueError('Fixture resume requires a valid sequential command window') from error
+    reruns = report.get('rerunFiles') or []
+    unique_records(reruns, lambda item: item.get('name'), 'Fixture resume records')
+    names = {item['name'] for item in reruns}
+    executed = report.get('executedFiles') or []
+    if len(executed) != len(set(executed)) or set(executed) != names:
+        raise ValueError('Fixture resume executed files differ from its declared reruns')
+    if set(before['tests']) != set(final['tests']):
+        raise ValueError('Fixture resume changed the declared test-file coverage')
+    observed = {name for name, item in final['tests'].items() if item.get('log') != before['tests'][name].get('log')}
+    if observed != names:
+        raise ValueError('Fixture resume result logs differ outside the declared reruns')
+    for item in reruns:
+        name = item['name']
+        previous, current = before['tests'][name], final['tests'][name]
+        if item.get('previousStatus') != previous.get('status') or item.get('previousSHA256') != previous.get('testSHA256') or item.get('currentSHA256') != current.get('testSHA256') or item.get('previousSHA256') == item.get('currentSHA256'):
+            raise ValueError('Fixture resume hashes or previous outcome disagree with the checkpoints: ' + name)
+        prior = {key: value for key, value in previous.items() if key != 'earlierAttempts'}
+        if prior not in current.get('earlierAttempts', []):
+            raise ValueError('Fixture resume lost its earlier per-file attempt: ' + name)
+    for name in set(final['tests']) - names:
+        if final['tests'][name] != before['tests'][name]:
+            raise ValueError('Fixture resume modified a retained test proof: ' + name)
+    return original, before
+
+
+def render_release_summary(args):
+    directory = args.directory.resolve()
+    http, workflow = load(directory / 'http.json'), load(directory / 'workflow.json')
+    regressions = load(args.regressions) if args.regressions else None
+    static = load(args.static_checks) if args.static_checks else None
+    browser = load(args.browser_regressions) if args.browser_regressions else None
+    validate_supplement_evidence(http, workflow)
+    if len(workflow.get('commands', [])) != 1:
+        raise ValueError('Release-summary mode requires exactly one HTTP experiment family')
+    validate_release_regressions(workflow, regressions)
+    if http.get('environment', {}).get('node') != regressions['source'].get('node'):
+        raise ValueError('Release HTTP and regression Node versions differ')
+    validate_static_checks(regressions, static)
+    expected_static = {('npm', 'run', name) for name in ('build', 'check', 'check:asset-registry')}
+    commands = [tuple(command['argv']) for command in static['commands']]
+    if len(commands) != 3 or set(commands) != expected_static:
+        raise ValueError('Release summary requires build, check and asset-registry checks exactly once')
+    fixture_changes = validate_browser_regressions(regressions, browser)
+    expected_browser = {'construction-control-recovery.browser.py', 'live-motion.browser.py',
+                        'transport-startup.browser.py', 'world-input-recovery.browser.py'}
+    selected_browser = browser.get('executionScope') == 'selected'
+    if selected_browser:
+        names, declared = browser.get('selectedChecks') or [], browser.get('declaredCommands') or {}
+        if browser.get('complete') is not False or len(names) != len(set(names)) or not {check['name'] for check in browser['checks']}.issubset(names) or set(names) != set(declared) or set(names) != set(browser['source'].get('testHashes', {})) or not set(names).issubset(expected_browser):
+            raise ValueError('Selected browser coverage must match its declared affected checks')
+        if any(any(check.get(key) != declared[check['name']].get(key) for key in ('argv', 'outerTimeoutSeconds')) for check in browser['checks']):
+            raise ValueError('Selected browser command or deadline differs from its declaration')
+    elif {check['name'] for check in browser['checks']} != expected_browser:
+        raise ValueError('Release summary requires all four selected browser checks')
+    recovery = http.get('recovery') or {}
+    validate_release_recovery(recovery)
+    if any(record.get('earlierAttempts') for record in regressions['tests'].values()) and not args.verification_resume:
+        raise ValueError('Release regressions contain replaced attempts; supply --verification-resume to preserve their command history')
+    resume = load(args.verification_resume) if args.verification_resume else None
+    original_workflow, before_resume = validate_verification_resume(workflow, regressions, args.regressions, resume) if args.verification_resume else (None, None)
+    stages = http['scenarios']
+    games = [stage for stage in stages if stage.get('kind') != 'login']
+    passes = [stage for stage in games if qualified(stage, http)]
+    content = '<header><p class="eyebrow">MUZIKAZ · COMBINED MAIN SOURCE</p><h1>Release verification and sampled gameplay</h1>'
+    content += '<p class="lead"><strong>' + str(len(passes)) + ' of ' + str(len(games)) + ' attempted HTTP gameplay workloads met every applicable gate.</strong></p>'
+    content += '<p>Tested source: <code>' + esc(workflow['sourceCommit']) + '</code>; HTTP window: ' + esc(stamp(http.get('startedAt'))) + ' to ' + esc(stamp(http.get('finishedAt'))) + '.</p></header>'
+    content += '<div class="notice"><strong>Scope: the listed HTTP workloads only.</strong> This is an HTTP-only follow-up, not a new full-capacity matrix. '
+    content += 'Untested room sizes and environments, plus 1,000/10,000-player simulation or admission targets, remain unqualified on this source. '
+    content += 'Passing short local samples do not establish a sustained public-launch capacity.</div>'
+    checks_clean = regressions['summary'].get('passed') == regressions['requestedFiles'] and all(item['exitCode'] == 0 for item in static['commands']) and all(item['status'] == 'passed' for item in browser['checks']) and (not selected_browser or len(browser['checks']) == len(browser['selectedChecks'])) and recovery.get('pass') is True and (not resume or resume['command']['status'] == 'passed')
+    if not checks_clean:
+        content += '<div class="notice"><strong>Some correctness, build, browser or recovery checks failed or did not complete.</strong> '
+        content += 'The recorded outcomes below remain separate from HTTP workload passes.</div>'
+    if args.historical_report:
+        if ':' in args.historical_report.split('/')[0] and not args.historical_report.startswith(('https://', 'http://')):
+            raise ValueError('Historical report link must be a relative path or HTTP(S) URL')
+        content += '<p><a href="' + esc(args.historical_report) + '">Earlier full-matrix report on its separately identified source</a>. '
+        content += 'Its outcomes are historical evidence and are not merged into the current workload or regression counts.</p>'
+    content += '<section><h2>HTTP latency, delivery and frame freshness</h2>' + plot_http(stages, http, {}) + http_table(stages, http)
+    content += '<p>Gates retain p95 ≤100 ms, p99 ≤250 ms, at least 95% delivery of all offered 20 Hz slots by deadline, '
+    content += 'at least 99% successful completed requests, valid hydrated snapshots, maintained expected presence and applicable health, capacity and ledger checks. '
+    content += 'General-world wire frame-age p95 must be ≤100 ms; native hockey and arcade do not expose that clock pair and no freshness pass is inferred. '
+    content += 'Hydration is already included in request timing. Skipped slots stay in the denominator.</p>'
+    content += '<p>Stored synthetic accounts: ' + esc(http.get('syntheticAccounts', 'unavailable')) + '; offered movement per workload: '
+    content += num(http.get('durationMs', 0) / 1000, 0) + ' seconds. Fresh temporary datasets and server processes are used for stages. '
+    content += 'These loopback experiments do not measure WAN or browser/GPU/VR rendering, live payment settlement or multi-host failover.</p></section>'
+    content += '<section><h2>Checkpointed restart and complete wallet receipts</h2>'
+    content += '<p>The corrected recovery boundary captures acknowledged balance, inventory and complete wallet receipts immediately before hard shutdown, '
+    content += 'after movement and the persisted room checkpoint. Earlier movement credits are retained as diagnostics. '
+    content += 'These samples do not qualify arbitrary in-flight crashes or power-loss durability.</p>'
+    checks = [('pass', 'Overall checkpointed restart'), ('sessionSurvived', 'Session survived'), ('balancePreserved', 'Exact pre-kill balance preserved'),
+              ('walletReceiptsPreserved', 'Complete wallet receipts preserved'), ('movementBalanceReconciles', 'Signed movement ledger reconciles'),
+              ('inventoryPreserved', 'Inventory preserved'), ('publishedMapPreserved', 'Published map preserved'), ('checkpointPreserved', 'Saved position preserved')]
+    content += table(['Check', 'Recorded result'], [[label, recovery.get(key, 'not completed') if recovery.get('status') == 'completed' else 'not completed'] for key, label in checks])
+    content += table(['Balance boundary', 'MZK'], [[label, recovery.get(key, 'not recorded')] for key, label in
+                     [('preMovementBalanceMzk', 'Before movement: diagnostic'), ('beforeKillBalanceMzk', 'Immediately before hard kill'), ('afterRestartBalanceMzk', 'After restart')]])
+    content += table(['Receipt boundary', 'Recorded count', 'Recorded receipt SHA-256'], [
+        [label, (recovery.get(key) or {}).get('receiptCount', 'not recorded'), (recovery.get(key) or {}).get('receiptSHA256', 'not recorded')]
+        for key, label in [('preKillLedger', 'Immediately before hard kill'), ('postRestartLedger', 'After restart')]])
+    content += '<p>Observed restart time: ' + num(recovery.get('restartMs')) + ' ms. All original wallet records and individual preservation checks are embedded below.</p></section>'
+    if resume:
+        initial, repeated = resume['initialNodeCommand'], resume['command']
+        retained = regressions['requestedFiles'] - len(resume['executedFiles'])
+        content += '<section><h2>Original verification and fixture-only resume</h2>'
+        content += '<p>The original complete Node command retains its recorded outcome below. After test-fixture corrections, the same application, '
+        content += 'runner, guard and declared commands were resumed. Only ' + str(len(resume['executedFiles'])) + ' changed test files executed again; '
+        content += str(retained) + ' unchanged file proofs were retained. The final counts below cover each declared file once; earlier cases are not added again.</p>'
+        content += table(['Attempt', 'Executed files', 'Recorded outcome', 'Exit code', 'Window'], [
+            ['Original full Node command', before_resume['requestedFiles'], initial['status'], initial['exitCode'], stamp(initial.get('startedAt')) + ' to ' + stamp(initial.get('finishedAt'))],
+            ['Fixture-only checkpoint resume', len(resume['executedFiles']), repeated['status'], repeated['exitCode'], stamp(repeated.get('startedAt')) + ' to ' + stamp(repeated.get('finishedAt'))]])
+        content += table(['Pre-resume checkpoint case outcome', 'Cases'], [[key, value] for key, value in before_resume['testCaseTotals'].items()])
+        content += table(['Changed fixture', 'Earlier outcome', 'Earlier test SHA-256', 'Executed replacement SHA-256', 'Final outcome'], [
+            [item['name'], item['previousStatus'], item['previousSHA256'], item['currentSHA256'], regressions['tests'][item['name']]['status']]
+            for item in resume['rerunFiles']])
+        content += '<p>The original workflow, pre-resume checkpoint, resume command and final checkpoint match their recorded artifact hashes. '
+        content += 'Each replaced result retains its earlier failed attempt and log identity.</p></section>'
+    source = regressions['source']
+    selected_node = regressions.get('executionScope') == 'selected'
+    content += '<section><h2>' + ('Selected affected Node checks' if selected_node else 'Full declared Node regression campaign') + '</h2>'
+    if selected_node:
+        content += '<p><strong>Coverage is partial: ' + str(regressions['requestedFiles']) + ' selected files out of ' + str(regressions['availableTestFiles']) + ' available files; complete=false.</strong> '
+        content += 'Earlier full-suite results retain their historical source identities and are not substituted for unexecuted current-source tests.</p>'
+    content += table(['File outcome', 'Files'], [[key, value] for key, value in regressions['summary'].items()])
+    content += table(['Node test-case outcome', 'Cases'], [[key, value] for key, value in regressions['testCaseTotals'].items()])
+    content += '<p>Declared files: ' + str(regressions['requestedFiles']) + '; complete TAP summaries: ' + str(regressions['filesWithCompleteTestCaseSummary']) + '. '
+    content += 'Counts are test cases, not individual assertion calls. Skips and failed or incomplete files remain visible. '
+    content += 'Correctness regressions do not increase the measured player capacity.</p>'
+    budgets = [['Default', source.get('testTimeoutMs', 0) / 1000, source.get('outerTimeoutSeconds'), 'Other files']]
+    budgets += [[name, value.get('testTimeoutMs', 0) / 1000, value.get('outerTimeoutSeconds'), value.get('reason', '')]
+                for name, value in source.get('timeoutOverrides', {}).items() if not selected_node or name in regressions['tests']]
+    content += table(['File scope', 'Node deadline s', 'Outer deadline s', 'Declared purpose'], budgets)
+    content += '<p>The command list, execution order, critical-phase barrier, budgets, Node version, runner and network guard are '
+    content += 'recorded in the broader source fingerprint: <code>' + esc(source['fingerprint']) + '</code>. '
+    content += 'Individual test hashes are retained separately in their per-file result records. '
+    content += 'Every HTTP runtime and harness hash matches that broader manifest. Runtime source stayed unchanged.</p>'
+    if selected_node:
+        content += table(['Capture', 'Recorded commit', 'Source fingerprint'], [[label, item.get('sourceCommit', 'not recorded'), item['source']['fingerprint']] for label, item in [('Node selection', {'sourceCommit': source.get('sourceCommit'), 'source': source}), ('Static checks', static), ('Browser checks', {'sourceCommit': browser['source'].get('sourceCommit'), 'source': browser['source']})]])
+        content += '<p>Commit labels may differ across the commit boundary; application, asset and helper hashes, Node, guard, runner and selected command declarations match exactly.</p>'
+    notable = [[name, item['status'], item.get('testCases', {}).get('footer'), num(item.get('elapsedSeconds'))]
+               for name, item in regressions['tests'].items() if item['status'] != 'passed' or (item.get('testCases', {}).get('footer') or {}).get('skipped')]
+    if notable:
+        content += table(['Skipped or non-passing file', 'Status', 'TAP summary', 'Elapsed s'], notable)
+    content += '</section><section><h2>Build, static and isolated browser checks</h2>'
+    content += table(['Command', 'Exit code', 'Elapsed s'], [[shlex.join(item['argv']), item['exitCode'], num(item.get('elapsedSeconds'))] for item in static['commands']])
+    browser_rows = [[item['name'], item['status'], item.get('exitCode'), num(item.get('elapsedSeconds'))] for item in browser['checks']]
+    if selected_browser:
+        browser_rows += [[name, 'not run', '—', '—'] for name in browser['selectedChecks'] if name not in {item['name'] for item in browser['checks']}]
+    content += table(['Selected browser check', 'Result', 'Exit code', 'Elapsed s'], browser_rows)
+    content += '<p>These completed checks match the Node runtime, guard, runner and application source. '
+    content += str(len(browser['checks'])) + ' selected browser checks provide functional coverage. They do not cover the full browser suite or establish live-client capacity. Every browser fixture hash was verified unchanged during its check.</p>'
+    if selected_browser:
+        omitted = sorted(expected_browser - set(browser['selectedChecks']))
+        content += '<p>Browser coverage is partial (complete=false). Current-source results are limited to the checks listed above. '
+        content += 'The remaining designated checks have no new result here: ' + esc(', '.join(omitted) or 'none') + '.</p>'
+    if fixture_changes:
+        content += '<p>Only the following declared existing browser fixtures changed between the Node and browser campaigns; application and helper files match.</p>'
+        content += table(['Browser fixture', 'Node-time SHA-256', 'Browser-time SHA-256'], fixture_changes)
+    content += '</section><section><h2>Source-bound commands and raw evidence</h2><p>HTTP runtime SHA-256: <code>' + esc(workflow['runtimeSourceSHA256']) + '</code>.</p>'
+    content += '<pre>' + esc('\n'.join(shlex.join(item['argv']) for item in workflow['commands'])) + '</pre>'
+    payload = {'http': http, 'http-workflow': workflow, 'node-regressions': regressions, 'static-checks': static, 'selected-browser-checks': browser}
+    if resume:
+        payload.update({'verification-resume': resume, 'original-verification-workflow': original_workflow, 'node-checkpoint-before-fixture-resume': before_resume})
+        helper = verified_helper_source(args.verification_resume.resolve().parent / 'run-verification-resume.py', resume.get('driverSHA256'), 'verification resume driver')
+        if helper:
+            payload['verification-resume-driver'] = helper
+    helper_directory = args.regressions.resolve().parent.parent
+    for label, name, digest in [('node-runner', 'run-affected-checks.py' if selected_node else 'run-regressions.py', source.get('runnerSHA256')),
+                                ('underlying-node-runner', 'run-regressions.py', source.get('originalRunnerSHA256') if selected_node else None),
+                                ('network-guard', 'regression-guard.mjs', source.get('guardSHA256')),
+                                ('browser-runner', 'run-affected-browser-checks.py' if selected_browser else 'run-browser-regressions.py', browser['source'].get('browserRunnerSHA256'))]:
+        helper = verified_helper_source(helper_directory / name, digest, label)
+        if helper:
+            payload[label] = helper
+    for label, value in payload.items():
+        content += evidence('Embedded evidence · ' + label, value)
+    content += '</section>'
+    css = 'body{font:16px/1.6 system-ui,sans-serif;margin:0;background:#edf2f6;color:#243447}main{max-width:1280px;margin:28px auto;padding:36px;background:white;border-radius:12px}h1,h2{color:#142d43;line-height:1.25}h1{font-size:36px}.eyebrow{font-weight:700;letter-spacing:.08em;font-size:12px}.lead{font-size:21px}.notice{background:#edf5fb;border-left:4px solid #37789f;padding:16px}section{margin-top:34px}.scroll{overflow:auto;border:1px solid #dbe4ec;border-radius:7px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid #dbe4ec}th{background:#edf2f7}tr:nth-child(even){background:#f8fafc}code,pre{overflow-wrap:anywhere;font-size:12px}pre{white-space:pre-wrap;padding:14px;background:#f0f4f8}details{margin:12px 0;border:1px solid #dbe4ec;border-radius:6px}summary{padding:12px;font-weight:650;cursor:pointer}svg{max-width:100%;height:auto}a{color:#145f8f}@media(max-width:700px){main{margin:0;padding:20px 14px}h1{font-size:29px}}'
+    output = args.output or directory / 'report.html'
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MUZIKAZ main release verification</title><style>' + css + '</style></head><body><main>' + content + '</main></body></html>')
+    print(output)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, required=True)
     parser.add_argument('--baseline', type=Path)
+    parser.add_argument('--release-summary', action='store_true',
+                        help='HTTP-only release summary bound to source-verified declared Node, static and browser checks; selected coverage stays explicit')
+    parser.add_argument('--historical-report', help='Separate historical full-matrix report link for release-summary mode')
+    parser.add_argument('--verification-resume', type=Path,
+                        help='Completed source-bound fixture-only checkpoint resume for release-summary mode')
     parser.add_argument('--supplement', '--supplement-http', dest='supplement_http', type=Path,
                         help='Separate completed HTTP file/directory; requires adjacent completed workflow.json')
     parser.add_argument('--regressions', type=Path, help='Completed regression results.json, reported separately from capacity qualification')
@@ -485,6 +866,16 @@ def main():
                         help='Separate instrumented recovery result; requires adjacent <stem>-provenance.json')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if args.release_summary:
+        if args.supplement_http or args.extended_regression or args.recovery_diagnostic or args.baseline:
+            parser.error('Release-summary mode does not merge historical experiment families or diagnostics')
+        try:
+            render_release_summary(args)
+        except ValueError as error:
+            parser.error(str(error))
+        return
+    if args.verification_resume:
+        parser.error('--verification-resume requires --release-summary')
     directory = args.directory.resolve()
     output = args.output or directory / 'report.html'
     current = {key: load(directory / (key + '.json')) for key in ('http', 'simulation', 'storage', 'admission', 'workflow')}

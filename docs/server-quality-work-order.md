@@ -1,6 +1,6 @@
 # Server quality and capacity work order
 
-Status: integrating the committed implementation with newer `main` changes before the requested main-branch push. The complete pre-integration pressure and regression results below belong to `99e5059e`; they do not qualify the combined source. Baseline source: `074c7a6e94ca0f57c887a0eacdcdfba79bd97ab4`. Implementation checkpoint: `15b1febe208369e9175bd093ce45d3f56f3945f0`. Runtime corrections: `76faf548` and `928afd02`. Expanded collision and snapshot changes: `7ff7fd19`, corrected by `99e5059e`. Source-bound reporting and this work order were committed in `10382d28`.
+Status: runtime fixes pushed to `main` in `7a1a203e`; current affected checks passed 19 selected files and 115 test cases, and all three build/static checks passed. Four of six sampled HTTP workloads and the checkpointed restart passed. Both current selected browser checks failed unresolved assertions. Capacity qualification remains partial. Earlier full runs remain attached to their original sources; they do not qualify the latest source. Baseline source: `074c7a6e94ca0f57c887a0eacdcdfba79bd97ab4`. Implementation checkpoint: `15b1febe208369e9175bd093ce45d3f56f3945f0`. Runtime corrections: `76faf548` and `928afd02`. Expanded collision and snapshot changes: `7ff7fd19`, corrected by `99e5059e`. Source-bound reporting and this work order were committed in `10382d28`.
 
 ## Problem and intended behavior
 
@@ -47,11 +47,46 @@ Baseline: `work/server-pressure/retest-20261027/report.html`. New profiles and c
 
 ### Integration with newer `main`
 
-The requested main-branch push requires integrating remote `main` at `39e03d73`, which contains newer changes to geometry, resident planning, startup, audio and controls. The merge preserves those changes alongside the storage, authentication, scheduling and snapshot work. Collision retains lazy static faces, bounded placed variants and nearby mesh selection. Active resources are released only after their final owning room expires; a new two-room lifecycle regression checks this boundary. The regenerated registry contains 470 assets with no broken paths.
+The main-branch push integrated remote `main` at `39e03d73`, which contained newer changes to geometry, resident planning, startup, audio and controls. The merge preserved those changes alongside the storage, authentication, scheduling and snapshot work. Collision retains lazy static faces, bounded placed variants and nearby mesh selection. Active resources are released only after their final owning room expires; a new two-room lifecycle regression checks this boundary. The regenerated registry contains 470 assets with no broken paths.
 
 Viewer-specific resident filtering runs before protocol-2 component memoization. Review also found that builder room responses could expose saved conversations through their raw simulation records. Gameplay and builder responses now apply the same audience projection, including persisted personal memories, with owner/outsider and anonymous API tests. Stored conversations and builder geometry remain intact.
 
-The recovery harness now captures balance, inventory and complete wallet receipts immediately before shutdown, compares exact saved state after restart, and records the earlier movement credits separately. This corrects the measurement boundary demonstrated below without altering historical artifacts. Integration tests and isolated browser verification must finish before the main-branch push. Capacity measurements on an earlier source remain historical evidence.
+The recovery harness now captures balance, inventory and complete wallet receipts immediately before shutdown, compares exact saved state after restart, and records the earlier movement credits separately. This corrects the measurement boundary demonstrated below without altering historical artifacts. The integration subsequently received the runtime fixes and selected verification described below. Capacity measurements on an earlier source remain historical evidence.
+
+### Latest affected source on `main` (`7a1a203e`)
+
+Detectable software WebGL adapters now select the existing performance path before creating the main renderer, including its context-time antialiasing choice. Detection is cached separately for each power preference and releases its temporary probe context. The local map checks its own low-power adapter and disables multisample antialiasing only when that adapter is identified as software. Hardware map settings and named quality presets retain their existing selection rules. Renderer identifiers can be masked by browser privacy settings; these changes do not establish hardware or mobile frame-rate capacity.
+
+Boat movement retains its three collision rays and exact placed-object raycast. It now prepares the actor exclusion map and native shot-collision view once within each synchronous blocked callback. The next callback refreshes membership and live poses. Custom collider overrides keep their original path, and a borrowed view cannot be used after its callback closes. This removes repeated preparation without reducing the number or changing the meaning of the collision tests.
+
+The current application/assets/helper manifest is `9fd5af512fbb660b45787c481365f5628ad0c8eb177be010d43b96ce001c11e9`. Source-bound affected verification passed all 19 selected Node files and 115 cases, with no failures, skipped or cancelled cases, timeouts, blocked network events or runtime changes. This includes 12 software-quality cases and 12 local-map cases on the final boat bytes. Evidence: `work/server-quality/current-main/affected-current/results.json`. The selection covers 19 of 649 available files (`executionScope: selected`, `complete: false`); it is not another full-suite run. It was captured before committing the same runtime bytes in `7a1a203e`.
+
+Fresh `build`, `check` and asset-registry checks all passed on these same runtime bytes, with no source changes (`work/server-quality/current-main/static-affected-release.json`). The unchanged transport-startup browser check failed its post-jump/ground-height assertion after 55.269 seconds. Its preceding input assertion passed: the look tap emitted no `jump:true` request. The final sampled local/server position was grounded at y≈0.22 with zero vertical velocity, matching a 0.20-high terminal floor plus the 0.02 walking gap. The fixture compares later heights against its pre-keyboard-jump baseline; this result does not prove that look input generated a jump. The assertion remains unresolved and is not relabeled as a pass.
+
+The originally planned world-input check then ran unchanged, without retrying transport, and failed after 44.664 seconds at the quest-selector movement-request assertion. It did not capture a qualifying forward POST during the 1.8-second press and 0.2-second release window. Position and focus assertions, and the later map controls, were not reached. Its traceback lacks queue, readiness and position samples, so it does not establish a runtime key-loss or focus defect. Both failures remain in `work/server-quality/current-main/browser-affected-current/results.json`, with unchanged fixture hashes and runtime. The earlier failed-only browser checkpoint and the continuation command are retained. No current map-interface pass is claimed.
+
+The completed HTTP follow-up retained 20-second workloads, 241 synthetic accounts, offered 20 Hz controls and all latency, delivery, presence, hydration and applicable frame-age gates. Its runtime source stayed unchanged. Four of the six attempted workloads passed:
+
+| Current sampled workload | Input response p95 | Offered inputs delivered by deadline | Result |
+| --- | ---: | ---: | --- |
+| Builder, 1 player | 15.458 ms | 99.500% | Pass; frame-age p95 45 ms |
+| Builder, 5 players | 47.125 ms | 95.452% | Pass; frame-age p95 47 ms |
+| Builder, 15 players | 247.192 ms | 35.567% | Fail |
+| Hockey, 10 players | 7.014 ms | 99.475% | Pass; native frame clock unmeasured |
+| Arcade, 2 players | 6.838 ms | 99.750% | Pass; native frame clock unmeasured |
+| Mixed activity, 30 players | 718.729 ms | 14.342% | Fail; frame-age p95 156 ms |
+
+The corrected checkpointed restart passed in 1,440.782 ms. Balance was 2,000 before movement, immediately before shutdown and after restart; inventory, complete wallet receipts, session, published map and saved position were preserved exactly. Movement credits were zero, so this run is a normal recovery proof. The earned-coin recovery case has not been repeated on this latest source; its `99e5059e` diagnostic remains historical only.
+
+Evidence: `work/server-quality/current-main/qualification-main-http/http.json` and `workflow.json`; the process finished in 167.014 seconds. Exit code 1 reflects the two failed gameplay gates, not a server crash. Portable current report: `work/server-quality/current-main/qualification-main-http/report.html`. Separate historical report: `work/server-quality/current-main/historical-99/report.html`.
+
+Construction recovery and live motion have earlier-source results only. This six-workload follow-up does not repeat the complete 17-workload, storage-growth, simulation or admission matrices. Untested environments and larger targets remain unqualified on current source, and no rendering-capacity pass is claimed.
+
+### Earlier combined-source verification (`4e61968f` / fixture corrections `6a9127d1`)
+
+The earlier full 647-file run and its seven fixture-only repairs are retained in `work/server-quality/current-main/regressions/results.json` and `work/server-quality/current-main/verification-resume.json`. After the source-bound resume, 645 files passed and two unchanged physics files retained their 270-second outer timeouts: `shipping-navigation.test.mjs` and `vehicle-auto-server.test.mjs`. The 645 complete TAP summaries report 3,668 passed cases and two optional skips; the timed-out files have no complete case totals. This was not a full correctness pass. The first complete Node command and the fixture-resume command both retain exit code 1.
+
+On that source, all three build/static commands passed. Only construction recovery passed among the four isolated browser checks; live motion, transport startup and world-input recovery failed. Those results motivated the software-rendering and collision-preparation work above and remain historical failures, not current passes. The full 45-world walking/jump/escape matrix did pass all 46 Node cases in 423.453 seconds on that earlier source. Capacity must be reported separately from those correctness checks.
 
 ### Pre-integration full pressure matrix on `99e5059e`
 
@@ -59,7 +94,7 @@ The final campaign ran sequentially from 18:52:38 to 19:06:29 UTC on October 28,
 
 Two of 17 gameplay workloads passed every applicable gate. These short local passes establish only the tested workloads; they do not establish consistent public capacity.
 
-| Current workload | Input response p95 | Offered inputs delivered by deadline | Result |
+| `99e5059e` workload | Input response p95 | Offered inputs delivered by deadline | Result |
 | --- | ---: | ---: | --- |
 | Builder, 1 player | 14.749 ms | 99.750% | Pass; frame-age p95 44 ms |
 | Builder, 5 players | 66.840 ms | 75.300% | Fail |
@@ -188,9 +223,13 @@ Further capacity work must address larger rooms and heavy environments, extend s
 
 | Next work item | Concrete completion check |
 | --- | --- |
-| Correct the recovery measurement boundary | Capture the authoritative balance, inventory and complete wallet receipts after movement and immediately before hard shutdown. Retain pre-movement balances and signed credits as diagnostics. Add a deterministic coin-collection case that passes only when the newly earned balance and every receipt survive restart; retain a real missing-balance/receipt failure. Keep historical raw campaign results unchanged. |
+| Validate the corrected recovery boundary on current runtime | The main harness now captures the authoritative balance, inventory and complete wallet receipts immediately before hard shutdown. The current normal restart passed. Add a deterministic earned-coin restart on current source, preserve exact receipts, and retain a real missing-balance/receipt failure. Keep historical raw campaign results unchanged. |
+| Resolve transport's ground-height assertion | Retain the passed no-jump-request check and failed height result. Capture stationary support height after the preceding keyboard jump, including local/server grounded state and the terminal floor plus walking gap, before interpreting later height deltas. Do not infer a look-generated jump from the current evidence. |
+| Resolve focused-selector movement sampling | Capture controlsReady, worldLoading, actual focus, in-flight input/queue state and position through the original key window. The current failure proves no qualifying POST was captured in that window; it does not prove physical key loss. Retain the assertion and its failed result while determining the readiness or queue boundary. |
+| Verify current map interaction | Current map coverage is constructor/policy unit coverage. Run the actual open, inspect, select and Close interactions on the current software-renderer path; the latest browser sequences failed before reaching those map actions. |
+| Close the two long boat/vehicle functional checks | `shipping-navigation.test.mjs` and `vehicle-auto-server.test.mjs` retain their earlier `4e61968f` 270-second outer timeouts. Repeat these unchanged assertions on current source with a declared appropriate correctness budget and retain both old and new outcomes. The smaller current affected checks do not replace either complete proof or change the HTTP timing gates. |
 | Stabilize five-player builder and two-player arcade delivery | Profile skipped slots and long event-loop pauses in both server and generator. Retain the failed samples, repeat longer isolated workloads, and meet latency, delivery, validity and presence gates consistently before calling these room sizes qualified. |
-| Explain native hockey delivery gaps | The current ten-player sample has 14.627 ms p95 response latency but only 67.275% offered-slot delivery: 1,299 skipped slots and ten issued inputs completed after the deadline. Maximum observed event-loop delay was 4,160.750 ms in the generator and 3,206.545 ms in the server; those observations do not establish their cause. Attribute missed slots to measured in-flight spans, scheduler gaps and process pauses; preserve the original denominator and repeat the unchanged workload. A native simulation clock is currently unmeasured, so do not label its frames fresh. |
+| Explain native hockey delivery gaps | The historical `99e5059e` ten-player sample had 14.627 ms p95 response latency but only 67.275% offered-slot delivery: 1,299 skipped slots and ten issued inputs completed after the deadline. Maximum observed event-loop delay was 4,160.750 ms in the generator and 3,206.545 ms in the server; those observations do not establish their cause. Attribute missed slots to measured in-flight spans, scheduler gaps and process pauses; preserve the original denominator and repeat the unchanged workload. A native simulation clock is currently unmeasured, so do not label its frames fresh. |
 | Profile the current 15-player builder path | Capture the final source and identify simulation, serialization, cloning, persistence and queue costs separately; rerun the unchanged 20-second/241-account workload and meet every HTTP gate. The earlier CPU profiles predate the final scheduled-input and directory changes. |
 | Reduce heavy-world stalls | Profile commons, airport and construction independently, preserving their NPCs, geometry and interactions. Start with resident route planning and clearance queries implicated by the diagnostic profile; validate any cached paths against changed geometry, live hull poses and the existing full-query oracle. Require fresh frames and maintained presence as well as low response latency. |
 | Increase concurrent room throughput | Re-run 30/60/120/240-player multi-room workloads with the same room sizes and input rate. Retain missed slots in the denominator and report incomplete or timed-out experiments. |
