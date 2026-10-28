@@ -107,6 +107,34 @@ try:
             assert 'Solo practice' in card.locator('.map-quest-world').inner_text()
             assert '100 practice score' in card.inner_text() and '100 world score' not in card.inner_text()
             assert not page.evaluate('blocked()')
+            # Entertainment maps offer quests through the existing launcher,
+            # keeping arrival clear while active and completed work stays visible.
+            for quiet_world in [
+                {'id':'muzikaz-casino','name':'Starlight Grand'},
+                {'id':'muzikaz-clown-funhouse','name':'Midnight Laughs'},
+                {'id':'custom-casino','name':'Custom Casino','game':'casino'},
+                {'id':'custom-funhouse','name':'Custom Funhouse','builderScene':{'sourceLayout':'clown-funhouse'}},
+            ]:
+                page.evaluate("next=>{delete snapshot.players.p.vehicleMission;environment=next;ui.update(snapshot,'p',environment);}", quiet_world)
+                assert not card.is_visible(), (quiet_world, 'Arrival must leave entertainment-map quests closed.')
+                assert launcher.is_visible() and launcher.get_attribute('aria-expanded') == 'false'
+                page.evaluate("for(let i=0;i<3;i++)ui.update(snapshot,'p',environment)")
+                assert not card.is_visible()
+                launcher.click()
+                assert card.get_by_role('heading', name='Local quests & challenges', exact=True).is_visible()
+                card.get_by_role('button', name='Close local quests', exact=True).click()
+                page.evaluate("""()=>{snapshot.players.p.vehicleMission={instanceId:'entertainment-quest',questId:'garden-tour',title:'Explore the floor',status:'active',ready:true,index:0,startedAt:10000,deadline:610000,reward:100,checkpoints:[{name:'Welcome host',x:2,y:0,z:0}]};ui.update(snapshot,'p',environment);}""")
+                assert not card.is_visible(), 'An active quest should keep its compact objective without reopening the card.'
+                objective = page.get_by_role('button', name='Open active quest', exact=True)
+                assert objective.is_visible()
+                objective.click()
+                assert card.get_by_role('heading', name='Explore the floor', exact=True).is_visible()
+                card.get_by_role('button', name='Close local quests', exact=True).click()
+                page.evaluate("snapshot.players.p.vehicleMission.status='completed';snapshot.players.p.vehicleMission.message='Complete · +100 score';ui.update(snapshot,'p',environment)")
+                assert card.get_by_role('heading', name='Challenge complete', exact=True).is_visible()
+                card.get_by_role('button', name='Close local quests', exact=True).click()
+                page.evaluate("ui.update(snapshot,'p',environment)")
+                assert not card.is_visible(), 'Completion feedback still appears once per entertainment-map assignment.'
             page.evaluate('ui.dispose();flow.dispose()')
             assert page.locator('.map-quest-prompts').count() == 0
             assert page.locator('.map-quest-launcher').count() == 0

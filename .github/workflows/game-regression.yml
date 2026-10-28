@@ -36,6 +36,7 @@ jobs:
           python test/construction-earth-crew.browser.py
           python test/game-display-flow.browser.py
           python test/action-bar-settings.browser.py
+          python test/venue-startup-controls.browser.py
           python test/one-row-game-controls.browser.py
           python test/construction-crew.browser.py
           python test/machine-walkup.browser.py
@@ -151,6 +152,7 @@ jobs:
           python test/fullscreen-panels.browser.py
           python test/game-display-flow.browser.py
           python test/action-bar-settings.browser.py
+          python test/venue-startup-controls.browser.py
           python test/local-map-resource-lifecycle.browser.py
           python test/login-map-controls.browser.py
           python test/sustained-world-controls.browser.py --fault stale-input

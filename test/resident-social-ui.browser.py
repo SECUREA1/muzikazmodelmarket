@@ -18,6 +18,9 @@ try:
         page.on('pageerror',lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/resident-contexts.html')
         page.wait_for_function('window.ready')
+        # The explorer theme gives stage buttons a display value. Hidden social
+        # actions must still stay out of greeting, invitation and visit prompts.
+        page.add_style_tag(content='.house-stage button{display:flex}')
         prompt=page.get_by_role('region',name='Resident invitation',exact=True)
         # Approaching a quiet, busy AI must expose Talk without waiting for a
         # greeting or opening People. Leaving the floor/range hides it again.
@@ -30,6 +33,7 @@ try:
         page.evaluate("state.players.me.position.x=8;ui.update(state,'me',world)")
         assert prompt.is_visible() and 'Talk to Maya Reed' in prompt.inner_text()
         assert prompt.get_by_role('button',name='Talk',exact=True).is_enabled()
+        assert prompt.locator('button:visible').all_text_contents()==['Talk','Not now']
         prompt.get_by_role('button',name='Talk',exact=True).click()
         page.wait_for_function("commands.at(-1)?.choice==='day'")
         assert page.locator('.world-resident-panel').is_visible()
@@ -83,6 +87,7 @@ try:
         assert page.locator('[data-resident-reply="resident-decline"]').is_visible()
         page.get_by_role('button',name='Close resident conversations',exact=True).click()
         assert prompt.get_by_role('button',name='Join',exact=True).is_enabled()
+        assert prompt.locator('button:visible').all_text_contents()==['Join','Something else','Not now']
         prompt.get_by_role('button',name='Something else',exact=True).click()
         page.wait_for_function("commands.at(-1)?.choice==='resident-other'")
         prompt.get_by_role('button',name='Join',exact=True).click()
@@ -93,6 +98,7 @@ try:
           ui.update(state,'me',world);
         }''')
         assert '20 m away' in prompt.inner_text()
+        assert prompt.locator('button:visible').all_text_contents()==['Confirm arrival','End visit']
         assert prompt.get_by_role('button',name='Confirm arrival',exact=True).is_disabled()
         page.evaluate("state.players.me.position.x=20;ui.update(state,'me',world)")
         assert prompt.get_by_role('button',name='Confirm arrival',exact=True).is_enabled()

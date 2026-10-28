@@ -3,7 +3,7 @@
 .house-stage .game-display-flow>.owned-placement-controls,.house-stage .game-display-flow>.basketball-hud,.house-stage .game-display-flow>.firing-range-hud,.house-stage .game-display-flow>.hockey-sports-bar,.house-stage .game-display-flow>.game-live-connection{position:static!important;inset:auto!important;transform:none!important;width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;pointer-events:auto}
 .house-stage .game-display-flow-actions{display:flex;align-items:flex-end;gap:8px;pointer-events:none}
 .house-stage .game-display-flow-actions>.nearby-gameplay-actions{position:static;inset:auto;flex:1 1 0;min-width:0;margin:0}
-.house-stage .game-display-flow-actions>.rad-tox-fire-trigger{position:static!important;inset:auto!important;transform:none!important;flex:0 0 64px;margin:0;pointer-events:auto}
+.house-stage .game-display-flow-actions>.rad-tox-fire-trigger{position:static!important;inset:auto!important;transform:none!important;order:2;flex:0 0 64px;margin:0;pointer-events:auto}
 .house-stage .game-display-flow [hidden]{display:none!important}
 
 /* Sports controls grow upward from the footer; no floating button offsets. */
@@ -62,10 +62,24 @@
 .house-stage .game-display-flow-views .live-local-map [data-body]{position:absolute;top:52px;right:0;width:175px;max-height:none;border:1px solid #799b99;border-radius:10px;background:#102b30ed;overflow:hidden;pointer-events:auto}
 .house-stage .game-display-flow-views .live-local-map [data-body][hidden]{display:none!important}
 
+/* Venue controls use the same row instead of floating over the scene. */
+.house-stage .game-display-flow-actions>.game-nearby-prompt{position:static!important;inset:auto!important;transform:none!important;display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;width:auto!important;max-width:100%;min-height:48px;box-sizing:border-box;margin:0;padding:8px 10px;border:1px solid #799b89;border-radius:12px;background:#10231cf5;color:#efffd7;box-shadow:none;text-align:left;pointer-events:auto;touch-action:manipulation}
+.game-display-flow-actions .game-nearby-prompt__key{display:grid;place-items:center;flex:0 0 24px;width:24px;height:28px;padding:0;border:1px solid #799b89;border-radius:5px;font:700 12px system-ui}
+.game-display-flow-actions .game-nearby-prompt__copy{min-width:0}
+.game-display-flow-actions .game-nearby-prompt strong{display:block;color:inherit;font:750 11px/1.3 system-ui;letter-spacing:normal;white-space:normal;overflow-wrap:anywhere}
+.game-display-flow-actions .game-nearby-prompt small{display:block;margin:2px 0 0;color:#b9cbb8;font:500 10px/1.3 system-ui;letter-spacing:normal}
+.house-stage .game-view-overflow>.funhouse-audio-toggle{position:static;inset:auto;transform:none;box-sizing:border-box;min-width:44px;width:44px!important;height:44px;min-height:44px;margin:0;padding:6px;border:1px solid #88a996;border-radius:9px;background:#112c30ed;color:#effff5;box-shadow:none;font:700 22px system-ui}
+.house-stage:has(>.game-display-flow)>.funhouse-audio-popover{top:60px;right:8px;bottom:auto;max-height:calc(100% - 76px);height:auto}
+.house-stage .game-display-flow>.funhouse-passport-hud,.house-stage .game-display-flow>.funhouse-experience-hud,.house-stage .game-display-flow>.funhouse-adventure-hud{position:static!important;inset:auto!important;transform:none!important;width:auto;max-width:100%;margin:0;box-sizing:border-box}
+.house-stage .game-display-flow>.funhouse-passport-hud{align-self:flex-end;gap:6px;padding:5px 9px;border-color:#799b8966;background:#10231cde}
+.house-stage .game-display-flow>.funhouse-passport-hud .funhouse-stamp{display:none}
+.house-stage .game-display-flow>.funhouse-passport-hud>b{max-width:none;margin:0;font:700 8px system-ui;letter-spacing:.05em;color:#b9cbb8}
+.house-stage .game-display-flow>.funhouse-passport-hud small{font:700 11px system-ui;color:#efffd7}
+
 /* Settings can remove the bars completely while live scores keep updating. */
 .house-stage.player-hide-action-bars .game-display-flow-views>:not(.game-viewport-toggle),
 .house-stage.player-hide-action-bars .game-viewport-toggle:not([aria-pressed=true]),
-.house-stage.player-hide-action-bars .game-display-flow>:not(.basketball-hud,.hockey-sports-bar,.shipping-hud),
+.house-stage.player-hide-action-bars .game-display-flow>:not(.basketball-hud,.hockey-sports-bar,.shipping-hud,.funhouse-passport-hud,.funhouse-experience-hud,.funhouse-adventure-hud),
 .house-stage.player-hide-action-bars .sports-action-modes,
 .house-stage.player-hide-action-bars .sports-action-tools,
 .house-stage.player-hide-action-bars .sports-action-header button,
@@ -78,6 +92,13 @@
 .house-stage.player-hide-action-bars .basketball-controls,
 .house-stage.player-hide-action-bars .fitness-nearby,
 .house-stage.player-hide-action-bars .resident-visitor-prompt,
+.house-stage.player-hide-action-bars .funhouse-audio-popover,
+.house-stage.player-hide-action-bars .funhouse-experience-hud button,
+.house-stage.player-hide-action-bars .funhouse-experience-hud [data-funhouse-experience-actions],
+.house-stage.player-hide-action-bars .funhouse-experience-hud [data-funhouse-experience-message],
+.house-stage.player-hide-action-bars .funhouse-experience-hud .funhouse-experience-help,
+.house-stage.player-hide-action-bars .funhouse-adventure-hud button,
+.house-stage.player-hide-action-bars .funhouse-adventure-hud [data-funhouse-adventure-hint],
 .house-stage.player-hide-action-bars .range-ops-button,
 .house-stage.player-hide-action-bars .building-adjust-button,
 .house-stage.player-hide-action-bars .rad-tox-hud>[data-rad-row]:not([data-rad-row=targets]),
@@ -89,6 +110,7 @@
 .house-stage.player-hide-action-bars [data-rad-tox-count]{white-space:normal}
 .house-stage.player-hide-action-bars .sports-action-header:empty{display:none!important}
 .house-stage.player-hide-action-bars .sports-action-bar{gap:0;padding:0;border:0;background:none}
+.house-stage.player-hide-action-bars .funhouse-adventure-hud [data-funhouse-adventure-details]{display:block!important}
 
 /* Reuse Settings as a floating shortcut, including inside fullscreen. The
    dock row takes no space; the existing movement/look sticks remain usable. */
