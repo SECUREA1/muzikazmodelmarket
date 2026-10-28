@@ -14,10 +14,7 @@ import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import { replaceServerStreets } from './server-streets.js';
 import { createBuilderLand } from './builder-land.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
-import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../../vendor/three/addons/loaders/DRACOLoader.js';
-import { KTX2Loader } from '../../vendor/three/addons/loaders/KTX2Loader.js';
-import { MeshoptDecoder } from '../../vendor/three/addons/libs/meshopt_decoder.module.js';
+import {createGameModelLoader,loadGameModel,disposeGameModel} from '../game-model-loader.js';
 import { Octree } from '../../vendor/three/addons/math/Octree.js';
 import { applyWorldQuality } from './environment-quality.js';
 import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
@@ -26,33 +23,34 @@ export class EnvironmentLoader {
   constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false, localCollision = false }) {
     this.serverAuthoritative=serverAuthoritative;this.localCollision=localCollision;this.camera=camera;
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
-    this.loader = new GLTFLoader();
-    const draco = new DRACOLoader(); draco.setDecoderPath('/public/vendor/three/addons/libs/draco/gltf/'); this.loader.setDRACOLoader(draco);
-    const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('/public/vendor/three/addons/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
-    this.loader.setMeshoptDecoder(MeshoptDecoder);
+    this.loader = createGameModelLoader(renderer); this.pendingLoads = new Set();
   }
   disposeMaterial(material,materials=new Set(),textures=new Set()) { if(!material||materials.has(material))return;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose?.(); }
 
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
   refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isWorldItemFactoryEnvironment(this.activeEnvironment)&&!isTropicalIslandEnvironment(this.activeEnvironment)&&!isPrisonEnvironment(this.activeEnvironment)&&!isProvingEnvironment(this.activeEnvironment)&&!isCompoundEnvironment(this.activeEnvironment)&&!isFactoryEnvironment(this.activeEnvironment)&&!isCleanCommonsEnvironment(this.activeEnvironment)&&!this.activeEnvironment?.airport?.enabled&&!this.activeEnvironment?.builderScene?.layoutMeta?.harbor&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
   updateEffects(elapsed, reducedMotion=false,serverTime=Date.now()) { this.floorSlime?.update(elapsed,reducedMotion);this.world?.userData.updateIslandEffects?.(elapsed,reducedMotion,serverTime); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion);this.world?.userData.updateHarborEffects?.(elapsed,reducedMotion);this.world?.userData.updateCasinoEffects?.(elapsed,reducedMotion);this.world?.userData.updateFunhouseEffects?.(elapsed,reducedMotion,serverTime);this.world?.userData.updateFactoryEffects?.(elapsed,reducedMotion);this.world?.userData.updateTestingEffects?.(elapsed,reducedMotion,serverTime); this.world?.userData.updatePrisonEffects?.(elapsed,reducedMotion); }
-  unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1;this.clearFloorEffects();if(this.world){this.scene.remove(this.world);this.disposeWorld(this.world,this.mixers);}else this.mixers.forEach(m=>m.stopAllAction());this.mixers=[];this.meshes=[];this.collisionMeshes=[];this.floorMeshes=[];this.supplementalCollisionRoots=[];this.world=null;this.octree=new Octree();this.localCollisionReady=false;this.renderer.renderLists?.dispose?.(); }
+  cancelPendingLoads() { for(const controller of this.pendingLoads)controller.abort(); this.pendingLoads.clear(); }
+  unload({cancelPending=true} = {}) { if(cancelPending){this.token+=1;this.cancelPendingLoads();}this.clearFloorEffects();if(this.world){this.scene.remove(this.world);this.disposeWorld(this.world,this.mixers);}else this.mixers.forEach(m=>m.stopAllAction());this.mixers=[];this.meshes=[];this.collisionMeshes=[];this.floorMeshes=[];this.supplementalCollisionRoots=[];this.world=null;this.octree=new Octree();this.localCollisionReady=false;this.renderer.renderLists?.dispose?.(); }
 
-  async loadOne(url, index, count) {
+  async loadOne(url, index, count, token=this.token) {
     let lastError;
     for (let attempt=0; attempt<2; attempt+=1) {
+      if(token!==this.token)throw new DOMException('World loading was cancelled.','AbortError');
+      const controller=new AbortController();this.pendingLoads.add(controller);let timedOut=false;
+      const timer=setTimeout(()=>{timedOut=true;controller.abort();},30000);
       try {
-        return await new Promise((resolve,reject)=>{
-          let settled=false;
-          const timer=setTimeout(()=>{settled=true;reject(new Error('Map asset request timed out: '+url));},30000);
-          this.loader.load(url,gltf=>{
-            if(settled){if(gltf.scene)this.disposeWorld(gltf.scene);return;}
-            settled=true;clearTimeout(timer);resolve(gltf);
-          },event=>{if(!settled)this.onProgress(((index+(event.total?event.loaded/event.total:.35))/count)*100);},error=>{
-            if(settled)return;settled=true;clearTimeout(timer);reject(error);
-          });
-        });
-      } catch(error){lastError=error;}
+        // Settle the aborted transport before retrying to avoid duplicate
+        // downloads. The shared loader discards late decoder-worker results.
+        const gltf=await loadGameModel(this.loader,url,{signal:controller.signal,onProgress:event=>{
+          if(!controller.signal.aborted&&token===this.token)this.onProgress(((index+(event.total?event.loaded/event.total:.35))/count)*100);
+        }});
+        if(controller.signal.aborted||token!==this.token){disposeGameModel(gltf);throw new DOMException('World loading was cancelled.','AbortError');}
+        return gltf;
+      } catch(error){
+        if(token!==this.token||controller.signal.aborted&&!timedOut)throw error;
+        lastError=timedOut?new Error('Map asset request timed out: '+url,{cause:error}):error;
+      } finally {clearTimeout(timer);this.pendingLoads.delete(controller);}
     }
     throw lastError;
   }
@@ -87,6 +85,7 @@ export class EnvironmentLoader {
   }
 
   async load(environment) {
+    this.cancelPendingLoads();
     const base=builderBaseEnvironment(environment);if(base)environment={...base,...environment,modelUrl:base.modelUrl,modelUrls:base.modelUrls,scale:base.scale,spaceScale:base.spaceScale,rotation:base.rotation,playableSize:base.playableSize,spawn:builderBaseSpawn(environment)};
     const token = ++this.token; const builderLand = Boolean(!base&&(environment.builderScene || environment.proceduralLand)); const urls = builderLand ? [] : (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl].filter(Boolean));
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; const baseScale = Number(environment.scale) || 1; let spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = baseScale; nextWorld.scale.setScalar(baseScale * spaceScale); nextWorld.rotation.set(environment.rotation?.x || 0, environment.rotation?.y || 0, environment.rotation?.z || 0);
@@ -97,7 +96,7 @@ export class EnvironmentLoader {
 
       else if (!urls.length) throw new Error('This environment has neither a 3D model nor a playable builder land definition.');
       for (let i = 0; i < urls.length; i += 1) {
-        const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) { nextWorld.add(gltf.scene); this.disposeWorld(nextWorld,nextMixers); return null; }
+        const gltf = await this.loadOne(urls[i], i, urls.length, token); if (token !== this.token) { nextWorld.add(gltf.scene); this.disposeWorld(nextWorld,nextMixers); return null; }
         gltf.scene.name = `GLB_${environment.id}_${i + 1}`; nextWorld.add(gltf.scene);
         if (gltf.animations?.length) { const mixer = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach((clip) => mixer.clipAction(clip).play()); nextMixers.push(mixer); }
       }

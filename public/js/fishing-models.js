@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createHarborBoat,HARBOR_HELM_POSES} from './harbor-models.js';
 import {FISHING_GEAR} from './fishing-config.js';
@@ -70,5 +71,5 @@ export function createFishingBoat(){
  const net=createFishingGear('fishing-net');net.position.set(-.75,.39,1.33);net.rotation.x=Math.PI/2;net.rotation.z=Math.PI/2;details.add(net);cosmetic(details);
  // Rod tips remain render-only and cannot enlarge the vessel's collision hull.
  for(const rod of rods)rod.traverse(node=>{node.userData.collisionDisabled=true;node.userData.collider=false;});
- const fishingRig={rods,tips,flexJoints:rods.map(rod=>Array.from({length:8},(_,i)=>rod.getObjectByName('ROD_FLEX_'+i))),rotors:rods.map(rod=>rod.getObjectByName('SPINNING_REEL_ROTOR')),cranks:rods.map(rod=>rod.getObjectByName('REEL_CRANK_ASSEMBLY'))};root.userData={...launch.userData,modelId:'harbor-fishing-boat',dimensions:[2.7,2.7,6.3],helmPose:HARBOR_HELM_POSES['harbor-fishing-boat'],fishingRig,boatRig:{...launch.userData.boatRig,fishingRig},vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES['harbor-fishing-boat'].position],speed:8,turnSpeed:.7}};return root;
+ const fishingRig={rods,tips,flexJoints:rods.map(rod=>Array.from({length:8},(_,i)=>rod.getObjectByName('ROD_FLEX_'+i))),rotors:rods.map(rod=>rod.getObjectByName('SPINNING_REEL_ROTOR')),cranks:rods.map(rod=>rod.getObjectByName('REEL_CRANK_ASSEMBLY'))};root.userData={...launch.userData,modelId:'harbor-fishing-boat',dimensions:[2.7,2.7,6.3],helmPose:HARBOR_HELM_POSES['harbor-fishing-boat'],fishingRig,boatRig:{...launch.userData.boatRig,fishingRig},vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES['harbor-fishing-boat'].position],speed:8,turnSpeed:.7}};return finishVehicleDesign(THREE,root,'harbor-fishing-boat');
 }

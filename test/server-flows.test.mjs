@@ -167,7 +167,7 @@ test('the VibeVerse multiplayer client uses server-confirmed sessions without a 
   ]);
   assert.doesNotMatch(source, /apiFetch\('\/api\/account\/bootstrap'/);
   assert.doesNotMatch(source, /localStorage\.getItem\('muzikazBottleMember'\)/, 'local flags cannot authenticate multiplayer');
-  assert.match(source, /apiFetch\('\/api\/market\/session'/, 'voice requests obtain the authenticated session proof');
+  assert.match(source, /roomFetch\('\/api\/market\/session'/, 'voice requests obtain the authenticated session proof after the room is ready');
   assert.match(source, /'X-User-Name': username/);
   assert.doesNotMatch(page, /data-multiplayer-control disabled/);
   assert.doesNotMatch(page, /id="multiplayer-paywall"/);

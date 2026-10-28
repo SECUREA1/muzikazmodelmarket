@@ -33,7 +33,8 @@ test('every supported device, sports item and arcade assembly receives bounded v
   const root=create(id);
   try{
    finishGameItem(THREE,root);
-   const placement=transform(root),before=new THREE.Box3().setFromObject(root,true);
+   const placement=transform(root),before=new THREE.Box3().setFromObject(root,true),existingDetails=new Set();
+   root.traverse(node=>{if(node.userData.nativeDesignDetail)existingDetails.add(node);});
    finishDeviceDesign(THREE,root,id);finishGameItem(THREE,root);
    assert.equal(root.userData.deviceDesignFinish,DEVICE_DESIGN_VERSION,id);
    assert.ok(root.userData.deviceDesignDetails>0,id+' receives actual detailing');
@@ -43,7 +44,7 @@ test('every supported device, sports item and arcade assembly receives bounded v
     if(!node.isMesh)return;meshes++;
     triangles+=(node.geometry.index?.count||node.geometry.attributes.position.count)/3*(node.isInstancedMesh?node.count:1);
     assert.ok([...node.geometry.attributes.position.array].every(Number.isFinite),id+' finite geometry');
-    if(node.userData.nativeDesignDetail){details++;assert.equal(node.userData.collisionDisabled,true);assert.equal(node.userData.builderRoot,root);assert.equal(node.isLight,undefined);}
+    if(node.userData.nativeDesignDetail){if(!existingDetails.has(node))details++;assert.equal(node.userData.collisionDisabled,true);assert.equal(node.userData.builderRoot,root);assert.equal(node.isLight,undefined);}
    });
    assert.ok(details>0&&details<=3,id+' bounds added draw calls');
    if(INTERACTIVE_DEVICES[id]){assert.ok(meshes<=32,id+' keeps the cabinet mesh budget');assert.ok(triangles<=6000,id+' keeps the cabinet triangle budget');}

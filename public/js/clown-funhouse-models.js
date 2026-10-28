@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {FUNHOUSE_ITEMS,FUNHOUSE_MODEL_INFO} from './clown-funhouse-items.js';
 import {createClownFunhouseLand} from './environments/clown-funhouse-land.js';
@@ -58,7 +59,7 @@ export function createFunhouseModel(id){
  root.userData.funhouseBallTargets=content.userData.funhouseBallTargets||[];
  root.userData.funhouseTargets=(content.userData.funhouseTargets||[]).map(target=>({...target,position:{x:target.position.x-origin[0],y:target.position.y-origin[1],z:target.position.z-origin[2]}}));
  root.traverse(node=>{if(node.isMesh){node.userData.builderRoot=root;node.receiveShadow=true;}});
- return root;
+ return finishVehicleDesign(THREE,root,id);
 }
 
 export function updateFunhouseModel(root,elapsed,reducedMotion=false){

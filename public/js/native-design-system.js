@@ -5,6 +5,8 @@ import {supportsTransportDesign,finishTransportDesign} from './transport-design-
 import {supportsArchitectureDesign,finishArchitectureDesign} from './architecture-design-finish.js';
 import {supportsDeviceDesign,finishDeviceDesign} from './device-design-finish.js';
 import {finishWorldPropDesign} from './world-prop-design-finish.js';
+import {finishVehicleDesign} from './vehicle-design-system.js';
+import {MOUNTAIN_DESIGN_VERSION,isCraftedMountainModel} from './mountain-design-profile.js';
 
 export {NATIVE_DESIGN_VERSION};
 const craftedFlags=['portalModel','commonPropModel','equipmentPropModel','craftedLandscapeModel','craftedCharacterModel','craftedBuildingModel','craftedFurnitureModel'];
@@ -17,6 +19,7 @@ export function finishNativeDesign(T,root,id){
  else if(supportsArchitectureDesign(id)){family='architecture';finishArchitectureDesign(T,root,id);}
  else if(supportsDeviceDesign(id)){family='devices-sports';finishDeviceDesign(T,root,id);}
  else finishWorldPropDesign(T,root,id);
+ finishVehicleDesign(T,root,id);
  const geometries=new Set();root.traverse(node=>{if(node.isMesh&&node.geometry)geometries.add(node.geometry);});
  // Construction geometry is also the authoritative walkable surface. Keep its
  // original faces, treads and uninterrupted slab edges; the material factory
@@ -34,5 +37,6 @@ export function finishNativeDesign(T,root,id){
  });
  root.userData.builderObject=true;root.userData.modelId=id;
  root.userData.nativeDesign={version:NATIVE_DESIGN_VERSION,id,family,materialCount:materials.size,texturedMaterialCount:texturedMaterials.size,geometryCount,detailCount,meshCount};
+ if(isCraftedMountainModel(id))root.userData.mountainDesign={version:MOUNTAIN_DESIGN_VERSION,id,meshCount,texturedMaterialCount:texturedMaterials.size};
  return root;
 }

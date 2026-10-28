@@ -23,6 +23,7 @@ import {createServerStreets} from './server-streets.js';
 import {createBasketballStadium} from '../basketball-stadium.js';
 import {constructionCutoutPatches,createConstructionBaseGeometry} from '../construction-terrain.js';
 import {finishNativeWorldDesign} from './native-world-design-finish.js';
+import {finishMountainTerrainDesign} from '../mountain-terrain-design.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
@@ -91,5 +92,5 @@ function createProceduralBuilderLand(environment) {
     if(!root.userData.firingRange&&!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     applyBuilderBaseTransform(root,built.baseTransform);
 
-    return root;
+    return layout==='mountain-pass'?finishMountainTerrainDesign(THREE,root,{ridgeNames:['BUILDER_TEMPLATE_mountain-pass']}):root;
   }

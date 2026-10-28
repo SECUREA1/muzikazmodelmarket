@@ -18,7 +18,7 @@ try:
    page.route('**/api/**',lambda r:r.fulfill(json={'data':{'models':[],'assets':[],'ownedAssets':[]},'models':[],'assets':[],'ownedAssets':[]}))
    page.route('https://**/*',lambda r:r.abort())
    # Limit software WebGL rendering; these checks exercise controls, not frame rate.
-   page.add_init_script("const originalRAF=requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>callback.name==='animate'?setTimeout(()=>callback(performance.now()),150):originalRAF(callback)")
+   page.add_init_script("const originalRAF=requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>callback.name==='animate'?setTimeout(()=>callback(performance.now()),1000):originalRAF(callback)")
    page.goto(base+'/environment-builder.html')
    page.wait_for_timeout(1200)
    assert not errors,(errors,page.evaluate('window.panelErrors'))

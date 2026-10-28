@@ -23,10 +23,16 @@ const serviceName=/BODY|COWLING|COWL|ENGINE|ACCOMMODATION|CONSOLE|PEDESTAL|FUNNE
  * change, and the original precise bounds contain every new cosmetic surface.
  */
 export function finishTransportDesign(THREE,root,id){
- if(!root||!supported.has(id)||root.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION)return root;
+ if(!root||!supported.has(id)||root.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION&&root.userData.transportDesign?.id===id)return root;
  root.updateMatrixWorld(true);
  const bounds=new THREE.Box3().setFromObject(root,true),source=[];
- root.traverse(node=>{if(!node.userData.nativeDesignDetail)source.push(node);});
+ root.traverse(node=>{
+  if(node.userData.nativeDesignDetail)return;
+  // A patrol or fishing launch can wrap an already-finished skiff. Finish the
+  // new outer assembly without repeating hardware on its original child hull.
+  for(let parent=node.parent;parent&&parent!==root;parent=parent.parent)if(parent.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION)return;
+  source.push(node);
+ });
  const metal=new THREE.MeshStandardMaterial({name:'CRAFTED_TRANSPORT_BRUSHED_ALLOY',color:0x9caeb5,roughness:.36,metalness:.78});
  const graphite=new THREE.MeshStandardMaterial({name:'CRAFTED_TRANSPORT_GRAPHITE_FASTENER',color:0x26353e,roughness:.48,metalness:.66});
  const materialCopies=new Map();let details=0,finishedMaterials=0;

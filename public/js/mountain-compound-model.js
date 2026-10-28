@@ -1,5 +1,6 @@
 import * as T from '../vendor/three/three.module.min.js';
 import {createTestingModel,updateTestingModel} from './factory-testing-props.js';
+import {finishMountainTerrainDesign} from './mountain-terrain-design.js';
 
 /** Cutaway underground power facility. The live room owns every access decision. */
 export function createMountainCompoundLand(environment={}){
@@ -147,5 +148,5 @@ export function createMountainCompoundLand(environment={}){
   core?.userData.updateTestingEffects?.(time,reducedMotion);
   if(core)updateTestingModel(core,time);
  };
- root.userData.setFactoryTestingState=root.userData.setTestingState;root.userData.updateFactoryTestingEffects=root.userData.updateTestingEffects;root.userData.setTestingState({});root.userData.updateTestingEffects(0,true);return root;
+ root.userData.setFactoryTestingState=root.userData.setTestingState;root.userData.updateFactoryTestingEffects=root.userData.updateTestingEffects;root.userData.setTestingState({});root.userData.updateTestingEffects(0,true);return finishMountainTerrainDesign(T,root,{rockNames:['COMPOUND_MOUNTAIN_ROCK_FACE','COMPOUND_BACK_ROCK_CUT']});
 }

@@ -25,7 +25,7 @@ export function disposeNativeAuditModel(root){
 
 export function nativeRenderStats(root){
  let meshes=0,lights=0,vertices=0,triangles=0,screen=0,details=0,texturedSurfaces=0,colouredSurfaces=0;
- const surfaces=[];
+ let nativeTexturedMeshes=0,missingNativeUVs=0,invalidNativeUVs=0;const surfaces=[];
  root.traverse(node=>{
   if(node.isLight)lights++;
   if(!node.isMesh)return;
@@ -36,13 +36,19 @@ export function nativeRenderStats(root){
   if(node.userData.mediaScreen)screen++;
   if(node.userData.nativeDesignDetail)details++;
   if(node.geometry?.attributes.color)colouredSurfaces++;
+  const nativeMapped=[].concat(node.material||[]).some(material=>material?.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION&&(material.map||material.roughnessMap||material.bumpMap||material.normalMap));
+  if(!node.userData.collisionOnly&&nativeMapped){
+   nativeTexturedMeshes++;const uv=node.geometry?.getAttribute('uv');
+   if(!uv)missingNativeUVs++;
+   else if(uv.count!==position?.count||!uv.array.every(Number.isFinite))invalidNativeUVs++;
+  }
   for(const material of [].concat(node.material||[])){
    if(!node.userData.mediaScreen&&!node.userData.collisionOnly&&(material.map||material.bumpMap||material.normalMap||material.roughnessMap))texturedSurfaces++;
    surfaces.push({name:material.name,color:material.color?.getHex(),roughness:material.roughness,metalness:material.metalness,map:Boolean(material.map),bumpMap:Boolean(material.bumpMap),normalMap:Boolean(material.normalMap),vertexColors:Boolean(material.vertexColors)});
   }
  });
  const bounds=new THREE.Box3().setFromObject(root);
- return {meshes,lights,vertices,triangles,screen,details,texturedSurfaces,colouredSurfaces,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},rootTransform:[...root.position,...root.quaternion,...root.scale],surfaces};
+ return {meshes,lights,vertices,triangles,screen,details,texturedSurfaces,colouredSurfaces,nativeTexturedMeshes,missingNativeUVs,invalidNativeUVs,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},rootTransform:[...root.position,...root.quaternion,...root.scale],surfaces};
 }
 
 function canonicalCompatibility(item){
@@ -56,7 +62,7 @@ export async function auditNativeDesigns({baselinePath,ids,checkThumbnails=false
  const baseline=baselinePath?JSON.parse(await readFile(baselinePath,'utf8')):null;
  const previous=new Map((baseline?.records||[]).map(record=>[record.id,record]));
  const definitions=Object.values(NATIVE_BUILDER_ITEMS).filter(item=>!ids||ids.includes(item.id));
- const failures=[],items=[],families={};
+ const failures=[],items=[],families={},packs={};
  for(const item of definitions){
   let root;
   const fail=(code,message)=>failures.push({id:item.id,code,message});
@@ -70,6 +76,7 @@ export async function auditNativeDesigns({baselinePath,ids,checkThumbnails=false
    const family=design?.family||'unclassified';families[family]=(families[family]||0)+1;
    if(stats.meshes<1||stats.vertices<3)fail('EMPTY_GEOMETRY','The renderer produced no drawable model.');
    if(!stats.texturedSurfaces&&!stats.colouredSurfaces&&!stats.details)fail('MISSING_RENDER_FINISH','The design has no textured surfaces, vertex surface work or authored detail geometry.');
+   if(stats.missingNativeUVs||stats.invalidNativeUVs)fail('INVALID_SURFACE_COORDINATES','Native texture maps require a finite UV pair for every rendered vertex.');
    if(![...stats.bounds.min,...stats.bounds.max,...stats.rootTransform].every(Number.isFinite))fail('INVALID_BOUNDS','The model contains non-finite bounds or transforms.');
    if(stats.lights!==0)fail('PER_ITEM_LIGHTS','The native design adds item lights instead of using shared world lighting.');
    let invalidVertices=false;
@@ -85,7 +92,8 @@ export async function auditNativeDesigns({baselinePath,ids,checkThumbnails=false
      if(!changed)fail('NO_VISIBLE_CHANGE','The new finish changed no render geometry or material properties.');
     }
    }
-   items.push({id:item.id,family,version:design?.version,meshes:stats.meshes,triangles:stats.triangles,details:stats.details,texturedSurfaces:stats.texturedSurfaces,colouredSurfaces:stats.colouredSurfaces});
+   const pack=item.category||item.type||'props';packs[pack]=(packs[pack]||0)+1;
+   items.push({id:item.id,pack,family,version:design?.version,meshes:stats.meshes,triangles:stats.triangles,details:stats.details,texturedSurfaces:stats.texturedSurfaces,colouredSurfaces:stats.colouredSurfaces,nativeTexturedMeshes:stats.nativeTexturedMeshes,missingNativeUVs:stats.missingNativeUVs,invalidNativeUVs:stats.invalidNativeUVs});
   }catch(error){fail('RENDER_FAILED',error.message);}
   finally{disposeNativeAuditModel(root);}
  }
@@ -102,12 +110,13 @@ export async function auditNativeDesigns({baselinePath,ids,checkThumbnails=false
   if(kind==='map-template'&&design?.layout!==id.slice(7))failSupplement(id,'INCORRECT_TEMPLATE_ID','The native world changed its source layout identity.');
   if(stats.meshes<1||stats.vertices<3)failSupplement(id,'EMPTY_SUPPLEMENTARY_GEOMETRY','The native '+kind+' has no drawable geometry.');
   if(!stats.texturedSurfaces)failSupplement(id,'MISSING_SUPPLEMENTARY_SURFACES','The '+kind+' has no actual textured native surfaces.');
+  if(stats.missingNativeUVs||stats.invalidNativeUVs)failSupplement(id,'INVALID_SUPPLEMENTARY_SURFACE_COORDINATES','The '+kind+' texture maps require finite coordinates for every rendered vertex.');
   if(![...stats.bounds.min,...stats.bounds.max,...stats.rootTransform].every(Number.isFinite))failSupplement(id,'INVALID_SUPPLEMENTARY_BOUNDS','The '+kind+' has non-finite bounds or transforms.');
   let invalidVertices=false;root.traverse(node=>{const positions=node.geometry?.attributes.position?.array;if(positions&&!invalidVertices)for(const value of positions)if(!Number.isFinite(value)){invalidVertices=true;break;}});
   if(invalidVertices)failSupplement(id,'INVALID_SUPPLEMENTARY_VERTICES','The '+kind+' contains non-finite geometry.');
   if(kind==='held-tool'&&stats.lights)failSupplement(id,'PER_TOOL_LIGHTS','Held gear must use shared scene lighting.');
   uniqueDesigns.add(id);
-  return {id,version:design?.version,meshes:stats.meshes,triangles:stats.triangles,texturedSurfaces:stats.texturedSurfaces,details:stats.details};
+  return {id,version:design?.version,meshes:stats.meshes,triangles:stats.triangles,texturedSurfaces:stats.texturedSurfaces,details:stats.details,nativeTexturedMeshes:stats.nativeTexturedMeshes,missingNativeUVs:stats.missingNativeUVs,invalidNativeUVs:stats.invalidNativeUVs};
  };
  if(includeSupplementary){
   for(const id of HELD_TOOL_DESIGN_IDS){
@@ -132,7 +141,7 @@ export async function auditNativeDesigns({baselinePath,ids,checkThumbnails=false
   const url=nativeDesignThumbnail(id);try{await access(new URL('../'+url.replace(/^\//,''),import.meta.url));}
   catch{failSupplement(id,'MISSING_THUMBNAIL','The current native design thumbnail is missing: '+url);}
  }
- return {version:NATIVE_DESIGN_VERSION,counts:{catalog:definitions.length,rendered:items.length,materials:definitions.filter(item=>item.id.startsWith('material:')).length,baselineCompared:definitions.filter(item=>previous.has(item.id)).length,families,heldTools:supplementary.heldTools.length,templateLayouts:supplementary.templateLayouts.length,nativeOffers:offers.length,uniqueDesigns:uniqueDesigns.size,nativeOfferAliases:includeSupplementary?offers.length-uniqueDesigns.size:0},failures,items,supplementary,offers};
+ return {version:NATIVE_DESIGN_VERSION,counts:{catalog:definitions.length,rendered:items.length,materials:definitions.filter(item=>item.id.startsWith('material:')).length,baselineCompared:definitions.filter(item=>previous.has(item.id)).length,families,packs,heldTools:supplementary.heldTools.length,templateLayouts:supplementary.templateLayouts.length,nativeOffers:offers.length,uniqueDesigns:uniqueDesigns.size,nativeOfferAliases:includeSupplementary?offers.length-uniqueDesigns.size:0},failures,items,supplementary,offers};
 }
 
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){

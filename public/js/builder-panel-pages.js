@@ -1,6 +1,6 @@
 import {createBuilderDashboard} from './builder-dashboard.js';
 // Keep the original controls and their listeners; page content instead of scrolling it.
-export function mountBuilderPanelPages({onMode=()=>{},...mapOptions}={}){
+export function mountBuilderPanelPages({onMode=()=>{},previewElement,...mapOptions}={}){
  let dashboard;
  function openPanel(name){const button=document.querySelector(`[data-workspace-panel="${name}"]`);if(button.getAttribute('aria-pressed')!=='true')button.click();}
  const library=document.querySelector('#library-panel'),inspector=document.querySelector('#inspector-panel');
@@ -13,7 +13,7 @@ export function mountBuilderPanelPages({onMode=()=>{},...mapOptions}={}){
   function walk(el){
    if(el.hidden||getComputedStyle(el).display==='none')return;
    if(el.matches('legend,summary')){if(el.tagName==='SUMMARY')out.push(el);return;}
-   if(el.matches('a,button,label,input,textarea,select,p,output,h2,h3,.catalog-card,.building-kit-card,.builder-nudge-row,.color-swatches,.rotation-presets,.position-grid,.scale-labels,.library-display-modes,.library-tile-size')){out.push(el);return;}
+   if(el.matches('a,button,label,input,textarea,select,p,output,h2,h3,.catalog-card,.building-kit-card,.builder-item-preview,.builder-nudge-row,.color-swatches,.rotation-presets,.position-grid,.scale-labels,.library-display-modes,.library-tile-size')){out.push(el);return;}
    const children=[...el.children];if(!children.length){if(el.textContent.trim())out.push(el);return;}
    for(const child of children)walk(child);
   }
@@ -27,7 +27,7 @@ export function mountBuilderPanelPages({onMode=()=>{},...mapOptions}={}){
   const prev=node('button','','Previous'),status=node('output',''),next=node('button','','Next');prev.type=next.type='button';status.setAttribute('aria-live','polite');footer.append(prev,status,next);
   const optionGroups=new Map();
   function optionGroup(entry){
-   if(panel===library){if(['items','dashboard','categories','filters','display'].includes(entry.id))return 'Browse & organize';if(['maps','layout-scenes','inlays','world','scene','games','release','view','guide'].includes(entry.id))return 'Map & gameplay';if(['create','import','generate','camp','camp-scenes','urban','buildings','furnish'].includes(entry.id))return 'Build & create';return 'Your collection';}
+   if(panel===library){if(['items','preview','dashboard','categories','filters','display'].includes(entry.id))return 'Browse & organize';if(['maps','layout-scenes','inlays','world','scene','games','release','view','guide'].includes(entry.id))return 'Map & gameplay';if(['create','import','generate','camp','camp-scenes','urban','buildings','furnish'].includes(entry.id))return 'Build & create';return 'Your collection';}
    if(['objects','move','rotation','scale','position','actions'].includes(entry.id))return 'Scene & transforms';
    if(['materials','animation-function','animation-studio','avatar-studio'].includes(entry.id))return 'Appearance & animation';return 'Gameplay & interactions';
   }
@@ -67,7 +67,7 @@ export function mountBuilderPanelPages({onMode=()=>{},...mapOptions}={}){
    schedule();
   });
   changes.observe(viewport,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']});
-  const resize=new ResizeObserver(schedule);resize.observe(panel);resize.observe(viewport);
+  const resize=new ResizeObserver(schedule);resize.observe(panel);resize.observe(viewport);for(const entry of entries)resize.observe(entry.box);
   panel.addEventListener('invalid',event=>{const entry=entries.find(e=>e.box.contains(event.target));if(!entry)return;show(entry.id);entry.box.querySelectorAll('[data-builder-page-hidden]').forEach(el=>el.removeAttribute('data-builder-page-hidden'));const items=blocks(entry.box),index=items.findIndex(item=>item.contains(event.target));if(index>=0){start=index;back=[0];render();}event.target.focus({preventScroll:true});},true);
   schedule();return{show,refresh:schedule,dispose(){alive=false;cancelAnimationFrame(frame);resize.disconnect();changes.disconnect();}};
  }
@@ -77,6 +77,7 @@ export function mountBuilderPanelPages({onMode=()=>{},...mapOptions}={}){
  const search=document.querySelector('.library-search'),browseTools=node('div','builder-browse-tools'),categoryLabel=document.querySelector('#library-category').closest('label');
  dashboard=createBuilderDashboard({...mapOptions,onOpen:id=>{if(id==='objects'||id.startsWith('inspector:')){const screen=id==='objects'?'objects':id.slice(10);if(screen!=='objects')document.querySelector('#touch-edit').click();openPanel('inspector');inspectorPager.show(screen);return;}itemPager.show(id);}});browseTools.append(search,categoryLabel);
  const itemEntries=[makeEntry('items','Browse items',[document.querySelector('#library-grid'),document.querySelector('#library-empty')]),makeEntry('filters','Collection & sort',[filters]),makeEntry('display','Tiles, list & preview size',[document.querySelector('.library-display-modes'),document.querySelector('.library-tile-size')])];
+ if(previewElement)itemEntries.push(makeEntry('preview','Preview selected item',[previewElement]));
  itemEntries.splice(1,0,makeEntry('dashboard','Builder dashboard',[dashboard.dashboard]),makeEntry('categories','Browse item categories',[dashboard.categories]),makeEntry('maps','Large world maps & weather',dashboard.maps),makeEntry('layout-scenes','In-map activity scenes',dashboard.layoutScenes),makeEntry('inlays','Small inlay maps',dashboard.inlays),makeEntry('camp','Summer camp world maps',dashboard.camp),makeEntry('camp-scenes','Camp scene stacks',dashboard.campScenes),makeEntry('world','World / land tuner',dashboard.world),makeEntry('scene','Scene layout tuner',dashboard.scene),makeEntry('games','Game testing & publishing',dashboard.games),makeEntry('view','View & placement toggles',dashboard.view),makeEntry('release','Draft & release tools',dashboard.release),makeEntry('guide','Controls & building guide',dashboard.guide));
  const advanced=document.querySelector('.builder-library-advanced');
  if(advanced){itemEntries.push(makeEntry('create','Create a custom item',[document.querySelector('#open-item-maker')]));const generator=advanced.querySelector('.library-advanced .world-generator');if(generator){const online=generator.querySelector('.online-model-import');if(online)itemEntries.push(makeEntry('import','Import a 3D model',[online]));itemEntries.push(makeEntry('generate','Generate a world',[generator]));}const urban=advanced.querySelector('#urban-templates');if(urban)itemEntries.push(makeEntry('urban','City & district templates',[urban]));}

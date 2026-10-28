@@ -1,5 +1,5 @@
 (function(){
-  async function api(path,options={}){const response=await window.MUZIKAZ_API.fetch(path,{credentials:'include',retries:0,...options,headers:{'Content-Type':'application/json',...options.headers}});const payload=await response.json();if(!response.ok||payload.success===false)throw Error(payload.message||'Wallet sign-in failed.');return payload.data;}
+  async function api(path,options={}){const response=await window.MUZIKAZ_API.fetch(path,{credentials:'include',retries:0,...options,headers:{'Content-Type':'application/json',...options.headers}});const payload=await window.MUZIKAZ_API.readJson(response,{label:'The member service'});if(!response.ok||payload.success===false)throw Object.assign(Error(payload.message||'Wallet sign-in failed.'),{status:response.status,code:payload.code});return payload.data;}
   window.MuzikazEthereumMember={async signIn(expectedAddress='',purpose='login'){
     const provider=window.ethereum?.providers?.find(item=>item.isMetaMask)||window.ethereum;
     if(!provider?.request)throw Error('Open this page in your Ethereum wallet browser or install an Ethereum wallet.');
