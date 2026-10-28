@@ -119,7 +119,7 @@ test('an established room recovers when concurrent widgets invalidate both CSRF 
 test('a timed out join cannot become ready when its late response arrives',async()=>{
  let release;
  await withRoom(async path=>path==='/api/game/room-session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
-  await assert.rejects(client.whenReady(25),/did not accept/);
+  await assert.rejects(client.whenReady(25),{code:'ROOM_CONNECTION_TIMEOUT'});
   release(response(confirmed()));await pause(10);assert.equal(client.ready,false);
  });
 });

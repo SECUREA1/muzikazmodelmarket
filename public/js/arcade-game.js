@@ -353,8 +353,11 @@ function openGameLobby(i){resetLivePresentation();lobby.open=false;lobby.querySe
 async function roomCommand(action,fields={}){
  const requestedGame=fields.game??game,revision=roomRequestRevision,sentAt=performance.now(),sequenced=action==='input'||action==='action';
  const ordering=sequenced?{inputSequence:++roomInputSequence,...(roomInputEpoch?{inputEpoch:roomInputEpoch}:{})}:{};
+ const body=JSON.stringify({action,game:requestedGame,...fields,...ordering}),timeout=['join','spectate'].includes(action)?25000:8000;
  roomSession ||= await roomApi.roomSession();
- const value=await roomApi.api('/api/rooms/'+encodeURIComponent(environmentId)+'/arcade',{method:'POST',headers:{'X-CSRF-Token':roomSession.csrfToken},body:JSON.stringify({action,game:requestedGame,...fields,...ordering})});
+ const request=()=>roomApi.api('/api/rooms/'+encodeURIComponent(environmentId)+'/arcade',{method:'POST',timeout,headers:{'X-CSRF-Token':roomSession.csrfToken},body});
+ let value;
+ try{value=await request();}catch(error){if(error.code!=='CSRF_INVALID')throw error;roomSession=await roomApi.roomSession();value=await request();}
  return {...value,requestRevision:revision,timing:{sentAt,receivedAt:performance.now()}};
 }
 function applyMatch(value){if(value.ended&&!ended&&gameElapsed>0&&gameStarted&&!localSpectator&&(!liveGame||roomSnapshot?.role==='player'))nativeArcadeRounds++;basketballState=value.basketball?{...value.basketball,selfSlot:liveGame?roomSnapshot?.slots.findIndex(s=>s.actor===roomSnapshot.selfId):localSpectator?-1:localSlot}:null;if(!liveGame&&!localSpectator&&gameStarted){const earned=Math.max(0,value.score-score);if(earned){total=localArcadePoints(total+earned);session.points+=earned;update();}}({score,remaining,gameElapsed,ended,attempts,shot,puck,balls,targets,opponent}=value);if(liveGame)pointer={...value.pointer};$('#feedback').textContent=value.feedback;$('#gamescore').textContent=basketballState?'HOME '+basketballState.teamScore[0]+' — '+basketballState.teamScore[1]+' VISITORS':'SCORE '+score;$('#timer').textContent=gameStarted?(basketballState?(basketballState.period>4?'OT'+(basketballState.period-4):'Q'+basketballState.period)+' · ':'')+Math.ceil(remaining)+'s'+(basketballState?' · Shot '+Math.ceil(basketballState.shotClock):''):'Waiting to start';$('#game').classList.toggle('round-ended',ended);syncTriggerControls();}
