@@ -1,6 +1,7 @@
-import { createHash, pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { deriveCredential } from './credential-derivation.mjs';
 
 // Current credentials use four readable groups. The first Loadout Pass
 // generator (the legacy Rust service) issued two eight-character groups, and
@@ -14,6 +15,24 @@ const normalizeCode = (value) => String(value || '').trim().toUpperCase().replac
 const normalizeWallet = (value) => String(value || '').trim().toLowerCase();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const enabled = (value, fallback = true) => value == null ? fallback : ![false, 0, '0', 'false', 'off', 'no'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
+const accountFiles = new Map();
+const emptyRecords = () => ({ schemaVersion: 2, accounts: [], credentials: [], migrations: {} });
+const fileIdentity = info => [info.dev, info.ino, info.size, info.mtimeNs, info.ctimeNs].join(':');
+function coordinator(file) {
+  const key = resolve(file);
+  if (!accountFiles.has(key)) accountFiles.set(key, { queue: Promise.resolve(), cache: null });
+  return accountFiles.get(key);
+}
+function snapshot(data, identity) {
+  if (!data || !Array.isArray(data.accounts) || !Array.isArray(data.credentials)) throw new Error('Unsupported account database schema.');
+  const accounts = new Map(), usernames = new Map();
+  for (const account of data.accounts) {
+    if (!accounts.has(account.accountId)) accounts.set(account.accountId, account);
+    const username = String(account.username || '').trim().toLowerCase();
+    if (!usernames.has(username)) usernames.set(username, account);
+  }
+  return { data, identity, accounts, usernames };
+}
 // Keep access-code accounts at parity with the paid Builder Loadout advertised
 // in the member hub and game. These are durable Backpack entries, not merely UI
 // flags, so every exclusive surface sees the same complete entitlement set.
@@ -57,19 +76,23 @@ function generateCode() {
   const groups = Array.from({ length: 4 }, (_, group) => Array.from({ length: 4 }, (_, index) => alphabet[bytes[group * 4 + index] % alphabet.length]).join(''));
   return `MZK-${groups.join('-')}`;
 }
-function hashCode(code, salt = randomBytes(16).toString('hex')) {
-  return { salt, hash: pbkdf2Sync(normalizeCode(code), salt, 210_000, 32, 'sha256').toString('hex') };
+async function hashCode(code, salt = randomBytes(16).toString('hex')) {
+  return { salt, hash: (await deriveCredential(normalizeCode(code), salt)).toString('hex') };
 }
-function verifies(code, credential) {
-  const candidate = Buffer.from(hashCode(code, credential.salt).hash, 'hex');
+async function verifies(code, credential) {
+  const candidate = Buffer.from((await hashCode(code, credential.salt)).hash, 'hex');
   const expected = Buffer.from(credential.hash, 'hex');
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
-function hashPassword(password, salt = randomBytes(16).toString('hex')) {
-  return { salt, hash: pbkdf2Sync(String(password), salt, 210_000, 32, 'sha256').toString('hex') };
+async function matchingCredential(data, code) {
+  for (const item of data.credentials) if (await verifies(code, { hash: item.codeHash, salt: item.codeSalt })) return item;
+  return null;
 }
-function verifiesPassword(password, account) {
-  const candidate = Buffer.from(hashPassword(password, account.passwordSalt).hash, 'hex');
+async function hashPassword(password, salt = randomBytes(16).toString('hex')) {
+  return { salt, hash: (await deriveCredential(String(password), salt)).toString('hex') };
+}
+async function verifiesPassword(password, account) {
+  const candidate = Buffer.from((await hashPassword(password, account.passwordSalt)).hash, 'hex');
   const expected = Buffer.from(account.passwordHash, 'hex');
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
@@ -93,10 +116,62 @@ function accountRecord(id, wallet = '', username = '') {
 }
 
 export class MzkAccountStore {
-  constructor(file, { legacyCodesFile = '', legacyUsersFile = '' } = {}) { this.file = file; this.legacyCodesFile = legacyCodesFile; this.legacyUsersFile = legacyUsersFile; this.queue = Promise.resolve(); }
-  async records() { try { return JSON.parse(await readFile(this.file, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return { schemaVersion: 2, accounts: [], credentials: [], migrations: {} }; throw error; } }
-  async save(data) { await mkdir(dirname(this.file), { recursive: true }); const temporary = `${this.file}.${process.pid}.${randomUUID()}.tmp`; await writeFile(temporary, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 }); await rename(temporary, this.file); }
-  serialized(work) { const operation = this.queue.then(async () => { const data = await this.records(); const result = await work(data); await this.save(data); return result; }, async () => { const data = await this.records(); const result = await work(data); await this.save(data); return result; }); this.queue = operation.catch(() => {}); return operation; }
+  #coordinator;
+  constructor(file, { legacyCodesFile = '', legacyUsersFile = '' } = {}) {
+    this.file = file; this.legacyCodesFile = legacyCodesFile; this.legacyUsersFile = legacyUsersFile;
+    this.#coordinator = coordinator(file); this.queue = this.#coordinator.queue;
+  }
+  async #readSnapshot() {
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const identity = fileIdentity(await stat(this.file, { bigint: true }));
+        if (this.#coordinator.cache?.identity === identity) return this.#coordinator.cache;
+        const text = await readFile(this.file, 'utf8');
+        if (identity !== fileIdentity(await stat(this.file, { bigint: true }))) continue;
+        const committed = snapshot(JSON.parse(text), identity);
+        this.#coordinator.cache = committed;
+        return committed;
+      }
+      throw new Error('Account database changed while it was being read. Retry the operation.');
+    } catch (error) {
+      this.#coordinator.cache = null;
+      if (error.code === 'ENOENT') return snapshot(emptyRecords(), null);
+      throw error;
+    }
+  }
+  async records() { return clone((await this.#readSnapshot()).data); }
+  async save(data) {
+    const encoded = `${JSON.stringify(data, null, 2)}\n`;
+    // Publish only a detached, committed snapshot. A rejected transaction or a
+    // caller subsequently editing its records must never alter hot lookups.
+    const committed = JSON.parse(encoded);
+    snapshot(committed, null);
+    await mkdir(dirname(this.file), { recursive: true });
+    const temporary = `${this.file}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temporary, encoded, { mode: 0o600 });
+      await rename(temporary, this.file);
+      // Do not attach a later path stat to these bytes: an external writer can
+      // replace/edit the file after rename. The next validated read publishes
+      // the cache from a stable before/read/after observation instead.
+      this.#coordinator.cache = null;
+    } catch (error) {
+      this.#coordinator.cache = null;
+      await rm(temporary, { force: true }).catch(() => {});
+      throw error;
+    }
+  }
+  serialized(work, { persist = true } = {}) {
+    const run = async () => {
+      const data = await this.records(), result = await work(data);
+      const returned = result === undefined ? undefined : clone(result);
+      if (persist) await this.save(data);
+      return returned;
+    };
+    const operation = this.#coordinator.queue.then(run, run);
+    this.queue = this.#coordinator.queue = operation.catch(() => {});
+    return operation;
+  }
   async migrate() {
     return this.serialized(async (data) => {
       data.migrations ||= {};
@@ -150,8 +225,8 @@ export class MzkAccountStore {
           const legacyCodes = JSON.parse(await readFile(this.legacyCodesFile, 'utf8'));
           for (const old of Array.isArray(legacyCodes) ? legacyCodes : []) {
             const code = normalizeCode(old.code);
-            if (!ACCESS_CODE_PATTERN.test(code) || data.credentials.some((item) => verifies(code, { hash: item.codeHash, salt: item.codeSalt }))) continue;
-            const secret = hashCode(code);
+            if (!ACCESS_CODE_PATTERN.test(code) || await matchingCredential(data, code)) continue;
+            const secret = await hashCode(code);
             const createdAt = new Date(old.createdAt || Date.now());
             const expiresAt = new Date(old.expiresAt || createdAt.getTime() + 7 * 86400000);
             data.credentials.push({
@@ -171,7 +246,7 @@ export class MzkAccountStore {
   }
   create(options = {}) {
     return this.serialized(async (data) => {
-      const code = generateCode(); const secret = hashCode(code); const now = new Date();
+      const code = generateCode(); const secret = await hashCode(code); const now = new Date();
       const hasExpiry = Boolean(options.maximumActivationDate || (options.expiresInDays !== undefined && options.expiresInDays !== ''));
       const days = Math.min(365, Math.max(1, Math.trunc(Number(options.expiresInDays) || 1)));
       const expiresAt = hasExpiry ? (options.maximumActivationDate ? new Date(options.maximumActivationDate) : new Date(now.getTime() + days * 86400000)) : null; if (expiresAt && (!Number.isFinite(expiresAt.getTime()) || expiresAt <= now)) throw Object.assign(new Error('Choose a future activation expiration.'), { statusCode: 400 });
@@ -182,7 +257,7 @@ export class MzkAccountStore {
   }
   activate(code, wallet = '', username = '', requestingAccountId = '') { return this.serialized(async (data) => {
     const normalized = normalizeCode(code); const address = normalizeWallet(wallet); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); if (address && !WALLET_PATTERN.test(address)) throw Object.assign(new Error('Enter a valid Ethereum wallet.'), { statusCode: 400 });
-    const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential) throw Object.assign(new Error('This MZK Access Code is invalid.'), { statusCode: 404 });
+    const credential = await matchingCredential(data, normalized); if (!credential) throw Object.assign(new Error('This MZK Access Code is invalid.'), { statusCode: 404 });
     if (credential.purpose && credential.purpose !== 'standard-loadout') throw Object.assign(new Error('This code is not a Loadout Pass.'), { statusCode: 403 });
     if (credential.status === 'revoked') throw Object.assign(new Error('This MZK Access Code has been revoked.'), { statusCode: 403 });
     if (credential.status === 'issued' && Date.parse(credential.expiresAt) <= Date.now()) throw Object.assign(new Error('This MZK Access Code expired before activation.'), { statusCode: 410 });
@@ -212,29 +287,60 @@ export class MzkAccountStore {
     for (const credential of data.credentials) if (credential.accountId === accountId && credential.status === 'activated') credential.boundWallet ||= address;
     return publicAccount(account);
   }); }
-  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (account.loadoutRedeemed) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
-  freePlayLogin(username, password) { return this.serialized(async (data) => {
+  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = await matchingCredential(data, normalized); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (account.loadoutRedeemed) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
+  createGuestAccount() {
+    return this.serialized(data => {
+      let username;
+      do { username = 'Guest-' + randomUUID().replaceAll('-', '').slice(0, 16); }
+      while (data.accounts.some(account => String(account.username || '').toLowerCase() === username.toLowerCase()));
+      const account = accountRecord('', '', username);
+      // Guest recovery uses its opaque account session, never an undisclosed
+      // random password. Do not create a reusable password credential for it.
+      account.guest = true;
+      grantStandardLoadout(account); data.accounts.push(account);
+      return publicAccount(account);
+    });
+  }
+  async freePlayLogin(username, password) {
     const name = String(username || '').trim();
     const normalizedName = name.toLowerCase();
     const secret = String(password || '');
     if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(name)) throw Object.assign(new Error('Username must be 3–24 letters, numbers, dots, dashes, or underscores.'), { statusCode: 400 });
     if (secret.length < 6 || secret.length > 128) throw Object.assign(new Error('Password must be 6–128 characters.'), { statusCode: 400 });
-    let account = data.accounts.find((item) => String(item.username || '').trim().toLowerCase() === normalizedName);
-    if (account?.passwordHash) {
-      if (!verifiesPassword(secret, account)) throw Object.assign(new Error('Username or password is incorrect.'), { statusCode: 401 });
-    } else if (account) {
+    const prior = (await this.#readSnapshot()).usernames.get(normalizedName);
+    let proof = null, candidate = null;
+    if (prior?.guest) throw Object.assign(new Error('Guest accounts must use their original session.'), { statusCode: 409 });
+    // PBKDF work runs outside the mutation queue so simultaneous guest logins
+    // can use the crypto worker pool without blocking existing gameplay reads.
+    if (prior?.passwordHash) {
+      if (!await verifiesPassword(secret, prior)) throw Object.assign(new Error('Username or password is incorrect.'), { statusCode: 401 });
+      proof = { accountId: prior.accountId, hash: prior.passwordHash, salt: prior.passwordSalt };
+    } else if (prior) {
       throw Object.assign(new Error('That username belongs to an existing account. Use its original sign-in method.'), { statusCode: 409 });
     } else {
-      account = accountRecord('', '', name);
-      const passwordSecret = hashPassword(secret);
-      account.passwordHash = passwordSecret.hash;
-      account.passwordSalt = passwordSecret.salt;
-      data.accounts.push(account);
+      candidate = await hashPassword(secret);
     }
-    grantStandardLoadout(account);
-    account.updatedAt = new Date().toISOString();
-    return publicAccount(account);
-  }); }
+    return this.serialized(async data => {
+      let account = data.accounts.find(item => String(item.username || '').trim().toLowerCase() === normalizedName);
+      if (account?.guest) throw Object.assign(new Error('Guest accounts must use their original session.'), { statusCode: 409 });
+      if (account?.passwordHash) {
+        // Another login or an administrator may have changed this username or
+        // password while derivation was running. Never authorize stale proof.
+        if (!(proof && account.accountId === proof.accountId && account.passwordHash === proof.hash && account.passwordSalt === proof.salt)
+            && !await verifiesPassword(secret, account)) throw Object.assign(new Error('Username or password is incorrect.'), { statusCode: 401 });
+      } else if (account) {
+        throw Object.assign(new Error('That username belongs to an existing account. Use its original sign-in method.'), { statusCode: 409 });
+      } else {
+        candidate ||= await hashPassword(secret);
+        account = accountRecord('', '', name);
+        account.passwordHash = candidate.hash; account.passwordSalt = candidate.salt;
+        data.accounts.push(account);
+      }
+      grantStandardLoadout(account);
+      account.updatedAt = new Date().toISOString();
+      return publicAccount(account);
+    });
+  }
   async walletMemberLogin(wallet){
     const found=await this.findByWallet(wallet);
     return this.serialized(async data=>{const account=data.accounts.find(item=>item.accountId===found.accountId);grantStandardLoadout(account);account.updatedAt=new Date().toISOString();return publicAccount(account);});
@@ -307,13 +413,13 @@ export class MzkAccountStore {
     if (data.accounts.some(row => row.accountId !== accountId && String(row.username).toLowerCase() === username.toLowerCase())) fail('Username is already in use.', 409);
     const password = String(input.password || '');
     if (password && (password.length < 6 || password.length > 128)) fail('Password must be 6–128 characters.');
-    if (password) { const secret = hashPassword(password); account.passwordHash = secret.hash; account.passwordSalt = secret.salt; }
+    if (password) { const secret = await hashPassword(password); account.passwordHash = secret.hash; account.passwordSalt = secret.salt; delete account.guest; }
     account.username = username;
     for (const key of ['gameAccess','creatorVaultAccess','marketplaceAccess']) if (typeof input[key] === 'boolean') { account[key] = input[key]; account.adminAccessOverrides ||= {}; account.adminAccessOverrides[key] = input[key]; }
     account.updatedAt = new Date().toISOString();
     return publicAccount(account);
   }); }
-  async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
+  async getAccount(accountId) { const account = (await this.#readSnapshot()).accounts.get(accountId); return account ? publicAccount(account) : null; }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
@@ -324,11 +430,11 @@ export class MzkAccountStore {
     }
     return publicAccount(account);
   }); }
-  ensureAccountCode(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const active = data.credentials.find((c) => c.accountId === accountId && c.status === 'activated'); if (active) return { created: false, credential: publicCredential(active) }; const code = generateCode(); const secret = hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); Object.assign(account, { accessCodeStatus: 'activated', accessCodeCreatedAt: now, accessCodeActivatedAt: now, updatedAt: now }); return { created: true, code, credential: publicCredential(record) }; }); }
-  rotate(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); for (const c of data.credentials) if (c.accountId === accountId && c.status === 'activated') c.status = 'revoked'; const code = generateCode(); const secret = hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Rotated account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); account.accessCodeCreatedAt = now; account.accessCodeActivatedAt = now; account.accessCodeStatus = 'activated'; account.updatedAt = now; return { code, credential: publicCredential(record), account: publicAccount(account) }; }); }
+  ensureAccountCode(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const active = data.credentials.find((c) => c.accountId === accountId && c.status === 'activated'); if (active) return { created: false, credential: publicCredential(active) }; const code = generateCode(); const secret = await hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); Object.assign(account, { accessCodeStatus: 'activated', accessCodeCreatedAt: now, accessCodeActivatedAt: now, updatedAt: now }); return { created: true, code, credential: publicCredential(record) }; }); }
+  rotate(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); for (const c of data.credentials) if (c.accountId === accountId && c.status === 'activated') c.status = 'revoked'; const code = generateCode(); const secret = await hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Rotated account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); account.accessCodeCreatedAt = now; account.accessCodeActivatedAt = now; account.accessCodeStatus = 'activated'; account.updatedAt = now; return { code, credential: publicCredential(record), account: publicAccount(account) }; }); }
   revoke(accountId) { return this.serialized(async (data) => { let found = false; for (const c of data.credentials) if (c.accountId === accountId && c.status === 'activated') { c.status = 'revoked'; found = true; } const account = data.accounts.find((a) => a.accountId === accountId); if (account) { account.accessCodeStatus = 'revoked'; account.updatedAt = new Date().toISOString(); } return { revoked: found, account: account && publicAccount(account) }; }); }
   adminRevoke(id) { return this.serialized(async (data) => { const record = data.credentials.find((c) => c.id === id); if (!record) throw Object.assign(new Error('Credential not found.'), { statusCode: 404 }); if (record.status !== 'issued') throw Object.assign(new Error('Only an unredeemed Loadout Pass can be revoked.'), { statusCode: 409 }); record.status = 'revoked'; record.revokedAt = new Date().toISOString(); return publicCredential(record); }); }
-  async list() { const data = await this.records(); if (expireIssuedCredentials(data)) await this.save(data); return data.credentials.map(publicCredential); }
+  async list() { return this.serialized(async data => { if (expireIssuedCredentials(data)) await this.save(data); return data.credentials.map(publicCredential); }, { persist: false }); }
 }
 
 // Compatibility export for older imports while all behavior now uses canonical accounts.

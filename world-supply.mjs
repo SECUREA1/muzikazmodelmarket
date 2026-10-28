@@ -35,6 +35,7 @@ for(const item of CARE_SUPPLIES){
  if(!staticAliases.has(item.id))staticAliases.set(item.id,id);
 }
 const STATIC_REVISION=createHash('sha256').update(JSON.stringify([...staticItems.values()])).digest('hex');
+const LEDGER_FIELDS=Object.freeze(['catalog','aliases','worldStock','factoryStock','maps','production','shipments','receipts']);
 
 export function canonicalSupplyId(item){
  if(typeof item==='string')return staticAliases.get(item)||item;
@@ -62,9 +63,18 @@ function register(ledger,item){
  return id;
 }
 
+// This predicate mirrors only ensureWorldSupply(data)'s default initialization
+// and catalog reconciliation. It makes no claim about calls adding items/maps.
+// Keep its no-write contract aligned with the default ensure implementation so
+// private wallet-only transactions may safely borrow an already-current ledger.
+export function worldSupplyIsCurrent(data){
+ const ledger=data?.worldSupply;
+ return Boolean(ledger&&ledger.catalogRevision===STATIC_REVISION&&LEDGER_FIELDS.every(field=>ledger[field]));
+}
+
 export function ensureWorldSupply(data,{items=[],maps=[]}={}){
  const ledger=data.worldSupply ||= {schemaVersion:1,createdAt:new Date().toISOString()};
- for(const field of ['catalog','aliases','worldStock','factoryStock','maps','production','shipments','receipts'])ledger[field] ||= {};
+ for(const field of LEDGER_FIELDS)ledger[field] ||= {};
  if(ledger.catalogRevision!==STATIC_REVISION){
   for(const item of staticItems.values())register(ledger,item);
   for(const [alias,id] of staticAliases)if(!own(ledger.aliases,alias))ledger.aliases[alias]=id;

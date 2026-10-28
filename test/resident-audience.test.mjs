@@ -60,3 +60,17 @@ test('explicit team radio recipients retain only the addressed member while publ
   assert.deepEqual(residentAudienceSnapshot(state,'a').transportRadio.map(call=>call.id),[1,2]);
   assert.deepEqual(residentAudienceSnapshot(state,'outsider').transportRadio.map(call=>call.id),[2]);
 });
+
+test('raw room records keep saved personal dialogue and preferences with their owning player',()=>{
+  const state=fixture(),alice=state.players['account:alice'];
+  for(const field of ['residentContinuity','residentSocial','residentPreferences','casinoSocial'])alice[field]={text:'PRIVATE_SAVED_PLAYER_TURN'};
+  const before=structuredClone(state),own=residentAudienceSnapshot(state,'account:alice');
+  for(const field of ['residentContinuity','residentSocial','residentPreferences','casinoSocial'])assert.deepEqual(own.players['account:alice'][field],alice[field]);
+  for(const viewer of [null,'account:bob']){
+    const other=residentAudienceSnapshot(state,viewer);
+    for(const field of ['residentContinuity','residentSocial','residentPreferences','casinoSocial'])assert.equal(other.players['account:alice'][field],null);
+    assert.doesNotMatch(JSON.stringify(other),/PRIVATE_SAVED_PLAYER_TURN/);
+    assert.deepEqual(other.players['account:alice'].position,alice.position);
+  }
+  assert.deepEqual(state,before,'filtering a raw room record must preserve its canonical saved dialogue');
+});

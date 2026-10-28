@@ -32,6 +32,8 @@ export function residentAudienceSnapshot(state, viewerId = null) {
     const own = id === viewerId;
     const mission = player.vehicleMission;
     return [id, {...player,
+      ...Object.fromEntries(['residentContinuity','residentSocial','residentPreferences','casinoSocial']
+        .filter(key=>Object.hasOwn(player,key)).map(key=>[key,own?player[key]:null])),
       npcConversation: own && player.npcConversation ? {
         ...player.npcConversation, conversation: callsFor(player.npcConversation.conversation, viewerId)
       } : null,

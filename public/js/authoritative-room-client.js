@@ -1,12 +1,13 @@
-import {hydrateRoomSnapshot} from './room-snapshot.js';
+import {hydrateRoomSnapshot,snapshotAcknowledgements} from './room-snapshot.js';
 import {RAD_TOX_SHOT_INTERVAL_MS} from './rad-tox-rules.js';
 import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0,snapshotProtocol=2,snapshotDecorActors=true}) {
  const api = new SharedGameInventory(),lifecycle=new AbortController();
  let renderTimer=null,pendingRender=null,lastRenderAt=null,latestSnapshot=null;
+ let snapshotRecovery=false;
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let confirmedOnce=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
@@ -85,13 +86,20 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:fireTool==='laser'?0:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
-    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:'compact',sceneVersion:latestSnapshot?.sceneVersion,actorSetRevision:latestSnapshot?.actorSetRevision,earthworksRevision:latestSnapshot?.construction?.earthworks?.revision,...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch,controlResponse:'ack'}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId},signal);
+    // Each response must hydrate against the exact baseline this request
+    // acknowledged, even if another action/input completes in the meantime.
+    const baseline=latestSnapshot;
+    let state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:snapshotRecovery?'full':'compact',sceneVersion:baseline?.sceneVersion,actorSetRevision:baseline?.actorSetRevision,earthworksRevision:baseline?.construction?.earthworks?.revision,...(snapshotProtocol===2?{snapshotProtocol:2,...(snapshotDecorActors===true?{snapshotDecorActors:true}:{}),snapshotAcknowledgements:snapshotRecovery?{}:snapshotAcknowledgements(baseline)}:{}),...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch,controlResponse:'ack'}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId},signal);
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.
     if(revision!==connectionRevision)return state;
     const selfId=state?.selfId||client.selfId;
     const controlAck=action==='construction-controls'&&fields.operation==='control'&&state?.constructionControlAck===true;
+    if(!controlAck){
+     try{state=hydrateRoomSnapshot(state,baseline);if(action==='join'||state.sequence>sequence)snapshotRecovery=false;}
+     catch(error){if(error.code!=='SNAPSHOT_BASELINE_MISSING')throw error;if(state?.sequence<=sequence)return state;snapshotRecovery=true;throw error;}
+    }
     if(!selfId||(!controlAck&&!state?.players?.[selfId]))throw Error('The server has not confirmed your player in this room.');
     const currentInput=action!=='input'||issuedEpoch===inputEpoch,currentEpoch=state.inputEpoch??state.result?.inputEpoch;
     // An input may overtake the response that boarded, exited or teleported us.
@@ -132,6 +140,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  };
  function handleError(error) {
    if (stopped) return;
+   if(error.code==='SNAPSHOT_BASELINE_MISSING'){snapshotRecovery=true;onStatus?.('Refreshing the shared world…');return;}
    // Failed joins and expired sessions must leave the loading state. A denied
    // tool action in an already joined room is not a connection failure.
    // Other panels may rotate the account's CSRF proof while both attempts are

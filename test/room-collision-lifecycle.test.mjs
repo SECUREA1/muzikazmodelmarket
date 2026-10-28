@@ -49,3 +49,30 @@ test('snapshot-only rooms release unoccupied collision resources without deletin
   assert.notEqual(rooms.collision.world(environment),world);
  }finally{await rm(directory,{recursive:true,force:true});}
 });
+
+test('collision geometry shared by multiple rooms remains until its final active owner expires',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'shared-room-collision-lifecycle-'));
+ let now=100000;
+ try{
+  const store=new SharedRoomStore(join(directory,'rooms.json')),rooms=new AuthoritativeRooms({store,now:()=>now});
+  const environment={id:'shared-collision-environment',updatedAt:'v1',spawn:{x:0,y:0,z:3},builderScene:{layout:'grand-floor',mapSize:32,objects:[{id:'door',modelId:'portal-door',position:{x:0,y:0,z:0}}]}};
+  const alice={accountId:'alice',walletId:'alice-wallet',username:'Alice'},bob={accountId:'bob',walletId:'bob-wallet',username:'Bob'};
+  await rooms.command('shared-room-a',environment,alice,{action:'join',requestId:'join-alice',radToxEnabled:false});
+  const joinedBob=await rooms.command('shared-room-b',environment,bob,{action:'join',requestId:'join-bob',radToxEnabled:false});
+  const sharedWorld=rooms.collision.world(environment);
+  let disposed=0;sharedWorld.root.traverse(mesh=>mesh.geometry?.addEventListener('dispose',()=>{disposed++;}));
+  now+=14000;
+  await rooms.command('shared-room-b',environment,bob,{action:'input',requestId:'bob-alive',input:{},inputEpoch:joinedBob.inputEpoch,inputSequence:1});
+  now+=1001;await rooms.tickActive();
+  assert.equal(rooms.activeWorlds.has('shared-room-a'),false);
+  assert.equal(rooms.activeWorlds.has('shared-room-b'),true);
+  assert.equal(disposed,0,'An expired room must not dispose a live room\'s shared geometry.');
+  assert.equal(rooms.collision.world(environment),sharedWorld,'The surviving room keeps its existing collision world.');
+  assert.ok((await store.get('shared-room-a')).simulation.players['account:alice'],'Expiry preserves the former owner\'s saved player.');
+  now+=15000;await rooms.tickActive();
+  assert.equal(rooms.activeWorlds.has('shared-room-b'),false);
+  assert.ok(disposed>0,'The final owner\'s expiry releases the shared geometry.');
+  assert.notEqual(rooms.collision.world(environment),sharedWorld,'A later visit rebuilds released collision geometry.');
+  assert.ok((await store.get('shared-room-b')).simulation.players['account:bob'],'Final release preserves the surviving player\'s saved state.');
+ }finally{await rm(directory,{recursive:true,force:true});}
+});

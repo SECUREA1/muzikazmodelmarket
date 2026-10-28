@@ -51,6 +51,9 @@
 .house-stage .game-view-overflow{position:absolute;top:52px;right:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;max-width:calc(100% - 16px);padding:8px;border:1px solid #88a996;border-radius:10px;background:#10282bf7;pointer-events:auto;z-index:35}
 .house-stage .game-view-overflow[hidden]{display:none!important}
 .house-stage .game-view-overflow>*{position:static!important;inset:auto!important;margin:0!important;transform:none!important}
+/* Flex items retain stacking contexts even after their absolute positioning is
+   removed. Keep an open companion panel above the More menu and its icons. */
+.house-stage .game-display-flow-views .transport-activity:has(>.transport-radio-panel:not([hidden])),.house-stage .game-display-flow-views .world-resident-ui:has(>.world-resident-panel:not([hidden])){z-index:36}
 .house-stage .game-view-overflow>.sports-action-utilities,.house-stage .game-view-overflow>.broadcast-controls{display:flex;gap:6px;flex-wrap:wrap}
 .house-stage .game-view-overflow button{min-width:44px;min-height:44px;box-sizing:border-box}
 .house-stage .game-view-overflow [hidden]{display:none!important}
