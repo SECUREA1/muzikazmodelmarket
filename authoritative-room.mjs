@@ -122,7 +122,7 @@ const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 const usesNativeSportsMatch=environment=>isHockeyMap(environment)||isArcadeMap(environment);
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},consumeAsset=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,fishingReward=async()=>{throw Error('Fishing reward storage unavailable.');},fishingState=async()=>null,shippingReward=async()=>{throw Error('Shipping reward storage unavailable.');},shippingState=async()=>null,supplyAction=async()=>{throw Error('World supply storage unavailable.');},supplyDelivery=async()=>{throw Error('World supply storage unavailable.');},shippingBind=async()=>{throw Error('Factory shipping storage unavailable.');},shippingReturn=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,prisonClaim=async()=>{throw Error('Prison Backpack storage unavailable.');},prisonState=async()=>({claimedItems:[]}),logisticsAction=async()=>{throw Error('Factory logistics storage unavailable.');},logisticsState=async()=>null,testingAction=async()=>{throw Error('Testing facility storage unavailable.');},testingState=async()=>null,testingAccess=async()=>{throw Object.assign(Error('Compound clearance storage unavailable.'),{statusCode:503});},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,consumeAsset,resolveAsset,reward,fitnessReward,fitnessState,fishingReward,fishingState,shippingReward,shippingState,supplyAction,supplyDelivery,shippingBind,shippingReturn,factoryAction,factoryState,prisonClaim,prisonState,logisticsAction,logisticsState,testingAction,testingState,testingAccess,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.aiDefinitionVersions=new WeakMap();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();}
+ constructor({store,now=Date.now,charge=async()=>{},consumeAsset=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,fishingReward=async()=>{throw Error('Fishing reward storage unavailable.');},fishingState=async()=>null,shippingReward=async()=>{throw Error('Shipping reward storage unavailable.');},shippingState=async()=>null,supplyAction=async()=>{throw Error('World supply storage unavailable.');},supplyDelivery=async()=>{throw Error('World supply storage unavailable.');},shippingBind=async()=>{throw Error('Factory shipping storage unavailable.');},shippingReturn=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,prisonClaim=async()=>{throw Error('Prison Backpack storage unavailable.');},prisonState=async()=>({claimedItems:[]}),logisticsAction=async()=>{throw Error('Factory logistics storage unavailable.');},logisticsState=async()=>null,testingAction=async()=>{throw Error('Testing facility storage unavailable.');},testingState=async()=>null,testingAccess=async()=>{throw Object.assign(Error('Compound clearance storage unavailable.'),{statusCode:503});},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32,scheduledInputs=false}){this.scheduledInputs=scheduledInputs===true;Object.assign(this,{store,now,charge,consumeAsset,resolveAsset,reward,fitnessReward,fitnessState,fishingReward,fishingState,shippingReward,shippingState,supplyAction,supplyDelivery,shippingBind,shippingReturn,factoryAction,factoryState,prisonClaim,prisonState,logisticsAction,logisticsState,testingAction,testingState,testingAccess,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.aiDefinitionVersions=new WeakMap();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();this.manifestOwners=new Map();}
  async releaseCancelledSupply(identity,sim,player,environment,now){
   const job=player?.shipping?.job;
   if(!job?.shipmentId||job.supplyReleasedAt||!['cancelled','expired','failed'].includes(job.phase))return;
@@ -149,13 +149,13 @@ export class AuthoritativeRooms {
  }
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
-  try{const ids=[...this.activeWorlds.keys()].filter(id=>this.now()>=(this.tickRetryAt.get(id)||0));if(!ids.length)return;
+  try{this.collision.setActiveWorlds([...this.activeWorlds.values()].map(environment=>environment.id));const ids=[...this.activeWorlds.keys()].filter(id=>this.now()>=(this.tickRetryAt.get(id)||0));if(!ids.length)return;
    const results=await this.store.updateMany(ids,(room,id)=>{const environment=this.activeWorlds.get(id);if(!environment)return;
     if(!Object.values(room.simulation?.players||{}).some(player=>!player.basketballAI&&!player.replacedByRoom&&this.now()-player.lastSeen<15000)){this.activeWorlds.delete(id);this.tickRetryAt.delete(id);return;}
     this.step(room,environment);
    },{persist:false});
    for(const {id,error}of results)if(error){this.tickRetryAt.set(id,this.now()+1000);console.error('[Room simulation]',id,error.message);}else this.tickRetryAt.delete(id);
-  }finally{this.ticking=false;}
+  }finally{this.collision.setActiveWorlds([...this.activeWorlds.values()].map(environment=>environment.id));this.pruneManifests();this.ticking=false;}
 
  }
  prepareEncounter(sim,environment){
@@ -173,8 +173,60 @@ export class AuthoritativeRooms {
    actor.spawnVersion=2;occupied.push(actor.position);
   }
  }
+ clearCaches(){
+  this.activeWorlds.clear();this.tickRetryAt.clear();this.manifestCache.clear();this.manifestOwners.clear();this.aiDefinitionVersions=new WeakMap();this.collision.clearWorlds();
+ }
+ manifestKey(environment){return (isBasketballEnvironment(environment)?'basketball-runtime-v2:':isDedicatedFiringRange(environment)?'firing-range-runtime-v1:':'')+environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);}
+ pruneManifests(){
+  const active=new Set([...this.activeWorlds.values()].map(environment=>environment.id));
+  const idle=[...this.manifestCache.keys()].filter(key=>!active.has(this.manifestOwners.get(key)));
+  for(const key of idle.slice(0,Math.max(0,idle.length-32))){this.manifestCache.delete(key);this.manifestOwners.delete(key);}
+ }
+ prepareManifest(environment){
+  const manifestKey=this.manifestKey(environment);let base=this.manifestCache.get(manifestKey);const newManifest=!base;
+  if(!base){
+   const scene=environment.builderScene||environment.placementScene||{};
+   base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});
+   for(const [key,id]of this.manifestOwners)if(id===environment.id){this.manifestCache.delete(key);this.manifestOwners.delete(key);}
+   this.manifestOwners.set(manifestKey,environment.id);
+  }else this.manifestCache.delete(manifestKey);
+  this.manifestCache.set(manifestKey,base);if(newManifest)this.pruneManifests();
+  return {manifestKey,manifest:{...base,objects:[...base.objects],actors:[...base.actors]}};
+ }
+ completeManifest(sim,environment,manifest,contentUpdatedAt){
+  if(isDedicatedFiringRange(environment)||sim.basketball||sim.construction)manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));
+  if(this.aiDefinitionVersions.get(sim)!==contentUpdatedAt){registerAIWorldDefinitions(sim,manifest);this.aiDefinitionVersions.set(sim,contentUpdatedAt);}
+  manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition&&(!sim.basketball||!['hostile','patrol','hazard'].includes(actor.definition.gameplay?.behavior))).map(actor=>actor.definition));
+ }
+ scheduledWalker(sim,environment,player){
+  if(!player||player.health<=0||player.replacedByRoom||player.radToxEnabled!==false||player.vehicleId||player.heldId||player.seatedId||player.skiing||player.skiLift)return false;
+  if(environment.game==='ski'||usesNativeSportsMatch(environment)||isCasinoEnvironment(environment)||isFunhouseEnvironment(environment)||isFitnessEnvironment(environment)||isFactoryEnvironment(environment)||isFactoryTestingEnvironment(environment)||isFactoryLogisticsEnvironment(environment)||isPrisonEnvironment(environment)||isTropicalIslandEnvironment(environment)||isShippingEnvironment(environment)||isDedicatedFiringRange(environment)||isBasketballEnvironment(environment))return false;
+  if(sim.match||sim.radTox||sim.basketball||sim.firingRange||sim.construction||sim.fitnessEnabled||sim.factoryEnabled||sim.factoryTestingEnabled||sim.factoryLogisticsEnabled||sim.shipping?.enabled||Object.keys(sim.projectiles||{}).length)return false;
+  if(player.fitness||player.fishing||player.shipping||player.factory||player.testing||player.logistics||player.funhouse||player.urbanMission||player.vehicleMission?.status==='active'||player.residentTask?.status==='active'||player.casinoTask?.status==='active')return false;
+  return true;
+ }
+ canScheduleInput(room,environment,player,receivedAt){
+  const sim=room.simulation,now=this.now();
+  if(!sim?.initialized||!this.scheduledWalker(sim,environment,player)||!Number.isFinite(sim.time)||now<sim.time||now-sim.time>250)return false;
+  // A paused connection and a changed scene retain the established full path.
+  // The bounded frame age also recovers safely if the external tick pauses.
+  return receivedAt-player.lastSeen>=0&&receivedAt-player.lastSeen<1000&&now-player.lastSeen<1000&&sim.environmentUpdatedAt===this.manifestKey(environment)&&sim.preparedRoomRevision===(room.revision||0)&&sim.mapRevision===(environment.atlas?.revision||0)&&sim.baseAlignmentKey===JSON.stringify(environment.builderScene?.baseTransform||{});
+ }
+ scheduledInputFrame(room,environment){
+  const sim=room.simulation,{manifestKey,manifest}=this.prepareManifest(environment);
+  // Return existing runtime gates without running their expiry/migration work;
+  // the normal 20 Hz background step still owns all world maintenance.
+  manifest.objects.push(...(sim.commonsArrivalReturns||[]).map(entry=>structuredClone(entry.definition)));
+  this.completeManifest(sim,environment,manifest,manifestKey);
+  sim.sequence++;
+  return {sim,manifest};
+ }
+ consumeScheduledJump(sim,environment,player,now){
+  const pending=player.pendingJump;if(!pending)return false;delete player.pendingJump;
+  return this.scheduledInputs&&pending.epoch===player.inputEpoch&&Number.isSafeInteger(pending.sequence)&&now>=pending.at&&now-pending.at<=250&&player.grounded&&this.scheduledWalker(sim,environment,player);
+ }
  initialize(room,environment){
-  const manifestKey=(isBasketballEnvironment(environment)?'basketball-runtime-v2:':isDedicatedFiringRange(environment)?'firing-range-runtime-v1:':'')+environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);let base=this.manifestCache.get(manifestKey);if(!base){const scene=environment.builderScene||environment.placementScene||{};base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,objects:[...base.objects],actors:[...base.actors]};
+  const {manifestKey,manifest}=this.prepareManifest(environment);
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
   const sim=room.simulation,contentUpdatedAt=manifestKey;
   manifest.objects.push(...syncCommonsArrivalReturns(sim,environment,manifest,this.now()));
@@ -239,16 +291,26 @@ export class AuthoritativeRooms {
   if(this.aiDefinitionVersions.get(sim)!==contentUpdatedAt){registerAIWorldDefinitions(sim,manifest);this.aiDefinitionVersions.set(sim,contentUpdatedAt);}
   if(!Object.values(sim.actors).some(actor=>actor.resident))this.collision.withActorCandidates(sim.actors,()=>stepWorldResidents(sim,environment,this.now(),0,{collision:this.collision,objects:room.objects}));
   if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment)){ensureRoadFleet(sim,environment,this.collision,room.objects);ensureFreight(sim,environment,this.collision,room.objects);}
-  manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition&&(!sim.basketball||!['hostile','patrol','hazard'].includes(actor.definition.gameplay?.behavior))).map(actor=>actor.definition));
+  this.completeManifest(sim,environment,manifest,contentUpdatedAt);
   sim.streets=usesNativeSportsMatch(environment)?[]:environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
+  sim.preparedAt=this.now();sim.preparedRoomRevision=room.revision||0;
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now();stepJobDispatch(sim,environment,now);advanceDevicePlayback(sim,now);stepFunhouse(sim,environment,now);stepFitness(sim,environment,now);stepFishing(sim,environment,now);stepShipping(sim,environment,now,{collision:this.collision,objects:room.objects});stepFactory(sim,environment,now);stepFactoryTesting(sim,environment,now);stepFactoryLogistics(sim,environment,now);stepPrison(sim,environment,now,{collision:this.collision,objects:room.objects});stepTropicalIsland(sim,environment,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);this.collision.withActorCandidates(sim.actors,()=>{stepWorldResidents(sim,environment,now,dt,{collision:this.collision,objects:room.objects});stepAIWorldActions(sim,environment,now,dt,{collision:this.collision,objects:room.objects});});if((!sim.construction||(environment.construction||environment.builderScene?.layoutMeta?.construction)?.ambientActivity===true)&&!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment))stepRoadActivity(sim,environment,now,dt,{collision:this.collision,objects:room.objects});if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment))stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
+  let now=this.now();const prior=room.simulation;
+  const fast=prior?.initialized&&prior.environmentUpdatedAt===this.manifestKey(environment)&&prior.preparedRoomRevision===(room.revision||0)&&prior.mapRevision===(environment.atlas?.revision||0)&&prior.baseAlignmentKey===JSON.stringify(environment.builderScene?.baseTransform||{})&&now>=prior.preparedAt&&now-prior.preparedAt<33;
+  let state;
+  if(fast){const {manifestKey,manifest}=this.prepareManifest(environment);manifest.objects.push(...syncCommonsArrivalReturns(prior,environment,manifest,now));this.completeManifest(prior,environment,manifest,manifestKey);state={sim:prior,manifest};}
+  else {state=this.initialize(room,environment);now=this.now();}
+  const {sim,manifest}=state;stepJobDispatch(sim,environment,now);advanceDevicePlayback(sim,now);stepFunhouse(sim,environment,now);stepFitness(sim,environment,now);stepFishing(sim,environment,now);stepShipping(sim,environment,now,{collision:this.collision,objects:room.objects});stepFactory(sim,environment,now);stepFactoryTesting(sim,environment,now);stepFactoryLogistics(sim,environment,now);stepPrison(sim,environment,now,{collision:this.collision,objects:room.objects});stepTropicalIsland(sim,environment,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);this.collision.withActorCandidates(sim.actors,()=>{stepWorldResidents(sim,environment,now,dt,{collision:this.collision,objects:room.objects});stepAIWorldActions(sim,environment,now,dt,{collision:this.collision,objects:room.objects});});if((!sim.construction||(environment.construction||environment.builderScene?.layoutMeta?.construction)?.ambientActivity===true)&&!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment))stepRoadActivity(sim,environment,now,dt,{collision:this.collision,objects:room.objects});if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment))stepTransportTraffic(sim,environment,now,dt,{collision:this.collision,objects:room.objects});
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   if(environment.game==='ski')stepSkiLobby(sim,now);
+  // Player movement queries share the same actor membership. Craft poses,
+  // holders and activity remain live inside each collision query.
+  this.collision.withActorCandidates(sim.actors,()=>{
   for(const player of Object.values(sim.players)){
    if(player.basketballAI)continue;
+   const latchedJump=this.consumeScheduledJump(sim,environment,player,now);
    if(environment.game==='ski'&&stepSkiAI(sim,player,now,dt))continue;
    if(environment.game==='ski'&&player.skiRace?.status==='countdown'){stepSkiRace(sim,player,player.position,now);if(player.skiRace.status==='countdown'){player.input={};player.skiSpeed=0;continue;}}
 
@@ -292,7 +354,7 @@ export class AuthoritativeRooms {
 
    if(environment.game==='ski'&&player.skiing){const motion=skiMotion(player,input,dt);next.x=motion.x;next.z=motion.z;const incline=(skiHeight(next.x,next.z)-skiHeight(player.position.x,player.position.z))/Math.max(.01,Math.hypot(next.x-player.position.x,next.z-player.position.z));if(player.grounded&&motion.speed>8&&(player.skiIncline||0)>.08&&incline<-.03){player.velocityY=Math.min(9,motion.speed*(player.skiIncline||0));player.grounded=false;}player.skiIncline=incline;}
    const floor=hasGeometry?-100:Number(player.floor)||0;
-   if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
+   if((input.jump||latchedJump)&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
    // One swept resolver handles map geometry and placed solids together.
    // A wall removes only the blocked control component; it never ejects the
@@ -319,6 +381,7 @@ export class AuthoritativeRooms {
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position,...(isWatercraft(vehicle)?{y:0}:{})};vehicle.rotation.y=player.yaw;}}
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
+  });
   if(environment.id===COMPOUND_ID)for(const player of Object.values(sim.players))this.constrainCompoundPlayer(sim,player,environment,player.position);
   if(isCasinoEnvironment(environment))stepCasinoTasks(sim,now);
   const constructionContext=this.constructionContext(sim,environment,room.objects);
@@ -353,13 +416,18 @@ export class AuthoritativeRooms {
  }
  view(room){const sim=room.simulation,now=this.now();return {authoritative:true,freightHubs:sim.freightHubs||[],freightDeliveries:sim.freightDeliveries||[],sceneVersion:sim.environmentUpdatedAt,population:worldPopulation(sim,now),residentLife:residentLifeView(sim),casinoLife:casinoLifeView(sim),prison:prisonSnapshot(sim),island:tropicalIslandView(sim),fitness:fitnessView(sim,now),fishing:fishingView(sim),shipping:shippingView(sim),factory:factoryView(sim,now),testing:factoryTestingView(sim,now),logistics:factoryLogisticsView(sim,now),construction:constructionView(sim),questTeams:questTeamOffers(sim,now),liveDispatch:sim.liveDispatch||null,questOffers:sim.questOffers||[],questResults:sim.questResults||[],transportRadio:sim.transportRadio||[],skiCompetition:skiCompetitionView(sim),airport:sim.airport?{runwayHolder:sim.airport.runwayHolder||null,expires:sim.airport.expires||0}:null,building:buildingPolicy(room),firingRange:sim.firingRange?copy(sim.firingRange):null,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:projectArcadeDevices(sim.devices||{}),players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,avatarBuildAssetId:p.avatarBuildAssetId||null,position:p.position,movementRevision:p.movementRevision||0,radToxReady:p.radToxReady!==false,radToxEnabled:p.radToxEnabled!==false,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,island:playerTropicalIslandView(p),funhouse:playerFunhouseView(p),urbanMission:p.urbanMission||null,fitness:fitnessRoundSnapshot(p.fitness),fishing:playerFishingView(sim,p),shipping:sim.shipping?.enabled?playerShippingView(sim,p):null,fitnessProgress:p.fitnessProgress||null,factory:p.factory?{job:p.factory.job,progress:p.factory.progress}:null,testing:publicTestingState(p.testing),logistics:publicLogisticsState(p.logistics),fitnessCoach:p.fitnessCoach||null,vehicleMission:p.vehicleMission||null,mapQuestProgress:p.mapQuestProgress||null,npcConversation:p.npcConversation||null,residentTask:p.residentTask||null,residentProgress:residentProgressView(p),casinoTask:casinoTaskView(p),casinoProgress:casinoProgressView(p),residentNearby:p.residentNearby||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballStealAt:p.basketballStealAt??null,firingRangeRole:p.firingRangeRole||null,firingRangeLane:p.firingRangeLane??null,seatedId:p.seatedId,vehicleId:p.vehicleId,skiing:!!p.skiing,skiSpeed:p.skiSpeed||0,skiHeading:p.skiHeading??p.yaw,skiAssist:p.skiAssist!==false,skiRace:p.skiRace||null,skiStats:p.skiStats||null,skiLift:p.skiLift||null,vehicleSeat:isAircraft(sim.actors[p.vehicleId])?'cockpit':isWatercraft(sim.actors[p.vehicleId])?(fishingLocked(p)?'fishing':'helm'):null,grounded:p.grounded}])),events:sim.events.slice(-30).map(event=>({...fitnessEventSnapshot(event),...(event.factory?{factory:publicFactoryState(event.factory)}:{}),...(event.testing?{testing:publicTestingState(event.testing)}:{}),...(event.logistics?{logistics:publicLogisticsState(event.logistics)}:{})}))};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
- command(id,environment,identity,command){const receivedAt=this.now(),requestedAction=command.action,transientCommand=requestedAction==='input'||requestedAction==='construction-controls'&&command.operation==='control';this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
+ command(id,environment,identity,command,{projectResult=value=>value}={}){const receivedAt=this.now(),requestedAction=command.action,transientCommand=requestedAction==='input'||requestedAction==='construction-controls'&&command.operation==='control';this.activeWorlds.set(id,environment);this.collision.activateWorld(environment.id);return this.store.update(id,async (room,allRooms)=>{
   if(environment.id===COMPOUND_ID&&requestedAction==='join')await this.testingAccess(identity,{deep:false});
   const actorId='account:'+identity.accountId,arrivingPlayer=room.simulation?.players?.[actorId];
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
+  // Inputs dominate the replay window. Bound their stored key size and omit
+  // empty results, while reading old saves and checking cross-action ID reuse.
+  const legacyReceiptKey=actorId+':'+requestId,compactReceiptKey='input-v2:'+createHash('sha256').update(legacyReceiptKey).digest('base64url');
+  const priorReceipt=()=>room.simulation?.receipts?.[legacyReceiptKey]||room.simulation?.receipts?.[compactReceiptKey];
   const currentInput=Boolean(arrivingPlayer?.inputEpoch&&command.inputEpoch===arrivingPlayer.inputEpoch&&Number.isSafeInteger(command.inputSequence)&&command.inputSequence>=0&&command.inputSequence>(arrivingPlayer.lastInputSequence??-1));
-  const returningInput=currentInput&&!room.simulation?.receipts?.[actorId+':'+requestId];
+  const returningInput=currentInput&&!priorReceipt();
   const freshInput=requestedAction==='input'&&arrivingPlayer&&!arrivingPlayer.replacedByRoom&&(receivedAt-arrivingPlayer.lastSeen<15000||returningInput);
+  const scheduledInput=this.scheduledInputs&&requestedAction==='input'&&currentInput&&!priorReceipt()&&this.canScheduleInput(room,environment,arrivingPlayer,receivedAt);
   // Shader compilation or a suspended tab can outlast the presence lease.
   // Fresh ordered controls for the current join resume that same player; old
   // epochs, replays and players who changed rooms still require a new join.
@@ -374,10 +442,10 @@ export class AuthoritativeRooms {
    if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
    arrivingPlayer.input={};
   }arrivingPlayer.lastSeen=this.now();}
-  const {sim,manifest}=this.step(room,environment),now=this.now();
+  const {sim,manifest}=scheduledInput?this.scheduledInputFrame(room,environment):this.step(room,environment),now=this.now();
   if(freshInput&&sim.players[actorId]&&!sim.players[actorId].replacedByRoom)sim.players[actorId].lastSeen=now;
   const spawnSignature=requestedAction==='spawn'?JSON.stringify([command.itemId||null,command.sku||null,command.modelId||null]):null,prisonSignature=prisonCommandSignature(command);
-  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){const prior=sim.receipts[receiptKey];if(prior.action!==requestedAction||spawnSignature&&prior.spawnSignature&&prior.spawnSignature!==spawnSignature)fail('Request ID already used for another item or action.',409);if(prisonSignature&&prior.prisonSignature!==prisonSignature)fail(prior.prisonSignature?'Request ID already used for another prison packet.':'This saved prison request has no packet signature. Retry with a new request id.',409);return {...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:prior.result};}
+  sim.receipts ||= {};const receiptKey=requestedAction==='input'?compactReceiptKey:legacyReceiptKey,prior=priorReceipt();if(prior){if(prior.action!==requestedAction||spawnSignature&&prior.spawnSignature&&prior.spawnSignature!==spawnSignature)fail('Request ID already used for another item or action.',409);if(prisonSignature&&prior.prisonSignature!==prisonSignature)fail(prior.prisonSignature?'Request ID already used for another prison packet.':'This saved prison request has no packet signature. Retry with a new request id.',409);return projectResult({...this.view(room),selfId:actorId,inputEpoch:sim.players[actorId]?.inputEpoch,result:prior.action==='input'&&prior.result===undefined?{}:prior.result});}
   let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   const rangeWasActive=Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000);
   await this.releaseCancelledSupply(identity,sim,player,environment,now);
@@ -422,6 +490,7 @@ export class AuthoritativeRooms {
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.avatarBuildAssetId=identity.avatar?.buildAssetId||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
    if(isTropicalIslandEnvironment(environment))stepTropicalIsland(sim,environment,now);
+   delete player.pendingJump;
    player.residentWalkthroughMode=command.residentWalkthrough===true;
    restoreResidentContinuity(player,allRooms,actorId,id,now);
    if(environment.builderScene?.layoutMeta?.harbor)applyFishingAccount(player,await this.fishingState(identity));
@@ -506,7 +575,7 @@ export class AuthoritativeRooms {
    else if(command.action==='island-action'){Object.assign(result,tropicalIslandCommand(sim,player,environment,command,now));}
    else if(/^funhouse-/.test(command.action)){Object.assign(result,funhouseCommand(sim,player,environment,command,now));}
    else if(/^fitness-/.test(command.action)){const fitnessResult=fitnessCommand(sim,player,environment,command,now);Object.assign(result,fitnessResult);if(fitnessResult.settlement){const receipt=await this.fitnessReward(identity,fitnessResult.settlement);player.fitness.settled=true;player.fitness.payoutMzk=receipt.amountMzk;player.fitness.rewardReceipt=receipt;player.fitnessProgress=receipt.progress;player.fitness.message=receipt.message;result.message=receipt.message;result.fitnessReceipt=receipt;delete result.settlement;}}
-   else if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0||fishingLocked(player)||shippingHandling(player)?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),lift:clamp(input.lift,-1,1),...(Number.isFinite(input.throttle)?{throttle:clamp(input.throttle,isWatercraft(sim.actors[player.vehicleId])?-1:0,1)}:{}),...(typeof input.gear==='boolean'?{gear:input.gear}:{}),...(Number.isFinite(input.flaps)?{flaps:clamp(input.flaps,0,1)}:{}),brake:input.brake===true,...(typeof input.anchor==='boolean'?{anchor:input.anchor}:{}),...(Number.isFinite(input.sailTrim)?{sailTrim:clamp(input.sailTrim,0,1)}:{}),rudder:clamp(input.rudder,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
+   else if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){const jumpPressed=input.jump===true&&player.input?.jump!==true;if(inputSequence!==undefined)player.lastInputSequence=inputSequence;if(this.scheduledInputs&&currentInput&&jumpPressed&&player.grounded&&this.scheduledWalker(sim,environment,player))player.pendingJump={epoch:player.inputEpoch,sequence:inputSequence,at:now};player.input=player.health<=0||fishingLocked(player)||shippingHandling(player)?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),lift:clamp(input.lift,-1,1),...(Number.isFinite(input.throttle)?{throttle:clamp(input.throttle,isWatercraft(sim.actors[player.vehicleId])?-1:0,1)}:{}),...(typeof input.gear==='boolean'?{gear:input.gear}:{}),...(Number.isFinite(input.flaps)?{flaps:clamp(input.flaps,0,1)}:{}),brake:input.brake===true,...(typeof input.anchor==='boolean'?{anchor:input.anchor}:{}),...(Number.isFinite(input.sailTrim)?{sailTrim:clamp(input.sailTrim,0,1)}:{}),rudder:clamp(input.rudder,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
    else if(command.action==='range-ready'||isDedicatedFiringRange(environment)&&['start-rad-tox','next-rad-tox'].includes(command.action)){if(!sim.firingRange)fail('This map has no live firing range.',409);result.message='Firing range ready. Choose Quick practice, join a lane, or watch the live range.';}
    else if(command.action==='range-practice'){startFiringRangePractice(sim,player,now,command);result.message='Open practice is live. Join any free lane; training ammunition is free.';}
    else if(command.action==='range-join'){joinFiringRange(sim,player,now,command);result.message='Lane selected. Training ammunition is free.';}
@@ -812,7 +881,8 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
   if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);player.input={};player.movementRevision=(player.movementRevision||0)+1;}
   if(priorCommandPosition&&requestedAction!=='input'&&distance(priorCommandPosition,player.position)>.001&&(player.movementRevision||0)===priorMovementRevision)player.movementRevision=priorMovementRevision+1;
 
-  if(requestedAction!=='join'&&(player.movementRevision||0)!==priorMovementRevision){player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;result.inputEpoch=player.inputEpoch;}
+  if(requestedAction!=='join'&&(player.movementRevision||0)!==priorMovementRevision){player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;delete player.pendingJump;result.inputEpoch=player.inputEpoch;}
+  if(player.pendingJump&&(requestedAction==='respawn'||!this.scheduledInputs||!this.scheduledWalker(sim,environment,player)))delete player.pendingJump;
 
   if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   if(player.shipping?.job?.factoryManifestId&&['cancelled','expired'].includes(player.shipping.job.phase)){await this.shippingReturn(identity,player,now);player.logistics=await this.logisticsState(identity,now,environment,sim);result.logistics=player.logistics;}
@@ -822,11 +892,11 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
   if(prisonSignature){sim.prison.revision=(Number.isSafeInteger(sim.prison.revision)?sim.prison.revision:0)+1;result.prisonPacket={protocol:PRISON_PROTOCOL,version:PRISON_PROTOCOL_VERSION,revision:sim.prison.revision,requestId};if(result.prison)result.prison.revision=sim.prison.revision;}
   if(!transientCommand){const publicResult={...fitnessEventSnapshot(result),...(result.factory?{factory:publicFactoryState(result.factory)}:{}),...(result.testing?{testing:publicTestingState(result.testing)}:{}),...(result.logistics?{logistics:publicLogisticsState(result.logistics)}:{})};sim.events.push({id:requestId,actorId,action:requestedAction,...publicResult,at:now});sim.events=sim.events.slice(-100);}
-  sim.receipts[receiptKey]={action:requestedAction,result,...(spawnSignature?{spawnSignature}:{}),...(prisonSignature?{prisonSignature}:{})};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
+  sim.receipts[receiptKey]={action:requestedAction,...(requestedAction==='input'&&Object.keys(result).length===0?{}:{result}),...(spawnSignature?{spawnSignature}:{}),...(prisonSignature?{prisonSignature}:{})};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   if(result.spawnedId){stepFactory(sim,environment,now);stepFactoryTesting(sim,environment,now);stepFactoryLogistics(sim,environment,now);}
   if(['join','npc-social'].includes(requestedAction)||result.residentId)saveResidentContinuity(player,id,now,actorId);
-  return {...this.view(room),selfId:actorId,inputEpoch:player.inputEpoch,result};
- },{persist:!transientCommand,roomOnly:requestedAction!=='join'});}
+  return projectResult({...this.view(room),selfId:actorId,inputEpoch:player.inputEpoch,result});
+ },{persist:!transientCommand,roomOnly:requestedAction!=='join',...(requestedAction==='join'?{playerScope:{playerId:'account:'+identity.accountId,roomIds:command.travelFrom?[String(command.travelFrom)]:[]}}:{})});}
 
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
   if(player.health<=0||sim.match?.state==='finished')return;

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 import {nativeBuilderItem} from '../public/js/native-builder-items.js';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
 
@@ -57,8 +58,6 @@ test('nearby item actions are stable and rate-limited for touch devices', async 
   assert.match(game, /function resolveNearbyAction\((?:key=null)?\)/);
   assert.match(game, /function renderNearbyAction\(next\)/);
   assert.match(game, /now-nearbyActionCheckedAt<100/);
-  assert.match(game, /if\(nearbyActionLocked\)return/);
-  assert.match(game, /setTimeout\(\(\)=>\{nearbyActionLocked=false;\},180\)/);
   assert.match(game, /bindGameActionButton\(builderActionButton,activateNearbyAction\)/);
   assert.match(actionButton, /button\.addEventListener\('pointerup',up\)/);
   assert.match(actionButton, /event\.pointerType!=='touch'/);
@@ -76,4 +75,32 @@ test('interaction failures stay isolated from the WebGL render loop', async () =
   assert.match(game, /safelyInteract\('World interaction'/);
   assert.doesNotMatch(game, /canvas\.setPointerCapture\?\.\(e\.pointerId\)/);
   assert.doesNotMatch(game, /stick\.setPointerCapture\?\.\(pointerId\)/);
+});
+
+
+test('nearby activation blocks unready/covered controls, rechecks the target, and enforces its cooldown', async () => {
+  const game=await read('../public/js/house-explorer-glb.js');
+  const start=game.indexOf('  function activateNearbyAction(event){');
+  const end=game.indexOf("  window.addEventListener('keydown'",start);
+  assert.ok(start>=0&&end>start,'exercise the real nearby-action implementation');
+  let ready=false,overlay=false,target={kind:'vehicle'},toggles=0,refreshes=0;
+  const timers=[];
+  const context=vm.createContext({
+    gameplayControlsReady:()=>ready,gameplayOverlayOpen:()=>overlay,nearbyActionLocked:false,
+    nearbyAction:{kind:'vehicle'},resolveNearbyAction:()=>target,
+    renderNearbyAction:next=>{context.nearbyAction=next;},serverHostedRoom:false,
+    safelyInteract:(_label,action)=>action(),vehicleController:{toggle:()=>{toggles++;}},
+    refreshNearbyAction:()=>{refreshes++;},performance:{now:()=>100},
+    window:{setTimeout:(callback,delay)=>timers.push({callback,delay})}
+  });
+  vm.runInContext(game.slice(start,end),context);
+  context.activateNearbyAction();assert.equal(toggles,0,'controls remain disabled before the game starts');
+  ready=true;overlay=true;context.activateNearbyAction();assert.equal(toggles,0,'a blocking overlay owns input');
+  overlay=false;context.activateNearbyAction();context.activateNearbyAction();
+  assert.equal(toggles,1,'duplicate touch/click activation cannot toggle twice');
+  assert.equal(refreshes,1);assert.equal(timers.length,1);assert.equal(timers[0].delay,180);
+  timers.shift().callback();
+  target={kind:'none'};context.activateNearbyAction();assert.equal(toggles,1,'a stale visible hint cannot activate a departed target');
+  assert.equal(timers.length,0,'no target does not consume the cooldown');
+  target={kind:'vehicle'};context.activateNearbyAction();assert.equal(toggles,2,'a fresh action succeeds once the cooldown expires');
 });

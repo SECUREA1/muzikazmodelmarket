@@ -8,7 +8,6 @@ import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
-import {isTropicalIslandMap} from '../public/js/tropical-island-destination.js';
 
 test('all generated districts have distinct playable experiences and renderable content',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'generated-vibes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
@@ -43,11 +42,11 @@ test('atlas routes and saved entry links retain the selected destination and pla
  const identity={accountId:'route-visitor',username:'Route Visitor'};
  for(const world of environments){
   const url=new URL(world.playUrl,'https://muzikaz.test/');
-  // The native island launches its solo game; shared rooms retain their
-  // Explorer/sports entry. Atlas pins must preserve both launch contracts.
-  const island=isTropicalIslandMap(world),mode=island?'solo':'multiplayer';
-  if(island){assert.equal(url.pathname,'/tropical-island.html');assert.equal(url.searchParams.get('house'),null);}
-  else {assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');}
+  // Published public destinations, including the island, share the native
+  // multiplayer room contract; legacy island bookmarks redirect to Explorer.
+  const mode='multiplayer';
+  assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');
+  assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');
   assert.equal(url.searchParams.get('environment'),world.id,world.id+' keeps its environment');
   assert.equal(url.searchParams.get('autoplay'),'1');assert.equal(url.searchParams.get('mode'),mode);
   const route=atlasPortalRoute({mapId:world.id,districtId:world.districtId});

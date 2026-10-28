@@ -40,6 +40,12 @@ function disposePlacedWorldEntry(entry){
  if(entry.construction){resources.add(entry.construction.geometry);resources.add(entry.construction.material);}
  for(const resource of resources)resource.dispose();entry.root.clear();
 }
+function disposeStaticWorld(world){
+ const resources=new Set();
+ world.root.traverse(mesh=>{if(mesh.geometry)resources.add(mesh.geometry);for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material])if(material)resources.add(material);});
+ for(const resource of resources)resource.dispose();
+ world.root.clear();
+}
 function indexCollisionMeshes(meshes){
  const cells=new Map(),large=[];
  for(const mesh of meshes){const box=collisionMeshBounds(mesh),x1=Math.floor(box.min.x/8),x2=Math.floor(box.max.x/8),z1=Math.floor(box.min.z/8),z2=Math.floor(box.max.z/8);if((x2-x1+1)*(z2-z1+1)>1024){large.push(mesh);continue;}for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++){const key=x+':'+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(mesh);}}
@@ -85,7 +91,28 @@ function nearbyWalls(world,minX,maxX,minZ,maxZ){
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
- constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));}
+ constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));this.activeWorldIds=new Set();}
+ // A live room owns its collision resources. Evicting one live room to build
+ // the next makes fleets larger than the idle cache rebuild every world on
+ // every tick. Idle inspection queries still use the bounded LRU below.
+ activateWorld(id){this.activeWorldIds.add(id);}
+ setActiveWorlds(ids){
+  const next=new Set(ids),previous=this.activeWorldIds;this.activeWorldIds=next;
+  for(const id of previous)if(!next.has(id))this.releaseWorld(id);
+  this.pruneWorlds();
+ }
+ releaseWorld(id){
+  this.activeWorldIds.delete(id);
+  for(const [key,world]of this.cache)if(world.environmentId===id){disposeStaticWorld(world);this.cache.delete(key);}
+  const placed=this.placedWorlds.get(id);if(placed){disposePlacedWorldEntry(placed);this.placedWorlds.delete(id);if(this.placedCombinedRoot===placed.root)this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;}
+ }
+ pruneWorlds(){
+  const idle=[...this.cache].filter(([,world])=>!this.activeWorldIds.has(world.environmentId));
+  for(const [key,world]of idle.slice(0,Math.max(0,idle.length-20))){disposeStaticWorld(world);this.cache.delete(key);}
+  const idlePlaced=[...this.placedWorlds].filter(([id])=>!this.activeWorldIds.has(id));
+  for(const [id,entry]of idlePlaced.slice(0,Math.max(0,idlePlaced.length-this.maxPlacedWorlds))){disposePlacedWorldEntry(entry);this.placedWorlds.delete(id);}
+ }
+ clearWorlds(){for(const world of this.cache.values())disposeStaticWorld(world);this.cache.clear();this.clearPlacedWorlds();for(const world of this.objectCache.values())disposeStaticWorld(world);this.objectCache.clear();this.activeWorldIds.clear();}
  withActorCandidates(actors,callback){
   const previous=this.actorCandidateScope,scope={actors,stable:Object.create(null),traffic:Object.create(null),construction:Object.create(null)};
   // Resident movement issues many floor/clearance queries against the same
@@ -117,7 +144,10 @@ export class ServerBuilderCollision {
   return {floors:[...new Set(floors)],triangles:[...new Set(triangles)]};
  }
  world(environment){
-  const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
+  const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key)){const world=this.cache.get(key);this.cache.delete(key);this.cache.set(key,world);return world;}
+  // A revised room must not retain obsolete geometry merely because its ID
+  // is active. Keep one static revision per room and dispose the old one.
+  for(const [oldKey,old]of this.cache)if(old.environmentId===environment.id){disposeStaticWorld(old);this.cache.delete(oldKey);}
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
   for(const item of environment.builderScene?.objects||[]){if(item.casinoStation||isBasketball(item)||isWatercraft(item)||isAircraft(item)||isConstructionMachine(item)||item.constructionManaged)continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
@@ -125,18 +155,18 @@ export class ServerBuilderCollision {
   root.traverse(mesh=>{if(mesh.isMesh)mesh.geometry=layoutCollisionGeometry(mesh.geometry);if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   if(!glb)for(const mesh of floors)if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')&&!mesh.isInstancedMesh&&!Array.isArray(mesh.material))accelerateStaticRaycast(mesh,{respectMaterialSide:true});
   const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
-  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex:indexCollisionMeshes(floors),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const world={environmentId:environment.id,root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex:indexCollisionMeshes(floors),glb,bounds};this.cache.set(key,world);this.pruneWorlds();return world;
 
  }
  placedWorld(actors={},objects={},environment=null){
   const scope=environment?.id||'__unscoped__',version=JSON.stringify([environment?.contentUpdatedAt||environment?.updatedAt||'',environment?.builderScene?.baseTransform||{}]);let entry=this.placedWorlds.get(scope);
   if(entry&&entry.version!==version){disposePlacedWorldEntry(entry);entry=null;}
-  if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
+  const newEntry=!entry;if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
   // Each simulation room keeps its own native craft and moving hulls. The
   // actors-only query and the query including saved pieces also alternate
   // during one tick, so retain one current geometry set for each variant.
   this.placedWorlds.delete(scope);this.placedWorlds.set(scope,entry);
-  if(this.placedWorlds.size>this.maxPlacedWorlds){const [oldScope,old]=this.placedWorlds.entries().next().value;disposePlacedWorldEntry(old);this.placedWorlds.delete(oldScope);}
+  if(newEntry)this.pruneWorlds();
   const candidates=this.actorCandidateScope?.actors===actors?this.actorCandidateScope:null;
   const stableActors=candidates?.stable||Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
   const objectState=Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),actorState=Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[[actor.id,actor.modelId,actor.asset?.id,actor.asset?.buildAssetId,actor.asset?.modelUrl,actor.asset?.renderKind,actor.asset?.configuration,actor.asset?.targetHeight,actor.placementRevision,actor.active,actor.holderId],actor.position,actor.rotation,actor.scale]);

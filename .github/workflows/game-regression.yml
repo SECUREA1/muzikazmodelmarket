@@ -48,6 +48,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Verify generated asset registry and read-only drift detection
+        run: |
+          npm run check:asset-registry
+          node --test test/asset-registry-check.test.mjs test/factory-market-catalog.test.mjs
       - run: npm run build
       - run: npm run check
       - name: Movement, collider, aircraft and tower regressions
@@ -59,6 +63,8 @@ jobs:
         run: node --test test/local-walking-view.test.mjs test/arcade-local-motion.test.mjs test/hockey-local-motion.test.mjs test/local-vehicle-view.test.mjs test/movement-presence-recovery.test.mjs test/firing-range-startup.test.mjs test/gameplay-avatar-identity.test.mjs test/server-storage-initialization.test.mjs test/hockey-input-recovery.test.mjs
       - name: Verify shared session proofs during panel refreshes
         run: node --test test/session-store.test.mjs test/room-session.test.mjs test/gameplay-session-proof.test.mjs
+      - name: Verify transactional storage and server quality prerequisites
+        run: node --test --test-concurrency=2 test/credential-derivation.test.mjs test/opaque-session-secrets.test.mjs test/session-store-cache.test.mjs test/session-store-opaque.test.mjs test/account-store-cache.test.mjs test/room-identity-cache.test.mjs test/user-json-database.test.mjs test/user-json-database-performance.test.mjs test/world-supply-current.test.mjs test/shared-room-store.test.mjs test/room-store-journal.test.mjs test/room-store-player-scope.test.mjs test/room-tick-isolation.test.mjs test/room-resource-lifecycle.test.mjs test/room-result-projection.test.mjs test/room-input-receipts.test.mjs test/scheduled-room-inputs.test.mjs test/room-snapshot-protocol.test.mjs test/room-client-snapshot-protocol.test.mjs test/room-population-snapshot.test.mjs test/world-directory-cache.test.mjs test/gameplay-review.integration.test.mjs
       - name: Verify per-map quests, site work and native game challenges
         run: node --test test/harbor-quest-routes.test.mjs test/solo-map-quests.test.mjs test/map-quest-catalog.test.mjs test/site-quests.test.mjs test/site-quest-world-matrix.test.mjs test/site-work-contracts.test.mjs test/map-quest-prompts.test.mjs test/native-game-challenges.test.mjs test/expanded-quests.test.mjs test/road-quests.test.mjs test/cargo-hauling.test.mjs test/mountain-flight-quests.test.mjs test/patrol-team-quests.test.mjs test/quest-conversations.test.mjs
       - name: Verify live AI conversations and server machine work

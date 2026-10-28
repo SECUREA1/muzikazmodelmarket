@@ -9,7 +9,7 @@ for(const [file,prefix]of [['world-resident-ui.js','resident'],['transport-activ
   const start=source.indexOf(' const open='),end=source.indexOf(';toggle.onclick',start);
   assert.ok(start>=0&&end>start,'exercise the companion panel’s real lifecycle');
   const releases=[],panel={hidden:true,scrollTop:12,querySelector:()=>({focus(){}})},attributes={};
-  const context=vm.createContext({panel,toggle:{setAttribute:(key,value)=>attributes[key]=value,focus(){}},shell:{contains:()=>false},document:{exitPointerLock(){},activeElement:null},requestGameInputRelease:reason=>releases.push(reason),revealGameViewControl:()=>false,render(){},fit(){},fitPanel(){}});
+  const context=vm.createContext({panel,toggle:{setAttribute:(key,value)=>attributes[key]=value,focus(){}},shell:{contains:()=>false},document:{exitPointerLock(){},activeElement:null},requestGameInputRelease:reason=>releases.push(reason),revealGameViewControl:()=>false,worldRadio:{refresh(){}},render(){},fit(){},fitPanel(){}});
   vm.runInContext(source.slice(start,end+1)+';globalThis.setPanelOpen=open;',context);
   context.setPanelOpen(false);assert.deepEqual(releases,[],'closed-panel snapshot updates preserve fresh input');
   context.setPanelOpen(true);assert.equal(panel.hidden,false);assert.equal(attributes['aria-expanded'],'true');
