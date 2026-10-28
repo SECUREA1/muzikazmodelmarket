@@ -53,13 +53,18 @@ with TemporaryDirectory(prefix='room-chat-audio-') as directory:
       document.body.replaceChildren(source.querySelector('#crib-chat-toggle'),source.querySelector('#crib-social'));
       localStorage.setItem('muzikazHouseSessionId','room-browser-'+index);
       localStorage.setItem('muzikazMultiplayerWorld','muzikaz-main');
+      // Simulate the old automatically-persisted default on the receiver. It
+      // migrates to automatic voices; a new explicit opt-out stays off.
       localStorage.setItem('muzikazChatTextToSpeech','false');
+      if(index===0)localStorage.setItem('muzikazChatTextToSpeech.v2','false');
+      else localStorage.removeItem('muzikazChatTextToSpeech.v2');
       window.MUZIKAZ_HOUSE_TRACKING={roomId:'muzikaz-main',position:{x:0,y:0,z:0}};
       window.MuzikazHouseExplorer={snapshot:()=>({roomId:'muzikaz-main',serverHostedRoom:true,serverReady:true})};
       window.MUZIKAZ_AUDIO_PREFERENCES={speechVoiceGender:'male',speechVoiceURI:'missing-device-voice',masterMuted:false};
       // Keep the real authoritative room alive without running the 3D renderer.
       window.keepRoom=setInterval(()=>fetch('/api/rooms/muzikaz-main/gameplay',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({action:'input',input:{},requestId:crypto.randomUUID()})}),3000);
-      window.chatAudio={peak:0,nativeCalls:0,spoken:[]};
+      window.chatAudio={peak:0,nativeCalls:0,spoken:[],microphoneRequests:0};
+      if(navigator.mediaDevices)navigator.mediaDevices.getUserMedia=()=>{chatAudio.microphoneRequests++;throw Error('Automatic playback must not request microphone capture');};
       const{gameSpeech}=await import('/public/js/neural-character-speech.js');
       const speech=gameSpeech(),speak=speech.speak.bind(speech);
       speech.speak=utterance=>{const start=utterance.onstart;utterance.onstart=event=>{chatAudio.spoken.push({text:utterance.text,voice:utterance.voice?.voiceURI});start?.(event);};speak(utterance);};
@@ -70,9 +75,14 @@ with TemporaryDirectory(prefix='room-chat-audio-') as directory:
      }''',{'index':index,'csrf':session['csrfToken']})
      page.click('#crib-chat-toggle')
      page.wait_for_function('document.querySelector("#crib-room-count").textContent.includes("online")')
+     if index==0:
+      page.locator('#crib-chat-input').fill('Earlier room history must stay quiet.')
+      page.locator('#crib-chat-form [type="submit"]').click()
+      page.wait_for_function('document.querySelector("#crib-chat-messages").textContent.includes("Earlier room history")')
     sender,receiver=pages
-    receiver.click('#crib-tts-toggle')
     assert receiver.locator('#crib-tts-toggle').get_attribute('aria-pressed')=='true'
+    assert receiver.evaluate('chatAudio.spoken.length')==0,'Joining must not read room history'
+    assert receiver.locator('#crib-chat-messages').inner_text().find('Earlier room history')>=0
     message='Hello Bob. Can you hear this room message clearly?'
     sender.locator('#crib-chat-input').fill(message)
     sender.locator('#crib-chat-form [type="submit"]').click()
@@ -84,11 +94,17 @@ with TemporaryDirectory(prefix='room-chat-audio-') as directory:
     first_peak=receiver.evaluate('chatAudio.peak')
     assert responses and all(response['status']==200 and response['type'].startswith('audio/wav') for response in responses),responses
     receiver.wait_for_function('''async()=>{const{gameSpeech}=await import('/public/js/neural-character-speech.js');return !gameSpeech().speaking&&!gameSpeech().pending;}''',timeout=30000)
+    receiver.locator('#crib-chat-input').fill('My own message must not echo automatically.')
+    receiver.locator('#crib-chat-form [type="submit"]').click()
+    receiver.wait_for_function('document.querySelector("#crib-chat-messages").textContent.includes("My own message must not echo")')
+    receiver.wait_for_timeout(250)
+    assert receiver.evaluate('chatAudio.spoken.length')==1,'Automatic speech echoed the sender\'s own message'
+    assert sender.evaluate('chatAudio.spoken.length')==0,'A saved explicit automatic-voice opt-out was ignored'
     # Explicit playback of an already visible message remains available when
     # automatic reading is off. A real click must resume the shared output.
     receiver.click('#crib-tts-toggle')
     receiver.evaluate('chatAudio.peak=0')
-    read=receiver.locator('#crib-chat-messages [data-chat-read]').first
+    read=receiver.locator('#crib-chat-messages li').filter(has_text=message).locator('[data-chat-read]')
     read.click()
     receiver.wait_for_function('chatAudio.spoken.length===2&&chatAudio.peak>.01',timeout=120000)
     assert receiver.locator('#crib-tts-toggle').get_attribute('aria-pressed')=='false'
@@ -104,6 +120,7 @@ with TemporaryDirectory(prefix='room-chat-audio-') as directory:
     read.click()
     receiver.wait_for_function('chatAudio.spoken.length===3&&chatAudio.peak>.01',timeout=120000)
     assert receiver.evaluate('chatAudio.nativeCalls')==0
+    assert all(page.evaluate('chatAudio.microphoneRequests')==0 for page in pages)
     assert not errors,errors
     print(json.dumps({'realRoomMessages':True,'liveEventDelivery':True,'savedMissingVoiceRecovered':True,'speakerMuteAndRetry':True,'automaticPeak':first_peak,'manualPeak':manual_peak,'retryPeak':receiver.evaluate('chatAudio.peak'),'spoken':receiver.evaluate('chatAudio.spoken'),'responses':responses}))
     for context in contexts:context.close()

@@ -43,6 +43,7 @@ import {mountWorldResidentUI} from './world-resident-ui.js';
 import {connectSoloResidents} from './solo-resident-client.js';
 import {createResidentConversationAudio} from './resident-conversation-audio.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
+import {nearestResidentActor} from './resident-social-prompt.js';
 import {isRoadVehicle,roadVehicleType} from './road-vehicles.js';
 import {mountRoadVehicleUI} from './road-vehicle-ui.js';
 import {questConversationVoice,unlockQuestConversation,prepareQuestConversation} from './quest-conversation-voice.js';
@@ -2470,7 +2471,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(held)return{kind:'drop',prompt:'G — Drop held item',label:'Drop held item',title:'DROP ITEM',hint:'Tap or click to drop',vehicleActive:false};
     const vehicle=vehicleController.active||vehicleController.nearest();
     if(vehicle){const active=Boolean(vehicleController.active),flying=(vehicleController.active||vehicle).userData.vehicle?.mode==='fly';return{kind:'vehicle',prompt:active?'F — Exit Vehicle':'F — Enter Vehicle',label:active?'Exit current vehicle':'Enter nearby vehicle',title:active?'EXIT VEHICLE':'ENTER VEHICLE',hint:active?(flying?'Sticks steer · jump climbs':'Sticks drive and steer'):'Tap or click to drive',vehicleActive:active};}
-    const resident=soloResidentClient?.ready&&Object.values(serverActors).find(actor=>actor.resident&&actor.active!==false&&Math.hypot(actor.position.x-playerRig.position.x,actor.position.y-playerRig.position.y,actor.position.z-playerRig.position.z)<3);
+    const resident=soloResidentClient?.ready&&nearestResidentActor(playerRig.position,serverActors);
     if(resident)return {kind:'resident',entityId:resident.id,prompt:'E — Talk to '+resident.resident.name,label:'Talk to '+resident.resident.name,title:'TALK',hint:'Tap or press E',vehicleActive:false};
     const prompt=builderGameplay.prompt(playerRig.position);
     return prompt?{kind:'item',prompt,label:'Use nearby gameplay item',title:'USE / ACTION',hint:'Tap or click to interact',vehicleActive:false}:{kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};

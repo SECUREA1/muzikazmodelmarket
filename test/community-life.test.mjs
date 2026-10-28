@@ -10,7 +10,7 @@ test('a machine worker answers locally with their real current job and refuses r
 
 test('nearby crew expose a named local conversation while vehicle keys stay reserved for machines',async()=>{
  const {sharedNearbyActions}=await import('../public/js/gameplay-actions.js'),self={id:'player',health:100,position:{x:0,y:0,z:0}},crew={workers:[{id:'crew-maya',name:'Maya Chen',position:{x:1,y:0,z:0}}]};
- const action=sharedNearbyActions(self,{}, {},null,crew)[0];assert.equal(action.resident,true);assert.equal(action.entityId,'crew-maya');assert.match(action.label,/Maya Chen/);assert.equal(sharedNearbyActions(self,{}, {},'f',crew).length,0);crew.workers[0].position.x=10;assert.equal(sharedNearbyActions(self,{}, {},null,crew).length,0);
+ const action=sharedNearbyActions(self,{}, {},null,crew)[0];assert.equal(action.resident,true);assert.equal(action.entityId,'crew-maya');assert.match(action.label,/Maya Chen/);assert.equal(sharedNearbyActions(self,{}, {},'f',crew).length,0);crew.workers[0].position.x=11;assert.equal(sharedNearbyActions(self,{}, {},null,crew).length,0);
 });
 
 function team(kind='park'){

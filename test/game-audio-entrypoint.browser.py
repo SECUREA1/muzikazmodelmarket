@@ -1,4 +1,4 @@
-"""The actual game preserves the first Begin gesture and exposes autoplay audio.
+"""The game starts voice audio through Start and ordinary controls automatically.
 
 The full production page, lazy 3D engine and speech queue run normally. The
 speech API deliberately returns unavailable, so introductions must use the
@@ -48,26 +48,25 @@ with TemporaryDirectory(prefix='game-audio-entrypoint-') as directory:
       if(window.speechSynthesis)window.speechSynthesis.speak=()=>{audioEntry.nativeCalls++;throw Error('Unexpected native voice');};''')
      url=base+'/model-explorer.html?environment='+world+'&mode=solo'+('&autoplay=1' if autoplay else '')
      page.goto(url,wait_until='domcontentloaded')
-     page.locator('[data-game-audio-enable]').wait_for(state='visible')
-     page.evaluate('''async()=>{const{gameSpeech}=await import('/public/js/neural-character-speech.js');window.entrySpeech=gameSpeech();}''')
+     page.evaluate('''async()=>{await import(document.querySelector('script[src*="rad-tox-launcher"]').src);const{gameSpeech}=await import('/public/js/neural-character-speech.js');window.entrySpeech=gameSpeech();}''')
+     assert page.locator('[data-game-audio-enable],.game-audio-activation').count()==0,'Audio must not require a separate Resume or Enable control'
      if autoplay:
       page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady',timeout=90000)
       assert page.evaluate('audioEntry.sources.length')==0,'Autoplay must wait for a real gesture'
-      assert page.get_by_role('button',name='Enable game audio',exact=True).is_visible()
-      page.get_by_role('button',name='Enable game audio',exact=True).click()
+      page.keyboard.press('ArrowUp')
      else:
       assert not page.evaluate('!!window.MuzikazHouseExplorer'),'The 3D engine must remain deferred before Begin'
       page.add_style_tag(content='[data-house-start],#house-game-start,#house-game-start *{animation:none!important;transition:none!important}')
       page.get_by_role('button',name='Begin Game',exact=True).click()
       # No second click, key or canvas gesture occurs before playback.
      try:
-      page.wait_for_function('audioEntry.sources.some(source=>source.peak>.0001)||entrySpeech.lastError',timeout=60000)
+      page.wait_for_function('audioEntry.sources.some(source=>source.peak>.0001)||(entrySpeech.lastError&&entrySpeech.lastError.code!=="not-allowed")',timeout=60000)
       assert not page.evaluate('entrySpeech.lastError'),page.evaluate('entrySpeech.lastError')
      except Exception:
       print(json.dumps({'autoplay':autoplay,'world':world,'errors':errors,'speechRequests':requests,'audioResponses':audio_responses,'diagnostic':page.evaluate('''async()=>{const{gameSpeech}=await import('/public/js/neural-character-speech.js');const{questConversationVoice}=await import('/public/js/quest-conversation-voice.js');return{speech:gameSpeech().state,voice:questConversationVoice().state,controls:document.body.dataset.gameControls,start:document.querySelector('[data-house-start]')?.textContent,status:document.querySelector('#house-game-load-status')?.textContent,game:!!window.MuzikazHouseExplorer,...audioEntry};}''')}),flush=True)
       raise
      state=page.evaluate('''async()=>{const {gameSpeech}=await import('/public/js/neural-character-speech.js');const{questConversationVoice}=await import('/public/js/quest-conversation-voice.js');return{speech:gameSpeech().state,voice:questConversationVoice().state,...audioEntry};}''')
-     activation=state['contexts'][0]['active'] or bool(state['resumes'] and state['resumes'][0]['active'])
+     activation=any(context['active'] for context in state['contexts']) or any(resume['active'] for resume in state['resumes'])
      assert activation,state
      assert state['speech']['unlocked'] and state['voice']['unlocked'],state
      assert state['sources'][0]['state']=='running' and state['sources'][0]['peak']>.0001,state

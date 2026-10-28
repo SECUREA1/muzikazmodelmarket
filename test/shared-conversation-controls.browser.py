@@ -31,8 +31,11 @@ with TemporaryDirectory(prefix='shared-conversation-controls-') as directory:
      except Exception:time.sleep(.05)
     else:raise AssertionError(Path(directory+'/server.log').read_text())
     assert context.request.post(base+'/api/access/free-play',data={'username':'SharedConversationTest','password':'shared-conversation-test-password'}).ok
-    page=context.new_page();errors=[];snapshots=[];speech=[]
+    page=context.new_page();errors=[];snapshots=[];speech=[];resident_requests=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
+    def record_request(request):
+     if '/api/rooms/muzikaz-main/gameplay' in request.url and request.method=='POST' and request.post_data_json.get('action')=='npc-social':resident_requests.append(request.post_data_json)
+    page.on('request',record_request)
     def record(response):
      # Do not synchronously decode every high-frequency movement heartbeat in
      # the automation client while it is also dispatching individual keys.
@@ -66,12 +69,21 @@ with TemporaryDirectory(prefix='shared-conversation-controls-') as directory:
       page.wait_for_timeout(500)
       for key in keys:page.keyboard.up(key)
      else:raise AssertionError('The shared resident could not be reached using walking controls')
+     # The world itself exposes the resident action, without a People menu or
+     # a fresh greeting. E must address the runtime NPC through npc-social.
+     page.wait_for_function('document.querySelector(".builder-nearby-action")?.getAttribute("aria-label")?.startsWith("Talk to ")',timeout=15000)
+     page.keyboard.press('e')
+     panel=page.locator('.world-resident-panel');panel.wait_for(state='visible')
+     transcript=panel.get_by_label('Quest conversation transcript',exact=True);transcript.wait_for(state='visible',timeout=20000)
+     assert resident_requests and resident_requests[0]['choice']=='day',resident_requests
+     assert resident_requests[0]['entityId'] in snapshots[-1]['actors']
+     assert snapshots[-1]['actors'][resident_requests[0]['entityId']].get('resident')
+     page.get_by_role('button',name='Close resident conversations',exact=True).click()
      page.locator('#crib-chat-toggle').click()
      page.locator('#crib-ai-conversations').click()
-     panel=page.locator('.world-resident-panel');panel.wait_for(state='visible')
+     panel.wait_for(state='visible')
      assert page.locator('#crib-chat-panel').is_hidden()
-     panel.locator('[data-resident-talk]:enabled').first.click()
-     transcript=panel.get_by_label('Quest conversation transcript',exact=True);transcript.wait_for(state='visible',timeout=20000)
+     transcript.wait_for(state='visible',timeout=20000)
      question=panel.get_by_label('Question for resident',exact=True)
      page.evaluate('''()=>{sharedChat.question=document.querySelector('.world-resident-panel [data-resident-question]');sharedChat.replacedInputs=0;new MutationObserver(()=>{if(!sharedChat.question?.isConnected){sharedChat.replacedInputs++;sharedChat.question=document.querySelector('.world-resident-panel [data-resident-question]');}}).observe(document.querySelector('.world-resident-panel'),{childList:true,subtree:true});}''')
      question.fill('')
@@ -89,7 +101,7 @@ with TemporaryDirectory(prefix='shared-conversation-controls-') as directory:
      assert any(response['status']==200 and response['text'] in expected for response in speech),{'reply':expected,'speech':speech}
      assert page.evaluate('sharedChat.nativeCalls')==0 and not errors,errors
      screenshot=str(ARTIFACTS/'shared-conversation-controls-live.png');page.screenshot(path=screenshot)
-     print(json.dumps({'actualSharedGame':True,'mobile':True,'chatToAI':True,'typedQuestion':True,'stableInput':True,'npcReplyStarted':True,'nativeCalls':0,'screenshot':screenshot}),flush=True)
+     print(json.dumps({'actualSharedGame':True,'mobile':True,'walkUpTalk':True,'keyboardNpcSocial':True,'chatToAI':True,'typedQuestion':True,'stableInput':True,'npcReplyStarted':True,'nativeCalls':0,'screenshot':screenshot}),flush=True)
     except Exception:
      game=page.evaluate('''()=>{const g=window.MuzikazHouseExplorer?.snapshot();return g?{world:g.roomId,shared:g.serverHostedRoom,ready:g.controlsReady,player:g.player,camera:g.cameraMode,health:g.health}:null;}''')
      print(json.dumps({'errors':errors,'speech':speech,'game':game,'starts':page.evaluate('sharedChat.starts'),'replacedInputs':page.evaluate('sharedChat.replacedInputs'),'longTasks':page.evaluate('sharedChat.longTasks.slice(-15)'),'status':page.locator('#house-status').text_content()}),flush=True)

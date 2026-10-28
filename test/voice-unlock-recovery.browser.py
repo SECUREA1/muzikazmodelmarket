@@ -54,27 +54,25 @@ try:
    window.recoveryVoice=createQuestConversationVoice({speech:recoverySpeech,Utterance:GameSpeechUtterance});
    window.recoveryGuide=mountNativeWorldGuide({parent:document.body,voice:recoveryVoice,loadPreferences:async()=>({})});
    await recoveryGuide.enter({id:'commons',name:'Public Commons'});
-   window.recoveryPeak=async(ms=400)=>{const data=new Float32Array(analyser.fftSize);let peak=0,end=performance.now()+ms;while(performance.now()<end){analyser.getFloatTimeDomainData(data);for(const sample of data)peak=Math.max(peak,Math.abs(sample));await new Promise(resolve=>setTimeout(resolve,20));}return peak;};
+   window.recoveryPeak=async(ms=1200)=>{const data=new Float32Array(analyser.fftSize);let peak=0,end=performance.now()+ms;while(performance.now()<end){analyser.getFloatTimeDomainData(data);for(const sample of data)peak=Math.max(peak,Math.abs(sample));await new Promise(resolve=>setTimeout(resolve,20));}return peak;};
   }''')
-  page.dispatch_event('body','pointerdown')
   page.wait_for_function("recoverySpeech.lastError?.code==='not-allowed' && recoveryVoice.state.pending===1")
   assert not speech_requests,'Rejected activation must not consume a voice request'
-  assert page.get_by_role('button',name='Enable guide audio',exact=True).is_enabled()
-  page.get_by_role('button',name='Enable guide audio',exact=True).click()
+  assert page.get_by_role('button',name='Enable guide audio',exact=True).count()==0
+  assert page.get_by_role('button',name='Resume guide audio',exact=True).count()==0
+  page.keyboard.press('ArrowUp')
   page.wait_for_function('recoverySpeech.speaking')
   first_peak=page.evaluate('recoveryPeak()')
-  assert first_peak>.0001,first_peak
+  assert first_peak>.01,first_peak
   assert 'Welcome to Public Commons' in speech_requests[0]['text'],speech_requests
   guide_requests=len(requests)
   page.evaluate('recoverySpeech.cancel()')
   page.evaluate('recoveryContext.suspend()')
   page.evaluate("recoveryVoice.ingest([{id:'npc-recovery',conversation:true,interaction:true,at:1000,recipients:['p'],speaker:'Guide',text:'Here is your next local job.'}],{worldId:'commons',actorId:'p',serverTime:1000})")
-  page.wait_for_function("recoverySpeech.lastError?.code==='not-allowed' && recoveryVoice.state.pending===1")
-  assert len(requests)==guide_requests,requests
-  page.get_by_role('button',name='Enable guide audio',exact=True).click()
+  page.keyboard.press('ArrowRight')
   page.wait_for_function('recoverySpeech.speaking')
   npc_peak=page.evaluate('recoveryPeak()')
-  assert npc_peak>.0001,npc_peak
+  assert npc_peak>.01,npc_peak
   assert len(requests)==guide_requests+1 and requests[-1]['text']=='Here is your next local job.',requests
   page.evaluate("dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:{masterMuted:true}}))")
   assert page.get_by_role('button',name='Mute map guide',exact=True).is_disabled()

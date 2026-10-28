@@ -7,7 +7,7 @@ const source=await readFile(new URL('../public/js/crib-multiplayer.js',import.me
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 
-function harness({discovery=false,microphone=false,pendingAudio=false,capture}={}) {
+function harness({discovery=false,microphone=false,pendingAudio=false,capture,speechSetting,legacySpeechSetting}={}) {
   class Target {
     listeners=new Map();
     addEventListener(name,handler){const list=this.listeners.get(name)||[];list.push(handler);this.listeners.set(name,list);}
@@ -34,6 +34,8 @@ function harness({discovery=false,microphone=false,pendingAudio=false,capture}={
   const document=new Target();document.querySelector=selector=>nodes.get(selector.slice(1))||null;document.createElement=()=>new Node();document.createTextNode=value=>({textContent:value});document.documentElement=new Node();document.currentScript={src:'https://frontend.example/public/js/crib-multiplayer.js'};
   nodes.get('crib-social').parentNode={insertBefore(){}};
   const values=new Map([['muzikazHouseSessionId','client-session'],['muzikazBottleMemberEmail','member@example.test'],['muzikazDesignatedAvatar','{"modelUrl":"/models/avatar.glb"}']]);
+  if(speechSetting!==undefined)values.set('muzikazChatTextToSpeech.v2',String(speechSetting));
+  if(legacySpeechSetting!==undefined)values.set('muzikazChatTextToSpeech',String(legacySpeechSetting));
   const storage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,String(value)),removeItem:key=>values.delete(key)};
   const snapshot={roomId:'world-a',serverHostedRoom:false,serverReady:false,gameplayStarted:false,worldLoading:false};
   const window=new Target();window.MUZIKAZ_HOUSE_TRACKING={roomId:'world-a'};window.MUZIKAZ_DESIGNATED_AVATAR={modelUrl:'/models/avatar.glb'};window.MuzikazHouseExplorer={snapshot:()=>snapshot};window.scrollTo=()=>{};
@@ -74,13 +76,27 @@ function harness({discovery=false,microphone=false,pendingAudio=false,capture}={
   const context=vm.createContext({window,document,navigator,RTCPeerConnection:window.RTCPeerConnection,location:{href:'https://frontend.example/model-explorer.html'},localStorage:storage,crypto:{randomUUID:()=> 'client-session'},URL,Map,Set,Date,JSON,Promise,Error,DOMException,AbortController,console,EventSource,CustomEvent:class{constructor(type,init={}){this.type=type;this.detail=init.detail;}},setInterval:(callback,ms)=>{const id=++nextTimer;intervals.set(id,{callback,ms});return id;},clearInterval:id=>intervals.delete(id),setTimeout,clearTimeout});
   vm.runInContext(source,context,{importModuleDynamically:()=>Promise.reject(new Error('Speech modules are not required by this social transport test.'))});
   function microphoneStream(){const track=new Target();track.kind='audio';track.stopped=false;track.stop=()=>{track.stopped=true;};const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};captured.stream=stream;captured.track=track;return stream;}
-  return {window,document,snapshot,nodes,requests,streams,response,captured,audioContexts,voicePeers,gainTransitions,microphoneStream,
+  return {window,document,snapshot,nodes,requests,streams,response,captured,audioContexts,voicePeers,gainTransitions,microphoneStream,storage,
     setFetcher:handler=>{fetcher=handler;},discover:()=>{base='https://api.example';discovered.resolve();},
     ready:roomId=>window.fire('muzikaz:multiplayer-room-ready',{detail:{roomId}}),
     change:roomId=>{snapshot.roomId=roomId;snapshot.serverReady=false;window.MUZIKAZ_HOUSE_TRACKING.roomId=roomId;return window.fire('muzikaz:multiplayer-world-change',{detail:{roomId}});},
     tick:async ms=>{for(const {callback,ms:delay}of intervals.values())if(delay===ms)await callback();await settle();}
   };
 }
+
+test('new and returning players get automatic voices while an explicit current-version opt-out remains off',async()=>{
+  for(const options of [{},{legacySpeechSetting:false}]){
+    const h=harness({microphone:true,...options});await settle();
+    assert.equal(h.nodes.get('crib-tts-toggle')['aria-pressed'],'true');
+    assert.equal(h.storage.getItem('muzikazChatTextToSpeech.v2'),null,'loading a page must not persist an invented user choice');
+    await h.document.fire('click');await h.document.fire('muzikaz:gameplay-ready');
+    assert.equal(h.captured.length,0,'automatic voices must never request microphone capture');
+    assert.ok(h.audioContexts[0].resumeCalls>0,'Start and normal controls activate incoming room audio');
+  }
+  const off=harness({microphone:true,speechSetting:false});await settle();
+  assert.equal(off.nodes.get('crib-tts-toggle')['aria-pressed'],'false');
+  assert.equal(off.storage.getItem('muzikazChatTextToSpeech.v2'),'false');
+});
 
 test('solo worlds and unjoined multiplayer do not send social API calls, even with an avatar',async()=>{
   const h=harness();await settle();

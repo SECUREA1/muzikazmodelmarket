@@ -1,4 +1,4 @@
-"""Each main game page can enable and hear its shipped voice without the API.
+"""Ordinary controls activate shipped voice audio on every main game page.
 
 Uses real page markup, launcher, shared speech ownership, WAV decoding and
 Web Audio output. The deferred 3D engine is intentionally not started.
@@ -40,7 +40,14 @@ with TemporaryDirectory(prefix='audio-page-entrypoints-') as directory:
       GainNode.prototype.connect=function(target,...args){if(target===this.context.destination){const analyser=this.context.createAnalyser();connect.call(this,analyser);analyser.connect(target);const samples=new Float32Array(analyser.fftSize);setInterval(()=>{analyser.getFloatTimeDomainData(samples);for(const sample of samples)pageAudio.peak=Math.max(pageAudio.peak,Math.abs(sample));},10);return target;}return connect.call(this,target,...args);};
       if(window.speechSynthesis)window.speechSynthesis.speak=()=>{pageAudio.nativeCalls++;throw Error('No native voice substitution');};''')
      page.goto(base+'/'+filename,wait_until='domcontentloaded')
-     page.get_by_role('button',name='Enable game audio',exact=True).click()
+     page.evaluate('''async()=>{
+      await import(document.querySelector('script[src*="rad-tox-launcher"]').src);
+      const{questConversationVoice}=await import('/public/js/quest-conversation-voice.js');
+      const{worldGuideIntroduction}=await import('/public/js/world-guide.js');
+      questConversationVoice().announce(worldGuideIntroduction({id:'public-commons',name:'Public Commons'}),{worldId:'public-commons',category:'introduction'});
+     }''')
+     assert page.locator('[data-game-audio-enable],.game-audio-activation').count()==0
+     page.locator('.house-stage').click(position={'x':12,'y':12})
      page.wait_for_function('pageAudio.peak>.01',timeout=15000)
      report=page.evaluate('pageAudio');assert report['nativeCalls']==0 and not speech_requests,report
      assert not page.evaluate('!!window.MuzikazHouseExplorer'),'The game must remain deferred until Begin Game'

@@ -57,18 +57,22 @@ try:
      window.deviceActivation=mountGameAudioActivation({parent:document.body,speech:deviceSpeech,voice:deviceVoice});
      const panel=document.createElement('main');document.body.append(panel);let settingsRequest=0;
      const inventory={session:async()=>({owner_id:'test',csrfToken:'test-token'}),api:async(path,options)=>{if(options?.method==='PUT'){const selected=JSON.parse(options.body).settings;await new Promise(resolve=>window.completeSave=resolve);return{owner_id:'test',settings:selected};}if(++settingsRequest===1)await new Promise(resolve=>window.completeSettings=resolve);return{owner_id:'test',settings:savedMuted};},state:async()=>{throw Error('Member telemetry unavailable');}};
-     window.deviceSettings=mountPlayerSettings({panel,inventory,speech:deviceSpeech,gameState:()=>({}),onChange:value=>{window.MUZIKAZ_AUDIO_PREFERENCES={...value};deviceVoice.setPreferences(value);window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:{...value}}));},onAvatar(){},onCare(){}});
+     window.deviceSettings=mountPlayerSettings({panel,inventory,speech:deviceSpeech,gameState:()=>({}),onPreviewVoice:value=>deviceVoice.preview(value),onChange:value=>{window.MUZIKAZ_AUDIO_PREFERENCES={...value};deviceVoice.setPreferences(value);window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:{...value}}));},onAvatar(){},onCare(){}});
      window.deviceSettingsRestore=deviceSettings.restore();
     }
     window.devicePeak=async()=>{const data=new Float32Array(analyser.fftSize);let peak=0,end=performance.now()+500;while(performance.now()<end){analyser.getFloatTimeDomainData(data);for(const sample of data)peak=Math.max(peak,Math.abs(sample));await new Promise(resolve=>setTimeout(resolve,10));}return peak;};
     window.closeDevice=()=>{deviceVoice.dispose();deviceSpeech.dispose();};
    }''',mode)
-   page.get_by_role('button',name='Enable game audio' if mode=='enable-muted' else 'Enter world',exact=True).click()
+   page.get_by_role('button',name='Enter world',exact=True).click()
    if mode=='late-preferences':
     page.wait_for_function('!!window.releasePreviousFetch')
     page.evaluate("deviceVoice.setPreferences({speechVoiceGender:'male'});releasePreviousFetch()")
    if mode=='enable-muted':
     page.evaluate('async()=>{completeSettings();await deviceSettingsRestore;await deviceSettings.open();}')
+    assert page.evaluate('deviceSettings.preferences.masterMuted&&deviceSettings.preferences.introductionMuted&&deviceSettings.preferences.dialogueMuted'),'Ordinary startup must preserve saved mutes'
+    assert not page.evaluate('deviceSpeech.speaking||deviceSpeech.pending'),'Saved mutes must stay silent until the user changes Audio settings'
+    assert page.locator('[data-game-audio-enable],.game-audio-activation').count()==0
+    page.get_by_role('button',name='Enable all audio',exact=True).click()
     assert not page.evaluate('deviceSettings.preferences.masterMuted||deviceSettings.preferences.introductionMuted||deviceSettings.preferences.dialogueMuted||deviceSettings.preferences.effectsMuted||deviceSettings.preferences.mediaMuted||deviceSettings.preferences.announcementsMuted')
     assert page.evaluate('deviceSettings.preferences.effectsVolume')==100
     assert page.evaluate('deviceSettings.preferences.fov')==81,'Audio recovery must preserve saved non-audio preferences'
@@ -84,13 +88,19 @@ try:
    assert not requests,requests
    assert not errors,errors
    if mode=='enable-muted':
-    # An already submitted Save can still return the earlier muted preferences
-    # after the visible stage button has enabled audio again.
+    # An already submitted Save cannot overwrite a later explicit unmute from
+    # the existing in-world conversation voice control.
     page.get_by_role('button',name='Mute all audio',exact=True).click()
     assert page.evaluate('deviceSettings.preferences.masterMuted')
     page.get_by_role('button',name='Save settings',exact=True).click()
     page.wait_for_function('!!window.completeSave')
-    page.get_by_role('button',name='Resume game audio',exact=True).click()
+    page.evaluate('''async()=>{
+     const{mountQuestConversationPanel}=await import('/public/js/quest-conversation-panel.js');
+     const root=document.createElement('section');document.body.append(root);
+     window.externalVoiceControl=mountQuestConversationPanel(root,{command:async()=>({})});
+     externalVoiceControl.update({serverTime:1000,players:{p:{npcConversation:{type:'resident',instanceId:'external-audio-enable',entityId:'guide',status:'active',contact:{name:'Guide',role:'Guide',channel:'Nearby'},conversation:[],dialogueChoices:[]}}},actors:{}},'p','voice-test-world');
+    }''')
+    page.get_by_role('button',name='Quest conversation voice',exact=True).click()
     page.evaluate('completeSave()')
     page.wait_for_function('!document.querySelector("[data-settings-save]").disabled')
     assert not page.evaluate('deviceSettings.preferences.masterMuted||deviceSettings.preferences.dialogueMuted')

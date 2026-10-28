@@ -39,10 +39,10 @@ try:
     {name:'MUZIKAZ Natural Female',voiceURI:'muzikaz:neural-female',gender:'female',lang:'en-US',generated:true,natural:true,default:true},
     {name:'MUZIKAZ Natural Male',voiceURI:'muzikaz:neural-male',gender:'male',lang:'en-US',generated:true,natural:true,default:false}
    ];
-   const speech={spoken:[],cancelled:0,current:null,autoStart:true,getVoices:()=>voices,resume(){},
-    speak(call){this.spoken.push(call);this.current=call;if(this.autoStart)call.onstart?.();},
-    cancel(){this.cancelled++;const previous=this.current;this.current=null;previous?.onerror?.({error:'interrupted'});}
-   };
+   const speech=Object.assign(new EventTarget(),{spoken:[],cancelled:0,current:null,autoStart:true,getVoices:()=>voices,resume(){},
+    speak(call){this.spoken.push(call);this.current=call;if(this.autoStart)call.onstart?.();this.dispatchEvent(new Event('statechange'));},
+    cancel(){this.cancelled++;const previous=this.current;this.current=null;this.dispatchEvent(new Event('statechange'));previous?.onerror?.({error:'interrupted'});}
+   });
    window.SpeechSynthesisUtterance=class {constructor(text){this.text=text;}};
    Object.defineProperty(window,'speechSynthesis',{value:speech,configurable:true});
    let stream;
@@ -65,7 +65,7 @@ try:
    const toggle=document.querySelector('#crib-tts-toggle');
    let id=0;
    const emit=(message,roomId=window.MUZIKAZ_HOUSE_TRACKING.roomId)=>stream.emit({id:'chat-'+ ++id,message,roomId,username:'Taylor',sessionId:'other',createdAt:new Date().toISOString()});
-   const finish=()=>{const active=speech.current;speech.current=null;active?.onend?.();};
+   const finish=()=>{const active=speech.current;speech.current=null;speech.dispatchEvent(new Event('statechange'));active?.onend?.();};
    emit('Hello during the welcome.');await settle();
    assert(speech.spoken.length===1&&speech.cancelled===0,'Chat queued or interrupted the world introduction');
    assert(document.querySelector('#crib-chat-messages').textContent.includes('Hello during the welcome.'),'Skipped speech lost its visible message');
@@ -112,7 +112,23 @@ try:
    worldVoice.announce('A new job is available.',{worldId:'room-a',key:'job'});
    toggle.click();await settle();
    assert(speech.cancelled===afterManualReading&&worldVoice.state.speaking,'Enabling chat interrupted a new game announcement');
-   finish();
+   const beforeQueue=speech.spoken.length;
+   emit('A fresh message while the NPC is speaking.');await settle();
+   emit('The latest fresh message wins.');await settle();
+   assert(speech.spoken.length===beforeQueue&&worldVoice.state.speaking,'A new chat message interrupted the NPC');
+   finish();await settle();
+   assert(speech.spoken.length===beforeQueue+1&&speech.current.text.includes('latest fresh message'),'The latest fresh other-player message did not play once the NPC finished');
+   finish();await settle();
+   const actualClock=Date.now;let queueClock=actualClock();Date.now=()=>queueClock;
+   worldVoice.announce('A longer activity explanation.',{worldId:'room-a',key:'queue-expiration'});
+   emit('This pending message must expire.');await settle();const beforeExpiration=speech.spoken.length;
+   queueClock+=16000;finish();await settle();
+   assert(speech.spoken.length===beforeExpiration,'Expired chat became an automatic speech backlog');Date.now=actualClock;
+   worldVoice.announce('Another NPC turn.',{worldId:'room-a',key:'queue-muted'});emit('A pending message that will be muted.');await settle();
+   const beforeMute=speech.spoken.length;window.MUZIKAZ_AUDIO_PREFERENCES={dialogueMuted:true};window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences'));finish();await settle();
+   assert(speech.spoken.length===beforeMute,'A pending message escaped the dialogue mute');window.MUZIKAZ_AUDIO_PREFERENCES={speechVoiceGender:'male'};
+   const beforeOwn=speech.spoken.length;stream.emit({id:'own-message',message:'Do not echo my own text.',roomId:'room-a',username:'Me',sessionId:'self'});await settle();
+   assert(speech.spoken.length===beforeOwn,'Automatic playback echoed the sender text');
    emit('This message belongs to the old room.');await settle();
    assert(speech.current?.text.includes('old room'),'Old-room test message did not start');
    const beforeTravel=speech.cancelled;
@@ -138,7 +154,7 @@ try:
    emit('A message after cleanup.','room-c');await settle();
    assert(speech.current?.text==='Welcome to the next world.','Disposed chat added another utterance');
    worldVoice.dispose();
-   return {introClear:true,chatDoesNotQueue:true,ownMuteOnly:true,oldRoomCancelled:true,cleanupKeepsOtherSpeaker:true,spoken:speech.spoken.length};
+   return {introClear:true,chatDoesNotOverlap:true,freshPendingMessage:true,expiredPendingDiscarded:true,noOwnEcho:true,ownMuteOnly:true,oldRoomCancelled:true,cleanupKeepsOtherSpeaker:true,spoken:speech.spoken.length};
   }''')
   assert not errors,errors
   print(json.dumps(result));browser.close()

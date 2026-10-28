@@ -25,10 +25,11 @@ Static map footprints retain their DOM elements between snapshots. Occupancy
 updates do not reorder and replace vehicle buttons during a tap. Touch boarding
 dispatches once on pointer release and suppresses the delayed compatibility click.
 
-Spoken audio starts after the player's first gesture. The small launch module
-enables audio during **Begin Game**, before loading the 3D engine, and an
-**Enable audio** control remains visible on the game stage for autoplay visits
-and suspended tabs. Each map visit has one short
+Spoken audio starts during **Begin Game**, before the deferred 3D engine loads.
+Autoplay visits attempt to start audio when gameplay is ready; a browser that
+requires a gesture uses the next normal game control. Audio also follows window
+focus, visibility and output interruptions. There is no separate Resume audio
+button or startup voice preview. Saved mute choices remain in effect. Each map visit has one short
 guide explaining its activities and how to find jobs or help. Returning to a
 previously visited map plays its guide again; repeated snapshots stay quiet. Initial snapshots establish the job baseline without reading existing work
 or past traffic aloud. Subsequent new jobs, changed objectives, completions,
@@ -75,18 +76,21 @@ If voices or effects are silent, use **Enable all audio** in Audio settings.
 This resumes the browser's audio output, clears the six mute switches, restores
 a zero effects volume and previews the voice. Save settings to keep those
 changes. A blocked first gesture leaves the unheard guide queued for the next
-tap. The audio control is visible outside the collapsed radio panel. Explicit
+tap without starting a synthesis timeout while browser permission is pending. Explicit
 voice preview also clears a local radio mute while honoring saved master and
 NPC conversation mutes.
-The stage **Enable audio** button explicitly clears all mute switches for the
-current session, including a late account-settings response. Save in Settings
-to keep that choice. Passive taps and movement continue to respect saved mutes.
 
 Solo worlds run a private AI resident simulation alongside local movement and
 walking quests. Residents walk, work and converse without joining a public room.
 Use **People and AI** to talk to a resident nearby. These practice conversations
 do not write public-world rewards, wallet balances or member progress. Replies
 are delivered to speech even while the People panel is closed.
+Within 10 metres on the same floor, a living friendly AI offers **Talk** even
+when it is quiet or working. Use the nearby prompt, E or the touch action to
+open its conversation. Invitations and active visits keep their own controls.
+The prompt follows the nearest eligible resident and disappears out of reach.
+Residents can step away if a player crowds them after a conversation and then
+continue walking, working, practising and socializing.
 
 The room **Mic** control shares your microphone with human players in a shared
 room. Turning it on requests microphone permission directly from the tap;
@@ -102,10 +106,15 @@ player's own typed question stays in the transcript without being synthesized.
 **Replay reply** speaks the latest NPC response again. Playback failures appear
 beside the conversation controls so the same reply can be retried.
 
-Room chat sends text to the human players in that shared room. **Read text**
-reads new messages automatically; **Read aloud** on an existing message plays
+Room chat sends text to the human players in that shared room. New messages
+from other players are read automatically after Start or normal game controls.
+Your own messages and earlier history stay silent. **Read text** stores an
+explicit opt-out; legacy versions that saved their default off value migrate
+to the new automatic default. **Read aloud** on an existing message plays
 that message directly and changes to **Stop** during playback. Turning on
-automatic reading does not read earlier messages. Missing saved device voices
+automatic reading does not read earlier messages. One fresh message can wait
+up to 15 seconds behind a requested NPC reply; newer arrivals replace it and
+mute, travel or opting out clears it. Missing saved device voices
 use a named generated voice, and microphone sharing remains a separate control.
 If generated speech is unavailable, a suitable installed local voice of the
 selected gender can play the reply or message before any words have started.
@@ -159,11 +168,13 @@ audio playback, together with the complete packaged map guide.
 `python3 test/bundled-voices.browser.py` verifies audible introductions and
 male/female previews while every API request fails.
 `python3 test/game-audio-entrypoint.browser.py` exercises the actual full game
-page using one Begin click and the autoplay audio control.
+page using one Begin click and an ordinary control on an autoplay visit, with
+no audio activation button.
 `python3 test/voice-device-recovery.browser.py` checks missing device voices,
 late settings and explicit unmute with the speech API unavailable.
 `python3 test/audio-page-entrypoints.browser.py` verifies real voice output on
-Home, Model Market and Model Explorer while every API request is unavailable.
+Home, Model Market and Model Explorer from the Start gesture while the speech
+API is unavailable.
 `python3 test/conversation-controls.browser.py` checks typing, held buttons and
 conversation visibility during live updates. The shared-world counterpart is
 `python3 test/shared-conversation-controls.browser.py`.

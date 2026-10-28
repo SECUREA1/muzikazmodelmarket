@@ -15,6 +15,37 @@ function fixture({voices=GENERATED_VOICES}={}){
 }
 const announce=(voice,text,category='announcements',extra={})=>voice.announce(text,{worldId:'map',key:text,category,...extra});
 
+test('an automatic startup resume can wait for a first gesture without consuming or timing out the guide',async()=>{
+ let resolveStartup,attempts=0,time=1000;const spoken=[],timers=new Map(),output={unlocked:false};
+ const startup=new Promise(resolve=>{resolveStartup=resolve;});
+ const voice=createQuestConversationVoice({speech:{state:output,getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),cancel(){},resume(){if(++attempts===1)return startup;output.unlocked=true;return Promise.resolve(true);}},Utterance:class{constructor(text){this.text=text;}},now:()=>time,setTimer:(fn,ms)=>{timers.set(1,{fn,ms});return 1;},clearTimer:id=>timers.delete(id)});
+ const pending=voice.unlock();announce(voice,'A welcome after the first normal control.','introduction');time+=180000;
+ assert.equal(spoken.length,0);assert.equal(timers.size,0,'waiting for audio permission must not run the synthesis watchdog');assert.equal(voice.state.pending,1);
+ await voice.unlock();assert.equal(spoken.length,1);assert.equal(spoken[0].text,'A welcome after the first normal control.');
+ resolveStartup(false);await pending;assert.equal(voice.state.unlocked,true,'a stale startup denial cannot undo the successful control gesture');
+ spoken[0].onstart();spoken[0].onend();await voice.unlock();assert.equal(spoken.length,1);voice.dispose();
+});
+
+test('a denied asynchronous resume leaves the queued introduction for the next control',async()=>{
+ const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),cancel(){},resume:()=>Promise.resolve(false)},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ announce(voice,'This welcome has not been heard.','introduction');assert.equal(await voice.unlock(),false);
+ assert.equal(spoken.length,0);assert.equal(voice.state.pending,1);assert.equal(voice.state.unlocked,false);voice.dispose();
+});
+
+test('fresh NPC replies survive an interrupted active session without replaying initial history',async()=>{
+ let allowed=false,resolveInterrupted;const output={unlocked:false},spoken=[];
+ const voice=createQuestConversationVoice({speech:{state:output,getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),cancel(){},resume(){return allowed?(output.unlocked=true,Promise.resolve(true)):new Promise(resolve=>{resolveInterrupted=resolve;});}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ const options={worldId:'map',actorId:'self',serverTime:1000},call={id:'history',at:1000,conversation:true,interaction:true,role:'guide',text:'An initial historical reply.'};
+ voice.ingest([call],options);assert.equal(voice.state.pending,0);
+ allowed=true;await voice.unlock();assert.equal(spoken.length,0,'the initial snapshot stays quiet');
+ allowed=false;output.unlocked=false;const interrupted=voice.unlock();
+ voice.ingest([{...call,id:'fresh',text:'A fresh reply while sound recovers.'}],options);
+ assert.equal(spoken.length,0);assert.equal(voice.state.pending,1);
+ allowed=true;await voice.unlock();assert.deepEqual(spoken.map(line=>line.text),['A fresh reply while sound recovers.']);
+ resolveInterrupted(false);await interrupted;assert.equal(voice.state.unlocked,true);
+ spoken[0].onstart();spoken[0].onend();voice.ingest([{...call,id:'fresh'}],options);await voice.unlock();assert.equal(spoken.length,1);voice.dispose();
+});
+
 test('saved category mute immediately stops its active voice and discards its queued calls',()=>{
  const {voice,spoken}=fixture();voice.unlock();
  announce(voice,'First welcome','introduction');announce(voice,'Queued welcome','introduction');announce(voice,'A new job');
@@ -301,7 +332,7 @@ test('a new map discards a blocked welcome and replay resumes the actual output'
 test('resuming audio can reject without an unhandled rejection or discarding a waiting welcome',async()=>{
  const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),resume:()=>Promise.reject(new Error('Activation required')),cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
  announce(voice,'A waiting welcome.','introduction');const unlocked=voice.unlock();
- spoken[0].onerror({error:'not-allowed'});assert.equal(await unlocked,false);
+ assert.equal(spoken.length,0,'a pending resume must not start synthesis');assert.equal(await unlocked,false);
  assert.equal(voice.state.unlocked,false);assert.equal(voice.state.pending,1);voice.dispose();
 });
 

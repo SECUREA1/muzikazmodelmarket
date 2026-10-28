@@ -23,6 +23,29 @@ test('the app supplies actual generated male/female profiles without native voic
  assert.ok(f.engine.getVoices().every(voice=>voice.generated&&voice.natural));f.engine.dispose();
 });
 
+test('native audio interruption and recovery notify the game without another activation button',async()=>{
+ const f=fixture(),events=new Map(),states=[];
+ f.context.addEventListener=(type,callback)=>events.set(type,callback);
+ f.context.removeEventListener=(type,callback)=>{if(events.get(type)===callback)events.delete(type);};
+ f.engine.addEventListener('statechange',()=>states.push(f.engine.state.unlocked));
+ await f.engine.resume();assert.equal(f.engine.state.unlocked,true);
+ f.context.state='interrupted';events.get('statechange')();
+ assert.equal(states.at(-1),false);assert.equal(f.engine.state.unlocked,false);
+ f.context.state='running';events.get('statechange')();
+ assert.equal(states.at(-1),true);assert.equal(f.engine.state.unlocked,true);
+ f.engine.dispose();assert.equal(events.size,0);
+});
+
+test('a replaced audio context cannot deliver stale lifecycle events',async()=>{
+ const contexts=Array.from({length:2},()=>Object.assign(new EventTarget(),{state:'suspended',resume(){this.state='running';return Promise.resolve();},close(){this.state='closed';return Promise.resolve();}}));
+ let index=0,notifications=0;
+ const engine=createNeuralCharacterSpeech({audioFactory:()=>contexts[index++],nativeSpeech:null});engine.addEventListener('statechange',()=>notifications++);
+ await engine.resume();contexts[0].state='closed';await engine.resume();
+ const before=notifications;contexts[0].dispatchEvent(new Event('statechange'));assert.equal(notifications,before);
+ contexts[1].state='interrupted';contexts[1].dispatchEvent(new Event('statechange'));assert.equal(notifications,before+1);assert.equal(engine.state.unlocked,false);
+ engine.dispose();
+});
+
 test('generated speech waits for a control gesture and never falls back to an unspecified browser voice',async()=>{
  const f=fixture(),utterance=new GameSpeechUtterance('Hello. This is a generated voice.');let error;
  utterance.onerror=event=>error=event;

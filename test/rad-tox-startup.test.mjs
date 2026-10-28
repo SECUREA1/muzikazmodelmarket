@@ -39,7 +39,7 @@ test('shared gameplay is confirmed before dismissing startup, with explicit solo
   assert.match(startup, /if\(await startRoomGameplay\(initializationWorld\)===false\|\|!current\(\)\)return;/);
   assert.match(startup, /await toxicBubbleSystem\.begin\(\);\s+if\(!current\(\)\)return;\s+gameplayStarted=true;\s+setGameplayReadiness\(\);\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
   assert.match(game, /await ensurePlayAccess\(sharedInventory\)/);
-  assert.match(game, /if\(guestSolo\)\{serverHostedRoom=false/);
+  assert.match(game, /if\(guestSolo\)\{\s*serverHostedRoom=false/);
   assert.match(game, /await choosePlayAccess\(sharedInventory\)/);
   assert.doesNotMatch(game, /Shared room loaded\. Connecting to authoritative gameplay/);
 });

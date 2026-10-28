@@ -4,7 +4,7 @@ import {spatialEffectGain} from './shared-effect-audio.js';
 import {chooseCharacterVoice,characterSpeechStyle,prepareSpeechText,speechTimeout} from './character-voice-profile.js';
 
 export function createQuestConversationVoice({speech=gameSpeech(),Utterance=GameSpeechUtterance,setTimer=setTimeout,clearTimer=clearTimeout,now=()=>Date.now()}={}){
- let unlocked=false,muted=false,disposed=false,failed=false,current=null,currentStarted=false,utterance=null,timer=null,generation=0,scope=null,latest=null;
+ let unlocked=false,activated=false,muted=false,disposed=false,failed=false,current=null,currentStarted=false,utterance=null,timer=null,generation=0,unlockRevision=0,scope=null,latest=null;
  let preferences={},listener=null,actors={},voiceWait=null,voicesWaited=false,previewSequence=0,introduction=null,introductionHeard=false,replyRequest=null;
  const queue=[],seen=new Set(),cast=new Map(),speechOwner=Symbol('world-voice');
  const supported=()=>!!(speech?.speak&&Utterance)&&!failed;
@@ -74,7 +74,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
      if(!started&&error?.error==='not-allowed'){
       generation++;current=null;utterance=null;unlocked=false;
       releaseGameSpeech(speech,speechOwner);queue.unshift(call);
-      call.onError?.(error.message||'Tap Enable guide audio or a game control to resume the voice.');
+      call.onError?.(error.message||'Use Start or a game control to resume the voice.');
       return;
      }
      // A selected installed voice may also fail at playback time. Retry once
@@ -112,7 +112,20 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    const id='announcement:'+worldId+':'+key;if(!remember(id))return false;
    enqueue({id,text:String(text),voice,speaker:voice,role,category,source,entityId,range,personality,mood,voiceProfile});return true;
   },
-  unlock(){if(disposed)return false;unlocked=true;failed=false;let resumed;try{resumed=speech?.resume?.();}catch{unlocked=false;return false;}if(resumed===false){unlocked=false;return false;}play();if(resumed?.then)return Promise.resolve(resumed).then(value=>{if(!disposed&&value===false)unlocked=false;return value!==false;},()=>{if(!disposed)unlocked=false;return false;});return true;},
+  unlock(){
+   if(disposed)return false;
+   const revision=++unlockRevision;failed=false;let resumed;
+   try{resumed=speech?.resume?.();}catch{unlocked=false;return false;}
+   const completed=value=>{const ready=value!==false;if(!disposed&&revision===unlockRevision){unlocked=ready;if(ready){activated=true;play();}}return ready;};
+   if(resumed?.then){
+    // A browser may hold an automatic startup resume until the first real
+    // control gesture. Keep the unheard welcome queued without starting its
+    // generation watchdog while that permission promise is still pending.
+    unlocked=speech?.state?.unlocked===true;if(unlocked){activated=true;play();}
+    return Promise.resolve(resumed).then(completed,()=>completed(false));
+   }
+   return completed(resumed);
+  },
   requestReply({worldId=scope,entityId}={}){
    if(disposed)return false;setScope(worldId);
    // Talk and Send are explicit turns. Answer them ahead of a long welcome,
@@ -139,9 +152,10 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
     // A user already knows the question they typed. Synthesizing it first
     // delays the resident's answer and can make the conversation seem silent.
     if(call.role==='player')continue;
-    // Historical dialogue seen before the gesture is consumed, not replayed later.
+    // Initial history stays quiet. After sound has run, fresh replies may wait
+    // through a temporary output interruption for automatic/control recovery.
     const awaitingRequest=requested?.worldId===scope&&(!requested.entityId||!call.speakerId||requested.entityId===call.speakerId);
-    if(unlocked||awaitingRequest){enqueue({...call,category:'dialogue'});receivedReply ||= awaitingRequest;}else latest={...call,category:'dialogue',queuedAt:now()};
+    if(unlocked||activated||awaitingRequest){enqueue({...call,category:'dialogue'});receivedReply ||= awaitingRequest;}else latest={...call,category:'dialogue',queuedAt:now()};
    }if(receivedReply)replyRequest=null;play();
   },
   replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();queue.push(replay);api.unlock();return true;},

@@ -34,10 +34,22 @@ function speechChunks(text){
 // All generated speech goes straight to a gain and the speakers. Spatial world
 // sounds keep their own graph; voices never receive reverb, delay or pitch shifts.
 export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAudio:requestAudio=defaultAudioFetch,audioFactory=defaultAudioFactory,nativeSpeech=globalThis.speechSynthesis,NativeUtterance=globalThis.SpeechSynthesisUtterance,setTimer=setTimeout,clearTimer=clearTimeout,setInterval:repeat=setInterval,clearInterval:clearRepeat=clearInterval,requestTimeout=60000}={}){
- let context=null,unlocking=null,resolveUnlock=null,unlockAttempt=0,unlocked=false,disposed=false,active=null,lastError=null,status='Tap a game control to enable voice audio.';
+ let context=null,observedContext=null,unlocking=null,resolveUnlock=null,unlockAttempt=0,unlocked=false,disposed=false,active=null,lastError=null,status='Voice audio starts with the game.';
  const listeners=new Map();
  const emit=(type,event={})=>{for(const callback of listeners.get(type)||[]){try{if(typeof callback==='function')callback({...event,type,target:api});else callback?.handleEvent?.({...event,type,target:api});}catch{}}};
  const notify=()=>emit('statechange');
+ function contextStateChanged(){
+  if(disposed)return;
+  unlocked=context?.state==='running';
+  if(unlocked){if(lastError?.code==='not-allowed')lastError=null;if(!active)status='Generated male and female voices are ready.';}
+  else if(!lastError)status='Audio will resume with the game.';
+  notify();
+ }
+ function observeContext(next){
+  if(next===observedContext)return;
+  observedContext?.removeEventListener?.('statechange',contextStateChanged);
+  observedContext=next;observedContext?.addEventListener?.('statechange',contextStateChanged);
+ }
  const nativeVoices=()=>{try{return speechVoiceOptions(nativeSpeech?.getVoices?.()||[]).map(entry=>entry.voice);}catch{return [];}};
  const isCurrent=job=>!disposed&&active===job;
  function event(job,type,detail={}){try{job.utterance['on'+type]?.({type,target:job.utterance,...detail});}catch{}}
@@ -50,7 +62,7 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
  async function generated(job,voice){
   if(unlocking)await unlocking;
   if(!isCurrent(job))return;
-  if(!unlocked||!context||context.state!=='running'){fail(job,'not-allowed','Tap a game control or Preview voice to enable audio.');return;}
+  if(!unlocked||!context||context.state!=='running'){fail(job,'not-allowed','Use Start or a game control to resume voice audio.');return;}
   const chunks=job.utterance.audioURL?[job.utterance.text]:job.utterance.recordedIntroduction?splitBundledSpeech(job.utterance.text):speechChunks(job.utterance.text);
   const failure=(code,message)=>({speechFailure:{code,message}});
   async function load(text){
@@ -127,13 +139,14 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
   // Some mobile browsers leave pointerdown's resume promise pending. A later
   // touchend/click must make a fresh resume attempt and release the same waiter.
   try{if(!context||context.state==='closed')context=audioFactory();}catch{}
+  observeContext(context);
   if(!context){lastError={code:'audio-unavailable',message:'This browser cannot play generated voice audio. Captions remain available.'};status=lastError.message;notify();return false;}
   if(!unlocking)unlocking=new Promise(resolve=>{resolveUnlock=resolve;});
   const pending=unlocking,attempt=++unlockAttempt;
   function completed(){
    if(disposed||attempt!==unlockAttempt)return;
    unlocked=context.state==='running';
-   if(unlocked){lastError=null;if(!active)status='Generated male and female voices are ready.';}else{lastError={code:'not-allowed',message:'Tap Enable all audio or Preview voice to enable audio.'};status=lastError.message;}
+   if(unlocked){lastError=null;if(!active)status='Generated male and female voices are ready.';}else{lastError={code:'not-allowed',message:'Use Start or a game control to resume voice audio.'};status=lastError.message;}
    const resolve=resolveUnlock;resolveUnlock=null;unlocking=null;resolve?.(unlocked);notify();
   }
   try{
@@ -147,7 +160,7 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
   getVoices:()=>[...GENERATED_VOICES,...nativeVoices()],
   addEventListener(type,callback){if(!listeners.has(type))listeners.set(type,new Set());listeners.get(type).add(callback);},
   removeEventListener(type,callback){listeners.get(type)?.delete(callback);},
-  dispose(){if(disposed)return;cancel();disposed=true;resolveUnlock?.(false);resolveUnlock=null;unlocking=null;nativeSpeech?.removeEventListener?.('voiceschanged',onNativeVoices);listeners.clear();try{context?.close?.()?.catch?.(()=>{});}catch{}},
+  dispose(){if(disposed)return;cancel();disposed=true;observeContext(null);resolveUnlock?.(false);resolveUnlock=null;unlocking=null;nativeSpeech?.removeEventListener?.('voiceschanged',onNativeVoices);listeners.clear();try{context?.close?.()?.catch?.(()=>{});}catch{}},
   get speaking(){return !!active?.started;},get pending(){return !!active&&!active.started;},get paused(){return false;},get status(){return status;},get lastError(){return lastError;},
   get state(){return {supported:!disposed,unlocked:unlocked&&context?.state==='running',speaking:!!active?.started,loading:!!active&&!active.started,error:lastError,status,selectedVoice:active?.utterance.voice?.name||null};}
  };

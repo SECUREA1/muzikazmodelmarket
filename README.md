@@ -281,7 +281,7 @@ waits for its model and exposes its controls. Map travel automatically releases
 seats, lifts and the previous vehicle, cancels abandoned jobs without rewards,
 and offers all public destinations. A short guide explains each map on entry, including return visits, after the first player gesture.
 Only new jobs, objective changes and game interactions are then voiced.
-Settings provides independent audio mutes and distance-based spatial sound. The Begin Game button enables audio before loading the 3D world, with a visible audio control for autoplay visits. All map introductions and male/female voice previews ship as neural recordings that play without the speech API; new NPC dialogue uses the local neural engine, which prepares missing dependencies and its model in the background on either hosting startup path. No speech API key is required. See [map travel and spoken objectives](docs/open-map-travel.md).
+Settings provides independent audio mutes and distance-based spatial sound. Begin Game and normal controls activate and recover audio automatically, without a Resume audio button. New messages from other players are read by default, and nearby friendly AI offer Talk while continuing their work and social routines. All map introductions and male/female voice previews ship as neural recordings that play without the speech API; new NPC dialogue uses the local neural engine, which prepares missing dependencies and its model in the background on either hosting startup path. No speech API key is required. See [map travel and spoken objectives](docs/open-map-travel.md).
 
 ## In-game camera views
 

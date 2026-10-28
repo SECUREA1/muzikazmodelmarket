@@ -87,13 +87,21 @@
   let speechTools=null,activeChatSpeech=null,activeChatMessageId=null,finishChatSpeech=null,chatSpeechGeneration=0,chatSpeechDisposed=false;
   const speechBase=document.currentScript?.src||location.href;
   const speechToolsReady=Promise.all([import(new URL('./game-speech-owner.js',speechBase).href),import(new URL('./neural-character-speech.js',speechBase).href),import(new URL('./character-voice-profile.js',speechBase).href)]).then(([owners,voices,profiles])=>speechTools={...owners,...profiles,speech:voices.gameSpeech(),Utterance:voices.GameSpeechUtterance}).catch(()=>null);
-  function cancelChatSpeech(){chatSpeechGeneration++;if(activeChatSpeech)speechTools?.cancelGameSpeech(speechTools.speech,activeChatSpeech);finishChatSpeech?.();}
+  let pendingAutomaticMessage=null,automaticMessageTimer=null,automaticFlushScheduled=false,roomAudioActivated=false;
+  const automaticMessageLifetime=15000;
+  function clearAutomaticMessage(){clearTimeout(automaticMessageTimer);automaticMessageTimer=null;pendingAutomaticMessage=null;}
+  function cancelChatSpeech(){clearAutomaticMessage();chatSpeechGeneration++;if(activeChatSpeech)speechTools?.cancelGameSpeech(speechTools.speech,activeChatSpeech);finishChatSpeech?.();}
   const speakerAudible=()=>speakerOn&&!window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted;
   window.addEventListener('muzikaz:audio-preferences',()=>{
     syncRemoteAudio();
     if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted||window.MUZIKAZ_AUDIO_PREFERENCES?.dialogueMuted)cancelChatSpeech();
   });
-  let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
+  // Older releases wrote their default "false" on every load, so that key
+  // cannot distinguish an opt-out from a visitor who never touched the switch.
+  // New voices play automatically; only an explicit choice in this version
+  // persists an opt-out, alongside the independent Audio settings mutes.
+  const automaticSpeechPreference='muzikazChatTextToSpeech.v2';
+  let textToSpeechOn = localStorage.getItem(automaticSpeechPreference) !== 'false';
   let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = window.MUZIKAZ_API?.readJson ? await window.MUZIKAZ_API.readJson(response,{label:'The multiplayer service'}) : await response.json(); if (!response.ok || result.success === false) throw Object.assign(new Error(result.error || result.message || 'The crib server did not respond.'),{status:response.status,code:result.code}); return payload(result); }
@@ -122,7 +130,7 @@
 
   function setTextToSpeech(on, announce = false) {
     textToSpeechOn = Boolean(on && (window.AudioContext||window.webkitAudioContext));
-    localStorage.setItem('muzikazChatTextToSpeech', String(textToSpeechOn));
+    if(announce){localStorage.setItem(automaticSpeechPreference,String(textToSpeechOn));localStorage.setItem('muzikazChatTextToSpeech',String(textToSpeechOn));}
     ttsToggle.classList.toggle('is-on', textToSpeechOn);
     ttsToggle.setAttribute('aria-pressed', String(textToSpeechOn));
     ttsToggle.querySelector('b').textContent = textToSpeechOn ? 'Read text on' : 'Read text off';
@@ -138,16 +146,38 @@
     if(!speechTools)return;
     try{Promise.resolve(speechTools.speech.resume()).then(enabled=>{if(enabled===false&&!chatSpeechDisposed)voiceStatus.textContent='Tap Read aloud again to enable voice playback.';},()=>{if(!chatSpeechDisposed)voiceStatus.textContent='Tap Read aloud again to enable voice playback.';});}catch{voiceStatus.textContent='Tap Read aloud again to enable voice playback.';}
   }
-  async function speakMessage(item,{manual=false}={}) {
+  function queueAutomaticMessage(item,receivedAt){
+    clearAutomaticMessage();
+    if(Date.now()-receivedAt>=automaticMessageLifetime)return;
+    pendingAutomaticMessage={item,receivedAt,roomId:activeRoom()};
+    automaticMessageTimer=setTimeout(clearAutomaticMessage,automaticMessageLifetime-(Date.now()-receivedAt));
+  }
+  function flushAutomaticMessage(){
+    if(!pendingAutomaticMessage||automaticFlushScheduled||chatSpeechDisposed)return;
+    automaticFlushScheduled=true;
+    // The adapter emits its state before the previous speaker releases speech
+    // ownership. Defer until that turn completes; never interrupt an NPC reply.
+    Promise.resolve().then(()=>{
+      automaticFlushScheduled=false;const pending=pendingAutomaticMessage;if(!pending)return;
+      if(chatSpeechDisposed||!textToSpeechOn||chatAudioBlocked()||pending.roomId!==activeRoom()||Date.now()-pending.receivedAt>=automaticMessageLifetime){clearAutomaticMessage();return;}
+      if(speechTools?.isGameSpeechActive(speechTools.speech)||speechTools?.speech.speaking||speechTools?.speech.pending)return;
+      clearAutomaticMessage();void speakMessage(pending.item,{receivedAt:pending.receivedAt});
+    });
+  }
+  async function speakMessage(item,{manual=false,receivedAt=Date.now()}={}) {
     const roomId=activeRoom(),blocked=chatAudioBlocked();
-    if (chatSpeechDisposed || blocked || (!manual&&!textToSpeechOn) || !item?.message || (item.roomId && item.roomId !== roomId) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)){if(manual&&blocked)voiceStatus.textContent=blocked;return;}
+    if (chatSpeechDisposed || blocked || (!manual&&(!textToSpeechOn||item?.sessionId===sessionId)) || !item?.message || (item.roomId && item.roomId !== roomId) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)){if(manual&&blocked)voiceStatus.textContent=blocked;return;}
     // Explicit reading starts output in the button gesture. It does not enable
     // automatic reading or replay the rest of the room's message history.
     if(manual){resumeChatAudio();cancelChatSpeech();}
     const generation=chatSpeechGeneration;
     const tools=await speechToolsReady;
-    if(chatSpeechDisposed||generation!==chatSpeechGeneration||(!manual&&!textToSpeechOn)||chatAudioBlocked()||roomId!==activeRoom()||(!manual&&tools?.isGameSpeechActive(tools.speech)))return;
+    if(chatSpeechDisposed||generation!==chatSpeechGeneration||(!manual&&!textToSpeechOn)||chatAudioBlocked()||roomId!==activeRoom())return;
     if(!tools){voiceStatus.textContent='Voice playback could not load. Reload this page to retry.';return;}
+    if(!manual){
+      if(Date.now()-receivedAt>=automaticMessageLifetime||!roomAudioActivated&&tools.speech.state?.unlocked===false)return;
+      if(tools.isGameSpeechActive(tools.speech)||tools.speech.speaking||tools.speech.pending){queueAutomaticMessage(item,receivedAt);return;}
+    }
     const settings=window.MUZIKAZ_AUDIO_PREFERENCES||{},available=tools.speech.getVoices(),character={id:item.sessionId||item.username||'room-player',role:'player'},selection={gender:settings.speechVoiceGender||'auto',selectedVoiceURI:settings.speechVoiceURI,language:'en-US'};
     const generated=()=>tools.chooseCharacterVoice(available.filter(voice=>voice.generated),character,{...selection,selectedVoiceURI:''});
     const installed=()=>tools.chooseCharacterVoice(available.filter(voice=>!voice.generated&&voice.localService),character,{...selection,selectedVoiceURI:''});
@@ -327,18 +357,25 @@
   form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; input.focus(); } });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
-  const roomAudioGestures=['pointerdown','touchend','keydown'];
-  const resumeRoomAudio=()=>{
+  const roomAudioGestures=['pointerdown','pointerup','touchend','click','keydown'];
+  const resumeRoomAudio=event=>{
+    const gesture=roomAudioGestures.includes(event?.type);
+    if(!gesture&&!roomAudioActivated&&speechTools?.speech.state?.unlocked!==true)return;
+    if(gesture)roomAudioActivated=true;
     Promise.resolve(speechTools?.speech.resume()).catch(()=>{});
     // Native media remains a usable output while Web Audio is interrupted.
     for(const audio of remoteAudio.values())if(speakerAudible())audio.play().catch(()=>{});
-    prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject&&!meters.has(id))meterStream(id,audio.srcObject);}).catch(()=>{});
+    prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject&&!meters.has(id))meterStream(id,audio.srcObject);flushAutomaticMessage();}).catch(()=>{});
   };
-  for(const gesture of roomAudioGestures)document.addEventListener(gesture,resumeRoomAudio,{passive:true});
+  for(const gesture of roomAudioGestures)document.addEventListener(gesture,resumeRoomAudio,{capture:true,passive:true});
+  const resumeVisibleRoomAudio=()=>{if(!document.hidden)resumeRoomAudio();};
+  document.addEventListener('muzikaz:gameplay-ready',resumeRoomAudio);
+  document.addEventListener('visibilitychange',resumeVisibleRoomAudio);
+  window.addEventListener('focus',resumeVisibleRoomAudio);window.addEventListener('pageshow',resumeVisibleRoomAudio);
   micToggle.addEventListener('click', async () => { if(micToggle.disabled)return; micToggle.disabled=true; try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); const errors={NotAllowedError:'Allow microphone access in your browser, then tap Mic off to retry.',NotFoundError:'No microphone found. Connect a microphone and tap Mic off to retry.',NotReadableError:'The microphone is busy or unavailable. Close other recording apps and tap Mic off to retry.'};voiceStatus.textContent=errors[error.name]||error.message; } finally { micToggle.disabled=false; } });
   speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn;syncRemoteAudio();if(speakerOn)remoteAudio.forEach(audio=>audio.play().catch(()=>{}));else cancelChatSpeech(); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
   ttsToggle.disabled=true;ttsToggle.title='Preparing voice playback…';
-  speechToolsReady.then(tools=>{if(chatSpeechDisposed)return;const supported=!!tools&&!!(window.AudioContext||window.webkitAudioContext);ttsToggle.disabled=!supported;ttsToggle.title=supported?'Read new room messages aloud':'Voice playback is unavailable. Reload this page to retry.';for(const button of messages.querySelectorAll('[data-chat-read]')){button.disabled=!supported;button.title=supported?'Read this message aloud':'Voice playback is unavailable. Reload this page to retry.';}});
+  speechToolsReady.then(tools=>{if(chatSpeechDisposed)return;const supported=!!tools&&!!(window.AudioContext||window.webkitAudioContext);ttsToggle.disabled=!supported;ttsToggle.title=supported?'Read new room messages aloud':'Voice playback is unavailable. Reload this page to retry.';tools?.speech.addEventListener?.('statechange',flushAutomaticMessage);if(roomAudioActivated)resumeRoomAudio();for(const button of messages.querySelectorAll('[data-chat-read]')){button.disabled=!supported;button.title=supported?'Read this message aloud':'Voice playback is unavailable. Reload this page to retry.';}});
   setTextToSpeech(textToSpeechOn);
   ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { resumeChatAudio();cancelChatSpeech(); setTextToSpeech(!textToSpeechOn, true); } });
   async function loadChat() {
@@ -395,5 +432,5 @@
   const initialRoom=window.MuzikazHouseExplorer?.snapshot?.();
   if(initialRoom?.serverHostedRoom&&initialRoom.serverReady)beginPresence({detail:{roomId:initialRoom.roomId}});
   const timer = setInterval(() => {if(!readyRoomId)return;if(!roomReady()){stopRoom();return;}beginPresence();}, 5_000);
-  window.addEventListener('pagehide', event => { cancelChatSpeech();if(event.persisted)return;chatSpeechDisposed=true;for(const gesture of roomAudioGestures)document.removeEventListener(gesture,resumeRoomAudio);clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined;stopRoom();audioContext?.close().catch(()=>{});if(wasJoined)navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  window.addEventListener('pagehide', event => { cancelChatSpeech();if(event.persisted)return;chatSpeechDisposed=true;for(const gesture of roomAudioGestures)document.removeEventListener(gesture,resumeRoomAudio,true);document.removeEventListener('muzikaz:gameplay-ready',resumeRoomAudio);document.removeEventListener('visibilitychange',resumeVisibleRoomAudio);window.removeEventListener('focus',resumeVisibleRoomAudio);window.removeEventListener('pageshow',resumeVisibleRoomAudio);speechTools?.speech.removeEventListener?.('statechange',flushAutomaticMessage);clearInterval(timer); clearInterval(voiceTimer); clearInterval(meterTimer);const wasJoined=joined;stopRoom();audioContext?.close().catch(()=>{});if(wasJoined)navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

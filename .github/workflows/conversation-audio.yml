@@ -39,14 +39,19 @@ jobs:
         run: |
           python -m pip install playwright
           sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
+      - name: Verify automatic audio, nearby interactions and continued AI activity
+        run: node --test test/game-audio-activation.test.mjs test/gameplay-actions.test.mjs test/resident-social-ui.test.mjs test/resident-life.test.mjs test/private-resident-activity.test.mjs
       - name: Verify real microphone, guides and NPC replies in the game
         run: |
           python test/room-microphone.browser.py
           python test/voice-device-recovery.browser.py
+          python test/voice-unlock-recovery.browser.py
           python test/audio-page-entrypoints.browser.py
+          python test/chat-speech-clarity.browser.py
           python test/room-chat-audio.browser.py
           python test/npc-reply-priority.browser.py
           python test/conversation-controls.browser.py
+          python test/resident-social-ui.browser.py
           python test/game-audio-entrypoint.browser.py
           python test/solo-residents.browser.py
           python test/shared-conversation-controls.browser.py

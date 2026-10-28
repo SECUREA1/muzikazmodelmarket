@@ -1,57 +1,43 @@
 import {gameSpeech} from './neural-character-speech.js';
 import {questConversationVoice} from './quest-conversation-voice.js';
-import {normalizePlayerPreferences} from './player-preferences.js';
 
-// This small module loads with the launch button, before the deferred 3D engine.
-// The original Begin gesture must reach Web Audio before any asynchronous import.
+// Run inside Start's original gesture, before loading the deferred 3D engine.
+// Resuming the output never changes a player's saved or local mute choices.
 export function activateGameAudio(){
- try{const voice=questConversationVoice();voice.setMuted(false);return voice.unlock();}catch{return false;}
+ try{return questConversationVoice().unlock();}catch{return false;}
 }
 
+const mounted=new WeakMap();
+
+// Audio follows the game lifecycle and normal controls. There is no separate
+// activation button or unsolicited voice preview over the game viewport.
 export function mountGameAudioActivation({parent=document.querySelector('.house-stage'),speech=gameSpeech(),voice=questConversationVoice(),events=globalThis}={}){
  if(!parent)return null;
- const existing=parent.querySelector('[data-game-audio-activation]');if(existing)return null;
- const root=document.createElement('div');root.className='game-audio-activation';root.dataset.gameAudioActivation='';
- const button=document.createElement('button');button.type='button';button.dataset.gameAudioEnable='';
- const status=document.createElement('span');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
- root.append(button,status);parent.append(root);
- let preferences=normalizePlayerPreferences(globalThis.MUZIKAZ_AUDIO_PREFERENCES||{}),disposed=false;
- function render(){
-  if(disposed)return;
-  const state=speech?.state||{},muted=!!preferences.masterMuted,voiceMuted=!!voice?.state?.muted;
-  button.textContent=state.unlocked?'Resume audio':'Enable audio';
-  button.setAttribute('aria-label',state.unlocked?'Resume game audio':'Enable game audio');
-  root.dataset.audioReady=String(!!state.unlocked);
-  status.textContent=muted?'All audio is muted in Settings.':state.error?.message|| (voiceMuted?'Voice audio is muted in Settings or World radio.':state.loading?'Preparing voice…':state.speaking?'Voice playing.':state.unlocked?'Audio enabled.':'Tap Enable audio to hear this world.');
+ if(mounted.has(parent))return mounted.get(parent);
+ parent.querySelector?.('[data-game-audio-activation]')?.remove();
+ const documentEvents=parent.ownerDocument||globalThis.document||parent,cleanup=[];
+ let disposed=false,started=false,gestured=false,wasReady=!!speech?.state?.unlocked;
+ const visible=()=>documentEvents.hidden!==true;
+ function listen(target,type,callback,options){target?.addEventListener?.(type,callback,options);cleanup.push(()=>target?.removeEventListener?.(type,callback,options));}
+ function activate(){
+  if(disposed)return false;
+  try{const result=voice.unlock();return result?.then?Promise.resolve(result).catch(()=>false):result;}catch{return false;}
  }
- function activate({unmute=false,previewIfIdle=false}={}){
-  if(disposed)return;
-  if(unmute){
-   // This button explicitly promises audio. Clear saved category mutes as well
-   // as the separate radio switch, and keep the choice through a late account
-   // settings response. Ordinary world/control gestures still honor all mutes.
-   const overrides={masterMuted:false,introductionMuted:false,announcementsMuted:false,dialogueMuted:false,effectsMuted:false,mediaMuted:false,effectsVolume:preferences.effectsVolume===0?100:preferences.effectsVolume};
-   globalThis.MUZIKAZ_AUDIO_SESSION_OVERRIDES=overrides;
-   preferences={...preferences,...overrides};globalThis.MUZIKAZ_AUDIO_PREFERENCES=preferences;
-   voice.setPreferences?.(preferences);voice.setMuted(false);
-   events?.dispatchEvent?.(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));
-  }
-  const result=voice.unlock();render();
-  if(result?.then)Promise.resolve(result).then(render,render);
-  if(unmute)voice.resumeIntroduction?.();
-  // An explicit sound check gives audible confirmation before the world is
-  // loaded. A waiting map guide keeps its place and plays instead of a preview.
-  if(previewIfIdle&&!preferences.masterMuted&&!preferences.dialogueMuted&&!voice.state?.speaking&&!voice.state?.pending){
-   const preview=voice.preview?.(preferences);if(preview?.then)Promise.resolve(preview).then(render,render);
-  }
- }
- const changed=event=>{preferences=event.detail||{};render();};
- // Capture the start gesture while the large game graph is still loading.
- const gestures=['pointerdown','pointerup','touchend','click','keydown'];
- for(const type of gestures)parent.addEventListener(type,activate,{capture:true,passive:true});
- button.addEventListener('click',()=>activate({unmute:true,previewIfIdle:true}));
- speech?.addEventListener?.('statechange',render);
- events?.addEventListener?.('muzikaz:audio-preferences',changed);
- render();
- return {root,dispose(){if(disposed)return;disposed=true;for(const type of gestures)parent.removeEventListener(type,activate,true);speech?.removeEventListener?.('statechange',render);events?.removeEventListener?.('muzikaz:audio-preferences',changed);root.remove();}};
+ const gesture=()=>{gestured=true;activate();};
+ const ready=()=>{started=true;if(visible())activate();};
+ const returned=()=>{if(visible()&&(started||gestured||wasReady))activate();};
+ const changed=()=>{
+  const previous=wasReady;wasReady=!!speech?.state?.unlocked;
+  // Retry a resumed page or an OS audio interruption once. A denied attempt
+  // waits for the next ordinary gesture instead of spinning on state changes.
+  if(previous&&!wasReady&&visible())activate();
+ };
+ for(const type of ['pointerdown','pointerup','touchend','click','keydown'])listen(documentEvents,type,gesture,{capture:true,passive:true});
+ listen(documentEvents,'muzikaz:gameplay-ready',ready);
+ listen(documentEvents,'visibilitychange',returned);
+ for(const type of ['focus','pageshow'])listen(events,type,returned);
+ listen(speech,'statechange',changed);
+ const api={dispose(){if(disposed)return;disposed=true;for(const remove of cleanup)remove();mounted.delete(parent);}};
+ listen(events,'pagehide',event=>{if(!event.persisted)api.dispose();});
+ mounted.set(parent,api);return api;
 }
