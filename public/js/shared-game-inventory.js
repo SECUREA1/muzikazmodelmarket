@@ -6,6 +6,9 @@ export function watchInventoryChange(refresh){let timer;const schedule=()=>{clea
 export class SharedGameInventory {
  constructor({getMapId=()=>undefined}={}){this.pending=new Map();this.getMapId=getMapId;}
  async api(path,options={}){
+  // Discovery has its own bounded cold-start budget. Do not spend the
+  // gameplay request deadline waiting for a server that has not woken yet.
+  if(window.MUZIKAZ_API?.whenReady)await window.MUZIKAZ_API.whenReady(options.signal);
   const controller=new AbortController(),timeout=Math.max(1000,Math.min(30000,Number(options.timeout)||8000)),external=options.signal;
   const cancel=()=>controller.abort();if(external?.aborted)cancel();else external?.addEventListener('abort',cancel,{once:true});
   const startedAt=performance.now();let grace=false,timer;

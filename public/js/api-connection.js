@@ -105,7 +105,7 @@
         var invalidation = window.Promise.resolve();
         if (response.status === 401 && sessionToken) {
           invalidation = response.clone().json().then(function (payload) {
-            if (payload && /^(SESSION_REQUIRED|SESSION_INVALID|SESSION_EXPIRED|SESSION_REVOKED|ACCOUNT_NOT_FOUND)$/.test(payload.code || '')) setSessionToken('');
+            if (payload && /^(SESSION_REQUIRED|SESSION_INVALID|SESSION_EXPIRED|SESSION_REVOKED|ACCOUNT_NOT_FOUND)$/.test(payload.code || '') && getSessionToken() === sessionToken) setSessionToken('');
           }, function () {});
         }
         if (response.status >= 500 && remaining > 0) return attempt(remaining - 1, requestPath, aliases);
@@ -199,8 +199,7 @@
   /* Initial discovery may fail before any panel has subscribed. A later login
    * starts discovery again instead of retaining a permanently rejected promise. */
   ready.catch(function () {});
-  function fetchApi(path, options) {
-    var signal = options && options.signal;
+  function whenReady(signal) {
     function cancelled() { var error = new Error('The API request was cancelled.'); error.name = 'AbortError'; return signal.reason || error; }
     if (signal && signal.aborted) return window.Promise.reject(cancelled());
     var waiting = connect();
@@ -212,8 +211,11 @@
     });
     return waiting.then(function () {
       if (signal && signal.aborted) throw cancelled();
-      return requestApi(path, options);
+      return base;
     });
+  }
+  function fetchApi(path, options) {
+    return whenReady(options && options.signal).then(function () { return requestApi(path, options); });
   }
 
   function readJson(response, options) {
@@ -298,5 +300,5 @@
 
   window.MUZIKAZ_API_BASE = base;
   window.MUZIKAZ_SHARED_AVATAR_API = base;
-  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, readJson: readJson, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, getGameSessionToken: getGameSessionToken, setGameSessionToken: setGameSessionToken, logout: logout };
+  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, whenReady: whenReady, readJson: readJson, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, getGameSessionToken: getGameSessionToken, setGameSessionToken: setGameSessionToken, logout: logout };
 }(window, document));

@@ -18,6 +18,14 @@ Map frames leave at least 50 ms after completion, extending that interval after 
 
 Validation: 52 focused Node cases passed, including transform/visibility/reparenting, scheduling, XR and map rendering ownership, travel and access recovery. Production build and static checks passed. `python3 test/map-frame-responsiveness.browser.py` exercises the actual map mount with 100 moving meshes, injects 60 ms render work, checks timers and a real input click, then injects a render failure and checks containment. This is a controlled responsiveness check, not full-game FPS or a guarantee against every freeze. The isolated 5,000-mesh/depth-15 benchmark reduced eight-update matrix calls from 640,000 to 40,120; observed median update time was 7.48 ms before and 1.77 ms after. Raw local results are in `work/freeze-fix/`.
 
+## API discovery and connection follow-up
+
+Shared API discovery now completes before starting a gameplay HTTP request's eight-second deadline. Discovery retains its own bounded health checks and cancellation, and an abandoned caller does not cancel the shared discovery for other callers. Room requests still require real authentication, CSRF where applicable, and a confirmed player; this does not increase their HTTP timeout or replay failed writes.
+
+An unauthorized response clears a cached account token only if it is still the token that request used. A delayed failure from the previous login cannot erase a newly renewed login. A currently rejected/revoked token still clears normally. The speech integration fixture now explicitly requests its existing extended synthesis deadline rather than relying on the previous sixty-second default; its original twenty-second-request and abort assertions remain intact.
+
+Validation: 91 selected Node cases passed, including actual isolated-server room HTTP checks, authentication/revocation, CSRF refresh, cancellation, timeout recovery and the new cold-start deadline/token-race cases. Build and static checks passed. `python3 test/server-connection.browser.py` starts an isolated real server, verifies served client bytes against source, and joins a room through a browser after nine seconds of deliberately delayed health discovery. The confirmed connection completed in approximately 12.25 seconds. This verifies the application flow locally, not public uptime. A public Render health probe from this execution environment was denied by its network proxy (CONNECT 403), so live hosting status remains unverified.
+
 ## Problem and intended behavior
 
 The October 27–28 isolated retest did not qualify any of 17 gameplay workloads against all chosen latency, delivery, correctness, and presence gates. Authentication and identity refresh repeatedly parse file-backed stores; durable mutations rewrite unrelated records; active-world geometry is evicted and rebuilt once the room count exceeds small caches. These costs delay simulation and responses even while the HTTP health endpoint responds.

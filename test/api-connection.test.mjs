@@ -217,7 +217,7 @@ test('a non-HTTP saved API base resets to the current web origin',async()=>{
  await window.MUZIKAZ_API.fetch('/api/market/session');assert.ok(paths.every(url=>url.startsWith('https://static.example/')));
 });
 
-test('generated voices keep their aborting deadline through the shared API instead of the 15 second request limit',async()=>{
+test('generated voices keep an explicitly extended aborting deadline through the shared API',async()=>{
  const previous=globalThis.MUZIKAZ_API,timers=new Map(),requests=[],events=[],sources=[];
  let time=0,serial=0;
  const clock={setTimeout(fn,ms){const id=++serial;timers.set(id,{fn,at:time+ms});return id;},clearTimeout(id){timers.delete(id);}};
@@ -235,7 +235,7 @@ test('generated voices keep their aborting deadline through the shared API inste
   createBufferSource(){const source={playbackRate:{value:1},connect(){},disconnect(){},start(){this.started=true;},stop(){}};sources.push(source);return source;},
   createGain:()=>({gain:{setValueAtTime(){}},connect(){},disconnect(){}}),close:async()=>{}
  };
- const engine=createNeuralCharacterSpeech({audioFactory:()=>context,nativeSpeech:null,NativeUtterance:null,setTimer:clock.setTimeout,clearTimer:clock.clearTimeout,setInterval:()=>0,clearInterval(){}});
+ const engine=createNeuralCharacterSpeech({requestTimeout:60000,audioFactory:()=>context,nativeSpeech:null,NativeUtterance:null,setTimer:clock.setTimeout,clearTimer:clock.clearTimeout,setInterval:()=>0,clearInterval(){}});
  const line=text=>{const utterance=new GameSpeechUtterance(text);utterance.onstart=()=>events.push([text,'start']);utterance.onerror=event=>events.push([text,event.error]);return utterance;};
  try{
   globalThis.MUZIKAZ_API=window.MUZIKAZ_API;
@@ -355,4 +355,26 @@ test('member API JSON decoding reports deployment failures without a raw parser 
  assert.deepEqual(await api.readJson(new Response(JSON.stringify(result))),result,'valid API errors retain their canonical code and message');
  const aborted=new Error('Cancelled');aborted.name='AbortError';
  await assert.rejects(api.readJson({status:200,headers:new Headers(),json:()=>Promise.reject(aborted)}),error=>error===aborted);
+});
+
+test('an obsolete unauthorized response cannot erase a freshly renewed login',async()=>{
+ let release;
+ const {window}=loadConnection(async url=>{
+  if(url.endsWith('/api/health'))return health();
+  return new Promise(resolve=>release=resolve);
+ },'https://muzikazmodelmarket.onrender.com');
+ window.MUZIKAZ_API.setSessionToken('expired-account-proof');
+ const pending=window.MUZIKAZ_API.fetch('/api/market/session');
+ while(!release)await Promise.resolve();
+ window.MUZIKAZ_API.setSessionToken('renewed-account-proof');
+ release(Response.json({success:false,code:'SESSION_EXPIRED'},{status:401}));
+ assert.equal((await pending).status,401);
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'renewed-account-proof');
+});
+
+test('a rejected current login is still cleared rather than bypassing revocation',async()=>{
+ const {window}=loadConnection(async url=>url.endsWith('/api/health')?health():Response.json({code:'SESSION_REVOKED'},{status:401}),'https://muzikazmodelmarket.onrender.com');
+ window.MUZIKAZ_API.setSessionToken('revoked-current-proof');
+ assert.equal((await window.MUZIKAZ_API.fetch('/api/market/session')).status,401);
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'');
 });
