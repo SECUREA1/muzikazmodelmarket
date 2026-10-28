@@ -122,7 +122,7 @@ const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 const usesNativeSportsMatch=environment=>isHockeyMap(environment)||isArcadeMap(environment);
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},consumeAsset=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,fishingReward=async()=>{throw Error('Fishing reward storage unavailable.');},fishingState=async()=>null,shippingReward=async()=>{throw Error('Shipping reward storage unavailable.');},shippingState=async()=>null,supplyAction=async()=>{throw Error('World supply storage unavailable.');},supplyDelivery=async()=>{throw Error('World supply storage unavailable.');},shippingBind=async()=>{throw Error('Factory shipping storage unavailable.');},shippingReturn=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,prisonClaim=async()=>{throw Error('Prison Backpack storage unavailable.');},prisonState=async()=>({claimedItems:[]}),logisticsAction=async()=>{throw Error('Factory logistics storage unavailable.');},logisticsState=async()=>null,testingAction=async()=>{throw Error('Testing facility storage unavailable.');},testingState=async()=>null,testingAccess=async()=>{throw Object.assign(Error('Compound clearance storage unavailable.'),{statusCode:503});},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32,scheduledInputs=false}){this.scheduledInputs=scheduledInputs===true;Object.assign(this,{store,now,charge,consumeAsset,resolveAsset,reward,fitnessReward,fitnessState,fishingReward,fishingState,shippingReward,shippingState,supplyAction,supplyDelivery,shippingBind,shippingReturn,factoryAction,factoryState,prisonClaim,prisonState,logisticsAction,logisticsState,testingAction,testingState,testingAccess,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.aiDefinitionVersions=new WeakMap();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();this.manifestOwners=new Map();}
+ constructor({store,now=Date.now,charge=async()=>{},consumeAsset=async()=>{},resolveAsset=async()=>null,reward=async()=>{},fitnessReward=async()=>{throw Error('Fitness reward storage unavailable.');},fitnessState=async()=>null,fishingReward=async()=>{throw Error('Fishing reward storage unavailable.');},fishingState=async()=>null,shippingReward=async()=>{throw Error('Shipping reward storage unavailable.');},shippingState=async()=>null,supplyAction=async()=>{throw Error('World supply storage unavailable.');},supplyDelivery=async()=>{throw Error('World supply storage unavailable.');},shippingBind=async()=>{throw Error('Factory shipping storage unavailable.');},shippingReturn=async()=>null,factoryAction=async()=>{throw Error('Factory storage unavailable.');},factoryState=async()=>null,prisonClaim=async()=>{throw Error('Prison Backpack storage unavailable.');},prisonState=async()=>({claimedItems:[]}),logisticsAction=async()=>{throw Error('Factory logistics storage unavailable.');},logisticsState=async()=>null,testingAction=async()=>{throw Error('Testing facility storage unavailable.');},testingState=async()=>null,testingAccess=async()=>{throw Object.assign(Error('Compound clearance storage unavailable.'),{statusCode:503});},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32,scheduledInputs=false}){this.scheduledInputs=scheduledInputs===true;Object.assign(this,{store,now,charge,consumeAsset,resolveAsset,reward,fitnessReward,fitnessState,fishingReward,fishingState,shippingReward,shippingState,supplyAction,supplyDelivery,shippingBind,shippingReturn,factoryAction,factoryState,prisonClaim,prisonState,logisticsAction,logisticsState,testingAction,testingState,testingAccess,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.aiDefinitionVersions=new WeakMap();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();this.manifestOwners=new Map();this.preparationEpoch=randomUUID();}
  async releaseCancelledSupply(identity,sim,player,environment,now){
   const job=player?.shipping?.job;
   if(!job?.shipmentId||job.supplyReleasedAt||!['cancelled','expired','failed'].includes(job.phase))return;
@@ -174,7 +174,7 @@ export class AuthoritativeRooms {
   }
  }
  clearCaches(){
-  this.activeWorlds.clear();this.tickRetryAt.clear();this.manifestCache.clear();this.manifestOwners.clear();this.aiDefinitionVersions=new WeakMap();this.collision.clearWorlds();
+  this.activeWorlds.clear();this.tickRetryAt.clear();this.manifestCache.clear();this.manifestOwners.clear();this.aiDefinitionVersions=new WeakMap();this.collision.clearWorlds();this.preparationEpoch=randomUUID();
  }
  manifestKey(environment){return (isBasketballEnvironment(environment)?'basketball-runtime-v2:':isDedicatedFiringRange(environment)?'firing-range-runtime-v1:':'')+environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);}
  pruneManifests(){
@@ -207,7 +207,7 @@ export class AuthoritativeRooms {
  }
  canScheduleInput(room,environment,player,receivedAt){
   const sim=room.simulation,now=this.now();
-  if(!sim?.initialized||!this.scheduledWalker(sim,environment,player)||!Number.isFinite(sim.time)||now<sim.time||now-sim.time>250)return false;
+  if(!sim?.initialized||sim.preparedEpoch!==this.preparationEpoch||!this.scheduledWalker(sim,environment,player)||!Number.isFinite(sim.time)||now<sim.time||now-sim.time>250)return false;
   // A paused connection and a changed scene retain the established full path.
   // The bounded frame age also recovers safely if the external tick pauses.
   return receivedAt-player.lastSeen>=0&&receivedAt-player.lastSeen<1000&&now-player.lastSeen<1000&&sim.environmentUpdatedAt===this.manifestKey(environment)&&sim.preparedRoomRevision===(room.revision||0)&&sim.mapRevision===(environment.atlas?.revision||0)&&sim.baseAlignmentKey===JSON.stringify(environment.builderScene?.baseTransform||{});
@@ -293,12 +293,15 @@ export class AuthoritativeRooms {
   if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&!isFitnessEnvironment(environment)&&!isFactoryEnvironment(environment)&&!isFactoryTestingEnvironment(environment)&&!isPrisonEnvironment(environment)&&!isTropicalIslandEnvironment(environment)&&!usesNativeSportsMatch(environment)){ensureRoadFleet(sim,environment,this.collision,room.objects);ensureFreight(sim,environment,this.collision,room.objects);}
   this.completeManifest(sim,environment,manifest,contentUpdatedAt);
   sim.streets=usesNativeSportsMatch(environment)?[]:environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
-  sim.preparedAt=this.now();sim.preparedRoomRevision=room.revision||0;
+  // Persisted timing alone cannot establish initialization in this runtime.
+  // The epoch survives detached transaction copies; failed candidates discard
+  // their stamp, and a reopened or invalidated runtime always runs migrations.
+  sim.preparedEpoch=this.preparationEpoch;sim.preparedAt=this.now();sim.preparedRoomRevision=room.revision||0;
   return {sim,manifest};
  }
  step(room,environment){
   let now=this.now();const prior=room.simulation;
-  const fast=prior?.initialized&&prior.environmentUpdatedAt===this.manifestKey(environment)&&prior.preparedRoomRevision===(room.revision||0)&&prior.mapRevision===(environment.atlas?.revision||0)&&prior.baseAlignmentKey===JSON.stringify(environment.builderScene?.baseTransform||{})&&now>=prior.preparedAt&&now-prior.preparedAt<33;
+  const fast=prior?.initialized&&prior.preparedEpoch===this.preparationEpoch&&prior.environmentUpdatedAt===this.manifestKey(environment)&&prior.preparedRoomRevision===(room.revision||0)&&prior.mapRevision===(environment.atlas?.revision||0)&&prior.baseAlignmentKey===JSON.stringify(environment.builderScene?.baseTransform||{})&&now>=prior.preparedAt&&now-prior.preparedAt<33;
   let state;
   if(fast){const {manifestKey,manifest}=this.prepareManifest(environment);manifest.objects.push(...syncCommonsArrivalReturns(prior,environment,manifest,now));this.completeManifest(prior,environment,manifest,manifestKey);state={sim:prior,manifest};}
   else {state=this.initialize(room,environment);now=this.now();}

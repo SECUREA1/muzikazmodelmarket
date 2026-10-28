@@ -74,3 +74,31 @@ test('burst inputs reuse initialization within the physics window while revision
  assert.equal(stale.players[joined.selfId].input.side,1,'an old epoch cannot replace accepted controls');
  assert.equal((await store.get(world.id)).simulation.players[joined.selfId].lastInputSequence,20);
 });
+
+
+test('cold runtimes and cache invalidation initialize persisted rooms even within the saved physics window',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'room-cold-initialization-')),file=join(directory,'rooms.json'),now=100000;
+ const world=environment('cold'),identity={accountId:'visitor',username:'Visitor'},original=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now,scheduledInputs:true});
+ let reopened;
+ t.after(async()=>{original.clearCaches();reopened?.clearCaches();await rm(directory,{recursive:true,force:true});});
+ const joined=await original.command(world.id,world,identity,{action:'join',requestId:'join',radToxEnabled:false});
+ const prior=(await original.store.get(world.id)).simulation;
+ reopened=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now,scheduledInputs:true});
+ let preparations=0;const initialize=reopened.initialize.bind(reopened);reopened.initialize=(...args)=>{preparations++;return initialize(...args);};
+ const packet={action:'input',inputEpoch:joined.inputEpoch,input:{side:1}};
+ await assert.rejects(reopened.command(world.id,world,identity,{...packet,requestId:'rejected-cold-input',inputSequence:-1}),{statusCode:422});
+ assert.equal(preparations,1,'the first cold request runs initialization before command validation');
+ assert.equal((await reopened.store.get(world.id)).simulation.preparedEpoch,prior.preparedEpoch,'a rejected transaction cannot publish its preparation stamp');
+ let snapshot=await reopened.command(world.id,world,identity,{...packet,requestId:'cold-input',inputSequence:1});
+ assert.equal(preparations,2,'the next accepted request must still initialize after the failed candidate rolls back');
+ assert.notEqual((await reopened.store.get(world.id)).simulation.preparedEpoch,prior.preparedEpoch);
+ assert.equal(snapshot.preparedEpoch,undefined,'runtime preparation metadata is absent from public snapshots');
+ await reopened.command(world.id,world,identity,{...packet,requestId:'warm-input',inputSequence:2});
+ assert.equal(preparations,2,'accepted warm controls keep the scheduled path');
+ const acceptedEpoch=(await reopened.store.get(world.id)).simulation.preparedEpoch;
+ reopened.clearCaches();snapshot=await reopened.snapshot(world.id,world);
+ assert.equal(preparations,3,'explicit invalidation forces initialization without advancing the clock or room revision');
+ assert.notEqual((await reopened.store.get(world.id)).simulation.preparedEpoch,acceptedEpoch);
+ assert.equal(snapshot.preparedEpoch,undefined);
+ assert.equal(snapshot.simulationTime,now,'initialization does not manufacture elapsed physics time');
+});
