@@ -52,27 +52,39 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
   if(!isCurrent(job))return;
   if(!unlocked||!context||context.state!=='running'){fail(job,'not-allowed','Tap a game control or Preview voice to enable audio.');return;}
   const chunks=job.utterance.audioURL?[job.utterance.text]:job.utterance.recordedIntroduction?splitBundledSpeech(job.utterance.text):speechChunks(job.utterance.text);
+  const failure=(code,message)=>({speechFailure:{code,message}});
   async function load(text){
    if(!isCurrent(job))return null;
    const recording=job.utterance.audioURL||(job.utterance.recordedIntroduction?bundledVoiceURL(text,voice.gender):null);
-   if(recording&&!/^\/public\/audio\/voices\/(?:world\/[a-z0-9-]+\.mp3|(?:female|male)-preview\.wav)$/.test(recording)){fail(job,'invalid-argument','This voice recording is unavailable.');return null;}
-   job.timeout=setTimer(()=>{if(isCurrent(job))fail(job,'synthesis-unavailable',recording?'The voice recording took too long to load. Please try again.':'Voice generation took too long. Captions remain available.');},requestTimeout);
+   if(recording&&!/^\/public\/audio\/voices\/(?:world\/[a-z0-9-]+\.mp3|(?:female|male)-preview\.wav)$/.test(recording))return failure('invalid-argument','This voice recording is unavailable.');
+   let expired;
+   const timeout=new Promise(resolve=>{expired=resolve;});
+   job.timeout=setTimer(()=>{if(isCurrent(job)){job.abort.abort();expired(failure('synthesis-unavailable',recording?'The voice recording took too long to load. Please try again.':'Voice generation took too long. Captions remain available.'));}},requestTimeout);
    try{
-    const response=recording?await requestAudio(recording,{method:'GET',signal:job.abort.signal}):await request('/api/speech',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Accept':'audio/wav'},body:JSON.stringify({text,voice:voice.gender,speed:clamp(job.utterance.rate,.9,1.1)}),signal:job.abort.signal});
-    if(!isCurrent(job))return null;
-    if(!response?.ok){fail(job,'synthesis-unavailable','Generated speech is temporarily unavailable. Try Preview voice again. Captions remain available.');return null;}
-    const bytes=await response.arrayBuffer();if(!isCurrent(job))return null;
-    if(bytes.byteLength<44){fail(job,'synthesis-failed','The generated voice audio could not be played. Captions remain available.');return null;}
-    // The file has arrived. Initial 3D shader compilation can delay the audio
-    // decoder's completion on the main thread; that is no network timeout.
-    clearTimer(job.timeout);job.timeout=null;
-    return await context.decodeAudioData(bytes);
-   }catch(error){if(isCurrent(job))fail(job,error?.name==='NotAllowedError'?'not-allowed':'synthesis-unavailable',error?.name==='NotAllowedError'?'Tap Preview voice to enable audio.':'Generated speech is temporarily unavailable. Captions remain available.');return null;}
+    const loading=(async()=>{
+     try{
+      const response=recording?await requestAudio(recording,{method:'GET',signal:job.abort.signal}):await request('/api/speech',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Accept':'audio/wav'},body:JSON.stringify({text,voice:voice.gender,speed:clamp(job.utterance.rate,.9,1.1)}),signal:job.abort.signal});
+      if(!isCurrent(job))return null;
+      if(!response?.ok)return failure('synthesis-unavailable','Generated speech is temporarily unavailable. Try Replay reply again. Captions remain available.');
+      const bytes=await response.arrayBuffer();if(!isCurrent(job))return null;
+      if(bytes.byteLength<44)return failure('synthesis-failed','The generated voice audio could not be played. Captions remain available.');
+      // A completed request must not time out while 3D shader work delays
+      // decoding on the main thread.
+      clearTimer(job.timeout);job.timeout=null;
+      return await context.decodeAudioData(bytes);
+     }catch(error){return failure(error?.name==='NotAllowedError'?'not-allowed':'synthesis-unavailable',error?.name==='NotAllowedError'?'Tap Replay reply to enable audio.':'Generated speech is temporarily unavailable. Captions remain available.');}
+    })();
+    return await Promise.race([loading,timeout]);
+   }
    finally{clearTimer(job.timeout);job.timeout=null;}
   }
   async function playChunk(pending,index){
    if(!isCurrent(job))return;
    const buffer=await pending;if(!isCurrent(job)||!buffer)return;
+   // A prefetched next sentence may fail while this sentence is speaking.
+   // Surface that failure only when it is needed, never by cutting off valid
+   // audio already delivered to the listener.
+   if(buffer.speechFailure){fail(job,buffer.speechFailure.code,buffer.speechFailure.message);return;}
    if(context.state!=='running'){fail(job,'not-allowed','Tap a game control or Preview voice again to resume audio.');return;}
    const next=index+1<chunks.length?load(chunks[index+1]):null;
    try{

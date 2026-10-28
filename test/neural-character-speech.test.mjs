@@ -74,7 +74,7 @@ test('only a deliberately selected acceptable installed voice can use browser sy
 
 test('request timeouts abort pending synthesis and disposal stops playing audio',async()=>{
  const f=fixture({request:()=>new Promise(()=>{})});await f.engine.resume();let error;const utterance=new GameSpeechUtterance('A bounded request');utterance.onerror=event=>error=event;f.engine.speak(utterance);await tick();
- const deadline=[...f.timers.values()][0];deadline.fn();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.calls[0].options.signal.aborted,true);assert.equal(f.engine.pending,false);f.engine.dispose();
+ const deadline=[...f.timers.values()][0];deadline.fn();await tick();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.calls[0].options.signal.aborted,true);assert.equal(f.engine.pending,false);f.engine.dispose();
  const playing=fixture();await playing.engine.resume();playing.engine.speak(new GameSpeechUtterance('Stop on leaving the page.'));await tick();playing.engine.dispose();assert.equal(playing.sources[0].stopped,1);assert.equal(playing.context.state,'closed');assert.equal(playing.intervals.size,0);
 });
 
@@ -110,6 +110,23 @@ test('canceling a segmented guide stops current audio and aborts its prefetched 
  f.engine.speak(utterance);await tick();assert.equal(f.calls.length,2);assert.equal(starts,1);
  const successor=f.calls[1].options.signal;f.engine.cancel();assert.equal(successor.aborted,true);assert.equal(f.sources[0].stopped,1);assert.equal(f.sources[0].onended,null);
  pending.resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(48)});await tick();assert.equal(f.sources.length,1);assert.equal(f.engine.speaking,false);assert.equal(f.timers.size,0);f.engine.dispose();
+});
+
+test('a failed prefetched sentence cannot cut off the valid reply already playing',async()=>{
+ let requests=0;const f=fixture({request:()=>++requests===1?{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)}:{ok:false,status:503}});
+ await f.engine.resume();const utterance=new GameSpeechUtterance('The crew is waiting by the pier. '+('Follow the map to meet them and collect the supplies. ').repeat(5));let error;
+ utterance.onerror=event=>error=event;f.engine.speak(utterance);await tick();
+ assert.equal(f.calls.length,2);assert.equal(f.sources.length,1);assert.equal(f.sources[0].started,1);assert.equal(f.sources[0].stopped,0);
+ assert.equal(f.engine.speaking,true);assert.equal(error,undefined,'A failed successor must not erase the sentence the user can already hear');
+ f.sources[0].onended();await tick();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.sources.length,1);assert.equal(f.engine.speaking,false);f.engine.dispose();
+});
+
+test('a prefetched request timeout waits for the audible sentence to finish before reporting failure',async()=>{
+ let requests=0;const f=fixture({request:()=>++requests===1?{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)}:new Promise(()=>{})});
+ await f.engine.resume();const utterance=new GameSpeechUtterance('The ferry is ready for boarding. '+('Stop at the marked pier and ask the crew for assistance. ').repeat(5));let error;
+ utterance.onerror=event=>error=event;f.engine.speak(utterance);await tick();
+ [...f.timers.values()][0].fn();await tick();assert.equal(f.calls[1].options.signal.aborted,true);assert.equal(f.sources[0].stopped,0);assert.equal(f.engine.speaking,true);assert.equal(error,undefined);
+ f.sources[0].onended();await tick();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.engine.speaking,false);f.engine.dispose();
 });
 
 test('packaged male and female voice previews play without requesting the synthesis service',async()=>{

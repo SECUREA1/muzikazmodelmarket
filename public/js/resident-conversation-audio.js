@@ -46,7 +46,7 @@ export function createResidentConversationAudio({voice=questConversationVoice(),
    const state=voice.state||{};
    // Ambient exchanges never build a backlog behind the guide or a requested
    // reply. They are heard where and when the exchange actually takes place.
-   if(!state.unlocked||state.audioReady===false||state.muted||state.speaking||state.pending||state.loading||state.supported===false)return;
+   if(!state.unlocked||state.audioReady===false||state.muted||state.speaking||state.outputBusy||state.pending||state.loading||state.supported===false)return;
    const nearest=candidates.sort((a,b)=>a.gap-b.gap||a.id.localeCompare(b.id))[0];if(!nearest)return;
    const {id,actor,info,spoken,key}=nearest;
    voice.announce(spoken,{key:'resident-exchange:'+key,worldId,category:'dialogue',entityId:id,source:{...actor.position},range:range*2,

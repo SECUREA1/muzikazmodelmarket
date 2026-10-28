@@ -94,6 +94,22 @@ test('solo worlds and unjoined multiplayer do not send social API calls, even wi
   assert.equal(h.requests.length,0);assert.equal(h.streams.length,0);
 });
 
+test('chat can open AI conversations in solo play without joining a public room',async()=>{
+  const h=harness();await settle();let request;
+  h.window.addEventListener('muzikaz:open-ai-conversations',event=>{request=event.detail;});
+  await h.nodes.get('crib-chat-toggle').fire('click');assert.equal(h.nodes.get('crib-chat-panel').hidden,false);
+  const entry=h.nodes.get('crib-chat-panel').children.find(node=>node.id==='crib-ai-conversations');assert.ok(entry);
+  await entry.fire('click');assert.equal(h.nodes.get('crib-chat-panel').hidden,true);assert.equal(request.source,'room-chat');assert.equal(h.requests.length,0);
+});
+
+test('Talk to AI explains Begin Game before the deferred game has loaded',async()=>{
+  const h=harness();await settle();delete h.window.MuzikazHouseExplorer;let dispatched=false;
+  h.window.addEventListener('muzikaz:open-ai-conversations',()=>{dispatched=true;});
+  await h.nodes.get('crib-chat-toggle').fire('click');
+  await h.nodes.get('crib-chat-panel').children.find(node=>node.id==='crib-ai-conversations').fire('click');
+  assert.equal(dispatched,false);assert.equal(h.nodes.get('crib-chat-panel').hidden,false);assert.match(h.nodes.get('crib-voice-status').textContent,/Begin Game/);assert.equal(h.requests.length,0);
+});
+
 test('authoritative room readiness waits for API discovery and retains presence, history, chat and credentialed events',async()=>{
   const h=harness({discovery:true});h.snapshot.serverHostedRoom=true;h.snapshot.serverReady=true;h.snapshot.worldLoading=true;
   const ready=h.ready('world-a');await settle();

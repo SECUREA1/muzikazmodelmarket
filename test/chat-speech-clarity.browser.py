@@ -39,8 +39,8 @@ try:
     {name:'MUZIKAZ Natural Female',voiceURI:'muzikaz:neural-female',gender:'female',lang:'en-US',generated:true,natural:true,default:true},
     {name:'MUZIKAZ Natural Male',voiceURI:'muzikaz:neural-male',gender:'male',lang:'en-US',generated:true,natural:true,default:false}
    ];
-   const speech={spoken:[],cancelled:0,current:null,getVoices:()=>voices,resume(){},
-    speak(call){this.spoken.push(call);this.current=call;call.onstart?.();},
+   const speech={spoken:[],cancelled:0,current:null,autoStart:true,getVoices:()=>voices,resume(){},
+    speak(call){this.spoken.push(call);this.current=call;if(this.autoStart)call.onstart?.();},
     cancel(){this.cancelled++;const previous=this.current;this.current=null;previous?.onerror?.({error:'interrupted'});}
    };
    window.SpeechSynthesisUtterance=class {constructor(text){this.text=text;}};
@@ -73,16 +73,45 @@ try:
    assert(speech.cancelled===0&&worldVoice.state.speaking,'Chat TTS toggle cancelled another speaker');
    finish();await settle();
    assert(speech.spoken.length===1,'Skipped welcome-time message was replayed later');
+   window.MUZIKAZ_AUDIO_PREFERENCES={speechVoiceURI:'missing-device-voice',speechVoiceGender:'male'};
    emit('A clear room message.');await settle();
    assert(speech.spoken.length===2&&speech.current.text.includes('A clear room message.'),'Chat did not speak once the game voice finished');
+   assert(speech.current.voice?.voiceURI==='muzikaz:neural-male','A saved missing device voice silenced chat instead of using the selected generated gender');
    assert(speech.current.pitch===1,'Chat applied an artificial pitch');
    emit('Do not queue over the first message.');await settle();
    assert(speech.spoken.length===2,'Chat created its own overlapping speech backlog');
    toggle.click();await settle();
    assert(speech.cancelled===1,'Chat TTS toggle did not cancel its own speech');
+   const read=[...document.querySelectorAll('[data-chat-read]')].find(button=>button.closest('li').textContent.includes('A clear room message.'));
+   assert(read&&!read.disabled,'An existing chat message has no usable Read aloud control');
+   read.click();await settle();
+   assert(speech.current?.text.includes('A clear room message.'),'Explicit Read aloud did not speak existing text while automatic reading was off');
+   assert(toggle.getAttribute('aria-pressed')==='false','Reading one message enabled automatic history playback');
+   speech.current.onerror?.({error:'synthesis-unavailable'});await settle();
+   assert(/could not be read|retry/i.test(document.querySelector('#crib-voice-status').textContent),'A playback failure disappeared without retry guidance');
+   assert(read.getAttribute('aria-pressed')==='false','Failed playback left a stuck Stop reading button');
+   read.click();await settle();assert(speech.current?.text.includes('A clear room message.'),'Read aloud could not retry a failed message');
+   read.click();await settle();assert(!speech.current,'Stop reading did not stop its own message');
+   // These are controlled transport failures, not claims about native voice
+   // quality. The real room test measures generated PCM through Web Audio.
+   voices.push({name:'Local Female Natural',voiceURI:'local-female',gender:'female',lang:'en-US',localService:true},
+    {name:'eSpeak English',voiceURI:'espeak:en',gender:'male',lang:'en-US',localService:true},
+    {name:'Local Male Natural',voiceURI:'local-male',gender:'male',lang:'en-US',localService:true});
+   speech.autoStart=false;read.click();await settle();
+   const unavailableGenerated=speech.current,fallbackCount=speech.spoken.length;
+   assert(unavailableGenerated.voice.generated,'The selected generated voice should be attempted first');
+   unavailableGenerated.onerror({error:'synthesis-unavailable'});await settle();
+   assert(speech.spoken.length===fallbackCount+1&&speech.current.voice.voiceURI==='local-male','Unavailable generated chat did not select a suitable local voice of the selected gender');
+   assert(speech.current.text===unavailableGenerated.text&&speech.current.pitch===1,'Local fallback changed the message or shifted its pitch');
+   unavailableGenerated.onend();assert(read.getAttribute('aria-pressed')==='true','An old callback stopped the replacement voice');
+   speech.current.onerror({error:'synthesis-failed'});await settle();
+   assert(speech.spoken.length===fallbackCount+1&&read.getAttribute('aria-pressed')==='false','Failed local fallback entered a retry cycle');finish();
+   read.click();await settle();const audibleGenerated=speech.current,afterStarted=speech.spoken.length;audibleGenerated.onstart();audibleGenerated.onerror({error:'synthesis-unavailable'});await settle();
+   assert(speech.spoken.length===afterStarted,'A partially heard message was repeated through a local voice');finish();speech.autoStart=true;
+   const afterManualReading=speech.cancelled;
    worldVoice.announce('A new job is available.',{worldId:'room-a',key:'job'});
    toggle.click();await settle();
-   assert(speech.cancelled===1&&worldVoice.state.speaking,'Enabling chat interrupted a new game announcement');
+   assert(speech.cancelled===afterManualReading&&worldVoice.state.speaking,'Enabling chat interrupted a new game announcement');
    finish();
    emit('This message belongs to the old room.');await settle();
    assert(speech.current?.text.includes('old room'),'Old-room test message did not start');

@@ -11,6 +11,8 @@ from playwright.sync_api import sync_playwright
 import json, math, os, signal, socket, subprocess, time
 
 ROOT=Path(__file__).resolve().parents[1]
+ARTIFACTS=Path(os.environ.get('MUZIKAZ_TEST_ARTIFACTS',str(ROOT.parent)))
+ARTIFACTS.mkdir(parents=True,exist_ok=True)
 with socket.socket() as probe:
  probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
 base=f'http://127.0.0.1:{port}'
@@ -69,9 +71,8 @@ with TemporaryDirectory(prefix='solo-residents-browser-') as directory:
      page.wait_for_function('soloAudio.peak>.0001',timeout=60000)
      introduction_peak=page.evaluate('soloAudio.peak')
      print('Actual intro output audible',flush=True)
-     # After proving the intro is audible, use the normal category preference
-     # event to stop this long guide before testing the independent NPC voice.
-     page.evaluate('''()=>{MUZIKAZ_AUDIO_PREFERENCES={...MUZIKAZ_AUDIO_PREFERENCES,introductionMuted:true};dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:MUZIKAZ_AUDIO_PREFERENCES}));}''')
+     # Keep normal intro preferences: explicitly requested dialogue must be
+     # heard without the test stopping the guide on the player's behalf.
      initial=page.evaluate('MuzikazHouseExplorer.snapshot()')
      assert initial['roomId']=='muzikaz-main' and not initial['serverHostedRoom'] and not initial['serverReady'],initial
      assert initial['localQuests'] is not None and not public_joins,public_joins
@@ -101,8 +102,10 @@ with TemporaryDirectory(prefix='solo-residents-browser-') as directory:
       if page.evaluate('MuzikazHouseExplorer.snapshot().cameraMode')=='top-down':break
       page.locator('.game-camera-toggle').click()
      assert page.evaluate('MuzikazHouseExplorer.snapshot().cameraMode')=='top-down'
-     page.get_by_role('button',name='Residents, conversations and daily objectives',exact=True).click()
+     page.locator('#crib-chat-toggle').click()
+     page.locator('#crib-ai-conversations').click()
      panel=page.locator('.world-resident-panel');panel.wait_for(state='visible')
+     assert page.locator('#crib-chat-panel').is_hidden()
      page.wait_for_function('!!document.querySelector("[data-resident-talk]:not([disabled])")',timeout=10000)
      page.evaluate('soloAudio.peak=0')
      panel.locator('[data-resident-talk]:enabled').first.click()
@@ -116,15 +119,40 @@ with TemporaryDirectory(prefix='solo-residents-browser-') as directory:
      npc_peak=page.evaluate('soloAudio.peak')
      assert any(response['status']==200 and response['type']=='audio/wav' for response in voice_responses),voice_responses
      assert any(response['status']==200 and response['text'] in expected for response in voice_responses),{'expectedNPC':expected,'responses':voice_responses}
+     print('Chat opens AI conversation and its real reply is audible',flush=True)
+     # A saved preference arriving while a visitor holds Send must not replace
+     # that button before release. The same UI then explicitly enables voices.
+     question=panel.get_by_label('Question for resident',exact=True)
+     question.fill('What do you do here?')
+     send=panel.locator('.casino-conversation-send');send.scroll_into_view_if_needed()
+     page.evaluate('window.heldConversationSend=document.querySelector(".world-resident-panel .casino-conversation-send")')
+     box=send.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down()
+     page.evaluate('''()=>{MUZIKAZ_AUDIO_PREFERENCES={...MUZIKAZ_AUDIO_PREFERENCES,dialogueMuted:true};dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:MUZIKAZ_AUDIO_PREFERENCES}));}''')
+     page.wait_for_timeout(400)
+     assert page.evaluate('heldConversationSend.isConnected&&heldConversationSend===document.querySelector(".world-resident-panel .casino-conversation-send")')
+     page.mouse.up()
+     page.wait_for_function('document.querySelector(".world-resident-panel [data-conversation-transcript]")?.textContent.includes("What do you do here?")',timeout=15000)
+     reply=resident_snapshots[-1]['players'][resident_snapshots[-1]['selfId']]['npcConversation']['conversation'][-1]
+     assert reply['role']!='player'
+     expected_question=page.evaluate('''async text=>{const {prepareSpeechText}=await import('/public/js/character-voice-profile.js');return prepareSpeechText(text);}''',reply['text'])
+     page.evaluate('soloAudio.peak=0')
+     panel.get_by_label('Quest conversation voice',exact=True).click()
+     page.wait_for_function('text=>soloAudio.spoken.some(line=>line.text===text&&line.volume>0)',arg=expected_question,timeout=120000)
+     page.wait_for_function('soloAudio.peak>.0001',timeout=15000)
+     previous_starts=page.evaluate('soloAudio.spoken.length')
+     panel.get_by_role('button',name='Replay reply',exact=True).click()
+     page.wait_for_function('expected=>soloAudio.spoken.length>expected.count&&soloAudio.spoken.at(-1).text===expected.text',arg={'count':previous_starts,'text':expected_question},timeout=120000)
+     print('Held Send, typed question, Enable voice and Replay use the actual NPC reply',flush=True)
      assert page.evaluate('soloAudio.nativeCalls')==0
      assert not public_joins and not errors,{'joins':public_joins,'errors':errors}
      assert resident_snapshots and all(snapshot['private'] and len(snapshot['players'])==1 for snapshot in resident_snapshots)
-     page.screenshot(path='/workspace/solo-residents-live.png')
-     print(json.dumps({'actualSoloMainWorld':True,'privateResidents':len(rendered),'renderedMovement':True,'localWalkingPreserved':True,'publicJoins':len(public_joins),'introductionPeak':introduction_peak,'npcPeak':npc_peak,'realNeuralReplies':voice_responses,'screenshot':'/workspace/solo-residents-live.png'}),flush=True)
+     screenshot=str(ARTIFACTS/'solo-residents-live.png');page.screenshot(path=screenshot)
+     page.screenshot(path=str(ARTIFACTS/'conversation-controls-live.png'))
+     print(json.dumps({'actualSoloMainWorld':True,'privateResidents':len(rendered),'renderedMovement':True,'localWalkingPreserved':True,'publicJoins':len(public_joins),'introductionPeak':introduction_peak,'npcPeak':npc_peak,'realNeuralReplies':voice_responses,'screenshot':screenshot}),flush=True)
     except Exception:
      print(json.dumps({'errors':errors,'publicJoins':public_joins,'voiceResponses':voice_responses,'lastPrivateSnapshot':resident_snapshots[-1] if resident_snapshots else None,'game':page.evaluate('window.MuzikazHouseExplorer?.snapshot()'),'audio':page.evaluate('soloAudio')}),flush=True)
      print(Path(directory+'/server.log').read_text()[-5000:],flush=True)
-     page.screenshot(path='/workspace/solo-residents-diagnostic.png',timeout=15000)
+     page.screenshot(path=str(ARTIFACTS/'solo-residents-diagnostic.png'),timeout=15000)
      raise
     finally:context.close();browser.close()
   finally:

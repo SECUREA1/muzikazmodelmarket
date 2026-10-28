@@ -94,6 +94,24 @@ output resume cannot block that request. Later gestures can resume interrupted
 output. A browser permission error remains visible with retry instructions.
 AI voices and introductions do not require your microphone to be on.
 
+Open **Chat → Talk to AI** or the **People and AI** controls to meet nearby
+residents. Starting a conversation reveals the active transcript above the
+resident list. Type a question and press Enter or use a suggested reply. A
+requested NPC reply takes priority over the guide and ambient speech; the
+player's own typed question stays in the transcript without being synthesized.
+**Replay reply** speaks the latest NPC response again. Playback failures appear
+beside the conversation controls so the same reply can be retried.
+
+Room chat sends text to the human players in that shared room. **Read text**
+reads new messages automatically; **Read aloud** on an existing message plays
+that message directly and changes to **Stop** during playback. Turning on
+automatic reading does not read earlier messages. Missing saved device voices
+use a named generated voice, and microphone sharing remains a separate control.
+If generated speech is unavailable, a suitable installed local voice of the
+selected gender can play the reply or message before any words have started.
+Robotic engines are excluded, and a partially spoken line is never restarted
+automatically.
+
 Playback stays at native pitch through a direct gain path with no added reverb,
 delay or HRTF on speech. NPC distance changes adjust volume. The unrelated
 continuous battle synthesizer is removed from all pages that host the NPC game.
@@ -144,6 +162,11 @@ male/female previews while every API request fails.
 page using one Begin click and the autoplay audio control.
 `python3 test/voice-device-recovery.browser.py` checks missing device voices,
 late settings and explicit unmute with the speech API unavailable.
+`python3 test/audio-page-entrypoints.browser.py` verifies real voice output on
+Home, Model Market and Model Explorer while every API request is unavailable.
+`python3 test/conversation-controls.browser.py` checks typing, held buttons and
+conversation visibility during live updates. The shared-world counterpart is
+`python3 test/shared-conversation-controls.browser.py`.
 `python3 test/room-microphone.browser.py` checks real browser capture and output
 recovery. `python3 test/resident-conversation-audio.browser.py` checks audible
 generated male and female voices for fresh nearby resident exchanges.

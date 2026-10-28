@@ -21,6 +21,15 @@
     return;
   }
   toggle.disabled=false;toggle.removeAttribute('aria-disabled');toggle.removeAttribute('tabindex');delete toggle.dataset.avatarDisabled;
+  const aiConversations=document.createElement('button');aiConversations.type='button';aiConversations.id='crib-ai-conversations';aiConversations.className='crib-chat-ai-entry';aiConversations.textContent='Talk to AI';aiConversations.title='Open nearby AI residents and conversations';(micToggle.parentElement||panel).append(aiConversations);
+  aiConversations.addEventListener('click',()=>{
+    if(!window.MuzikazHouseExplorer?.snapshot){
+      voiceStatus.textContent='Begin Game to meet AI residents.';
+      status.textContent='Begin Game to meet AI residents.';
+      const start=document.querySelector('[data-house-start]')||document.querySelector('#house-game-start');start?.focus?.({preventScroll:true});start?.scrollIntoView?.({block:'center',behavior:'smooth'});return;
+    }
+    setPanel(false);window.dispatchEvent(new CustomEvent('muzikaz:open-ai-conversations',{detail:{source:'room-chat'}}));
+  });
   const panelParent=root.parentNode,panelNext=root.nextSibling;
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map(), pendingCandidates = new Map();
@@ -75,14 +84,14 @@
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, presenceRequest=null;
   let readyRoomId=null,roomGeneration=0,roomRequests=null,events=null,eventsRoomId=null,openingEvents=null;
-  let speechTools=null,activeChatSpeech=null,finishChatSpeech=null,chatSpeechGeneration=0,chatSpeechDisposed=false;
+  let speechTools=null,activeChatSpeech=null,activeChatMessageId=null,finishChatSpeech=null,chatSpeechGeneration=0,chatSpeechDisposed=false;
   const speechBase=document.currentScript?.src||location.href;
-  const speechToolsReady=Promise.all([import(new URL('./game-speech-owner.js',speechBase).href),import(new URL('./neural-character-speech.js',speechBase).href)]).then(([owners,voices])=>speechTools={...owners,speech:voices.gameSpeech(),Utterance:voices.GameSpeechUtterance}).catch(()=>null);
+  const speechToolsReady=Promise.all([import(new URL('./game-speech-owner.js',speechBase).href),import(new URL('./neural-character-speech.js',speechBase).href),import(new URL('./character-voice-profile.js',speechBase).href)]).then(([owners,voices,profiles])=>speechTools={...owners,...profiles,speech:voices.gameSpeech(),Utterance:voices.GameSpeechUtterance}).catch(()=>null);
   function cancelChatSpeech(){chatSpeechGeneration++;if(activeChatSpeech)speechTools?.cancelGameSpeech(speechTools.speech,activeChatSpeech);finishChatSpeech?.();}
   const speakerAudible=()=>speakerOn&&!window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted;
   window.addEventListener('muzikaz:audio-preferences',()=>{
     syncRemoteAudio();
-    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted)cancelChatSpeech();
+    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted||window.MUZIKAZ_AUDIO_PREFERENCES?.dialogueMuted)cancelChatSpeech();
   });
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
@@ -117,23 +126,54 @@
     ttsToggle.classList.toggle('is-on', textToSpeechOn);
     ttsToggle.setAttribute('aria-pressed', String(textToSpeechOn));
     ttsToggle.querySelector('b').textContent = textToSpeechOn ? 'Read text on' : 'Read text off';
-    if (announce) voiceStatus.textContent = textToSpeechOn ? 'Room messages will be read aloud' : 'Text to speech off';
+    if (announce) voiceStatus.textContent = textToSpeechOn ? chatAudioBlocked()||'New room messages will be read aloud. Use Read aloud on an earlier message.' : 'Automatic reading off. Use Read aloud on a message to hear it.';
   }
-  async function speakMessage(item) {
-    const roomId=activeRoom(),generation=chatSpeechGeneration;
-    if (chatSpeechDisposed || window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted || !textToSpeechOn || !item?.message || (item.roomId && item.roomId !== roomId) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
+  function readButton(item,on){const button=[...messages.querySelectorAll('[data-chat-read]')].find(node=>node.dataset.chatRead===String(item.id));if(button){button.textContent=on?'Stop reading':'Read aloud';button.setAttribute('aria-pressed',String(on));}}
+  function chatAudioBlocked(){
+    if(window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted||window.MUZIKAZ_AUDIO_PREFERENCES?.dialogueMuted)return 'Unmute all audio and NPC conversations in Audio settings to hear chat.';
+    if(!speakerOn)return 'Tap Speaker on to hear this message.';
+    return '';
+  }
+  function resumeChatAudio(){
+    if(!speechTools)return;
+    try{Promise.resolve(speechTools.speech.resume()).then(enabled=>{if(enabled===false&&!chatSpeechDisposed)voiceStatus.textContent='Tap Read aloud again to enable voice playback.';},()=>{if(!chatSpeechDisposed)voiceStatus.textContent='Tap Read aloud again to enable voice playback.';});}catch{voiceStatus.textContent='Tap Read aloud again to enable voice playback.';}
+  }
+  async function speakMessage(item,{manual=false}={}) {
+    const roomId=activeRoom(),blocked=chatAudioBlocked();
+    if (chatSpeechDisposed || blocked || (!manual&&!textToSpeechOn) || !item?.message || (item.roomId && item.roomId !== roomId) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)){if(manual&&blocked)voiceStatus.textContent=blocked;return;}
+    // Explicit reading starts output in the button gesture. It does not enable
+    // automatic reading or replay the rest of the room's message history.
+    if(manual){resumeChatAudio();cancelChatSpeech();}
+    const generation=chatSpeechGeneration;
     const tools=await speechToolsReady;
-    if(chatSpeechDisposed||generation!==chatSpeechGeneration||!tools||!textToSpeechOn||window.MUZIKAZ_AUDIO_PREFERENCES?.masterMuted||roomId!==activeRoom()||tools.isGameSpeechActive(tools.speech))return;
-    const utterance = new tools.Utterance(`${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`);
-    const settings=window.MUZIKAZ_AUDIO_PREFERENCES||{},uri=settings.speechVoiceURI||(settings.speechVoiceGender==='male'?'muzikaz:neural-male':'muzikaz:neural-female');
-    utterance.voice=tools.speech.getVoices().find(voice=>voice.voiceURI===uri);if(!utterance.voice)return;
-    utterance.lang = 'en-US';
-    utterance.rate = 1;utterance.pitch=1;utterance.volume=.85;
-    const owner=Symbol('room-message'),finish=()=>{clearTimeout(watchdog);tools.releaseGameSpeech(tools.speech,owner);if(activeChatSpeech===owner){activeChatSpeech=null;finishChatSpeech=null;}};
-    let watchdog=null;activeChatSpeech=owner;finishChatSpeech=finish;
-    tools.claimGameSpeech(tools.speech,owner,finish);utterance.onend=finish;utterance.onerror=finish;
-    watchdog=setTimeout(()=>{tools.cancelGameSpeech(tools.speech,owner);finish();},65000);
-    try{tools.speech.speak(utterance);}catch{finish();}
+    if(chatSpeechDisposed||generation!==chatSpeechGeneration||(!manual&&!textToSpeechOn)||chatAudioBlocked()||roomId!==activeRoom()||(!manual&&tools?.isGameSpeechActive(tools.speech)))return;
+    if(!tools){voiceStatus.textContent='Voice playback could not load. Reload this page to retry.';return;}
+    const settings=window.MUZIKAZ_AUDIO_PREFERENCES||{},available=tools.speech.getVoices(),character={id:item.sessionId||item.username||'room-player',role:'player'},selection={gender:settings.speechVoiceGender||'auto',selectedVoiceURI:settings.speechVoiceURI,language:'en-US'};
+    const generated=()=>tools.chooseCharacterVoice(available.filter(voice=>voice.generated),character,{...selection,selectedVoiceURI:''});
+    const installed=()=>tools.chooseCharacterVoice(available.filter(voice=>!voice.generated&&voice.localService),character,{...selection,selectedVoiceURI:''});
+    const selected=tools.chooseCharacterVoice(available,character,selection)||generated();
+    if(!selected){voiceStatus.textContent='Choose a generated male or female voice in Audio settings, then tap Read aloud.';return;}
+    const name=item.sessionId===sessionId?'You':item.username||'Player',line=tools.prepareSpeechText(`${name} says: ${item.message}`);
+    const owner=Symbol('room-message'),finish=()=>{clearTimeout(watchdog);tools.releaseGameSpeech(tools.speech,owner);if(activeChatSpeech===owner){readButton(item,false);activeChatSpeech=null;activeChatMessageId=null;finishChatSpeech=null;}};
+    let watchdog=null,attempt=0;activeChatSpeech=owner;finishChatSpeech=finish;
+    activeChatMessageId=String(item.id);readButton(item,true);tools.claimGameSpeech(tools.speech,owner,finish);
+    const failed=()=>{voiceStatus.textContent=tools.speech.lastError?.message||'This message could not be read. Tap Read aloud to retry.';finish();};
+    const deadline=milliseconds=>{clearTimeout(watchdog);watchdog=setTimeout(()=>{tools.cancelGameSpeech(tools.speech,owner);voiceStatus.textContent='Voice playback took too long. Tap Read aloud to retry.';finish();},milliseconds);};
+    function play(voice,retried=false){
+      const attemptId=++attempt,playing=()=>activeChatSpeech===owner&&attemptId===attempt;
+      const utterance=new tools.Utterance(line);utterance.voice=voice;utterance.lang=voice.lang||'en-US';utterance.rate=1;utterance.pitch=1;utterance.volume=.85;let started=false;
+      utterance.onstart=()=>{if(!playing())return;started=true;voiceStatus.textContent=`Reading ${name==='You'?'your':name+"'s"} message.`;deadline(tools.speechTimeout(line));};
+      utterance.onboundary=boundary=>{if(playing()&&Number.isFinite(boundary?.audioDuration))deadline(Math.max(8000,boundary.audioDuration*1000+(boundary.remainingSegments>0?65000:5000)));};
+      utterance.onend=()=>{if(!playing())return;voiceStatus.textContent='Message finished.';finish();};
+      utterance.onerror=error=>{
+        if(!playing())return;
+        const recoverable=['network','voice-unavailable','language-unavailable','synthesis-unavailable','synthesis-failed','not-allowed'].includes(error?.error);
+        const fallback=!retried&&!started&&recoverable?(voice.generated?installed():generated()):null;
+        if(fallback){play(fallback,true);return;}failed();
+      };
+      deadline(65000);try{tools.speech.speak(utterance);}catch{failed();}
+    }
+    play(selected);
   }
 
   function renderPresence(data = {}) {
@@ -156,7 +196,12 @@
     if (item.sessionId === sessionId) li.classList.add('is-mine');
     const name = document.createElement('strong'); name.append(text(item.sessionId === sessionId ? 'You' : item.username));
     const time = document.createElement('time'); time.dateTime = item.createdAt || ''; time.textContent = item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'now';
-    const body = document.createElement('span'); body.append(text(item.message)); li.append(name, time, body); messages.append(li);
+    const body = document.createElement('span'); body.append(text(item.message)); li.append(name, time, body);
+    if(!/^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)){
+      const read=document.createElement('button');read.type='button';read.className='crib-chat-read';read.dataset.chatRead=String(item.id);read.textContent='Read aloud';read.setAttribute('aria-label',`Read message from ${item.sessionId===sessionId?'you':item.username||'player'} aloud`);read.setAttribute('aria-pressed','false');read.disabled=!speechTools;
+      read.addEventListener('click',()=>{if(activeChatSpeech&&activeChatMessageId===String(item.id)){cancelChatSpeech();voiceStatus.textContent='Message reading stopped.';}else void speakMessage(item,{manual:true});});li.append(read);
+    }
+    messages.append(li);
     while (messages.children.length > 50) messages.firstElementChild.remove();
     if (pinnedToBottom || item.sessionId === sessionId) messages.scrollTop = messages.scrollHeight;
     if (notify && panel.hidden && item.sessionId !== sessionId) { unread += 1; unreadCount.textContent = unread > 9 ? '9+' : String(unread); unreadCount.hidden = false; }
@@ -291,10 +336,11 @@
   };
   for(const gesture of roomAudioGestures)document.addEventListener(gesture,resumeRoomAudio,{passive:true});
   micToggle.addEventListener('click', async () => { if(micToggle.disabled)return; micToggle.disabled=true; try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); const errors={NotAllowedError:'Allow microphone access in your browser, then tap Mic off to retry.',NotFoundError:'No microphone found. Connect a microphone and tap Mic off to retry.',NotReadableError:'The microphone is busy or unavailable. Close other recording apps and tap Mic off to retry.'};voiceStatus.textContent=errors[error.name]||error.message; } finally { micToggle.disabled=false; } });
-  speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn;syncRemoteAudio();if(speakerOn)remoteAudio.forEach(audio=>audio.play().catch(()=>{})); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
-  if (!(window.AudioContext||window.webkitAudioContext)) { ttsToggle.disabled = true; ttsToggle.title = 'Generated speech audio is not supported by this browser'; }
+  speakerToggle.addEventListener('click', () => { prepareAudio().then(()=>{for(const [id,audio]of remoteAudio)if(audio.srcObject)meterStream(id,audio.srcObject);}).catch(()=>{});speakerOn = !speakerOn;syncRemoteAudio();if(speakerOn)remoteAudio.forEach(audio=>audio.play().catch(()=>{}));else cancelChatSpeech(); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
+  ttsToggle.disabled=true;ttsToggle.title='Preparing voice playback…';
+  speechToolsReady.then(tools=>{if(chatSpeechDisposed)return;const supported=!!tools&&!!(window.AudioContext||window.webkitAudioContext);ttsToggle.disabled=!supported;ttsToggle.title=supported?'Read new room messages aloud':'Voice playback is unavailable. Reload this page to retry.';for(const button of messages.querySelectorAll('[data-chat-read]')){button.disabled=!supported;button.title=supported?'Read this message aloud':'Voice playback is unavailable. Reload this page to retry.';}});
   setTextToSpeech(textToSpeechOn);
-  ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { speechTools?.speech.resume();cancelChatSpeech(); setTextToSpeech(!textToSpeechOn, true); } });
+  ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { resumeChatAudio();cancelChatSpeech(); setTextToSpeech(!textToSpeechOn, true); } });
   async function loadChat() {
     const roomId=readyRoomId,generation=roomGeneration;
     if(!roomReady(roomId,generation))return;

@@ -1,5 +1,6 @@
-import {questConversationVoice,unlockQuestConversation} from './quest-conversation-voice.js';
+import {questConversationVoice,prepareQuestConversation} from './quest-conversation-voice.js';
 import {requestGameInputRelease} from './game-input-release.js';
+import {normalizePlayerPreferences} from './player-preferences.js';
 
 const friendly=value=>String(value||'').replaceAll('-',' ').replaceAll('_',' ').replace(/\b\w/g,char=>char.toUpperCase());
 const skillLevel=value=>Number(value)>=80?'expert':Number(value)>=60?'skilled':Number(value)>=35?'practising':'learning';
@@ -19,10 +20,24 @@ export function mountQuestConversationPanel(root,{command}){
  if(!document.querySelector('[data-ai-conversation-style]')){const style=document.createElement('style');style.dataset.aiConversationStyle='';style.textContent='.quest-conversation .ai-contact-actions{margin:10px 0;padding:9px;border:1px solid #719e7c;border-radius:9px;background:#14372b}.ai-contact-actions h4{font:700 12px system-ui;color:#e7df9b;margin:0 0 7px}.ai-contact-action-buttons{display:flex;flex-wrap:wrap;gap:6px}.quest-conversation .ai-contact-action-buttons button{flex:1 1 115px;min-height:40px!important;white-space:normal;text-align:left}.quest-conversation .ai-contact-actions [data-ai-work-status]{color:#d6edb8;margin:8px 0 0}.quest-conversation .contact-question-label{margin:10px 0 5px}.quest-conversation [data-resident-question]{box-sizing:border-box;display:block;width:100%;max-width:100%;font:16px system-ui;min-height:42px;padding:8px;border:1px solid #799d8a;border-radius:7px;background:#193e37;color:#eaffed}.quest-conversation .casino-conversation-send{min-height:40px!important;margin-top:8px}.quest-conversation input:focus-visible{outline:2px solid #e7d88a;outline-offset:2px}';document.head.append(style);}
  const section=document.createElement('section');section.className='quest-conversation';section.setAttribute('aria-label','Quest NPC conversation');section.hidden=true;root.append(section);
  const audio=questConversationVoice();let latest=null,selfId=null,world='resident-world',key='',busy=false,draft='',selectedReply='',contactId='',statusMessage='',disposed=false,requestVersion=0;
- const make=(tag,text,parent=section)=>{const node=document.createElement(tag);node.textContent=text;parent.append(node);return node;};
+ let pressedControl=null,renderPending=false,releaseTimer=null,form=null,renderParent=section;
+ const make=(tag,text,parent=renderParent)=>{const node=document.createElement(tag);node.textContent=text;parent.append(node);return node;};
  const conversation=()=>{const player=latest?.players?.[selfId];return player?.npcConversation?.type==='resident'&&player.npcConversation.status==='active'?player.npcConversation:player?.vehicleMission?.contact?player.vehicleMission:player?.npcConversation;};
+ const latestReply=q=>(q?.conversation||[]).findLast(call=>call.role!=='player');
+ function enableVoice(){
+  const overrides={masterMuted:false,dialogueMuted:false};
+  globalThis.MUZIKAZ_AUDIO_SESSION_OVERRIDES={...globalThis.MUZIKAZ_AUDIO_SESSION_OVERRIDES,...overrides};
+  const preferences=normalizePlayerPreferences({...globalThis.MUZIKAZ_AUDIO_PREFERENCES,...overrides});
+  globalThis.MUZIKAZ_AUDIO_PREFERENCES=preferences;audio.setPreferences(preferences);audio.setMuted(false);audio.unlock();
+  globalThis.dispatchEvent?.(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));
+ }
+ function audioStatus(){
+  const node=section.querySelector('[data-conversation-audio-status]');if(!node)return;
+  const state=audio.state;node.textContent=state.muted?'Conversation audio is muted. Use Enable voice to hear replies.':state.error?.message||(state.loading?'Preparing reply audio…':state.audioReady===false?'Use Enable voice to resume reply audio.':'');
+ }
  async function sendChoice(q,choice,text=''){
-  if(busy||!command)return;const version=++requestVersion;unlockQuestConversation();if(text||conversationAIState(q,latest).actions.some(action=>action.id===choice))requestGameInputRelease('ai-conversation-request');busy=true;statusMessage='';key='';render();
+  const active=conversation();if(busy||!command||active?.instanceId!==q.instanceId||(active?.entityId||'')!==(q.entityId||''))return;
+  const version=++requestVersion;prepareQuestConversation({worldId:world,entityId:q.entityId||q.contactId||q.contactEntityId});requestGameInputRelease('ai-conversation-request');busy=true;statusMessage='Waiting for '+q.contact.name+'…';key='';render();
   try{const result=await command(q.type==='resident'?'npc-social':'vehicle-mission',{operation:'converse',entityId:q.entityId,choice,...(text?{text}:{})});if(disposed||version!==requestVersion)return;statusMessage=result?.result?.message||'Your contact replied.';if(text&&draft.trim()===text)draft='';}
   catch(error){if(!disposed&&version===requestVersion)statusMessage=error.message;}
   finally{if(!disposed&&version===requestVersion){busy=false;key='';render();}}
@@ -40,41 +55,78 @@ export function mountQuestConversationPanel(root,{command}){
   if(relation||memories.length){const memory=make('div','');memory.className='casino-contact-memory resident-contact-memory';make('strong',Number(relation?.affinity)>=20?'A familiar friend':Number(relation?.affinity)>=8?'Growing trust':'Getting to know each other',memory);if(relation){make('p',Number(relation.visits)>1?'You have spoken '+relation.visits+' times.':inCasino?'Your first conversation on the casino floor.':'Your first conversation here.',memory);if(relation.topic)make('small','Last topic: '+friendly(relation.topic),memory);const interest=relation.rememberedGame||relation.rememberedInterest;if(interest)make('p','They remember your interest in '+interest+'.',memory);if(relation.lastPlayerMessage)make('p','They remember you asking: “'+relation.lastPlayerMessage+'”',memory);}for(const item of memories)make('p',item.text,memory);}
   const offer=context.taskOffer;if(offer){const card=make('div','');card.className='casino-task-offer resident-task-offer';card.setAttribute('aria-label',inCasino?'Casino staff task offer':'Local favor offer');make('h4',offer.title,card);if(offer.description)make('p',offer.description,card);if(offer.steps?.length){const steps=make('ol','',card);for(const step of offer.steps)make('li',typeof step==='string'?step:step.name,steps);}const reward=offer.reward;if(reward)make('small','Earn '+(reward.score?reward.score+' score · ':'')+(reward.reputation||0)+' reputation and '+(reward.xp||0)+' '+friendly(reward.skill)+' experience'+(reward.cosmetic||reward.badge?' · '+(reward.cosmetic||reward.badge):''),card);}
  }
+ // Keep the editor connected while snapshots refresh the transcript, voice
+ // state and resident metadata. Recreating and refocusing it loses keystrokes,
+ // native selection and IME composition even when its value is restored.
+ function updateForm(q,isResident,inCasino){
+  if(!form){
+   const node=make('div','',section);node.className='quest-conversation-editor';
+   const textLabel=make('label','Question',node);textLabel.className='casino-question-label contact-question-label';
+   const message=make('input','',textLabel);message.type='text';message.maxLength=180;message.dataset.residentQuestion='';
+   const label=make('label','Reply',node),choice=make('select','',label);choice.dataset.conversationChoice='';choice.setAttribute('aria-label','Choose quest conversation reply');
+   const send=make('button','Talk',node);send.type='button';send.className='casino-conversation-send';
+   message.oninput=()=>{draft=message.value;};message.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();const current=conversation();if(current&&message.value.trim())void sendChoice(current,'question',message.value.trim());}};
+   choice.onchange=()=>{selectedReply=choice.value;};send.onclick=()=>{const current=conversation();if(current)void sendChoice(current,message.value.trim()?'question':choice.value,message.value.trim()||'');};
+   form={node,textLabel,message,label,choice,send,choicesKey:null};
+  }
+  const {node,textLabel,message,label,choice,send}=form;node.hidden=q.status!=='active';
+  if(node.hidden)return form;
+  textLabel.firstChild.nodeValue=isResident?(inCasino?'Ask about their day, a game, or a staff task':'Ask about this place, their plans, or a local favor'):'Ask your contact about the quest or available work';
+  message.placeholder=inCasino?'What are you doing? Any tips for blackjack?':'Can you show me how this works?';message.setAttribute('aria-label',isResident?'Question for resident':'Question for contact');if(message.value!==draft)message.value=draft;
+  label.firstChild.nodeValue='Reply to '+q.contact.name;
+  const choices=q.dialogueChoices||[],choicesKey=JSON.stringify(choices);if(choicesKey!==form.choicesKey){form.choicesKey=choicesKey;choice.replaceChildren();for(const reply of choices){const option=make('option',reply.label,choice);option.value=reply.id;}}
+  if(choices.some(reply=>reply.id===selectedReply)){if(choice.value!==selectedReply)choice.value=selectedReply;}else selectedReply=choice.value;
+  choice.disabled=busy;send.textContent='Talk to '+q.contact.name;send.disabled=busy||!command;
+  return form;
+ }
  function render(){
-  if(disposed)return;const q=conversation();section.hidden=!q?.contact;if(section.hidden)return;
-  const scope=world+':'+(q.entityId||q.instanceId);if(contactId!==scope){contactId=scope;requestVersion++;busy=false;draft='';selectedReply='';statusMessage='';key='';}
+  if(disposed)return;if(pressedControl){renderPending=true;return;}renderPending=false;const q=conversation();section.hidden=!q?.contact;if(section.hidden)return;
+  const renderedWorld=world,scope=world+':'+(q.entityId||q.contactId||'')+':'+q.instanceId;if(contactId!==scope){contactId=scope;requestVersion++;busy=false;draft='';selectedReply='';statusMessage='';key='';form=null;}
   const ai=conversationAIState(q,latest),isResident=q.type==='resident',inCasino=isResident&&(world==='muzikaz-casino'||Boolean(q.casino)),context=inCasino?q.casino:q.residentContext,info=latest?.actors?.[q.entityId]?.resident||{},state=audio.state,signature=JSON.stringify([world,q.instanceId,q.status,q.contact,q.conversation?.map(call=>[call.id,call.text]),q.dialogueChoices,ai.actions,!!ai.summary,isResident?context:null,state.muted,state.unlocked,state.supported,busy,statusMessage]);
   updateAIStatus(ai);
   if(signature===key){if(isResident){const activity=info.task||context?.activity,now=section.querySelector('[data-casino-contact-activity]'),intention=section.querySelector('[data-casino-contact-intention]');if(now){const value=activity?'Now: '+(typeof activity==='string'?activity:activity.text||activity.name||''):'';if(now.textContent!==value)now.textContent=value;now.hidden=!value;}if(intention){const value=info.goal?.reason&&info.goal.reason!==activity?'Next: '+info.goal.reason:'';if(intention.textContent!==value)intention.textContent=value;intention.hidden=!value;}}return;}key=signature;
   const focus=document.activeElement,focusedQuestion=focus===section.querySelector('[data-resident-question]'),focusedSelect=focus===section.querySelector('[data-conversation-choice]'),selection=focusedQuestion?[focus.selectionStart,focus.selectionEnd]:null,previousTranscript=section.querySelector('[data-conversation-transcript]'),atBottom=!previousTranscript||previousTranscript.scrollHeight-previousTranscript.clientHeight-previousTranscript.scrollTop<24,transcriptScroll=previousTranscript?.scrollTop||0,rootScroll=root.scrollTop;
-  section.classList.toggle('is-casino',inCasino);section.classList.toggle('has-resident-context',isResident);section.setAttribute('aria-label',inCasino?'Casino resident conversation':isResident?'Resident conversation':'Quest NPC conversation');section.replaceChildren();
+  section.classList.toggle('is-casino',inCasino);section.classList.toggle('has-resident-context',isResident);section.setAttribute('aria-label',inCasino?'Casino resident conversation':isResident?'Resident conversation':'Quest NPC conversation');for(const child of [...section.children])if(child!==form?.node)child.remove();const head=document.createDocumentFragment(),tail=document.createDocumentFragment();renderParent=head;
   const header=make('header',''),portrait=make('span','',header);portrait.className='quest-contact-portrait';portrait.style.setProperty('--contact-color',q.contact.color);portrait.innerHTML='<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="17" r="9" fill="currentColor"/><path d="M7 45v-7c0-8 7-12 17-12s17 4 17 12v7" fill="currentColor"/><path d="M13 17v8m22-8v8m-2-2h-8" stroke="#102b30" stroke-width="3"/></svg>';
-  const who=make('div','',header);make('strong',q.contact.name+' · '+q.contact.role,who);make('small',q.contact.channel,who);if(isResident)profile(q,info,inCasino);
-  const controls=make('div','');controls.className='quest-conversation-audio';const voice=make('button',!state.supported?'Captions available':state.muted?'Enable quest voice':state.unlocked?'Mute quest voice':'Enable quest voice',controls);voice.type='button';voice.setAttribute('aria-label','Quest conversation voice');voice.setAttribute('aria-pressed',String(state.unlocked&&!state.muted));voice.disabled=!state.supported;voice.onclick=()=>{if(!audio.state.unlocked){audio.setMuted(false);audio.unlock();}else audio.setMuted(!audio.state.muted);key='';render();};
-  const replay=make('button','Replay reply',controls);replay.type='button';replay.onclick=()=>{audio.replay(q.conversation?.at(-1));key='';render();};replay.disabled=!q.conversation?.length||!state.supported;
+  const who=make('div','',header);make('strong',q.contact.name+' · '+q.contact.role,who);make('small',q.contact.channel,who);
+  const controls=make('div','');controls.className='quest-conversation-audio';const voice=make('button',!state.supported?'Captions available':state.muted||state.audioReady===false||!state.unlocked?'Enable voice':'Mute voice',controls);voice.type='button';voice.setAttribute('aria-label','Quest conversation voice');voice.setAttribute('aria-pressed',String(state.unlocked&&!state.muted));voice.disabled=!state.supported;voice.onclick=()=>{if(world!==renderedWorld||conversation()?.instanceId!==q.instanceId)return;if(audio.state.muted||audio.state.audioReady===false||!audio.state.unlocked){enableVoice();const reply=latestReply(q);if(reply)audio.replay(reply);}else audio.setMuted(true);key='';render();};
+  const replay=make('button','Replay reply',controls);replay.type='button';replay.onclick=()=>{if(world!==renderedWorld||conversation()?.instanceId!==q.instanceId)return;enableVoice();audio.replay(latestReply(q));key='';render();};replay.disabled=!latestReply(q)||!state.supported;
+  const outputStatus=make('p','');outputStatus.dataset.conversationAudioStatus='';outputStatus.setAttribute('role','status');audioStatus();
   const transcript=make('ol','');transcript.dataset.conversationTranscript='';transcript.setAttribute('aria-label',inCasino?'Casino conversation transcript':'Quest conversation transcript');
   for(const call of(q.conversation||[]).slice(isResident?-8:-4)){const row=make('li','',transcript);row.classList.toggle('is-player',call.role==='player');make('strong',call.speaker+': ',row);row.append(document.createTextNode(call.text));}
   transcript.scrollTop=atBottom?transcript.scrollHeight:transcriptScroll;
   if(q.status==='active'){
+   const secondary=document.createDocumentFragment();
    if(isResident){
-    const suggestions=make('div','');suggestions.className='casino-conversation-suggestions resident-conversation-suggestions';suggestions.setAttribute('aria-label',inCasino?'Suggested casino questions':'Suggested local questions');
+    const suggestions=make('div','',secondary);suggestions.className='casino-conversation-suggestions resident-conversation-suggestions';suggestions.setAttribute('aria-label',inCasino?'Suggested casino questions':'Suggested local questions');
     const priorities=inCasino?['casino-task','casino-accept','casino-progress','casino-skills','casino-activity','casino-personality']:['help','accept','progress','resident-skills','resident-activity','resident-personality','resident-memory'];
     const options=priorities.map(id=>(q.dialogueChoices||[]).find(reply=>reply.id===id)).filter(Boolean);
     for(const reply of options){const button=make('button',reply.label,suggestions);button.type='button';if(inCasino)button.dataset.casinoReply=reply.id;button.dataset.residentReply=reply.id;button.disabled=busy||!command;button.onclick=()=>sendChoice(q,reply.id);}
    }
    if(ai.actions.length||ai.summary){
-    const help=make('section','');help.className='ai-contact-actions';help.setAttribute('aria-label','Ask AI to help');make('h4','Ask AI to help',help);
+    const help=make('section','',secondary);help.className='ai-contact-actions';help.setAttribute('aria-label','Ask AI to help');make('h4','Ask AI to help',help);
     const actions=make('div','',help);actions.className='ai-contact-action-buttons';
     for(const action of ai.actions){const button=make('button',action.label,actions);button.type='button';button.dataset.aiAction=action.id;button.disabled=busy||!command||!!action.disabled;button.title=action.disabled&&action.reason?action.reason:action.description||action.label;button.onclick=()=>sendChoice(q,action.id);}
     const work=make('p','',help);work.dataset.aiWorkStatus='';work.setAttribute('role','status');work.setAttribute('aria-live','polite');updateAIStatus(ai);
    }
-   const textLabel=make('label',isResident?(inCasino?'Ask about their day, a game, or a staff task':'Ask about this place, their plans, or a local favor'):'Ask your contact about the quest or available work');textLabel.className='casino-question-label contact-question-label';const message=make('input','',textLabel);message.type='text';message.maxLength=180;message.value=draft;message.dataset.residentQuestion='';message.placeholder=inCasino?'What are you doing? Any tips for blackjack?':'Can you show me how this works?';message.setAttribute('aria-label',isResident?'Question for resident':'Question for contact');message.oninput=()=>{draft=message.value;};message.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();if(message.value.trim())void sendChoice(q,'question',message.value.trim());}};
-   const label=make('label','Reply to '+q.contact.name),choice=make('select','',label);choice.dataset.conversationChoice='';choice.setAttribute('aria-label','Choose quest conversation reply');for(const reply of q.dialogueChoices||[]){const option=make('option',reply.label,choice);option.value=reply.id;}if((q.dialogueChoices||[]).some(reply=>reply.id===selectedReply))choice.value=selectedReply;else selectedReply=choice.value;choice.onchange=()=>{selectedReply=choice.value;};choice.disabled=busy;
-   const send=make('button','Talk to '+q.contact.name);send.type='button';send.className='casino-conversation-send';send.disabled=busy||!command;send.onclick=()=>sendChoice(q,message?.value.trim()?'question':choice.value,message?.value.trim()||'');
-   if(focusedQuestion&&message){message.focus({preventScroll:true});if(selection)message.setSelectionRange(...selection);}else if(focusedSelect)choice.focus({preventScroll:true});
+   const {message,choice}=updateForm(q,isResident,inCasino);
+   if(focusedQuestion&&document.activeElement!==message){message.focus({preventScroll:true});if(selection)message.setSelectionRange(...selection);}else if(focusedSelect&&document.activeElement!==choice)choice.focus({preventScroll:true});
+   tail.append(secondary);
   }
-  const status=make('p',statusMessage);status.setAttribute('role','status');root.scrollTop=rootScroll;
+  if(q.status!=='active'&&form)form.node.hidden=true;
+  renderParent=tail;if(isResident)profile(q,info,inCasino);
+  const status=make('p',statusMessage);status.setAttribute('role','status');section.insertBefore(head,form?.node||null);section.append(tail);renderParent=section;transcript.scrollTop=atBottom?transcript.scrollHeight:transcriptScroll;updateAIStatus(ai);audioStatus();root.scrollTop=rootScroll;
  }
  section.addEventListener('keydown',event=>{if(event.target.closest('input,textarea,select')||event.key==='Enter'||event.key===' '&&event.target.closest('button'))event.stopPropagation();});
- return {update(snapshot,id,worldId){latest=snapshot;selfId=id;if(worldId)world=worldId;const q=snapshot?.players?.[id]?.vehicleMission;audio.ingest([...(q?.conversation||[]),...(snapshot?.players?.[id]?.npcConversation?.conversation||[])],{worldId,actorId:id,serverTime:snapshot?.serverTime,instanceId:q?.instanceId});render();},dispose(){disposed=true;requestVersion++;section.remove();}};
+ // Keep a live snapshot from replacing a button between press and release.
+ // Touch clicks and Space activation still target the control the user chose.
+ function releaseControl(){clearTimeout(releaseTimer);pressedControl=null;if(renderPending)render();}
+ const released=()=>{if(!pressedControl)return;clearTimeout(releaseTimer);releaseTimer=setTimeout(releaseControl,750);};
+ section.addEventListener('pointerdown',event=>{if(event.target.closest('button'))pressedControl=event.target.closest('button');},true);
+ section.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)&&event.target.closest('button'))pressedControl=event.target.closest('button');},true);
+ section.addEventListener('click',releaseControl);
+ section.addEventListener('keyup',released);
+ document.addEventListener('pointerup',released,true);document.addEventListener('pointercancel',releaseControl,true);
+ audio.addEventListener?.('statechange',audioStatus);
+ return {update(snapshot,id,worldId){const previous=conversation(),previousWorld=world,previousSelf=selfId;latest=snapshot;selfId=id;if(worldId)world=worldId;const active=conversation();if(previousWorld!==world||previousSelf!==selfId||previous?.instanceId!==active?.instanceId){clearTimeout(releaseTimer);pressedControl=null;renderPending=false;requestVersion++;busy=false;contactId='';draft='';selectedReply='';statusMessage='';key='';}const q=snapshot?.players?.[id]?.vehicleMission;audio.ingest([...(q?.conversation||[]),...(snapshot?.players?.[id]?.npcConversation?.conversation||[])],{worldId,actorId:id,serverTime:snapshot?.serverTime,instanceId:q?.instanceId});render();},dispose(){disposed=true;requestVersion++;clearTimeout(releaseTimer);document.removeEventListener('pointerup',released,true);document.removeEventListener('pointercancel',releaseControl,true);audio.removeEventListener?.('statechange',audioStatus);section.remove();}};
 }

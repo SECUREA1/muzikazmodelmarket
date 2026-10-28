@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createResidentConversationAudio} from '../public/js/resident-conversation-audio.js';
 import {createQuestConversationVoice} from '../public/js/quest-conversation-voice.js';
 import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
+import {claimGameSpeech,isGameSpeechActive,releaseGameSpeech} from '../public/js/game-speech-owner.js';
 
 function fixture(){
  const calls=[],voice={state:{unlocked:true,audioReady:true},announce:(text,options)=>calls.push({text,...options})};
@@ -71,4 +72,19 @@ test('real quest voice integration preserves an introduction and speaks a later 
  const f=fixture();f.audio=createResidentConversationAudio({voice});const update=()=>f.audio.update(f.snapshot,'self',f.world);
  voice.setScene({listener:f.snapshot.players.self.position,actors:f.snapshot.actors});voice.unlock();voice.announce('Welcome to the world.',{worldId:'commons',category:'introduction'});update();f.say('a');update();assert.equal(spoken.length,1);assert.equal(voice.state.pending,0);
  spoken[0].onend();f.snapshot.serverTime+=4000;f.say('b','Good, thank you.');update();assert.equal(spoken.length,2);assert.equal(spoken[1].text,'Good, thank you.');assert.ok(spoken[1].volume>0&&spoken[1].volume<.9);assert.ok(spoken[1].voice.generated);voice.dispose();
+});
+
+test('nearby ambient exchanges cannot interrupt a room message that the user is reading aloud',()=>{
+ const spoken=[],chatOwner=Symbol('manual-chat');let interrupted=0,cancelled=0;
+ const speech={state:{speaking:false,loading:false},getVoices:()=>GENERATED_VOICES,speak:utterance=>spoken.push(utterance),cancel(){cancelled++;},resume(){}};
+ const voice=createQuestConversationVoice({speech,Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ const f=fixture(),audio=createResidentConversationAudio({voice}),update=()=>audio.update(f.snapshot,'self',f.world);
+ voice.setScene({listener:f.snapshot.players.self.position,actors:f.snapshot.actors});voice.unlock();update();
+ claimGameSpeech(speech,chatOwner,()=>{interrupted++;});speech.state.speaking=true;
+ f.say('a','Shall we explore the garden?');update();
+ assert.equal(spoken.length,0);assert.equal(interrupted,0);assert.equal(cancelled,0);assert.equal(isGameSpeechActive(speech),true);
+ releaseGameSpeech(speech,chatOwner);speech.state.speaking=false;update();
+ assert.equal(spoken.length,0,'an exchange observed during the message must not become a backlog');
+ f.snapshot.serverTime+=4000;f.say('b','The next trail is ready.');update();
+ assert.equal(spoken.length,1);assert.equal(spoken[0].text,'The next trail is ready.');voice.dispose();
 });

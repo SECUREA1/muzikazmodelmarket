@@ -5,7 +5,7 @@ import {chooseCharacterVoice,characterSpeechStyle,prepareSpeechText,speechTimeou
 
 export function createQuestConversationVoice({speech=gameSpeech(),Utterance=GameSpeechUtterance,setTimer=setTimeout,clearTimer=clearTimeout,now=()=>Date.now()}={}){
  let unlocked=false,muted=false,disposed=false,failed=false,current=null,currentStarted=false,utterance=null,timer=null,generation=0,scope=null,latest=null;
- let preferences={},listener=null,actors={},voiceWait=null,voicesWaited=false,previewSequence=0,introduction=null,introductionHeard=false;
+ let preferences={},listener=null,actors={},voiceWait=null,voicesWaited=false,previewSequence=0,introduction=null,introductionHeard=false,replyRequest=null;
  const queue=[],seen=new Set(),cast=new Map(),speechOwner=Symbol('world-voice');
  const supported=()=>!!(speech?.speak&&Utterance)&&!failed;
  const blocked=call=>muted||preferences.masterMuted||preferences[({introduction:'introductionMuted',announcements:'announcementsMuted',dialogue:'dialogueMuted'})[call.category||'dialogue']];
@@ -46,6 +46,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   // removed by the browser. Our named generated voices are available on every
   // device, so a stale device selection must not silently consume the guide.
   const generatedFallback=()=>chooseCharacterVoice(available.filter(candidate=>candidate.generated),character,{...selection,selectedVoiceURI:'',preferredVoiceURI:''});
+  const installedFallback=()=>chooseCharacterVoice(available.filter(candidate=>candidate.localService&&!candidate.generated),character,{...selection,selectedVoiceURI:'',preferredVoiceURI:''});
   const selected=chooseCharacterVoice(available,character,selection)||generatedFallback();
   if(!selected){call.onError?.('That voice is unavailable. Choose a generated male or female voice in Audio settings.');play();return;}
   if(selected){cast.set(character.id,selected.voiceURI||selected.name);if(cast.size>128)cast.delete(cast.keys().next().value);}
@@ -85,6 +86,13 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
       const local=chooseCharacterVoice(available.filter(candidate=>candidate.localService&&candidate!==voice),character,{language:style.lang,gender:preferences.speechVoiceGender||'auto'});
       if(local&&!preferences.speechVoiceURI){speak(local,true);return;}
      }
+     // Dynamic replies still need the voice service. A clear installed voice
+     // can read the exact reply when that service is offline. Try it once only
+     // before playback starts; never replace a partly spoken line or use an
+     // anonymous browser default/robotic engine.
+     if(!retry&&!started&&voice?.generated&&['network','voice-unavailable','language-unavailable','synthesis-unavailable','synthesis-failed'].includes(error?.error)){
+      const installed=installedFallback();if(installed){speak(installed,true);return;}
+     }
      call.onError?.('The voice could not play. Please try Preview voice again.');finish();
     };
     timer=setTimer(watchdog,65000);
@@ -95,7 +103,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
  }
  function onVoicesChanged(){if(disposed||!voices().length)return;voicesWaited=true;clearVoiceWait();play();}
  speech?.addEventListener?.('voiceschanged',onVoicesChanged);
- function setScope(worldId){if(scope===worldId)return;stop();seen.clear();scope=worldId;latest=null;introduction=null;introductionHeard=false;}
+ function setScope(worldId){if(scope===worldId)return;stop();seen.clear();scope=worldId;latest=null;introduction=null;introductionHeard=false;replyRequest=null;}
  function remember(id){if(seen.has(id))return false;seen.add(id);if(seen.size>128)seen.delete(seen.values().next().value);return true;}
  function enqueue(call){latest={...call,queuedAt:now()};if(latest.category==='introduction'){introduction=latest;introductionHeard=false;}if(!blocked(latest)){queue.push(latest);if(queue.length>8){const expendable=queue.findIndex(call=>call.category!=='introduction');queue.splice(expendable<0?0:expendable,1)[0]?.onCancelled?.();}}play();}
  const api={
@@ -105,6 +113,13 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    enqueue({id,text:String(text),voice,speaker:voice,role,category,source,entityId,range,personality,mood,voiceProfile});return true;
   },
   unlock(){if(disposed)return false;unlocked=true;failed=false;let resumed;try{resumed=speech?.resume?.();}catch{unlocked=false;return false;}if(resumed===false){unlocked=false;return false;}play();if(resumed?.then)return Promise.resolve(resumed).then(value=>{if(!disposed&&value===false)unlocked=false;return value!==false;},()=>{if(!disposed)unlocked=false;return false;});return true;},
+  requestReply({worldId=scope,entityId}={}){
+   if(disposed)return false;setScope(worldId);
+   // Talk and Send are explicit turns. Answer them ahead of a long welcome,
+   // ambient conversation, old reply or announcement backlog. The transcript
+   // remains intact, and repeated snapshots cannot restart the welcome.
+   stop();replyRequest={worldId:scope,entityId};return api.unlock();
+  },
   resumeIntroduction(){if(disposed||!introduction||introductionHeard||blocked(introduction))return false;if(current?.id===introduction.id||queue.some(call=>call.id===introduction.id))return true;queue.unshift({...introduction,queuedAt:now()});play();return true;},
   setMuted(value){muted=!!value;if(muted)stop();else play();},
   setPreferences(value={}){if((preferences.speechVoiceGender||'auto')!==(value.speechVoiceGender||'auto')||(preferences.speechVoiceURI||'')!==(value.speechVoiceURI||'')){
@@ -117,12 +132,17 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   setScene({listener:position,actors:worldActors={}}={}){listener=position;actors=worldActors;if(current){const gain=volume(current);if(gain<=0){cancelCurrent();play();}else if(utterance)utterance.volume=gain;}},
   ingest(calls,{worldId,actorId,serverTime,instanceId}={}){
    if(disposed)return;setScope(worldId);
+   const requested=replyRequest;let receivedReply=false;
    for(const call of calls||[]){
     if(!call.conversation||call.questInstance!==instanceId&&!call.interaction||call.recipients&&!call.recipients.includes(actorId)||seen.has(call.id)||serverTime-call.at>30000)continue;
     remember(call.id);
+    // A user already knows the question they typed. Synthesizing it first
+    // delays the resident's answer and can make the conversation seem silent.
+    if(call.role==='player')continue;
     // Historical dialogue seen before the gesture is consumed, not replayed later.
-    if(unlocked)enqueue({...call,category:'dialogue'});else latest={...call,category:'dialogue',queuedAt:now()};
-   }play();
+    const awaitingRequest=requested?.worldId===scope&&(!requested.entityId||!call.speakerId||requested.entityId===call.speakerId);
+    if(unlocked||awaitingRequest){enqueue({...call,category:'dialogue'});receivedReply ||= awaitingRequest;}else latest={...call,category:'dialogue',queuedAt:now()};
+   }if(receivedReply)replyRequest=null;play();
   },
   replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();queue.push(replay);api.unlock();return true;},
   preview(value=preferences){
@@ -137,14 +157,15 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
      onStarted:voice=>done('Playing '+(voice?.name||'your selected voice')+'.'),onFinished:()=>done('Voice preview finished.'),onError:done,onCancelled:()=>done('Voice preview stopped.')});
    });
   },
-  reset(){stop();seen.clear();scope=null;latest=null;introduction=null;introductionHeard=false;},
+  reset(){stop();seen.clear();scope=null;latest=null;introduction=null;introductionHeard=false;replyRequest=null;},
   addEventListener(type,callback){speech?.addEventListener?.(type,callback);},
   removeEventListener(type,callback){speech?.removeEventListener?.(type,callback);},
   dispose(){disposed=true;stop();speech?.removeEventListener?.('voiceschanged',onVoicesChanged);cast.clear();},
-  get state(){const output=speech?.state;return {unlocked,audioReady:unlocked&&output?.unlocked!==false,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,supported:supported(),speaking:!!current,pending:queue.length,loading:!!output?.loading,error:output?.error||null,status:output?.status||''};}
+  get state(){const output=speech?.state;return {unlocked,audioReady:unlocked&&output?.unlocked!==false,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,supported:supported(),speaking:!!current,outputBusy:!!output?.speaking||!!output?.loading,pending:queue.length,loading:!!output?.loading,error:output?.error||null,status:output?.status||''};}
  };
  return api;
 }
 let shared;
 export function questConversationVoice(){return shared||=createQuestConversationVoice();}
 export function unlockQuestConversation(){questConversationVoice().unlock();}
+export function prepareQuestConversation(options){return questConversationVoice().requestReply(options);}

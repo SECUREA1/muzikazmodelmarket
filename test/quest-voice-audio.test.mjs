@@ -58,6 +58,51 @@ test('duplicate updates cannot repeat a line, including updates observed while m
  voice.setPreferences({dialogueMuted:false});voice.ingest([{...call,id:'reply-2'}],options);assert.equal(spoken.length,1);
 });
 
+test('a requested NPC turn answers ahead of the guide without reading the typed question or replaying the guide',()=>{
+ const {voice,spoken}=fixture();voice.unlock();announce(voice,'Welcome to this world.','introduction');spoken[0].onstart();
+ announce(voice,'An old job update.');voice.requestReply({worldId:'map',entityId:'guide'});
+ assert.equal(voice.state.speaking,false);assert.equal(voice.state.pending,0);
+ const call={id:'npc-reply',at:1000,conversation:true,interaction:true,recipients:['self'],speakerId:'guide',text:'The supplies are beside the pier.',role:'guide'},options={worldId:'map',actorId:'self',serverTime:1000};
+ voice.ingest([{...call,id:'my-question',text:'Where are the supplies?',role:'player'},call],options);
+ assert.deepEqual(spoken.map(line=>line.text),['Welcome to this world.','The supplies are beside the pier.']);
+ spoken[0].onend();assert.equal(voice.state.speaking,true,'the cancelled guide cannot finish the NPC reply');
+ spoken[1].onstart();spoken[1].onend();voice.ingest([call],options);voice.unlock();
+ assert.equal(spoken.length,2);assert.equal(voice.resumeIntroduction(),false);voice.dispose();
+});
+
+test('a requested reply survives a rejected first unlock and is heard only at the next gesture',()=>{
+ const spoken=[];let allowed=false;
+ const voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),cancel(){},resume:()=>allowed},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ assert.equal(voice.requestReply({worldId:'map',entityId:'guide'}),false);
+ voice.ingest([{id:'reply',at:1000,conversation:true,interaction:true,recipients:['self'],speakerId:'guide',role:'guide',text:'I can help you find your way.'}],{worldId:'map',actorId:'self',serverTime:1000});
+ assert.equal(spoken.length,0);assert.equal(voice.state.pending,1);
+ allowed=true;voice.unlock();assert.equal(spoken[0].text,'I can help you find your way.');voice.dispose();
+});
+
+test('background dialogue does not interrupt a welcome without an explicit request',()=>{
+ const {voice,spoken}=fixture();voice.unlock();announce(voice,'Welcome to this world.','introduction');spoken[0].onstart();
+ voice.ingest([{id:'reply',at:1000,conversation:true,interaction:true,text:'A nearby answer.',role:'guide'}],{worldId:'map',actorId:'self',serverTime:1000});
+ assert.equal(spoken.length,1);assert.equal(voice.state.pending,1);spoken[0].onend();assert.equal(spoken[1].text,'A nearby answer.');voice.dispose();
+});
+
+test('an unavailable voice service retries the exact NPC reply with a suitable installed voice once',()=>{
+ const native={name:'Microsoft David Desktop',voiceURI:'device:david',gender:'male',lang:'en-US',localService:true};
+ const {voice,spoken}=fixture({voices:[...GENERATED_VOICES,native,{name:'eSpeak Male',voiceURI:'espeak:en',gender:'male',lang:'en-US',localService:true}]});
+ voice.setPreferences({speechVoiceGender:'male'});voice.unlock();announce(voice,'The ferry is ready for boarding.','dialogue');
+ assert.equal(spoken[0].voice.gender,'male');assert.equal(spoken[0].voice.generated,true);spoken[0].onerror({error:'synthesis-unavailable'});
+ assert.equal(spoken.length,2);assert.equal(spoken[1].voice,native);assert.equal(spoken[1].text,spoken[0].text);
+ spoken[0].onend();assert.equal(voice.state.speaking,true);spoken[1].onerror({error:'network'});assert.equal(spoken.length,2,'a failed fallback must not cycle through engines');voice.dispose();
+});
+
+test('a partly spoken generated reply or an incompatible/robotic local voice never triggers fallback',()=>{
+ for(const native of [{name:'eSpeak Female',voiceURI:'espeak:en',gender:'female',lang:'en-US',localService:true},{name:'Microsoft David Desktop',voiceURI:'device:david',gender:'male',lang:'en-US',localService:true}]){
+  const {voice,spoken}=fixture({voices:[...GENERATED_VOICES,native]});voice.setPreferences({speechVoiceGender:'female'});voice.unlock();announce(voice,'Your exact reply.','dialogue');
+  spoken[0].onerror({error:'synthesis-unavailable'});assert.equal(spoken.length,1);voice.dispose();
+ }
+ const {voice,spoken}=fixture({voices:[...GENERATED_VOICES,{name:'Microsoft Zira Desktop',voiceURI:'device:zira',gender:'female',lang:'en-US',localService:true}]});
+ voice.unlock();announce(voice,'A reply already in progress.','dialogue');spoken[0].onstart();spoken[0].onerror({error:'synthesis-unavailable'});assert.equal(spoken.length,1);voice.dispose();
+});
+
 
 test('flat map source positions remain audible and watchdog cancels stalled speech',()=>{
  const {voice,spoken,timers}=fixture();voice.unlock();
