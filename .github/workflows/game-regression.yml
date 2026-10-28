@@ -141,6 +141,7 @@ jobs:
       - name: Verify login, basketball buttons and both maps
         run: |
           python test/commons-room-connection.browser.py
+          python test/map-room-refresh.browser.py
           python test/basketball-quick-controls.browser.py
           python test/xr-visibility.browser.py
           python test/mobile-map-layout.browser.py

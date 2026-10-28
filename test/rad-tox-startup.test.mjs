@@ -27,7 +27,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.doesNotMatch(startup, /resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
   assert.match(game, /if\(guestSolo\|\|localSandbox\|\|multiplayerWorldLoading\|\|serverHostedRoom\)return/, 'legacy avatar polling stays off in authoritative multiplayer to avoid duplicate bodies');
   assert.match(game, /resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\);[\s\S]{0,500}roomId:env\.id,position:/, 'the new room is announced only after its spawn is loaded and applied');
-  assert.match(game, /if\(previousRoom!==env\.id\)window\.dispatchEvent/, 'multiplayer reconnects only after a successful world transition');
+  assert.match(game, /authoritativeClient\?\.stop\(\);authoritativeClient=null;[\s\S]{0,250}multiplayer-world-change/, 'every committed map selection detaches the old room, including a same-map refresh');
   assert.match(game, /seatedBuilderObject=null;builderGameplay\.player\.seatedObjectId=null/, 'a seat from the previous world cannot pin the player during loading');
 });
 

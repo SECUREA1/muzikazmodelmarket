@@ -6,6 +6,14 @@ recover. An unavailable connection keeps the selection pending for a bounded
 reconnection period; failure leaves a visible retry message instead of hiding
 controls or permanently closing the room.
 
+Selecting a destination from the world menu rebuilds the local scene and joins
+its room server with fresh snapshots and movement controls. Selecting the
+current map also refreshes its connection. The previous room's chat, live
+camera, conversations and pending controls close as the transition begins.
+The destination activates only after its server confirms the player and its
+game systems are ready; late replies from the previous room are ignored.
+This refresh preserves shared world progress and other players' sessions.
+
 Vehicle, route and location selections show an immediate, indeterminate loading
 display. It never captures pointer or keyboard input. Boarding waits for the
 confirmed vehicle model to reach the scene, then exposes the vehicle controls

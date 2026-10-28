@@ -24,7 +24,7 @@ function fixture(extra={}){
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},
   gameplayStarted:false,pendingFactoryTestingXRFrames:0,gameplayReadiness:null,multiplayerWorldLoading:false,worldLoadGeneration:1,worldNavigationGeneration:0,gameInitializationPromise:null,gameInitializationRevision:0,
-  serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},
+  serverHostedRoom:true,guestSolo:false,residentWalkthrough:false,authoritativeClient:null,serverPlayerInitialized:false,activeEnvironment:{id:'muzikaz-airport'},serverActors:{},soloResidentClient:null,soloResidentSnapshot:null,residentConversationAudio:{reset,update:reset},residentUI:{open:reset,report:reset,update:reset},prepareQuestConversation:reset,
   factoryTestingVR:{reset,receive:reset,visible:()=>false,isActive:()=>false},funhouseVR:{reset,update:reset},funhouseAudio:{reset,receive:reset,update:reset,pause:reset},resetFunhouseRideView:reset,funhouseRide:()=>null,funhouseAimRay:()=>({}),useFunhouseWorld:()=>false,funhouseWorldStation:null,funhouseRideView:null,funhouseServerAt:0,funhouseReceivedAt:0,currentFunhouseEquipment:()=>null,fireCarriedWater:()=>false,syncLocalClownAvatar:reset,funhouseWaterEffects:{receive:reset,reset},districtMap:{setReady:value=>readinessChanges.push(value)},mapQuestPrompts:{update:reset,close:reset},soloMapQuests:{relocate:reset},envLoader:{world:null},builderDecor:{},applyFactoryMachineActivity:reset,constructionUI:{update:reset},skiResortControls:{update:reset},deviceUI:{reset},landSaleUI:{reset},casinoUI:{reset},funhouseUI:{reset,receive:reset,visible:()=>false},clearFunhouseCostume:reset,playerIndicator:{},yachtGames:{reset},setStatus:message=>statuses.push(message),hideBasketballControls:reset,lockMenuInput:reset,
   scaleControl:{querySelectorAll:()=>[]},connectionBadge:{textContent:''},sharedInventory:{},ensurePlayAccess:async()=>({account:{}}),settingsUI:{restore:async()=>{}},choosePlayAccess:async()=>null,
   serverInput:()=>({}),renderServerRoom:reset,radToxEnabled:false,showConnectionFailure:reset,publishGameStage:reset,updateLevelLoader:reset,
@@ -44,6 +44,81 @@ function commandFixture(reply,extra={}){
  vm.runInContext(hostCommand,state.context);return {...state,effects,client};
 }
 
+function worldHandoffFixture(){
+ const trace=[],asset=deferred(),begin=deferred(),environmentReady=deferred(),connected=deferred(),connections=[];
+ const noop=()=>{},point=()=>({x:3,y:0,z:4,clone:point});
+ const destination={id:'muzikaz-main',name:'Main Floor',updatedAt:5,proceduralLand:true};
+ const oldClient={ready:true,stop(){this.ready=false;trace.push('old-stop');}};
+ const f=fixture({
+  console:{...console,error:noop},gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:oldClient,serverVehicleId:'old-vehicle',serverMovementRevision:12,
+  registry:{find:()=>destination},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,
+  startEnvironment:'muzikaz-airport',replaceGameLocation:noop,transportActivity:{close:()=>trace.push('transport-close')},
+  ownedPlacement:{reset:noop},updateFunhouseWaterGun:noop,roadVehicleUI:{update:noop},constructionScene:{reset:noop},constructionCamera:{reset:noop},
+  buildingToggle:{update:noop},buildRoomButton:{disabled:false},liveRangeHud:null,rangeScenes:{clear:noop,refresh:noop},rangeFeedback:{reset:noop},
+  stage:{classList:{remove:noop,add:noop}},gameEconomy:null,serverPlayerRoots:new Map(),disposeProjection:noop,clearServerRadTox:noop,
+  camera:{position:{x:0,z:0},updateProjectionMatrix:noop},overviewCamera:{updateProjectionMatrix:noop},
+  serverAssetLoads:new Map(),serverAssetRetryAt:new Map(),isCleanCommonsEnvironment:()=>false,isShippingEnvironment:()=>false,
+  soloResidentEntry:{hidden:true},envLoader:{unload:()=>trace.push('unload'),load(){trace.push('load');return asset.promise;}},
+  clearBuilderDecor:noop,builderGameplay:{player:{}},stopRangeCourse:noop,rangeOpsButton:{hidden:true},showRangeOps:noop,
+  showLevelLoader:noop,THREE:{MathUtils:{clamp:value=>value}},loadingMeter:{hidden:true},
+  gameLoadingDisplay:{fail:message=>trace.push('failed:'+message)},
+  dayNightLighting:{setEnvironment:noop,state:{}},worldScenery:{setEnvironment:noop},radToggle:{hidden:false},
+  airportOps:{updateEnvironment:noop},harborOps:{updateEnvironment:noop},resetBasketballWorld:noop,loadBuilderDecor:async()=>null,
+  scaleControl:{querySelectorAll:()=>[],querySelector:()=>({value:''})},playerRig:{position:point()},player:{yaw:0},
+  localStorage:{setItem:noop},walkButton:{setAttribute:noop},firingRangeLocations:()=>[],renderLibrary:noop,logEnvironment:noop,
+  warmGameDisplay:async()=>trace.push('warm'),
+  toxicBubbleSystem:{level:1,clearBricks:noop,handleEnvironmentWillChange:noop,
+   begin:()=>{trace.push('begin');return begin.promise;},
+   handleEnvironmentReady:()=>{trace.push('environment-ready');return environmentReady.promise;}},
+  renderServerRoom(snapshot){trace.push('render:'+snapshot.roomId);f.context.serverPlayerInitialized=true;f.context.setGameplayReadiness();},
+  connectAuthoritativeRoom(options){const joined=deferred(),client={ready:false,whenReady:()=>joined.promise,stop(){this.ready=false;trace.push('new-stop');}};connections.push({options,joined,client});trace.push('connect:'+options.roomId);connected.resolve();return client;},
+  publishGameStage:stage=>trace.push('stage:'+stage),canvas:{focus:()=>trace.push('focus')},scheduleGameResize:()=>trace.push('resize')
+ });
+ f.context.districtMap.update=noop;
+ f.context.document.querySelector=()=>null;
+ f.context.document.dispatchEvent=event=>{f.events.push(event);trace.push(event.type);if(event.type==='muzikaz:gameplay-ready')assert.equal(f.context.multiplayerWorldLoading,false,'arrival activates only after leaving its loading state');};
+ f.context.window.dispatchEvent=event=>{f.events.push(event);trace.push(event.type);if(event.type==='muzikaz:multiplayer-world-change'){assert.equal(f.context.authoritativeClient,null);assert.equal(oldClient.ready,false);}};
+ vm.runInContext(loadWorld+joinRoom,f.context);
+ return {...f,destination,oldClient,connections,trace,asset,begin,environmentReady,connected,loadResult:{scale:1,spawn:{position:point(),rotationY:0}},confirm(){const {options,client,joined}=connections.at(-1);options.render({roomId:options.roomId},'self');client.ready=true;joined.resolve(client);}};
+}
+
+test('in-place map travel retires the old room and activates only after fresh join, begin and environment readiness',async()=>{
+ for(const sameMap of [false,true]){
+  const f=worldHandoffFixture(),{context,trace,connections,events,controls}=f;
+  if(sameMap)context.activeEnvironment=f.destination;
+  const loading=context.loadById(f.destination.id);
+  assert.equal(context.worldLoadGeneration,2);assert.equal(context.authoritativeClient,null);assert.equal(context.startEnvironment,f.destination.id);
+  assert.equal(context.serverVehicleId,null);assert.equal(context.serverMovementRevision,null);
+  assert.ok(trace.indexOf('old-stop')<trace.indexOf('load'));assert.ok(trace.indexOf('muzikaz:multiplayer-world-change')<trace.indexOf('load'));
+  assert.equal(context.gameplayControlsReady(),false);assert.ok([...controls.values()].every(control=>control.disabled));
+  assert.equal(events.filter(event=>event.type==='muzikaz:multiplayer-world-change').length,1);
+  f.asset.resolve(f.loadResult);await Promise.race([f.connected.promise,loading.then(()=>assert.fail('The destination completed without joining its room.'))]);
+  assert.equal(connections.length,1);assert.equal(connections[0].options.roomId,f.destination.id);assert.notEqual(context.authoritativeClient,f.oldClient);
+  assert.equal(context.gameplayControlsReady(),false);assert.equal(events.filter(event=>event.type==='muzikaz:gameplay-ready').length,0);
+  f.confirm();await turns();assert.ok(trace.includes('begin'));assert.equal(context.gameplayControlsReady(),false);
+  f.begin.resolve();await turns();assert.ok(trace.includes('environment-ready'));assert.equal(context.gameplayControlsReady(),false);
+  f.environmentReady.resolve();assert.equal(await loading,true);
+  assert.equal(context.gameplayControlsReady(),true);assert.ok([...controls.values()].every(control=>!control.disabled));
+  assert.equal(events.filter(event=>event.type==='muzikaz:multiplayer-room-ready').length,1);
+  assert.equal(events.filter(event=>event.type==='muzikaz:gameplay-ready').length,1);
+  assert.ok(trace.indexOf('environment-ready')<trace.indexOf('stage:game-active'));
+  assert.ok(trace.indexOf('stage:game-active')<trace.indexOf('muzikaz:gameplay-ready'));
+ }
+});
+
+test('failed room, gameplay or environment initialization cannot publish arrival readiness',async()=>{
+ for(const phase of ['join','begin','environment']){
+  const f=worldHandoffFixture(),loading=f.context.loadById(f.destination.id);
+  const failed=assert.rejects(loading,/Destination initialization failed/);
+  f.asset.resolve(f.loadResult);await Promise.race([f.connected.promise,loading.then(()=>assert.fail('The destination completed without joining its room.'))]);
+  if(phase==='join')f.connections[0].joined.reject(Error('Destination initialization failed'));
+  else{f.confirm();await turns();if(phase==='begin')f.begin.reject(Error('Destination initialization failed'));else{f.begin.resolve();await turns();f.environmentReady.reject(Error('Destination initialization failed'));}}
+  await failed;
+  assert.equal(f.context.authoritativeClient,null);assert.equal(f.context.gameplayStarted,false);assert.equal(f.context.gameplayControlsReady(),false);
+  assert.equal(f.events.filter(event=>event.type==='muzikaz:gameplay-ready').length,0);assert.equal(f.trace.includes('stage:game-active'),false);
+ }
+});
+
 test('delayed action replies cannot change overlays or destinations in a replacement world or connection',async()=>{
  for(const replacement of ['world','client'])for(const [action,result] of [
   ['npc-social',{message:'Old conversation',residentId:'old-resident'}],
@@ -55,6 +130,7 @@ test('delayed action replies cannot change overlays or destinations in a replace
  ]){
   const reply=deferred(),{context,effects,statuses}=commandFixture(reply);
   const pending=context.serverCommand(action);
+  effects.length=0; // Starting a conversation opens its panel before the request.
   if(replacement==='world')context.worldLoadGeneration++;else context.authoritativeClient={ready:true};
   reply.resolve({result});assert.equal(await pending,false,replacement+' '+action);
   assert.deepEqual(effects,[]);assert.deepEqual(statuses,[]);
@@ -65,6 +141,7 @@ test('a failed obsolete action cannot replace the current status or resident pan
  for(const replacement of ['world','client']){
   const reply=deferred(),{context,effects,statuses}=commandFixture(reply);
   const pending=context.serverCommand('npc-social');
+  effects.length=0;
   if(replacement==='world')context.worldLoadGeneration++;else context.authoritativeClient={ready:true};
   reply.reject(Error('Old request failed'));assert.equal(await pending,false);assert.deepEqual(effects,[]);assert.deepEqual(statuses,[]);
  }
@@ -250,6 +327,15 @@ test('choosing multiplayer from a ready solo map validates the current room befo
  assert.equal(selected,'public-commons');assert.equal(context.guestSolo,false);
 });
 
+test('choosing the current map still invokes a fresh room load',async()=>{
+ const selected=[],environment={id:'public-commons',name:'Public Commons',updatedAt:5,multiplayer:true};
+ const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true},activeEnvironment:environment,pickerPanel:{dialog:{close(){}}},library:{classList:{add(){}}},worldButton:{setAttribute(){}},replaceGameLocation(){},loadById:async(...args)=>selected.push(args)});
+ const onJoin=section('onJoin:async env=>{','}});\n  }').slice('onJoin:'.length)+'}';
+ vm.runInContext('globalThis.chooseDestination=('+onJoin+');',context);
+ await context.chooseDestination(environment);
+ assert.equal(selected.length,1);assert.equal(selected[0][0],environment.id);
+});
+
 test('a failed world selection reopens the picker so its error remains visible',async()=>{
  let reopened=0,collapsed=true;
  const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,pickerPanel:{dialog:{close(){}},open(){reopened++;}},library:{classList:{add(){},remove(){collapsed=false;}}},worldButton:{setAttribute(){}},replaceGameLocation(){},loadById:async()=>{throw Error('Destination unavailable');}});
@@ -261,11 +347,12 @@ test('a failed world selection reopens the picker so its error remains visible',
 
 test('a late room join success or failure cannot complete or reset a newer world',async()=>{
  for(const failure of [false,true]){
-  const ready=deferred();let oldStops=0,newStops=0;
+  const ready=deferred();let oldStops=0,newStops=0,oldRender,renders=0;
   const oldClient={ready:false,whenReady:()=>ready.promise,stop(){oldStops++;}},replacement={ready:true,stop(){newStops++;}};
-  const {context,events}=fixture({connectAuthoritativeRoom:()=>oldClient});vm.runInContext(joinRoom,context);
+  const {context,events}=fixture({connectAuthoritativeRoom:options=>{oldRender=options.render;return oldClient;},renderServerRoom:()=>renders++});vm.runInContext(joinRoom,context);
   const joining=context.startRoomGameplay();await turns();assert.equal(context.authoritativeClient,oldClient);
   context.worldLoadGeneration++;context.activeEnvironment={id:'public-commons'};context.authoritativeClient=replacement;
+  oldRender({players:{self:{}}},'self');assert.equal(renders,0,'a retired join renderer cannot hydrate a replacement world');
   if(failure)ready.reject(Error('Old connection interrupted'));else ready.resolve(oldClient);
   assert.equal(await joining,false);assert.equal(context.authoritativeClient,replacement);assert.equal(newStops,0);assert.equal(oldStops,0);
   assert.equal(events.filter(event=>event.type==='muzikaz:multiplayer-room-ready').length,0);

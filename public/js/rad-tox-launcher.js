@@ -63,7 +63,7 @@ import {activateGameAudio,mountGameAudioActivation} from './game-audio-activatio
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var enginePath = './house-explorer-glb.js?v=startup-recovery-20261027';
+    var enginePath = './house-explorer-glb.js?v=fresh-map-room-20261028';
     var recovery = new URLSearchParams(window.location.search).get('gameRecovery');
     if (recovery) enginePath += '&recovery=' + encodeURIComponent(recovery);
     loadTimer = window.setTimeout(function () { showStall(revision); }, 30000);
