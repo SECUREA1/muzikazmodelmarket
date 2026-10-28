@@ -117,3 +117,48 @@ test('indexed clearance and walking sweeps keep full-query results after pose an
  }
  collision.clearWorlds();reference.clearWorlds();
 });
+
+function triangleCacheFixture(t,mesh){
+ const collision=new ServerBuilderCollision(),view=collision.placedWorld({}, {},{id:'triangle-cache'}),world=collision.placedCache.world;
+ const wrapper=new THREE.Group();wrapper.userData.builderObjectId='cached-hull';wrapper.add(mesh);world.root.add(wrapper);world.meshes.push(mesh);world.root.updateMatrixWorld(true);
+ t.after(()=>collision.clearWorlds());
+ // Broad bounds isolate transformed-triangle caching from spatial cell changes.
+ const query=()=>view.nearbyTriangles(-1000,1000,-1000,1000);
+ return {view,world,wrapper,query};
+}
+function watchVertexReads(attribute){
+ let reads=0;const original=attribute.getX;attribute.getX=function(index){reads++;return original.call(this,index);};
+ return {reset(){reads=0;},get reads(){return reads;}};
+}
+
+test('repeated nearby stable hull queries reuse transformed triangles and refresh changed geometry and ownership',t=>{
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(2,4,2,16,16,16),new THREE.MeshBasicMaterial()),f=triangleCacheFixture(t,mesh);
+ let watched=watchVertexReads(mesh.geometry.attributes.position),first=f.query();assert.ok(first.length);assert.ok(watched.reads>0);
+ watched.reset();const repeated=f.query();assert.equal(watched.reads,0,'a nearby stable hull must not transform every vertex again');assert.ok(repeated.every((triangle,index)=>triangle===first[index]));
+ const firstX=first[0].a.x;f.wrapper.position.x=7;f.wrapper.updateMatrixWorld(true);watched.reset();first=f.query();
+ assert.ok(watched.reads>0);assert.equal(first[0].a.x,firstX+7,'parent transforms refresh physical triangle coordinates');
+ watched.reset();f.query();assert.equal(watched.reads,0);
+ f.wrapper.userData.builderObjectId='new-hull-owner';watched.reset();first=f.query();assert.ok(watched.reads>0);assert.ok(first.every(triangle=>triangle.objectId==='new-hull-owner'));
+ const replaced=mesh.geometry.attributes.position.clone();replaced.setX(0,replaced.getX(0)+.25);mesh.geometry.setAttribute('position',replaced);watched=watchVertexReads(replaced);
+ first=f.query();assert.ok(watched.reads>0,'a replacement attribute with the same version refreshes triangles');
+ const before=triangleShape(first[0]);replaced.setY(0,replaced.getY(0)+.25);replaced.needsUpdate=true;watched.reset();first=f.query();assert.ok(watched.reads>0);assert.notDeepEqual(triangleShape(first[0]),before);
+ mesh.geometry.setIndex(mesh.geometry.index.clone());watched.reset();f.query();assert.ok(watched.reads>0,'a same-version replacement index refreshes triangles');
+ const index=mesh.geometry.index,a=index.getX(0),b=index.getX(1);index.setX(0,b);index.setX(1,a);index.needsUpdate=true;watched.reset();f.query();assert.ok(watched.reads>0,'in-place indexed geometry updates refresh triangles');
+ mesh.geometry=mesh.geometry.clone();watched=watchVertexReads(mesh.geometry.attributes.position);f.query();assert.ok(watched.reads>0,'a new geometry owner refreshes triangles');
+});
+
+test('cached nearby triangles follow instance matrices and active instance count',t=>{
+ const mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(2,4,2),new THREE.MeshBasicMaterial(),2);
+ mesh.setMatrixAt(0,new THREE.Matrix4());mesh.setMatrixAt(1,new THREE.Matrix4().makeTranslation(10,0,0));mesh.instanceMatrix.needsUpdate=true;
+ const f=triangleCacheFixture(t,mesh),watched=watchVertexReads(mesh.geometry.attributes.position),first=f.query();watched.reset();f.query();assert.equal(watched.reads,0);
+ mesh.setMatrixAt(1,new THREE.Matrix4().makeTranslation(18,0,0));mesh.instanceMatrix.needsUpdate=true;watched.reset();let next=f.query();
+ assert.ok(watched.reads>0);assert.equal(Math.max(...next.map(triangle=>triangle.maxX)),19);assert.notDeepEqual(next.map(triangleShape),first.map(triangleShape));
+ mesh.count=1;watched.reset();next=f.query();assert.ok(watched.reads>0);assert.equal(next.length,first.length/2);assert.ok(next.every(triangle=>triangle.maxX<=1));
+});
+
+test('cached nearby triangles observe interleaved position updates',t=>{
+ const geometry=new THREE.BufferGeometry(),data=new THREE.InterleavedBuffer(new Float32Array([0,0,0,1,0,2,0,1,1,0,0,1]),4),position=new THREE.InterleavedBufferAttribute(data,3,0,false);
+ geometry.setAttribute('position',position);
+ const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial()),f=triangleCacheFixture(t,mesh),watched=watchVertexReads(position),first=f.query();assert.equal(first.length,1);watched.reset();f.query();assert.equal(watched.reads,0);
+ position.setX(2,2);data.needsUpdate=true;watched.reset();const next=f.query();assert.ok(watched.reads>0);assert.equal(next[0].c.x,2);assert.notDeepEqual(triangleShape(next[0]),triangleShape(first[0]));
+});

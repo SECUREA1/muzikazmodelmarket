@@ -72,12 +72,6 @@ export function createRoomSnapshotEncoder({maxWorlds=2048,maxBytes=128*1024*1024
    else result[field]=value;
    return true;
   }
-  // Older protocol2 clients do not understand actor components. Only clients
-  // explicitly opting in may omit complete decor records from inline actors.
-  if(request.snapshotDecorActors===true){
-   const decor=decorActorRecords(state.actors,environment);
-   if(Object.keys(decor).length&&component(decorActorsKey,decor,'snapshotDecorActors'))result.actors=Object.fromEntries(Object.entries(state.actors||{}).filter(([id])=>!own(decor,id)));
-  }
   const metadata=actorMetadata(state.actors);
   if(Object.keys(metadata).length&&component(metadataKey,metadata,'snapshotActorMetadata')){
    result.actors=Object.fromEntries(Object.entries(result.actors||{}).map(([id,actor])=>{
@@ -90,6 +84,15 @@ export function createRoomSnapshotEncoder({maxWorlds=2048,maxBytes=128*1024*1024
    if(!own(state,key)||state[key]===undefined)continue;
    const value=key==='construction'?result.construction:state[key],encoded=json(value);
    if(encoded!==undefined&&encoded.length>=128)component(key,value,key,encoded);
+  }
+  // Full decor records repeat their metadata. Admit this optional component
+  // only after the base components, so it cannot evict otherwise reusable
+  // metadata or make a world exceed the global cache budget by itself.
+  // Unadmitted records retain the older protocol2 inline actor format.
+  if(request.snapshotDecorActors===true){
+   const decor=decorActorRecords(state.actors,environment),encoded=json(decor);
+   const baseBytes=[...retained].reduce((sum,key)=>sum+world.components.get(key).size,0);
+   if(Object.keys(decor).length&&baseBytes+encoded.length*2<=Math.min(maxWorldBytes,maxBytes)&&component(decorActorsKey,decor,'snapshotDecorActors',encoded))result.actors=Object.fromEntries(Object.entries(result.actors||{}).filter(([id])=>!own(decor,id)));
   }
   for(const [key,entry]of world.components)if(!retained.has(key)){world.components.delete(key);world.bytes-=entry.size;bytes-=entry.size;}
   while(world.bytes>maxWorldBytes&&world.components.size){const [key,entry]=world.components.entries().next().value;world.components.delete(key);world.bytes-=entry.size;bytes-=entry.size;}

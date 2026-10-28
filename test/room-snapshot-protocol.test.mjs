@@ -235,3 +235,55 @@ test('decor maps retain prototype-named actors and returning earlier content rec
  for(const id of Object.keys(state.actors))assert.ok(Object.hasOwn(baseline.actors,id));
  assert.equal(Object.prototype.health,undefined);assert.equal(Object.getPrototypeOf(baseline.actors),Object.prototype);
 });
+
+function budgetState(sequence=1){return {
+ authoritative:true,selfId:'me',sequence,serverTime:sequence*50,sceneVersion:'scene-1',players:{me:{position:{x:0,y:0,z:0}}},
+ actors:{tree:{id:'tree',position:{x:0,y:0,z:0},health:160,open:false,definition:{gameplay:{behavior:'decor'},shape:'x'.repeat(300)},asset:{id:'tree'},futureFeature:{preserve:true}}}
+};}
+const encodedBytes=value=>JSON.stringify(value).length*2;
+function metadataBytes(state){return encodedBytes({tree:{definition:state.actors.tree.definition,asset:state.actors.tree.asset}});}
+
+test('optional decor cannot churn reusable metadata when their combined cache size exceeds either budget',()=>{
+ const state=budgetState(),metadataSize=metadataBytes(state),decorSize=encodedBytes(state.actors),budget=Math.max(metadataSize,decorSize)+2;
+ assert.ok(metadataSize<=budget&&decorSize<=budget&&metadataSize+decorSize>budget,'both records fit separately but their duplication does not');
+ for(const limits of [{maxWorldBytes:budget},{maxWorldBytes:budget*4,maxBytes:budget}]){
+  const encoder=createRoomSnapshotEncoder(limits);let baseline=null,metadataRevision;
+  for(let sequence=1;sequence<=4;sequence++){
+   const next=budgetState(sequence);next.actors.tree.position.x=sequence;
+   const packet=wire(encoder(next,decorRequest(baseline),environment));
+   assert.equal(packet.snapshotRevisions['@decorActors'],undefined);
+   assert.equal(packet.snapshotDecorActors,undefined);assert.ok(packet.actors.tree,'fallback keeps every scenery actor inline');
+   if(metadataRevision){
+    assert.equal(packet.snapshotRevisions['@actorMetadata'],metadataRevision,'optional scenery must not force a new metadata revision');
+    assert.equal(packet.snapshotActorMetadata,undefined);assert.ok(packet.snapshotUnchanged.includes('@actorMetadata'));
+   }else{metadataRevision=packet.snapshotRevisions['@actorMetadata'];assert.ok(packet.snapshotActorMetadata.tree);}
+   baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(next));
+  }
+ }
+});
+
+test('decor admission reserves every base component and safely falls back and returns as the base state changes',()=>{
+ let state=budgetState(),baseline;const metadataSize=metadataBytes(state),decorSize=encodedBytes(state.actors),budget=metadataSize+decorSize+64;
+ const encoder=createRoomSnapshotEncoder({maxWorldBytes:budget});
+ let packet=wire(encoder(state,decorRequest(),environment));
+ assert.ok(packet.snapshotDecorActors.tree);baseline=hydrateRoomSnapshot(packet);
+ const firstDecor=snapshotAcknowledgements(baseline)['@decorActors'],metadataRevision=snapshotAcknowledgements(baseline)['@actorMetadata'];
+ state=wire(state);state.sequence=2;state.residentLife={payload:'r'.repeat(Math.ceil(decorSize/2))};
+ const otherSize=encodedBytes(state.residentLife);
+ assert.ok(otherSize<=budget&&metadataSize+otherSize<=budget&&metadataSize+otherSize+decorSize>budget,'base components fit together while optional duplication does not');
+ packet=wire(encoder(state,decorRequest(baseline),environment));
+ assert.equal(packet.snapshotRevisions['@decorActors'],undefined);assert.ok(packet.actors.tree);assert.equal(packet.snapshotRevisions['@actorMetadata'],metadataRevision);
+ assert.ok(packet.residentLife);baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(state));
+ state=wire(state);state.sequence=3;state.actors.tree.open=true;
+ packet=wire(encoder(state,decorRequest(baseline),environment));
+ assert.equal(packet.snapshotRevisions['@decorActors'],undefined);assert.equal(packet.snapshotActorMetadata,undefined);assert.equal(packet.residentLife,undefined);
+ baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(state));
+ state=wire(state);state.sequence=4;delete state.residentLife;
+ packet=wire(encoder(state,decorRequest(baseline),environment));
+ assert.ok(packet.snapshotDecorActors.tree);assert.notEqual(packet.snapshotRevisions['@decorActors'],firstDecor,'re-admission cannot acknowledge the retired record');
+ assert.equal(packet.snapshotRevisions['@actorMetadata'],metadataRevision);baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(state));
+ state=wire(state);state.sequence=5;
+ packet=wire(encoder(state,decorRequest(baseline),environment));
+ assert.equal(packet.snapshotDecorActors,undefined);assert.ok(packet.snapshotUnchanged.includes('@decorActors'));
+ assert.deepEqual(hydrateRoomSnapshot(packet,baseline),wire(state));
+});

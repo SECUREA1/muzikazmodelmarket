@@ -56,16 +56,25 @@ function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(ind
 
 function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)&&!isConstructionMachine(actor)&&!actor.constructionManaged));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
+const wallTriangleCache=new WeakMap();
+function triangleAttributeState(attribute){return attribute?[attribute,attribute.array,attribute.version,attribute.count,attribute.itemSize,attribute.normalized,attribute.offset,attribute.data,attribute.data?.array,attribute.data?.version,attribute.data?.stride]:null;}
+function sameTriangleAttribute(state,attribute){return attribute?Boolean(state&&state[0]===attribute&&state[1]===attribute.array&&state[2]===attribute.version&&state[3]===attribute.count&&state[4]===attribute.itemSize&&state[5]===attribute.normalized&&state[6]===attribute.offset&&state[7]===attribute.data&&state[8]===attribute.data?.array&&state[9]===attribute.data?.version&&state[10]===attribute.data?.stride):state===null;}
 function wallTriangles(mesh){
- const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
- if(!positions)return triangles;
- const count=index?index.count:positions.count;
- for(const matrix of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
-  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(matrix));
+ const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index;
+ if(!positions)return [];
+ const matrix=mesh.matrixWorld.elements,objectId=builderObjectId(mesh),cached=wallTriangleCache.get(mesh);
+ // Spatially bounded queries often revisit the same nearby hull. Retain its
+ // transformed triangles until any input read by this extraction changes.
+ // Buffer/instance updates use Three.js's normal needsUpdate/version contract.
+ if(cached&&cached.geometry===geometry&&cached.instanced===mesh.isInstancedMesh&&cached.count===mesh.count&&cached.objectId===objectId&&sameTriangleAttribute(cached.positions,positions)&&sameTriangleAttribute(cached.index,index)&&sameTriangleAttribute(cached.instances,mesh.instanceMatrix)&&matrix.every((value,i)=>value===cached.matrix[i]))return cached.triangles;
+ const triangles=[],count=index?index.count:positions.count;
+ for(const transform of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
+  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(transform));
   const [a,b,c]=vertices,normal=new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize();
   if(Math.abs(normal.y)>=.55)continue;
-  triangles.push({a,b,c,mesh,objectId:builderObjectId(mesh),minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
+  triangles.push({a,b,c,mesh,objectId,minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
  }
+ wallTriangleCache.set(mesh,{geometry,positions:triangleAttributeState(positions),index:triangleAttributeState(index),instances:triangleAttributeState(mesh.instanceMatrix),instanced:mesh.isInstancedMesh,count:mesh.count,objectId,matrix:[...matrix],triangles});
  return triangles;
 }
 function boxSegments(box){const {min,max}=box;return [[min.x,min.z,max.x,min.z],[max.x,min.z,max.x,max.z],[max.x,max.z,min.x,max.z],[min.x,max.z,min.x,min.z]].map(([ax,az,bx,bz])=>({a:{x:ax,z:az},b:{x:bx,z:bz}}));}

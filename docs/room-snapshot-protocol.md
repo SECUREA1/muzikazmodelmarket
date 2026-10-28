@@ -10,6 +10,8 @@ Legacy clients continue using their existing full/compact responses. Join replie
 
 Updated clients additionally request `snapshotDecorActors: true`. This capability allows the `@decorActors` component to reuse complete authored scenery actor records. The client restores those records before applying actor metadata, so hydrated snapshots retain every actor and field. Any record or membership change changes the exact-content revision and retransmits the component, including changes to positions, health, opening, ownership or previously unknown fields. Residents, traffic and other unclassified actors remain inline. The server does not send this component to an older protocol 2 client that has not requested the capability. The client option `snapshotDecorActors: false` retains that earlier format, and older servers can ignore the new request flag.
 
+Scenery reuse is optional within the world and global cache limits. It is admitted after base components only when both can remain cached together; otherwise scenery remains inline. This fallback preserves existing metadata acknowledgments instead of repeatedly evicting and resending them.
+
 ## Scheduled controls
 
 Production enables `scheduledInputs` on `AuthoritativeRooms`; the constructor default remains false for existing manual-clock callers. Fresh ordered on-foot controls in an initialized, unchanged, eligible world acknowledge against the latest authoritative frame. The existing 50 ms timer owns normal movement and world maintenance. Inputs do not advance or postpone the simulation clock.
