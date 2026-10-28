@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
@@ -48,9 +48,14 @@ test('a saved permanent site receives new models and labels without resetting op
   sim.construction.crew.workers[0].message='Assigned work remains saved';sim.construction.crew.jobs[0].progress=.42;
   room.objects['owner-placed-wall']={id:'owner-placed-wall',ownerId:'account:driver',materialId:'metal-panel',position:[-45,0,66],rotation:[0,.3,0],scale:[1,1,1],revision:1};
  });
- const saved=JSON.parse(await readFile(path,'utf8'))[before.id],oldMachines=Object.fromEntries(['construction-crane','construction-truck','construction-dozer','construction-excavator'].map(id=>[id,saved.simulation.actors[id]]));
- const restored=new AuthoritativeRooms({store:new SharedRoomStore(path),now});
+ // Reopen through the production reader: acknowledged updates may still be
+ // journaled before the next canonical JSON checkpoint. Retire the old writer.
+ const restoredStore=new SharedRoomStore(path),saved=(await restoredStore.read())[before.id],oldMachines=Object.fromEntries(['construction-crane','construction-truck','construction-dozer','construction-excavator'].map(id=>[id,saved.simulation.actors[id]]));
+ const restored=new AuthoritativeRooms({store:restoredStore,now});
  const migrated=await restored.store.update(after.id,room=>{restored.initialize(room,after);return copy(room);});
+ assert.equal(saved.simulation.preparedEpoch,original.preparationEpoch);
+ assert.equal(migrated.simulation.preparedEpoch,restored.preparationEpoch);
+ assert.notEqual(migrated.simulation.preparedEpoch,saved.simulation.preparedEpoch,'a reopened runtime must prepare the saved site itself');
  assert.equal(migrated.simulation.actors['construction-old-office-panel'],undefined,'retired authored support parts must not remain as ghost actors');
  assert.equal(migrated.simulation.actors['construction-detailed-container'].modelId,'shipping-container-box');
  for(const [id,old]of Object.entries(oldMachines)){
@@ -70,7 +75,11 @@ test('a saved permanent site receives new models and labels without resetting op
  assert.deepEqual(migrated.objects,saved.objects,'independent owner placements are not a graphics migration target');
  const again=new AuthoritativeRooms({store:new SharedRoomStore(path),now});
  const repeated=await again.store.update(after.id,room=>{again.initialize(room,after);return copy(room);});
- assert.deepEqual(repeated,migrated,'restarting a second time cannot reapply or duplicate the upgrade');
+ assert.equal(repeated.simulation.preparedEpoch,again.preparationEpoch);
+ assert.notEqual(repeated.simulation.preparedEpoch,migrated.simulation.preparedEpoch,'each runtime has its own preparation marker');
+ const previousGameplay=copy(migrated),repeatedGameplay=copy(repeated);
+ delete previousGameplay.simulation.preparedEpoch;delete repeatedGameplay.simulation.preparedEpoch;
+ assert.deepEqual(repeatedGameplay,previousGameplay,'restarting a second time cannot reapply or duplicate the upgrade');
 });
 
 test('an owner-authored construction copy still applies intentional machine relocation',async()=>{

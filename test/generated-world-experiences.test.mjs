@@ -8,6 +8,7 @@ import {synchronizeWorldDirectory} from '../world-directory.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
+import {isTropicalIslandMap} from '../public/js/tropical-island-destination.js';
 
 test('all generated districts have distinct playable experiences and renderable content',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'generated-vibes-'));t.after(()=>rm(dir,{recursive:true,force:true}));

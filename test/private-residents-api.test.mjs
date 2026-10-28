@@ -6,12 +6,15 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 test('solo resident API protects private conversations without joining or rewarding public rooms',async()=>{
- const directory=await mkdtemp(join(tmpdir(),'private-resident-api-')),previous={...process.env};let server;
+ const directory=await mkdtemp(join(tmpdir(),'private-resident-api-')),previous={...process.env};let server,closeTestServer;
  Object.assign(process.env,{MUZIKAZ_DATA_DIR:directory,MUZIKAZ_USER_DATABASE_FILE:join(directory,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(directory,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(directory,'orders.json'),MUZIKAZ_ACCOUNT_SESSIONS_FILE:join(directory,'account-sessions.json'),MUZIKAZ_GAME_SESSIONS_FILE:join(directory,'game-sessions.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(directory,'avatars'),MUZIKAZ_ASSET_UPLOAD_DIR:join(directory,'assets'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(directory,'environments')});
  try{
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
-  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export {server};');
-  const modulePath=join(directory,'handler.mjs');await writeFile(modulePath,source);({server}=await import(pathToFileURL(modulePath).href));
+  // Closing the HTTP listener does not stop the module's periodic persistence.
+  // Use its existing maintenance/drain boundary before removing its data tree.
+  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,`export {server};
+export async function closeTestServer(){masterMaintenance=true;await new Promise(resolve=>server.close(resolve));await drainServerState();}`);
+  const modulePath=join(directory,'handler.mjs');await writeFile(modulePath,source);({server,closeTestServer}=await import(pathToFileURL(modulePath).href));
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port;
   async function call(path,{body,headers={}}={}){
    const response=await fetch(base+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...headers},...(body?{body:JSON.stringify(body)}:{})});
@@ -46,7 +49,8 @@ test('solo resident API protects private conversations without joining or reward
   assert.equal((await call('/api/economy',{headers:alice})).body.data.balance,walletBefore,'Solo NPC interaction must not grant or spend persistent funds');
   const closed=await call(path,{headers:alice,body:{action:'leave'}});assert.equal(closed.status,200);assert.equal(closed.body.data.closed,true);
  }finally{
-  if(server)await new Promise(resolve=>server.close(resolve));
+  if(closeTestServer)await closeTestServer();
+  else if(server)await new Promise(resolve=>server.close(resolve));
   for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);
   await rm(directory,{recursive:true,force:true});
  }
