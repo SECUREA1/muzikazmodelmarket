@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Build a portable server qualification report from completed isolated runs."""
 import argparse
+import hashlib
 import html
 import io
 import json
+import math
 import shlex
 from datetime import datetime
 from pathlib import Path
@@ -18,7 +20,7 @@ def num(value, digits=1):
 
 
 def pct(value):
-    return '—' if value is None else num(value * 100) + '%'
+    return '—' if value is None else num(value * 100, 3 if 0 < abs(value) < .001 else 2) + '%'
 
 
 def stamp(value):
@@ -30,6 +32,273 @@ def stamp(value):
 
 def load(path):
     return json.loads(path.read_text()) if path.exists() else None
+
+
+def manifest_digest(manifest):
+    return hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
+
+
+def validate_source_identity(source, label):
+    manifest = source.get('runtimeManifest') or {}
+    if not manifest or source.get('runtimeSHA256') != manifest_digest(manifest):
+        raise ValueError(label + ' runtime manifest digest is inconsistent')
+    base = {key: value for key, value in source.items() if key != 'fingerprint'}
+    if source.get('fingerprint') != manifest_digest(base):
+        raise ValueError(label + ' source fingerprint is inconsistent')
+    return manifest
+
+
+def unique_records(records, key, label):
+    identities = [key(record) for record in records]
+    if not identities or any(identity is None or identity == '' for identity in identities) or len(set(identities)) != len(identities):
+        raise ValueError(label + ' must contain unique identified records')
+
+
+def validate_primary_evidence(current, regressions=None):
+    """Bind every primary family and optional correctness run to one runtime."""
+    workflow = current['workflow']
+    manifest = workflow.get('runtimeManifest') or {}
+    digest = workflow.get('runtimeSourceSHA256')
+    if workflow.get('diagnosticOnly') or not manifest or digest != manifest_digest(manifest):
+        raise ValueError('Primary workflow is diagnostic-only or has an inconsistent runtime manifest')
+    families = ('http', 'simulation', 'storage', 'admission')
+    commands = workflow.get('commands') or []
+    if len(commands) != len(families) or {command.get('name') for command in commands} != set(families):
+        raise ValueError('Primary workflow must contain exactly one command for each experiment family')
+    for command in commands:
+        if command.get('status') != 'finished' or not command.get('finishedAt') or command.get('sourceUnchanged') is not True or not isinstance(command.get('exitCode'), int):
+            raise ValueError('Primary workflow command is incomplete or its source changed: ' + str(command.get('name')))
+    harnesses = workflow.get('harnesses') or {}
+    scripts = {'http': 'scripts/pressure-test-server.mjs', 'simulation': 'scripts/pressure-test-simulation.mjs',
+               'storage': 'scripts/pressure-test-storage.mjs', 'admission': 'scripts/pressure-test-admission.mjs'}
+    for command in commands:
+        script = scripts[command['name']]
+        argv = command.get('argv') or []
+        if len(argv) < 2 or Path(argv[0]).name != 'node' or argv[1] != script or not harnesses.get(script):
+            raise ValueError('Primary workflow command does not identify its recorded harness: ' + command['name'])
+    for family in families:
+        report = current[family]
+        if report.get('runtimeSourceSHA256') != digest or report.get('runtimeSourceUnchangedDuringRun') is not True:
+            raise ValueError('Primary family does not match unchanged workflow runtime: ' + family)
+        if report.get('sourceCommit', workflow.get('sourceCommit')) != workflow.get('sourceCommit'):
+            raise ValueError('Primary family source commit differs from workflow: ' + family)
+    for family, script in [('http', 'scripts/pressure-test-server.mjs'), ('admission', 'scripts/pressure-test-admission.mjs')]:
+        if not harnesses.get(script) or current[family].get('harnessSHA256') != harnesses[script]:
+            raise ValueError('Primary family harness differs from workflow: ' + family)
+    unique_records(current['http'].get('scenarios', []), lambda stage: stage.get('name'), 'HTTP scenarios')
+    unique_records(current['simulation'].get('scenarios', []), lambda stage: stage.get('scenario', {}).get('players'), 'Simulation scenarios')
+    unique_records(current['storage'].get('correctness', []), lambda stage: stage.get('name'), 'Storage integrity checks')
+    unique_records(current['storage'].get('growth', []), lambda stage: stage.get('scale', {}).get('users'), 'Storage growth scales')
+    for growth in current['storage'].get('growth', []):
+        unique_records(growth.get('workloads', []), lambda stage: stage.get('name'), 'Storage growth workloads')
+    unique_records(current['admission'].get('stages', []), lambda stage: stage.get('offeredAttempts'), 'Admission scenarios')
+    if regressions:
+        regression_source = regressions.get('source') or {}
+        regression_manifest = validate_source_identity(regression_source, 'Regression')
+        for path, expected in {**manifest, **harnesses}.items():
+            if regression_manifest.get(path) != expected:
+                raise ValueError('Regression runtime or harness differs from primary capacity evidence: ' + path)
+        declared = regression_source.get('testCommands')
+        if declared:
+            tests = regressions.get('tests') or {}
+            if set(declared) != set(tests) or len(tests) != regressions.get('requestedFiles'):
+                raise ValueError('Regression records do not cover the declared per-file commands')
+            for name, command in declared.items():
+                record = tests[name]
+                if any(record.get(key) != command.get(key) for key in ('argv', 'testTimeoutMs', 'outerTimeoutSeconds')):
+                    raise ValueError('Regression command or deadline differs from its declaration: ' + name)
+
+
+def validate_supplement_evidence(report, workflow):
+    """Validate a separately labeled HTTP run without merging source revisions."""
+    if not report or not report.get('finishedAt') or not workflow or not workflow.get('finishedAt'):
+        raise ValueError('Supplemental HTTP requires a complete result and adjacent workflow.json')
+    manifest = workflow.get('runtimeManifest') or {}
+    digest = workflow.get('runtimeSourceSHA256')
+    if workflow.get('diagnosticOnly') or not manifest or digest != manifest_digest(manifest):
+        raise ValueError('Supplemental workflow is diagnostic-only or has an inconsistent runtime manifest')
+    if not workflow.get('sourceCommit') or report.get('sourceCommit') != workflow['sourceCommit']:
+        raise ValueError('Supplemental HTTP source commit differs from its workflow')
+    if report.get('runtimeSourceSHA256') != digest or report.get('runtimeSourceUnchangedDuringRun') is not True:
+        raise ValueError('Supplemental HTTP does not match its unchanged workflow runtime')
+    script = 'scripts/pressure-test-server.mjs'
+    harness_hash = (workflow.get('harnesses') or {}).get(script)
+    if not harness_hash or report.get('harnessSHA256') != harness_hash:
+        raise ValueError('Supplemental HTTP harness differs from its workflow')
+    commands = workflow.get('commands') or []
+    http_commands = [command for command in commands if command.get('name') == 'http']
+    if len(http_commands) != 1:
+        raise ValueError('Supplemental workflow must contain exactly one HTTP command')
+    for command in commands:
+        if command.get('status') != 'finished' or not command.get('finishedAt') or command.get('sourceUnchanged') is not True or not isinstance(command.get('exitCode'), int):
+            raise ValueError('Supplemental workflow command is incomplete or its source changed: ' + str(command.get('name')))
+    argv = http_commands[0].get('argv') or []
+    if len(argv) < 2 or Path(argv[0]).name != 'node' or argv[1] != script:
+        raise ValueError('Supplemental HTTP command does not identify its recorded harness')
+    unique_records(report.get('scenarios', []), lambda stage: stage.get('name'), 'Supplemental HTTP scenarios')
+
+
+def validate_bound_evidence(standard, report, label):
+    """Require completed checks to use the standard regression's exact source."""
+    if not standard:
+        raise ValueError(label + ' requires completed --regressions evidence')
+    if not report or not report.get('finishedAt'):
+        raise ValueError(label + ' must exist and be complete')
+    if report.get('runtimeChangedDuringRun') is not False:
+        raise ValueError(label + ' runtime source was not verified unchanged')
+    expected_source = standard.get('source') or {}
+    actual_source = report.get('source') or {}
+    validate_source_identity(expected_source, 'Regression')
+    validate_source_identity(actual_source, label)
+    for key in ('runtimeSHA256', 'node', 'guardSHA256', 'runnerSHA256', 'fingerprint'):
+        if not expected_source.get(key) or actual_source.get(key) != expected_source[key]:
+            raise ValueError(label + ' source does not match standard evidence: ' + key)
+
+
+def validate_extended_regression(standard, extended):
+    """Bind a separate long-budget attempt to the original source and test."""
+    validate_bound_evidence(standard, extended, 'Extended regression')
+    if extended.get('testUnchanged') is not True:
+        raise ValueError('Extended regression test source was not verified unchanged')
+    test_path = extended.get('test', '')
+    test_name = Path(test_path).name
+    if test_path != 'test/' + test_name or not test_name.endswith('.test.mjs'):
+        raise ValueError('Extended regression must identify a test/<name>.test.mjs file')
+    expected_test = standard.get('tests', {}).get(test_name) or {}
+    if not expected_test.get('testSHA256') or extended.get('testSHA256') != expected_test['testSHA256']:
+        raise ValueError('Extended regression test hash does not match the standard attempt')
+    if extended.get('status') not in ('passed', 'failed', 'timeout'):
+        raise ValueError('Extended regression has no final status')
+    if extended.get('status') == 'passed':
+        footer = extended.get('testCases', {}).get('footer') or {}
+        if extended.get('exitCode') != 0 or not footer.get('tests') or footer.get('fail', 0) or footer.get('cancelled', 0):
+            raise ValueError('Extended regression pass is inconsistent with its exit code or TAP summary')
+    return test_name, expected_test
+
+
+def validate_browser_regressions(standard, report):
+    if not standard:
+        raise ValueError('Browser regressions require completed --regressions evidence')
+    if not report or not report.get('finishedAt') or report.get('runtimeChangedDuringRun') is not False:
+        raise ValueError('Browser regressions must be complete with source verified unchanged')
+    expected_source = standard.get('source') or {}
+    actual_source = report.get('source') or {}
+    expected_manifest = expected_source.get('runtimeManifest') or {}
+    actual_manifest = actual_source.get('runtimeManifest') or {}
+    checks = report.get('checks') or []
+    hashes = actual_source.get('testHashes') or {}
+    names = [check.get('name') for check in checks]
+    if not checks or len(set(names)) != len(names) or set(names) != set(hashes):
+        raise ValueError('Browser checks must cover the unique declared test hashes')
+    if any(not isinstance(name, str) or name != Path(name).name or not name.endswith('.browser.py') for name in names):
+        raise ValueError('Browser checks must identify standalone <name>.browser.py fixtures')
+    if not expected_manifest or not actual_manifest:
+        raise ValueError('Browser binding requires complete standard and browser manifests')
+    for key, value in expected_source.items():
+        if key not in ('runtimeManifest', 'runtimeSHA256', 'fingerprint') and actual_source.get(key) != value:
+            raise ValueError('Browser source does not match standard evidence: ' + key)
+    # Browser runners append metadata after computing the base Node fingerprint.
+    # Recompute both base identities before permitting any fixture-only changes.
+    for source in (expected_source, actual_source):
+        manifest_hash = hashlib.sha256(json.dumps(source['runtimeManifest'], sort_keys=True).encode()).hexdigest()
+        base = {key: source.get(key) for key in expected_source if key != 'fingerprint'}
+        fingerprint = hashlib.sha256(json.dumps(base, sort_keys=True).encode()).hexdigest()
+        if source.get('runtimeSHA256') != manifest_hash or source.get('fingerprint') != fingerprint:
+            raise ValueError('Browser/standard source manifest or fingerprint is inconsistent')
+    fixture_paths = {'test/' + name for name in names}
+    differences = []
+    for path in sorted(set(expected_manifest) | set(actual_manifest)):
+        old, new = expected_manifest.get(path), actual_manifest.get(path)
+        if old != new:
+            if path not in fixture_paths or not old or new != hashes[Path(path).name]:
+                raise ValueError('Browser source differs outside declared existing browser fixtures: ' + path)
+            differences.append([path, old, new])
+    for check in checks:
+        name = check['name']
+        if name != Path(name).name or not check.get('finishedAt') or check.get('status') not in ('passed', 'failed', 'timeout'):
+            raise ValueError('Browser check is missing a completed final status: ' + str(name))
+        if check.get('testUnchanged') is not True or not hashes.get(name) or check.get('testSHA256') != hashes[name] or actual_manifest.get('test/' + name) != hashes[name]:
+            raise ValueError('Browser test hash does not match unchanged browser source: ' + name)
+        if check.get('status') == 'passed' and check.get('exitCode') != 0:
+            raise ValueError('Browser check pass disagrees with its exit code: ' + name)
+    return differences
+
+
+def validate_static_checks(standard, report):
+    validate_bound_evidence(standard, report, 'Static checks')
+    commands = report.get('commands') or []
+    if not commands or any(not command.get('argv') or not isinstance(command.get('exitCode'), int) for command in commands):
+        raise ValueError('Static checks must contain completed commands and exit codes')
+
+
+def validate_recovery_diagnostic(current, report, provenance, result_path):
+    """Keep instrumented recovery evidence separate and bound to its exact code."""
+    if not report or not report.get('finishedAt') or report.get('diagnosticOnly') is not True or report.get('scenarios'):
+        raise ValueError('Recovery diagnostic must be complete, diagnostic-only and contain no gameplay pressure stages')
+    workflow = current['workflow']
+    if not provenance or provenance.get('diagnosticOnly') is not True or provenance.get('processExited') is not True:
+        raise ValueError('Recovery diagnostic requires completed sibling provenance')
+    for key in ('runtimeManifestUnchangedAtDiagnosticStart', 'runtimeManifestUnchangedAfterDiagnostic', 'canonicalHarnessUnchanged'):
+        if provenance.get(key) is not True:
+            raise ValueError('Recovery diagnostic source was not verified unchanged: ' + key)
+    if provenance.get('changedRuntimeFiles') != [] or provenance.get('changedRuntimeFilesAfter') != []:
+        raise ValueError('Recovery diagnostic runtime changed')
+    if provenance.get('runtimeManifest') != workflow.get('runtimeManifest') or provenance.get('runtimeSourceSHA256') != workflow.get('runtimeSourceSHA256'):
+        raise ValueError('Recovery diagnostic runtime differs from primary evidence')
+    if manifest_digest(provenance['runtimeManifest']) != provenance['runtimeSourceSHA256']:
+        raise ValueError('Recovery diagnostic runtime manifest digest is inconsistent')
+    if report.get('sourceCommit') != workflow.get('sourceCommit') or provenance.get('sourceCommit') != workflow.get('sourceCommit'):
+        raise ValueError('Recovery diagnostic source commit differs from primary evidence')
+    node = current['http'].get('environment', {}).get('node')
+    if not node or provenance.get('node') != node or report.get('environment', {}).get('node') != node:
+        raise ValueError('Recovery diagnostic Node version differs from primary evidence')
+    for kind, path in [('canonicalHarness', 'scripts/pressure-test-server.mjs'), ('canonicalProbe', 'scripts/pressure-test-probe.mjs')]:
+        if provenance.get(kind + 'Path') != path or provenance.get(kind + 'SHA256') != workflow.get('harnesses', {}).get(path):
+            raise ValueError('Recovery diagnostic canonical harness differs from primary evidence: ' + path)
+    root = Path(__file__).resolve().parents[1]
+    script_path = (root / provenance.get('diagnosticHarnessPath', '')).resolve()
+    if not script_path.is_relative_to(root) or not script_path.is_file():
+        raise ValueError('Recovery diagnostic script must exist inside the repository workspace')
+    script = script_path.read_bytes()
+    digest = hashlib.sha256(script).hexdigest()
+    if digest != provenance.get('diagnosticHarnessSHA256') or digest != report.get('harnessSHA256'):
+        raise ValueError('Recovery diagnostic script hash differs from recorded evidence')
+    if (root / provenance.get('resultPath', '')).resolve() != result_path.resolve() or hashlib.sha256(result_path.read_bytes()).hexdigest() != provenance.get('resultSHA256'):
+        raise ValueError('Recovery diagnostic result path or digest is inconsistent')
+    argv = provenance.get('argv') or []
+    if len(argv) < 2 or Path(argv[0]).name != 'node' or Path(argv[1]).resolve() != script_path or '--output=' + str(result_path.resolve()) not in argv:
+        raise ValueError('Recovery diagnostic command does not identify its script and result')
+    attempts = report.get('recoveryAttempts') or []
+    if not attempts:
+        raise ValueError('Recovery diagnostic contains no completed attempts')
+    for attempt in attempts:
+        diagnostic = attempt.get('diagnostic') or {}
+        values = [diagnostic.get(key) for key in ('preMovementBalance', 'immediatePreKillBalance', 'afterRestartBalance', 'movementDelta', 'netSignedMovementReceipts')]
+        if any(not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) for value in values):
+            raise ValueError('Recovery diagnostic requires finite recorded balances and receipt totals')
+        before, at_kill, after, delta, net = values
+        receipts = diagnostic.get('movementReceipts')
+        if not isinstance(receipts, list) or any(not isinstance(receipt.get('amountMzk'), (int, float)) for receipt in receipts):
+            raise ValueError('Recovery diagnostic requires signed movement receipts')
+        if delta != at_kill - before or net != sum(receipt['amountMzk'] for receipt in receipts):
+            raise ValueError('Recovery diagnostic movement totals disagree with balances or receipts')
+        if diagnostic.get('originalEquality') is not (before == after) or attempt.get('balancePreserved') is not (before == after):
+            raise ValueError('Recovery diagnostic original comparison was changed')
+        if diagnostic.get('exactBalancePreservedAtKill') is True and at_kill != after:
+            raise ValueError('Recovery diagnostic exact prekill balance comparison is inconsistent')
+        if diagnostic.get('coinCreditExplainsDifference') is True and not (delta > 0 and delta == net and receipts and all(receipt.get('type') == 'MZK_COIN' and receipt['amountMzk'] == 1 for receipt in receipts) and at_kill == after):
+            raise ValueError('Recovery diagnostic coin-credit explanation is inconsistent')
+    return script.decode()
+
+
+def verified_helper_source(path, expected_hash, label):
+    """Embed an optional local helper only when its recorded digest matches."""
+    if not expected_hash or not path.is_file():
+        return None
+    source = path.read_bytes()
+    if hashlib.sha256(source).hexdigest() != expected_hash:
+        raise ValueError(label + ' helper differs from the recorded verification source: ' + str(path))
+    return {'path': str(path), 'sha256': expected_hash, 'source': source.decode()}
 
 
 def table(headers, rows):
@@ -115,6 +384,33 @@ def comparable(stage, report, old, baseline):
         report.get('methodology', {}).get('inputIntervalMs') == baseline.get('methodology', {}).get('inputIntervalMs')
 
 
+def freshness(stage):
+    value = stage.get('frameFreshness') or {}
+    age = value.get('ageMs') or {}
+    if not age.get('count'):
+        return 'not measured' if stage.get('kind') != 'login' else 'login test only'
+    return num(age.get('p95')) + ' / ' + str(age['count']) + ' samples'
+
+
+def http_table(stages, report):
+    rows = []
+    for stage in stages:
+        login = stage.get('kind') == 'login'
+        timing = stage.get('latencyMs', {}) if login else stage.get('inputLatencyMs', {})
+        available = login or measured(stage)
+        suffix = ' †' if cutoff(stage, report) and available else ''
+        rows.append([name(stage), stage.get('requestedPlayers', stage.get('requested', '—')),
+                     stage.get('joinedPlayers', stage.get('successful', '—')),
+                     'login test only' if login else presence(stage.get('occupancyBefore', {})) + ' / ' + presence(stage.get('occupancyAfter', {})),
+                     num(timing.get('p95')) + suffix if available else 'not measured',
+                     num(timing.get('p99')) + suffix if available else 'not measured',
+                     pct(stage.get('deliveredSlotRatio')) + suffix if measured(stage) else 'not measured',
+                     freshness(stage), num(stage.get('snapshotHydrationMs', {}).get('p95')), assessment(stage, report)])
+    return table(['Workload', 'Requested players', 'Join/login acknowledgments', 'Presence before / after',
+                  'Request p95 ms', 'Request p99 ms', 'Delivered slots', 'Frame-age p95 ms / sample count',
+                  'Hydration p95 ms', 'Assessment'], rows)
+
+
 def simulation_result(stage, report):
     if not stage:
         return 'Not measured'
@@ -178,6 +474,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, required=True)
     parser.add_argument('--baseline', type=Path)
+    parser.add_argument('--supplement', '--supplement-http', dest='supplement_http', type=Path,
+                        help='Separate completed HTTP file/directory; requires adjacent completed workflow.json')
+    parser.add_argument('--regressions', type=Path, help='Completed regression results.json, reported separately from capacity qualification')
+    parser.add_argument('--extended-regression', type=Path,
+                        help='Completed separate long-budget test attempt, source/test-bound to --regressions')
+    parser.add_argument('--static-checks', type=Path, help='Completed source-bound build, syntax and asset checks')
+    parser.add_argument('--browser-regressions', type=Path, help='Completed source-bound selected browser checks')
+    parser.add_argument('--recovery-diagnostic', type=Path,
+                        help='Separate instrumented recovery result; requires adjacent <stem>-provenance.json')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     directory = args.directory.resolve()
@@ -190,11 +495,69 @@ def main():
     if unfinished:
         parser.error('Experiments are still running; final report requires finishedAt: ' + ', '.join(unfinished))
     http, simulation, storage, admission, workflow = [current[key] for key in current]
+    supplement_path = args.supplement_http
+    if supplement_path and supplement_path.is_dir():
+        supplement_path = supplement_path / 'http.json'
+    supplement = load(supplement_path) if supplement_path else None
+    supplement_workflow = load(supplement_path.parent / 'workflow.json') if supplement_path else None
+    regressions = load(args.regressions) if args.regressions else None
+    extended_regression = load(args.extended_regression) if args.extended_regression else None
+    static_checks = load(args.static_checks) if args.static_checks else None
+    browser_regressions = load(args.browser_regressions) if args.browser_regressions else None
+    recovery_diagnostic = load(args.recovery_diagnostic) if args.recovery_diagnostic else None
+    recovery_provenance_path = args.recovery_diagnostic.with_name(args.recovery_diagnostic.stem + '-provenance.json') if args.recovery_diagnostic else None
+    recovery_provenance = load(recovery_provenance_path) if recovery_provenance_path else None
+    recovery_diagnostic_script = None
+    for label, path, report in [('supplemental HTTP', supplement_path, supplement), ('regressions', args.regressions, regressions)]:
+        if path and (report is None or not report.get('finishedAt')):
+            parser.error('The ' + label + ' input must exist and be complete: ' + str(path))
+    if regressions and regressions.get('runtimeChangedDuringRun') is not False:
+        parser.error('Regression source changed during the run; evidence cannot qualify a final build')
+    try:
+        validate_primary_evidence(current, regressions)
+        if supplement_path:
+            validate_supplement_evidence(supplement, supplement_workflow)
+        if args.recovery_diagnostic:
+            recovery_diagnostic_script = validate_recovery_diagnostic(current, recovery_diagnostic, recovery_provenance, args.recovery_diagnostic)
+    except ValueError as error:
+        parser.error(str(error))
+    extended_test = None
+    if args.extended_regression:
+        try:
+            extended_test = validate_extended_regression(regressions, extended_regression)
+        except ValueError as error:
+            parser.error(str(error))
+    for path, report, validator in [(args.static_checks, static_checks, validate_static_checks),
+                                    (args.browser_regressions, browser_regressions, validate_browser_regressions)]:
+        if path:
+            try:
+                validator(regressions, report)
+            except ValueError as error:
+                parser.error(str(error))
+    helper_sources = {}
+    if regressions:
+        helper_directory = args.regressions.resolve().parent.parent
+        candidates = [('node-regression-runner', helper_directory / 'run-regressions.py', regressions['source'].get('runnerSHA256')),
+                      ('loopback-network-guard', helper_directory / 'regression-guard.mjs', regressions['source'].get('guardSHA256'))]
+        if browser_regressions:
+            candidates.append(('browser-regression-runner', helper_directory / 'run-browser-regressions.py',
+                               browser_regressions.get('source', {}).get('browserRunnerSHA256')))
+        for label, path, digest in candidates:
+            try:
+                source = verified_helper_source(path, digest, label)
+            except ValueError as error:
+                parser.error(str(error))
+            if source is not None:
+                helper_sources[label] = source
     baseline = {key: load(args.baseline / (key + '.json')) for key in ('http', 'simulation', 'storage', 'admission')} if args.baseline else {}
     before = baseline.get('http') or {}
     stages = http.get('scenarios', [])
     gameplay = [stage for stage in stages if stage.get('kind') != 'login']
     passes = [stage for stage in gameplay if qualified(stage, http)]
+    latest = supplement or http
+    latest_gameplay = [stage for stage in latest.get('scenarios', []) if stage.get('kind') != 'login']
+    latest_passes = [stage for stage in latest_gameplay if qualified(stage, latest)]
+    latest_unqualified = [stage for stage in latest_gameplay if not qualified(stage, latest)]
     old_gameplay = [stage for stage in before.get('scenarios', []) if stage.get('kind') != 'login']
     old_passes = [stage for stage in old_gameplay if qualified(stage, before)]
     sims = {stage['scenario']['players']: stage for stage in simulation.get('scenarios', [])}
@@ -210,12 +573,18 @@ def main():
 
     content = '<header><p class="eyebrow">MUZIKAZ · IMPLEMENTATION AND CAPACITY EVIDENCE</p>'
     content += '<h1>Server quality and workload qualification</h1><p class="lead"><strong>'
-    content += str(len(passes)) + ' of ' + str(len(gameplay)) + ' attempted HTTP gameplay workloads met every chosen gate.</strong> '
+    content += str(len(latest_passes)) + ' of ' + str(len(latest_gameplay)) + ' attempted HTTP gameplay workloads on the latest tested build met every applicable gate.</strong> '
     content += 'A passing short workload qualifies that sample; it does not certify a sustained public launch or establish an overall player limit.</p>'
+    content += '<p>Latest tested source: <code>' + esc(latest.get('sourceCommit', 'unavailable')) + '</code>; experiment window: '
+    content += esc(stamp(latest.get('startedAt'))) + ' to ' + esc(stamp(latest.get('finishedAt'))) + '.</p>'
+    if supplement:
+        content += '<p>The earlier full matrix on <code>' + esc(http.get('sourceCommit', 'unavailable')) + '</code> recorded '
+        content += str(len(passes)) + '/' + str(len(gameplay)) + ' gameplay passes. Those older passes do not qualify workloads that missed a gate in the latest run.</p>'
     if before:
         content += '<p>Baseline: ' + str(len(old_passes)) + '/' + str(len(old_gameplay)) + ' gameplay workloads met all gates. '
-        content += 'The new results measure changed server code, with the same assessment targets.</p>'
-    content += '<p>Experiment window: ' + esc(stamp(workflow.get('startedAt'))) + ' to ' + esc(stamp(workflow.get('finishedAt'))) + '.</p></header>'
+        content += 'The implementation results measure changed server code with the same offered cadence, populations and time windows, '
+        content += 'plus browser-equivalent snapshot hydration and an added general-world freshness gate.</p>'
+    content += '<p>Full-matrix experiment window: ' + esc(stamp(workflow.get('startedAt'))) + ' to ' + esc(stamp(workflow.get('finishedAt'))) + '.</p></header>'
     content += '<div class="notice"><strong>Three different measurements:</strong> connected clients making real HTTP gameplay requests; '
     content += 'synthetic populations running simulation only; and cold-login attempts. Their player and request counts are not interchangeable.</div>'
     if interruptions:
@@ -223,10 +592,26 @@ def main():
         content += 'work was resumed as documented in the workflow. This is separate from deliberate per-stage experiment cutoffs. '
         content += 'An interrupted experiment alone does not establish a spontaneous game-server crash.</div>'
 
-    content += '<section><h2>What is qualified and what remains open</h2><p>Qualified HTTP samples: '
-    content += esc(', '.join(name(stage) for stage in passes) or 'none') + '.</p>'
-    unqualified = [stage for stage in gameplay if not qualified(stage, http)]
-    content += '<p>Workloads not meeting every gate: ' + esc(', '.join(name(stage) for stage in unqualified) or 'none') + '.</p>'
+    content += '<section><h2>Latest sampled passes and remaining work</h2><p>Latest HTTP samples meeting every applicable gate: '
+    content += esc(', '.join(name(stage) for stage in latest_passes) or 'none') + '.</p>'
+    content += '<p>Latest workloads not meeting every gate: ' + esc(', '.join(name(stage) for stage in latest_unqualified) or 'none') + '.</p>'
+    if (latest.get('recovery') or {}).get('pass') is False:
+        failed_recovery = [label for key, label in [('sessionSurvived', 'session'), ('balancePreserved', 'balance'),
+                           ('inventoryPreserved', 'inventory'), ('publishedMapPreserved', 'published map'),
+                           ('checkpointPreserved', 'checkpointed position')] if latest['recovery'].get(key) is False]
+        content += '<div class="notice"><strong>The checkpointed restart check failed.</strong> Recorded failed checks: '
+        content += esc(', '.join(failed_recovery) or 'see embedded recovery evidence') + '. The original result is retained below; '
+        content += 'the HTTP workload pass count does not imply a recovery pass.</div>'
+    if supplement:
+        older_pass_names = {stage.get('name') for stage in passes}
+        inconsistent = [stage for stage in latest_unqualified if stage.get('name') in older_pass_names]
+        if inconsistent:
+            content += '<div class="notice"><strong>Short-run results are inconsistent for '
+            content += esc(', '.join(name(stage) for stage in inconsistent)) + '.</strong> These workloads passed an earlier short sample but '
+            content += 'missed at least one gate in the latest release run. They remain open; the older passing samples are not a current capacity qualification. '
+            content += 'The runs use different source revisions and activity samples, so they do not isolate the cause of this variation.</div>'
+        content += '<p>The larger-target evidence below comes from the earlier full matrix. Those workloads were not repeated in the latest subset '
+        content += 'and remain unqualified on the latest build.</p>'
     target_rows = []
     world = next((stage for stage in stages if stage.get('name') == 'commons-128'), None)
     if world:
@@ -242,10 +627,16 @@ def main():
     content += '<p>Admission limits and cumulative join acknowledgments do not establish concurrent gameplay capacity. '
     content += 'A health response also does not establish that game updates meet their deadlines.</p></section>'
 
-    content += '<section><h2>Test conditions and changed implementation</h2><p>The measured implementation includes changes to authentication, '
-    content += 'identity refresh, persistence and world-resource caches. The base commit is <code>' + esc(http.get('sourceCommit', workflow.get('sourceCommit', 'unavailable'))) + '</code>. '
-    content += 'A base commit label alone may precede the implementation commit; the workflow’s changed-file manifests and hashes identify '
-    content += 'the exact tested working tree. This is a comparison with the earlier implementation, not a claim of unchanged source.</p>'
+    matrix_label = 'Earlier full-matrix' if supplement else 'Current full-matrix'
+    content += '<section><h2>Test conditions and source identities</h2><p>The ' + matrix_label.lower() + ' implementation includes changes to authentication, '
+    content += 'identity refresh, persistence, world-resource caches, scheduled movement, snapshot encoding and collision queries. The recorded source commit is <code>' + esc(http.get('sourceCommit', workflow.get('sourceCommit', 'unavailable'))) + '</code>. '
+    content += 'The workflow’s source manifest and hashes identify the exact tested runtime and verify that it stayed unchanged during every family. '
+    content += 'Each family’s runtime hash is checked against that manifest before this report is rendered. '
+    if supplement:
+        content += 'Later supplements retain their own source identity and do not replace these matrix results. '
+    if regressions:
+        content += 'The broader correctness manifest contains identical runtime and pressure-harness file hashes. '
+    content += '</p>'
     if workflow.get('runtimeSourceSHA256'):
         content += '<p>Tested runtime fingerprint: <code>' + esc(workflow['runtimeSourceSHA256']) + '</code>.</p>'
     content += '<p>Environment: ' + esc(cpu) + '; memory limit ' + esc(memory) + '; Node ' + esc(env.get('node', 'unavailable')) + '. '
@@ -262,36 +653,42 @@ def main():
     content += '<p>The assessment uses p95 ≤100 ms, p99 ≤250 ms, at least 95% successful delivery of offered 20 Hz input slots by the deadline, '
     content += 'at least 99% successful completed input requests, valid snapshots and maintained expected occupancy. Capacity guards, health checks '
     content += 'and mixed-ledger checks must also pass where exercised. These are chosen engineering gates, not a universal industry standard.</p>'
+    content += '<p>For general authoritative worlds, raw wire <code>serverTime − simulationTime</code> must have p95 ≤100 ms. '
+    content += 'This age is measured before client hydration so a reused component cannot hide an old simulation frame. '
+    content += 'Native hockey and arcade APIs do not expose the same clock pair: their frame age is not measured and no freshness pass is inferred. '
+    content += 'A fresh response among a small subset of delivered inputs cannot compensate for missed input slots.</p>'
+    content += '<p>Protocol 2 matches the current browser client: the load generator reconstructs acknowledged components and validates the resulting '
+    content += 'snapshot. Request timing and deadline delivery include this client hydration cost. Hydration p95 is shown separately as a diagnostic '
+    content += 'and must not be added to the request timing a second time.</p>'
+    if 'negotiated exact decor-actor reuse' in http.get('methodology', {}).get('snapshotProtocol', ''):
+        content += '<p>Updated clients explicitly request complete scenery-actor component reuse. Exact record or membership changes invalidate the revision; '
+        content += 'hydration restores all actors and fields. Residents, traffic and other unclassified actors remain inline. The optional scenery component is '
+        content += 'admitted only when it and the base components fit together within the world and global cache limits; otherwise scenery stays inline and '
+        content += 'base acknowledgments remain usable. Older protocol 2 clients receive their existing format.</p>'
+        content += '<p>Collision queries select indexed nearby meshes before extracting transformed wall triangles, preserving candidate order and live poses. '
+        content += 'Per-mesh triangle reuse checks geometry, attribute/index/instance identity and versions, instance count, ownership and the world matrix. '
+        content += 'Geometry mutations must follow the renderer’s attribute-version contract. These implementation details do not replace the measured '
+        content += 'workload gates, and no NPC or physics feature was removed to obtain the results.</p>'
     content += '<p>One input may be in flight per player. Skipped slots remain in the denominator, and request timings include errors and timeouts. '
     content += 'Loopback clients and the server share a machine. Browser/GPU/VR rendering, WAN behavior, vehicle driving, live payment settlement, '
     content += 'power-loss durability and multi-host failover require separate qualification.</p></section>'
 
-    content += '<section><h2>HTTP latency and update delivery</h2>' + plot_http(stages, http, before)
-    content += '<p class="caption">Bars show the changed implementation; dark diamonds show matched complete baseline stages with verified presence. '
+    content += '<section><h2>' + matrix_label + ' HTTP latency and update delivery</h2>' + plot_http(stages, http, before)
+    content += '<p class="caption">This chart and table describe the ' + matrix_label.lower() + ' source. '
+    content += 'Bars show the changed implementation; dark diamonds show matched complete baseline stages with verified presence. '
     content += 'Green latency bars identify full gate passes. † Presence was not maintained or could not be verified. '
     content += 'Experiment-cutoff stages are omitted from the chart and retained in the table.</p>'
-    rows = []
-    for stage in stages:
-        login = stage.get('kind') == 'login'
-        timing = stage.get('latencyMs', {}) if login else stage.get('inputLatencyMs', {})
-        available = login or measured(stage)
-        suffix = ' †' if cutoff(stage, http) and available else ''
-        rows.append([name(stage), stage.get('requestedPlayers', stage.get('requested', '—')),
-                     stage.get('joinedPlayers', stage.get('successful', '—')),
-                     'login test only' if login else presence(stage.get('occupancyBefore', {})) + ' / ' + presence(stage.get('occupancyAfter', {})),
-                     num(timing.get('p95')) + suffix if available else 'not measured',
-                     num(timing.get('p99')) + suffix if available else 'not measured',
-                     pct(stage.get('deliveredSlotRatio')) + suffix if measured(stage) else 'not measured', assessment(stage, http)])
-    content += table(['Workload', 'Requested players', 'Join/login acknowledgments', 'Presence before / after', 'Request p95 ms',
-                      'Request p99 ms', 'Delivered slots', 'Assessment'], rows)
+    content += http_table(stages, http)
     content += '<p class="caption">† Timings from experiment-limited stages can include requests after termination; they do not qualify '
     content += 'steady gameplay. Failed occupancy replies mean unavailable, not zero players. Cutoffs are imposed experiment terminations.</p></section>'
 
     if before:
-        content += '<section><h2>Measured change from the baseline</h2><p>Only matching scene sizes, populations, durations, stored-account counts '
+        content += '<section><h2>' + matrix_label + ' change from the baseline</h2><p>Only matching scene sizes, populations, durations, stored-account counts '
         content += 'and input cadence are paired. Both stages must be complete, free of experiment cutoffs and verified for expected presence. '
         content += 'Synthetic identities and random activity may differ. Short runs describe observed results; they do not establish statistical '
-        content += 'significance or sustained production capacity.</p>'
+        content += 'significance or sustained production capacity. The older harness measured HTTP plus JSON parsing with the earlier snapshot '
+        content += 'path; the current path includes component hydration and checks frame freshness. These results compare the delivered implementations '
+        content += 'under matched offered workloads; they do not isolate any one optimization or constitute an identical-protocol microbenchmark.</p>'
         prior = {stage['name']: stage for stage in before.get('scenarios', [])}
         paired = []
         for stage in stages:
@@ -302,6 +699,120 @@ def main():
                                'passed' if qualified(old, before) else 'outside gates',
                                'passed' if qualified(stage, http) else 'outside gates'])
         content += table(['Workload', 'Baseline p95 ms', 'Changed p95 ms', 'Baseline delivery', 'Changed delivery', 'Baseline gates', 'Changed gates'], paired) + '</section>'
+
+    if supplement:
+        supplemental_stages = supplement.get('scenarios', [])
+        supplemental_games = [stage for stage in supplemental_stages if stage.get('kind') != 'login']
+        supplemental_passes = [stage for stage in supplemental_games if qualified(stage, supplement)]
+        content += '<section><h2>Latest release HTTP verification</h2><p>This is a separate run with '
+        content += str(len(supplemental_passes)) + '/' + str(len(supplemental_games)) + ' attempted gameplay workloads meeting every applicable gate. '
+        content += 'It is not merged with the full matrix above, and untested workloads on this later source remain unqualified.</p>'
+        content += '<p>Recorded source commit: <code>' + esc(supplement.get('sourceCommit', 'unavailable')) + '</code>; runtime fingerprint: <code>'
+        content += esc(supplement.get('runtimeSourceSHA256', 'not recorded')) + '</code>. Window: '
+        content += esc(stamp(supplement.get('startedAt'))) + ' to ' + esc(stamp(supplement.get('finishedAt'))) + '.</p>'
+        content += '<p>Source unchanged during run: ' + esc(supplement.get('runtimeSourceUnchangedDuringRun', 'not recorded')) + '.</p>'
+        if supplement_workflow:
+            content += '<p>The supplemental workflow is embedded below with its independent commands and source manifest.</p>'
+        content += http_table(supplemental_stages, supplement)
+        content += '<p>A low p95 response time does not compensate for missed offered updates. The scheduling diagnostics below retain skipped '
+        content += 'slots and deadline delivery separately from successful requests. Event-loop observations describe the measured run; '
+        content += 'they do not establish whether source changes, random activity or machine scheduling caused a difference between runs.</p>'
+        content += table(['Latest workload', 'Offered slots', 'Skipped slots', 'Successful by deadline', 'Successful requests including drain',
+                          'Generator event-loop max ms', 'Server interval-max p95 ms'], [
+            [name(stage), stage.get('offeredSlots', '—'), stage.get('skippedSlots', '—'), stage.get('successfulByDeadline', '—'),
+             stage.get('successfulRequests', '—'), num(stage.get('generator', {}).get('eventLoopMaxMs')),
+             num(stage.get('server', {}).get('eventLoopMaxMs', {}).get('p95'))]
+            for stage in supplemental_games])
+        supplemental_recovery = supplement.get('recovery') or {}
+        if supplemental_recovery:
+            content += '<p>Follow-up checkpointed restart: ' + esc('passed' if supplemental_recovery.get('pass') else 'failed')
+            content += '; observed restart ' + num(supplemental_recovery.get('restartMs')) + ' ms. '
+            content += 'This checks the selected persisted session, balance, inventory, map and position after a hard kill; it does not qualify an arbitrary in-flight crash.</p>'
+        supplemental_ledgers = []
+        for stage in supplemental_stages:
+            side = stage.get('sideTraffic') or {}
+            ledger = side.get('ledgerAssessment') or {}
+            if side.get('requests', 0):
+                supplemental_ledgers.append([name(stage), ledger.get('status', 'not completed'), side.get('acknowledgedSpends', '—'),
+                                            ledger.get('creditsMzk', '—'), ledger.get('debitsMzk', '—'),
+                                            side.get('balanceBefore', '—'), side.get('balanceAfter', '—')])
+        if supplemental_ledgers:
+            content += table(['Follow-up workload', 'Ledger assessment', 'Acknowledged spends', 'Credits MZK', 'Debits MZK', 'Starting balance', 'Ending balance'], supplemental_ledgers)
+        content += '</section>'
+
+    if static_checks:
+        content += '<section><h2>Build and static verification</h2><p>These completed commands use the same runtime, Node version, guard, '
+        content += 'runner and source fingerprint as the regression run. Runtime source stayed unchanged. Their exit codes establish the listed '
+        content += 'build and consistency outcomes; they do not measure gameplay smoothness.</p>'
+        content += table(['Command', 'Exit code', 'Result', 'Elapsed s'], [
+            [shlex.join(command['argv']), command['exitCode'], 'passed' if command['exitCode'] == 0 else 'failed', num(command.get('elapsedSeconds'))]
+            for command in static_checks['commands']])
+        if static_checks.get('methodology'):
+            content += '<p>' + esc(static_checks['methodology']) + '</p>'
+        content += '</section>'
+
+    if browser_regressions:
+        checks = browser_regressions['checks']
+        fixture_differences = validate_browser_regressions(regressions, browser_regressions)
+        passed_checks = sum(check['status'] == 'passed' for check in checks)
+        content += '<section><h2>Selected browser verification</h2><p>' + str(passed_checks) + '/' + str(len(checks))
+        content += ' selected existing browser checks passed. These selected checks do not cover the full browser suite and do not establish '
+        content += 'live-client capacity. Node, guard, runner, application and helper files match the Node regression evidence. '
+        content += 'Every selected test hash matches the browser source manifest and was verified unchanged during the browser run.</p>'
+        if fixture_differences:
+            content += '<p>The broad source fingerprint differs from the Node run solely because the following independent browser fixtures '
+            content += 'changed between runs. Both old and new hashes are retained. These exceptions do not permit application or helper changes '
+            content += 'and do not rewrite the Node outcomes.</p>'
+            content += table(['Standalone browser fixture', 'Hash during Node run', 'Hash during final browser run'], fixture_differences)
+        else:
+            content += '<p>The broad source fingerprint also matches the Node regression run exactly.</p>'
+        content += '<p>Browser-run source fingerprint: <code>' + esc(browser_regressions['source']['fingerprint']) + '</code>.</p>'
+        content += table(['Selected check', 'Result', 'Exit code', 'Elapsed s', 'Blocked network events'], [
+            [check['name'], check['status'], check.get('exitCode', '—'), num(check.get('elapsedSeconds')), check.get('blockedNetworkEvents', '—')]
+            for check in checks])
+        content += '<p>' + esc(browser_regressions.get('methodology', '')) + '</p>'
+        content += '<p>Browser: ' + esc(browser_regressions.get('source', {}).get('chromium', 'unavailable'))
+        content += '; Playwright ' + esc(browser_regressions.get('source', {}).get('playwright', 'unavailable')) + '.</p></section>'
+
+    if regressions:
+        content += '<section><h2>Regression verification of the final source</h2><p>These functional checks are separate from timing experiments. '
+        content += 'A passing regression does not increase the measured player capacity.</p>'
+        content += table(['Per-file campaign result', 'Files'], [[key, value] for key, value in regressions.get('summary', {}).items()])
+        content += table(['Campaign Node test-case result', 'Cases'], [[key, value] for key, value in regressions.get('testCaseTotals', {}).items()])
+        content += '<p>Requested files: ' + esc(regressions.get('requestedFiles', 'unavailable')) + '; files with complete TAP summaries: '
+        content += esc(regressions.get('filesWithCompleteTestCaseSummary', 'unavailable')) + '. These are Node test cases, not individual assertion calls. '
+        content += 'Source unchanged during run: ' + esc(not regressions.get('runtimeChangedDuringRun', True)) + '. Source fingerprint: <code>'
+        content += esc(regressions.get('source', {}).get('fingerprint', 'unavailable')) + '</code>. '
+        content += 'The regression fingerprint covers a broader file set and the runner/guard, so it differs from the capacity runtime fingerprint.</p>'
+        content += '<p>' + esc(regressions.get('methodology', '')) + '</p>'
+        regression_source = regressions.get('source') or {}
+        if regression_source.get('timeoutOverrides'):
+            budgets = [['Default per-file allowance', num(regression_source.get('testTimeoutMs', 0) / 1000, 0),
+                        regression_source.get('outerTimeoutSeconds', '—'), 'All files without a declared override']]
+            for test_name, budget in regression_source['timeoutOverrides'].items():
+                budgets.append([test_name, num(budget.get('testTimeoutMs', 0) / 1000, 0),
+                                budget.get('outerTimeoutSeconds', '—'), budget.get('reason', '')])
+            content += '<p>These per-file deadlines were declared in the fingerprinted runner before the campaign. They are test-runner '
+            content += 'allowances, separate from the HTTP and simulation performance gates. Each recorded command and deadline matches '
+            content += 'its declaration; exact arguments are embedded below.</p>'
+            content += table(['Test scope', 'Node deadline s', 'Outer deadline s', 'Reason'], budgets)
+        if extended_regression:
+            test_name, standard_attempt = extended_test
+            extended_footer = extended_regression.get('testCases', {}).get('footer') or {}
+            content += '<h3>Separate extended-budget matrix attempt</h3><p>The standard attempt is retained above with its original outcome. '
+            content += 'The same test was run again with a larger test-runner budget; no game-performance limit was relaxed. '
+            content += 'Runtime, Node version, guard, runner and test hashes match the standard evidence, and source stayed unchanged.</p>'
+            content += table(['Test', 'Attempt', 'Node test budget s', 'Outer deadline s', 'Result', 'Elapsed s'], [
+                [test_name, 'standard', num(regressions.get('source', {}).get('testTimeoutMs', 0) / 1000, 0),
+                 regressions.get('source', {}).get('outerTimeoutSeconds', '—'), standard_attempt.get('status', 'unavailable'),
+                 num(standard_attempt.get('elapsedSeconds'))],
+                [test_name, 'separate extended attempt', num(extended_regression.get('testTimeoutMs', 0) / 1000, 0),
+                 extended_regression.get('outerTimeoutSeconds', '—'), extended_regression.get('status', 'unavailable'),
+                 num(extended_regression.get('elapsedSeconds'))]])
+            content += table(['Extended-attempt Node test-case result', 'Cases'], [[key, value] for key, value in extended_footer.items()])
+            content += '<p>Standard and extended TAP totals are shown separately. Repeated or incomplete cases from the first attempt are not '
+            content += 'added to the extended attempt to create a combined case count. Test SHA-256: <code>' + esc(extended_regression.get('testSHA256')) + '</code>.</p>'
+        content += '</section>'
 
     content += '<section><h2>Simulation budget with synthetic players</h2><p>These fixtures use real production collision, NPC logic, queues '
     content += 'and room state. They contain unique synthetic active players in light park scenes. The timed work excludes HTTP clients, '
@@ -389,6 +900,37 @@ def main():
     content += 'spend receipt exactly once. Timeouts produce an inconclusive assessment instead of an automatic corruption finding. '
     content += 'The qualification count covers the listed pressure workloads; other regression checks are tracked in the work order.</p></section>'
 
+    if recovery_diagnostic:
+        attempts = recovery_diagnostic['recoveryAttempts']
+        exact_count = sum(attempt['diagnostic'].get('exactBalancePreservedAtKill') is True and attempt['diagnostic'].get('allWalletReceiptsPreserved') is True for attempt in attempts)
+        explained_count = sum(attempt['diagnostic'].get('coinCreditExplainsDifference') is True for attempt in attempts)
+        content += '<section><h2>Separate instrumented recovery diagnostic</h2><p>The primary campaign’s failed recovery result above remains unchanged. '
+        content += 'It recorded neither the compared balance values nor the corresponding ledger, so its specific discrepancy remains inconclusive. '
+        content += 'This later diagnostic skips gameplay pressure stages and does not change the HTTP workload qualification count.</p>'
+        content += '<p>The follow-up recorded balance immediately before each hard kill and after restart, alongside wallet receipts. '
+        content += str(exact_count) + '/' + str(len(attempts)) + ' separate attempts preserved that exact prekill balance and every captured wallet receipt. '
+        if explained_count:
+            content += 'In ' + str(explained_count) + ' attempt(s), movement legitimately earned a signed coin credit between the old pre-movement baseline and the kill. '
+            content += 'Comparing that older baseline with the restored balance therefore reported a failure despite preservation of the exact prekill balance. '
+            content += 'This reproduces a measurement false failure; it does not establish the cause of the original campaign’s discrepancy. '
+        content += 'These checkpointed samples do not establish arbitrary in-flight crash or power-loss durability.</p>'
+        content += table(['Separate attempt', 'Before movement MZK', 'Immediately before kill MZK', 'After restart MZK',
+                          'Signed movement receipts MZK', 'Original equality', 'Exact prekill balance preserved', 'All wallet receipts preserved',
+                          'Other selected state preserved', 'Restart ms'], [
+            [index, attempt['diagnostic']['preMovementBalance'], attempt['diagnostic']['immediatePreKillBalance'],
+             attempt['diagnostic']['afterRestartBalance'], attempt['diagnostic']['netSignedMovementReceipts'],
+             attempt['diagnostic']['originalEquality'], attempt['diagnostic'].get('exactBalancePreservedAtKill', 'unavailable'),
+             attempt['diagnostic'].get('allWalletReceiptsPreserved', 'unavailable'),
+             all(attempt.get(key) is True for key in ('sessionSurvived', 'inventoryPreserved', 'publishedMapPreserved', 'checkpointPreserved')),
+             num(attempt.get('restartMs'))]
+            for index, attempt in enumerate(attempts, 1)])
+        content += '<p>Runtime manifest, source commit, Node version and unchanged canonical pressure-harness hashes match the primary campaign. '
+        content += 'The separate diagnostic script and raw result match their recorded SHA-256 digests. '
+        content += 'Window: ' + esc(stamp(recovery_diagnostic.get('startedAt'))) + ' to ' + esc(stamp(recovery_diagnostic.get('finishedAt'))) + '.</p>'
+        content += '<p>Diagnostic script SHA-256: <code>' + esc(recovery_provenance['diagnosticHarnessSHA256']) + '</code>. '
+        content += 'Its top-level diagnostic outcome refers to the investigated measurement behavior, not to the original recovery gate.</p>'
+        content += '<pre>' + esc(shlex.join(recovery_provenance['argv'])) + '</pre></section>'
+
     content += '<section><h2>Reproduce and inspect the evidence</h2><p>The commands below use isolated synthetic state. Retain the source '
     content += 'manifest, fixture sizes, cadence, time windows and resource limits when comparing results. Workflow exit code 1 can indicate '
     content += 'a failed qualification gate; inspect the family results rather than treating every nonzero exit as a server crash.</p>'
@@ -397,7 +939,29 @@ def main():
         argv = entry.get('argv', entry.get('command', []))
         commands.append(shlex.join(argv) if isinstance(argv, list) else str(argv))
     content += '<pre>' + esc('\n'.join(commands)) + '</pre>'
+    if helper_sources:
+        content += '<p>The portable evidence also embeds the following verification helpers after checking each file against the recorded '
+        content += 'SHA-256 digest: ' + esc(', '.join(helper_sources)) + '. Helpers absent from the local evidence directory are omitted; '
+        content += 'their recorded hashes remain in the corresponding result metadata.</p>'
     payload = {'changed-' + key: value for key, value in current.items()}
+    if supplement:
+        payload['follow-up-http'] = supplement
+    if supplement_workflow:
+        payload['follow-up-workflow'] = supplement_workflow
+    if regressions:
+        payload['final-regressions'] = regressions
+    if extended_regression:
+        payload['extended-regression'] = extended_regression
+    if static_checks:
+        payload['static-checks'] = static_checks
+    if browser_regressions:
+        payload['selected-browser-regressions'] = browser_regressions
+    if recovery_diagnostic:
+        payload['separate-recovery-diagnostic'] = recovery_diagnostic
+        payload['separate-recovery-diagnostic-provenance'] = recovery_provenance
+        payload['separate-recovery-diagnostic-script'] = recovery_diagnostic_script
+    for label, source in helper_sources.items():
+        payload['verified-helper-' + label] = source
     for key, value in baseline.items():
         if value is not None:
             payload['baseline-' + key] = value
