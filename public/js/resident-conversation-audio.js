@@ -5,7 +5,8 @@ const distance=(a,b)=>Math.hypot(a.x-b.x,(a.y??0)-(b.y??0),a.z-b.z);
 const text=value=>typeof value==='string'?value.trim():'';
 
 // Speech bubbles are also used for private replies and periodic work captions.
-// Only a fresh exchange between nearby residents belongs on the world audio.
+// Fresh nearby exchanges and greetings addressed to this visitor belong on the
+// world audio; private replies and task captions use their own presentation.
 export function createResidentConversationAudio({voice=questConversationVoice(),range=14,maxAge=5000}={}){
  let scope=null,ready=false;
  const seen=new Set();
@@ -36,7 +37,8 @@ export function createResidentConversationAudio({voice=questConversationVoice(),
     if(direct.some(call=>call.speakerId===id&&text(call.text)===spoken&&Number.isFinite(call.at)&&now-call.at>=0&&now-call.at<15000))continue;
     const line=exchanges.get(id+'\0'+spoken),interaction=info.interaction;
     const paired=interaction?.kind==='conversation'&&interaction.phase==='speaking'&&actors[interaction.partnerId]?.resident;
-    if(!line&&!paired)continue;
+    const addressed=interaction?.kind==='visitor-greeting'&&interaction.phase==='speaking'&&interaction.playerId===selfId;
+    if(!line&&!paired&&!addressed)continue;
     if(line&&(!Number.isFinite(line.at)||now-line.at<0||now-line.at>maxAge))continue;
     if(!point(self.position)||!point(actor.position)||Math.abs((self.position.y??0)-(actor.position.y??0))>1.2)continue;
     const gap=distance(self.position,actor.position);if(gap>=range)continue;

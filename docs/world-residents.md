@@ -5,6 +5,27 @@ start a conversation, type a question, or use a suggested reply. Their profile
 shows their background, strengths, current activity and familiar contacts. The
 nearby conversation feed follows exchanges between residents.
 
+Residents can also walk over to welcome a nearby visitor, stopping with personal
+space on the same public floor. One resident approaches a visitor at a time;
+conversations and assigned work take priority. The greeting can be heard after
+audio is enabled, and a small invitation card appears without opening People or
+blocking movement. Choose **Talk**, **Join**, **Something else**, or **Not now**.
+Declining an activity gives the visitor a two-minute break from new suggestions.
+
+Ask **What can we do together?** or type a similar question to receive a current
+map suggestion. Joining marks a public activity approach on the local map. Walk
+there, then choose **Confirm arrival** in the invitation card. **End visit**
+clears the marker. Visits expire after ten minutes; travel or removal of the
+destination cancels them. These visits award no currency or quest credit and do
+not enter a native match automatically. At the destination, use its own controls
+to play, watch or work. Daily favors remain a separate activity.
+
+**Share a recent experience** describes completed resident work, practice,
+landmark rounds or teamwork. Nearby residents also exchange those experiences
+with each other and remember what they learned. Private player questions are
+kept out of those public exchanges. Recipient-only dialogue, invitations and
+speech captions are filtered from other visitors' HTTP snapshots.
+
 Residents adapt to the location: musicians rehearse, dock crews review departure
 plans, ground crews practise flight briefings, sports hosts work beside the
 playing area, and makers discuss projects in saved Builder maps. The casino

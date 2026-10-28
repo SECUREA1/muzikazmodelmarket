@@ -34,7 +34,7 @@ function relationship(info,id,amount,now){
 }
 function event(life,kind,actorId,targetId,text,now){const item={id:'casino-life-'+ ++life.sequence,kind,actorId,targetId,text:short(text),at:now};life.events.push(item);life.events=life.events.slice(-12);return item;}
 function face(npc,target){npc.resident.lookAt={...target};if(!npc.resident.moving){const yaw=Math.atan2(npc.position.x-target.x,npc.position.z-target.z),delta=Math.atan2(Math.sin(yaw-npc.rotation.y),Math.cos(yaw-npc.rotation.y));if(Math.abs(delta)>1.05)npc.rotation.y=yaw;}}
-function say(npc,text,now,{gesture='talk',duration=3200,target}={}){const info=npc.resident;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.gesture=gesture;if(target)face(npc,target);}
+function say(npc,text,now,{gesture='talk',duration=3200,target}={}){const info=npc.resident;delete info.speechRecipients;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.gesture=gesture;if(target)face(npc,target);}
 function grounded(environment,point,collision,sim,objects){const floor=collision?.groundAt?collision.groundAt(environment,point,{entry:true,actors:sim.actors,objects}):point;if(!floor||Math.abs((floor.y||0)-(point.y||0))>.4)return null;return {x:point.x,y:floor.y||0,z:point.z};}
 function visible(sim,a,b,environment,collision,objects){if(!collision?.blocksShot)return true;const origin={...a.position,y:(a.position.y||0)+1.55},target={...b.position,y:(b.position.y||0)+1.55},span=Math.hypot(target.x-origin.x,target.y-origin.y,target.z-origin.z);return span<.1||!collision.blocksShot(environment,origin,[(target.x-origin.x)/span,(target.y-origin.y)/span,(target.z-origin.z)/span],span,{},objects);}
 function initializeResident(npc,source,index,now){
