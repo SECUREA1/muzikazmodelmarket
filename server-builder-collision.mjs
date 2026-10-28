@@ -40,6 +40,11 @@ function disposePlacedWorldEntry(entry){
  if(entry.construction){resources.add(entry.construction.geometry);resources.add(entry.construction.material);}
  for(const resource of resources)resource.dispose();entry.root.clear();
 }
+function disposeStaticWorld(world){
+ const resources=new Set();
+ world.root.traverse(mesh=>{if(mesh.geometry)resources.add(mesh.geometry);for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material])if(material)resources.add(material);});
+ for(const resource of resources)resource.dispose();world.root.clear();
+}
 function indexCollisionMeshes(meshes){
  const cells=new Map(),large=[];
  for(const mesh of meshes){const box=collisionMeshBounds(mesh),x1=Math.floor(box.min.x/8),x2=Math.floor(box.max.x/8),z1=Math.floor(box.min.z/8),z2=Math.floor(box.max.z/8);if((x2-x1+1)*(z2-z1+1)>1024){large.push(mesh);continue;}for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++){const key=x+':'+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(mesh);}}
@@ -111,8 +116,26 @@ function nearbyGroupWalls(groups,minX,maxX,minZ,maxZ){
 }
 function nearbyWalls(world,minX,maxX,minZ,maxZ){
  if(!world)return [];
+ if(world.nearbyTriangles)return world.nearbyTriangles(minX,maxX,minZ,maxZ);
  if(!world.wallIndex)return world.triangles||world.floors.flatMap(wallTriangles);
  return queryIndex(world.wallIndex,minX,maxX,minZ,maxZ);
+}
+function staticWallQuery(floors,floorIndex){
+ const order=new Map(floors.map((mesh,index)=>[mesh,index])),wide=[];
+ for(const mesh of floors){const {min,max}=collisionMeshBounds(mesh);if((Math.floor(max.x/WALL_GRID_SIZE)-Math.floor(min.x/WALL_GRID_SIZE)+1)*(Math.floor(max.z/WALL_GRID_SIZE)-Math.floor(min.z/WALL_GRID_SIZE)+1)>256)wide.push(mesh);}
+ return (minX,maxX,minZ,maxZ)=>{
+  const x1=Math.floor(minX/WALL_GRID_SIZE),x2=Math.floor(maxX/WALL_GRID_SIZE),z1=Math.floor(minZ/WALL_GRID_SIZE),z2=Math.floor(maxZ/WALL_GRID_SIZE);
+  // Match the original wall grid's candidates and order, but materialize
+  // exact faces only for nearby meshes and possible large-grid faces.
+  const meshes=[...new Set([...wide,...queryCollisionMeshes(floorIndex,x1*WALL_GRID_SIZE,(x2+1)*WALL_GRID_SIZE,z1*WALL_GRID_SIZE,(z2+1)*WALL_GRID_SIZE)])].sort((a,b)=>order.get(a)-order.get(b)),found=[];
+  for(const mesh of meshes)for(const triangle of wallTriangles(mesh)){
+   const ax=Math.floor(triangle.minX/WALL_GRID_SIZE),bx=Math.floor(triangle.maxX/WALL_GRID_SIZE),az=Math.floor(triangle.minZ/WALL_GRID_SIZE),bz=Math.floor(triangle.maxZ/WALL_GRID_SIZE),large=(bx-ax+1)*(bz-az+1)>256;
+   if(!large&&(bx<x1||ax>x2||bz<z1||az>z2))continue;
+   found.push({triangle,x:large?-Infinity:Math.max(x1,ax),z:large?-Infinity:Math.max(z1,az)});
+  }
+  found.sort((a,b)=>a.x-b.x||a.z-b.z);
+  return found.map(value=>value.triangle);
+ };
 }
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
@@ -133,6 +156,14 @@ export class ServerBuilderCollision {
   try{return callback();}finally{this.actorCandidateScope=previous;}
  }
  clearPlacedWorlds(){for(const entry of this.placedWorlds.values())disposePlacedWorldEntry(entry);this.placedWorlds.clear();this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;}
+ releaseWorld(environmentId){
+  for(const [key,world]of this.cache)if(world.environmentId===environmentId){disposeStaticWorld(world);this.cache.delete(key);}
+  const entry=this.placedWorlds.get(environmentId);
+  if(entry){
+   if(this.placedCombinedRoot===entry.root)this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;
+   disposePlacedWorldEntry(entry);this.placedWorlds.delete(environmentId);
+  }
+ }
  placedObjects(objects){
   const floors=[],triangles=[];
   for(const object of Object.values(objects)){
@@ -150,14 +181,15 @@ export class ServerBuilderCollision {
  }
  world(environment){
   const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
+  for(const [oldKey,old]of this.cache)if(old.environmentId===environment.id){disposeStaticWorld(old);this.cache.delete(oldKey);}
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
   for(const item of environment.builderScene?.objects||[]){if(item.casinoStation||isBasketball(item)||isWatercraft(item)||isAircraft(item)||isConstructionMachine(item)||item.constructionManaged)continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(mesh.isMesh)mesh.geometry=layoutCollisionGeometry(mesh.geometry);if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   if(!glb)for(const mesh of floors)if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')&&!mesh.isInstancedMesh&&!Array.isArray(mesh.material))accelerateStaticRaycast(mesh,{respectMaterialSide:true});
-  const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
-  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex:indexCollisionMeshes(floors),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
+  const floorIndex=indexCollisionMeshes(floors),world={environmentId:environment.id,root,walls,floors,get triangles(){return floors.flatMap(wallTriangles);},nearbyTriangles:staticWallQuery(floors,floorIndex),floorIndex,glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;disposeStaticWorld(old);this.cache.delete(oldKey);}return world;
 
  }
  placedWorld(actors={},objects={},environment=null){

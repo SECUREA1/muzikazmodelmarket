@@ -130,8 +130,8 @@ jobs:
       - run: npm run build
       - name: Verify startup, connection recovery and map lifecycle
         run: node --test test/gameplay-startup-readiness.test.mjs test/rad-tox-startup.test.mjs test/live-map-interaction.test.mjs test/vehicle-input-routing.test.mjs test/xr-game-controls.test.mjs test/api-connection.test.mjs test/game-request-deadline.test.mjs test/local-map-3d.test.mjs test/collision-world-cache.test.mjs test/collision-candidate-scope.test.mjs test/spawn-clearance.test.mjs test/movement-presence-recovery.test.mjs
-      - name: Verify room startup deadlines for every game client
-        run: node --test test/room-startup-deadline.test.mjs test/native-room-connection.test.mjs
+      - name: Verify room startup and collision resource lifecycle
+        run: node --test test/room-startup-deadline.test.mjs test/native-room-connection.test.mjs test/room-collision-lifecycle.test.mjs test/server-collision-memory.test.mjs
       - name: Verify dense GLB collision and RAD-TOX movement recovery
         run: node --test test/collision-tree.test.mjs test/local-environment-collision.test.mjs test/world-entry-safety.test.mjs test/yacht-walking.test.mjs test/rad-tox-movement-recovery.test.mjs test/rad-tox-solo-flow.test.mjs test/match-results-flow.test.mjs test/resident-world-link.test.mjs test/world-picker-refresh.test.mjs
       - name: Install browser test tools
