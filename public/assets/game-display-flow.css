@@ -61,3 +61,40 @@
 .house-stage .game-display-flow-views .live-local-map [data-collapse]{width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:8px;border:1px solid #799b99;border-radius:9px;background:#112c30ed;color:#e9f9ee}
 .house-stage .game-display-flow-views .live-local-map [data-body]{position:absolute;top:52px;right:0;width:175px;max-height:none;border:1px solid #799b99;border-radius:10px;background:#102b30ed;overflow:hidden;pointer-events:auto}
 .house-stage .game-display-flow-views .live-local-map [data-body][hidden]{display:none!important}
+
+/* Settings can remove the bars completely while live scores keep updating. */
+.house-stage.player-hide-action-bars .game-display-flow-views>:not(.game-viewport-toggle),
+.house-stage.player-hide-action-bars .game-viewport-toggle:not([aria-pressed=true]),
+.house-stage.player-hide-action-bars .game-display-flow>:not(.basketball-hud,.hockey-sports-bar,.shipping-hud),
+.house-stage.player-hide-action-bars .sports-action-modes,
+.house-stage.player-hide-action-bars .sports-action-tools,
+.house-stage.player-hide-action-bars .sports-action-header button,
+.house-stage.player-hide-action-bars .sports-action-utilities,
+.house-stage.player-hide-action-bars .basketball-hud>:not(.sports-action-bar),
+.house-stage.player-hide-action-bars .shipping-hud>:not([data-shipping-live-summary]),
+.house-stage.player-hide-action-bars .shipping-hud:not(:has(>[data-shipping-live-summary]:not([hidden]))),
+.house-stage.player-hide-action-bars [data-shipping-live-summary] button,
+.house-stage.player-hide-action-bars .firing-range-caption,
+.house-stage.player-hide-action-bars .basketball-controls,
+.house-stage.player-hide-action-bars .fitness-nearby,
+.house-stage.player-hide-action-bars .resident-visitor-prompt,
+.house-stage.player-hide-action-bars .range-ops-button,
+.house-stage.player-hide-action-bars .building-adjust-button,
+.house-stage.player-hide-action-bars .rad-tox-hud>[data-rad-row]:not([data-rad-row=targets]),
+.house-stage.player-hide-action-bars .rad-tox-row-toggle{display:none!important}
+.house-stage.player-hide-action-bars .rad-tox-hud{left:60px;right:60px}
+.house-stage.player-hide-action-bars [data-rad-row=targets]{flex:1;grid-template-columns:minmax(0,1fr);width:auto}
+.house-stage.player-hide-action-bars [data-rad-row=targets]::before{display:none}
+.house-stage.player-hide-action-bars [data-rad-row=targets] .rad-tox-hud-row__content{display:block!important}
+.house-stage.player-hide-action-bars [data-rad-tox-count]{white-space:normal}
+.house-stage.player-hide-action-bars .sports-action-header:empty{display:none!important}
+.house-stage.player-hide-action-bars .sports-action-bar{gap:0;padding:0;border:0;background:none}
+
+/* Reuse Settings as a floating shortcut, including inside fullscreen. The
+   dock row takes no space; the existing movement/look sticks remain usable. */
+.house-explorer-shell.player-hide-action-bars{position:relative}
+body .house-explorer-shell.player-hide-action-bars .house-control-dock .house-bottom-controls,
+body .house-explorer-shell.player-hide-action-bars .house-control-dock .game-dock-actions{position:static;height:0;min-height:0;padding:0;margin:0;border:0;background:none}
+.house-explorer-shell.player-hide-action-bars .house-bottom-controls>:not(.game-dock-actions),
+.house-explorer-shell.player-hide-action-bars .game-dock-actions>:not(#house-view-options){display:none!important}
+body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-view-options{position:absolute;top:8px;right:8px;z-index:40;flex:none;width:44px;min-width:44px;height:44px;border:1px solid #6c8d4f;background:#132922ed}

@@ -1,3 +1,10 @@
+// Keep runtime visibility flags intact: incoming controls inherit the preference.
+export function setGameActionBarsHidden(stage,hidden){
+ const changed=stage.classList.contains('player-hide-action-bars')!==!!hidden;
+ stage.classList.toggle('player-hide-action-bars',!!hidden);
+ stage.closest('.house-explorer-shell')?.classList.toggle('player-hide-action-bars',!!hidden);
+ if(changed)stage.dispatchEvent(new CustomEvent('muzikaz:action-bars-visibility'));
+}
 // A single bottom anchor owns gameplay overlays. Panels and nearby actions
 // participate in normal layout instead of competing for the same pixels.
 // Programmatic panel openings must also reveal their toolbar overflow group.
@@ -55,6 +62,8 @@ export function mountGameDisplayFlow(stage){
   stage.style.setProperty('--game-view-controls-height','44px');fitting=false;
  }
  const schedule=()=>{if(frame===null)frame=requestAnimationFrame(fit);};
+ const refit=()=>{lastLayout=null;schedule();};
+ stage.addEventListener('muzikaz:action-bars-visibility',refit);
  stylesheet.addEventListener('load',()=>{lastLayout=null;schedule();});
  const outside=event=>{if(!views.contains(event.target))closeOverflow();};stage.ownerDocument.addEventListener('pointerdown',outside,true);
  views.addEventListener('keydown',event=>{if(event.key==='Escape'&&!overflow.hidden){event.preventDefault();event.stopPropagation();closeOverflow();more.focus();}});
@@ -67,5 +76,5 @@ export function mountGameDisplayFlow(stage){
  collect();const observer=new MutationObserver(collect);observer.observe(stage,{childList:true});
  const changes=new MutationObserver(records=>{if(records.some(({target,oldValue})=>oldValue!==target.getAttribute('hidden')&&target!==more&&target!==overflow&&!target.closest(panelControls)))schedule();});changes.observe(views,{subtree:true,attributes:true,attributeFilter:['hidden'],attributeOldValue:true});
  const resize=typeof ResizeObserver==='undefined'?null:new ResizeObserver(schedule);resize?.observe(views);
- return {root,views,dispose(){observer.disconnect();changes.disconnect();resize?.disconnect();if(frame!==null)cancelAnimationFrame(frame);stage.ownerDocument.removeEventListener('pointerdown',outside,true);for(const child of [...root.children]){if(child===actions||child===views)stage.append(...child.children);else stage.append(child);}for(const child of groups)if(child.isConnected)stage.append(child);views.remove();root.remove();stylesheet.remove();stage.style.removeProperty('--game-view-controls-height');}};
+ return {root,views,dispose(){observer.disconnect();changes.disconnect();resize?.disconnect();if(frame!==null)cancelAnimationFrame(frame);stage.removeEventListener('muzikaz:action-bars-visibility',refit);stage.ownerDocument.removeEventListener('pointerdown',outside,true);for(const child of [...root.children]){if(child===actions||child===views)stage.append(...child.children);else stage.append(child);}for(const child of groups)if(child.isConnected)stage.append(child);views.remove();root.remove();stylesheet.remove();stage.style.removeProperty('--game-view-controls-height');}};
 }
