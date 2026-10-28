@@ -84,3 +84,35 @@ test('live material colors and scalar properties update without a source shader 
  for(const key of ['emissiveIntensity','opacity','roughness','metalness','clearcoat','transmission','iridescence','depthWrite'])assert.equal(copy[key],material[key],key);
  assert.equal(copy.color.getHex(),material.color.getHex());assert.equal(copy.emissive.getHex(),material.emissive.getHex());assert.deepEqual(copy.normalScale,material.normalScale);assert.deepEqual(copy.iridescenceThicknessRange,material.iridescenceThicknessRange);assert.notEqual(copy.iridescenceThicknessRange,material.iridescenceThicknessRange);assert.equal(map.update(),false);map.dispose();
 });
+
+test('map transform synchronization updates shared ancestors once and follows reparented meshes',()=>{
+ const parent=new THREE.Group(),root=new THREE.Group(),geometry=new THREE.BoxGeometry(),material=new THREE.MeshBasicMaterial();parent.add(root);
+ for(let i=0;i<300;i++)root.add(new THREE.Mesh(geometry,material));
+ const map=mirrorMapMeshes([root]);let updates=0;const update=parent.updateWorldMatrix;
+ parent.updateWorldMatrix=function(...args){updates++;return update.apply(this,args);};
+ parent.position.x=7;root.position.z=4;assert.equal(map.update(),true);assert.equal(updates,1,'shared parent is refreshed once, not once per mirrored mesh');
+ for(const {source,mesh}of map.pairs)assert.deepEqual(mesh.matrix.elements,source.matrixWorld.elements);
+ const outside=new THREE.Group(),moved=root.children[0];outside.position.y=12;outside.add(moved);moved.position.x=3;
+ assert.equal(map.update(),true);assert.equal(map.pairs[0].mesh.matrix.elements[13],12);assert.equal(map.pairs[0].mesh.matrix.elements[12],3);
+ root.visible=false;map.update();assert.equal(map.pairs[1].mesh.visible,false);assert.equal(map.pairs[0].mesh.visible,true);
+ map.dispose();parent.updateWorldMatrix=update;geometry.dispose();material.dispose();
+});
+
+test('expensive map frames leave input time after completing their work',async()=>{
+ const {mapFrameDeadline}=await import('../public/js/local-map-3d.js');
+ assert.equal(mapFrameDeadline(100,105),155);
+ assert.equal(mapFrameDeadline(100,300),700,'a 200ms frame leaves 400ms after completion, rather than drawing immediately again');
+ assert.equal(mapFrameDeadline(100,2100),3100,'cooldown stays bounded after a very slow frame');
+});
+
+
+test('the open map suspends duplicate world rendering without changing XR rendering',async()=>{
+ const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
+ const begin=source.indexOf('    if(!districtMap.dialog.open||renderer.xr.isPresenting){');
+ const code=source.slice(begin,source.indexOf('    // WebXR publishes',begin));
+ for(const [open,xr,expected]of [[false,false,1],[true,false,0],[true,true,1]]){
+  let draws=0,sceneryUpdates=0;
+  vm.runInNewContext(code,{districtMap:{dialog:{open}},renderer:{xr:{isPresenting:xr},render(){draws++;}},worldScenery:{update(){sceneryUpdates++;}},reducedMotion:false,clock:{elapsedTime:1},displayCamera:()=>({}),dayNightLighting:{update:()=>({})},playerRig:{position:{}},yachtGames:{presentCamera(){}},islandBuzz:{render:()=>false},scene:{},islandUI:{visual:()=>({}),reduced:()=>false},time:10,playerPreferences:{}});
+  assert.equal(draws,expected);assert.equal(sceneryUpdates,expected);
+ }
+});

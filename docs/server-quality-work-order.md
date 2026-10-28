@@ -10,6 +10,14 @@ Expired access during active play opens the guest/sign-in choice over the retain
 
 Generated speech network waits are bounded at eight seconds instead of sixty; existing installed-voice fallback and captions remain available. This does not establish zero-delay microphone communication or hardware/network performance. New executable transition tests cover fresh selection, repeat visits, join/readiness, denied storage and stale access replies. Previous capacity/browser failures remain open; this follow-up is not a new full-capacity qualification. Validation: nine selected Node files completed with 162 passed cases and one optional neural-generation integration skip, zero failures; production build and static dependency checks passed. Physical-device transition timing and live microphone latency were not measured.
 
+## Map rendering freeze follow-up
+
+The open district map now owns the desktop graphics budget: the main scene continues processing game input and simulation without drawing into a second WebGL context behind the map. Closing the map resumes its normal rendering; XR keeps its render path. Map transforms update shared ancestors once per root instead of once per mesh, preserving moving/reparented meshes, visibility and resource ownership.
+
+Map frames leave at least 50 ms after completion, extending that interval after expensive work, capped at one second. A slow render therefore cannot immediately monopolize the next frame. A map rendering exception disposes its view and shows a recovery message instead of repeatedly throwing through the animation loop; the 2D view and outer controls remain available.
+
+Validation: 52 focused Node cases passed, including transform/visibility/reparenting, scheduling, XR and map rendering ownership, travel and access recovery. Production build and static checks passed. `python3 test/map-frame-responsiveness.browser.py` exercises the actual map mount with 100 moving meshes, injects 60 ms render work, checks timers and a real input click, then injects a render failure and checks containment. This is a controlled responsiveness check, not full-game FPS or a guarantee against every freeze. The isolated 5,000-mesh/depth-15 benchmark reduced eight-update matrix calls from 640,000 to 40,120; observed median update time was 7.48 ms before and 1.77 ms after. Raw local results are in `work/freeze-fix/`.
+
 ## Problem and intended behavior
 
 The October 27–28 isolated retest did not qualify any of 17 gameplay workloads against all chosen latency, delivery, correctness, and presence gates. Authentication and identity refresh repeatedly parse file-backed stores; durable mutations rewrite unrelated records; active-world geometry is evicted and rebuilt once the room count exceeds small caches. These costs delay simulation and responses even while the HTTP health endpoint responds.

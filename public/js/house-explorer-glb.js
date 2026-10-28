@@ -2918,10 +2918,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(renderer.xr.isPresenting){const pointer=xrGameControls?.controllers?.find(controller=>controller.userData.inputSource?.handedness==='right')||xrGameControls?.controllers?.[0];if(pointer?.userData.inputSource){const ray=funhouseAimRay(null,{controller:pointer});funhouseVR.pointerMove(ray);if(!xrGameControls?.menuOpen)factoryTestingVR.pointerMove(ray);}const panel=panelXR.snapshot();if(panel.active&&!xrGameControls?.menuOpen)xrGameControls?.openMenu();}
     airportOps.updateAim();
     aircraftCannonEffects.update(frameDelta);
+    // The open map owns the graphics budget; room input and simulation above
+    // continue without drawing the full world into a second WebGL context.
+    if(!districtMap.dialog.open||renderer.xr.isPresenting){
     worldScenery.update(reducedMotion?0:clock.elapsedTime,displayCamera(),dayNightLighting.update(playerRig.position));
     if(!renderer.xr.isPresenting)yachtGames.presentCamera(displayCamera(),playerRig);
-    // The map is a companion panel; gameplay remains visible and responsive.
     if(!islandBuzz.render(scene,displayCamera(),islandUI.visual(),{time:time/1000,reducedMotion:reducedMotion||playerPreferences.reducedMotion||islandUI.reduced()}))renderer.render(scene, displayCamera());
+    }
     // WebXR publishes the tracked ArrayCamera pose during render. Anchor the
     // first dashboard after two XR renders without moving the player or head.
     presentFactoryTestingXRDashboard();
