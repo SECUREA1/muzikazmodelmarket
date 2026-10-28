@@ -121,3 +121,92 @@ test('concurrent identical refreshes share work and each call snapshots mutable 
   assert.equal(find(await pending).name, 'Queued name');
   assert.equal(find(await read(atlas, maps, deeds)).name, 'Later name');
 });
+
+test('an external restore between the last atlas transaction and cache publication is loaded before caching', async t => {
+  const {atlas, maps, deeds, calls} = await fixture(t), synchronize = atlas.synchronize.bind(atlas);
+  let transactions = 0;
+  atlas.synchronize = async (...args) => {
+    const result = await synchronize(...args);
+    if (++transactions === 2) {
+      const restored = JSON.parse(await readFile(atlas.file, 'utf8'));
+      Object.values(restored.cells).find(cell => cell.mapId === 'cache-design').meetings.push({id: 'publication-restore', name: 'Restored during refresh', position: {x: 2, y: 0, z: 3}});
+      await writeFile(atlas.file + '.restored', JSON.stringify(restored));
+      await rename(atlas.file + '.restored', atlas.file);
+    }
+    return result;
+  };
+  const result = await read(atlas, maps, deeds);
+  assert.ok(find(result).meetingPoints.some(point => point.id === 'publication-restore'));
+  assert.equal(calls(), 4, 'the restored generation is loaded in one bounded rebuild');
+  assert.equal(await read(atlas, maps, deeds), result);
+  assert.equal(calls(), 4, 'the verified restored result is cached');
+});
+
+test('a corrupt restore during cold cache publication fails instead of being cached behind an old in-memory atlas', async t => {
+  const {atlas, maps, deeds} = await fixture(t), synchronize = atlas.synchronize.bind(atlas);
+  let transactions = 0, valid;
+  atlas.synchronize = async (...args) => {
+    const result = await synchronize(...args);
+    if (++transactions === 2) {
+      valid = await readFile(atlas.file);
+      await writeFile(atlas.file + '.restored', '{corrupt');
+      await rename(atlas.file + '.restored', atlas.file);
+    }
+    return result;
+  };
+  await assert.rejects(read(atlas, maps, deeds), SyntaxError);
+  await assert.rejects(read(atlas, maps, deeds), SyntaxError, 'a second call cannot hit a stale cache');
+  await writeFile(atlas.file, valid);
+  assert.equal(find(await read(atlas, maps, deeds)).name, 'Saved design');
+});
+
+test('a newer in-process atlas transaction is retained while a directory snapshot finishes', async t => {
+  const {atlas, maps, deeds} = await fixture(t), synchronize = atlas.synchronize.bind(atlas);
+  let transactions = 0, newer;
+  atlas.synchronize = async (...args) => {
+    const result = await synchronize(...args);
+    if (++transactions === 2) {
+      await atlas.addStreet('cache-design', {from: {x: -5, z: 3}, to: {x: 5, z: 3}}, owner);
+      newer = atlas.data;
+    }
+    return result;
+  };
+  await read(atlas, maps, deeds);
+  assert.equal(atlas.data, newer, 'directory refresh never clears a newer in-memory owner');
+  assert.equal(find(await read(atlas, maps, deeds)).streets[0].createdBy, 'Alice');
+});
+
+test('continuously replaced atlas generations fail after bounded rebuilds', async t => {
+  const {atlas, maps, deeds, calls} = await fixture(t), synchronize = atlas.synchronize.bind(atlas);
+  let transactions = 0;
+  atlas.synchronize = async (...args) => {
+    const result = await synchronize(...args);
+    if (++transactions % 2 === 0) {
+      const restored = JSON.parse(await readFile(atlas.file, 'utf8'));
+      Object.values(restored.cells).find(cell => cell.mapId === 'cache-design').meetings.push({id: 'replacement-' + transactions, name: 'Concurrent replacement', position: {x: 2, y: 0, z: 3}});
+      await writeFile(atlas.file + '.restored', JSON.stringify(restored));
+      await rename(atlas.file + '.restored', atlas.file);
+    }
+    return result;
+  };
+  await assert.rejects(read(atlas, maps, deeds), {statusCode: 503});
+  assert.equal(calls(), 6, 'three complete refresh attempts cap external replacement work');
+});
+
+test('a reordered but equivalent persisted atlas can be cached without a rebuild', async t => {
+  const {atlas, maps, deeds, calls} = await fixture(t), synchronize = atlas.synchronize.bind(atlas);
+  let transactions = 0;
+  atlas.synchronize = async (...args) => {
+    const result = await synchronize(...args);
+    if (++transactions === 2) {
+      const restored = JSON.parse(await readFile(atlas.file, 'utf8'));
+      await writeFile(atlas.file + '.restored', JSON.stringify(Object.fromEntries(Object.entries(restored).reverse()), null, 2));
+      await rename(atlas.file + '.restored', atlas.file);
+    }
+    return result;
+  };
+  const result = await read(atlas, maps, deeds);
+  assert.equal(calls(), 2);
+  assert.equal(await read(atlas, maps, deeds), result);
+  assert.equal(calls(), 2);
+});

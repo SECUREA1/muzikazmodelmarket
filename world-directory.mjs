@@ -7,17 +7,39 @@ import {memberPlotEnvironment} from './member-plots.mjs';
 import {WORLD_DISTRICTS,districtMapId} from './world-districts.mjs';
 import {attachAtlas} from './world-atlas.mjs';
 import {readFileSync} from 'node:fs';
-import {stat} from 'node:fs/promises';
+import {open,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {shippingWorld,SHIPPING_HARBOR_ID} from './shipping-world.mjs';
 import {FACTORY_ID} from './public/js/missile-factory-config.js';
 import {PROVING_ID,COMPOUND_ID} from './public/js/factory-test-config.js';
 const permanentWorlds=JSON.parse(readFileSync(new URL('./public/models/environments/environments.json',import.meta.url),'utf8')).filter(map=>map.permanent===true).map(map=>({...map,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false}));
 const directories=new WeakMap();
+function fileIdentity(info){return [info.dev,info.ino,info.birthtimeNs,info.mtimeNs,info.ctimeNs,info.size].join(':');}
 async function atlasFileIdentity(atlas){
  if(!atlas.file)return null;
- try{const info=await stat(atlas.file,{bigint:true});return [info.dev,info.ino,info.birthtimeNs,info.mtimeNs,info.ctimeNs,info.size].join(':');}
+ try{return fileIdentity(await stat(atlas.file,{bigint:true}));}
  catch(error){if(error.code==='ENOENT')return null;throw error;}
+}
+function unstableAtlas(){return Object.assign(new Error('The world atlas changed during directory refresh. Please retry.'),{statusCode:503});}
+async function persistedAtlas(atlas){
+ if(!atlas.file)return {file:null,data:null};
+ // Read a single persisted generation. A final path stat also catches an atomic
+ // replacement while the old file descriptor remains readable.
+ for(let attempt=0;attempt<3;attempt++){
+  let handle;
+  try{
+   handle=await open(atlas.file,'r');
+   const before=fileIdentity(await handle.stat({bigint:true}));
+   const encoded=await handle.readFile('utf8'),after=fileIdentity(await handle.stat({bigint:true}));
+   const visible=await atlasFileIdentity(atlas);
+   if(before===after&&after===visible)return {file:visible,data:JSON.parse(encoded)};
+  }catch(error){
+   if(error.code!=='ENOENT')throw error;
+   if(await atlasFileIdentity(atlas)===null)return {file:null,data:null};
+  }finally{await handle?.close();}
+ }
+ throw unstableAtlas();
 }
 function freezeDirectory(value,seen=new WeakSet()){
  if(!value||typeof value!=='object'||seen.has(value))return value;
@@ -30,6 +52,7 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[],{readon
  const encoded=JSON.stringify([published,deeds]),signature=createHash('sha256').update(encoded).digest('hex');
  let directory=directories.get(atlas);if(!directory){directory={queue:Promise.resolve(),cached:null};directories.set(atlas,directory);}
  const operation=directory.queue.then(async()=>{
+ for(let attempt=0;attempt<3;attempt++){
   let queued,file;
   do{queued=atlas.queue;await queued;file=await atlasFileIdentity(atlas);}while(queued!==atlas.queue);
   const cached=directory.cached;
@@ -38,13 +61,24 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[],{readon
   // checkpoint that was installed without that in-process invalidation hook.
   if(cached&&cached.data===atlas.data&&cached.file!==file)atlas.data=null;
   const [currentPublished,currentDeeds]=JSON.parse(encoded);
-  const result=await buildWorldDirectory(atlas,currentPublished,currentDeeds),data=atlas.data,revision=result.atlas.revision;
-  const currentFile=await atlasFileIdentity(atlas);
-  const owned=freezeDirectory(structuredClone(result));
+  const result=await buildWorldDirectory(atlas,currentPublished,currentDeeds),data=atlas.data,revision=result.atlas.revision,queue=atlas.queue;
+  const persisted=await persistedAtlas(atlas);
   // A street/pin transaction may have completed while the directory was built.
   // Return this snapshot, but do not cache it against a newer atlas revision.
-  if(data===atlas.data&&data?.revision===revision)directory.cached={signature,data,revision,file:currentFile,result:owned};
+  if(data===atlas.data&&data?.revision===revision&&queue===atlas.queue&&atlas.file&&!isDeepStrictEqual(persisted.data,JSON.parse(JSON.stringify(result.atlas)))){
+   // An external restore can land after buildWorldDirectory's last transaction.
+   // Never tag that older result with the restored file's generation. Wait for
+   // in-process transactions before invalidating, preserving any newer owner.
+   directory.cached=null;
+   await atlas.queue;
+   if(data===atlas.data&&data?.revision===revision)atlas.data=null;
+   continue;
+  }
+  const owned=freezeDirectory(structuredClone(result));
+  if(data===atlas.data&&data?.revision===revision&&queue===atlas.queue)directory.cached={signature,data,revision,file:persisted.file,result:owned};
   return readonly?owned:result;
+ }
+ throw unstableAtlas();
  });
  directory.queue=operation.then(()=>{},()=>{});return operation;
 }
