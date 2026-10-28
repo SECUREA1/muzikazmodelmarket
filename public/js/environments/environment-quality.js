@@ -6,12 +6,50 @@ export const QUALITY_PRESETS = {
   high: { pixelRatio: 2, shadows: true, exposure: 1.12, shadowSize: 2048 }
 };
 
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|swrast|software rasterizer|microsoft basic render driver|\bwarp\b/i;
+// A low-power map context can select a different adapter from the main view.
+const softwarePreflight = new Map();
+
+function softwareContext(context) {
+  if (!context?.getParameter) return false;
+  try {
+    let debug = null;
+    try { debug = context.getExtension('WEBGL_debug_renderer_info'); } catch { /* Privacy settings may mask this extension. */ }
+    const name = context.getParameter(debug?.UNMASKED_RENDERER_WEBGL ?? context.RENDERER);
+    return SOFTWARE_RENDERER.test(String(name || ''));
+  } catch { return false; }
+}
+
+// Antialiasing is chosen when the renderer's context is created. Discover a
+// software adapter first so automatic desktop mode uses the complete existing
+// performance path, rather than only disabling shadows after creation.
+export function softwareRendererRequiresPerformance({powerPreference = 'high-performance'} = {}) {
+  if (softwarePreflight.has(powerPreference)) return softwarePreflight.get(powerPreference);
+  if (typeof document === 'undefined' || !document.createElement) return false;
+  let context = null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const options = {alpha: false, antialias: false, powerPreference};
+    context = canvas.getContext('webgl2', options) || canvas.getContext('webgl', options);
+    softwarePreflight.set(powerPreference, softwareContext(context));
+  } catch { softwarePreflight.set(powerPreference, false); }
+  finally {
+    try { context?.getExtension('WEBGL_lose_context')?.loseContext(); } catch { /* The temporary context may already be lost. */ }
+  }
+  return softwarePreflight.get(powerPreference);
+}
+
+function softwareRenderer(renderer) {
+  try { return softwareContext(renderer?.getContext?.()); } catch { return false; }
+}
+
 export function chooseQualityPreset(name = 'auto', renderer = null) {
   if (name !== 'auto') return QUALITY_PRESETS[name] || QUALITY_PRESETS.balanced;
   const mobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const limitedCpu = Number(navigator.hardwareConcurrency || 8) <= 4;
   const limitedGpu = Number(renderer?.capabilities?.maxTextureSize || 8192) < 4096;
-  if (renderer?.xr?.isPresenting || mobile || limitedCpu || limitedGpu) return QUALITY_PRESETS.performance;
+  if (renderer?.xr?.isPresenting || mobile || limitedCpu || limitedGpu || softwareRenderer(renderer)) return QUALITY_PRESETS.performance;
   return QUALITY_PRESETS.balanced;
 }
 

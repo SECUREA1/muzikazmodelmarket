@@ -170,7 +170,7 @@ import {clone as cloneGameSkeleton} from '../vendor/three/addons/utils/SkeletonU
 import {fetchPublishedModels,absoluteUrl} from './model-api.js';
 import {normalizeEnvironmentList,EnvironmentRegistry} from './environments/environment-registry.js';
 import {EnvironmentLoader} from './environments/environment-loader.js';
-import {configureRenderer} from './environments/environment-quality.js';
+import {configureRenderer,softwareRendererRequiresPerformance} from './environments/environment-quality.js';
 import {logEnvironment} from './environments/environment-api.js';
 import {FLOOR_ENTRY_OFFSET,alignPointAboveFloor} from './environments/environment-collision.js';
 import {fetchGitHubGlbFiles,mergeGitHubAvatarFiles} from './github-glb-discovery.js';
@@ -507,7 +507,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // starts a high-resolution, shadowed render loop. Keep its desktop gameplay
   // path intact, but use the already-supported performance renderer settings.
   const firefoxSafeMode = isFirefox && !mobileQualityMode;
-  const performanceMode = mobileQualityMode || firefoxSafeMode;
+  const performanceMode = mobileQualityMode || firefoxSafeMode || softwareRendererRequiresPerformance();
   // Quest and other standalone headsets report a coarse pointer, which selects
   // our lower-cost renderer. That must not disable WebXR: the headset browser
   // still needs to be able to start an immersive session.

@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import {OrbitControls} from '../vendor/three/addons/controls/OrbitControls.js';
 import {localMapTags} from './local-map-tags.js';
+import {softwareRendererRequiresPerformance} from './environments/environment-quality.js';
 // Three.js retains the uniform table used to compile a material. Update those
 // entries in place so live values reach its renderer without recompiling it.
 function syncMapUniformValue(source,target,texture,markChanged){
@@ -117,7 +118,7 @@ export async function mountLocalMap3D(root,{environment,getRoots=null,live=null,
  let disposed=false,frame=0,mirror=null,ownedLoader=null,ownedDecor=null,liveState=live,viewerId=selfId,lastRebuild=0,needsRender=true,tagSignature='';
  const resources=createMapResources();
  const scene=new THREE.Scene();scene.background=new THREE.Color(presentation.background||'#0c242b');scene.add(new THREE.HemisphereLight(0xe4f7ff,0x4b6149,2.5));const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.set(100,250,80);scene.add(sun);
- const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.domElement.setAttribute('aria-label',environment.name+' accurate 3D local map');renderer.domElement.setAttribute('role','img');
+ const renderer=new THREE.WebGLRenderer({antialias:!softwareRendererRequiresPerformance({powerPreference:'low-power'}),powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.domElement.setAttribute('aria-label',environment.name+' accurate 3D local map');renderer.domElement.setAttribute('role','img');
  const viewport=document.createElement('div');viewport.className='local-map-3d-viewport';const labels=document.createElement('div');labels.className='local-map-3d-tags';const compass=document.createElement('span');compass.className='local-map-compass';compass.textContent='↑ N';compass.title='North is negative world Z';viewport.append(renderer.domElement,labels,compass);
  const toolbar=document.createElement('div');toolbar.className='local-map-3d-controls';toolbar.setAttribute('role','group');toolbar.setAttribute('aria-label','3D map controls');
  const makeButton=(text,run)=>{const button=document.createElement('button');button.type='button';button.textContent=text;button.onclick=run;toolbar.append(button);return button;};

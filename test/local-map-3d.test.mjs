@@ -1,7 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {mirrorMapMeshes} from '../public/js/local-map-3d.js';
+
+// Exercise the actual mount path and the actual adapter helper. Stopping at
+// renderer construction keeps these policy cases independent of a GPU/DOM.
+const qualitySource=await readFile(new URL('../public/js/environments/environment-quality.js',import.meta.url),'utf8');
+const mapSource=await readFile(new URL('../public/js/local-map-3d.js',import.meta.url),'utf8');
+const withoutModuleSyntax=source=>source.replace(/^import .*;\n/gm,'').replace(/export /g,'');
+for(const {name,masked=false,antialias}of [
+ {name:'ANGLE (Google, Vulkan (SwiftShader Device))',antialias:false},
+ {name:'ANGLE (NVIDIA GeForce RTX)',antialias:true},
+ {name:'SwiftShader',masked:true,antialias:true}
+])test('3D map retains low-power adapter and chooses antialiasing for '+(masked?'masked GPU':name),async()=>{
+ let options,probeOptions,released=0;
+ const stopped=new Error('renderer construction observed'),gl={RENDERER:1,
+  getExtension(extension){if(extension==='WEBGL_debug_renderer_info')return masked?null:{UNMASKED_RENDERER_WEBGL:2};if(extension==='WEBGL_lose_context')return {loseContext(){released++;}};return null;},
+  getParameter(key){return key===2?name:'WebKit WebGL';}
+ };
+ const context=vm.createContext({THREE:{...THREE,WebGLRenderer:class{constructor(value){options=value;throw stopped;}}},
+  document:{createElement(kind){assert.equal(kind,'canvas');return {getContext(kind,value){assert.equal(kind,'webgl2');probeOptions=value;return gl;}};}}
+ });
+ vm.runInContext(withoutModuleSyntax(qualitySource)+'\n'+withoutModuleSyntax(mapSource)+'\nglobalThis.mount=mountLocalMap3D;',context);
+ await assert.rejects(context.mount({}, {environment:{name:'Policy fixture'},getRoots:()=>[]}),error=>error===stopped);
+ assert.equal(options.antialias,antialias);
+ assert.equal(options.powerPreference,'low-power');
+ assert.equal(probeOptions.powerPreference,'low-power','probe the adapter the map will actually request');
+ assert.equal(probeOptions.antialias,false,'the temporary capability probe stays lightweight');
+ assert.equal(released,1,'the temporary context is released before map renderer construction');
+});
+
 test('map owns disposable wrappers while sharing transformed game mesh data',()=>{
  const texture=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1);texture.needsUpdate=true;
  const parent=new THREE.Group(),root=new THREE.Group(),geometry=new THREE.BoxGeometry(2,3,4),material=new THREE.MeshBasicMaterial({map:texture}),mesh=new THREE.Mesh(geometry,material);parent.position.set(10,2,-8);root.rotation.y=.7;root.scale.setScalar(2);mesh.position.set(3,0,9);parent.add(root);root.add(mesh);

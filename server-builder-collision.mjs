@@ -54,6 +54,14 @@ function indexCollisionMeshes(meshes){
 function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(index.large);for(let x=Math.floor(minX/8);x<=Math.floor(maxX/8);x++)for(let z=Math.floor(minZ/8);z<=Math.floor(maxZ/8);z++)for(const mesh of index.cells.get(x+':'+z)||[])found.add(mesh);return nearCollisionMeshes([...found],minX,maxX,minZ,maxZ);}
 
 
+// These predicates are shared by ordinary shot queries and the short-lived
+// three-ray boat view. Keep range, open/held actor and GLB semantics identical.
+function shotBlockedByView(world,placed,actors,origin,direction,distance){
+ const start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
+ if(placed.boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
+ if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
+ return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+}
 function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)&&!isConstructionMachine(actor)&&!actor.constructionManaged));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
 const wallTriangleCache=new WeakMap();
@@ -292,12 +300,24 @@ export class ServerBuilderCollision {
   const id=hit&&builderObjectId(hit.object),actor=actors[id];
   return actor?.destructible&&actor.active!==false?{entity:actor,along:hit.distance}:null;
  }
+ withShotCollisionView(environment,actors={},objects={},callback){
+  // Borrow one current view only during this synchronous callback. Never keep
+  // it for a boat-assist closure: actors can join, leave or move between calls.
+  // The caller must not mutate actors or geometry inside the borrowed callback.
+  const hasGeometry=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
+  const nativeShot=this.blocksShot===ServerBuilderCollision.prototype.blocksShot;
+  const world=nativeShot&&hasGeometry?this.world(environment):null,placed=nativeShot&&hasGeometry?this.placedWorld(actors,objects,environment):null;
+  let active=true;
+  try{return callback((origin,direction,distance)=>{
+   if(!active)throw new Error('Shot collision views are synchronous and cannot escape their callback.');
+   // Preserve instance/subclass overrides rather than bypassing custom logic.
+   if(!nativeShot)return this.blocksShot(environment,origin,direction,distance,actors,objects);
+   return hasGeometry?shotBlockedByView(world,placed,actors,origin,direction,distance):false;
+  });}finally{active=false;}
+ }
  blocksShot(environment,origin,direction,distance,actors={},objects={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
-  const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
-  if(this.placedWorld(actors,objects,environment).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
-  if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
-  return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+  return shotBlockedByView(this.world(environment),this.placedWorld(actors,objects,environment),actors,origin,direction,distance);
  }
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects,earthworks}={}){
   const world=this.world(environment),bounds=world.bounds,earth=constructionGroundWorld(earthworks);
