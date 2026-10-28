@@ -170,3 +170,53 @@ test('radio traffic while login is pending cannot evict the map guide',()=>{
  assert.equal(spoken.length,1);assert.equal(spoken[0].text,'Welcome and map guidance.');
  spoken[0].onend();assert.equal(spoken.length,1);voice.dispose();
 });
+
+test('a denied audio unlock preserves the unheard welcome until the next gesture',()=>{
+ const {voice,spoken}=fixture();
+ announce(voice,'Welcome after audio is enabled.','introduction');voice.unlock();
+ spoken[0].onerror({error:'not-allowed',message:'Tap to enable audio.'});
+ assert.equal(voice.state.unlocked,false);assert.equal(voice.state.speaking,false);assert.equal(voice.state.pending,1);
+ assert.equal(spoken.length,1,'a blocked output never loops its retries');
+ voice.unlock();assert.equal(spoken.length,2);assert.equal(spoken[1].text,spoken[0].text);
+ spoken[0].onend();assert.equal(voice.state.speaking,true,'the failed attempt cannot finish the retry');
+ spoken[1].onstart();spoken[1].onend();voice.unlock();assert.equal(spoken.length,2,'a completed guide is never replayed by movement');voice.dispose();
+});
+
+test('a denied NPC line retains its queued follow-up and mute can still discard both',()=>{
+ const {voice,spoken}=fixture();voice.unlock();
+ announce(voice,'An unheard NPC reply.','dialogue');announce(voice,'The NPC follow-up.','dialogue');
+ spoken[0].onerror({error:'not-allowed'});assert.equal(voice.state.pending,2);
+ voice.setPreferences({dialogueMuted:true});assert.equal(voice.state.pending,0);
+ voice.unlock();assert.equal(spoken.length,1);voice.dispose();
+});
+
+test('a new map discards a blocked welcome and replay resumes the actual output',()=>{
+ let resumes=0;const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),resume(){resumes++;},cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ voice.unlock();announce(voice,'Old welcome.','introduction');spoken[0].onerror({error:'not-allowed'});
+ voice.announce('Current welcome.',{worldId:'current-map',category:'introduction'});voice.unlock();
+ assert.equal(spoken[1].text,'Current welcome.');spoken[1].onend();
+ assert.equal(voice.replay(),true);assert.equal(resumes,3);assert.equal(spoken.at(-1).text,'Current welcome.');voice.dispose();
+});
+
+test('resuming audio can reject without an unhandled rejection or discarding a waiting welcome',async()=>{
+ const spoken=[],voice=createQuestConversationVoice({speech:{getVoices:()=>GENERATED_VOICES,speak:line=>spoken.push(line),resume:()=>Promise.reject(new Error('Activation required')),cancel(){}},Utterance:class{constructor(text){this.text=text;}},setTimer:()=>1,clearTimer(){}});
+ announce(voice,'A waiting welcome.','introduction');const unlocked=voice.unlock();
+ spoken[0].onerror({error:'not-allowed'});assert.equal(await unlocked,false);
+ assert.equal(voice.state.unlocked,false);assert.equal(voice.state.pending,1);voice.dispose();
+});
+
+test('voice state exposes actual generated output readiness and errors',()=>{
+ const speech={getVoices:()=>GENERATED_VOICES,speak(){},resume(){},cancel(){},state:{unlocked:false,loading:false,error:{message:'Tap to resume.'},status:'Tap to resume.'}};
+ const voice=createQuestConversationVoice({speech,Utterance:class{},setTimer:()=>1,clearTimer(){}});voice.unlock();
+ assert.equal(voice.state.audioReady,false);assert.equal(voice.state.error.message,'Tap to resume.');
+ speech.state={unlocked:true,loading:true,error:null,status:'Generating voice…'};
+ assert.equal(voice.state.audioReady,true);assert.equal(voice.state.loading,true);assert.equal(voice.state.status,'Generating voice…');voice.dispose();
+});
+
+test('generated sentence boundaries allow each next sentence its generation budget',()=>{
+ const {voice,spoken,delays,timers}=fixture();voice.unlock();announce(voice,'A long guide with several generated sentences.','introduction');
+ spoken[0].onstart();spoken[0].onboundary({name:'sentence',audioDuration:8,remainingSegments:2});
+ assert.equal(delays.at(-1),73000);assert.equal(timers.size,1);
+ spoken[0].onboundary({name:'sentence',audioDuration:4,remainingSegments:0});assert.equal(delays.at(-1),9000);assert.equal(timers.size,1);
+ spoken[0].onend();assert.equal(timers.size,0);voice.dispose();
+});

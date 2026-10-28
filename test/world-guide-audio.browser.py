@@ -60,13 +60,14 @@ try:
         first_peak = page.evaluate('peak()')
         assert first_peak > .0001, first_peak
         assert 'Public Commons' in requests[0]['text']
+        first_guide_requests = len(requests)
         page.evaluate("arrive('commons','Public Commons')")
-        assert len(requests) == 1, 'Unchanged snapshots repeated the map guide'
+        assert len(requests) == first_guide_requests, 'Unchanged snapshots repeated the map guide'
         page.evaluate("arrive('airport','MUZIKAZ Airport',{airport:{enabled:true}})")
         page.wait_for_function("speech.speaking && speech.status.startsWith('Playing')")
         page.wait_for_function("voice.state.speaking && !speech.pending")
-        assert len(requests) == 2
-        assert 'MUZIKAZ Airport' in requests[-1]['text']
+        assert len(requests) > first_guide_requests
+        assert 'MUZIKAZ Airport' in requests[first_guide_requests]['text']
         travel_peak = page.evaluate('peak()')
         assert travel_peak > .0001, travel_peak
         page.evaluate('voice.setMuted(true)')

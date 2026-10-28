@@ -76,3 +76,37 @@ test('request timeouts abort pending synthesis and disposal stops playing audio'
  const deadline=[...f.timers.values()][0];deadline.fn();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.calls[0].options.signal.aborted,true);assert.equal(f.engine.pending,false);f.engine.dispose();
  const playing=fixture();await playing.engine.resume();playing.engine.speak(new GameSpeechUtterance('Stop on leaving the page.'));await tick();playing.engine.dispose();assert.equal(playing.sources[0].stopped,1);assert.equal(playing.context.state,'closed');assert.equal(playing.intervals.size,0);
 });
+
+test('a later touch gesture releases speech even if the first resume promise never settles',async()=>{
+ const f=fixture(),first=deferred();let attempts=0;
+ f.context.resume=function(){if(++attempts===1)return first.promise;this.state='running';return Promise.resolve();};
+ const initiallyPending=f.engine.resume();f.engine.speak(new GameSpeechUtterance('The welcome was not lost.'));await tick();
+ assert.equal(f.calls.length,0);assert.equal(f.engine.pending,true);
+ assert.equal(await f.engine.resume(),true);assert.equal(await initiallyPending,true);await tick();
+ assert.equal(attempts,2);assert.equal(f.sources[0].started,1);assert.equal(f.engine.state.unlocked,true);
+ first.reject(Error('Stale pointerdown refusal'));await tick();assert.equal(f.engine.state.unlocked,true);assert.equal(f.engine.lastError,null);f.engine.dispose();
+});
+
+test('long guides start at a sentence boundary and prefetch only one upcoming segment',async()=>{
+ const f=fixture(),line='Welcome to the island. '+('Follow the marked route to find a boat and choose a job from the local map. ').repeat(5).trim();
+ const utterance=new GameSpeechUtterance(line),events=[],boundaries=[];
+ utterance.onstart=()=>events.push('start');utterance.onend=()=>events.push('end');utterance.onboundary=event=>boundaries.push(event);
+ await f.engine.resume();f.engine.speak(utterance);await tick();
+ assert.deepEqual(events,['start']);assert.equal(f.sources.length,1);assert.equal(f.calls.length,2,'Only the playing segment and its successor are requested.');
+ assert.ok(JSON.parse(f.calls[0].options.body).text.endsWith('.'));
+ let played=0;
+ while(f.engine.speaking){assert.ok(++played<10);f.sources.at(-1).onended();await tick();}
+ assert.equal(f.calls.map(call=>JSON.parse(call.options.body).text).join(' '),line);
+ assert.ok(f.calls.every(call=>JSON.parse(call.options.body).text.length<=180));
+ assert.deepEqual(events,['start','end']);assert.equal(boundaries.length,played);assert.equal(boundaries.at(-1).remainingSegments,0);assert.equal(f.intervals.size,0);
+ assert.ok(f.sources.every(source=>source.disconnected===1));f.engine.dispose();
+});
+
+test('canceling a segmented guide stops current audio and aborts its prefetched successor',async()=>{
+ const pending=deferred();let requests=0;
+ const f=fixture({request:()=>++requests===1?{ok:true,arrayBuffer:async()=>new ArrayBuffer(48)}:pending.promise});
+ await f.engine.resume();const utterance=new GameSpeechUtterance('Welcome to the map. '+('Use the local map to find a new job. ').repeat(8));let starts=0;utterance.onstart=()=>starts++;
+ f.engine.speak(utterance);await tick();assert.equal(f.calls.length,2);assert.equal(starts,1);
+ const successor=f.calls[1].options.signal;f.engine.cancel();assert.equal(successor.aborted,true);assert.equal(f.sources[0].stopped,1);assert.equal(f.sources[0].onended,null);
+ pending.resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(48)});await tick();assert.equal(f.sources.length,1);assert.equal(f.engine.speaking,false);assert.equal(f.timers.size,0);f.engine.dispose();
+});

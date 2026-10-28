@@ -20,8 +20,7 @@ try:
         browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--enable-unsafe-swiftshader'])
         for name,path,ready,start in [
             ('Hockey','hockey.html?mode=solo','window.MuzikazHockey&&MuzikazHockey.snapshot().ready','#start'),
-            ('Arcade','arcade.html?environment=neon-junction&mode=solo','window.NeonJunction&&NeonJunction.ready','#camera-toggle'),
-            ('Island','tropical-island.html','window.islandAdventure&&islandAdventure.ready','#start-button')
+            ('Arcade','arcade.html?environment=neon-junction&mode=solo','window.NeonJunction&&NeonJunction.ready','#camera-toggle')
         ]:
             page=browser.new_page(viewport={'width':1100,'height':780});errors=[];spoken=[]
             page.on('pageerror',lambda error:errors.append(str(error)))
@@ -39,19 +38,23 @@ try:
             page.goto(f'http://127.0.0.1:{server.server_port}/'+path,wait_until='domcontentloaded')
             page.wait_for_function(ready,timeout=60000)
             assert not spoken,(name,'guide spoke before control gesture')
+            page.evaluate('async()=>{window.nativeTestSpeech=(await import("/public/js/neural-character-speech.js")).gameSpeech();}')
             page.locator(start).click()
-            try: page.wait_for_function('voiceEnds>=1',timeout=15000)
+            try: page.wait_for_function('voiceEnds>=1&&!nativeTestSpeech.speaking&&!nativeTestSpeech.pending',timeout=15000)
             except Exception:
                 print(name, {'errors':errors,'spoken':spoken,'audio':page.evaluate('async()=>({starts:voiceStarts,ends:voiceEnds,status:document.querySelector("#status")?.textContent,controls:document.querySelector(".native-world-guide-audio")?.textContent,voice:(await import("/public/js/quest-conversation-voice.js")).questConversationVoice().state,speech:(await import("/public/js/neural-character-speech.js")).gameSpeech().state,snapshot:window.MuzikazHockey?.snapshot()})')},flush=True)
                 raise
-            assert page.evaluate('voiceStarts')==['running'],(name,page.evaluate('voiceStarts'))
-            assert len(spoken)==1,(name,spoken)
+            starts=page.evaluate('voiceStarts')
+            assert starts and all(state=='running' for state in starts),(name,starts)
+            assert len(starts)==len(spoken),(name,starts,spoken)
+            assert sum(text.startswith('Welcome to') for text in spoken)==1,(name,spoken)
             assert 'Welcome to' in spoken[0],(name,spoken)
+            guide_requests=len(spoken)
             page.keyboard.press('w');page.keyboard.press('w')
             page.wait_for_timeout(200)
-            assert len(spoken)==1,(name,'movement repeated introduction')
+            assert len(spoken)==guide_requests,(name,'movement repeated introduction')
             assert not errors,(name,errors)
             page.close()
         browser.close()
-    print('Hockey, arcade and island guides wait for readiness and gesture, decode WAV into a running AudioContext, complete playback and avoid repeated input announcements.')
+    print('Hockey and arcade guides wait for readiness and gesture, decode each speech sentence into a running AudioContext, complete playback and avoid repeated input announcements. Island entry uses the shared explorer.')
 finally:server.shutdown()

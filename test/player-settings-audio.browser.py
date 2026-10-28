@@ -34,10 +34,13 @@ try:
    ];
    window.settingsSpeech = new EventTarget();
    window.settingsSpeech.getVoices = () => [...window.generatedVoiceFixtures, ...window.installedVoiceFixtures];
+   window.audioResumeCalls = [];
+   window.settingsSpeech.resume = () => { window.audioResumeCalls.push({active:navigator.userActivation.isActive, previewCalls:window.voicePreviewCalls.length}); return Promise.resolve(true); };
+   window.settingsPutCalls = 0;
    window.voicePreviewCalls = [];
    window.failSettingsLoad = false;
    const inventory = {
-    async api(path, options) { if (window.failSettingsLoad) throw Error('Sign in to save member settings.'); if (options?.method === 'PUT') window.savedAudioSettings = JSON.parse(options.body).settings; return {owner_id:'member', settings:window.savedAudioSettings}; },
+    async api(path, options) { if (window.failSettingsLoad) throw Error('Sign in to save member settings.'); if (options?.method === 'PUT') { window.settingsPutCalls++; window.savedAudioSettings = JSON.parse(options.body).settings; } return {owner_id:'member', settings:window.savedAudioSettings}; },
     async session() { return {owner_id:'member', csrfToken:'test'}; },
     async state() { return {owner_id:'member', balance:0, items:[], stats:{}, history:[]}; }
    };
@@ -99,6 +102,62 @@ try:
   page.get_by_role('button', name='Preview voice', exact=True).click()
   page.wait_for_function('window.voicePreviewCalls.length === 3')
   assert page.evaluate('window.voicePreviewCalls[2].speechVoiceURI') == 'muzikaz:neural-female'
+  # Explicit recovery works for a guest with saved mutes and zero effects volume.
+  # It starts AudioContext resume during the click and keeps unrelated preferences.
+  page.locator('[data-player-setting=effectsVolume]').fill('0')
+  page.locator('[data-player-setting=mouseSensitivity]').fill('1.75')
+  page.get_by_role('button', name='Enable all audio', exact=True).click()
+  page.wait_for_function('window.voicePreviewCalls.length === 4')
+  assert page.evaluate('window.audioResumeCalls.length') == 1
+  assert page.evaluate('window.audioResumeCalls[0].active && window.audioResumeCalls[0].previewCalls === 3')
+  assert page.evaluate("['masterMuted','introductionMuted','announcementsMuted','dialogueMuted','effectsMuted','mediaMuted'].every(key=>window.voicePreviewCalls[3][key]===false)")
+  assert page.evaluate('window.voicePreviewCalls[3].effectsVolume') == 100
+  assert page.evaluate('window.voicePreviewCalls[3].mouseSensitivity') == 1.75
+  assert page.evaluate('window.voicePreviewCalls[3].spatialAudio') is False
+  assert page.evaluate('window.voicePreviewCalls[3].speechVoiceURI') == 'muzikaz:neural-female'
+  assert page.evaluate('window.settingsPutCalls') == 1, 'Recovery must not save settings without an explicit Save action'
+  assert page.evaluate('window.settingsUI.dirty') is True
+  assert page.locator('[data-settings-status]').inner_text() == 'All audio enabled for this session. Save to keep these preferences.'
+  # A missing saved device selection is repaired only by explicit recovery.
+  gender.select_option('male')
+  installed.select_option('guy')
+  page.evaluate("window.installedVoiceFixtures=[];window.settingsSpeech.dispatchEvent(new Event('voiceschanged'))")
+  assert installed.input_value() == 'guy'
+  page.get_by_role('button', name='Enable all audio', exact=True).click()
+  page.wait_for_function('window.voicePreviewCalls.length === 5')
+  assert page.evaluate('window.voicePreviewCalls[4].speechVoiceURI') == ''
+  assert page.evaluate('window.voicePreviewCalls[4].speechVoiceGender') == 'male'
+  # Engine events expose actual generation or playback errors in settings.
+  page.evaluate("window.settingsSpeech.state={loading:true,status:'Generating male voice…'};window.settingsSpeech.dispatchEvent(new Event('statechange'))")
+  assert page.locator('[data-voice-preview-status]').inner_text() == 'Generating male voice…'
+  page.evaluate("window.settingsSpeech.state={error:{message:'Tap Enable all audio to retry playback.'}};window.settingsSpeech.dispatchEvent(new Event('statechange'))")
+  assert page.locator('[data-voice-preview-status]').inner_text() == 'Tap Enable all audio to retry playback.'
+  page.evaluate("() => { window.settingsSpeech.state={unlocked:false};window.settingsSpeech.resume=()=>Promise.reject(Error('Blocked')); }")
+  page.get_by_role('button', name='Enable all audio', exact=True).click()
+  page.wait_for_function('window.voicePreviewCalls.length === 6')
+  page.wait_for_function("document.querySelector('[data-voice-preview-status]').textContent === 'Audio could not resume. Tap Enable all audio again.'")
+  # Mobile resume can stay pending until a later gesture. Keep the recovery
+  # control clickable while preserving the one in-flight preview.
+  page.evaluate('''() => {
+   window.pendingResumeCalls=[];
+   let release;
+   const pending=new Promise(resolve=>{release=resolve;});
+   window.settingsSpeech.resume=()=>{
+    pendingResumeCalls.push(navigator.userActivation.isActive);
+    if(pendingResumeCalls.length===2)release(true);
+    return pending;
+   };
+  }''')
+  recovery=page.get_by_role('button', name='Enable all audio', exact=True)
+  recovery.click()
+  page.wait_for_function('window.voicePreviewCalls.length === 7')
+  assert recovery.is_enabled(), 'A pending resume must allow another activation gesture'
+  assert page.get_by_role('button', name='Preview voice', exact=True).is_disabled()
+  recovery.click()
+  page.wait_for_function("!document.querySelector('[data-settings-preview-voice]').disabled")
+  assert page.evaluate('window.pendingResumeCalls') == [True, True]
+  assert page.evaluate('window.voicePreviewCalls.length') == 7, 'A recovery tap must not duplicate the pending preview'
+  assert page.locator('[data-voice-preview-status]').inner_text() == 'Preview using male voice.'
   assert not errors, errors
   page.evaluate('''async () => {
    window.settingsUI.close();
@@ -113,6 +172,6 @@ try:
   assert 'Automatic uses a MUZIKAZ generated voice' in page.locator('[data-voice-availability]').inner_text()
   assert not errors, errors
   browser.close()
-  print('Audio and voice settings, filtered live voice list, preview callbacks, save/reset/restore and guest preview passed.')
+  print('Audio settings, live voice selection, saved mutes, explicit guest audio recovery, activation, truthful engine status and save/reset/restore passed.')
 finally:
  server.shutdown()
