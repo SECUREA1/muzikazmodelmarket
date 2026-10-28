@@ -66,7 +66,7 @@ const report = {schemaVersion:1, startedAt:new Date().toISOString(), profile, du
     cgroupCpuMax:await optionalFile('/sys/fs/cgroup/cpu.max'),cgroupMemoryMax:await optionalFile('/sys/fs/cgroup/memory.max')},
   methodology:{target:'loopback HTTP, separate server process', accountSetup:'synthetic accounts created using real account/user/session store APIs before timing', inputIntervalMs:50,
     scheduler:'per-client 20 Hz offered slots; at most one in-flight input per client; skipped slots counted',
-    snapshotProtocol:'Protocol 2, matching the current browser client; exact hydrated state is validated. Input timing and deadline delivery include hydration.',
+    snapshotProtocol:'Protocol 2 with negotiated exact decor-actor reuse, matching the current browser client; complete hydrated state is validated. Input timing and deadline delivery include hydration.',
     stageIsolation:'fresh server and identical seeded accounts/users/sessions before every stage; only that stage actors plus a spare are authenticated before timing',
     stageWallBudgetSeconds:stageSeconds,
     scope:'one server process; movement/snapshot pressure, selected mixed fire/economy writes, sports inputs; no vehicle-driving/GPU/render/VR/WAN benchmark; no production traffic or payments',
@@ -170,7 +170,7 @@ async function run(scenario, actors) {
     actor.roomId=roomIds[scenario.rooms?Math.floor(index/15):0];actor.sequence=0;actor.busy=false;actor.joined=false;actor.successfulInputs=0;actor.snapshot=null;
   }
   const generalWorld=!['hockey','arcade'].includes(scenario.kind);
-  const controlsProtocol=actor=>({snapshotMode:'compact',snapshotProtocol:2,snapshotAcknowledgements:snapshotAcknowledgements(actor.snapshot),sceneVersion:actor.sceneVersion,actorSetRevision:actor.actorSetRevision,earthworksRevision:actor.snapshot?.construction?.earthworks?.revision});
+  const controlsProtocol=actor=>({snapshotMode:'compact',snapshotProtocol:2,snapshotDecorActors:true,snapshotAcknowledgements:snapshotAcknowledgements(actor.snapshot),sceneVersion:actor.sceneVersion,actorSetRevision:actor.actorSetRevision,earthworksRevision:actor.snapshot?.construction?.earthworks?.revision});
   const updateProof=(actor,data,baseline=actor.snapshot)=>{
     if(generalWorld){
       if(actor.snapshot&&Number.isFinite(data.sequence)&&data.sequence<=actor.snapshot.sequence)return actor.snapshot;

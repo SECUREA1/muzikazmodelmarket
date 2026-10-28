@@ -10,6 +10,15 @@ async def snapshot_state(page):
     return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
 
+async def reveal_view_control(page, control):
+    # Narrow screens place these existing controls behind the visible More button.
+    if not await control.is_visible():
+        more = page.get_by_role('button', name='More view controls', exact=True)
+        if await more.is_visible() and await more.get_attribute('aria-expanded') != 'true':
+            await more.click()
+    await control.wait_for(state='visible')
+
+
 async def main():
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
@@ -76,6 +85,7 @@ async def main():
                         # Closing a resident conversation deliberately restores focus
                         # to its toggle. Movement must work without clicking the canvas.
                         residents = page.get_by_role('button', name='Residents, conversations and daily objectives', exact=True)
+                        await reveal_view_control(page, residents)
                         await residents.click()
                         assert not (await snapshot_state(page))['player']['inputBlocked'], 'Open people panel locked gameplay.'
                         await walk_from_focused_control('open residents')
@@ -88,13 +98,18 @@ async def main():
                         assert not await page.locator('#house-explorer-canvas').evaluate('canvas=>!!canvas.closest("[inert]")')
                         await page.locator('.district-map-toggle').click()
                         await page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
-                        await page.get_by_role('button', name='Close resident conversations', exact=True).click()
+                        close_residents = page.get_by_role('button', name='Close resident conversations', exact=True)
+                        await reveal_view_control(page, close_residents)
+                        await close_residents.click()
                         await walk_from_focused_control('residents')
 
                         radio = page.get_by_role('button', name='Crew radio and vehicle quests', exact=True)
+                        await reveal_view_control(page, radio)
                         await radio.click()
                         await walk_from_focused_control('open crew radio', 's')
-                        await page.get_by_role('button', name='Close crew radio', exact=True).click()
+                        close_radio = page.get_by_role('button', name='Close crew radio', exact=True)
+                        await reveal_view_control(page, close_radio)
+                        await close_radio.click()
                         await walk_from_focused_control('radio', 's')
 
                         mini = page.locator('.live-local-map [data-collapse]')
@@ -147,7 +162,9 @@ async def main():
                         await dialog.wait_for(state='hidden')
                         assert await page.locator('.district-map-toggle').is_enabled(), 'Boarding must expose controls and keep the map available.'
                         functions_name = 'Show flight controls' if world == 'muzikaz-airport' else 'Show boat functions'
-                        await page.get_by_role('button', name=functions_name, exact=True).click()
+                        functions = page.get_by_role('button', name=functions_name, exact=True)
+                        await reveal_view_control(page, functions)
+                        await functions.click()
                         exit_vehicle = page.get_by_role('button', name='Exit parked aircraft', exact=True) if world == 'muzikaz-airport' else page.get_by_role('button', name='Leave stopped boat', exact=True)
                         await exit_vehicle.wait_for(state='visible')
                         await exit_vehicle.click()
@@ -168,7 +185,10 @@ async def main():
                             await nearby.dispatch_event('click',{'detail':1})
                             await page.wait_for_timeout(150)
                             assert (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['vehicleActive'], 'Delayed touch click undid dock boarding.'
-                            if not await exit_vehicle.is_visible():await page.get_by_role('button',name='Show boat functions',exact=True).click()
+                            if not await exit_vehicle.is_visible():
+                                functions = page.get_by_role('button', name='Show boat functions', exact=True)
+                                await reveal_view_control(page, functions)
+                                await functions.click()
                             await exit_vehicle.click()
                             await exit_vehicle.wait_for(state='hidden')
                         await page.locator('#house-explorer-canvas').focus()

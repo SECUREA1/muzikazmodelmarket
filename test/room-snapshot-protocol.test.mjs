@@ -117,3 +117,121 @@ test('more than64 active worlds retain both negotiated and legacy membership ack
   assert.equal(compactRoomSnapshot(full(2),{action:'input',snapshotMode:'compact',sceneVersion:'scene-1',actorSetRevision:legacy.actorSetRevision},env).actorIds,undefined);
  }
 });
+
+const decorRequest=baseline=>({...request(baseline),snapshotDecorActors:true});
+function decorRoundtrip(state,previous,encoder=compactRoomSnapshot,env=environment){return hydrateRoomSnapshot(wire(encoder(state,decorRequest(previous),env)),previous);}
+
+test('opted-in decor reuse omits complete unchanged records while retaining every hydrated actor and field',()=>{
+ const encoder=createRoomSnapshotEncoder(),state=full();
+ state.actors=Object.fromEntries(Array.from({length:1000},(_,index)=>['decor-'+index,{
+  id:'decor-'+index,position:{x:index,y:0,z:-index},rotation:{y:index/100},scale:{x:1,y:1,z:1},health:160,active:true,open:false,
+  definition:{gameplay:{behavior:'decor'},shape:'authored shape '+index},asset:{id:'asset-'+index},futureFeature:{parts:[index,'retained']}
+ }]));
+ state.actors.resident={id:'resident',position:{x:2,y:0,z:3},resident:{name:'Resident'},definition:{gameplay:{behavior:'decor'}}};
+ state.actors.traffic={id:'traffic',position:{x:3},trafficAI:true,definition:{gameplay:{behavior:'decor'}}};
+ state.actors.crew={id:'crew',position:{x:4},constructionManaged:true,definition:{gameplay:{behavior:'decor'}}};
+ state.actors.unknown={id:'unknown',futureFeature:{preserve:true}};
+ const baseline=decorRoundtrip(state,null,encoder),next=wire(state);next.sequence=2;next.actors.resident.position.x=9;
+ const packet=wire(encoder(next,decorRequest(baseline),environment));
+ assert.deepEqual(Object.keys(packet.actors).sort(),['crew','resident','traffic','unknown']);
+ assert.equal(packet.snapshotDecorActors,undefined);assert.equal(packet.snapshotActorMetadata,undefined);
+ assert.ok(packet.snapshotUnchanged.includes('@decorActors'));
+ assert.deepEqual(packet.actors.resident.resident,next.actors.resident.resident);
+ assert.deepEqual(hydrateRoomSnapshot(packet,baseline),wire(next));
+ assert.ok(JSON.stringify(packet).length<JSON.stringify(next).length/10,'stable large actor records leave the wire without losing their hydrated state');
+});
+
+test('decor reuse is explicitly negotiated and authored actors without definitions use their real gameplay configuration',()=>{
+ const encoder=createRoomSnapshotEncoder(),state=full();
+ state.actors={authored:{id:'authored',position:{x:2},health:160,open:false},unknown:{id:'unknown',position:{x:3}}};
+ const env={id:'authored-decor',builderScene:{objects:[{id:'authored',functionalSettings:{behavior:'decor'}}]}};
+ const first=wire(encoder(state,decorRequest(),env));
+ assert.ok(first.snapshotDecorActors.authored);assert.ok(first.actors.unknown);
+ const baseline=hydrateRoomSnapshot(first),next=wire(state);next.sequence=2;
+ for(const flag of [undefined,false,'true']){
+  const packet=wire(encoder(next,{...request(baseline),snapshotDecorActors:flag},env));
+  assert.equal(packet.snapshotDecorActors,undefined);assert.equal(packet.snapshotRevisions['@decorActors'],undefined);
+  assert.ok(packet.actors.authored,'older protocol2 requests retain their inline actor format');
+  assert.deepEqual(hydrateRoomSnapshot(packet,baseline),next);
+ }
+ const legacy=compactRoomSnapshot(state,{action:'input',snapshotMode:'compact',snapshotProtocol:1,snapshotDecorActors:true},env);
+ assert.equal(legacy.snapshotProtocol,undefined);assert.equal(legacy.snapshotDecorActors,undefined);
+});
+
+test('every changed decor field updates the exact-content revision and full component before hydration',()=>{
+ const encoder=createRoomSnapshotEncoder();let state=full(),baseline=decorRoundtrip(state,null,encoder);
+ const changes=[actor=>{actor.open=true;},actor=>{actor.health=40;},actor=>{actor.active=false;},actor=>{actor.position.x=14;},
+  actor=>{actor.futureFeature={nested:['new field',1]};},actor=>{actor.definition.shape='updated definition';},actor=>{actor.asset.settings.parts.push('new part');}];
+ for(const change of changes){
+  state=wire(state);state.sequence++;change(state.actors.tree);
+  const priorRevision=snapshotAcknowledgements(baseline)['@decorActors'],packet=wire(encoder(state,decorRequest(baseline),environment));
+  assert.ok(packet.snapshotDecorActors.tree);assert.notEqual(packet.snapshotRevisions['@decorActors'],priorRevision);
+  assert.deepEqual(packet.snapshotDecorActors.tree,state.actors.tree);
+  baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(state));
+ }
+});
+
+test('decor membership, deletion and transitions to live actors never resurrect an earlier member',()=>{
+ const encoder=createRoomSnapshotEncoder();let state=full(),baseline=decorRoundtrip(state,null,encoder);
+ state=wire(state);state.sequence=2;state.actors.second={id:'second',position:{x:3},definition:{gameplay:{behavior:'decor'}}};
+ baseline=decorRoundtrip(state,baseline,encoder);assert.deepEqual(baseline,wire(state));
+ state=wire(state);state.sequence=3;delete state.actors.tree;state.actors.second.resident={name:'Now a resident'};
+ let packet=wire(encoder(state,decorRequest(baseline),environment));
+ assert.equal(packet.snapshotRevisions['@decorActors'],undefined);assert.ok(packet.actors.second);
+ baseline=hydrateRoomSnapshot(packet,baseline);assert.deepEqual(baseline,wire(state));assert.equal(baseline.actors.tree,undefined);
+ state=wire(state);state.sequence=4;delete state.actors.second.resident;
+ baseline=decorRoundtrip(state,baseline,encoder);assert.deepEqual(baseline,wire(state));
+ state=wire(state);state.sequence=5;state.actors={};
+ assert.deepEqual(decorRoundtrip(state,baseline,encoder),wire(state));
+});
+
+test('decor baselines repair application mutation and out-of-order replies use their acknowledged full records',()=>{
+ const encoder=createRoomSnapshotEncoder(),baseline=decorRoundtrip(full(),null,encoder);
+ const older=wire(encoder(full(2),decorRequest(baseline),environment)),newerState=full(3);newerState.actors.tree.open=true;
+ const newer=decorRoundtrip(newerState,baseline,encoder);
+ assert.deepEqual(newer,wire(newerState));
+ assert.throws(()=>hydrateRoomSnapshot(older,newer),{code:'SNAPSHOT_BASELINE_MISSING'});
+ baseline.actors.tree.futureFeature=baseline.actors.tree;
+ baseline.actors.tree.definition.shape='application mutation';
+ assert.deepEqual(hydrateRoomSnapshot(older,baseline),wire(full(2)));
+ const missing=wire(older);assert.throws(()=>hydrateRoomSnapshot(missing,wire(full())),{code:'SNAPSHOT_BASELINE_MISSING'});
+ assert.deepEqual(decorRoundtrip(newerState,newer,encoder),wire(newerState),'a newer baseline also repairs shared application mutations before reuse');
+});
+
+test('decor cache eviction, capacity fallback and world isolation resend complete records safely',()=>{
+ const encoder=createRoomSnapshotEncoder({maxWorlds:1}),first=decorRoundtrip(full(),null,encoder);
+ decorRoundtrip(full(),null,encoder,{id:'different-room'});
+ let packet=wire(encoder(full(2),decorRequest(first),environment));
+ assert.ok(packet.snapshotDecorActors.tree);assert.deepEqual(hydrateRoomSnapshot(packet),wire(full(2)));
+ packet=wire(createRoomSnapshotEncoder()(full(2),decorRequest(first),environment));
+ assert.ok(packet.snapshotDecorActors.tree);assert.deepEqual(hydrateRoomSnapshot(packet),wire(full(2)));
+ const small=createRoomSnapshotEncoder({maxWorldBytes:32});packet=wire(small(full(2),decorRequest(first),environment));
+ assert.equal(packet.snapshotDecorActors,undefined);assert.ok(packet.actors.tree);assert.deepEqual(hydrateRoomSnapshot(packet),wire(full(2)));
+ const changedScene=full(3);changedScene.sceneVersion='different-scene';
+ const recovered=hydrateRoomSnapshot(wire(encoder(changedScene,decorRequest(first),environment)),first);
+ assert.deepEqual(recovered,wire(changedScene));assert.deepEqual(snapshotAcknowledgements(recovered),{});
+});
+
+test('decor transport rejects duplicate actors, malformed records and contradictory metadata',()=>{
+ const encoder=createRoomSnapshotEncoder(),packet=wire(encoder(full(),decorRequest(),environment));
+ for(const value of [null,[],{tree:null}]){
+  const malformed=wire(packet);malformed.snapshotDecorActors=value;
+  assert.throws(()=>hydrateRoomSnapshot(malformed),{code:'SNAPSHOT_BASELINE_MISSING'});
+ }
+ const duplicate=wire(packet);duplicate.actors.tree={id:'tree'};
+ assert.throws(()=>hydrateRoomSnapshot(duplicate),{code:'SNAPSHOT_BASELINE_MISSING'});
+ const unversioned=wire(packet);delete unversioned.snapshotRevisions['@decorActors'];
+ assert.throws(()=>hydrateRoomSnapshot(unversioned),{code:'SNAPSHOT_BASELINE_MISSING'});
+ const contradictory=wire(packet);contradictory.snapshotActorMetadata.tree.definition.shape='contradiction';
+ assert.throws(()=>hydrateRoomSnapshot(contradictory),{code:'SNAPSHOT_BASELINE_MISSING'});
+});
+
+test('decor maps retain prototype-named actors and returning earlier content receives a new revision',()=>{
+ const encoder=createRoomSnapshotEncoder(),state=full();state.actors=Object.fromEntries(['__proto__','constructor','toString'].map(id=>[id,{id,health:160,definition:{gameplay:{behavior:'decor'}}}]));
+ let baseline=decorRoundtrip(state,null,encoder),oldRevision=snapshotAcknowledgements(baseline)['@decorActors'];
+ const changed=wire(state);changed.sequence=2;changed.actors.__proto__.health=40;
+ baseline=decorRoundtrip(changed,baseline,encoder);baseline=decorRoundtrip({...state,sequence:3},baseline,encoder);
+ assert.notEqual(snapshotAcknowledgements(baseline)['@decorActors'],oldRevision);
+ for(const id of Object.keys(state.actors))assert.ok(Object.hasOwn(baseline.actors,id));
+ assert.equal(Object.prototype.health,undefined);assert.equal(Object.getPrototypeOf(baseline.actors),Object.prototype);
+});

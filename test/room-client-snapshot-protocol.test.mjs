@@ -29,7 +29,7 @@ test('the real client negotiates component acknowledgements and presents fully h
  },async client=>{
   const first=await client.send('input',{input:{side:1}});assert.deepEqual(first,wire(full(2)));
   const next=await client.send('input',{input:{side:0}});assert.deepEqual(next,wire(full(3)));
-  assert.equal(commands[1].snapshotProtocol,2);assert.deepEqual(commands[1].snapshotAcknowledgements,{});
+  assert.equal(commands[1].snapshotProtocol,2);assert.equal(commands[1].snapshotDecorActors,true);assert.deepEqual(commands[1].snapshotAcknowledgements,{});
   assert.ok(commands[2].snapshotAcknowledgements['@actorMetadata']);
   assert.equal(packets[2].snapshotActorMetadata,undefined);assert.equal(packets[2].objects,undefined);
   assert.equal(packets[2].snapshotEarthworks,undefined);
@@ -89,6 +89,21 @@ test('an explicit older client protocol keeps legacy compact requests and hydrat
   const command=JSON.parse(options.body);commands.push(command);return response(wire(compactRoomSnapshot(full(++sequence),command,{id:'client-legacy'})));
  },async client=>{
   const state=await client.send('input',{input:{}});assert.ok(state.actors.machine.definition);
-  assert.equal(commands.at(-1).snapshotProtocol,undefined);assert.equal(commands.at(-1).snapshotAcknowledgements,undefined);
+  assert.equal(commands.at(-1).snapshotProtocol,undefined);assert.equal(commands.at(-1).snapshotDecorActors,undefined);assert.equal(commands.at(-1).snapshotAcknowledgements,undefined);
  },{snapshotProtocol:1});
+});
+
+
+test('decor reuse can be disabled while retaining protocol 2 compatibility',async()=>{
+ let sequence=0;const commands=[];
+ await withClient(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  return response(wire(compactRoomSnapshot(full(++sequence),command,{id:'client-no-decor-capability'})));
+ },async client=>{
+  const state=await client.send('input',{input:{}});
+  assert.equal(commands.at(-1).snapshotProtocol,2);
+  assert.equal(commands.at(-1).snapshotDecorActors,undefined);
+  assert.deepEqual(state,wire(full(2)));
+ },{snapshotDecorActors:false});
 });

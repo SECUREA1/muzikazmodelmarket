@@ -10,12 +10,13 @@ async function fixture(t){
  const directory=await mkdtemp(join(tmpdir(),'world-entry-safety-'));
  t.after(()=>rm(directory,{recursive:true,force:true}));
  const world={id:'saved-entry-test',publicDestination:true,proceduralLand:true,spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',mapSize:80,objects:[]}};
- const store=new SharedRoomStore(join(directory,'rooms.json'));
+ let store=new SharedRoomStore(join(directory,'rooms.json'));
  let runtime=new AuthoritativeRooms({store,now:()=>100000}),sequence=0;
  const send=(accountId='visitor')=>runtime.command(world.id,world,{accountId,username:accountId,stats:{health:100}},{action:'join',requestId:'safe-entry-'+ ++sequence,deferRadTox:true,radToxEnabled:false});
- const reload=()=>{runtime.collision.clearPlacedWorlds();runtime=new AuthoritativeRooms({store:new SharedRoomStore(store.file),now:()=>100000});};
+ // A restart retires the old writer; fixture mutations follow the restored store.
+ const reload=()=>{runtime.collision.clearPlacedWorlds();store=new SharedRoomStore(store.file);runtime=new AuthoritativeRooms({store,now:()=>100000});};
  const clear=state=>{const point=state.players[state.selfId].position;assert.doesNotThrow(()=>runtime.collision.teleportPosition(world,point,point,state.actors,state.objects,{localMap:true}));assert.ok(['x','y','z'].every(axis=>Number.isFinite(point[axis])));assert.ok(runtime.collision.hasBodyClearance(world,point,.38,{actors:state.actors,objects:state.objects}));const floor=runtime.collision.groundAt(world,point,{actors:state.actors,objects:state.objects});assert.ok(floor&&Math.abs(floor.y-point.y)<.05);};
- return {world,store,send,reload,clear};
+ return {world,get store(){return store;},send,reload,clear};
 }
 
 test('new arrivals and persisted walking players clear saved room obstacles on every join without losing progress',async t=>{

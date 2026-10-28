@@ -4,7 +4,7 @@ import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0,snapshotProtocol=2}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,residentWalkthrough=false,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0,snapshotProtocol=2,snapshotDecorActors=true}) {
  const api = new SharedGameInventory(),lifecycle=new AbortController();
  let renderTimer=null,pendingRender=null,lastRenderAt=null,latestSnapshot=null;
  let snapshotRecovery=false;
@@ -82,7 +82,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     // Each response must hydrate against the exact baseline this request
     // acknowledged, even if another action/input completes in the meantime.
     const baseline=latestSnapshot;
-    let state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:snapshotRecovery?'full':'compact',sceneVersion:baseline?.sceneVersion,actorSetRevision:baseline?.actorSetRevision,earthworksRevision:baseline?.construction?.earthworks?.revision,...(snapshotProtocol===2?{snapshotProtocol:2,snapshotAcknowledgements:snapshotRecovery?{}:snapshotAcknowledgements(baseline)}:{}),...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch,controlResponse:'ack'}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId},signal);
+    let state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(['input','construction-controls'].includes(action)?{snapshotMode:snapshotRecovery?'full':'compact',sceneVersion:baseline?.sceneVersion,actorSetRevision:baseline?.actorSetRevision,earthworksRevision:baseline?.construction?.earthworks?.revision,...(snapshotProtocol===2?{snapshotProtocol:2,...(snapshotDecorActors===true?{snapshotDecorActors:true}:{}),snapshotAcknowledgements:snapshotRecovery?{}:snapshotAcknowledgements(baseline)}:{}),...(action==='construction-controls'&&fields.operation==='control'?{controlSequence:++constructionSequence,controlEpoch:issuedEpoch,controlResponse:'ack'}:{})}:{}),...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId},signal);
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.

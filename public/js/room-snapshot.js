@@ -3,6 +3,7 @@ const actorSets=new Map();let actorSetSequence=0;
 const baselineStates=new WeakMap();
 const metadataKey='@actorMetadata';
 const earthworksKey='@earthworks';
+const decorActorsKey='@decorActors';
 const componentNames=new Set(['objects','streets','devices','construction','freightHubs','freightDeliveries','residentLife','casinoLife','prison','island','fitness','fishing','shipping','factory','testing','logistics','questTeams','liveDispatch','questOffers','questResults','transportRadio','skiCompetition','building','firingRange','basketball','match','radTox']);
 const own=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
 const json=value=>JSON.stringify(value);
@@ -19,14 +20,22 @@ function actorMetadata(actors={}){
  }
  return Object.fromEntries(entries);
 }
+function decorActorRecords(actors,environment){
+ const authored=new Map((environment.builderScene?.objects||environment.placementScene?.objects||[]).map(item=>[item.id,item.functionalSettings||item.gameplay||{behavior:item.behavior||'decor'}]));
+ return Object.fromEntries(Object.entries(actors||{}).filter(([id,actor])=>{
+  if(!object(actor)||actor.resident||actor.trafficAI||actor.constructionManaged||actor.basketballManaged||actor.rangeManaged||actor.radTox)return false;
+  return (actor.definition?.gameplay||authored.get(id))?.behavior==='decor';
+ }));
+}
 function constructionWithoutEarthworks(value){if(!object(value))return value;const result={...value};delete result.earthworks;return result;}
 function componentValue(state,key,parts){
+ if(key===decorActorsKey)return Object.fromEntries((parts.get(decorActorsKey)?.actorIds||[]).filter(id=>own(state.actors||{},id)).map(id=>[id,state.actors[id]]));
  if(key===metadataKey)return actorMetadata(state.actors);
  if(key===earthworksKey)return state.construction?.earthworks;
  return key==='construction'&&parts.has(earthworksKey)?constructionWithoutEarthworks(state.construction):state[key];
 }
-const componentField=key=>key===metadataKey?'snapshotActorMetadata':key===earthworksKey?'snapshotEarthworks':key;
-const knownComponent=key=>key===metadataKey||key===earthworksKey||componentNames.has(key);
+const componentField=key=>key===metadataKey?'snapshotActorMetadata':key===earthworksKey?'snapshotEarthworks':key===decorActorsKey?'snapshotDecorActors':key;
+const knownComponent=key=>key===metadataKey||key===earthworksKey||key===decorActorsKey||componentNames.has(key);
 function membershipRevision(ids,environment,state){
  const key=ids.join('\0'),scope=String(environment.roomId||environment.id||'')||'anonymous:'+key,now=Date.now();
  let entry=actorSets.get(scope);
@@ -63,9 +72,15 @@ export function createRoomSnapshotEncoder({maxWorlds=2048,maxBytes=128*1024*1024
    else result[field]=value;
    return true;
   }
+  // Older protocol2 clients do not understand actor components. Only clients
+  // explicitly opting in may omit complete decor records from inline actors.
+  if(request.snapshotDecorActors===true){
+   const decor=decorActorRecords(state.actors,environment);
+   if(Object.keys(decor).length&&component(decorActorsKey,decor,'snapshotDecorActors'))result.actors=Object.fromEntries(Object.entries(state.actors||{}).filter(([id])=>!own(decor,id)));
+  }
   const metadata=actorMetadata(state.actors);
   if(Object.keys(metadata).length&&component(metadataKey,metadata,'snapshotActorMetadata')){
-   result.actors=Object.fromEntries(Object.entries(state.actors||{}).map(([id,actor])=>{
+   result.actors=Object.fromEntries(Object.entries(result.actors||{}).map(([id,actor])=>{
     if(!object(actor))return [id,actor];
     const dynamic={...actor};delete dynamic.definition;delete dynamic.asset;return [id,dynamic];
    }));
@@ -120,9 +135,9 @@ function hydrateProtocol2(state,previous){
  const revisions=state.snapshotRevisions,unchanged=state.snapshotUnchanged||[];
  if(!object(revisions)||!Array.isArray(unchanged)||new Set(unchanged).size!==unchanged.length)throw missingBaseline();
  const components=new Map(),prior=previous&&baselineStates.get(previous),scene=sceneKey(state);
- const result={...state};delete result.snapshotProtocol;delete result.snapshotRevisions;delete result.snapshotUnchanged;delete result.snapshotActorMetadata;delete result.snapshotEarthworks;
- const reused=new Set(unchanged);let metadata=null,earthworks,hasEarthworks=false;
- for(const key of [metadataKey,earthworksKey])if(own(state,componentField(key))&&!own(revisions,key))throw missingBaseline();
+ const result={...state};delete result.snapshotProtocol;delete result.snapshotRevisions;delete result.snapshotUnchanged;delete result.snapshotActorMetadata;delete result.snapshotEarthworks;delete result.snapshotDecorActors;
+ const reused=new Set(unchanged);let metadata=null,decor,earthworks,hasEarthworks=false;
+ for(const key of [metadataKey,earthworksKey,decorActorsKey])if(own(state,componentField(key))&&!own(revisions,key))throw missingBaseline();
  for(const key of reused)if(!own(revisions,key)||!knownComponent(key))throw missingBaseline();
  for(const [key,revision]of Object.entries(revisions)){
   if(!knownComponent(key)||typeof revision!=='string'||revision.length>256)throw missingBaseline();
@@ -137,13 +152,20 @@ function hydrateProtocol2(state,previous){
    if(!own(state,field))throw missingBaseline();value=state[field];encoded=json(value);
    if(encoded===undefined)throw missingBaseline();
   }
-  components.set(key,{revision,encoded});
-  if(key===metadataKey)metadata=value;else if(key===earthworksKey){earthworks=value;hasEarthworks=true;}else result[key]=value;
+  components.set(key,{revision,encoded,...(key===decorActorsKey?{actorIds:Object.keys(value||{})}:{})});
+  if(key===decorActorsKey)decor=value;else if(key===metadataKey)metadata=value;else if(key===earthworksKey){earthworks=value;hasEarthworks=true;}else result[key]=value;
+ }
+ if(decor!==undefined){
+  if(!object(decor)||!object(state.actors)||Object.entries(decor).some(([id,actor])=>own(state.actors,id)||!object(actor)))throw missingBaseline();
+  result.actors=Object.fromEntries([...Object.entries(decor),...Object.entries(state.actors)]);
  }
  if(metadata!==null){
-  if(!object(metadata)||!object(state.actors))throw missingBaseline();
-  for(const [id,fields]of Object.entries(metadata))if(!own(state.actors,id)||!object(fields)||Object.keys(fields).some(key=>key!=='definition'&&key!=='asset'))throw missingBaseline();
-  result.actors=Object.fromEntries(Object.entries(state.actors).map(([id,actor])=>[id,object(actor)?{...actor,...(own(metadata,id)?metadata[id]:{})}:actor]));
+  if(!object(metadata)||!object(result.actors))throw missingBaseline();
+  for(const [id,fields]of Object.entries(metadata)){
+   if(!own(result.actors,id)||!object(fields)||Object.keys(fields).some(key=>key!=='definition'&&key!=='asset'))throw missingBaseline();
+   if(decor&&own(decor,id)&&Object.entries(fields).some(([key,value])=>!own(decor[id],key)||json(decor[id][key])!==json(value)))throw missingBaseline();
+  }
+  result.actors=Object.fromEntries(Object.entries(result.actors).map(([id,actor])=>[id,object(actor)?{...actor,...(own(metadata,id)?metadata[id]:{})}:actor]));
  }
  if(hasEarthworks){if(!object(result.construction))throw missingBaseline();result.construction={...result.construction,earthworks};}
  baselineStates.set(result,{scene,components});return result;

@@ -1,3 +1,6 @@
+import {isWorldItemFactoryEnvironment} from '../public/js/world-item-factory-config.js';
+import {isTropicalIslandEnvironment} from '../public/js/tropical-island-config.js';
+import {isFitnessEnvironment} from '../public/js/fitness-config.js';
 import {isProvingEnvironment,isCompoundEnvironment} from '../public/js/factory-test-config.js';
 import {isPrisonEnvironment} from '../public/js/prison-config.js';
 import {isCleanCommonsEnvironment} from '../public/js/rad-tox-rules.js';
@@ -15,7 +18,7 @@ const source=readFileSync(new URL('../public/js/environments/environment-loader.
 function fixture(compileAsync){
  const created=[],scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
  class AssetLoader{setDecoderPath(){return this;}setTranscoderPath(){return this;}detectSupport(){return this;}setDRACOLoader(){}setKTX2Loader(){}setMeshoptDecoder(){}}
- const context=vm.createContext({isProvingEnvironment,isCompoundEnvironment,isPrisonEnvironment,isCleanCommonsEnvironment,isFactoryEnvironment,THREE,builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn,isFiringRangeEnvironment,isBasketballEnvironment,isCleanSportsEnvironment,GLTFLoader:AssetLoader,DRACOLoader:AssetLoader,KTX2Loader:AssetLoader,MeshoptDecoder:{},Octree:class{},createBuilderLand(){const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());let disposed=0;mesh.geometry.addEventListener('dispose',()=>disposed++);created.push({mesh,disposed:()=>disposed});return mesh;},replaceServerStreets(){},applyWorldQuality:()=>({}),buildCollision:()=>({visibleMeshes:[{}],collisionMeshes:[],floorMeshes:[],octree:{}}),resolveSafeSpawn:()=>({bounds:new THREE.Box3()}),collectSlimeFloorMeshes:()=>[],createSlimeFloor:()=>({dispose(){},update(){}})});
+ const context=vm.createContext({isWorldItemFactoryEnvironment,isTropicalIslandEnvironment,isFitnessEnvironment,isProvingEnvironment,isCompoundEnvironment,isPrisonEnvironment,isCleanCommonsEnvironment,isFactoryEnvironment,THREE,builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn,isFiringRangeEnvironment,isBasketballEnvironment,isCleanSportsEnvironment,GLTFLoader:AssetLoader,DRACOLoader:AssetLoader,KTX2Loader:AssetLoader,MeshoptDecoder:{},Octree:class{},createBuilderLand(){const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());let disposed=0;mesh.geometry.addEventListener('dispose',()=>disposed++);created.push({mesh,disposed:()=>disposed});return mesh;},replaceServerStreets(){},applyWorldQuality:()=>({}),buildCollision:()=>({visibleMeshes:[{}],collisionMeshes:[],floorMeshes:[],octree:{}}),resolveSafeSpawn:()=>({bounds:new THREE.Box3()}),collectSlimeFloorMeshes:()=>[],createSlimeFloor:()=>({dispose(){},update(){}})});
  vm.runInContext(source,context);
  const renderer={compileAsync};const loader=new context.Loader({scene,renderer,camera});
  return {loader,scene,camera,created};

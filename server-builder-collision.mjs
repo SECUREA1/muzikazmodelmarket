@@ -49,7 +49,7 @@ function disposeStaticWorld(world){
 function indexCollisionMeshes(meshes){
  const cells=new Map(),large=[];
  for(const mesh of meshes){const box=collisionMeshBounds(mesh),x1=Math.floor(box.min.x/8),x2=Math.floor(box.max.x/8),z1=Math.floor(box.min.z/8),z2=Math.floor(box.max.z/8);if((x2-x1+1)*(z2-z1+1)>1024){large.push(mesh);continue;}for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++){const key=x+':'+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(mesh);}}
- return {cells,large};
+ return {cells,large,order:new Map(meshes.map((mesh,index)=>[mesh,index]))};
 }
 function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(index.large);for(let x=Math.floor(minX/8);x<=Math.floor(maxX/8);x++)for(let z=Math.floor(minZ/8);z<=Math.floor(maxZ/8);z++)for(const mesh of index.cells.get(x+':'+z)||[])found.add(mesh);return nearCollisionMeshes([...found],minX,maxX,minZ,maxZ);}
 
@@ -185,15 +185,28 @@ export class ServerBuilderCollision {
   const traffic=entry.traffic,construction=entry.construction;
   // Existing diagnostics inspect the most recently queried collision world.
   this.placedCache=cached;this.trafficCollision=traffic;this.constructionCollision=construction;this.placedCombinedRoot=entry.root;
+  const nearbyMeshes=(minX,maxX,minZ,maxZ)=>[
+   ...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),
+   ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
+   ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
+  ];
   return {
    root:entry.root,
    boxes:[...world.boxes,...traffic.boxes,...construction.boxes],
    meshes:[...world.meshes,...traffic.meshes,...construction.meshes],
-   nearbyMeshes(minX,maxX,minZ,maxZ){return [
-    ...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),
-    ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
-    ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
-   ];},
+   nearbyMeshes,
+   // Route planning asks thousands of small clearance queries. Select current
+   // mesh bounds before extracting triangles, retaining the same exact bounds
+   // predicate used by the full-world path. Poses and instance matrices remain
+   // live; the stable mesh index is invalidated by updatePlacedCollisionPoses.
+   nearbyTriangles(minX,maxX,minZ,maxZ){
+    const meshes=nearbyMeshes(minX,maxX,minZ,maxZ),order=world.meshIndex.order;
+    // Keep the full getter's stable/traffic/construction triangle order, even
+    // when the spatial query visits cells in another order. Dynamic meshes
+    // retain their existing array order through the stable sort.
+    meshes.sort((a,b)=>(order.get(a)??Infinity)-(order.get(b)??Infinity));
+    return meshes.flatMap(wallTriangles).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ);
+   },
    get triangles(){return [...(world.wallTriangles ||= world.meshes.flatMap(wallTriangles)),...traffic.meshes.flatMap(wallTriangles),...construction.meshes.flatMap(wallTriangles)];}
   };
  }
@@ -261,13 +274,13 @@ export class ServerBuilderCollision {
   return floor;
  }
  hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
-  const world=this.world(environment);
+  const world=this.world(environment),dynamic=placed?this.placedWorld(placed.actors,placed.objects,environment):null;
   // Surface distance alone misses a capsule entirely enclosed by a saved solid.
   // World AABBs are only a broad phase: a rotated yacht wall's enclosing box
   // can cover its empty central aisle. Test the body axis in each mesh's
   // authored frame, leaving capsule-to-surface distance to the triangles below.
   if(placed){
-   const dynamic=this.placedWorld(placed.actors,placed.objects,environment),candidates=new Set(dynamic.boxes.filter(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03).map(box=>box.objectId));
+   const candidates=new Set(dynamic.boxes.filter(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03).map(box=>box.objectId));
    for(const mesh of dynamic.meshes){
     if(!candidates.has(builderObjectId(mesh)))continue;
     if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
@@ -280,7 +293,7 @@ export class ServerBuilderCollision {
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
-  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
+  if(dynamic)triangles.push(...dynamic.nearbyTriangles(point.x-radius,point.x+radius,point.z-radius,point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
@@ -421,7 +434,7 @@ export class ServerBuilderCollision {
    }
    return embedded.get(group);
   };
-  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles.filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
+  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.nearbyTriangles(minX,maxX,minZ,maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
   const sweep=step=>{
    // Gravity is applied before this sweep. While the previous pose has floor
    // support, that provisional downward endpoint must not expose buried floor
