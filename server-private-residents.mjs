@@ -41,6 +41,9 @@ export class PrivateResidentRooms {
   // Refresh an edited map's collision/context without exposing a public room.
   room.environment=environment;room.lastSeen=now;
   const player=room.sim.players[selfId];player.position={...command.position};player.lastSeen=now;player.yaw=Number.isFinite(command.yaw)?command.yaw:0;
+  if(Number.isSafeInteger(command.movementRevision)&&command.movementRevision>=0)player.movementRevision=command.movementRevision;
+  player.grounded=command.grounded!==false;
+  player.vehicleId=typeof command.vehicleId==='string'?command.vehicleId.slice(0,128):null;
   this.step(room);
   let result;
   if(command.action==='npc-social'){

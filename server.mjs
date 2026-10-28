@@ -7,6 +7,7 @@ import {bindFactoryShippingVoyage,reconcileFactoryShippingVoyage} from './server
 import {worldPopulation} from './public/js/world-population.js';
 import {worldRadioCalls} from './server-world-radio.mjs';
 import {compactRoomSnapshot} from './public/js/room-snapshot.js';
+import {residentAudienceSnapshot} from './server-resident-audience.mjs';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {LAND_LOTS,landLotById,lotVisitUrl} from './public/js/land-lots.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
@@ -1109,7 +1110,7 @@ const server = createServer(async (req, res) => {
       return sendJson(res,200,assetResponse(privateResidents.command(environment,identity,command)));
     }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
-    if(roomGameplay&&['GET','POST'].includes(req.method)){const environment=await roomEnvironment(decodeURIComponent(roomGameplay[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(compactRoomSnapshot(snapshot,command,environment)));}
+    if(roomGameplay&&['GET','POST'].includes(req.method)){const environment=await roomEnvironment(decodeURIComponent(roomGameplay[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;if(req.method==='GET'){const authentication=await resolveAccountSession(req)||await recoverRoomSession(accountSessionStore,gameSessionStore,String(req.headers['x-game-session']||''));const viewerId=authentication?.accountId?'account:'+authentication.accountId:null;return sendJson(res,200,assetResponse(residentAudienceSnapshot(await authoritativeRooms.snapshot(id,environment),viewerId)));}const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(compactRoomSnapshot(residentAudienceSnapshot(snapshot,'account:'+identity.accountId),command,environment)));}
     const buildSettings=url.pathname.match(/^\/api\/rooms\/([^/]+)\/building$/);
     if(buildSettings&&req.method==='POST'){
       const environment=await roomEnvironment(decodeURIComponent(buildSettings[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;
