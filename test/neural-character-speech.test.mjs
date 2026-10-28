@@ -97,7 +97,7 @@ test('only a deliberately selected acceptable installed voice can use browser sy
 
 test('request timeouts abort pending synthesis and disposal stops playing audio',async()=>{
  const f=fixture({request:()=>new Promise(()=>{})});await f.engine.resume();let error;const utterance=new GameSpeechUtterance('A bounded request');utterance.onerror=event=>error=event;f.engine.speak(utterance);await tick();
- const deadline=[...f.timers.values()][0];deadline.fn();await tick();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.calls[0].options.signal.aborted,true);assert.equal(f.engine.pending,false);f.engine.dispose();
+ const deadline=[...f.timers.values()][0];assert.ok(deadline.ms<=8000,'Unavailable speech must release the reply within eight seconds.');deadline.fn();await tick();assert.equal(error.error,'synthesis-unavailable');assert.equal(f.calls[0].options.signal.aborted,true);assert.equal(f.engine.pending,false);f.engine.dispose();
  const playing=fixture();await playing.engine.resume();playing.engine.speak(new GameSpeechUtterance('Stop on leaving the page.'));await tick();playing.engine.dispose();assert.equal(playing.sources[0].stopped,1);assert.equal(playing.context.state,'closed');assert.equal(playing.intervals.size,0);
 });
 

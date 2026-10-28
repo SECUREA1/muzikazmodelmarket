@@ -41,7 +41,7 @@ function fixture(extra={}){
 }
 function commandFixture(reply,extra={}){
  const effects=[],client={ready:true,send:()=>reply.promise};
- const state=fixture({authoritativeClient:client,unlockQuestConversation(){},residentUI:{open:value=>effects.push(['resident',value]),report:message=>effects.push(['report',message])},transportActivity:{close:()=>effects.push(['transport'])},lockMenuInput:()=>effects.push(['lock']),landSaleUI:{open:id=>effects.push(['land',id])},airportOps:{acceptAutomaticRoute:()=>effects.push(['airport'])},harborOps:{acceptAutomaticRoute:()=>effects.push(['harbor'])},deviceUI:{open:id=>effects.push(['device',id])},registry:{find:()=>({}),refresh:async()=>{}},loadById:async id=>effects.push(['destination',id]),...extra});
+ const state=fixture({authoritativeClient:client,unlockQuestConversation(){},residentUI:{open:value=>effects.push(['resident',value]),report:message=>effects.push(['report',message])},transportActivity:{close:()=>effects.push(['transport'])},lockMenuInput:()=>effects.push(['lock']),landSaleUI:{open:id=>effects.push(['land',id])},airportOps:{acceptAutomaticRoute:()=>effects.push(['airport'])},harborOps:{acceptAutomaticRoute:()=>effects.push(['harbor'])},deviceUI:{open:id=>effects.push(['device',id])},registry:{refresh:async()=>{},find:()=>({}),refresh:async()=>{}},loadById:async id=>effects.push(['destination',id]),...extra});
  vm.runInContext(hostCommand,state.context);return {...state,effects,client};
 }
 
@@ -52,7 +52,7 @@ function worldHandoffFixture(){
  const oldClient={ready:true,stop(){this.ready=false;trace.push('old-stop');}};
  const f=fixture({
   console:{...console,error:noop},gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:oldClient,serverVehicleId:'old-vehicle',serverMovementRevision:12,
-  registry:{find:()=>destination},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,
+  registry:{refresh:async()=>{},find:()=>destination},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,
   startEnvironment:'muzikaz-airport',replaceGameLocation:noop,transportActivity:{close:()=>trace.push('transport-close')},
   ownedPlacement:{reset:noop},updateFunhouseWaterGun:noop,roadVehicleUI:{update:noop},constructionScene:{reset:noop},constructionCamera:{reset:noop},
   buildingToggle:{update:noop},buildRoomButton:{disabled:false},liveRangeHud:null,rangeScenes:{clear:noop,refresh:noop},rangeFeedback:{reset:noop},
@@ -86,7 +86,7 @@ function worldHandoffFixture(){
 test('internal startup deployment retires the old room and activates only after fresh join, begin and environment readiness',async()=>{
  for(const sameMap of [false,true]){
   const f=worldHandoffFixture(),{context,trace,connections,events,controls}=f;
-  if(sameMap)context.activeEnvironment=f.destination;
+  if(sameMap){context.activeEnvironment=f.destination;context.localStorage={setItem(){throw Error('Storage denied');}};}
   const loading=context.loadById(f.destination.id,{startup:true});
   assert.equal(context.worldLoadGeneration,2);assert.equal(context.authoritativeClient,null);assert.equal(context.startEnvironment,f.destination.id);
   assert.equal(context.serverVehicleId,null);assert.equal(context.serverMovementRevision,null);
@@ -171,7 +171,7 @@ test('private freight replies hydrate only the current account room and stale fa
 });
 
 test('a destination reply rechecks its issuing world after asynchronous directory refresh',async()=>{
- const reply=deferred(),refresh=deferred(),refreshEntered=deferred(),{context,effects}=commandFixture(reply,{registry:{find:()=>null,refresh:()=>{refreshEntered.resolve();return refresh.promise;}}});
+ const reply=deferred(),refresh=deferred(),refreshEntered=deferred(),{context,effects}=commandFixture(reply,{registry:{refresh:async()=>{},find:()=>null,refresh:()=>{refreshEntered.resolve();return refresh.promise;}}});
  const pending=context.serverCommand('interact');reply.resolve({result:{destination:'old-destination'}});await refreshEntered.promise;
  context.worldLoadGeneration++;refresh.resolve();assert.equal(await pending,false);assert.deepEqual(effects,[]);
 });
@@ -255,7 +255,7 @@ test('a joined room retains a selection until the connection recovers',async()=>
 
 test('early navigation cannot stop the pending room join or start a second world load',async()=>{
  let resolves=0,stops=0;
- const client={ready:false,stop(){stops++;}}, {context}=fixture({authoritativeClient:client,registry:{find:()=>null,resolve:async()=>{resolves++;}},canonicalWorldId:id=>id});
+ const client={ready:false,stop(){stops++;}}, {context}=fixture({authoritativeClient:client,registry:{refresh:async()=>{},find:()=>null,resolve:async()=>{resolves++;}},canonicalWorldId:id=>id});
  vm.runInContext(loadWorld,context);
  assert.equal(await context.loadById('public-commons'),false);
  assert.equal(resolves,0);assert.equal(stops,0);assert.equal(context.authoritativeClient,client);assert.equal(context.worldLoadGeneration,1);assert.equal(context.multiplayerWorldLoading,false);
@@ -289,7 +289,7 @@ test('reticle attraction actions consume the primary action before vehicle or we
 
 test('failed destination discovery restores current-world readiness without replacing its room',async()=>{
  const discovery=deferred();let stops=0;
- const client={ready:true,stop(){stops++;}}, {context,controls}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:client,registry:{find:()=>null,resolve:()=>discovery.promise},canonicalWorldId:id=>id});
+ const client={ready:true,stop(){stops++;}}, {context,controls}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:client,registry:{refresh:async()=>{},find:()=>null,resolve:()=>discovery.promise},canonicalWorldId:id=>id});
  vm.runInContext(loadWorld,context);
  const loading=context.loadById('missing-destination');
  assert.equal(context.multiplayerWorldLoading,true);assert.equal(controls.get('house-outside-button').disabled,true);
@@ -303,7 +303,7 @@ test('failed destination discovery restores current-world readiness without repl
 test('native game redirects retain a selected atlas meeting point and play mode',async()=>{
  for(const game of ['hockey','arcade']){
   let destination;
-  const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id})},canonicalWorldId:id=>id,isArcadeMap:()=>game==='arcade',isHockeyMap:()=>game==='hockey',location:{href:'http://localhost/model-explorer.html?mode=solo',assign:url=>{destination=new URL(url);}}});
+  const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{refresh:async()=>{},find:id=>({id})},canonicalWorldId:id=>id,isArcadeMap:()=>game==='arcade',isHockeyMap:()=>game==='hockey',location:{href:'http://localhost/model-explorer.html?mode=solo',assign:url=>{destination=new URL(url);}}});
   vm.runInContext(loadWorld,context);
   await context.loadById('selected-game',{meetingId:'meet-4-2'});
   assert.equal(destination.pathname,'/'+game+'.html');
@@ -313,32 +313,21 @@ test('native game redirects retain a selected atlas meeting point and play mode'
  }
 });
 
-test('map selections open a fresh document before loading geometry or starting an in-page room',async()=>{
- let destination,unloads=0,joins=0;
- const client={ready:true,stop(){throw Error('The current room belongs to the current document.');}};
- const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:client,registry:{find:id=>({id,name:'New map'})},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,envLoader:{unload(){unloads++;}},startRoomGameplay(){joins++;},location:{href:'http://localhost/model-explorer.html?environment=old&house=old&mode=multiplayer&meet=old&useItem=one-time#house-explorer-canvas',assign:url=>{destination=new URL(url);}}});
- vm.runInContext(loadWorld,context);
- assert.equal(await context.loadById('new-map',{meetingId:'meet-4-2'}),true);
- assert.equal(destination.searchParams.get('environment'),'new-map');
- assert.equal(destination.searchParams.get('house'),'new-map');
- assert.equal(destination.searchParams.get('autoplay'),'1');
- assert.equal(destination.searchParams.get('mode'),'multiplayer');
- assert.equal(destination.searchParams.get('meet'),'meet-4-2');
- assert.equal(destination.searchParams.has('useItem'),false);
- assert.equal(destination.hash,'');
- assert.equal(unloads,0);assert.equal(joins,0);
- assert.equal(context.worldLoadGeneration,1);
- assert.equal(context.authoritativeClient,client);
-});
-
-test('reopening the current map reloads the document even when only the canvas fragment changes',async()=>{
- let reloaded=0,replaced;
- const {context}=fixture({gameplayStarted:true,serverHostedRoom:false,registry:{find:id=>({id})},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,replaceGameLocation:url=>{replaced=url;},location:{href:'http://localhost/model-explorer.html?environment=my-map&house=my-map&autoplay=1&mode=multiplayer#house-explorer-canvas',assign(){throw Error('Same-document fragment navigation would not restart the game.');},reload(){reloaded++;}}});
- vm.runInContext(loadWorld,context);
- assert.equal(await context.loadById('my-map'),true);
- assert.equal(reloaded,1);assert.equal(replaced.hash,'');
- assert.equal(replaced.searchParams.get('environment'),'my-map');
- assert.equal(context.worldLoadGeneration,1);
+test('map selections and repeat visits refresh and join in-page without reloading',async()=>{
+ for(const sameMap of [false,true]){
+  const f=worldHandoffFixture(),{context,trace}=f;let destination,refreshes=0;
+  if(sameMap){context.activeEnvironment=f.destination;context.localStorage={setItem(){throw Error('Storage denied');}};}
+  context.registry.refresh=async()=>{refreshes++;};
+  context.replaceGameLocation=url=>{destination=url;context.location.href=url.href;};
+  context.location={href:'http://localhost/model-explorer.html?environment=old&useItem=one-time',assign(){assert.fail('Page navigation');},reload(){assert.fail('Page reload');}};
+  const loading=context.loadById(f.destination.id,{meetingId:'meet-4-2'});
+  f.asset.resolve(f.loadResult);await Promise.race([f.connected.promise,loading.then(()=>assert.fail('Join was skipped'))]);
+  assert.equal(refreshes,1);assert.ok(trace.includes('old-stop'));assert.ok(trace.includes('unload'));
+  assert.equal(destination.searchParams.get('environment'),f.destination.id);assert.equal(destination.searchParams.get('meet'),'meet-4-2');assert.equal(destination.searchParams.has('useItem'),false);
+  f.confirm();f.begin.resolve();f.environmentReady.resolve();assert.equal(await loading,true);
+  assert.equal(context.worldLoadGeneration,2);assert.equal(context.gameplayControlsReady(),true);
+  assert.equal(f.connections.length,1);assert.equal(f.events.filter(e=>e.type==='muzikaz:gameplay-ready').length,1);
+ }
 });
 
 test('the resort stays in the native explorer and its shared world systems',()=>{

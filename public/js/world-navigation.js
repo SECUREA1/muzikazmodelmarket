@@ -9,7 +9,7 @@ export function freshWorldUrl(currentUrl,environment,{meetingId=null}={}){
  url.searchParams.set('house',environment.id);
  url.searchParams.set('autoplay','1');
  url.searchParams.set('mode',environment.multiplayer===false?'solo':url.searchParams.get('mode')||'multiplayer');
- // A new document owns a new client and server join, including return visits.
+ // Each destination owns a fresh client and server join, including return visits.
  // Never carry a previous meeting or a one-shot item deployment into it.
  url.searchParams.delete('meet');
  url.searchParams.delete('useItem');

@@ -33,7 +33,7 @@ function speechChunks(text){
 
 // All generated speech goes straight to a gain and the speakers. Spatial world
 // sounds keep their own graph; voices never receive reverb, delay or pitch shifts.
-export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAudio:requestAudio=defaultAudioFetch,audioFactory=defaultAudioFactory,nativeSpeech=globalThis.speechSynthesis,NativeUtterance=globalThis.SpeechSynthesisUtterance,setTimer=setTimeout,clearTimer=clearTimeout,setInterval:repeat=setInterval,clearInterval:clearRepeat=clearInterval,requestTimeout=60000}={}){
+export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAudio:requestAudio=defaultAudioFetch,audioFactory=defaultAudioFactory,nativeSpeech=globalThis.speechSynthesis,NativeUtterance=globalThis.SpeechSynthesisUtterance,setTimer=setTimeout,clearTimer=clearTimeout,setInterval:repeat=setInterval,clearInterval:clearRepeat=clearInterval,requestTimeout=8000}={}){
  let context=null,observedContext=null,unlocking=null,resolveUnlock=null,unlockAttempt=0,unlocked=false,disposed=false,active=null,lastError=null,status='Voice audio starts with the game.';
  const listeners=new Map();
  const emit=(type,event={})=>{for(const callback of listeners.get(type)||[]){try{if(typeof callback==='function')callback({...event,type,target:api});else callback?.handleEvent?.({...event,type,target:api});}catch{}}};

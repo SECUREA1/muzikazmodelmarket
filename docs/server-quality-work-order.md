@@ -2,6 +2,14 @@
 
 Status: runtime fixes pushed to `main` in `7a1a203e`; current affected checks passed 19 selected files and 115 test cases, and all three build/static checks passed. Four of six sampled HTTP workloads and the checkpointed restart passed. Both current selected browser checks failed unresolved assertions. Capacity qualification remains partial. Earlier full runs remain attached to their original sources; they do not qualify the latest source. Baseline source: `074c7a6e94ca0f57c887a0eacdcdfba79bd97ab4`. Implementation checkpoint: `15b1febe208369e9175bd093ce45d3f56f3945f0`. Runtime corrections: `76faf548` and `928afd02`. Expanded collision and snapshot changes: `7ff7fd19`, corrected by `99e5059e`. Source-bound reporting and this work order were committed in `10382d28`.
 
+## In-page travel and access recovery follow-up
+
+Map selection now refreshes destination definitions and runs the existing scene teardown, fresh room join and readiness pipeline inside the current explorer page. Repeat visits also rebuild the scene; old clients, audio and projections are retired. Dedicated hockey and arcade applications keep their separate entry pages. A denied browser storage write no longer aborts world activation.
+
+Expired access during active play opens the guest/sign-in choice over the retained map and restarts only after successful authorization. A late renewal cannot restart an obsolete world. Authentication and revocation remain enforced. Non-authentication action errors no longer default to a misleading sign-in message.
+
+Generated speech network waits are bounded at eight seconds instead of sixty; existing installed-voice fallback and captions remain available. This does not establish zero-delay microphone communication or hardware/network performance. New executable transition tests cover fresh selection, repeat visits, join/readiness, denied storage and stale access replies. Previous capacity/browser failures remain open; this follow-up is not a new full-capacity qualification. Validation: nine selected Node files completed with 162 passed cases and one optional neural-generation integration skip, zero failures; production build and static dependency checks passed. Physical-device transition timing and live microphone latency were not measured.
+
 ## Problem and intended behavior
 
 The October 27–28 isolated retest did not qualify any of 17 gameplay workloads against all chosen latency, delivery, correctness, and presence gates. Authentication and identity refresh repeatedly parse file-backed stores; durable mutations rewrite unrelated records; active-world geometry is evicted and rebuilt once the room count exceeds small caches. These costs delay simulation and responses even while the HTTP health endpoint responds.
