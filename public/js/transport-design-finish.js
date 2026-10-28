@@ -24,7 +24,7 @@ const serviceName=/BODY|COWLING|COWL|ENGINE|ACCOMMODATION|CONSOLE|PEDESTAL|FUNNE
  */
 export function finishTransportDesign(THREE,root,id){
  if(!root||!supported.has(id)||root.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION&&root.userData.transportDesign?.id===id)return root;
- root.updateMatrixWorld(true);
+ root.updateWorldMatrix(true,true);
  const bounds=new THREE.Box3().setFromObject(root,true),source=[];
  root.traverse(node=>{
   if(node.userData.nativeDesignDetail)return;
@@ -58,7 +58,7 @@ export function finishTransportDesign(THREE,root,id){
  function attach(parent,node,name){
   if(details>=30){node.geometry?.dispose();return false;}
   node.name=name;node.userData={nativeDesignDetail:true,transportDesignDetail:true,collisionDisabled:true,collider:false,builderRoot:root};
-  node.castShadow=false;node.receiveShadow=true;parent.add(node);root.updateMatrixWorld(true);
+  node.castShadow=false;node.receiveShadow=true;parent.add(node);parent.updateWorldMatrix(true,false);
   const fitted=new THREE.Box3().setFromObject(node,true);
   const tolerance=.00001;
   if(bounds.isEmpty()||!Number.isFinite(fitted.min.x)||['x','y','z'].some(axis=>fitted.min[axis]<bounds.min[axis]-tolerance||fitted.max[axis]>bounds.max[axis]+tolerance)){

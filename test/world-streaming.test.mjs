@@ -25,24 +25,23 @@ function fixture(compileAsync,overrides={}){
  return {loader,scene,camera,created};
 }
 const environment=id=>({id,rotation:{},builderScene:{}});
-test('world shaders finish preparing before a streamed world replaces the current one',async()=>{
- let release,compiled;
- const f=fixture((...args)=>{compiled=args;return new Promise(resolve=>{release=resolve;});});
+test('world installation leaves shader warming to the gameplay display after the spawn camera is ready',async()=>{
+ let compiled=0;
+ const f=fixture(()=>{compiled++;throw Error('Do not compile the whole world at the old camera');});
  const old=new THREE.Group();f.loader.world=old;f.scene.add(old);
  const pending=f.loader.load(environment('next'));
- assert.equal(f.loader.world,old);assert.equal(compiled[1],f.camera);assert.equal(compiled[2],f.scene);
- release();const loaded=await pending;
+ assert.equal(f.loader.world,old);const loaded=await pending;assert.equal(compiled,0);
  assert.equal(f.loader.world,loaded.world);assert.equal(old.parent,null);assert.equal(loaded.world.parent,f.scene);
 });
 test('overlapping world streams discard canceled geometry and install only the latest world',async()=>{
- const releases=[];const f=fixture(()=>new Promise(resolve=>releases.push(resolve)));
+ const f=fixture(undefined);
  const first=f.loader.load(environment('first')),second=f.loader.load(environment('second'));
- releases[0]();assert.equal(await first,null);assert.equal(f.created[0].disposed(),1);assert.equal(f.loader.world,null);
- releases[1]();const result=await second;assert.equal(f.loader.world,result.world);assert.equal(result.world.name,'WORLD_second');assert.equal(f.created[1].disposed(),0);
+ assert.equal(await first,null);assert.equal(f.created[0].disposed(),1);
+ const result=await second;assert.equal(f.loader.world,result.world);assert.equal(result.world.name,'WORLD_second');assert.equal(f.created[1].disposed(),0);
 });
-test('shader preparation errors dispose the failed stream and retain the current world',async()=>{
- const f=fixture(async()=>{throw Error('compile failed');});const old=new THREE.Group();f.loader.world=old;f.scene.add(old);
- await assert.rejects(f.loader.load(environment('broken')),/compile failed/);
+test('world preparation errors dispose the failed stream and retain the current world',async()=>{
+ const f=fixture(undefined,{applyWorldQuality:()=>{throw Error('material preparation failed');}});const old=new THREE.Group();f.loader.world=old;f.scene.add(old);
+ await assert.rejects(f.loader.load(environment('broken')),/material preparation failed/);
  assert.equal(f.loader.world,old);assert.equal(old.parent,f.scene);assert.equal(f.created[0].disposed(),1);
 });
 test('browsers without async shader compilation can still load a world',async()=>{

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {applyWorldQuality} from '../public/js/environments/environment-quality.js';
 
-test('shared textures upload once per world while every mesh retains lighting and shadow settings',()=>{
+test('shared textures prepare once while every mesh retains lighting and shadow settings',()=>{
  const root=new THREE.Group(),texture=new THREE.Texture();
  const material=new THREE.MeshStandardMaterial({map:texture,roughnessMap:texture});
  const alternate=new THREE.MeshStandardMaterial({map:texture,transparent:true});
@@ -15,6 +15,28 @@ test('shared textures upload once per world while every mesh retains lighting an
  for(const mesh of root.children.filter(n=>n.isMesh)){assert.equal(mesh.receiveShadow,true);assert.equal(mesh.frustumCulled,true);assert.equal(mesh.castShadow,mesh.name!=='floor');}
  assert.equal(alternate.depthWrite,false);
  root.traverse(n=>n.geometry?.dispose());material.dispose();alternate.dispose();texture.dispose();
+});
+
+test('unchanged cached surfaces survive repeated worlds without forcing another GPU upload',()=>{
+ const texture=new THREE.Texture();texture.userData.nativeSurfaceShared=true;
+ const geometry=new THREE.BoxGeometry(),firstMaterial=new THREE.MeshStandardMaterial({map:texture}),secondMaterial=new THREE.MeshStandardMaterial({roughnessMap:texture}),first=new THREE.Group(),second=new THREE.Group(),renderer={capabilities:{getMaxAnisotropy:()=>8}};
+ first.add(new THREE.Mesh(geometry,firstMaterial));second.add(new THREE.Mesh(geometry,secondMaterial));
+ applyWorldQuality(first,renderer);const version=texture.version;
+ for(let i=0;i<12;i++)applyWorldQuality(i%2?first:second,renderer);
+ assert.equal(texture.version,version,'moving an immutable surface between worlds does not invalidate its existing GPU pixels');
+ applyWorldQuality(second,{capabilities:{getMaxAnisotropy:()=>2}});assert.equal(texture.anisotropy,2);assert.equal(texture.version,version+1,'a real filtering change still uploads');
+ applyWorldQuality(first,{capabilities:{getMaxAnisotropy:()=>2}});assert.equal(texture.version,version+1);
+ geometry.dispose();firstMaterial.dispose();secondMaterial.dispose();texture.dispose();
+});
+
+test('quality preserves cosmetic shadow opt-outs through groups and keeps ordinary authored shadows',()=>{
+ const root=new THREE.Group(),details=new THREE.Group(),geometry=new THREE.BoxGeometry(),material=new THREE.MeshStandardMaterial();details.userData.collisionDisabled=true;
+ const inherited=new THREE.Mesh(geometry,material),marked=new THREE.Mesh(geometry,material),authored=new THREE.Mesh(geometry,material),wall=new THREE.Mesh(geometry,material);
+ marked.userData.nativeDesignDetail=true;authored.userData.collisionDisabled=true;authored.castShadow=true;details.add(inherited);root.add(details,marked,authored,wall);
+ applyWorldQuality(root,{capabilities:{getMaxAnisotropy:()=>1}});
+ assert.equal(inherited.castShadow,false);assert.equal(marked.castShadow,false);assert.equal(authored.castShadow,true);assert.equal(wall.castShadow,true);
+ for(const mesh of [inherited,marked,authored,wall])assert.equal(mesh.receiveShadow,true);
+ geometry.dispose();material.dispose();
 });
 
 test('texture filtering respects the device limit and distinct textures remain independent',()=>{

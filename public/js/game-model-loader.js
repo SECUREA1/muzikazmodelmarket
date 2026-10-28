@@ -3,6 +3,7 @@ import {DRACOLoader} from '../vendor/three/addons/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../vendor/three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from '../vendor/three/addons/libs/meshopt_decoder.module.js';
 import {isApiModelAssetUrl,isModelUploadReference,resolveModelAssetUrl} from './model-asset-url.js';
+import {disposeModelResources} from './game-graphics-resources.js';
 
 const browser = () => globalThis.window || globalThis;
 const abortError = () => new DOMException('Model loading was cancelled.', 'AbortError');
@@ -18,15 +19,7 @@ async function waitForApi(api,signal) {
   } finally { if (cancel) signal.removeEventListener('abort',cancel); }
 }
 export function disposeGameModel(gltf) {
-  const resources = new Set();
-  gltf?.scene?.traverse(node => {
-    if (node.geometry) resources.add(node.geometry);
-    for (const material of [].concat(node.material || [])) {
-      resources.add(material);
-      for (const value of Object.values(material)) if (value?.isTexture) resources.add(value);
-    }
-  });
-  for (const resource of resources) resource.dispose?.();
+  disposeModelResources(gltf?.scene);
 }
 
 function parsedModel(parsing,signal) {
