@@ -61,12 +61,23 @@ browser's unknown default. Preview reports errors while captions remain visible.
 Changes preview immediately and save to the member account with the other audio
 preferences.
 
+If voices or effects are silent, use **Enable all audio** in Audio settings.
+This resumes the browser's audio output, clears the six mute switches, restores
+a zero effects volume and previews the voice. Save settings to keep those
+changes. A blocked first gesture leaves the unheard guide queued for the next
+tap; the guide's enable control remains available after a suspended tab.
+
 Playback stays at native pitch through a direct gain path with no added reverb,
 delay or HRTF on speech. NPC distance changes adjust volume. The unrelated
 continuous battle synthesizer is removed from all pages that host the NPC game.
 One speech owner prevents radio, NPC and chat voices from competing, and passive
 gestures do not trigger an extra tower introduction. Generation and playback
-have separate deadlines so model startup cannot clip a short reply.
+have separate deadlines so model startup cannot clip a short reply. Generated
+requests keep their own aborting deadline through the shared API connection,
+instead of its usual 15-second limit. Long guides play in sentence sections of
+up to 180 characters, with only the next section prefetched, so the first words
+can start before the full guide has been generated. Mute and map changes cancel
+both playback and any pending section.
 
 `npm run build` prepares a checksum-pinned 109 MB model from the official Kokoro
 release using `curl`, then builds the site. Models stay in `.speech-models/`
@@ -84,7 +95,10 @@ Static samples are available at
 [`male-preview.wav`](../public/audio/voices/male-preview.wav). Run
 `MUZIKAZ_TEST_NEURAL_VOICES=1 node --test test/neural-voice-engine.test.mjs` for
 real inference/cancellation checks, and `python3 test/neural-speech.browser.py`
-for real inference → HTTP → browser audio playback. Controlled voice-list tests
+for real inference → shared API connection → map guide/NPC queue → browser audio
+playback. `python3 test/voice-unlock-recovery.browser.py` checks a rejected first
+gesture and suspended-output recovery using stored neural WAVs and real Web
+Audio. Controlled voice-list tests
 only test selection and lifecycle; the real tests validate generated waveforms.
 
 Disabling spatial audio centers world sounds and removes distance falloff.

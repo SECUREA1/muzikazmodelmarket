@@ -55,3 +55,32 @@ test('failed preference loading leaves a playable guide and late preferences can
  const f=fixture({loadPreferences:async()=>{throw Error('offline');}});await f.ui.enter(hockey);f.events.dispatchEvent(new Event('pointerdown'));assert.equal(f.calls.length,1);f.ui.dispose();
  let resolve;const waiting=new Promise(yes=>resolve=yes),old=fixture({loadPreferences:()=>waiting});const ready=old.ui.enter(hockey);old.events.dispatchEvent(new Event('pointerdown'));old.ui.dispose();resolve({});await ready;assert.equal(old.calls.length,0);
 });
+
+test('failed touch activation leaves a working resume button and exposes the output error',async()=>{
+ const output=new EventTarget(),state={unlocked:false,audioReady:false,error:{message:'Tap to enable audio.'}};
+ let resumes=0;
+ const voice={state,announce(){},setPreferences(){},unlock(){resumes++;return Promise.resolve(state.audioReady);},addEventListener:(...args)=>output.addEventListener(...args),removeEventListener:(...args)=>output.removeEventListener(...args)};
+ const f=fixture({voice});await f.ui.enter(hockey);
+ f.events.dispatchEvent(new Event('pointerdown'));
+ const [enable,,,status]=f.ui.controls.children;
+ assert.equal(enable.disabled,false);assert.equal(enable.textContent,'Enable guide audio');assert.equal(status.textContent,'Tap to enable audio.');
+ state.unlocked=state.audioReady=true;state.error=null;output.dispatchEvent(new Event('statechange'));
+ assert.equal(enable.textContent,'Resume guide audio');assert.equal(enable.disabled,false);
+ enable.onclick();await Promise.resolve();assert.equal(resumes,2);
+ f.ui.dispose();state.error={message:'After disposal'};output.dispatchEvent(new Event('statechange'));assert.notEqual(status.textContent,'After disposal');
+});
+
+test('touch completion and clicks can enable audio without duplicating the welcome',async()=>{
+ const f=fixture();await f.ui.enter(hockey);
+ for(const type of ['pointerup','touchend','click'])f.events.dispatchEvent(new Event(type));
+ assert.equal(f.unlocks,3);assert.equal(f.calls.length,1);
+ f.ui.dispose();for(const type of ['pointerup','touchend','click'])f.events.dispatchEvent(new Event(type));assert.equal(f.unlocks,3);
+});
+
+test('passive audio recovery retains explicit saved mutes and explains master mute',async()=>{
+ const f=fixture({loadPreferences:async()=>({masterMuted:true,introductionMuted:true})});await f.ui.enter(hockey);
+ f.events.dispatchEvent(new Event('click'));
+ const [enable,mute,,status]=f.ui.controls.children;assert.equal(enable.disabled,false);
+ assert.equal(mute.disabled,true);assert.equal(mute.textContent,'Muted in Audio settings');assert.match(status.textContent,/All audio is muted in Audio settings/);
+ enable.onclick();mute.onclick();assert.equal(f.settings.at(-1).masterMuted,true);assert.equal(f.settings.at(-1).introductionMuted,true);f.ui.dispose();
+});

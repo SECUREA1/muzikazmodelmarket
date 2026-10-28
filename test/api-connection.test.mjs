@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
+import {createNeuralCharacterSpeech,GameSpeechUtterance} from '../public/js/neural-character-speech.js';
 
 const source = await readFile(new URL('../public/js/api-connection.js', import.meta.url), 'utf8');
 function loadConnection(fetch, configured = '', storage = new Map(), timers = {}) {
@@ -214,6 +215,50 @@ test('invalid saved header tokens are cleared before browser fetch and valid dra
 test('a non-HTTP saved API base resets to the current web origin',async()=>{
  const paths=[];const {window}=loadConnection(async url=>{paths.push(url);return health();},'data:text/plain,broken');
  await window.MUZIKAZ_API.fetch('/api/market/session');assert.ok(paths.every(url=>url.startsWith('https://static.example/')));
+});
+
+test('generated voices keep their aborting deadline through the shared API instead of the 15 second request limit',async()=>{
+ const previous=globalThis.MUZIKAZ_API,timers=new Map(),requests=[],events=[],sources=[];
+ let time=0,serial=0;
+ const clock={setTimeout(fn,ms){const id=++serial;timers.set(id,{fn,at:time+ms});return id;},clearTimeout(id){timers.delete(id);}};
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ async function advance(ms){time+=ms;for(const[id,timer]of timers)if(timer.at<=time){timers.delete(id);timer.fn();}await tick();}
+ const {window}=loadConnection(async(url,options)=>{
+  if(url.endsWith('/api/health'))return health();
+  assert.equal(url,'https://muzikazmodelmarket.onrender.com/api/speech');
+  return new Promise((resolve,reject)=>{
+   const request={options,resolve};requests.push(request);
+   options.signal.addEventListener('abort',()=>reject(Object.assign(new Error('Canceled'),{name:'AbortError'})),{once:true});
+  });
+ },'https://muzikazmodelmarket.onrender.com',new Map(),clock);
+ const context={state:'running',currentTime:0,destination:{},decodeAudioData:async()=>({duration:3}),
+  createBufferSource(){const source={playbackRate:{value:1},connect(){},disconnect(){},start(){this.started=true;},stop(){}};sources.push(source);return source;},
+  createGain:()=>({gain:{setValueAtTime(){}},connect(){},disconnect(){}}),close:async()=>{}
+ };
+ const engine=createNeuralCharacterSpeech({audioFactory:()=>context,nativeSpeech:null,NativeUtterance:null,setTimer:clock.setTimeout,clearTimer:clock.clearTimeout,setInterval:()=>0,clearInterval(){}});
+ const line=text=>{const utterance=new GameSpeechUtterance(text);utterance.onstart=()=>events.push([text,'start']);utterance.onerror=event=>events.push([text,event.error]);return utterance;};
+ try{
+  globalThis.MUZIKAZ_API=window.MUZIKAZ_API;
+  await window.MUZIKAZ_API.ready;await engine.resume();
+  engine.speak(line('Slow server voice'));await tick();
+  assert.equal(requests.length,1);
+  await advance(20000);
+  assert.equal(engine.pending,true,'The shared API must not abandon a valid 20 second inference request.');
+  assert.deepEqual(events,[]);assert.equal(requests[0].options.signal.aborted,false);
+  requests[0].resolve(new Response(new Uint8Array(48),{headers:{'content-type':'audio/wav'}}));await tick();
+  assert.deepEqual(events,[['Slow server voice','start']]);assert.equal(sources.length,1);
+
+  engine.speak(line('Canceled server voice'));await tick();await advance(20000);
+  assert.equal(engine.pending,true);engine.cancel();await tick();
+  assert.equal(requests[1].options.signal.aborted,true);
+  assert.deepEqual(events.at(-1),['Canceled server voice','canceled']);
+  await advance(60000);assert.equal(requests.length,2,'Canceled generation must not be retried.');assert.equal(sources.length,1);
+
+  engine.speak(line('Generation deadline'));await tick();await advance(60001);
+  assert.equal(requests[2].options.signal.aborted,true);
+  assert.deepEqual(events.at(-1),['Generation deadline','synthesis-unavailable']);
+  assert.equal(engine.pending,false);assert.equal(requests.length,3,'The generation deadline must not replay speech.');
+ }finally{engine.dispose();if(previous===undefined)delete globalThis.MUZIKAZ_API;else globalThis.MUZIKAZ_API=previous;}
 });
 
 test('member bearer sessions use sessionStorage when localStorage is blocked', async()=>{

@@ -56,10 +56,20 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
     utterance.lang=voice?.lang||style.lang;utterance.rate=style.rate;utterance.pitch=style.pitch;utterance.volume=volume(call);
     const watchdog=()=>{if(token!==generation||attemptId!==attempt)return;call.onError?.('Voice playback took too long. Please try again.');cancelCurrent();play();};
     utterance.onstart=()=>{if(attemptId!==attempt||token!==generation)return;started=true;clearTimer(timer);timer=setTimer(watchdog,speechTimeout(spokenText,style.rate));call.onStarted?.(voice);};
+    if(voice?.generated)utterance.onboundary=boundary=>{if(token!==generation||attemptId!==attempt||!Number.isFinite(boundary?.audioDuration))return;clearTimer(timer);timer=setTimer(watchdog,Math.max(8000,boundary.audioDuration*1000+(boundary.remainingSegments>0?65000:5000)));};
     utterance.onend=()=>{if(attemptId===attempt)finish();};
     utterance.onerror=error=>{
      if(token!==generation||attemptId!==attempt||disposed)return;
      clearTimer(timer);timer=null;
+     // Touch activation and returning from a background tab can leave the
+     // output suspended. Keep unheard words for the next real control gesture.
+     // A failed unlock must not consume the one map introduction.
+     if(!started&&error?.error==='not-allowed'){
+      generation++;current=null;utterance=null;unlocked=false;
+      releaseGameSpeech(speech,speechOwner);queue.unshift(call);
+      call.onError?.(error.message||'Tap Enable guide audio or a game control to resume the voice.');
+      return;
+     }
      // A device's online natural voice can be unavailable offline. Retry once
      // with a local voice only if no speech began, avoiding repeated sentences.
      if(!retry&&!started&&!voice?.generated&&!preferences.speechVoiceURI&&['network','voice-unavailable','language-unavailable','synthesis-unavailable','synthesis-failed'].includes(error?.error)){
@@ -85,7 +95,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    const id='announcement:'+worldId+':'+key;if(!remember(id))return false;
    enqueue({id,text:String(text),voice,speaker:voice,role,category,source,entityId,range,personality,mood,voiceProfile});return true;
   },
-  unlock(){if(disposed)return;unlocked=true;failed=false;try{speech?.resume?.();}catch{}play();},
+  unlock(){if(disposed)return false;unlocked=true;failed=false;let resumed;try{resumed=speech?.resume?.();}catch{unlocked=false;return false;}if(resumed===false){unlocked=false;return false;}play();if(resumed?.then)return Promise.resolve(resumed).then(value=>{if(!disposed&&value===false)unlocked=false;return value!==false;},()=>{if(!disposed)unlocked=false;return false;});return true;},
   setMuted(value){muted=!!value;if(muted)stop();else play();},
   setPreferences(value={}){if((preferences.speechVoiceGender||'auto')!==(value.speechVoiceGender||'auto')||(preferences.speechVoiceURI||'')!==(value.speechVoiceURI||'')){stop();cast.clear();}preferences={...value};for(let i=queue.length-1;i>=0;i--)if(blocked(queue[i])){queue[i].onCancelled?.();queue.splice(i,1);}if(!queue.length)clearVoiceWait();if(current&&blocked(current))cancelCurrent();play();},
   setScene({listener:position,actors:worldActors={}}={}){listener=position;actors=worldActors;if(current){const gain=volume(current);if(gain<=0){cancelCurrent();play();}else if(utterance)utterance.volume=gain;}},
@@ -98,7 +108,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
     if(unlocked)enqueue({...call,category:'dialogue'});else latest={...call,category:'dialogue',queuedAt:now()};
    }play();
   },
-  replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();unlocked=true;queue.push(replay);play();return true;},
+  replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();queue.push(replay);api.unlock();return true;},
   preview(value=preferences){
    api.setPreferences(value);
    if(blocked({category:'dialogue'}))return Promise.resolve('Unmute all audio and NPC conversations to preview the voice.');
@@ -109,8 +119,10 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    });
   },
   reset(){stop();seen.clear();scope=null;latest=null;},
+  addEventListener(type,callback){speech?.addEventListener?.(type,callback);},
+  removeEventListener(type,callback){speech?.removeEventListener?.(type,callback);},
   dispose(){disposed=true;stop();speech?.removeEventListener?.('voiceschanged',onVoicesChanged);cast.clear();},
-  get state(){return {unlocked,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,supported:supported(),speaking:!!current,pending:queue.length};}
+  get state(){const output=speech?.state;return {unlocked,audioReady:unlocked&&output?.unlocked!==false,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,supported:supported(),speaking:!!current,pending:queue.length,loading:!!output?.loading,error:output?.error||null,status:output?.status||''};}
  };
  return api;
 }
