@@ -218,7 +218,7 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   const toggle=hauntHUD.querySelector('[data-funhouse-haunt-toggle]');toggle.hidden=!running;toggle.setAttribute('aria-expanded',String(hauntExpanded));toggle.textContent=hauntExpanded?'Hide hint':'Hint';
   hauntHUD.querySelector('[data-funhouse-haunt-next]').textContent=running?(haunt.sealed?.length||0)+' / '+FUNHOUSE_HAUNT_WARDS.length+' sealed · '+(ward?.name||'Find the next lantern')+(nearbyWard?' · F to seal':''):haunt.message||'The watch ended.';
   hauntHUD.querySelector('[data-funhouse-haunt-hint]').textContent=ward?.hint||haunt.hint||haunt.message||'';
-  hauntHUD.querySelector('[data-funhouse-haunt-progress]').textContent=Number(haunt.score||0)+' points'+(haunt.status==='complete'?' · Best '+Number(state.bestScores?.haunt||haunt.score||0):' · Points awarded when all four lanterns are sealed.');
+  hauntHUD.querySelector('[data-funhouse-haunt-progress]').textContent=Number(haunt.score||0)+' points'+(haunt.status==='complete'?' · Best '+Number(state.bestScores?.haunt||haunt.score||0):' · Seal all four to score.');
   const seal=hauntHUD.querySelector('[data-funhouse-haunt-seal]');seal.hidden=!running;seal.disabled=pending||!nearbyWard;seal.textContent=nearbyWard?'Seal lantern · F':'Find the glowing lantern';
   const stop=hauntHUD.querySelector('[data-funhouse-haunt-stop]');stop.hidden=!running;stop.disabled=pending;
   const replay=hauntHUD.querySelector('[data-funhouse-haunt-replay]');replay.hidden=running;replay.disabled=pending||isActive(state.ride)||!funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START);replay.textContent=funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START)?'Start again':'Return to the house lobby';
