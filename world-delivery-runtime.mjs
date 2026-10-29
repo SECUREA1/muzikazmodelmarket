@@ -1,5 +1,8 @@
 import {DEED_DELIVERY_RULES} from './world-delivery-routing.mjs';
 import {deliverFactoryLots} from './world-factory-lineage.mjs';
+import {ensureAirFreight,prepareAirTransfers,advanceAirTransfers,holdAirTransfers,projectAirTransfers} from './world-air-freight.mjs';
+import {straitPortFreight} from './public/js/strait-freight-network.js';
+import {createPortTransfer,advancePortTransfer,portTransferView,portTransferProjection,portTransferRoute} from './world-port-freight.mjs';
 
 const clone=value=>JSON.parse(JSON.stringify(value));
 const terminal=new Set(['delivered','cancelled','port-held']);
@@ -9,6 +12,7 @@ const fail=message=>{throw Object.assign(new Error(message),{statusCode:409});};
 export const ROAD_DELIVERY_RULES=Object.freeze({roadCratesPerContainer:20,truckSlots:4,maximumActiveTrucksPerMap:16,departureHeadwayMs:1500});
 export function ensureWorldDelivery(ledger){
  for(const key of ['deliveryTasks','deliveryRoutes','portReceipts','dropoffReceipts','portEscrow','deliveryNextDepartureAt'])ledger[key] ||= {};
+ ensureAirFreight(ledger);
  return ledger;
 }
 function sample(points,progress){
@@ -39,6 +43,10 @@ function installRoute(task,route,now,{loading=true,courierOnly=false}={}){
  delete task.blockedReason;delete task.blockedAt;delete task.heldPhase;
 }
 export function deliveryTaskView(task,now=task.lastAdvancedAt){
+ if(task.portHandling&&task.portHandling.phase!=='complete'){
+  const transfer=portTransferView(task.portHandling,now);
+  return {...task,phase:terminal.has(task.phase)?task.phase:task.phase==='blocked'?'blocked':'port-transfer',portTransferPhase:transfer.phase,positionMapId:transfer.mapId,position:transfer.position,truckPosition:transfer.position,courierPosition:null,rotationY:transfer.rotationY,stageStartedAt:transfer.stageStartedAt,stageDurationMs:transfer.stageDurationMs,stageProgress:transfer.stageProgress,progress:transfer.stageProgress,estimatedDurationMs:transfer.totalDurationMs};
+ }
  const route=task.route||{},elapsed=Math.max(0,Number(task.elapsedMs)||0),steps=task.timeline||[];
  let offset=0,stage=steps.at(-1)||{phase:task.phase,durationMs:0},stageOffset=0;
  for(const step of steps){stage=step;stageOffset=offset;if(elapsed<offset+step.durationMs)break;offset+=step.durationMs;}
@@ -47,45 +55,85 @@ export function deliveryTaskView(task,now=task.lastAdvancedAt){
  const motionPhase=task.phase==='blocked'?(task.heldPhase||stage.phase):stage.phase;
  const truckPath=route.truckWaypoints||[],footPath=route.courierWaypoints||[],truckAt=motionPhase==='loading'?sample(truckPath,0):motionPhase==='driving'?sample(truckPath,stageProgress):sample(truckPath,1),courierAt=motionPhase==='courier'?sample(footPath,stageProgress):sample(footPath,motionPhase==='dropoff'||actualPhase==='delivered'?1:0);
  const truckPosition=truckAt?.position||task.truckPosition||route.hub?.position||task.lastPosition||null,courierPosition=courierAt?.position||task.courierPosition||route.dropoff?.position||null;
- return {...task,phase:actualPhase,stageStartedAt:Number(task.lastAdvancedAt||now)-(elapsed-stageOffset),stageDurationMs:stage.durationMs,stageProgress,progress:stageProgress,truckPosition,courierPosition,position:motionPhase==='courier'||motionPhase==='dropoff'?courierPosition:truckPosition,rotationY:motionPhase==='courier'?courierAt?.rotationY||0:truckAt?.rotationY||0,estimatedDurationMs:task.totalDurationMs};
+ return {...task,phase:actualPhase,positionMapId:task.mapId,stageStartedAt:Number(task.lastAdvancedAt||now)-(elapsed-stageOffset),stageDurationMs:stage.durationMs,stageProgress,progress:stageProgress,truckPosition,courierPosition,position:motionPhase==='courier'||motionPhase==='dropoff'?courierPosition:truckPosition,rotationY:motionPhase==='courier'?courierAt?.rotationY||0:truckAt?.rotationY||0,estimatedDurationMs:task.totalDurationMs};
+}
+function stageRoadTasks(ledger,shipment,{quantity=shipment.quantity,offset=0,airTask,airReceipt,portHandling=shipment.portHandling}={},now){
+ const unitsPerContainer=shipment.packing.unitsPerContainer,unitsPerRoadCrate=shipment.packing.unitsPerRoadCrate,capacity=shipment.packing.unitsPerTruck;
+ if(!whole(quantity)||!quantity||!whole(offset)||offset+quantity>shipment.quantity)fail('This receiving transfer has no valid counted cargo.');
+ let remaining=quantity,index=0;
+ while(remaining){
+  const count=Math.min(remaining,capacity),id='deed-truck:'+shipment.id+(airTask?':air:'+airTask.id:'')+':'+index++,cargoOffset=offset+quantity-remaining;
+  if(ledger.deliveryTasks[id])fail('This receiving transfer was already staged.');
+  let allocationOffset=cargoOffset,toAssign=count;const lotAllocations=[];
+  for(const line of ledger.factoryLotAllocations[shipment.id]?.lots||[]){if(allocationOffset>=line.quantity){allocationOffset-=line.quantity;continue;}const amount=Math.min(toAssign,line.quantity-allocationOffset);lotAllocations.push({lotId:line.lotId,quantity:amount});toAssign-=amount;allocationOffset=0;if(!toAssign)break;}
+  const task={id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,recipientId:shipment.recipientId||shipment.ownerId,itemId:shipment.itemId,itemName:shipment.itemName,quantity:count,cargoOffset,unitsPerRoadCrate,crateCount:Math.ceil(count/unitsPerRoadCrate),truckSlots:ROAD_DELIVERY_RULES.truckSlots,sourceContainerCount:Math.ceil(count/unitsPerContainer),lotAllocations,modelId:'frontier-pickup',mapId:shipment.destinationMapId,phase:'awaiting-route',createdAt:now,receivedAtPortAt:shipment.seaReceivedAt||now,lastAdvancedAt:now,elapsedMs:0,totalDurationMs:0,deliveredQuantity:0,...(airTask?{airTaskId:airTask.id,airDeliveryId:airReceipt.id,receivingPortId:airTask.destinationPortId||airTask.route?.toPortId}:{} )};
+  if(portHandling){task.portHandling=createPortTransfer(ledger,{...clone(portHandling),id:'port-truck:'+id},now);task.phase='port-transfer';task.totalDurationMs=task.portHandling.totalDurationMs;}
+  ledger.deliveryTasks[id]=task;shipment.deliveryTaskIds.push(id);remaining-=count;
+ }
 }
 export function receiveDeedShipment(ledger,shipment,result,now){
  ensureWorldDelivery(ledger);
  if(ledger.portReceipts[shipment.id])return ledger.portReceipts[shipment.id];
- const receipt={id:'port:'+shipment.id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,itemId:shipment.itemId,quantity:shipment.quantity,portId:shipment.destinationPortId,shippingMapId:shipment.shippingMapId,deliveryId:result.deliveryId,quality:result.quality,receivedAt:now};
+ const receipt={id:'port:'+shipment.id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,itemId:shipment.itemId,quantity:shipment.quantity,portId:shipment.destinationPortId,shippingMapId:shipment.shippingMapId,deliveryId:result.deliveryId,quality:result.quality,receivedAt:now,...(shipment.onwardMode?{onwardMode:shipment.onwardMode,onwardPortId:shipment.onwardPortId}:{} )};
  ledger.portReceipts[shipment.id]=receipt;
  shipment.seaReceipt=clone(receipt);shipment.phase='port-received';shipment.seaReceivedAt=now;shipment.deliveryId=result.deliveryId;shipment.deliveryTaskIds=[];
- shipment.transferTask={id:'transfer:'+shipment.id,phase:'port-received',fromPortId:shipment.destinationPortId,destinationMapId:shipment.destinationMapId,mode:'server-managed-road-delivery',quantity:shipment.quantity};
- ledger.portEscrow[shipment.id]={id:'port-escrow:'+shipment.id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,itemId:shipment.itemId,quantity:shipment.quantity,remainingQuantity:shipment.quantity,heldQuantity:0,deliveredQuantity:0,phase:'awaiting-road-delivery',portId:shipment.destinationPortId,receivedAt:now};
+ shipment.transferTask={id:'transfer:'+shipment.id,phase:'port-received',fromPortId:shipment.destinationPortId,destinationMapId:shipment.destinationMapId,mode:shipment.onwardMode==='air'?'verified-sea-air-road-delivery':'server-managed-road-delivery',quantity:shipment.quantity};
+ ledger.portEscrow[shipment.id]={id:'port-escrow:'+shipment.id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,itemId:shipment.itemId,quantity:shipment.quantity,remainingQuantity:shipment.quantity,heldQuantity:0,deliveredQuantity:0,phase:shipment.onwardMode==='air'?'awaiting-air-delivery':'awaiting-road-delivery',portId:shipment.destinationPortId,receivedAt:now};
  const unitsPerContainer=shipment.packing.unitsPerContainer,unitsPerRoadCrate=Math.max(1,Math.ceil(unitsPerContainer/ROAD_DELIVERY_RULES.roadCratesPerContainer)),capacity=unitsPerRoadCrate*ROAD_DELIVERY_RULES.truckSlots;
  Object.assign(shipment.packing,{unitsPerRoadCrate,roadCratesPerContainer:ROAD_DELIVERY_RULES.roadCratesPerContainer,truckSlots:ROAD_DELIVERY_RULES.truckSlots,unitsPerTruck:capacity});
  if(!whole(capacity)||!capacity)fail('This shipment has no valid road packing capacity.');
- let remaining=shipment.quantity,index=0;
- while(remaining){
-  const quantity=Math.min(remaining,capacity),id='deed-truck:'+shipment.id+':'+index++;
-  let offset=shipment.quantity-remaining,toAssign=quantity;const lotAllocations=[];
-  for(const line of ledger.factoryLotAllocations[shipment.id]?.lots||[]){if(offset>=line.quantity){offset-=line.quantity;continue;}const count=Math.min(toAssign,line.quantity-offset);lotAllocations.push({lotId:line.lotId,quantity:count});toAssign-=count;offset=0;if(!toAssign)break;}
-  ledger.deliveryTasks[id]={id,shipmentId:shipment.id,orderId:shipment.orderId,deedId:shipment.deedId,...(shipment.addressId?{addressId:shipment.addressId,address:clone(shipment.address)}:{}),ownerId:shipment.ownerId,recipientId:shipment.recipientId||shipment.ownerId,itemId:shipment.itemId,itemName:shipment.itemName,quantity,unitsPerRoadCrate,crateCount:Math.ceil(quantity/unitsPerRoadCrate),truckSlots:ROAD_DELIVERY_RULES.truckSlots,sourceContainerCount:Math.ceil(quantity/unitsPerContainer),lotAllocations,modelId:'frontier-pickup',mapId:shipment.destinationMapId,phase:'awaiting-route',createdAt:now,receivedAtPortAt:now,lastAdvancedAt:now,elapsedMs:0,totalDurationMs:0,deliveredQuantity:0};
-  shipment.deliveryTaskIds.push(id);remaining-=quantity;
- }
+ if(shipment.onwardMode==='air')prepareAirTransfers(ledger,shipment,now);
+ else stageRoadTasks(ledger,shipment,{},now);
  return receipt;
+}
+/** Called only after the gameplay-bound flight has committed an air receipt.
+ * Arrival releases that flight's exact parcel slice to road delivery, without
+ * changing map/world stock or releasing another flight's sealed cargo. */
+export function receiveAirShipment(ledger,shipment,airTask,receipt,now){
+ ensureWorldDelivery(ledger);
+ const saved=ledger.airReceipts[airTask?.id];
+ if(!shipment?.seaReceipt||shipment.onwardMode!=='air'||!airTask||airTask.shipmentId!==shipment.id||airTask.phase!=='air-delivered'||!saved||saved.id!==receipt?.id||saved.quantity!==airTask.quantity||saved.shipmentId!==shipment.id)fail('A verified matching air receipt is required before road delivery.');
+ if(airTask.roadDeliveryStagedAt!==undefined)return (airTask.roadDeliveryTaskIds||[]).map(id=>ledger.deliveryTasks[id]).filter(Boolean);
+ if(['cancelled','port-held'].includes(shipment.phase)||ledger.orders?.[shipment.orderId]?.phase==='cancelled')fail('The sender held the remaining shipment at port.');
+ const portId=airTask.destinationPortId||airTask.route?.toPortId,connection=straitPortFreight(portId),path=connection?.airRoadWaypoints;
+ if(!path?.length)fail('The receiving airfield has no connected shore freight bay.');
+ const portHandling={mapId:airTask.mapId||shipment.shippingMapId,portId,name:'Air cargo arrival · shore freight bay',waypoints:[...path].reverse().map(point=>({...point}))},before=shipment.deliveryTaskIds.length;
+ stageRoadTasks(ledger,shipment,{quantity:airTask.quantity,offset:airTask.offset,airTask,airReceipt:saved,portHandling},now);
+ airTask.roadDeliveryTaskIds=shipment.deliveryTaskIds.slice(before);airTask.roadDeliveryStagedAt=now;
+ shipment.phase='port-received';shipment.transferTask.phase='air-received';
+ return airTask.roadDeliveryTaskIds.map(id=>ledger.deliveryTasks[id]);
 }
 function creditTask(ledger,task,shipment,now){
  const existing=ledger.dropoffReceipts[task.id];if(existing)return existing;
  const stock=ledger.maps[task.mapId]?.stock;if(!stock)fail('The deed receiving inventory is unavailable.');
  const next=(stock[task.itemId]||0)+task.quantity;if(!Number.isSafeInteger(next))fail('The deed inventory is at capacity.');stock[task.itemId]=next;
- const receipt={id:'door:'+task.id,deliveryId:task.id,deliveryTaskId:task.id,shipmentId:shipment.id,orderId:task.orderId,deedId:task.deedId,...(task.addressId?{addressId:task.addressId,address:clone(task.route?.address||task.address)}:{}),productionId:shipment.productionId,ownerId:task.ownerId,itemId:task.itemId,quantity:task.quantity,destinationMapId:task.mapId,dropoffId:task.route.dropoff.id,dropoff:clone(task.route.dropoff),routeRevision:task.routeRevision,receivedAt:now,seaDeliveryId:shipment.deliveryId,quality:shipment.seaReceipt.quality,lotAllocations:clone(task.lotAllocations||[])};
+ const receipt={id:'door:'+task.id,deliveryId:task.id,deliveryTaskId:task.id,shipmentId:shipment.id,orderId:task.orderId,deedId:task.deedId,...(task.addressId?{addressId:task.addressId,address:clone(task.route?.address||task.address)}:{}),...(task.airTaskId?{airTaskId:task.airTaskId,airDeliveryId:task.airDeliveryId,onwardMode:'air'}:{}),productionId:shipment.productionId,ownerId:task.ownerId,itemId:task.itemId,quantity:task.quantity,destinationMapId:task.mapId,dropoffId:task.route.dropoff.id,dropoff:clone(task.route.dropoff),routeRevision:task.routeRevision,receivedAt:now,seaDeliveryId:shipment.deliveryId,quality:shipment.seaReceipt.quality,lotAllocations:clone(task.lotAllocations||[])};
  ledger.dropoffReceipts[task.id]=receipt;ledger.factoryStockReceipts[task.id]=clone(receipt);
  task.phase='delivered';task.deliveredAt=now;task.deliveredQuantity=task.quantity;task.elapsedMs=task.totalDurationMs;
  const escrow=ledger.portEscrow[shipment.id];escrow.deliveredQuantity+=task.quantity;escrow.remainingQuantity-=task.quantity;escrow.phase=escrow.remainingQuantity?'road-delivery':'delivered';return receipt;
 }
+function receivingValid(record,data,addressValid){
+ if(record.addressId)return !!addressValid?.(record);
+ const recipient=record.recipientId||record.ownerId,deed=Object.values(data.landDeeds||{}).find(deed=>deed.id===record.deedId);
+ return deed?.status==='active'&&deed.ownerId===recipient&&data.users[recipient]?.items?.some(item=>item.id===record.deedId&&item.type==='land-deed');
+}
 export function advanceWorldDelivery(ledger,data,now,{planFor,addressValid}={}){
  ensureWorldDelivery(ledger);
+ advanceAirTransfers(ledger,now,{canAdvance:task=>{const shipment=ledger.shipments?.[task.shipmentId];return !!shipment&&!['cancelled','port-held'].includes(shipment.phase)&&ledger.orders?.[task.orderId]?.phase!=='cancelled'&&receivingValid(task,data,addressValid);}});
  const occupied=new Map();for(const task of Object.values(ledger.deliveryTasks))if(task.route&&!terminal.has(task.phase)&&task.phase!=='awaiting-truck')occupied.set(task.mapId,(occupied.get(task.mapId)||0)+1);
  for(const task of Object.values(ledger.deliveryTasks)){
   if(terminal.has(task.phase))continue;
-  const shipment=ledger.shipments[task.shipmentId],order=ledger.orders?.[task.orderId],deed=Object.values(data.landDeeds||{}).find(deed=>deed.id===task.deedId),recipient=task.recipientId||task.ownerId,owns=task.addressId?!!addressValid?.(task):deed?.status==='active'&&deed.ownerId===recipient&&data.users[recipient]?.items.some(item=>item.id===task.deedId&&item.type==='land-deed');
+  const shipment=ledger.shipments[task.shipmentId],order=ledger.orders?.[task.orderId],owns=receivingValid(task,data,addressValid);
   if(!shipment||task.orderId&&!order||order?.phase==='cancelled')continue;
+  if(task.portHandling&&task.portHandling.phase!=='complete'){
+   advancePortTransfer(task.portHandling,now,{held:!owns});task.lastAdvancedAt=now;task.updatedAt=now;
+   if(task.portHandling.phase!=='complete'){
+    task.phase=owns?'port-transfer':'blocked';task.truckPosition=portTransferView(task.portHandling,now).position;
+    if(!owns)task.blockedReason='The receiving address or deed owner changed. The sender can hold remaining cargo at port.';else delete task.blockedReason;
+    continue;
+   }
+   task.phase='awaiting-route';task.truckPosition=null;delete task.blockedReason;
+  }
   if(!task.route&&(occupied.get(task.mapId)||0)>=ROAD_DELIVERY_RULES.maximumActiveTrucksPerMap){task.phase='awaiting-truck';task.lastAdvancedAt=now;task.updatedAt=now;continue;}
   if(task.phase==='awaiting-truck'&&task.route){
    if(now<task.departureAt)continue;
@@ -114,13 +162,17 @@ export function advanceWorldDelivery(ledger,data,now,{planFor,addressValid}={}){
  for(const shipment of Object.values(ledger.shipments))if(shipment.deliverySchemaVersion&&shipment.seaReceipt&&!['delivered','cancelled','port-held'].includes(shipment.phase)){
   const tasks=shipment.deliveryTaskIds.map(id=>ledger.deliveryTasks[id]);
   shipment.deliveredQuantity=tasks.filter(task=>task.phase==='delivered').reduce((sum,task)=>sum+task.quantity,0);
-  if(tasks.length&&tasks.every(task=>task.phase==='delivered')){
+  const airTasks=(shipment.airTaskIds||[]).map(id=>ledger.airTasks[id]).filter(Boolean),airComplete=shipment.onwardMode!=='air'||airTasks.length>0&&airTasks.every(task=>task.phase==='air-delivered')&&airTasks.reduce((sum,task)=>sum+task.quantity,0)===shipment.quantity;
+  if(airComplete&&tasks.length&&tasks.every(task=>task.phase==='delivered')&&tasks.reduce((sum,task)=>sum+task.quantity,0)===shipment.quantity){
    shipment.phase='delivered';shipment.deliveredAt=now;shipment.transferTask.phase='delivered';deliverFactoryLots(ledger,shipment,{now});
-  }else shipment.phase=tasks.some(task=>!['awaiting-route','awaiting-truck','blocked','loading'].includes(task.phase))?'land-transit':'port-received';
+  }else if(tasks.some(task=>!['awaiting-route','awaiting-truck','blocked','loading','port-transfer'].includes(task.phase)))shipment.phase='land-transit';
+  else if(shipment.onwardMode==='air'&&!airComplete)shipment.phase=airTasks.some(task=>task.phase==='reserved')?'air-transit':'awaiting-air-cargo';
+  else shipment.phase='port-received';
  }
 }
 export function holdShipmentAtPort(ledger,shipment,now){
  ensureWorldDelivery(ledger);
+ holdAirTransfers(ledger,shipment,now);
  for(const id of shipment.deliveryTaskIds||[]){const task=ledger.deliveryTasks[id];if(task&&task.phase!=='delivered'){task.phase='port-held';task.heldAt=now;task.updatedAt=now;}}
  const escrow=ledger.portEscrow[shipment.id];if(escrow){escrow.phase='port-held';escrow.heldQuantity=escrow.remainingQuantity;escrow.heldAt=now;}
  shipment.phase='port-held';shipment.heldAt=now;if(shipment.transferTask)shipment.transferTask.phase='port-held';
@@ -128,12 +180,16 @@ export function holdShipmentAtPort(ledger,shipment,now){
 export function projectWorldDeliveries(ledger,mapId,now){
  ensureWorldDelivery(ledger);
  const routes=Object.values(ledger.deliveryRoutes).filter(route=>route.mapId===mapId),allTasks=Object.values(ledger.deliveryTasks).filter(task=>task.mapId===mapId),tasks=allTasks.filter(task=>task.phase!=='awaiting-truck'&&task.phase!=='port-held'&&task.phase!=='cancelled'&&(task.phase!=='delivered'||now-task.deliveredAt<10000)).sort((a,b)=>Number(a.phase==='delivered')-Number(b.phase==='delivered')),vehicles=[],couriers=[];
+ const portTasks=Object.values(ledger.deliveryTasks).filter(task=>task.portHandling?.mapId===mapId&&task.portHandling.phase!=='complete'&&!terminal.has(task.phase));
+ for(const task of portTasks){const vehicle=portTransferProjection(task.portHandling,now);if(vehicle){vehicles.push(vehicle);routes.push(portTransferRoute(task.portHandling));}}
  for(const task of tasks){
   const view=deliveryTaskView(task,now),common={id:task.id,mapId,phase:view.phase,routeId:task.route?.id,routeRevision:task.routeRevision,updatedAt:task.updatedAt,stageStartedAt:view.stageStartedAt,stageDurationMs:view.stageDurationMs,stageProgress:view.stageProgress,progress:view.stageProgress};
+  if(task.portHandling&&task.portHandling.phase!=='complete')continue;
   const vehicleAccess=task.route?.accessMode!=='courier-access'&&task.route?.hub?.vehicleAccess!==false&&!!task.route?.truckWaypoints?.length;
   if(vehicleAccess&&view.truckPosition)vehicles.push({...common,modelId:'frontier-pickup',position:view.truckPosition,rotationY:view.rotationY,waypoints:view.phase==='driving'?task.route.truckWaypoints:[view.truckPosition],truckWaypoints:task.route?.truckWaypoints||[],courierWaypoints:task.route?.courierWaypoints||[]});
   if(['courier','dropoff','delivered'].includes(view.phase)&&view.courierPosition)couriers.push({...common,id:task.id+':courier',isCourier:true,modelId:'scout-avatar',position:view.courierPosition,rotationY:view.rotationY,waypoints:view.phase==='courier'?task.route.courierWaypoints:[view.courierPosition]});
  }
- const dropoffs=routes.map(route=>({...route.dropoff,deedId:route.deedId,status:route.status,...(route.reason?{reason:route.reason}:{}),deliveredAt:Math.max(0,...Object.values(ledger.dropoffReceipts).filter(receipt=>route.addressId?receipt.addressId===route.addressId:!receipt.addressId&&receipt.deedId===route.deedId).map(receipt=>receipt.receivedAt))||undefined}));
- return {serverTime:now,mapId,routes:clone(routes),dropoffs,vehicles:vehicles.slice(0,ROAD_DELIVERY_RULES.maximumActiveTrucksPerMap),couriers:couriers.slice(0,ROAD_DELIVERY_RULES.maximumActiveTrucksPerMap),queuedCount:allTasks.filter(task=>task.phase==='awaiting-truck').length};
+ const dropoffs=routes.filter(route=>route.dropoff).map(route=>({...route.dropoff,deedId:route.deedId,status:route.status,...(route.reason?{reason:route.reason}:{}),...(route.kind==='port-transfer'?{}:{deliveredAt:Math.max(0,...Object.values(ledger.dropoffReceipts).filter(receipt=>route.addressId?receipt.addressId===route.addressId:!receipt.addressId&&receipt.deedId===route.deedId).map(receipt=>receipt.receivedAt))||undefined})}));
+ const air=projectAirTransfers(ledger,mapId,now);
+ return {serverTime:now,mapId,routes:clone([...routes,...(air.routes||[])]),dropoffs:clone([...dropoffs,...(air.dropoffs||[])]),vehicles:[...vehicles,...(air.vehicles||[])].slice(0,ROAD_DELIVERY_RULES.maximumActiveTrucksPerMap),couriers:couriers.slice(0,ROAD_DELIVERY_RULES.maximumActiveTrucksPerMap),queuedCount:allTasks.filter(task=>task.phase==='awaiting-truck').length+portTasks.filter(task=>task.portHandling.phase==='queued').length};
 }

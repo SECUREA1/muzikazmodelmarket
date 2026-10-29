@@ -1249,7 +1249,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const fitnessUI=mountFitnessUI(stage,serverCommand,{onOpen:()=>stage.classList.add('fitness-training-overlay'),onClose:()=>stage.classList.remove('fitness-training-overlay'),announce:setStatus});
   const factoryUI=mountMissileFactoryUI(stage,serverCommand,{announce:setStatus,getPosition:()=>playerRig.position});
   const prisonUI=mountPrisonGame(stage,{command:serverCommand,announce:setStatus,getPosition:()=>playerRig.position,onOpen:lockMenuInput,onClose:()=>canvas.focus({preventScroll:true})});
-  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onState:state=>{if(activeEnvironment?.worldSupply?.enabled)envLoader.world?.traverse(object=>object.userData.setWorldFactoryProductionState?.(state.production));},onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:options=>shippingUI.open(options),onNavigate:destinationId=>loadById(destinationId),announce:setStatus});
+  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onState:state=>{if(activeEnvironment?.worldSupply?.enabled)envLoader.world?.traverse(object=>object.userData.setWorldFactoryProductionState?.(state.production));},onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:options=>shippingUI.open(options),onMap:()=>districtMap.button.click(),onNavigate:destinationId=>loadById(destinationId),announce:setStatus});
   worldSupplyUI.update(null,null,activeEnvironment);
   const deedDeliveryScene=createWorldDeedDeliveryScene({scene,inventory:sharedInventory});
   deedDeliveryScene.update(activeEnvironment);

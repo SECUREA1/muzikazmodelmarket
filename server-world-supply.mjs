@@ -11,9 +11,12 @@ import {ownedSupplyDeeds,orderDestination,refreshFactoryOrders,stageFactoryOrder
 import {SHIPPING_ID,SHIPPING_ROUTES,SHIPPING_RULES,isShippingEnvironment} from './public/js/shipping-config.js';
 import {distributionChallenges,distributionChallengeForDispatch,distributionChallengeResult} from './server-distribution-challenges.mjs';
 import {planDeedDelivery,deliveryMapRevision} from './world-delivery-routing.mjs';
-import {ensureWorldDelivery,receiveDeedShipment,advanceWorldDelivery,deliveryTaskView,projectWorldDeliveries,holdShipmentAtPort} from './world-delivery-runtime.mjs';
+import {ensureWorldDelivery,receiveDeedShipment,receiveAirShipment,advanceWorldDelivery,deliveryTaskView,projectWorldDeliveries,holdShipmentAtPort} from './world-delivery-runtime.mjs';
 import {DeliveryRoutePool} from './world-delivery-route-pool.mjs';
 import {addressMapId,mapDeliveryAddresses,publicDeliveryAddress,resolveDeliveryAddress,addressRecipientValid} from './world-delivery-addresses.mjs';
+import {STRAIT_FREIGHT_CONNECTIONS,STRAIT_AIR_ROUTES,straitPortFreight,straitAirRoute} from './public/js/strait-freight-network.js';
+import {ensureAirFreight,reserveAirTransfer,releaseAirTransfer,settleAirTransfer} from './world-air-freight.mjs';
+import {validateAirReservation} from './server-world-air-freight.mjs';
 
 export const WORLD_SUPPLY_RULES=Object.freeze({initialStock:1000,bulkMinimum:10,bulkDiscountPercent:20,maxQuantity:10000,minimumBuildMs:3000,maximumBuildMs:120000,itemsPerContainer:1000});
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
@@ -22,13 +25,30 @@ const activePhases=new Set(['loading','secured','sailing','unloading']);
 const routes=SHIPPING_ROUTES.filter(route=>route.from!==route.to&&!route.factoryExport);
 function deliveryActivityMaps(ledger={}){
  ledger ||= {};
- const ids=new Set(),terminal=new Set(['delivered','cancelled','port-held']);
+ const ids=new Set(),terminal=new Set(['delivered','air-delivered','cancelled','port-held']);
  for(const order of Object.values(ledger.orders||{}))if((order.addressId||order.deedId)&&!terminal.has(order.phase))ids.add(order.destinationMapId);
  for(const shipment of Object.values(ledger.shipments||{}))if((shipment.addressId||shipment.deedId)&&shipment.deliverySchemaVersion&&!terminal.has(shipment.phase))ids.add(shipment.destinationMapId);
  for(const task of Object.values(ledger.deliveryTasks||{}))if(!terminal.has(task.phase))ids.add(task.mapId);
+ for(const task of Object.values(ledger.deliveryTasks||{}))if(!terminal.has(task.phase)&&task.portHandling?.mapId&&task.portHandling.phase!=='complete')ids.add(task.portHandling.mapId);
+ for(const task of Object.values(ledger.airTasks||{}))if(!terminal.has(task.phase)){ids.add(task.mapId);ids.add(task.destinationMapId);}
  ids.delete(undefined);ids.delete(null);return ids;
 }
 function quantity(value){if(!Number.isSafeInteger(value)||value<1||value>WORLD_SUPPLY_RULES.maxQuantity)fail('Choose 1 to 10,000 whole items.',422);return value;}
+function onwardSelection(value,route,{destination,shippingMapId=SHIPPING_ID,directory}={}){
+ const mode=value??'road';
+ if(!['road','air'].includes(mode))fail('Choose road delivery or air onward delivery.',422);
+ if(mode==='air'){
+  if(!destination)fail('Choose a deed, store or building receiving address before selecting air onward delivery.',422);
+  const air=straitAirRoute(route?.to),map=directory?.maps.find(map=>map.id===shippingMapId);
+  if(shippingMapId!==SHIPPING_ID||!air||!map?.airport?.enabled)fail('This sea arrival port has no connected air-cargo route. Choose road delivery or another sea lane.',422);
+ }
+ return {onwardMode:mode,onwardPortId:mode==='air'?straitAirRoute(route.to).toPortId:route?.to};
+}
+function publicAirTask(task,walletId){
+ const {reservationId,captainId,releasedReservations,...record}=task;
+ return {...record,isCaptain:!!walletId&&captainId===walletId,reserved:!!captainId};
+}
+function publicAirReceipt(receipt){const {reservationId,captainId,...record}=receipt;return record;}
 function recipeSummary(item){
  const recipe=worldFactoryRecipe(item);
  return {id:recipe.id,profileId:recipe.profileId,recipeVersion:recipe.recipeVersion,itemPlanId:recipe.itemPlanId,fingerprint:recipe.fingerprint,name:recipe.name,itemName:recipe.itemName,description:recipe.description,unitsPerContainer:recipe.unitsPerContainer,unitBuildMs:recipe.unitBuildMs,minimumBuildMs:recipe.minimumBuildMs,stages:recipe.stages.map(({id,name,description,station})=>({id,name,description,station}))};
@@ -65,7 +85,8 @@ function updatePortTransfer(shipment,phase,now){
  if(phase==='returned')task.returnedAt ||= now;
 }
 function createShipment(fields,route,now){
- const shipment={...fields,phase:'queued',createdAt:now,transferMode:'simulated-onward-freight'};
+ const connection=fields.shippingMapId===SHIPPING_ID?straitPortFreight(route.to):null,onwardMode=fields.onwardMode||'road';
+ const shipment={...fields,onwardMode,onwardPortId:onwardMode==='air'?straitAirRoute(route.to)?.toPortId:route.to,...(connection?{portHandling:{mapId:SHIPPING_ID,portId:route.to,waypoints:connection.roadWaypoints}}:{}),phase:'queued',createdAt:now,transferMode:'simulated-onward-freight'};
  shipment.transferTask={id:'transfer:'+shipment.id,phase:'awaiting-sea-delivery',fromPortId:route.to,destinationMapId:shipment.destinationMapId,mode:'simulated-onward-freight',quantity:shipment.quantity};portTransferTask(shipment,now);return shipment;
 }
 function adoptDeedDeliveries(ledger,data){
@@ -78,6 +99,7 @@ function adoptDeedDeliveries(ledger,data){
 }
 function advance(ledger,now,data,directory){
  ensureWorldDelivery(ledger);
+ ensureAirFreight(ledger);
  adoptDeedDeliveries(ledger,data);
  ensureFactoryLineage(ledger,{now});
  for(const job of Object.values(ledger.production))if(advanceFactoryProduction(job,now))recordFactoryOutput(ledger,job,{now});
@@ -130,7 +152,7 @@ export class WorldSupplyService {
   const addressesFor=(data,id)=>{const map=available.find(map=>map.id===id);return map?mapDeliveryAddresses(data,map,rooms[id]||{}):[];};
   const context=(data,shipment)=>{
    const address=shipment.addressId?addressFor(data,shipment.addressId):null,base=available.find(map=>map.id===shipment.destinationMapId)||{id:shipment.destinationMapId};
-   const deed=shipment.addressId?{id:shipment.addressId,name:address?.name||shipment.address?.name||'Delivery address',ownerId:address?.recipientId||'missing',status:address?'active':'missing'}:Object.values(data.landDeeds||{}).find(deed=>deed.id===shipment.deedId)||{id:shipment.deedId,status:'missing'},environment=address?{...base,delivery:{...base.delivery,...(address.kind.endsWith('entrance')?{dropoff:base.delivery?.dropoff,entrance:address.dropoff}:{dropoff:address.dropoff})}}:base,room=rooms?.[environment.id]||{},portId=shipment.destinationPortId,revision=deliveryMapRevision({deed,environment,room,portId});return {deed,environment,room,portId,revision,address,addressId:shipment.addressId,storedAddress:shipment.address};
+   const deed=shipment.addressId?{id:shipment.addressId,name:address?.name||shipment.address?.name||'Delivery address',ownerId:address?.recipientId||'missing',status:address?'active':'missing'}:Object.values(data.landDeeds||{}).find(deed=>deed.id===shipment.deedId)||{id:shipment.deedId,status:'missing'},environment=address?{...base,delivery:{...base.delivery,...(address.kind.endsWith('entrance')?{dropoff:base.delivery?.dropoff,entrance:address.dropoff}:{dropoff:address.dropoff})}}:base,room=rooms?.[environment.id]||{},portId=shipment.receivingPortId||shipment.onwardPortId||shipment.destinationPortId,revision=deliveryMapRevision({deed,environment,room,portId});return {deed,environment,room,portId,revision,address,addressId:shipment.addressId,storedAddress:shipment.address};
   };
   const keyFor=(entry,{origin,mode}={})=>entry.deed.id+':'+entry.revision+':'+(origin?JSON.stringify([mode||'truck',origin.x,origin.y,origin.z]):'base'),preparedPlans=new Map();
   const remember=(key,plan)=>{if(this.deliveryRouteCache.size>=512)this.deliveryRouteCache.delete(this.deliveryRouteCache.keys().next().value);this.deliveryRouteCache.set(key,plan);return plan;};
@@ -195,7 +217,7 @@ export class WorldSupplyService {
    const availableFactoryStock={...ledger.factoryStock};
    for(const lot of Object.values(ledger.factoryLots))if(lot.reservedOrderId)availableFactoryStock[lot.itemId]=Math.max(0,(availableFactoryStock[lot.itemId]||0)-lot.availableQuantity);
    const addressRecords=mapId?directory.addressesFor(data,mapId).map(publicDeliveryAddress):[],addresses=addressRecords.slice(0,200),addressPage={mapId:mapId||null,total:addressRecords.length,offset:0,hasMore:addressRecords.length>addresses.length,nextOffset:addressRecords.length>addresses.length?addresses.length:null};
-   return filterSupplyState({addresses,addressPage,ownerId:walletId||null,deeds:walletId?ownedSupplyDeeds(data,walletId).map(deed=>({...deed,deliveryRoute:ledger.deliveryRoutes[deed.id]||null,deliveryDropoff:ledger.deliveryRoutes[deed.id]?.dropoff||null})):[],orders:Object.values(ledger.orders),deliveryTasks:Object.values(ledger.deliveryTasks).map(task=>deliveryTaskView(task,now)),deliveryRoutes:Object.values(ledger.deliveryRoutes),portReceipts:Object.values(ledger.portReceipts),dropoffReceipts:Object.values(ledger.dropoffReceipts),portEscrow:Object.values(ledger.portEscrow),serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,availableFactoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))},{walletId,data});
+   return filterSupplyState({airTasks:Object.values(ledger.airTasks||{}).map(task=>publicAirTask(task,walletId)),airReceipts:Object.values(ledger.airReceipts||{}).map(publicAirReceipt),airRoutes:STRAIT_AIR_ROUTES,freightConnections:STRAIT_FREIGHT_CONNECTIONS,addresses,addressPage,ownerId:walletId||null,deeds:walletId?ownedSupplyDeeds(data,walletId).map(deed=>({...deed,deliveryRoute:ledger.deliveryRoutes[deed.id]||null,deliveryDropoff:ledger.deliveryRoutes[deed.id]?.dropoff||null})):[],orders:Object.values(ledger.orders),deliveryTasks:Object.values(ledger.deliveryTasks).map(task=>deliveryTaskView(task,now)),deliveryRoutes:Object.values(ledger.deliveryRoutes),portReceipts:Object.values(ledger.portReceipts),dropoffReceipts:Object.values(ledger.dropoffReceipts),portEscrow:Object.values(ledger.portEscrow),serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,availableFactoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))},{walletId,data});
   });
  }
  async recipe(itemId,count=1,{walletId}={}){
@@ -212,7 +234,7 @@ export class WorldSupplyService {
   if(shipmentId)shipIds.add(shipmentId);
   const shipments=state.shipments.filter(shipment=>shipIds.has(shipment.id)),stockReceipts=state.stockReceipts.filter(receipt=>shipIds.has(receipt.shipmentId));
   const related=records=>(records||[]).filter(record=>shipIds.has(record.shipmentId));
-  return {serverTime:state.serverTime,production,lots,allocations,shipments,stockReceipts,deliveryTasks:related(state.deliveryTasks),portReceipts:related(state.portReceipts),dropoffReceipts:related(state.dropoffReceipts),portEscrow:related(state.portEscrow),events:production.flatMap(job=>job.events||[]).sort((a,b)=>a.at-b.at)};
+  return {serverTime:state.serverTime,production,lots,allocations,shipments,stockReceipts,deliveryTasks:related(state.deliveryTasks),portReceipts:related(state.portReceipts),dropoffReceipts:related(state.dropoffReceipts),airTasks:related(state.airTasks),airReceipts:related(state.airReceipts),portEscrow:related(state.portEscrow),events:production.flatMap(job=>job.events||[]).sort((a,b)=>a.at-b.at)};
  }
  async projection({mapId}={}){
   const directory=await this.directory({mapId,includeCatalog:false}),now=this.now();
@@ -220,25 +242,26 @@ export class WorldSupplyService {
   return this.supplyTransaction(data=>{const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);return projectWorldDeliveries(ledger,mapId,now);});
  }
  async action(walletId,operation,input={}){
-  const wallet=cleanWallet(walletId),directory=await this.directory({walletId:wallet,addressId:input.addressId}),now=this.now();
+  const wallet=cleanWallet(walletId),directory=await this.directory({walletId:wallet,addressId:input.addressId,mapId:input.destinationMapId}),now=this.now();
   return this.supplyTransaction(data=>{
    const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);
    const user=data.users[wallet];if(!user)fail('Sign in to operate the world factory.',401);
    if(operation==='quote')return quoteFor(factoryProductionItem(data,input.itemId,directory.items,{walletId:wallet}),input.quantity);
-   const key=requestKey(wallet,operation,input),signature=JSON.stringify([input.itemId,input.quantity,input.destinationMapId,input.shippingMapId,input.contractId,input.productionId,input.shipmentId,input.expectedPriceMzk,input.sourceMapId,...(input.challengeId?[input.challengeId]:[]),...(input.deedId?[{deedId:input.deedId}]:[]),...(input.orderId?[{orderId:input.orderId}]:[]),...(input.customItemId?[{customItemId:input.customItemId}]:[]),...(input.addressId?[{addressId:input.addressId}]:[]),...(input.expectedAddressRevision!==undefined?[{expectedAddressRevision:input.expectedAddressRevision}]:[])]);
+   const key=requestKey(wallet,operation,input),signature=JSON.stringify([input.itemId,input.quantity,input.destinationMapId,input.shippingMapId,input.contractId,input.productionId,input.shipmentId,input.expectedPriceMzk,input.sourceMapId,...(input.challengeId?[input.challengeId]:[]),...(input.deedId?[{deedId:input.deedId}]:[]),...(input.orderId?[{orderId:input.orderId}]:[]),...(input.customItemId?[{customItemId:input.customItemId}]:[]),...(input.addressId?[{addressId:input.addressId}]:[]),...(input.expectedAddressRevision!==undefined?[{expectedAddressRevision:input.expectedAddressRevision}]:[]),...(input.onwardMode!==undefined?[{onwardMode:input.onwardMode}]:[])]);
    const prior=priorReceipt(ledger,key,signature);if(prior)return prior;
    let result;
    if(operation==='register-design'){
     const item=registerPrivateFactoryBlueprint(data,wallet,input.customItemId);result={itemId:item.supplyId,item};
    }else if(operation==='produce'||operation==='order'||operation==='order-address'){
     const item=factoryProductionItem(data,input.itemId,directory.items,{walletId:wallet}),quote=quoteFor(item,input.quantity),target=operation==='order-address'?addressOrderDestination(data,input,directory):operation==='order'?orderDestination(data,wallet,{...input,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:input.contractId||'gulf-gateway'},directory,routes):null;
+    const onward=target?onwardSelection(input.onwardMode,target.route,{destination:true,shippingMapId:input.shippingMapId||SHIPPING_ID,directory}):null;
     if(input.expectedPriceMzk!==undefined&&input.expectedPriceMzk!==quote.priceMzk)fail('The factory quote changed. Review the current cost.');
     if(Number(user.tokens.MZK||0)<quote.priceMzk)fail('Not enough MZK for this production batch.');
     if(Object.values(ledger.production).filter(job=>job.ownerId===wallet&&['building','paused'].includes(job.phase)).length>=20)fail('Finish an existing production batch before starting another.');
     user.tokens.MZK-=quote.priceMzk;
     result=createFactoryProduction(quote,{id:randomUUID(),ownerId:wallet,now});ledger.production[result.id]=result;
     if(target){
-     const job=result,order={id:randomUUID(),deliverySchemaVersion:1,ownerId:wallet,deedId:target.deed?.id||null,deedName:target.address?.name||target.deed.name,...(target.address?{addressId:target.address.id,address:publicDeliveryAddress(target.address),recipientId:target.address.recipientId}:{}),destinationMapId:target.destinationMapId,productionId:job.id,itemId:item.supplyId,itemName:item.name,quantity:quote.quantity,priceMzk:quote.priceMzk,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:target.route.id,shipmentIds:[],deliveredQuantity:0,phase:'building',createdAt:now,updatedAt:now};
+     const job=result,order={id:randomUUID(),deliverySchemaVersion:1,...onward,ownerId:wallet,deedId:target.deed?.id||null,deedName:target.address?.name||target.deed.name,...(target.address?{addressId:target.address.id,address:publicDeliveryAddress(target.address),recipientId:target.address.recipientId}:{}),destinationMapId:target.destinationMapId,productionId:job.id,itemId:item.supplyId,itemName:item.name,quantity:quote.quantity,priceMzk:quote.priceMzk,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:target.route.id,shipmentIds:[],deliveredQuantity:0,phase:'building',createdAt:now,updatedAt:now};
      job.orderId=order.id;ledger.orders[order.id]=order;result=order;
     }
     const fundedJob=target?ledger.production[result.productionId]:result;
@@ -250,6 +273,7 @@ export class WorldSupplyService {
    }else if(operation==='dispatch'){
     const item=supplyItem(data,input.itemId),count=quantity(input.quantity),receivingAddress=input.addressId?directory.addressFor(data,input.addressId):null,destinationMapId=receivingAddress?.mapId||input.destinationMapId,sourceMapId=input.sourceMapId||'factory',shippingMapId=input.shippingMapId||SHIPPING_ID,contractId=input.contractId||'gulf-gateway',route=routes.find(route=>route.id===contractId);
     if(!route)fail('Choose a shipping lane with a destination port.',422);
+    const onward=onwardSelection(input.onwardMode,route,{destination:!!receivingAddress||Object.values(data.landDeeds||{}).some(deed=>deed.status==='active'&&'plot-'+deed.id===destinationMapId),shippingMapId,directory});
     if(input.addressId&&!receivingAddress)fail('This receiving address is no longer available.',404);
     if(receivingAddress&&input.expectedAddressRevision!==undefined&&input.expectedAddressRevision!==receivingAddress.revision)fail('This receiving address moved or changed owner. Refresh the address and review it before dispatch.');
     if(receivingAddress&&input.destinationMapId!==undefined&&input.destinationMapId!==receivingAddress.mapId)fail('The destination must match the selected delivery address.',422);
@@ -265,7 +289,7 @@ export class WorldSupplyService {
     const sourceStock=sourceMapId==='factory'?ledger.factoryStock:sourceMapId==='world'?ledger.worldStock:ledger.maps[sourceMapId].stock;
     if((sourceStock[item.supplyId]||0)<count)fail(sourceMapId==='factory'?'Complete enough factory production before dispatching this item.':'The source warehouse has insufficient stock for this transfer.');
     if(sourceMapId!=='factory')sourceStock[item.supplyId]-=count;
-    result=createShipment({id:randomUUID(),ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing,sourceMapId,destinationMapId,shippingMapId,contractId,...(receivingAddress?{addressId:receivingAddress.id,address:publicDeliveryAddress(receivingAddress),deedId:receivingAddress.deedId,recipientId:receivingAddress.recipientId,deliverySchemaVersion:1}:{}),...(challenge?{challenge}:{})},route,now);ledger.shipments[result.id]=result;allocateFactoryLots(ledger,result,{now});
+    result=createShipment({id:randomUUID(),...onward,ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing,sourceMapId,destinationMapId,shippingMapId,contractId,...(receivingAddress?{addressId:receivingAddress.id,address:publicDeliveryAddress(receivingAddress),deedId:receivingAddress.deedId,recipientId:receivingAddress.recipientId,deliverySchemaVersion:1}:{}),...(challenge?{challenge}:{})},route,now);ledger.shipments[result.id]=result;allocateFactoryLots(ledger,result,{now});
    }else if(operation==='cancel'){
     const linkedProduction=input.productionId&&ledger.production[input.productionId],linkedShipment=input.shipmentId&&ledger.shipments[input.shipmentId],orderId=input.orderId||linkedProduction?.orderId||linkedShipment?.orderId;
     if(orderId){result=cancelFactoryOrder(ledger,data,orderId,wallet,input.requestId,now,(shipment,time)=>updatePortTransfer(shipment,'returned',time));}
@@ -321,6 +345,45 @@ export class WorldSupplyService {
     shipment.phase='queued';delete shipment.jobId;delete shipment.captainId;delete shipment.leaseUntil;updatePortTransfer(shipment,'staged',now);return {shipmentId:shipment.id};
    }
    fail('Choose a listed factory freight operation.',422);
+  });
+ }
+ async airAction(identity,sim,player,environment,command,now=this.now()){
+  if(environment?.id!==SHIPPING_ID||!environment.airport?.enabled)fail('Enter a connected Strait airfield to carry this cargo.',422);
+  const wallet=cleanWallet(identity.walletId),directory=await this.directory({walletId:wallet});
+  return this.supplyTransaction(data=>{
+   const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);ensureAirFreight(ledger);
+   const task=own(ledger.airTasks,command.airTaskId)&&ledger.airTasks[command.airTaskId],shipment=task&&ledger.shipments[task.shipmentId];
+   if(!task||!shipment||task.mapId!==environment.id)fail('This air cargo task is unavailable in this map.',404);
+   if(command.operation==='release'){
+    const result=releaseAirTransfer(ledger,task.id,{walletId:wallet,reservationId:command.reservationId,reason:command.reason},now);
+    return {task:JSON.parse(JSON.stringify(result)),reservationId:result.reservationId||null};
+   }
+   if(command.operation!=='reserve')fail('Choose a listed air cargo reservation action.',422);
+   assertOrderFreightAvailable(ledger,data,shipment,directory);
+   if(['cancelled','delivered','port-held'].includes(shipment.phase)||shipment.addressId&&!directory.addressValid(data,shipment))fail('The receiving address or remaining freight is on hold.');
+   if(!supplyItemVisibleTo(data,shipment.itemId,wallet))fail('Only the current design owner can pilot this private factory freight.',403);
+   validateAirReservation(sim,player,environment,task,now);
+   const result=reserveAirTransfer(ledger,task.id,{walletId:wallet,aircraftId:player.vehicleId,mapId:environment.id},now);
+   return {task:JSON.parse(JSON.stringify(result)),reservationId:result.reservationId};
+  });
+ }
+ async airDelivery(identity,proof,environment,now=this.now()){
+  if(environment?.id!==SHIPPING_ID)fail('A verified Strait cargo flight is required.',422);
+  const wallet=cleanWallet(identity.walletId),directory=await this.directory({walletId:wallet});
+  return this.supplyTransaction(data=>{
+   const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);ensureAirFreight(ledger);
+   const task=own(ledger.airTasks,proof.airTaskId)&&ledger.airTasks[proof.airTaskId],shipment=task&&ledger.shipments[task.shipmentId];
+   if(!task||!shipment)fail('This sealed air manifest is unavailable.',404);
+   if(task.captainId!==wallet||task.mapId!==environment.id)fail('This air cargo belongs to another pilot or map.',403);
+   const previous=ledger.airReceipts[task.id];
+   if(previous){if(previous.deliveryId!==proof.deliveryId||previous.reservationId!==proof.reservationId)fail('This cargo was received by another flight.');return previous;}
+   assertOrderFreightAvailable(ledger,data,shipment,directory);
+   if(['cancelled','delivered','port-held'].includes(shipment.phase)||shipment.addressId&&!directory.addressValid(data,shipment))fail('The receiving address or remaining freight is on hold.');
+   if(!supplyItemVisibleTo(data,shipment.itemId,wallet))fail('This private design is no longer authorized for this pilot.',403);
+   const receipt=settleAirTransfer(ledger,{...proof,captainId:wallet,mapId:environment.id},now);
+   receiveAirShipment(ledger,shipment,task,receipt,now);
+   advance(ledger,now,data,directory);
+   return receipt;
   });
  }
  async deliver(identity,result,environment,now=this.now()){

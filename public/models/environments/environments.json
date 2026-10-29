@@ -1347,6 +1347,17 @@
     "category": "Flight & transport",
     "game": "airport",
     "worldId": "skyline-deck",
+    "delivery": {
+      "hub": {
+        "id": "airport-factory-cargo-bay",
+        "name": "International Airport counted freight terminal",
+        "position": {
+          "x": -88,
+          "y": 0,
+          "z": -70
+        }
+      }
+    },
     "airport": {
       "enabled": true,
       "runway": {
@@ -1393,7 +1404,7 @@
       ],
       "ceiling": 140
     },
-    "contentUpdatedAt": "2026-10-25T00:00:00.000Z",
+    "contentUpdatedAt": "2026-10-29T12:00:00.000Z",
     "permanent": true,
     "publicDestination": true,
     "proceduralLand": true,
@@ -1414,7 +1425,7 @@
       "z": 74,
       "rotationY": 0
     },
-    "description": "An expanded 2 km airport world with three flyable aircraft and four connected airfields. Fly to Alpine Ridge for a paved mountain runway, taxiway, parking apron, walk-in lodge, ranger station, supply store, forest campground, lake and lookout trails. Automatic flights, ground services, mountain supply and camper evacuation missions, and on-foot collection quests connect the full experience.",
+    "description": "An expanded 2 km airport world with three flyable aircraft and four connected airfields. Fly to Alpine Ridge for a paved mountain runway, taxiway, parking apron, walk-in lodge, ranger station, supply store, forest campground, lake and lookout trails. Automatic flights, ground services, mountain supply and camper evacuation missions, and on-foot collection quests connect the full experience. A counted-freight terminal and paved apron access connect to the Strait’s sea, road and cargo-flight network through a reciprocal freight gateway.",
     "streets": [
       {
         "id": "airport-access",
@@ -1428,6 +1439,38 @@
           "z": 105
         },
         "width": 5
+      },
+      {
+        "id": "airport-cargo-access-0",
+        "name": "International air cargo access",
+        "from": {
+          "x": -88,
+          "y": 0,
+          "z": -70
+        },
+        "to": {
+          "x": 7,
+          "y": 0,
+          "z": -70
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "airport-cargo-access-1",
+        "name": "International air cargo access",
+        "from": {
+          "x": 7,
+          "y": 0,
+          "z": -70
+        },
+        "to": {
+          "x": 7,
+          "y": 0,
+          "z": 0
+        },
+        "width": 7,
+        "speedLimitKph": 20
       }
     ],
     "builderScene": {
@@ -27015,6 +27058,98 @@
             "destructible": false,
             "device": "aerie-boarding-kiosk"
           }
+        },
+        {
+          "id": "airport-factory-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "placementAnchor": "collider-base",
+          "name": "International Airport · counted freight terminal",
+          "position": {
+            "x": -88,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "airport-factory-cargo-guide",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Connected factory and Strait freight",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": -62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Connected factory and Strait freight"
+          },
+          "dialogueSettings": {
+            "text": "This cargo bay joins the access road, aircraft apron and Strait of Hormuz freight network. Use World Supply to order counted items for a store, building or deed. The verified sea and cargo flight legs keep one manifest; final truck and doorstep receipts replenish map stock. Travel to the Strait gateway for its five cargo airfields."
+          }
+        },
+        {
+          "id": "airport-strait-freight-gateway",
+          "modelId": "archway",
+          "placementAnchor": "collider-base",
+          "name": "Strait of Hormuz · sea, road and air cargo",
+          "position": {
+            "x": -82,
+            "y": 0,
+            "z": -82
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "destructible": false,
+            "prompt": "Visit Strait freight docks and cargo flights · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "hormuz-shipping",
+              "ownerName": "MUZIKAZ",
+              "color": "#80d9c9"
+            }
+          }
         }
       ],
       "layoutMeta": {
@@ -27204,6 +27339,16 @@
             "width": 19.2,
             "depth": 14.4,
             "description": "Walk-in public lounge with executive seating, shared video, club radio, flight meetup notices and an equipment marketplace. Connects to the terminal by the paved promenade."
+          },
+          {
+            "id": "airport-strait-freight-gateway",
+            "name": "Strait freight network gateway",
+            "x": -82,
+            "y": 0,
+            "z": -82,
+            "width": 8,
+            "depth": 8,
+            "description": "Travel to the Strait’s connected ports, shore roads and cargo airfields. Cargo remains bound to its manifest."
           }
         ]
       },
@@ -61083,8 +61228,8 @@
   {
     "id": "hormuz-shipping",
     "name": "Strait of Hormuz · Shipping Academy",
-    "label": "Atlas factory exports · live rivals, cargo terminals & convoy challenges",
-    "description": "A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Connected commercial terminals have open warehouses, cargo supervisors, moving cranes and live AI shipments. The Atlas factory export and eastern receiving desks connect certified production models to real balanced cargo voyages; delivered machine parts can fund future factory orders. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Compete with rival shipping companies while completing rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.",
+    "label": "Connected sea, road and cargo flights · live terminals & factory freight",
+    "description": "A large shared shipping world inspired by the Strait of Hormuz, with condensed arcade geography: Persian Gulf and Gulf of Oman approaches, Qeshm and Hormuz islands, Musandam, six cargo ports and separate inbound and outbound lanes. Every port has a shore freight bay and dock road; five mainland ports have paved cargo airfields, aircraft aprons and connected air cargo roads. Qeshm retains sea and shore delivery because its island cannot fit these runways. Connected commercial terminals have open warehouses, cargo supervisors, moving cranes and live AI shipments. The Atlas factory export and eastern receiving desks connect certified production models to real balanced cargo voyages; delivered machine parts can fund future factory orders. Learn balanced loading, manifests, slower loaded handling, unloading and supply trading. Compete with rival shipping companies while completing rewarded delivery contracts and fictional pirate, debris, storm and sea-mine challenges using the connected boat, quest, combat and marketplace systems.",
     "category": "Shipping & transport",
     "game": "shipping",
     "worldId": "neon-docks",
@@ -61103,7 +61248,7 @@
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 2800,
-    "contentUpdatedAt": "2026-10-27T07:00:00.000Z",
+    "contentUpdatedAt": "2026-10-29T12:00:00.000Z",
     "thumbnailUrl": "/public/images/shipping/hormuz-shipping.svg",
     "spawn": {
       "x": -1030,
@@ -61111,10 +61256,407 @@
       "z": 382,
       "rotationY": 0
     },
-    "streets": [],
+    "streets": [
+      {
+        "id": "strait-jebel-ali-dock-road-0",
+        "name": "Jebel Ali dock access",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": 352
+        },
+        "to": {
+          "x": -1015,
+          "y": 0,
+          "z": 412
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-jebel-ali-air-road-0",
+        "name": "Jebel Ali air cargo road",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": 412
+        },
+        "to": {
+          "x": -1015,
+          "y": 0,
+          "z": 430
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-jebel-ali-air-road-1",
+        "name": "Jebel Ali air cargo road",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": 430
+        },
+        "to": {
+          "x": -1061,
+          "y": 0,
+          "z": 430
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-jebel-ali-air-road-2",
+        "name": "Jebel Ali air cargo road",
+        "from": {
+          "x": -1061,
+          "y": 0,
+          "z": 430
+        },
+        "to": {
+          "x": -1061,
+          "y": 0,
+          "z": 700
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-ras-tanura-dock-road-0",
+        "name": "Ras Tanura dock access",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": -617
+        },
+        "to": {
+          "x": -1015,
+          "y": 0,
+          "z": -668
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-ras-tanura-air-road-0",
+        "name": "Ras Tanura air cargo road",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": -668
+        },
+        "to": {
+          "x": -1015,
+          "y": 0,
+          "z": -686
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-ras-tanura-air-road-1",
+        "name": "Ras Tanura air cargo road",
+        "from": {
+          "x": -1015,
+          "y": 0,
+          "z": -686
+        },
+        "to": {
+          "x": -1061,
+          "y": 0,
+          "z": -686
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-ras-tanura-air-road-2",
+        "name": "Ras Tanura air cargo road",
+        "from": {
+          "x": -1061,
+          "y": 0,
+          "z": -686
+        },
+        "to": {
+          "x": -1061,
+          "y": 0,
+          "z": -900
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-bandar-abbas-dock-road-0",
+        "name": "Bandar Abbas dock access",
+        "from": {
+          "x": 415,
+          "y": 0,
+          "z": -617
+        },
+        "to": {
+          "x": 415,
+          "y": 0,
+          "z": -668
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-bandar-abbas-air-road-0",
+        "name": "Bandar Abbas air cargo road",
+        "from": {
+          "x": 415,
+          "y": 0,
+          "z": -668
+        },
+        "to": {
+          "x": 415,
+          "y": 0,
+          "z": -686
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-bandar-abbas-air-road-1",
+        "name": "Bandar Abbas air cargo road",
+        "from": {
+          "x": 415,
+          "y": 0,
+          "z": -686
+        },
+        "to": {
+          "x": 369,
+          "y": 0,
+          "z": -686
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-bandar-abbas-air-road-2",
+        "name": "Bandar Abbas air cargo road",
+        "from": {
+          "x": 369,
+          "y": 0,
+          "z": -686
+        },
+        "to": {
+          "x": 369,
+          "y": 0,
+          "z": -900
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-qeshm-dock-road-0",
+        "name": "Qeshm dock access",
+        "from": {
+          "x": -65,
+          "y": 0,
+          "z": -302
+        },
+        "to": {
+          "x": -65,
+          "y": 0,
+          "z": -358
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-khasab-dock-road-0",
+        "name": "Khasab dock access",
+        "from": {
+          "x": 195,
+          "y": 0,
+          "z": 267
+        },
+        "to": {
+          "x": 195,
+          "y": 0,
+          "z": 323
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-khasab-air-road-0",
+        "name": "Khasab air cargo road",
+        "from": {
+          "x": 195,
+          "y": 0,
+          "z": 323
+        },
+        "to": {
+          "x": 195,
+          "y": 0,
+          "z": 341
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-khasab-air-road-1",
+        "name": "Khasab air cargo road",
+        "from": {
+          "x": 195,
+          "y": 0,
+          "z": 341
+        },
+        "to": {
+          "x": 149,
+          "y": 0,
+          "z": 341
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-khasab-air-road-2",
+        "name": "Khasab air cargo road",
+        "from": {
+          "x": 149,
+          "y": 0,
+          "z": 341
+        },
+        "to": {
+          "x": 149,
+          "y": 0,
+          "z": 650
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-fujairah-dock-road-0",
+        "name": "Fujairah dock access",
+        "from": {
+          "x": 1045,
+          "y": 0,
+          "z": 697
+        },
+        "to": {
+          "x": 1045,
+          "y": 0,
+          "z": 748
+        },
+        "width": 7,
+        "speedLimitKph": 20
+      },
+      {
+        "id": "strait-fujairah-air-road-0",
+        "name": "Fujairah air cargo road",
+        "from": {
+          "x": 1045,
+          "y": 0,
+          "z": 748
+        },
+        "to": {
+          "x": 1045,
+          "y": 0,
+          "z": 766
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-fujairah-air-road-1",
+        "name": "Fujairah air cargo road",
+        "from": {
+          "x": 1045,
+          "y": 0,
+          "z": 766
+        },
+        "to": {
+          "x": 999,
+          "y": 0,
+          "z": 766
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      },
+      {
+        "id": "strait-fujairah-air-road-2",
+        "name": "Fujairah air cargo road",
+        "from": {
+          "x": 999,
+          "y": 0,
+          "z": 766
+        },
+        "to": {
+          "x": 999,
+          "y": 0,
+          "z": 1050
+        },
+        "width": 7,
+        "speedLimitKph": 25
+      }
+    ],
+    "airport": {
+      "enabled": true,
+      "runway": {
+        "id": "freight-airfield-jebel-ali",
+        "name": "Jebel Ali freight airfield",
+        "x": -1030,
+        "z": 700,
+        "width": 20,
+        "length": 240,
+        "surface": "paved"
+      },
+      "runways": [
+        {
+          "id": "freight-airfield-jebel-ali",
+          "name": "Jebel Ali freight airfield",
+          "x": -1030,
+          "z": 700,
+          "width": 20,
+          "length": 240,
+          "surface": "paved"
+        },
+        {
+          "id": "freight-airfield-ras-tanura",
+          "name": "Ras Tanura freight airfield",
+          "x": -1030,
+          "z": -900,
+          "width": 20,
+          "length": 240,
+          "surface": "paved"
+        },
+        {
+          "id": "freight-airfield-bandar-abbas",
+          "name": "Bandar Abbas freight airfield",
+          "x": 400,
+          "z": -900,
+          "width": 20,
+          "length": 240,
+          "surface": "paved"
+        },
+        {
+          "id": "freight-airfield-khasab",
+          "name": "Khasab freight airfield",
+          "x": 180,
+          "z": 650,
+          "width": 20,
+          "length": 240,
+          "surface": "paved"
+        },
+        {
+          "id": "freight-airfield-fujairah",
+          "name": "Fujairah freight airfield",
+          "x": 1030,
+          "z": 1050,
+          "width": 20,
+          "length": 240,
+          "surface": "paved"
+        }
+      ],
+      "ceiling": 140
+    },
     "shipping": {
       "enabled": true,
-      "version": 3,
+      "version": 4,
       "ports": [
         {
           "id": "jebel-ali",
@@ -62393,6 +62935,344 @@
     "builderScene": {
       "version": 3,
       "layout": "neon-harbor",
+      "streets": [
+        {
+          "id": "strait-jebel-ali-dock-road-0",
+          "name": "Jebel Ali dock access",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": 352
+          },
+          "to": {
+            "x": -1015,
+            "y": 0,
+            "z": 412
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-jebel-ali-air-road-0",
+          "name": "Jebel Ali air cargo road",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": 412
+          },
+          "to": {
+            "x": -1015,
+            "y": 0,
+            "z": 430
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-jebel-ali-air-road-1",
+          "name": "Jebel Ali air cargo road",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": 430
+          },
+          "to": {
+            "x": -1061,
+            "y": 0,
+            "z": 430
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-jebel-ali-air-road-2",
+          "name": "Jebel Ali air cargo road",
+          "from": {
+            "x": -1061,
+            "y": 0,
+            "z": 430
+          },
+          "to": {
+            "x": -1061,
+            "y": 0,
+            "z": 700
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-ras-tanura-dock-road-0",
+          "name": "Ras Tanura dock access",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": -617
+          },
+          "to": {
+            "x": -1015,
+            "y": 0,
+            "z": -668
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-ras-tanura-air-road-0",
+          "name": "Ras Tanura air cargo road",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": -668
+          },
+          "to": {
+            "x": -1015,
+            "y": 0,
+            "z": -686
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-ras-tanura-air-road-1",
+          "name": "Ras Tanura air cargo road",
+          "from": {
+            "x": -1015,
+            "y": 0,
+            "z": -686
+          },
+          "to": {
+            "x": -1061,
+            "y": 0,
+            "z": -686
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-ras-tanura-air-road-2",
+          "name": "Ras Tanura air cargo road",
+          "from": {
+            "x": -1061,
+            "y": 0,
+            "z": -686
+          },
+          "to": {
+            "x": -1061,
+            "y": 0,
+            "z": -900
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-bandar-abbas-dock-road-0",
+          "name": "Bandar Abbas dock access",
+          "from": {
+            "x": 415,
+            "y": 0,
+            "z": -617
+          },
+          "to": {
+            "x": 415,
+            "y": 0,
+            "z": -668
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-bandar-abbas-air-road-0",
+          "name": "Bandar Abbas air cargo road",
+          "from": {
+            "x": 415,
+            "y": 0,
+            "z": -668
+          },
+          "to": {
+            "x": 415,
+            "y": 0,
+            "z": -686
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-bandar-abbas-air-road-1",
+          "name": "Bandar Abbas air cargo road",
+          "from": {
+            "x": 415,
+            "y": 0,
+            "z": -686
+          },
+          "to": {
+            "x": 369,
+            "y": 0,
+            "z": -686
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-bandar-abbas-air-road-2",
+          "name": "Bandar Abbas air cargo road",
+          "from": {
+            "x": 369,
+            "y": 0,
+            "z": -686
+          },
+          "to": {
+            "x": 369,
+            "y": 0,
+            "z": -900
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-qeshm-dock-road-0",
+          "name": "Qeshm dock access",
+          "from": {
+            "x": -65,
+            "y": 0,
+            "z": -302
+          },
+          "to": {
+            "x": -65,
+            "y": 0,
+            "z": -358
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-khasab-dock-road-0",
+          "name": "Khasab dock access",
+          "from": {
+            "x": 195,
+            "y": 0,
+            "z": 267
+          },
+          "to": {
+            "x": 195,
+            "y": 0,
+            "z": 323
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-khasab-air-road-0",
+          "name": "Khasab air cargo road",
+          "from": {
+            "x": 195,
+            "y": 0,
+            "z": 323
+          },
+          "to": {
+            "x": 195,
+            "y": 0,
+            "z": 341
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-khasab-air-road-1",
+          "name": "Khasab air cargo road",
+          "from": {
+            "x": 195,
+            "y": 0,
+            "z": 341
+          },
+          "to": {
+            "x": 149,
+            "y": 0,
+            "z": 341
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-khasab-air-road-2",
+          "name": "Khasab air cargo road",
+          "from": {
+            "x": 149,
+            "y": 0,
+            "z": 341
+          },
+          "to": {
+            "x": 149,
+            "y": 0,
+            "z": 650
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-fujairah-dock-road-0",
+          "name": "Fujairah dock access",
+          "from": {
+            "x": 1045,
+            "y": 0,
+            "z": 697
+          },
+          "to": {
+            "x": 1045,
+            "y": 0,
+            "z": 748
+          },
+          "width": 7,
+          "speedLimitKph": 20
+        },
+        {
+          "id": "strait-fujairah-air-road-0",
+          "name": "Fujairah air cargo road",
+          "from": {
+            "x": 1045,
+            "y": 0,
+            "z": 748
+          },
+          "to": {
+            "x": 1045,
+            "y": 0,
+            "z": 766
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-fujairah-air-road-1",
+          "name": "Fujairah air cargo road",
+          "from": {
+            "x": 1045,
+            "y": 0,
+            "z": 766
+          },
+          "to": {
+            "x": 999,
+            "y": 0,
+            "z": 766
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        },
+        {
+          "id": "strait-fujairah-air-road-2",
+          "name": "Fujairah air cargo road",
+          "from": {
+            "x": 999,
+            "y": 0,
+            "z": 766
+          },
+          "to": {
+            "x": 999,
+            "y": 0,
+            "z": 1050
+          },
+          "width": 7,
+          "speedLimitKph": 25
+        }
+      ],
       "mapSize": 2800,
       "objects": [
         {
@@ -66218,6 +67098,3384 @@
           }
         },
         {
+          "id": "shipping-jebel-ali-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "jebel ali shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1015,
+            "y": -0.198,
+            "z": 412
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-jebel-ali",
+          "modelId": "freight-loading-bay",
+          "name": "Jebel Ali dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1015,
+            "y": 0,
+            "z": 412
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-freight-guide",
+          "modelId": "street-sign",
+          "name": "Jebel Ali connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1009,
+            "y": 0,
+            "z": 412
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Jebel Ali connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Public dock → shore freight bay → Jebel Ali freight airfield. Choose road delivery or a verified cargo flight in World Supply; stock arrives after final doorstep delivery."
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-cargo-runway",
+          "modelId": "material:floor",
+          "name": "Jebel Ali freight airfield · paved runway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.198,
+            "z": 700
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 1,
+            "z": 100
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#303b40"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-cargo-apron",
+          "modelId": "material:floor",
+          "name": "Jebel Ali cargo aircraft apron",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1051,
+            "y": -0.198,
+            "z": 700
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 1,
+            "z": 66.66666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#64716f"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-cargo-taxiway",
+          "modelId": "material:floor",
+          "name": "jebel ali cargo taxiway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1040.5,
+            "y": -0.198,
+            "z": 700
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.083333333333334,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#566361"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--100",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 600
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--84",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 616
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--68",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 632
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--52",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 648
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--36",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 664
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--20",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 680
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center--4",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 696
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-12",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 712
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-28",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 728
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-44",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 744
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-60",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 760
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-76",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 776
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-runway-center-92",
+          "modelId": "material:floor",
+          "name": "Jebel Ali runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": 792
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-air-cargo-bay-pad",
+          "modelId": "material:floor",
+          "name": "jebel ali air cargo bay pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1073,
+            "y": -0.198,
+            "z": 700
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-air-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "name": "Jebel Ali air cargo loading bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1073,
+            "y": 0,
+            "z": 700
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-cargo-aircraft",
+          "modelId": "piper-cub",
+          "name": "Jebel Ali public cargo aircraft",
+          "placementAnchor": "aircraft-origin",
+          "position": {
+            "x": -1051,
+            "y": 0.4,
+            "z": 730
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter cargo aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "shipping-jebel-ali-airfield-guide",
+          "modelId": "street-sign",
+          "name": "Jebel Ali freight airfield",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1042,
+            "y": 0,
+            "z": 688
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Jebel Ali freight airfield",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Stage the shipment at this cargo apron, enter a public aircraft and open World Supply for the bound cargo flight. The existing tower, automatic takeoff, map flight destinations, landing and parking controls are available. Unload only the assigned manifest after a verified arrival."
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "ras tanura shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1015,
+            "y": -0.198,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-ras-tanura",
+          "modelId": "freight-loading-bay",
+          "name": "Ras Tanura dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1015,
+            "y": 0,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-freight-guide",
+          "modelId": "street-sign",
+          "name": "Ras Tanura connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1009,
+            "y": 0,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Ras Tanura connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Public dock → shore freight bay → Ras Tanura freight airfield. Choose road delivery or a verified cargo flight in World Supply; stock arrives after final doorstep delivery."
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-cargo-runway",
+          "modelId": "material:floor",
+          "name": "Ras Tanura freight airfield · paved runway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 1,
+            "z": 100
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#303b40"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-cargo-apron",
+          "modelId": "material:floor",
+          "name": "Ras Tanura cargo aircraft apron",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1051,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 1,
+            "z": 66.66666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#64716f"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-cargo-taxiway",
+          "modelId": "material:floor",
+          "name": "ras tanura cargo taxiway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1040.5,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.083333333333334,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#566361"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--100",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -1000
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--84",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -984
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--68",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -968
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--52",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -952
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--36",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -936
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--20",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -920
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center--4",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -904
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-12",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -888
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-28",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -872
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-44",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -856
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-60",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -840
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-76",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -824
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-runway-center-92",
+          "modelId": "material:floor",
+          "name": "Ras Tanura runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1030,
+            "y": -0.184,
+            "z": -808
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-air-cargo-bay-pad",
+          "modelId": "material:floor",
+          "name": "ras tanura air cargo bay pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1073,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-air-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "name": "Ras Tanura air cargo loading bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1073,
+            "y": 0,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-cargo-aircraft",
+          "modelId": "piper-cub",
+          "name": "Ras Tanura public cargo aircraft",
+          "placementAnchor": "aircraft-origin",
+          "position": {
+            "x": -1051,
+            "y": 0.4,
+            "z": -930
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter cargo aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "shipping-ras-tanura-airfield-guide",
+          "modelId": "street-sign",
+          "name": "Ras Tanura freight airfield",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1042,
+            "y": 0,
+            "z": -912
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Ras Tanura freight airfield",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Stage the shipment at this cargo apron, enter a public aircraft and open World Supply for the bound cargo flight. The existing tower, automatic takeoff, map flight destinations, landing and parking controls are available. Unload only the assigned manifest after a verified arrival."
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "bandar abbas shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 415,
+            "y": -0.198,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-bandar-abbas",
+          "modelId": "freight-loading-bay",
+          "name": "Bandar Abbas dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 415,
+            "y": 0,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-freight-guide",
+          "modelId": "street-sign",
+          "name": "Bandar Abbas connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 421,
+            "y": 0,
+            "z": -668
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Bandar Abbas connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Public dock → shore freight bay → Bandar Abbas freight airfield. Choose road delivery or a verified cargo flight in World Supply; stock arrives after final doorstep delivery."
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-cargo-runway",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas freight airfield · paved runway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 1,
+            "z": 100
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#303b40"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-cargo-apron",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas cargo aircraft apron",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 379,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 1,
+            "z": 66.66666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#64716f"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-cargo-taxiway",
+          "modelId": "material:floor",
+          "name": "bandar abbas cargo taxiway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 389.5,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.083333333333334,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#566361"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--100",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -1000
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--84",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -984
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--68",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -968
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--52",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -952
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--36",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -936
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--20",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -920
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center--4",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -904
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-12",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -888
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-28",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -872
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-44",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -856
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-60",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -840
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-76",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -824
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-runway-center-92",
+          "modelId": "material:floor",
+          "name": "Bandar Abbas runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 400,
+            "y": -0.184,
+            "z": -808
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-air-cargo-bay-pad",
+          "modelId": "material:floor",
+          "name": "bandar abbas air cargo bay pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 357,
+            "y": -0.198,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-air-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "name": "Bandar Abbas air cargo loading bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 357,
+            "y": 0,
+            "z": -900
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-cargo-aircraft",
+          "modelId": "piper-cub",
+          "name": "Bandar Abbas public cargo aircraft",
+          "placementAnchor": "aircraft-origin",
+          "position": {
+            "x": 379,
+            "y": 0.4,
+            "z": -930
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter cargo aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "shipping-bandar-abbas-airfield-guide",
+          "modelId": "street-sign",
+          "name": "Bandar Abbas freight airfield",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 388,
+            "y": 0,
+            "z": -912
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Bandar Abbas freight airfield",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Stage the shipment at this cargo apron, enter a public aircraft and open World Supply for the bound cargo flight. The existing tower, automatic takeoff, map flight destinations, landing and parking controls are available. Unload only the assigned manifest after a verified arrival."
+          }
+        },
+        {
+          "id": "shipping-qeshm-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "qeshm shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -65,
+            "y": -0.198,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-qeshm",
+          "modelId": "freight-loading-bay",
+          "name": "Qeshm dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -65,
+            "y": 0,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-qeshm-freight-guide",
+          "modelId": "street-sign",
+          "name": "Qeshm connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -59,
+            "y": 0,
+            "z": -358
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Qeshm connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Qeshm uses sea and road freight. Its island has no runway long enough for these aircraft."
+          }
+        },
+        {
+          "id": "shipping-khasab-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "khasab shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 195,
+            "y": -0.198,
+            "z": 323
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-khasab",
+          "modelId": "freight-loading-bay",
+          "name": "Khasab dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 195,
+            "y": 0,
+            "z": 323
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-khasab-freight-guide",
+          "modelId": "street-sign",
+          "name": "Khasab connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 201,
+            "y": 0,
+            "z": 323
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Khasab connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Public dock → shore freight bay → Khasab freight airfield. Choose road delivery or a verified cargo flight in World Supply; stock arrives after final doorstep delivery."
+          }
+        },
+        {
+          "id": "shipping-khasab-cargo-runway",
+          "modelId": "material:floor",
+          "name": "Khasab freight airfield · paved runway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.198,
+            "z": 650
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 1,
+            "z": 100
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#303b40"
+          }
+        },
+        {
+          "id": "shipping-khasab-cargo-apron",
+          "modelId": "material:floor",
+          "name": "Khasab cargo aircraft apron",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 159,
+            "y": -0.198,
+            "z": 650
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 1,
+            "z": 66.66666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#64716f"
+          }
+        },
+        {
+          "id": "shipping-khasab-cargo-taxiway",
+          "modelId": "material:floor",
+          "name": "khasab cargo taxiway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 169.5,
+            "y": -0.198,
+            "z": 650
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.083333333333334,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#566361"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--100",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 550
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--84",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 566
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--68",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 582
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--52",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 598
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--36",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 614
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--20",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 630
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center--4",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 646
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-12",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 662
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-28",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 678
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-44",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 694
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-60",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 710
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-76",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 726
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-runway-center-92",
+          "modelId": "material:floor",
+          "name": "Khasab runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 180,
+            "y": -0.184,
+            "z": 742
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-khasab-air-cargo-bay-pad",
+          "modelId": "material:floor",
+          "name": "khasab air cargo bay pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 137,
+            "y": -0.198,
+            "z": 650
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-khasab-air-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "name": "Khasab air cargo loading bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 137,
+            "y": 0,
+            "z": 650
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-khasab-cargo-aircraft",
+          "modelId": "piper-cub",
+          "name": "Khasab public cargo aircraft",
+          "placementAnchor": "aircraft-origin",
+          "position": {
+            "x": 159,
+            "y": 0.4,
+            "z": 680
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter cargo aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "shipping-khasab-airfield-guide",
+          "modelId": "street-sign",
+          "name": "Khasab freight airfield",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 168,
+            "y": 0,
+            "z": 638
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Khasab freight airfield",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Stage the shipment at this cargo apron, enter a public aircraft and open World Supply for the bound cargo flight. The existing tower, automatic takeoff, map flight destinations, landing and parking controls are available. Unload only the assigned manifest after a verified arrival."
+          }
+        },
+        {
+          "id": "shipping-fujairah-shore-freight-pad",
+          "modelId": "material:floor",
+          "name": "fujairah shore freight pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1045,
+            "y": -0.198,
+            "z": 748
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "strait-freight-bay-fujairah",
+          "modelId": "freight-loading-bay",
+          "name": "Fujairah dock-to-road freight bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1045,
+            "y": 0,
+            "z": 748
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-fujairah-freight-guide",
+          "modelId": "street-sign",
+          "name": "Fujairah connected freight",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1051,
+            "y": 0,
+            "z": 748
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Fujairah connected freight",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Public dock → shore freight bay → Fujairah freight airfield. Choose road delivery or a verified cargo flight in World Supply; stock arrives after final doorstep delivery."
+          }
+        },
+        {
+          "id": "shipping-fujairah-cargo-runway",
+          "modelId": "material:floor",
+          "name": "Fujairah freight airfield · paved runway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.198,
+            "z": 1050
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 1,
+            "z": 100
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#303b40"
+          }
+        },
+        {
+          "id": "shipping-fujairah-cargo-apron",
+          "modelId": "material:floor",
+          "name": "Fujairah cargo aircraft apron",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1009,
+            "y": -0.198,
+            "z": 1050
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 1,
+            "z": 66.66666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#64716f"
+          }
+        },
+        {
+          "id": "shipping-fujairah-cargo-taxiway",
+          "modelId": "material:floor",
+          "name": "fujairah cargo taxiway",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1019.5,
+            "y": -0.198,
+            "z": 1050
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.083333333333334,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#566361"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--100",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 950
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--84",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 966
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--68",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 982
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--52",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--36",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1014
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--20",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1030
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center--4",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1046
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-12",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1062
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-28",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1078
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-44",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1094
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-60",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1110
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-76",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1126
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-runway-center-92",
+          "modelId": "material:floor",
+          "name": "Fujairah runway center marking",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1030,
+            "y": -0.184,
+            "z": 1142
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.075,
+            "y": 1,
+            "z": 2.0833333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#eee5ce"
+          }
+        },
+        {
+          "id": "shipping-fujairah-air-cargo-bay-pad",
+          "modelId": "material:floor",
+          "name": "fujairah air cargo bay pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 987,
+            "y": -0.198,
+            "z": 1050
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-fujairah-air-cargo-bay",
+          "modelId": "freight-loading-bay",
+          "name": "Fujairah air cargo loading bay",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 987,
+            "y": 0,
+            "z": 1050
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "asset": {
+            "buildAssetId": "freight-loading-bay"
+          }
+        },
+        {
+          "id": "shipping-fujairah-cargo-aircraft",
+          "modelId": "diamond-da40",
+          "name": "Fujairah public cargo aircraft",
+          "placementAnchor": "aircraft-origin",
+          "position": {
+            "x": 1009,
+            "y": 0.4,
+            "z": 1080
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter cargo aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "shipping-fujairah-airfield-guide",
+          "modelId": "street-sign",
+          "name": "Fujairah freight airfield",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 1018,
+            "y": 0,
+            "z": 1038
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Fujairah freight airfield",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Stage the shipment at this cargo apron, enter a public aircraft and open World Supply for the bound cargo flight. The existing tower, automatic takeoff, map flight destinations, landing and parking controls are available. Unload only the assigned manifest after a verified arrival."
+          }
+        },
+        {
           "id": "shipping-welcome",
           "modelId": "street-sign",
           "name": "Strait of Hormuz · shipping academy",
@@ -66596,6 +70854,66 @@
           }
         },
         {
+          "id": "shipping-international-airport-gateway-pad",
+          "modelId": "material:floor",
+          "name": "international airport gateway pad",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1002,
+            "y": -0.198,
+            "z": 426
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.3333333333333335,
+            "y": 1,
+            "z": 3.3333333333333335
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "shipping-international-airport-gateway",
+          "modelId": "archway",
+          "name": "MUZIKAZ International Airport · cargo connection",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1002,
+            "y": 0,
+            "z": 426
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "destructible": false,
+            "prompt": "Visit International Airport cargo terminal · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "muzikaz-airport",
+              "ownerName": "MUZIKAZ",
+              "color": "#80d9c9"
+            }
+          }
+        },
+        {
           "id": "shipping-starter-feeder",
           "modelId": "shipping-feeder",
           "name": "Gulf Runner · public training feeder",
@@ -66809,7 +71127,7 @@
         "color": 11770474,
         "sky": 9092296,
         "harbor": {
-          "version": 3,
+          "version": 4,
           "mainIsland": false,
           "extent": 1400,
           "islands": [
@@ -67239,7 +71557,7 @@
         },
         "shipping": {
           "enabled": true,
-          "version": 3,
+          "version": 4,
           "ports": [
             {
               "id": "jebel-ali",
@@ -68787,6 +73105,106 @@
             "description": "A connected commercial dock with live crane transfers, rival company traffic and a shared dispatch board."
           },
           {
+            "id": "freight-airfield-jebel-ali",
+            "name": "Jebel Ali freight airfield",
+            "x": -1030,
+            "y": 0,
+            "z": 700,
+            "width": 20,
+            "depth": 240,
+            "description": "Paved cargo runway, connected shore road and real aircraft apron. Fly to this airfield with the map flight controls."
+          },
+          {
+            "id": "freight-airfield-jebel-ali-cargo-apron",
+            "name": "Jebel Ali flight cargo apron",
+            "x": -1051,
+            "y": 0,
+            "z": 700,
+            "width": 28,
+            "depth": 160,
+            "description": "Load or unload a bound counted shipment while the aircraft is parked. Public aircraft stand 30 m from the apron center, clear of the truck approach."
+          },
+          {
+            "id": "freight-airfield-ras-tanura",
+            "name": "Ras Tanura freight airfield",
+            "x": -1030,
+            "y": 0,
+            "z": -900,
+            "width": 20,
+            "depth": 240,
+            "description": "Paved cargo runway, connected shore road and real aircraft apron. Fly to this airfield with the map flight controls."
+          },
+          {
+            "id": "freight-airfield-ras-tanura-cargo-apron",
+            "name": "Ras Tanura flight cargo apron",
+            "x": -1051,
+            "y": 0,
+            "z": -900,
+            "width": 28,
+            "depth": 160,
+            "description": "Load or unload a bound counted shipment while the aircraft is parked. Public aircraft stand 30 m from the apron center, clear of the truck approach."
+          },
+          {
+            "id": "freight-airfield-bandar-abbas",
+            "name": "Bandar Abbas freight airfield",
+            "x": 400,
+            "y": 0,
+            "z": -900,
+            "width": 20,
+            "depth": 240,
+            "description": "Paved cargo runway, connected shore road and real aircraft apron. Fly to this airfield with the map flight controls."
+          },
+          {
+            "id": "freight-airfield-bandar-abbas-cargo-apron",
+            "name": "Bandar Abbas flight cargo apron",
+            "x": 379,
+            "y": 0,
+            "z": -900,
+            "width": 28,
+            "depth": 160,
+            "description": "Load or unload a bound counted shipment while the aircraft is parked. Public aircraft stand 30 m from the apron center, clear of the truck approach."
+          },
+          {
+            "id": "freight-airfield-khasab",
+            "name": "Khasab freight airfield",
+            "x": 180,
+            "y": 0,
+            "z": 650,
+            "width": 20,
+            "depth": 240,
+            "description": "Paved cargo runway, connected shore road and real aircraft apron. Fly to this airfield with the map flight controls."
+          },
+          {
+            "id": "freight-airfield-khasab-cargo-apron",
+            "name": "Khasab flight cargo apron",
+            "x": 159,
+            "y": 0,
+            "z": 650,
+            "width": 28,
+            "depth": 160,
+            "description": "Load or unload a bound counted shipment while the aircraft is parked. Public aircraft stand 30 m from the apron center, clear of the truck approach."
+          },
+          {
+            "id": "freight-airfield-fujairah",
+            "name": "Fujairah freight airfield",
+            "x": 1030,
+            "y": 0,
+            "z": 1050,
+            "width": 20,
+            "depth": 240,
+            "description": "Paved cargo runway, connected shore road and real aircraft apron. Fly to this airfield with the map flight controls."
+          },
+          {
+            "id": "freight-airfield-fujairah-cargo-apron",
+            "name": "Fujairah flight cargo apron",
+            "x": 1009,
+            "y": 0,
+            "z": 1050,
+            "width": 28,
+            "depth": 160,
+            "description": "Load or unload a bound counted shipment while the aircraft is parked. Public aircraft stand 30 m from the apron center, clear of the truck approach."
+          },
+          {
             "id": "shipping-dispatch",
             "name": "Shipping dispatch & training",
             "x": -1030,
@@ -68845,6 +73263,16 @@
             "description": "Travel between the factory export yard and the shipping port with your sealed manifest."
           },
           {
+            "id": "shipping-international-airport-gateway",
+            "name": "MUZIKAZ International Airport · cargo connection",
+            "x": -1002,
+            "y": 0,
+            "z": 426,
+            "width": 8,
+            "depth": 8,
+            "description": "A reciprocal passenger and freight-network gateway. Counted cargo remains on its assigned server manifest during travel."
+          },
+          {
             "id": "shipping-sea-portal",
             "name": "Sea portal · return to Neon Harbor",
             "x": -1042,
@@ -68857,6 +73285,9 @@
       },
       "gameplay": {
         "multiplayer": true,
+        "airport": {
+          "enabled": true
+        },
         "friendlyFire": false,
         "radTox": false
       }

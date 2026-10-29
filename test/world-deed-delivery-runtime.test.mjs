@@ -30,6 +30,13 @@ async function portShipment(f,{quantity=1000,itemId=ITEM,legacy=false,generic=fa
  shipment=await f.service.deliver(identity,result,environment);return {order,shipment,identity,environment,player,result};
 }
 const stock=state=>state.maps.find(map=>map.id===MAP).stock[ITEM]||0;
+async function reachLocalRoad(f){
+ let state=await f.service.state({walletId:OWNER});const pending=state.deliveryTasks.filter(task=>task.portHandling&&task.portHandling.phase!=='complete');
+ if(!pending.length)return state;
+ assert.equal(stock(state),0,'sea unloading and the shore truck cannot credit the receiving inventory');
+ const port=await f.service.projection({mapId:'hormuz-shipping'});assert.ok(port.vehicles.length>0&&port.vehicles.length<=16,'a bounded truck projection follows the actual receiving quay road');assert.equal((await f.service.projection({mapId:MAP})).vehicles.length,0,'local trucks do not appear before the explicit map transfer');
+ f.now=Math.max(...pending.map(task=>task.portHandling.readyAt))+1;state=await f.service.state({walletId:OWNER});assert.equal(stock(state),0,'arrival at the receiving-map distribution hub still waits for the door');return state;
+}
 
 test('sea containers unpack into bounded road crates and exact truck lots, with no stock before doorway receipt',async t=>{
  const f=await fixture(t),v=await portShipment(f);assert.equal(v.shipment.phase,'port-received');let state=await f.service.state({walletId:OWNER});
@@ -37,14 +44,14 @@ test('sea containers unpack into bounded road crates and exact truck lots, with 
  assert.deepEqual(state.deliveryTasks.map(task=>task.quantity),[200,200,200,200,200]);assert.ok(state.deliveryTasks.every(task=>task.crateCount===4&&task.unitsPerRoadCrate===50&&task.truckSlots===4));
  assert.equal(state.deliveryTasks.flatMap(task=>task.lotAllocations).reduce((sum,line)=>sum+line.quantity,0),1000);
  await f.service.shippingAction(v.identity,{},v.player,v.environment,{operation:'release',shipmentId:v.shipment.id,jobId:v.result.jobId});assert.equal((await f.service.state()).shipments[0].phase,'port-received','late voyage cleanup cannot return unloaded freight to sea queue');
- const reopened=new WorldSupplyService(new UserJsonDatabase(f.database.file),f.options);f.now=Math.max(...state.deliveryTasks.map(task=>task.startedAt+task.totalDurationMs))+1;state=await reopened.state({walletId:OWNER});
+ state=await reachLocalRoad(f);const reopened=new WorldSupplyService(new UserJsonDatabase(f.database.file),f.options);f.now=Math.max(...state.deliveryTasks.map(task=>task.startedAt+task.totalDurationMs))+1;state=await reopened.state({walletId:OWNER});
  assert.equal(stock(state),1000);assert.equal(state.orders[0].phase,'delivered');assert.equal(state.portEscrow[0].remainingQuantity,0);assert.equal(state.dropoffReceipts.length,5);assert.equal(state.stockReceipts.length,5);assert.equal(state.stockReceipts.reduce((sum,receipt)=>sum+receipt.quantity,0),1000);
  assert.ok(state.dropoffReceipts.every(receipt=>receipt.productionId===v.order.productionId&&receipt.routeRevision&&receipt.dropoff.kind==='doorstep'));
  await reopened.deliver(v.identity,v.result,v.environment);assert.equal(stock(await reopened.state()),1000);assert.equal((await reopened.state()).stockReceipts.length,5,'replayed sea and timer updates cannot duplicate delivery');
 });
 
 test('current geometry blocks a delivery and clearing it resumes from the saved position without offline instant credit',async t=>{
- const f=await fixture(t);await portShipment(f,{quantity:10});let state=await f.service.state({walletId:OWNER}),task=state.deliveryTasks[0];f.now+=task.timeline[0].durationMs+300;state=await f.service.state({walletId:OWNER});task=state.deliveryTasks[0];assert.equal(task.phase,'driving');const position={...task.truckPosition};
+ const f=await fixture(t);await portShipment(f,{quantity:10});let state=await reachLocalRoad(f),task=state.deliveryTasks[0];f.now+=task.timeline[0].durationMs+300;state=await f.service.state({walletId:OWNER});task=state.deliveryTasks[0];assert.equal(task.phase,'driving');const position={...task.truckPosition};
  const clear=f.options.collision.hasBodyClearance.bind(f.options.collision);f.options.collision.hasBodyClearance=()=>false;f.rooms[MAP].objects.obstacle={id:'obstacle',position:[0,0,10],materialId:'wall',revision:1};f.now+=100000;
  state=await f.service.state({walletId:OWNER});assert.equal(state.deliveryTasks[0].phase,'blocked');assert.equal(stock(state),0);assert.deepEqual(state.deliveryTasks[0].truckPosition,position);
  delete f.rooms[MAP].objects.obstacle;f.options.collision.hasBodyClearance=clear;f.now+=100000;state=await f.service.state({walletId:OWNER});task=state.deliveryTasks[0];assert.equal(task.phase,'driving');assert.equal(task.elapsedMs,0);assert.equal(stock(state),0);assert.ok(Math.hypot(task.route.origin.position.x-position.x,task.route.origin.position.y-position.y,task.route.origin.position.z-position.z)<1e-6,'rerouting starts where the truck stopped, not at the depot');
@@ -52,7 +59,7 @@ test('current geometry blocks a delivery and clearing it resumes from the saved 
 });
 
 test('multiple pickups depart with headway instead of rendering stacked trucks on the same route',async t=>{
- const f=await fixture(t);await portShipment(f,{quantity:400});let state=await f.service.state({walletId:OWNER});assert.equal(state.deliveryTasks.length,2);const [first,second]=state.deliveryTasks;
+ const f=await fixture(t);await portShipment(f,{quantity:400});let state=await reachLocalRoad(f);assert.equal(state.deliveryTasks.length,2);const [first,second]=state.deliveryTasks;
  assert.equal(second.startedAt-first.startedAt,1500);assert.equal(second.phase,'awaiting-truck');assert.equal((await f.service.projection({mapId:MAP})).vehicles.length,1,'waiting pickup remains at distribution rather than overlapping the live truck');
  f.now=second.startedAt+second.timeline[0].durationMs+800;state=await f.service.state({walletId:OWNER});assert.ok(state.deliveryTasks.every(task=>task.phase==='driving'));const [a,b]=state.deliveryTasks.map(task=>task.truckPosition);assert.ok(Math.hypot(a.x-b.x,a.z-b.z)>5,'the pickup departure headway leaves visible vehicle clearance');assert.equal((await f.service.projection({mapId:MAP})).vehicles.length,2);
 });
@@ -71,12 +78,12 @@ test('pending unversioned deed freight upgrades automatically while completed hi
 });
 
 test('a manual map transfer to another holder’s deed also requires doorstep delivery and retains sender cancellation rights',async t=>{
- const f=await fixture(t),v=await portShipment(f,{quantity:10,generic:true});assert.equal(v.shipment.ownerId,CAPTAIN);assert.equal(v.shipment.recipientId,OWNER);assert.equal(v.shipment.deedId,DEED.id);assert.equal(v.shipment.deliverySchemaVersion,1);let state=await f.service.state();assert.equal(stock(state),0);assert.equal(state.deliveryTasks[0].recipientId,OWNER);assert.equal(state.deliveryTasks[0].phase,'loading');
+ const f=await fixture(t),v=await portShipment(f,{quantity:10,generic:true});assert.equal(v.shipment.ownerId,CAPTAIN);assert.equal(v.shipment.recipientId,OWNER);assert.equal(v.shipment.deedId,DEED.id);assert.equal(v.shipment.deliverySchemaVersion,1);let state=await reachLocalRoad(f);assert.equal(stock(state),0);assert.equal(state.deliveryTasks[0].recipientId,OWNER);assert.equal(state.deliveryTasks[0].phase,'loading');
  f.now+=state.deliveryTasks[0].totalDurationMs+1;state=await f.service.state();assert.equal(stock(state),10);assert.equal(state.shipments[0].phase,'delivered');assert.equal(state.orders.length,0,'a direct inventory transfer does not forge a deed-owner production order');
 });
 
 test('public delivery projection exposes route and vehicle poses without private cargo, quantity, or order metadata',async t=>{
- const f=await fixture(t);await portShipment(f,{quantity:10});const projection=await f.service.projection({mapId:MAP});assert.equal(projection.vehicles.length,1);assert.equal(projection.dropoffs[0].kind,'doorstep');
+ const f=await fixture(t);await portShipment(f,{quantity:10});await reachLocalRoad(f);const projection=await f.service.projection({mapId:MAP});assert.equal(projection.vehicles.length,1);assert.equal(projection.dropoffs[0].kind,'doorstep');
  for(const field of ['itemId','itemName','quantity','orderId','ownerId','shipmentId'])assert.equal(JSON.stringify(projection).includes('"'+field+'"'),false,field+' is private cargo data');
  assert.ok(projection.routes[0].truckWaypoints.length>1);assert.equal(projection.vehicles[0].modelId,'frontier-pickup');
 });

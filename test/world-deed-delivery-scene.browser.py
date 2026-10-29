@@ -90,10 +90,40 @@ try:
                 assert page.evaluate('deliveryScene.snapshot().visible') is False
                 assert page.evaluate('deliveryScene.snapshot().mapId') is None
                 assert page.evaluate('deliveryScene.snapshot().vehicles.length') == 0
+                page.evaluate('''async base=>{
+                  deliveryDefer=false;
+                  const {createBuilderModel}=await import(base+'/public/js/builder-models-3d.js');
+                  const plane=createBuilderModel('diamond-da40');plane.name='ROOM_PILOT_AIRCRAFT';plane.position.set(-7,.4,-13);deliveryWorld.add(plane);window.existingPilotPlane=plane;
+                  projection={mapId:'hormuz-shipping',serverTime:20000,dropoffs:[
+                    {id:'port-bay',mapId:'hormuz-shipping',kind:'port-freight-bay',position:{x:-12,y:0,z:6},receivedAt:19000},
+                    {id:'air-source',mapId:'hormuz-shipping',kind:'air-cargo-departure',position:{x:-10,y:0,z:-9}},
+                    {id:'air-destination',mapId:'hormuz-shipping',kind:'air-cargo-arrival',position:{x:12,y:0,z:-9}},
+                    {id:'duplicate-air-destination',mapId:'hormuz-shipping',kind:'air-cargo-arrival',position:{x:12,y:0,z:-9}}
+                  ],routes:[
+                    {id:'port-road',mapId:'hormuz-shipping',kind:'port-transfer',truckWaypoints:[{x:-12,y:0,z:6},{x:-12,y:0,z:-9},{x:-10,y:0,z:-9}]},
+                    {id:'flight-route',mapId:'hormuz-shipping',airWaypoints:[{x:-10,y:0,z:-9},{x:-10,y:12,z:-14},{x:12,y:12,z:-14},{x:12,y:0,z:-9}]},
+                    {id:'receiving-room-link',mapId:'hormuz-shipping',kind:'map-transfer',fromMapId:'hormuz-shipping',toMapId:'plot-a',truckWaypoints:[{x:12,y:0,z:-9},{x:10000,y:0,z:10000}]}
+                  ],vehicles:[{id:'port-transfer-truck',mapId:'hormuz-shipping',phase:'driving',deliveryPhase:'port-transfer',position:{x:-12,y:0,z:6},stageStartedAt:20000,stageDurationMs:15000,waypoints:[{x:-12,y:0,z:6},{x:-12,y:0,z:-9},{x:-10,y:0,z:-9}]}],aircraft:[{id:'pilot-plane',mapId:'hormuz-shipping',modelId:'diamond-da40',position:{x:-7,y:.4,z:-13}}]};
+                  deliveryScene.update({id:'hormuz-shipping'},{deliveryActivity:true});await deliveryScene.refresh();renderDelivery();
+                }''', base)
+                page.wait_for_function('deliveryScene.snapshot().vehicles[0]?.loaded', timeout=30000)
+                page.evaluate('renderDelivery()')
+                assert page.evaluate('deliveryScene.snapshot().airRoutes') == 1
+                assert page.evaluate('deliveryScene.snapshot().intermediatePads') == 3
+                assert page.evaluate('deliveryScene.snapshot().routes') == 2
+                assert page.evaluate('deliveryWorld.getObjectsByProperty("name","ROOM_PILOT_AIRCRAFT").length') == 1
+                assert page.evaluate('deliveryWorld.getObjectByName("DEED_AIR_PATH").geometry.attributes.position.count') == 4
+                assert page.evaluate('deliveryWorld.getObjectByName("CONFIRMED_DOORSTEP_PARCEL")===undefined'), 'Port and apron pads cannot advertise final world-stock delivery.'
+                assert page.evaluate('deliveryWorld.getObjectByName("DEED_DELIVERY_ROUTE_receiving-room-link")===undefined'), 'Room transfers must not draw a straight line through unrelated room coordinates.'
+                textures = page.evaluate('deliveryRenderer.info.memory.textures')
+                page.evaluate('''()=>{for(let i=0;i<30;i++){deliveryScene.receive(projection);renderDelivery();}}''')
+                assert page.evaluate('deliveryRenderer.info.memory.textures') == textures, 'Unchanged flight projections must not allocate textures per frame.'
+                page.screenshot(path=str(artifacts / ('strait-freight-scene-mobile.png' if mobile else 'strait-freight-scene-desktop.png')))
+                page.evaluate('''async()=>{deliveryScene.update({id:'other-idle-map'});await deliveryScene.refresh();renderDelivery();if(deliveryWorld.getObjectByName('DEED_AIR_PATH'))throw Error('A departed room retained its flight path.');existingPilotPlane.removeFromParent();}''')
                 page.evaluate('deliveryScene.dispose();deliveryRenderer.dispose();deliveryRenderer.forceContextLoss()')
                 assert page.evaluate('deliveryWorld.getObjectByName("WORLD_DEED_DELIVERIES")===undefined')
                 assert not errors, errors
-                print(('Mobile' if mobile else 'Desktop') + ' delivery scene passed: native truck/courier, confirmed parcel, bounded motion, ordinary-map activity gating and late-response cleanup.', flush=True)
+                print(('Mobile' if mobile else 'Desktop') + ' delivery scene passed: native truck/courier, port transfer, air route/aprons without duplicate plane, bounded motion, activity gating and late-response cleanup.', flush=True)
                 page.close()
         finally:
             browser.close()

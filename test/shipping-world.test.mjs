@@ -15,6 +15,7 @@ import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {localMapLocations} from '../public/js/local-map-locations.js';
+import {STRAIT_FREIGHT_CONNECTIONS} from '../public/js/strait-freight-network.js';
 
 test('shipping academy is a permanent shared sea destination with a matching static catalogue',async()=>{
  const world=shippingWorld(),rows=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
@@ -65,7 +66,10 @@ test('every shipping dock and academy location supports actual populated-room tr
  const world=directory.environments.find(world=>world.id===SHIPPING_ID),file=join(dir,'room.json'),visitor={accountId:'map-visitor',username:'Map visitor',stats:{health:100}};
  let runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>100000}),sequence=0;
  const send=(action,fields={})=>runtime.command(world.id,world,visitor,{action,requestId:'shipping-location-'+ ++sequence,...fields});
- assert.deepEqual(world.streets,[],'the atlas retains the sea world’s authored absence of roads');assert.ok(localMapLocations(world).every(place=>place.kind!=='freight'),'road freight bays are not invented in open water');
+ assert.ok(world.streets.length>=16,'the atlas retains authored local dock and air cargo roads');
+ const freight=localMapLocations(world).filter(place=>place.kind==='freight');
+ for(const connection of STRAIT_FREIGHT_CONNECTIONS)assert.ok(freight.some(place=>place.id===connection.bayId),'every port exposes its actual shore freight bay');
+ for(const place of freight)assert.equal(harborWaterAt(world,place),false,'freight bays stay on actual shore land');
  const first=await send('join',{deferRadTox:true,radToxEnabled:false});runtime.collision.clearPlacedWorlds();
  runtime=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>100000});const rejoined=await send('join',{deferRadTox:true,radToxEnabled:false});
  assert.deepEqual(Object.keys(rejoined.actors).sort(),Object.keys(first.actors).sort());

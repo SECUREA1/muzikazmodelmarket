@@ -100,7 +100,7 @@ async function buildWorldDirectory(atlas,published,deeds=[]){
   map.playUrl=isTropicalIslandMap(map)?tropicalIslandPlayUrl(map,{mode:solo?'solo':'multiplayer'}):page+'?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode='+(solo?'solo':'multiplayer')+'&autoplay=1';
   if(map.source!=='community-atlas'){
    const factoryNeighbors=map.id===FACTORY_ID?[PROVING_ID,'world-item-factory']:map.id===PROVING_ID?[FACTORY_ID]:map.id===COMPOUND_ID?[PROVING_ID]:[];
-   map.portalTargets=[...new Set([map.lot?.mapId,map.districtId,'public-commons',...factoryNeighbors,...(map.id==='hormuz-shipping'?[SHIPPING_HARBOR_ID,'world-item-factory']:map.id==='world-item-factory'?['hormuz-shipping','muzikaz-missile-factory']:[])].filter(id=>id&&id!==map.id&&byId.has(id)))];
+   map.portalTargets=[...new Set([map.lot?.mapId,map.districtId,'public-commons',...factoryNeighbors,...(map.id==='hormuz-shipping'?[SHIPPING_HARBOR_ID,'world-item-factory','muzikaz-airport']:map.id==='muzikaz-airport'?['hormuz-shipping']:map.id==='world-item-factory'?['hormuz-shipping','muzikaz-missile-factory']:[])].filter(id=>id&&id!==map.id&&byId.has(id)))];
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));
   }
  }

@@ -108,3 +108,41 @@ test('a server activity hint activates only its ordinary map and withdrawing it 
  defer=false;f.manager.update({id:'other-idle-world'});await f.manager.refresh();assert.equal(calls.length,2,'another ordinary map stays idle');
  f.manager.update({id:'authored-room',delivery:{enabled:true}},{deliveryActivity:false});await f.manager.refresh();assert.equal(calls.length,3,'metadata-enabled freight retains its existing subscription');
 });
+
+test('port trucks and manual air freight show only map-local paths and receiving aprons without duplicate aircraft or stock markers',async()=>{
+ const mapId='hormuz-shipping',shore=[{x:1030,y:0,z:730},{x:1100,y:0,z:730},{x:1100,y:0,z:920}],air=[{x:1100,y:0,z:920},{x:1100,y:30,z:700},{x:-1030,y:35,z:500},{x:-1030,y:0,z:650}],labels=[],models=[];
+ const createCanvas=()=>({getContext:()=>({fillRect(){},fillText:text=>labels.push(text)})});
+ const f=setup({createCanvas,createModel:id=>{models.push(id);return new THREE.Group();}});f.manager.update({id:mapId},{deliveryActivity:true});
+ f.manager.receive({serverTime:10000,mapId,dropoffs:[
+  {id:'bay',mapId,kind:'port-freight-bay',position:shore.at(-1),receivedAt:10000},
+  {id:'departure',mapId,kind:'air-cargo-departure',position:air[0]},
+  {id:'arrival',mapId,kind:'air-cargo-arrival',position:air.at(-1)},
+  {id:'another-manifest-same-apron',mapId,kind:'air-cargo-arrival',position:air.at(-1)},
+  {id:'other-world-door',mapId:'plot-a',kind:'door',position:{x:10,y:0,z:10},deliveredAt:10000}
+ ],routes:[
+  {id:'shore-route',mapId,kind:'port-transfer',truckWaypoints:shore},
+  {id:'approved-flight',mapId,kind:'air',airWaypoints:air},
+  {id:'another-manifest-same-flight',mapId,kind:'air',airWaypoints:air},
+  {id:'room-link',mapId,kind:'map-transfer',fromMapId:mapId,toMapId:'plot-a',truckWaypoints:[shore.at(-1),{x:10,y:0,z:10}]},
+  {id:'another-world',mapId:'plot-a',truckWaypoints:[{x:0,y:0,z:0},{x:10,y:0,z:10}]}
+ ],vehicles:[{...truck,id:'port-truck',mapId,deliveryPhase:'port-transfer',position:shore[0],waypoints:shore},{...truck,id:'other-world-truck',mapId:'plot-a'}],aircraft:[{id:'pilot-owned-aircraft',mapId,modelId:'diamond-da40',position:air[1]}]});
+ await wait();assert.deepEqual(models,['frontier-pickup'],'the gameplay room remains the only owner of the piloted aircraft visual');
+ assert.equal(f.manager.snapshot().airRoutes,1);assert.equal(f.manager.snapshot().routes,2);assert.equal(f.manager.snapshot().intermediatePads,3);assert.equal(f.manager.snapshot().vehicles.length,1);
+ assert.ok(labels.includes('AIR CARGO DEPARTURE'));assert.ok(labels.includes('AIR CARGO ARRIVAL'));assert.ok(labels.includes('PORT FREIGHT BAY'));
+ assert.equal(f.scene.getObjectByName('CONFIRMED_DOORSTEP_PARCEL'),undefined,'a port or air receipt does not imply final stock receipt');
+ const line=f.scene.getObjectByName('DEED_AIR_PATH');assert.equal(line.geometry.attributes.position.count,4);assert.ok(line.geometry.attributes.position.getY(1)>30,'airborne checkpoints retain actual altitude');
+ f.time=3000;f.manager.tick();const expected=deedDeliveryPathPose(shore,.15).position;assert.deepEqual(f.manager.snapshot().vehicles[0].position,expected,'the port pickup follows source-map coordinates');
+ assert.equal(f.scene.getObjectByName('DEED_DELIVERY_ROUTE_room-link'),undefined,'separate room coordinates cannot form a physical road');
+ f.manager.update({id:'plot-a'});await wait();assert.equal(f.scene.getObjectByName('DEED_AIR_PATH'),undefined,'leaving the shipping map removes its flight route');f.manager.dispose();
+});
+
+test('air paths replace revised geometry, split at foreign room coordinates, and keep a fixed line budget',async()=>{
+ const f=setup(),mapId='hormuz-shipping';f.manager.update({id:mapId},{deliveryActivity:true});await wait();
+ const route={id:'flight',mapId,airWaypoints:[{x:0,y:0,z:0},{x:0,y:30,z:50},{mapId:'other-room',x:1e6,y:30,z:1e6},{x:100,y:30,z:50},{x:100,y:0,z:0}]};
+ f.manager.receive({mapId,serverTime:12000,routes:[route],dropoffs:[],vehicles:[]});
+ const first=f.scene.getObjectsByProperty('name','DEED_AIR_PATH');assert.equal(first.length,2);assert.ok(first.every(line=>line.geometry.attributes.position.count===2));
+ let disposed=0;for(const line of first)line.geometry.addEventListener('dispose',()=>disposed++);
+ f.manager.receive({mapId,serverTime:13000,routes:[{...route,airWaypoints:[{x:0,y:0,z:0},{x:50,y:25,z:50}]}],dropoffs:[],vehicles:[]});assert.equal(disposed,2,'a changed air approach updates even when a route keeps its identity');
+ f.manager.receive({mapId,serverTime:14000,routes:Array.from({length:80},(_,index)=>({id:'flight-'+index,mapId,airWaypoints:Array.from({length:1000},(_,step)=>({x:index,y:step%2?30:0,z:step}))})),dropoffs:[],vehicles:[]});
+ assert.equal(f.manager.snapshot().airRoutes,16);assert.equal(f.scene.getObjectsByProperty('name','DEED_AIR_PATH').length,16);assert.ok(f.scene.getObjectsByProperty('name','DEED_AIR_PATH').every(line=>line.geometry.attributes.position.count===400));f.manager.dispose();
+});

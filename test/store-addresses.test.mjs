@@ -27,7 +27,13 @@ async function orderAndShip(f,{addressId=deliveryAddressId(f.mapId,'market-b'),q
 async function sea(f,shipment){
  const identity={walletId:SENDER},environment=f.maps[0],player={shipping:{}};await f.service.shippingAction(identity,{},player,environment,{operation:'reserve',shipmentId:shipment.id,contractId:shipment.contractId});
  const startedAt=f.now,id='store-sea';player.shipping.job={id,contractId:shipment.contractId,environmentId:environment.id,phase:'loading',deadline:startedAt+SHIPPING_RULES.contractLimitMs};await f.service.shippingAction(identity,{},player,environment,{operation:'bind',shipmentId:shipment.id,jobId:id});
- const route=SHIPPING_ROUTES.find(row=>row.id===shipment.contractId),result={type:'delivery',deliveryId:id,jobId:id,shipmentId:shipment.id,contractId:shipment.contractId,cargoId:route.cargoId,units:route.units||4,quality:100,startedAt,departedAt:startedAt+10000,deliveredAt:startedAt+120000};f.now=result.deliveredAt;return f.service.deliver(identity,result,environment);
+ const route=SHIPPING_ROUTES.find(row=>row.id===shipment.contractId),result={type:'delivery',deliveryId:id,jobId:id,shipmentId:shipment.id,contractId:shipment.contractId,cargoId:route.cargoId,units:route.units||4,quality:100,startedAt,departedAt:startedAt+10000,deliveredAt:startedAt+120000};f.now=result.deliveredAt;const receipt=await f.service.deliver(identity,result,environment);
+ let state=await f.service.state({walletId:SENDER});const pending=state.deliveryTasks.filter(task=>task.shipmentId===shipment.id&&task.portHandling&&task.portHandling.phase!=='complete');
+ if(pending.length){
+  assert.equal(state.maps.find(map=>map.id===f.mapId).stock[ITEM]||0,0,'the selected store receives no inventory from sea unloading or shore handling');assert.equal((await f.service.projection({mapId:f.mapId})).vehicles.length,0,'the store map has no truck before the explicit port transfer');const port=await f.service.projection({mapId:'hormuz-shipping'});assert.ok(port.vehicles.length>0&&port.vehicles.length<=16,'counted goods take a bounded truck route along the receiving quay');
+  f.now=Math.max(...pending.map(task=>task.portHandling.readyAt))+1;state=await f.service.state({walletId:SENDER});assert.equal(state.maps.find(map=>map.id===f.mapId).stock[ITEM]||0,0,'the store door still controls the final stock receipt');
+ }
+ return receipt;
 }
 
 test('stable building addresses cover native shells and layouts without exposing identities or treating merchandise as stores',()=>{

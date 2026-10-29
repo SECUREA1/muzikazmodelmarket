@@ -38,9 +38,9 @@ export function refreshFactoryOrders(ledger,data,now,{addressValid}={}){
   if(order.addressId?addressValid&&!addressValid(order):!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId)){
    order.phase='attention';order.attentionReason=order.addressId?'The receiving address was removed or its owner changed. Cancel remaining freight; delivered stock stays received.':'Deed ownership changed. Cancel the remaining order to release unsent output; delivered stock stays at its destination.';
   }else if(order.phase!=='attention'||order.addressId){
-   const tasks=shipments.flatMap(shipment=>(shipment.deliveryTaskIds||[]).map(id=>ledger.deliveryTasks?.[id]).filter(Boolean)),blocked=tasks.find(task=>task.phase==='blocked');
+   const tasks=shipments.flatMap(shipment=>(shipment.deliveryTaskIds||[]).map(id=>ledger.deliveryTasks?.[id]).filter(Boolean)),airTasks=shipments.flatMap(shipment=>(shipment.airTaskIds||[]).map(id=>ledger.airTasks?.[id]).filter(Boolean)),blocked=[...tasks,...airTasks].find(task=>task.phase==='blocked');
    order.deliveryBlockedReason=blocked?.blockedReason||null;
-   order.phase=job?.phase==='paused'?'paused':job?.phase==='building'?'building':tasks.some(task=>['courier','dropoff'].includes(task.phase))?'doorstep-delivery':shipments.some(shipment=>shipment.phase==='land-transit')?'land-transit':shipments.some(shipment=>shipment.phase==='port-received')?'port-received':shipments.some(shipment=>shipment.phase==='reserved')?'in-transit':'awaiting-shipping';
+   order.phase=job?.phase==='paused'?'paused':job?.phase==='building'?'building':tasks.some(task=>['courier','dropoff'].includes(task.phase))?'doorstep-delivery':shipments.some(shipment=>shipment.phase==='land-transit')?'land-transit':shipments.some(shipment=>shipment.phase==='air-transit')?'air-transit':shipments.some(shipment=>shipment.phase==='awaiting-air-cargo')?'awaiting-air-cargo':shipments.some(shipment=>shipment.phase==='port-received')?'port-received':shipments.some(shipment=>shipment.phase==='reserved')?'in-transit':'awaiting-shipping';
   }
   order.updatedAt=now;
  }
@@ -59,7 +59,7 @@ export function stageFactoryOrders(ledger,data,directory,routes,now,createShipme
   if(!Number.isSafeInteger(capacity)||capacity<1)fail('This order has an invalid saved packing plan.');
   let remaining=order.quantity;
   while(remaining){
-   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),...(order.deliverySchemaVersion?{deliverySchemaVersion:order.deliverySchemaVersion,recipientId:order.recipientId||order.ownerId}:{}),...(order.addressId?{addressId:order.addressId,address:order.address}:{}),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
+   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),...(order.deliverySchemaVersion?{deliverySchemaVersion:order.deliverySchemaVersion,recipientId:order.recipientId||order.ownerId}:{}),...(order.addressId?{addressId:order.addressId,address:order.address}:{}),...(order.onwardMode?{onwardMode:order.onwardMode,onwardPortId:order.onwardPortId}:{}),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
    ledger.shipments[shipment.id]=shipment;
    allocateFactoryLots(ledger,shipment,{now,lotId:lot.id,orderId:order.id});order.shipmentIds.push(shipment.id);remaining-=quantity;
   }
