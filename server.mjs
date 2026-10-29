@@ -33,6 +33,7 @@ import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
 import {backpackPackage,ownedPackageItem} from './backpack-files.mjs';
 import {resolveStoreCart} from './store-catalog.mjs';
 import {nativeMarketCatalog} from './native-market-catalog.mjs';
+import {publicProductVisual,publicProductFunctionData} from './public-product-visual.mjs';
 import {nativeBuilderItem} from './public/js/native-builder-items.js';
 import {EthereumMemberAuth} from './ethereum-member-auth.mjs';
 import {ServerBackups} from './server-backups.mjs';
@@ -139,7 +140,7 @@ async function trustedPurchaseOrder(input) {
   const purchaseType = String(input.purchaseType || '').toUpperCase();
   if (!['LOADOUT', 'LAND_TIER', 'MZK_PURCHASE', 'MARKETPLACE'].includes(purchaseType)) return input;
   const marketplace = purchaseType === 'MARKETPLACE';
-  const store = marketplace ? resolveStoreCart(input.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]) : null;
+  const store = marketplace ? resolveStoreCart(input.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(isPublishedModel)]) : null;
   const tokenPurchase = purchaseType === 'MZK_PURCHASE';
   const landTier = purchaseType === 'LAND_TIER';
   if (!marketplace && !tokenPurchase && (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout')) throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
@@ -461,7 +462,7 @@ async function repositoryGameCatalog({includeEnvironments=true}={}) {
 }
 async function deliverVerifiedStoreOrder(order){
   if(order.purchaseType!=='MARKETPLACE'||!order.memberAccountId||!['PAID','FULFILLED'].includes(order.paymentStatus))return null;
-  const resolved=resolveStoreCart(order.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]);
+  const resolved=resolveStoreCart(order.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(isPublishedModel)]);
   if(Number(order.basePrice)+.01<resolved.totalUsd)return null;
   order={...order,metadata:{...order.metadata,items:resolved.items.map(item=>({quantity:item.quantity,price:item.priceUsd,deliverable:item}))}};
   const account=await loadoutCodeStore.getAccount(order.memberAccountId);if(!account)throw new Error('Purchasing member account was not found.');
@@ -793,7 +794,10 @@ const server = createServer(async (req, res) => {
     }
     if(url.pathname==='/api/market/catalog'&&req.method==='GET'){
       const player=(await userDatabase.marketListings()).map(item=>({...item,id:'player:'+item.sellerId+':'+item.itemId,name:item.itemName,itemCategory:item.category,category:/land/.test(item.itemType)?'Land and deeds':item.itemType==='custom-item'?'Custom items':'Player items',source:'player',priceMzk:item.priceMzk,seller:item.sellerName}));
-      const builder=(await userDatabase.builderMarket()).map(item=>({asset:{name:item.asset.name,thumbnail_url:item.asset.thumbnail_url||item.preview,glb_url:item.asset.glb_url,buildAssetId:item.asset.function_data?.buildAssetId||item.asset.function_data?.modelId,builder_category:item.asset.builder_category,asset_type:item.asset.asset_type,function_data:item.asset.function_data},id:'builder:'+item.listing_id,name:item.asset.name,category:'Builder assets',source:'builder',priceMzk:item.price_mzk,description:item.asset.builder_category}));
+      const builder=(await userDatabase.builderMarket()).filter(item=>item.asset.visibility!=='private').map(item=>{
+        const functionData=publicProductFunctionData(item.asset.function_data);
+        return {asset:{name:item.asset.name,thumbnail_url:item.asset.thumbnail_url||item.preview,glb_url:item.asset.glb_url,buildAssetId:functionData.buildAssetId||functionData.modelId,builder_category:item.asset.builder_category,asset_type:item.asset.asset_type,function_data:functionData,...publicProductVisual(item.asset)},id:'builder:'+item.listing_id,name:item.asset.name,category:'Builder assets',source:'builder',priceMzk:item.price_mzk,description:item.asset.builder_category};
+      });
       const nativeCatalog=nativeMarketCatalog((await userDatabase.economy('guest:catalog')).items,await combinedEnvironments());
       const upgrades=nativeCatalog.items.map(item=>({...item,id:'upgrade:'+item.sku,name:item.name,category:item.category||'Game upgrades',source:'upgrade',priceMzk:item.priceMzk,basic:item.basic}));
       const models=(await repositoryGameCatalog()).filter(item=>item.assetType!=='environment'&&/\.(?:glb|gltf)(?:[?#]|$)/i.test(item.modelUrl)).map(item=>{const quote=resolveStoreCart([{quantity:1,deliverable:{id:item.id}}],[item]);return {id:'model:'+item.id,name:quote.items[0].name,category:'Models',source:'model',priceUsd:quote.items[0].priceUsd,model:item};});
@@ -1002,7 +1006,7 @@ const server = createServer(async (req, res) => {
       const context=await memberContext(req,res,true);if(!context)return;
       const body=await bodyJson(req),items=body.items;
       if(!Array.isArray(items)||!items.length||items.length>50)throw Object.assign(new Error('Choose up to 50 digital models.'),{statusCode:400});
-      const {items:resolved,amountMzk}=resolveStoreCart(items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]);
+      const {items:resolved,amountMzk}=resolveStoreCart(items,[...(await repositoryGameCatalog()),...(await readModels()).filter(isPublishedModel)]);
       if(Number(body.expectedAmountMzk)!==amountMzk)return authorizationError(res,409,'STORE_PRICE_CHANGED','The catalog price changed. Refresh the cart before paying.','checkout');
       return sendJson(res,201,assetResponse(await userDatabase.purchaseStoreModels(context.walletId,resolved,amountMzk,body.requestId,await registerSupplyMap(body.mapId))));
     }

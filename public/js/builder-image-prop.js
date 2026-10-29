@@ -27,11 +27,14 @@ export function createImageProp(THREE,url,settings={},options={}){
 
 // The editor clones cached templates. Wait until textures and optional raster
 // extrusion have finished so neither a preview nor a placed copy keeps a blank panel.
-export function loadImageProp(THREE,url,settings={},timeout=20000){
+export function loadImageProp(THREE,url,settings={},timeout=20000,{signal}={}){
  return new Promise((resolve,reject)=>{
   const controller=new AbortController();let settled=false,timer,root;
-  const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);if(error){controller.abort();const resources=new Set();root?.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const material of [].concat(node.material||[])){resources.add(material);for(const value of Object.values(material))if(value?.isTexture)resources.add(value);}});for(const resource of resources)resource.dispose?.();reject(error);}else resolve(value);};
+  const cancel=()=>finish(new DOMException('Image preview canceled.','AbortError'));
+  const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);if(error){controller.abort();const resources=new Set();root?.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const material of [].concat(node.material||[])){resources.add(material);for(const value of Object.values(material))if(value?.isTexture)resources.add(value);}});for(const resource of resources)resource.dispose?.();reject(error);}else resolve(value);};
+  if(signal?.aborted){cancel();return;}
+  signal?.addEventListener('abort',cancel,{once:true});
   root=createImageProp(THREE,url,settings,{signal:controller.signal,onLoad:value=>finish(null,value),onError:error=>finish(error)});
-  timer=setTimeout(()=>finish(Error('Image loading timed out. Retry the item preview.')),timeout);
+  if(!settled)timer=setTimeout(()=>finish(Error('Image loading timed out. Retry the item preview.')),timeout);
  });
 }

@@ -3,20 +3,38 @@ import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {mountDeviceDemo} from './device-demos.js';
 import {toolPreviewArt} from './tool-preview-art.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function safePreviewUrl(value){
+export function safePreviewUrl(value,{allowBlob=false}={}){
  if(typeof value!=='string'||!value.trim())return '';
  const url=value.trim();if(/[\\\x00-\x1f]/.test(url))return '';
+ if(allowBlob&&/^blob:(?:https?:\/\/|null\/)/i.test(url))return url;
  if(!/^[a-z][a-z\d+.-]*:/i.test(url)&&!url.startsWith('//'))return url;
  if(/^(?:https?:\/\/|\/(?!\/)|\.\.?\/|public\/|uploads\/)/i.test(url)||/^data:image\/(?:png|jpeg|webp|gif|svg\+xml)[;,]/i.test(url))return url;
  return '';
 }
 export function previewDescriptor(record={}){
- const item=record.asset||record.model||record,config=item.function_data||{},name=item.name||item.itemName||record.name||record.itemName||'Market item';
- const modelUrl=item.modelUrl||item.glb_url;
- const descriptor={name,image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?modelUrl:'')),model:safePreviewUrl(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?'':modelUrl),buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,deviceId:config.device||item.functionalSettings?.device||item.device,materialId:item.materialId,toolId:item.toolId,targetHeight:item.targetHeight,category:item.builder_category||item.category||item.itemType||item.type||item.kind||record.source||'Item',icon:item.icon||'',color:/^#[\da-f]{6}$/i.test(item.color)?item.color:'#9cff69',entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1}))};
+ const nested=record.asset&&typeof record.asset==='object'?record.asset:record.model&&typeof record.model==='object'?record.model:null;
+ const item={...record,...nested},config=item.function_data||{},name=item.name||item.itemName||'Market item';
+ const modelUrl=item.modelUrl||item.glb_url||item.modelPath||(typeof item.model==='string'?item.model:'');
+ const imageModel=/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')||/^image\//i.test(item.mimeType||'')||/^(?:image|image-prop|image-3d)$/.test(item.renderKind||'')||!modelUrl&&/^(?:svg|png|jpe?g|webp|gif)$/i.test(item.format||'');
+ const artwork=item.artwork||(imageModel?modelUrl||item.imageUrl||item.image_url||item.image||item.thumbnailUrl||item.thumbnail_url:item.imageUrl||item.image_url);
+ const descriptor={
+  id:record.id||item.id,sku:record.sku||item.sku,name,
+  image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(imageModel?modelUrl:'')),
+  model:safePreviewUrl(imageModel?'':modelUrl,{allowBlob:true}),
+  buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,
+  deviceId:item.deviceId||config.device||item.functionalSettings?.device||item.device,
+  materialId:item.materialId,toolId:item.toolId,targetHeight:item.targetHeight,builderLayoutId:item.builderLayoutId,
+  generated:item.generated===true,generator:item.generator||item.registry?.generator,
+  color:/^#[\da-f]{6}$/i.test(item.registry?.materials?.color||item.color)?item.registry?.materials?.color||item.color:'#9cff69',
+  category:item.builder_category||item.category||item.itemType||item.type||item.kind||record.source||'Item',icon:item.icon||'',
+  entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1})),
+  drawingSettings:item.drawingSettings,configuration:item.configuration,form:item.form,strokes:item.strokes,
+  artwork:safePreviewUrl(artwork,{allowBlob:true}),renderKind:item.renderKind,previewCard:item.previewCard===true,previewNote:item.previewNote
+ };
  if(descriptor.model&&/brand_name|logo|placeholder/i.test(descriptor.image))descriptor.image='';
  return descriptor;
 }
+
 function illustration(item){
  if(item.toolId){const art=toolPreviewArt(item.toolId,{name:item.name});if(art)return art;}
  const type=(item.toolId||item.category||'').toLowerCase(),color=item.color;
@@ -31,7 +49,7 @@ let queue=Promise.resolve(),modules;
 const snapshots=new Map(),figureSnapshots=new WeakMap(),previewEpochs=new WeakMap();
 const activeFigure=(figure,epoch)=>figure.isConnected&&figure.dataset.previewReleased!=='true'&&(epoch===undefined||previewEpochs.get(figure)===epoch);
 function snapshotFor(item,figure){
- const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.toolId,item.targetHeight]);let entry=snapshots.get(key);
+ const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.toolId,item.targetHeight,item.builderLayoutId,item.generator,item.strokes,item.artwork,item.drawingSettings,item.configuration,item.form,item.color,previewModelSource(item)==='card'?[item.id,item.name,item.category,item.entries,item.previewNote]:null]);let entry=snapshots.get(key);
  if(!entry){
   let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});
   entry={promise,figures:new Set(),status:'pending',cancel(){if(entry.status!=='pending')return;entry.status='canceled';if(snapshots.get(key)===entry)snapshots.delete(key);reject(Error('Preview canceled'));}};
@@ -54,25 +72,48 @@ function snapshotFor(item,figure){
 }
 // Match the placement renderer: native definitions remain authoritative even
 // when they also carry a reference GLB URL.
-export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.model?'glb':item.toolId?'tool':null;}
+export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.builderLayoutId?'layout':item.strokes?.length?'drawing':item.generator?'generated':item.model?'glb':item.toolId?'tool':item.artwork?'image':item.name||item.image?'card':null;}
 export function disposePreviewModel(root){disposeModelResources(root);}
-export async function loadPreviewModel(item){
- modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/loaders/GLTFLoader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
- const [THREE,{GLTFLoader},{createBuilderModel},{createBuildingBlock},{prepareAuthoredBuilderModel},{createHeldToolModel}]=await modules;
- let root,timer,expired=false;
+export async function loadPreviewModel(record,{renderer,signal,timeout=12000}={}){
+ const item=previewDescriptor(record);
+ modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('./game-model-loader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
+ const [THREE,{createGameModelLoader,loadGameModel},{createBuilderModel,createGeneratedAsset},{createBuildingBlock},{prepareAuthoredBuilderModel,createSavedCustomModel},{createHeldToolModel}]=await modules;
+ if(signal?.aborted)throw new DOMException('Preview canceled','AbortError');
+ let root,timer,animations=[];const controller=new AbortController(),cancel=()=>controller.abort();signal?.addEventListener('abort',cancel,{once:true});
+ if(signal?.aborted)controller.abort();
+ timer=setTimeout(()=>controller.abort(),timeout);
  try{
   const source=previewModelSource(item);
   if(source==='material')root=createBuildingBlock(THREE,item.materialId);
   else if(source==='native')root=createBuilderModel(item.buildAssetId);
   else if(source==='tool')root=createHeldToolModel(THREE,item.toolId);
+  else if(source==='generated')root=createGeneratedAsset(item);
+  else if(source==='drawing')root=createSavedCustomModel(item);
+  else if(source==='layout'){
+   const {createBuilderLand}=await import('./environments/builder-land.js');
+   root=createBuilderLand({id:'product-preview-'+item.builderLayoutId,source:'repository',proceduralLand:true,builderScene:{layout:item.builderLayoutId,mapSize:60,objects:[]}});
+  }
+  else if(source==='image'){
+   const {loadImageProp}=await import('./builder-image-prop.js');
+   root=await loadImageProp(THREE,item.artwork,item.drawingSettings||item.configuration||{},timeout,{signal:controller.signal});
+  }
   else if(source==='glb'){
-   const pending=new GLTFLoader().loadAsync(item.model).then(gltf=>{if(expired){disposePreviewModel(gltf.scene);throw Error('Preview timed out');}return gltf;});
-   const gltf=await Promise.race([pending,new Promise((_,reject)=>timer=setTimeout(()=>{expired=true;reject(Error('Preview timed out'));},12000))]);
-   root=prepareAuthoredBuilderModel(gltf.scene,item);
+   const loader=createGameModelLoader(renderer);let gltf;
+   try{gltf=await loadGameModel(loader,item.model,{signal:controller.signal});}
+   finally{loader.dracoLoader?.dispose();loader.ktx2Loader?.dispose();}
+   root=prepareAuthoredBuilderModel(gltf.scene,item);animations=gltf.animations||[];
+  }
+  else if(source==='card'){
+   const {createProductCard}=await import('./product-card-model.js');
+   root=await createProductCard(THREE,item,{signal:controller.signal});
   }
   if(!root)throw Error('No visual model');
-  return {THREE,root};
- }finally{clearTimeout(timer);}
+  if(controller.signal.aborted)throw new DOMException('Preview canceled or timed out','AbortError');
+  root.userData.previewPresentation=source==='card'?'product-card':'actual-model';
+  if(item.previewNote)root.userData.previewNote=item.previewNote;
+  return {THREE,root,animations};
+ }catch(error){disposePreviewModel(root);throw error;}
+ finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
 }
 async function modelSnapshot(item,current=()=>true){
  let root,renderer;
@@ -100,7 +141,7 @@ function addDevicePreview(figure,item){
 function loadPreview(figure){
  if(figure.dataset.previewMounted)return;figure.dataset.previewMounted='true';delete figure.dataset.previewReleased;const epoch=(previewEpochs.get(figure)||0)+1;previewEpochs.set(figure,epoch);const active=()=>activeFigure(figure,epoch),item=JSON.parse(figure.dataset.itemPreview);addDevicePreview(figure,item);if(item.entries?.length&&!item.image)return;
  const fallback=()=>{if(!active())return;const failed=()=>{if(active())figure.querySelector('figcaption').textContent='3D preview unavailable · illustration shown';};if(item.image)displayImage(figure,item.image,item.name+' · artwork (3D preview unavailable)',failed,epoch);else failed();};
- const model=()=>{if(!active())return;if(!(item.model||item.buildAssetId||item.materialId||item.toolId)){figure.querySelector('figcaption').textContent=item.toolId?'Tool illustration · '+item.name:'Illustration · '+item.category;return;}
+ const model=()=>{if(!active())return;const source=previewModelSource(item);if(!source||source==='card'){figure.querySelector('figcaption').textContent='Illustration · '+item.category;return;}
   snapshotFor(item,figure).then(url=>{if(active())displayImage(figure,url,item.name+' · 3D preview',fallback,epoch);}).catch(fallback);
  };
  if(figure.dataset.previewPreferModel==='true'&&previewModelSource(item))model();else if(item.image)displayImage(figure,item.image,item.name+' · item artwork',model,epoch);else model();
@@ -121,4 +162,13 @@ export function hydrateMarketPreviews(root){
  for(const figure of observed)if(!figure.isConnected){observer.unobserve(figure);observed.delete(figure);}
  root.querySelectorAll('[data-item-preview]:not([data-preview-mounted])').forEach(figure=>{delete figure.dataset.previewReleased;observed.add(figure);observer.observe(figure);});
 }
-export function openMarketPreview(item){const dialog=document.createElement('dialog');dialog.className='market-preview-dialog';dialog.innerHTML='<button type="button">Close preview ×</button><h2>'+escape(previewDescriptor(item).name)+'</h2><p>'+escape(item.description||item.asset?.description||'')+'</p>'+marketItemPreview(item);dialog.querySelector('button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());(document.fullscreenElement||document.body).append(dialog);dialog.showModal();hydrateMarketPreviews(dialog);}
+export function openMarketPreview(item){
+ const descriptor=previewDescriptor(item),dialog=document.createElement('dialog');dialog.className='market-preview-dialog';dialog.dataset.renderGameplay='suspend';
+ const price=Number.isFinite(Number(item.priceMzk))?Number(item.priceMzk).toLocaleString()+' MZK':Number.isFinite(Number(item.priceUsd))?'$'+Number(item.priceUsd).toFixed(2):'';
+ dialog.innerHTML='<button type="button">Close preview ×</button><h2>'+escape(descriptor.name)+'</h2><p>'+escape(item.description||item.asset?.description||'')+'</p><p>'+escape(price)+'</p>'+marketItemPreview(item);
+ let actions;dialog.querySelector('button').onclick=()=>dialog.close();
+ dialog.addEventListener('close',()=>{releaseMarketPreviews(dialog);actions?.dispose();dialog.remove();});
+ (document.fullscreenElement||document.body).append(dialog);dialog.showModal();hydrateMarketPreviews(dialog);
+ void import('./product-actions.js').then(({mountProductActions})=>{if(dialog.isConnected&&dialog.open)actions=mountProductActions(dialog,item);}).catch(()=>{});
+ return dialog;
+}

@@ -88,7 +88,7 @@ function workshop(root) {
       for (const m of Array.isArray(node.material) ? node.material : [node.material]) if (m) materials.add(m);
     });
     for (const geometry of geometries) geometry.dispose();
-    for (const m of materials) {if (!m.map?.userData?.sportsSurfaceShared && !m.map?.userData?.nativeSurfaceShared) m.map?.dispose(); m.dispose();}
+    for (const m of materials) {if (!m.map?.userData?.sportsSurfaceShared && !m.map?.userData?.nativeSurfaceShared && !m.map?.userData?.groundLandscapeShared) m.map?.dispose(); m.dispose();}
   }
   return {box, ball, disc, ring, line, linePoints, equipment, material, dispose};
 }

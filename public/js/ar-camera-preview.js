@@ -31,13 +31,18 @@ export function createCameraPreview({document,window,navigator}){
  return {open,close};
 }
 if(typeof window!=='undefined'&&typeof document!=='undefined'){
- const camera=createCameraPreview({document,window,navigator});window.MuzikazAR=camera;
+ let productPreview,request=0;
+ const camera={
+  async open(record,{mode='camera'}={}){const token=++request;productPreview ||= import('./product-preview.js');const preview=await productPreview;if(token!==request)return;return preview.openProductPreview(record,{mode});},
+  close(){request++;return productPreview?.then(preview=>preview.closeProductPreview());},
+  async getState(){return productPreview?(await productPreview).getProductPreviewState():{mode:'closed',arSupported:null};},
+ };window.MuzikazAR=camera;
  const controls=new Map(),sources=new WeakMap();
  function syncControls(){
   for(const [viewer,button]of controls)if(!viewer.isConnected||!cameraControlVisible(viewer)){button.remove();controls.delete(viewer);}
   for(const viewer of document.querySelectorAll('model-viewer')){
-   // Native phone viewers may save an unowned source file as their fallback.
-   // Use our camera preview controls on every browser instead.
+   // Route explicit controls through the local product preview. It supports
+   // WebXR hit-test placement without exporting files to an external phone app.
    viewer.removeAttribute('ar');viewer.removeAttribute('ios-src');
    if(controls.has(viewer)||!cameraControlVisible(viewer)||viewer.closest('.muzikaz-camera-preview,button'))continue;
    const button=document.createElement('button');button.type='button';button.className='ar-button';button.dataset.cameraPreview='';button.textContent='Open camera preview';button.setAttribute('aria-label','Open camera preview: '+(viewer.getAttribute('alt')||'selected model'));viewer.insertAdjacentElement('afterend',button);controls.set(viewer,button);sources.set(button,viewer);
@@ -51,6 +56,6 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'){
  document.addEventListener('click',event=>{
   const button=event.composedPath().find(node=>node?.matches?.('[slot="ar-button"],[data-ar-launch],[data-camera-preview]'));if(!button)return;
   const viewer=sources.get(button)||button.closest('model-viewer')||button.closest('article')?.querySelector('model-viewer');if(!viewer)return;
-  event.preventDefault();event.stopImmediatePropagation();camera.open({modelUrl:viewer.getAttribute('src'),name:viewer.getAttribute('alt')||'Selected model'});
+  event.preventDefault();event.stopImmediatePropagation();camera.open({modelUrl:viewer.getAttribute('src'),name:viewer.getAttribute('alt')||'Selected model'},{mode:button.matches('[slot="ar-button"],[data-ar-launch]')?'ar':'camera'});
  },true);
 }

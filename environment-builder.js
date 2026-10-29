@@ -1,3 +1,4 @@
+import {isSharedGraphicsTexture} from './public/js/game-graphics-resources.js';
 import {editableFactoryLogisticsScene,factoryLogisticsBuilderLayoutMeta} from './public/js/factory-logistics-builder.js';
 import {FACTORY_LOGISTICS_ITEMS} from './public/js/factory-logistics-items.js';
 import {FACTORY_TESTING_BUILDER_LAYOUTS,createFactoryTestingBuilderScene,editableFactoryTestingScene,testingBuilderLayoutMeta} from './public/js/factory-testing-builder.js';
@@ -197,7 +198,7 @@ function updateSportsTextureCredit(root){
 }
 function disposeSportsDressing(root){
  const geometries=new Set(),materials=new Set(),textures=new Set();
- root.traverse(node=>{if(node.geometry&&!geometries.has(node.geometry)){geometries.add(node.geometry);node.geometry.dispose();}for(const material of [].concat(node.material||[])){if(materials.has(material))continue;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!value.userData.nativeSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose();}});
+ root.traverse(node=>{if(node.geometry&&!geometries.has(node.geometry)){geometries.add(node.geometry);node.geometry.dispose();}for(const material of [].concat(node.material||[])){if(materials.has(material))continue;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!value.userData.nativeSurfaceShared&&!value.userData.groundLandscapeShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose();}});
 }
 function addWorldDressing(){
  basketballPreview=null;
@@ -209,12 +210,12 @@ function addWorldDressing(){
  if(sceneData.layout==='basketball-stadium'){basketballPreview=template;template.traverse(node=>{if(node.name==='ARENA_ROOF_CEILING'||node.name==='ARENA_EXTERIOR_WALL')node.visible=false;});worldDressing.add(template);terrain.visible=false;return;}
  if(!baseWorld)terrain.visible=true;
  for(const child of [...template.children]){
-  if(child.name.startsWith('BUILDER_WALKABLE_FLOOR')){child.geometry.dispose();if(child.name==='BUILDER_WALKABLE_FLOOR_'+(sceneData.sourceLayout||sceneData.layout)){terrain.material.map?.dispose();terrain.material.dispose();terrain.material=child.material;}else{child.material.map?.dispose();child.material.dispose();}continue;}
+  if(child.name.startsWith('BUILDER_WALKABLE_FLOOR')){child.geometry.dispose();if(child.name==='BUILDER_WALKABLE_FLOOR_'+(sceneData.sourceLayout||sceneData.layout)){if(!isSharedGraphicsTexture(terrain.material.map))terrain.material.map?.dispose();terrain.material.dispose();terrain.material=child.material;}else{if(!isSharedGraphicsTexture(child.material.map))child.material.map?.dispose();child.material.dispose();}continue;}
   worldDressing.add(child);
  }
 }
 function shapeTerrain(){
- const meta=layouts[sceneData.layout];terrainGeometry.dispose();terrainGeometry=createLayoutTerrain(sceneData.layout,sceneData.mapSize,meta.color);terrain.geometry=terrainGeometry;terrain.scale.set(1,1,1);terrain.material.map?.dispose();terrain.material.dispose();terrain.material=createLayoutMaterial(sceneData.layout,sceneData.mapSize);const badge=$('#texture-credit');badge.classList.add('ready');badge.querySelector('span').textContent='Shared procedural surface · editor & gameplay';
+ const meta=layouts[sceneData.layout];terrainGeometry.dispose();terrainGeometry=createLayoutTerrain(sceneData.layout,sceneData.mapSize,meta.color);terrain.geometry=terrainGeometry;terrain.scale.set(1,1,1);if(!isSharedGraphicsTexture(terrain.material.map))terrain.material.map?.dispose();terrain.material.dispose();terrain.material=createLayoutMaterial(sceneData.layout,sceneData.mapSize);const badge=$('#texture-credit');badge.classList.add('ready');badge.querySelector('span').textContent='Shared procedural surface · editor & gameplay';
  world.background.setHex(meta.sky);world.fog.color.setHex(meta.sky);applyWeather();if(grid)grid.visible=!['crystal-cavern','mountain-pass','basketball-stadium'].includes(sceneData.layout);addWorldDressing();applyBuilderBaseTransform(proceduralWorld,sceneData.baseTransform);proceduralWorld.userData.buildBounds=new THREE.Box3().setFromObject(proceduralWorld);applyBuilderLayerVisibility();
 }
 const terrain=new THREE.Mesh(terrainGeometry,createLayoutMaterial('grand-floor',40));terrain.rotation.x=-Math.PI/2;terrain.receiveShadow=true;terrain.name='BUILDER_WALKABLE_FLOOR';terrain.userData.colliderShape='mesh';const proceduralWorld=new THREE.Group();proceduralWorld.name="EDITOR_WORLD_LAYER";proceduralWorld.add(terrain);world.add(proceduralWorld);

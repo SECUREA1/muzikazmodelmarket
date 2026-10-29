@@ -80,7 +80,10 @@ export function createInteractiveDevice(THREE,id){
  if(shape==='karaoke'){cylinder(.12,.035,[1.05,.018,0],rubber);cylinder(.025,2.5,[1.05,1.28,0],trim);const mic=cylinder(.06,.22,[1.05,2.57,0],rubber);mic.rotation.z=.9;}
  if(shape==='projector'){part([.5,.3,.7],[.48,2.15,.1],paint,'PROJECTOR');const lens=cylinder(.095,.055,[.48,2.15,-.27],accent);lens.rotation.x=Math.PI/2;}
  if(typeof document!=='undefined'&&!table){
-  const texture=new THREE.TextureLoader().load(deviceArtworkUrl(id),undefined,undefined,()=>{});texture.colorSpace=THREE.SRGBColorSpace;
+  // The intrinsic SVG dimensions changed; bypass the older hour-fresh image
+  // while retaining normal browser caching for subsequent cabinet instances.
+  const artwork=deviceArtworkUrl(id),url=artwork.includes('/interactive-devices/')?artwork+'?artwork=intrinsic-v1':artwork;
+  const texture=new THREE.TextureLoader().load(url,undefined,undefined,()=>{});texture.colorSpace=THREE.SRGBColorSpace;
   const material=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false});
   for(const side of [-1,1]){const poster=new THREE.Mesh(new THREE.PlaneGeometry(.5,height*.72),material);poster.position.set(side*(width*.46+.004),height*.52,.1);poster.rotation.y=side*Math.PI/2;poster.userData.collisionDisabled=true;poster.name='CABINET_ARTWORK';root.add(poster);}
  }

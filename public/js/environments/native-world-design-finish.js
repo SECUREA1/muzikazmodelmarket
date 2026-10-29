@@ -1,5 +1,6 @@
 import {finishNativeSurfaces} from '../native-surface-finish.js';
 import {NATIVE_DESIGN_VERSION} from '../native-design-profile.js';
+import {finishGroundLandscape} from '../ground-landscape-design.js';
 
 // Backpack map aliases use the same authored procedural constructors as the
 // editor and the game. Imported GLB scenes and private/member maps keep their
@@ -31,6 +32,7 @@ export function finishNativeWorldDesign(T,root,environment={}){
  // in monolithic world character rigs. Named wood, stone, metal and cloth still
  // receive their appropriate grain, roughness and surface relief.
  finishNativeSurfaces(T,root,'native-world-resident:'+layout);
+ finishGroundLandscape(T,root,environment);
  const materials=new Set(),textured=new Set();root.traverse(node=>{if(!node.isMesh)return;for(const material of [].concat(node.material||[]))if(material.userData.nativeSurfaceVersion===NATIVE_DESIGN_VERSION){materials.add(material);if(material.map)textured.add(material);}});
  root.userData.nativeWorldDesign={version:NATIVE_DESIGN_VERSION,layout,materialCount:materials.size,texturedMaterialCount:textured.size};
  return root;

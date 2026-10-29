@@ -2,6 +2,7 @@ import {prisonRewardFor} from './public/js/prison-rewards.js';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
+import {publicProductVisual} from './public-product-visual.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { economyItem, ownsEconomyItem, economyInventory, GAME_BUNDLES, economyBundleQuote, economyBundles } from './game-economy.mjs';
 import {ensureWorldSupply,worldSupplyIsCurrent,consumeWorldStock,canonicalSupplyId,supplyAvailability} from './world-supply.mjs';
@@ -386,14 +387,14 @@ export class UserJsonDatabase {
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.visibility!=='private'&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
         thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
-        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...modelMarketMetadata(data,proofFor(sellerId,item.id))
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...publicProductVisual(item),...modelMarketMetadata(data,proofFor(sellerId,item.id))
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }
