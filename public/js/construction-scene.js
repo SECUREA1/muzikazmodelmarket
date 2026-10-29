@@ -52,6 +52,11 @@ export function createConstructionScene(THREE,scene){
    const height=patch.heights.reduce((max,value)=>Math.max(max,numeric(value)),numeric(patch.baseY));tag.position.set(patch.origin.x+patch.columns*patch.cellSize/2,height+2,patch.origin.z+patch.rows*patch.cellSize/2);tag.userData.quarryMaterial=key;
    updateLabel(tag,definition.name,numeric(stock.volume).toFixed(1)+' m³ loose · '+numeric(stock.buffer).toFixed(1)+' m³ in plant',null,'Book stock for Trading Market');
   }
+  for(const stock of (quarry.stockInventory?.piles||[]).filter(stock=>!stock.patchId.startsWith('product-')).slice(0,18)){
+   const patch=patches.find(p=>p.id===stock.patchId);if(!patch)continue;const id='yard:'+stock.id;seen.add(id);let tag=quarryTags.get(id);if(!tag){tag=label(quarryLabels,[0,0,0],[6.6,1.65,1]);tag.name='QUARRY_YARD_LABEL_'+stock.id;quarryTags.set(id,tag);}
+   const height=patch.heights.reduce((max,value)=>Math.max(max,numeric(value)),numeric(patch.baseY));tag.position.set(stock.x,height+2,stock.z);tag.userData.quarryMaterial=stock.material;
+   updateLabel(tag,stock.name,numeric(stock.volume).toFixed(1)+' m³ loose · '+numeric(stock.seededVolume).toFixed(0)+' m³ opening stock',null,QUARRY_MATERIALS[stock.material]?'Scoop & load · book for freight':'Raw feed · screen before freight');
+  }
   for(const [key,title]of [['screener','Screening plant'],['crusher','Jaw crusher'],['stacker','Stockpile stacker']]){
    const state=quarry.stations?.[key],actor=actors.find(a=>a.active!==false&&a.quarryMachine?.kind===key);if(!state||!actor)continue;const id='plant:'+key;seen.add(id);let tag=quarryTags.get(id);if(!tag){tag=label(quarryLabels,[0,0,0],[5.5,1.35,1]);tag.name='QUARRY_PLANT_LABEL_'+key;quarryTags.set(id,tag);}tag.position.set(numeric(actor.position?.x),numeric(actor.position?.y)+5.5,numeric(actor.position?.z));updateLabel(tag,title,numeric(state.throughput).toFixed(2)+' m³/s · '+(state.status||'Parked'));
   }

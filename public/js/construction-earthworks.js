@@ -4,6 +4,7 @@
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,finite(value,min)));
 const EPS=1e-8;
+export const EARTHWORKS_PATCH_LIMIT=24;
 export const EARTH_MATERIALS=Object.freeze(['soil','gravel','sand','fines','stone','crushed','topsoil','mulch']);
 export const earthCargoVolume=cargo=>EARTH_MATERIALS.reduce((sum,key)=>sum+Math.max(0,finite(cargo?.[key])),0);
 export const earthCargo=cargo=>Object.fromEntries(EARTH_MATERIALS.filter(key=>['soil','gravel'].includes(key)||finite(cargo?.[key])>EPS).map(key=>[key,Math.max(0,finite(cargo?.[key]))]));
@@ -20,7 +21,7 @@ export function earthworksPatch(config={},cellSize=2,index=0){
  return patch;
 }
 export function createEarthworks(config={}){
- const excavation=config.excavation||{x:25,z:17,radius:12},stockpile=config.stockpile||{x:30,z:39},settings=config.earthworks||{},definitions=[{id:'excavation',kind:'excavation',...excavation,maxDepth:excavation.maxDepth??8,depth:excavation.width?excavation.depth:undefined},{id:'spoil',kind:'stockpile',width:28,depth:16,maxDepth:0,...stockpile},...(settings.patches||[])].slice(0,16),ids=new Set();
+ const excavation=config.excavation||{x:25,z:17,radius:12},stockpile=config.stockpile||{x:30,z:39},settings=config.earthworks||{},definitions=[{id:'excavation',kind:'excavation',...excavation,maxDepth:excavation.maxDepth??8,depth:excavation.width?excavation.depth:undefined},{id:'spoil',kind:'stockpile',width:28,depth:16,maxDepth:0,...stockpile},...(settings.patches||[])].slice(0,EARTHWORKS_PATCH_LIMIT),ids=new Set();
  const patches=definitions.filter(definition=>{if(ids.has(definition.id))return false;ids.add(definition.id);return true;}).map((definition,index)=>earthworksPatch(definition,settings.cellSize,index));
  const earthworks={version:1,revision:1,patches,initialVolume:patches.reduce((sum,patch)=>sum+patch.initialVolume,0),excavated:0,deposited:0,pushed:0,totals:{}};
  refreshEarthworksTotals(earthworks);return earthworks;
@@ -91,7 +92,7 @@ export function earthworksCollisionBoxes(earthworks,bounds=null){
 export function expandEarthworks(earthworks,config={}){
  const definitions=config.earthworks?.patches||[],ids=new Set(earthworks.patches.map(patch=>patch.id));let added=0;
  for(const definition of definitions){
-  if(ids.has(definition.id)||earthworks.patches.length>=16)continue;
+  if(ids.has(definition.id)||earthworks.patches.length>=EARTHWORKS_PATCH_LIMIT)continue;
   const patch=earthworksPatch(definition,config.earthworks?.cellSize,earthworks.patches.length);
   earthworks.patches.push(patch);ids.add(patch.id);earthworks.initialVolume+=patch.initialVolume;added++;
  }
