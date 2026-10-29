@@ -4,7 +4,7 @@ const baselineStates=new WeakMap();
 const metadataKey='@actorMetadata';
 const earthworksKey='@earthworks';
 const decorActorsKey='@decorActors';
-const componentNames=new Set(['objects','streets','devices','construction','freightHubs','freightDeliveries','residentLife','casinoLife','prison','forestHarvest','island','fitness','fishing','shipping','factory','testing','logistics','questTeams','liveDispatch','questOffers','questResults','transportRadio','skiCompetition','building','firingRange','basketball','match','radTox']);
+const componentNames=new Set(['objects','streets','devices','construction','freightHubs','freightDeliveries','residentLife','casinoLife','prison','forestHarvest','forestSnake','island','fitness','fishing','shipping','factory','testing','logistics','questTeams','liveDispatch','questOffers','questResults','transportRadio','skiCompetition','building','firingRange','basketball','match','radTox']);
 const own=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
 const json=value=>JSON.stringify(value);
 const sceneKey=state=>json(state.sceneVersion??null);

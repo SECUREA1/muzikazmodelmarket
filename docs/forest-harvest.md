@@ -30,3 +30,9 @@ Timberland uses authored 2,048-pixel color maps, 1,024-pixel normal maps and 512
 Tree trunks have flared roots and individual branches; layered leaf sprays replace solid cone canopies. Instanced undergrowth, cut faces, subtle wind, falling trunks, gravel haul roads and smoother distant ridges follow the saved harvest state. Machinery has finer cylinders, bevelled body panels, hydraulic hoses, cab instruments, wipers, seals and grilles. Added cosmetic detail does not change machinery collision surfaces, station approaches or the forest's walkable floor.
 
 Hardware rendering uses a tighter player-follow shadow area and a 2K shadow map, with up to twice the CSS pixel resolution when the display supports it. The existing mobile/software-renderer performance mode remains available. `test/forestry-*.test.mjs` and the forestry graphics model/scene tests check texture dimensions, shared resource disposal, geometry budgets and preserved gameplay surfaces. `python3 test/forest-harvest-graphics.browser.py` verifies desktop/mobile texture loading and shader compilation, and captures trees and machinery for inspection.
+
+## Mossback, the wandering snake
+
+Mossback is a harmless thirteen-metre forest python that patrols between camp and the timber stands. Its rippling body, golden eyes, moving jaw and forked tongue follow a shared server-controlled route. Nearby players see speech bubbles and captions when it offers an odd woodland observation; dialogue audio uses the platform's normal sound activation, voice and mute settings. Approach its head or body and press **E / Use** to chat. Mossback does not attack, damage equipment or block hauling lanes.
+
+The snake is also a native creature in the item list, market and Builder. Its model animates locally, while Timberland owns its patrol and timed dialogue. Snake motion uses a small separate snapshot component so movement does not retransmit the forest's tree inventory on every frame.

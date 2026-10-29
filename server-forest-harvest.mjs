@@ -1,3 +1,4 @@
+import {stepForestSnake,forestSnakeTalk} from './server-forest-snake.mjs';
 import {randomUUID} from 'node:crypto';
 import {FOREST_HARVEST_ID,FOREST_SPECIES,FOREST_TREES,FOREST_PLOTS,FOREST_STATIONS,FOREST_VEHICLES,FOREST_EQUIPMENT,FOREST_PRODUCTS,FOREST_RECIPES,FOREST_CHALLENGES,FOREST_GROWTH_MS,FOREST_MILL_MS,FOREST_DRY_MS,isForestHarvestEnvironment} from './public/js/forest-harvest-config.js';
 
@@ -33,6 +34,7 @@ function finishJob(state,job,player){
 }
 export function stepForestHarvest(sim,environment,now=Date.now()){
  const state=ensureForestHarvest(sim,environment,now);if(!state)return;
+ stepForestSnake(sim,environment,now);
  for(const tree of Object.values(state.trees))if(tree.phase==='growing'&&now>=tree.growthEndsAt){tree.phase='standing';tree.hits=0;const planter=Object.values(sim.players||{}).find(player=>playerId(player)===tree.plantedBy);if(planter)personal(planter).progress.regrown++;delete tree.growthEndsAt;}
  for(const job of state.jobs)if(job.phase==='working'&&now>=job.endsAt){const owner=Object.values(sim.players||{}).find(player=>playerId(player)===job.ownerId);if(owner)finishJob(state,job,owner);}
  // Finished jobs are informational; their output was delivered exactly once.
@@ -67,6 +69,7 @@ export function forestHarvestCommand(sim,player,environment,command,now=Date.now
   if(player.grounded===false)fail('Return to the ground before operating forestry equipment.');
  }
  let message='',crafted=null,job=null;
+ if(action==='forest-snake-talk')return forestSnakeTalk(sim,player,environment,now);
  if(action==='forest-status'){
   message='Forest operations ready.';
  }else if(action==='forest-equip'){
@@ -131,6 +134,6 @@ export function forestHarvestCommand(sim,player,environment,command,now=Date.now
  state.message=message;return {message,...(crafted?{crafted}:{}),...(job?{job:copy(job)}:{})};
 }
 export function forestHarvestView(sim,player){
- if(!sim.forestHarvest)return null;const state=copy(sim.forestHarvest);if(player)state.personal=copy(personal(player));return state;
+ if(!sim.forestHarvest)return null;const state=copy(sim.forestHarvest);if(state.snake)state.snake={id:state.snake.id,name:state.snake.name,epoch:state.snake.epoch,speech:state.snake.speech};if(player)state.personal=copy(personal(player));return state;
 }
 export const forestHarvestSnapshot=forestHarvestView;

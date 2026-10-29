@@ -84172,7 +84172,7 @@
     "id": "forest-harvest",
     "name": "Timberland · Forest Harvest & Lumber Mill",
     "label": "Grow · fell · haul · mill · build",
-    "description": "An advanced working forest with mixed-species timber stands, a tree nursery, marked haul roads, forestry machinery, a log receiving yard, sawmill, drying kiln and woodworking shop. Farm trees, select tools, fell and buck trunks, load and haul logs, remove stumps to reclaim land, and mill selected species and lumber profiles for building pieces, furniture and item creation. Forestry challenges reward the full tree-to-land production cycle and replanting.",
+    "description": "An advanced working forest with mixed-species timber stands, a tree nursery, marked haul roads, forestry machinery, a log receiving yard, sawmill, drying kiln and woodworking shop. Farm trees, select tools, fell and buck trunks, load and haul logs, remove stumps to reclaim land, and mill selected species and lumber profiles for building pieces, furniture and item creation. Forestry challenges reward the full tree-to-land production cycle and replanting. Mossback, a giant wandering snake, shares strange stories as it passes.",
     "category": "Forestry & resource farming",
     "game": "forest-harvest",
     "mapTheme": "forest",
@@ -84798,7 +84798,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-29T06:00:00.000Z",
+    "contentUpdatedAt": "2026-10-29T12:00:00.000Z",
     "scale": 1,
     "spaceScale": 1,
     "thumbnailUrl": "/public/images/forest-harvest/timberland.svg",
@@ -85498,6 +85498,39 @@
             "behavior": "decor",
             "destructible": false,
             "damage": 0
+          }
+        },
+        {
+          "id": "forest-mossback",
+          "modelId": "timberland-snake",
+          "asset": {
+            "buildAssetId": "timberland-snake"
+          },
+          "name": "Mossback · Wandering Forest Snake",
+          "position": {
+            "x": -2,
+            "y": 0,
+            "z": 64
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "none",
+            "forestSnake": true,
+            "interactionDistance": 8,
+            "prompt": "Talk to Mossback · E / Use"
           }
         }
       ],
@@ -86274,6 +86307,15 @@
               "z": -75
             },
             "description": "Harvest every tree and remove its stump to reclaim this plot. Replant your selected species for the next growing cycle."
+          },
+          {
+            "id": "forest-snake-crossing",
+            "name": "Mossback’s crossing",
+            "x": -2,
+            "z": 64,
+            "width": 16,
+            "depth": 16,
+            "description": "A giant, harmless snake wanders between camp and the timber stands, sharing peculiar observations as it passes."
           },
           {
             "id": "forest-arrival",
