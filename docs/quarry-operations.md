@@ -27,3 +27,17 @@ Existing freight dispatch can transfer your delivered deed stock to another owne
 ## Validation
 
 `test/quarry.test.mjs` covers the native map, editable models, real truck ramp support, source filtering, processing yields, typed material conservation and operator access. `test/quarry-supply.test.mjs` covers durable booking recovery, ownership, stock and payment idempotency, cancellations, actual sea/last-mile delivery and deed material use. `test/quarry.browser.py` exercises the native mobile game, cab interaction, digging/loading, plant controls, Hide/Show, ordering and in-page deed travel.
+
+## Connected plant and Trading Market
+
+The expanded plant has thirteen individually editable conveyor sections: raw intake, three screened-stone transfer sections, crusher receiving intake, two product elevators, and six segregated stockpile conveyors. A steel gantry supports the raised stacker. The elevated stockpile belts leave at least six metres of clearance above the haul road; their supports do not create an invisible barrier in the truck lane.
+
+The server checks the actual intake and discharge positions of every conveyor. Removing, disabling, or moving a section out of alignment stops the affected transfer and retains its feed or buffered material. Other connected product routes can continue. Reconnect the native belt to its authored endpoints to resume. Existing quarry copies without a configured conveyor network retain their previous operation.
+
+Plant dashboards show actual m³/s and cumulative processed volume. Plant feed rate offers 25%, 50%, 75%, and 100% of rated capacity, validated at the operator's controls. Conveyors display colored aggregate only while real material moves; powered but empty plants do not manufacture visual output. Coarse stone piles have bounded instanced grains, while sand, fines, topsoil and mulch use their true terrain colors. Six live pile labels distinguish loose pile volume from the processing buffer. Neither is yet warehouse stock.
+
+All six processed products appear in the public Trading Market and in-game Quarry materials section, using their canonical `quarry:*` identities and MZK/m³ prices. Availability reads only booked public-quarry warehouse stock, excluding loose piles, personal deed inventories and cargo already reserved for an order. Empty offers remain visible as production opportunities with zero availability. Each offer links to its own source quarry and selects that material in the real ordering panel. `/model-market.html?source=quarry` opens the public quarry filter directly.
+
+The market does not grant free stock or add these materials to factory manufacture. Purchases use the same paid `order-quarry` operation, current deed ownership checks, finite source inventory, shipping and last-mile receipt. All quarry machines, conveyors, storage bays and prepared garden/path models resolve to their existing native market SKUs and appear in the quarry template's component list.
+
+Additional validation: `quarry-processing-network.test.mjs` covers connected/misaligned belts, feed throttling and material conservation; `quarry-layout.test.mjs` drives a real truck under the gantry; `quarry-model-flow.test.mjs` and `quarry-scene.test.mjs` verify bounded visuals and scene cleanup; `quarry-market.test.mjs` and `quarry-market.browser.py` cover market provenance, availability, filters and source-specific ordering links.

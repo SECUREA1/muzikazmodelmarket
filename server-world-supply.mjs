@@ -1,3 +1,4 @@
+import {quarryMarketCatalog} from './public/js/quarry-market.js';
 import {QUARRY_MATERIALS} from './public/js/quarry-config.js';
 import {requireSupplyDeed} from './world-factory-orders.mjs';
 import {randomUUID} from 'node:crypto';
@@ -221,6 +222,7 @@ export class WorldSupplyService {
   if(!mapId||!directory.maps.some(map=>map.id===mapId))fail('Choose an available delivery map.',404);
   return this.supplyTransaction(data=>{const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);return projectWorldDeliveries(ledger,mapId,now);});
  }
+ async quarryMarketCatalog(){const [maps,data]=await Promise.all([this.maps(),this.database.read()]);return quarryMarketCatalog(data.worldSupply||{},maps);}
  async quarryState({mapId,walletId}={}){
   const state=await this.state({mapId,walletId});return {ownerId:state.ownerId,deeds:state.deeds,orders:state.orders.filter(order=>String(order.itemId).startsWith('quarry:')),shipments:state.shipments.filter(shipment=>String(shipment.itemId).startsWith('quarry:')),maps:state.maps.map(map=>({id:map.id,name:map.name,stock:Object.fromEntries(Object.entries(map.stock||{}).filter(([key])=>key.startsWith('quarry:')))})),routes:state.routes.map(route=>({id:route.id,name:route.name,from:route.from,to:route.to})),shippingMaps:state.shippingMaps,serverTime:state.serverTime};
  }

@@ -1,6 +1,7 @@
 import {MARKET_CATEGORIES} from './market-categories.js';
 import {marketFacets} from './market-facets.js';
-export const MARKET_SOURCES=[['','All items'],['upgrade','Game items'],['native','Native items & functions'],['native-map','Native map templates'],['player','Member sales'],['custom','Custom items'],['builder','Builder assets'],['model','3D models'],['land','Land & deeds'],['care','Care supplies'],['bundle','Bundles']];
+export const MARKET_SOURCES=[['','All items'],['upgrade','Game items'],['quarry','Quarry materials'],['native','Native items & functions'],['native-map','Native map templates'],['player','Member sales'],['custom','Custom items'],['builder','Builder assets'],['model','3D models'],['land','Land & deeds'],['care','Care supplies'],['bundle','Bundles']];
+export function initialMarketSource(search=''){const source=new URLSearchParams(search).get('source')||'';return MARKET_SOURCES.some(([id])=>id===source)?source:'';}
 export function matchesMarketSource(item,source){if(!source)return true;if(source==='native')return item.native===true;if(source==='custom')return item.itemType==='custom-item'||item.type==='custom-item'||item.asset?.asset_type==='custom';return item.source===source;}
 export function mainMarketEntries(items){return items.map(item=>({item,facts:marketFacets(item)}));}
 export function mainMarketOptions(entries,{source='',category=''}={}){

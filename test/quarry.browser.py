@@ -41,9 +41,11 @@ await db.transaction(data=>{data.worldSupply.maps['plot-deed-quarry-browser']={i
      if not button.is_visible():page.get_by_role('button',name='More view controls',exact=True).click()
      button.click()
     try:
+     catalog=context.request.get(base+'/api/market/catalog').json()['data'];offers=[item for item in catalog if item.get('source')=='quarry'];assert len(offers)==6;assert next(item for item in offers if item['id']=='quarry:sand')['availableStock']==5
      command('join');command('construction-crew',operation='pause')
-     page.goto(base+'/model-explorer.html?environment=surface-mine-quarry&autoplay=1&mode=multiplayer',wait_until='domcontentloaded')
+     page.goto(base+'/model-explorer.html?environment=surface-mine-quarry&autoplay=1&mode=multiplayer&quarryMaterial=sand',wait_until='domcontentloaded')
      page.wait_for_function("window.MuzikazHouseExplorer?.snapshot().serverReady",timeout=120000)
+     entry_panel=page.get_by_role('region',name='Quarry operations',exact=True);entry_panel.wait_for(state='visible');assert entry_panel.get_by_label('Material',exact=True).input_value()=='sand';entry_panel.get_by_role('button',name='Close',exact=True).click()
      if page.get_by_role('button',name='Close local quests',exact=True).is_visible():page.get_by_role('button',name='Close local quests',exact=True).click()
      command('construction-crew',operation='pause')
      machine=state()['actors']['quarry-excavator'];yaw=machine['rotation']['y']+machine['construction']['swing'];cab={'x':machine['position']['x']-2.9*math.cos(yaw),'z':machine['position']['z']+2.9*math.sin(yaw)}
@@ -59,6 +61,7 @@ await db.transaction(data=>{data.worldSupply.maps['plot-deed-quarry-browser']={i
      page.locator('#house-explorer-canvas').focus();page.keyboard.press('e')
      panel=page.get_by_role('region',name='Quarry operations',exact=True);panel.wait_for(state='visible')
      panel.locator('.sports-primary-trigger').click();wait(lambda s:s['quarry']['stations']['screener']['enabled'],'screener start');assert state()['quarry']['stats']['screened']==0
+     panel.get_by_label('Plant feed rate',exact=True).select_option('0.5');wait(lambda s:s['quarry']['stations']['screener'].get('feedRate')==.5,'plant feed control')
      panel.get_by_role('button',name='Park plant',exact=True).click();wait(lambda s:not s['quarry']['stations']['screener']['running'],'screener park')
      panel.get_by_role('button',name='Hide quarry panel',exact=True).click();assert 'game-panel-collapsed' in panel.get_attribute('class')
      panel.get_by_role('button',name='Show quarry panel',exact=True).click();assert 'game-panel-collapsed' not in panel.get_attribute('class')
@@ -70,6 +73,7 @@ await db.transaction(data=>{data.worldSupply.maps['plot-deed-quarry-browser']={i
      panel.get_by_label('Delivery deed',exact=True).select_option('deed-quarry-browser');panel.get_by_label('Material',exact=True).select_option('sand');panel.get_by_label('Material quantity',exact=True).fill('1')
      panel.get_by_role('button',name='Order freight · 4 MZK',exact=True).click()
      page.wait_for_function("document.querySelector('.quarry-hud [data-order-id]')!==null",timeout=30000)
+     catalog=context.request.get(base+'/api/market/catalog').json()['data'];assert next(item for item in catalog if item['id']=='quarry:sand')['availableStock']==4
      stock=context.request.get(base+'/api/world-supply/quarry?mapId=surface-mine-quarry').json()['data'];assert len(stock['orders'])==1;assert stock['maps'][next(i for i,x in enumerate(stock['maps']) if x['id']=='plot-deed-quarry-browser')]['stock'].get('quarry:sand',0)==0
      page.evaluate('window.quarryPageToken=crypto.randomUUID()');token=page.evaluate('quarryPageToken')
      panel.get_by_role('button',name='Travel to selected deed',exact=True).click()
