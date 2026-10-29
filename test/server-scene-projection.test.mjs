@@ -2,11 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {syncServerAvatar,projectServerActor,disposeProjection} from '../public/js/server-scene-projection.js';
+import {updateAvatarPaddle} from '../public/js/avatar-paddle.js';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+
+test('replacing a playing avatar restores its borrowed paddle before releasing model resources',()=>{
+ const root=new THREE.Group(),model=new THREE.Group(),body=new THREE.Group();root.add(model,body);
+ const paddle=new THREE.Mesh(new THREE.BoxGeometry(.2,.3,.03),new THREE.MeshStandardMaterial());paddle.name='WAIST_PADDLE';model.add(paddle);
+ Object.assign(root.userData,{serverAvatarModel:model,serverAvatarUrl:'/old.glb',serverBody:body});
+ let released=0;paddle.geometry.addEventListener('dispose',()=>released++);
+ updateAvatarPaddle(THREE,root,{equipped:true,equippedAt:1},1000);assert.notEqual(paddle.parent,model);
+ syncServerAvatar({THREE,root,peer:{},loader:{},prepare:value=>value,isCurrent:()=>true});
+ assert.equal(root.userData.avatarPaddle,undefined);assert.equal(paddle.parent,model);assert.equal(model.parent,null);assert.equal(released,1);assert.equal(body.visible,true);
+});
 
 test('room snapshots refresh the server-selected avatar and ignore a client model URL',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'server-avatar-'));

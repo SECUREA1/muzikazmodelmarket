@@ -14,6 +14,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {shippingWorld,SHIPPING_HARBOR_ID} from './shipping-world.mjs';
 import {FACTORY_ID} from './public/js/missile-factory-config.js';
 import {PROVING_ID,COMPOUND_ID} from './public/js/factory-test-config.js';
+import {buildWorldConnectivity} from './world-connectivity.mjs';
 const permanentWorlds=JSON.parse(readFileSync(new URL('./public/models/environments/environments.json',import.meta.url),'utf8')).filter(map=>map.permanent===true).map(map=>({...map,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false}));
 const directories=new WeakMap();
 function fileIdentity(info){return [info.dev,info.ino,info.birthtimeNs,info.mtimeNs,info.ctimeNs,info.size].join(':');}
@@ -105,5 +106,7 @@ async function buildWorldDirectory(atlas,published,deeds=[]){
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));
   }
  }
- return {atlas:state,environments:all};
+ const connectivity=buildWorldConnectivity(all,state),locations=new Map(connectivity.locations.map(place=>[place.mapId,place]));
+ for(const map of all){const place=locations.get(map.id);map.regionId=place.regionId;map.regionName=place.regionName;map.travelModes=place.modes;}
+ return {atlas:state,environments:all,connectivity};
 }

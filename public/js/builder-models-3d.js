@@ -50,6 +50,7 @@ import {CRAFTED_CHARACTER_MODEL_INFO,createCraftedCharacterModel,updateCraftedCh
 import {CRAFTED_BUILDING_MODEL_INFO,createCraftedBuildingModel,updateCraftedBuildingModel} from './crafted-building-models.js';
 import {CRAFTED_FURNITURE_MODEL_INFO,createCraftedFurnitureModel,updateCraftedFurnitureModel} from './crafted-furniture-models.js';
 import {finishNativeDesign} from './native-design-system.js';
+import {articulateLimb,finalizeArticulatedCharacter,updateArticulatedCharacter} from './articulated-character-rig.js';
 
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createBasketballHoop} from './basketball-stadium.js';
@@ -213,6 +214,50 @@ function expandedModel(id){
 }
 
 
+
+// Keep the native stand-ins' rest envelope and equipment, but bend the existing
+// limb surfaces at real joints. No added render meshes, materials or textures.
+function nativeHumanoid(root,{suit,pale,dark,metal,glow}){
+ const pelvis=new THREE.Group();pelvis.name='QUEST_CHARACTER_HIPS';pelvis.position.y=.79;pelvis.userData.articulatedHips=true;root.add(pelvis);
+ const bodyPart=(geometry,mat,position)=>{const part=mesh(geometry,mat,[position[0],position[1]-.79,position[2]]);pelvis.add(part);return part;};
+ bodyPart(new THREE.CapsuleGeometry(.29,.48,4,14),suit,[0,1.03,0]).name='QUEST_CHARACTER_TORSO';
+ const head=new THREE.Group();head.name='QUEST_CHARACTER_HEAD';head.position.set(0,1.65-.79,0);pelvis.add(head);
+ head.add(mesh(new THREE.SphereGeometry(.25,16,10),pale),mesh(new THREE.BoxGeometry(.41,.12,.08),dark,[0,.03,-.22]));
+ for(const x of [-.105,.105]){const eye=mesh(new THREE.SphereGeometry(.035,8,6),glow,[x,.04,-.27]);eye.scale.z=Math.sin(Math.PI*.4);head.add(eye);}
+ bodyPart(new THREE.BoxGeometry(.37,.29,.075),metal,[0,1.17,-.25]);bodyPart(new THREE.BoxGeometry(.17,.035,.015),glow,[0,1.18,-.294]);
+ for(const side of [-1,1]){
+  const label=side<0?'LEFT':'RIGHT';
+  const arm=new THREE.Group();arm.name='QUEST_'+label+'_ARM';arm.position.set(side*.38,1.25-.79,0);pelvis.add(arm);
+  const shoulder=mesh(new THREE.SphereGeometry(.15,12,6),metal,[-side*.02,0,0]);shoulder.name='QUEST_SHOULDER';arm.add(shoulder);
+  const sleeve=mesh(new THREE.CapsuleGeometry(.09,.36,4,10),suit,[0,-.29,0]);sleeve.name='QUEST_SLEEVE';arm.add(sleeve);
+  const hand=mesh(new THREE.SphereGeometry(.105,8,6),dark,[0,-.57,0]);hand.name='QUEST_HAND';arm.add(hand);
+  articulateLimb(THREE,arm,{mesh:sleeve,bend:[0,-.29,0],end:[0,-.57,0],attachments:[hand],kind:'arm',side,prefix:'QUEST_'+label});
+  const leg=new THREE.Group();leg.name='QUEST_'+label+'_LEG';leg.position.set(side*.155,.7-.79,0);pelvis.add(leg);
+  const trouser=mesh(new THREE.CapsuleGeometry(.105,.39,4,10),suit,[0,-.3,0]);trouser.name='QUEST_TROUSER';leg.add(trouser);
+  const boot=mesh(new THREE.BoxGeometry(.24,.17,.38),dark,[0,.095-.7,-.07]);boot.name='QUEST_BOOT';leg.add(boot);
+  articulateLimb(THREE,leg,{mesh:trouser,bend:[0,-.3,0],end:[0,-.53,0],attachments:[boot],kind:'leg',side,prefix:'QUEST_'+label});
+ }
+ root.userData.nativePeopleModel=true;finalizeArticulatedCharacter(root);
+}
+const nativePeopleParts=new WeakMap(),builderCharacterMotions=new WeakMap();
+function characterMotionFor(root,inherited){
+ const own=root.userData?.avatarMotion;if(!own)return inherited;
+ let state=builderCharacterMotions.get(root);if(!state){state={};builderCharacterMotions.set(root,state);}
+ state.moving=own.moving??inherited.moving;state.speed=own.speed??inherited.speed;state.gesture=own.gesture??inherited.gesture;
+ state.reducedMotion=own.reducedMotion===true||inherited.reducedMotion===true;
+ return state;
+}
+function updateNativePeople(root,elapsed,motion={}){
+ if(!root.userData?.nativePeopleModel)return false;
+ const animation=root.userData.animationState||{},rate=Number.isFinite(animation.speed)?Math.max(0,animation.speed):1,time=(Number.isFinite(elapsed)?elapsed:0)*rate;
+ const reducedMotion=motion.reducedMotion===true||animation.enabled===false;
+ let parts=nativePeopleParts.get(root);if(!parts){parts={head:root.getObjectByName('QUEST_CHARACTER_HEAD'),motion:{}};nativePeopleParts.set(root,parts);}
+ const state=parts.motion;state.moving=motion.moving;state.speed=motion.speed;state.gesture=motion.gesture;state.reducedMotion=reducedMotion;state.upperBody=motion.upperBody;
+ updateArticulatedCharacter(root,time,state);
+ if(parts.head)parts.head.rotation.x=reducedMotion?0:root.userData.questSpeaking?Math.sin(time*9)*.065:Math.sin(time*.8)*.015;
+ return true;
+}
+
 function gameplayItem(id){
  const [name,behavior,colorValue]=GAMEPLAY_ITEMS[id],root=new THREE.Group(),color=new THREE.Color(colorValue),glow=material(color,.38,.08,{emissive:color.clone().multiplyScalar(.28),emissiveIntensity:.65});
  const actor=['hero-spawn','scout-avatar','wolf-guardian','rad-tox','void-wolf','ember-dragon','rogue-bot','friendly-ghost'].includes(id);
@@ -234,9 +279,7 @@ function gameplayItem(id){
    add(new THREE.TorusGeometry(.52,.025,6,24),glow,[0,.2,0],[Math.PI/2,0,0]);
   }else{
    const suit=material(id==='rad-tox'?0x46632e:id==='scout-avatar'?0x374b55:0x263e55,.68,.15);
-   add(new THREE.CapsuleGeometry(.29,.48,6,14),suit,[0,1.03,0]);const head=new THREE.Group();head.name='QUEST_CHARACTER_HEAD';head.position.set(0,1.65,0);root.add(head);head.add(mesh(new THREE.SphereGeometry(.25,18,12),pale,[0,0,0]),mesh(new THREE.BoxGeometry(.41,.12,.08),dark,[0,.03,-.22]));for(const x of [-.105,.105])head.add(mesh(new THREE.SphereGeometry(.035,10,8),glow,[x,.04,-.27]));
-   add(new THREE.BoxGeometry(.37,.29,.075),metal,[0,1.17,-.25]);add(new THREE.BoxGeometry(.17,.035,.015),glow,[0,1.18,-.294]);
-   for(const side of [-1,1]){add(new THREE.SphereGeometry(.15,12,8),metal,[side*.36,1.25,0]);add(new THREE.CapsuleGeometry(.09,.36,4,10),suit,[side*.38,.96,0]);add(new THREE.SphereGeometry(.105,10,8),dark,[side*.38,.68,0]);add(new THREE.CapsuleGeometry(.105,.39,4,10),suit,[side*.155,.4,0]);add(new THREE.BoxGeometry(.24,.17,.38),dark,[side*.155,.095,-.07]);}
+   nativeHumanoid(root,{suit,pale,dark,metal,glow});
    if(id==='hero-spawn')add(new THREE.TorusGeometry(.53,.035,8,28),glow,[0,.04,0],[Math.PI/2,0,0]);
   }
  }else if(id==='quest-scroll'){
@@ -258,7 +301,7 @@ function gameplayItem(id){
   for(const angle of [-.65,.65])add(new THREE.CylinderGeometry(.09,.12,.75,12),wood,[0,.18,0],[Math.PI/2,0,angle]);
   for(let i=0;i<3;i++){const flame=add(new THREE.ConeGeometry(.15,.7-i*.12,12),material(i===0?0xffc16b:0xff7048,.8,0,{emissive:0xff682a,emissiveIntensity:.85,transparent:true,opacity:.86}),[(i-1)*.16,.55-i*.06,0]);flame.userData.itemFlame=i;flame.userData.collisionDisabled=true;}
  }else for(let i=0;i<9;i++){const bubble=add(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;}
- root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
+ root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
 }
 
 function plant(id) {
@@ -430,24 +473,27 @@ export function createGeneratedAsset(model) {
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return finishGameItem(THREE,root);
 }
 
-function updateCraftedModel(root,elapsed){
+function updateCraftedModel(root,elapsed,motion){
  if(root.userData?.equipmentPropModel){updateEquipmentPropModel(root,elapsed);return true;}
  if(root.userData?.craftedLandscapeModel){updateCraftedLandscapeModel(root,elapsed);return true;}
- if(root.userData?.craftedCharacterModel){updateCraftedCharacterModel(root,elapsed);return true;}
+ if(root.userData?.craftedCharacterModel){updateCraftedCharacterModel(root,elapsed,motion);return true;}
  if(root.userData?.craftedBuildingModel){updateCraftedBuildingModel(root,elapsed);return true;}
  if(root.userData?.craftedFurnitureModel){updateCraftedFurnitureModel(root,elapsed);return true;}
  return false;
 }
 
-export function updateBuilderModels(group, elapsed) {
+export function updateBuilderModels(group, elapsed, motion={}) {
   if(group.userData?.forestSnakeModel){updateForestSnakeModel(group,elapsed,{talking:group.userData.forestSnakeTalking===true,reducedMotion:group.userData.forestSnakeReducedMotion===true});return;}
-  if(updateCraftedModel(group,elapsed))return;
+  motion=characterMotionFor(group,motion);
+  if(updateNativePeople(group,elapsed,motion))return;
+  if(group.userData?.residentModel){updateWorldResident(group,elapsed,motion);return;}
+  if(updateCraftedModel(group,elapsed,motion))return;
   if(group.userData?.portalModel){updatePortalModel(group,elapsed);return;}
   if(group.userData?.commonPropModel){updateCommonPropModel(group,elapsed);return;}
   // Avatar projections supply their native model directly; placed scenery
   // supplies a collection. Both retain the same authored carnival animation.
-  if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed);return;}
-  group.children.forEach(root=>{const snake=root.userData.forestSnakeModel?root:root.children.find(child=>child.userData.forestSnakeModel);if(snake){updateForestSnakeModel(snake,elapsed,{talking:snake.userData.forestSnakeTalking===true,reducedMotion:snake.userData.forestSnakeReducedMotion===true});return;}if(root.userData.forestHarvestModel){updateForestHarvestModel(root,elapsed);return;}if(updateQuarryModel(root,elapsed))return;if(updateCraftedModel(root,elapsed))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed,motion.reducedMotion,motion);return;}
+  group.children.forEach(root=>{const snake=root.userData.forestSnakeModel?root:root.children.find(child=>child.userData.forestSnakeModel);if(snake){updateForestSnakeModel(snake,elapsed,{talking:snake.userData.forestSnakeTalking===true,reducedMotion:snake.userData.forestSnakeReducedMotion===true});return;}if(root.userData.forestHarvestModel){updateForestHarvestModel(root,elapsed);return;}const rootMotion=characterMotionFor(root,motion);if(updateNativePeople(root,elapsed,rootMotion))return;if(updateQuarryModel(root,elapsed))return;if(updateCraftedModel(root,elapsed,rootMotion))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed,rootMotion.reducedMotion,rootMotion);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed,rootMotion);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

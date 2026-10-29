@@ -1,5 +1,8 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import {finishGameItem} from './game-item-finish.js';
+import {articulateLimb,finalizeArticulatedCharacter,updateArticulatedCharacter} from './articulated-character-rig.js';
+
+const animationParts=new WeakMap();
 
 export const CRAFTED_CHARACTER_MODEL_INFO=Object.freeze({
  'forest-ranger':['Forest Ranger','A hooded woodland guide with a layered travelling cloak, fitted leather equipment and a full arrow quiver.',[.75,1.8,.55]],
@@ -274,6 +277,29 @@ function ray(root){
  profile(body,'RAY_DORSAL_FIN',[[0,0],[.12,.12],[.28,0]],.025,rim,[0,.16,.16],[0,Math.PI/2,0]);
 }
 
+// Existing tailored cuffs, armour plates and rock pieces become real lower
+// limbs. Only continuous cloth/actuator cylinders require a skinned replacement.
+function articulateHumanoid(design,id){
+ const traveller=id==='forest-ranger'||id==='desert-merchant',clockwork=id==='clockwork-knight',golem=id==='moss-golem';if(!traveller&&!clockwork&&!golem)return;
+ const legNames=traveller?['LEATHER_BOOT','TROUSER_LEG','BOOT_CUFF']:clockwork?['SABATON_BOOT','BOOT_OVERLAP_PLATE','LEG_ACTUATOR','GREAVE_ARMOUR','KNEE_PIVOT','THIGH_OVERLAP']:['GOLEM_STONE_FOOT','GOLEM_SHIN','GOLEM_KNEE','GOLEM_UPPER_LEG'];
+ const arms=[];design.traverse(node=>{if(['TRAVELLER_ARM','CLOCKWORK_ARM','GOLEM_ARM'].includes(node.name))arms.push(node);});
+ for(const side of [-1,1]){
+  const hip=new THREE.Group();hip.name=`CRAFTED_HIP_${side}`;hip.position.set(side*(golem?.27:clockwork?.17:.14),golem?1.17:clockwork?.86:.67,0);design.add(hip);
+  const parts=design.children.filter(node=>legNames.includes(node.name)&&Math.sign(node.position.x)===side);design.updateWorldMatrix(true,true);for(const part of parts)hip.attach(part);
+  const footNames=traveller?['LEATHER_BOOT','BOOT_CUFF']:clockwork?['SABATON_BOOT','BOOT_OVERLAP_PLATE']:['GOLEM_STONE_FOOT'];
+  const lowerNames=clockwork?['GREAVE_ARMOUR','KNEE_PIVOT']:golem?['GOLEM_SHIN','GOLEM_KNEE']:[];
+  articulateLimb(THREE,hip,{mesh:parts.find(node=>node.name===(traveller?'TROUSER_LEG':'LEG_ACTUATOR'))||null,bend:[0,golem?-.41:clockwork?-.31:-.285,0],end:[0,golem?-.95:clockwork?-.71:-.52,0],attachments:parts.filter(node=>footNames.includes(node.name)),lowerParts:parts.filter(node=>lowerNames.includes(node.name)),kind:'leg',side,prefix:'CRAFTED'});
+ }
+ for(const arm of arms){
+  const side=Math.sign(arm.position.x)||1,parts=[...arm.children],bend=traveller?[side*.055,-.23,-.01]:clockwork?[side*.05,-.23,0]:[side*.1,-.45,0],end=traveller?[side*.075,-.42,-.02]:clockwork?[side*.055,-.52,-.015]:[side*.14,-.89,-.07];
+  const handNames=traveller?['TRAVELLER_HAND']:clockwork?['GAUNTLET','GAUNTLET_FINGER_PLATE']:['GOLEM_STONE_FIST','GOLEM_FIST_KNUCKLE'];
+  const lowerNames=traveller?['LEATHER_BRACER','BRACER_STRAP']:clockwork?['VAMBRACE','ELBOW_PIVOT']:['GOLEM_ELBOW','GOLEM_FOREARM'];
+  articulateLimb(THREE,arm,{mesh:traveller?parts.find(node=>node.name==='CLOTH_SLEEVE'):null,bend,end,attachments:parts.filter(node=>handNames.includes(node.name)),lowerParts:parts.filter(node=>lowerNames.includes(node.name)),kind:'arm',side,prefix:'CRAFTED'});
+ }
+ const torso=design.getObjectByName(traveller?'TRAVELLER_TORSO':clockwork?'CLOCKWORK_TORSO':'GOLEM_TORSO');if(torso)torso.userData.articulatedHips=true;
+ finalizeArticulatedCharacter(design);
+}
+
 export function createCraftedCharacterModel(id){
  const info=CRAFTED_CHARACTER_MODEL_INFO[id];if(!info)return null;
  const root=new THREE.Group(),design=new THREE.Group();design.name='CRAFTED_CHARACTER_DESIGN';root.add(design);
@@ -284,6 +310,7 @@ export function createCraftedCharacterModel(id){
  else if(id==='moss-golem')golem(design);
  else if(id==='cave-spider')spider(design);
  else ray(design);
+ articulateHumanoid(design,id);
  // Preserve placement origin and original advertised character height/span.
  const bounds=new THREE.Box3().setFromObject(design,true),size=bounds.getSize(new THREE.Vector3());
  design.scale.set(info[2][0]/size.x,info[2][1]/size.y,info[2][2]/size.z);design.position.y=-bounds.min.y*design.scale.y;
@@ -292,12 +319,14 @@ export function createCraftedCharacterModel(id){
  return finishGameItem(THREE,root);
 }
 
-export function updateCraftedCharacterModel(root,elapsed){
+export function updateCraftedCharacterModel(root,elapsed,state={}){
  if(!root?.userData?.craftedCharacterModel||root.userData.animationState?.enabled===false)return;
- const speed=Number(root.userData.animationState?.speed??1),time=(Number.isFinite(elapsed)?elapsed:0)*(Number.isFinite(speed)?Math.max(0,speed):1);
- root.traverse(node=>{
+ const speed=Number(root.userData.animationState?.speed??1),time=(state.reducedMotion?0:Number.isFinite(elapsed)?elapsed:0)*(Number.isFinite(speed)?Math.max(0,speed):1);
+ let parts=animationParts.get(root);if(!parts){parts=[];root.traverse(node=>{if(node.userData.characterMotion||node.userData.characterGlow)parts.push(node);});animationParts.set(root,parts);}
+ updateArticulatedCharacter(root,time,state);
+ for(const node of parts){
   const motion=node.userData.characterMotion,glow=node.userData.characterGlow;
-  if(motion){const value=motion.base+Math.sin(time*1.35+motion.phase)*motion.amplitude;if(motion.kind==='rotation')node.rotation[motion.axis]=value;else if(motion.kind==='position')node.position[motion.axis]=value;else node.scale[motion.axis]=value;}
+  if(motion&&!(state.moving&&node.userData.articulatedLimb)){const value=motion.base+Math.sin(time*1.35+motion.phase)*motion.amplitude;if(motion.kind==='rotation')node.rotation[motion.axis]=value;else if(motion.kind==='position')node.position[motion.axis]=value;else node.scale[motion.axis]=value;}
   if(glow&&node.material?.emissive)node.material.emissiveIntensity=glow.intensity*(1+Math.sin(time*1.5+glow.phase)*.1);
- });
+ }
 }

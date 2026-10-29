@@ -52,6 +52,10 @@ function upgradePublicPlazas(data){
   if(scene.publicExperienceVersion!==GENERATED_EXPERIENCE_VERSION||cell.mapId==='public-commons'&&scene.commonsNeighborhoodVersion!==COMMONS_NEIGHBORHOOD_VERSION||cell.environment.atlasDistrict?.id==='neon-docks'&&!cell.environment.atlasDistrict.page&&scene.layoutMeta?.harbor?.version!==NEON_MARINA_VERSION){
    const experience=generatedExperience(cell.environment);
    scene.objects=scene.objects.filter(object=>!object.id.startsWith('public-experience-'));scene.objects.push(...experience.objects);
+   // Replace only our own courier roads. Member-authored streets and all
+   // existing district corridors retain their identities and positions.
+   cell.streets=[...cell.streets.filter(street=>street.createdBy||!String(street.id).startsWith('regional-courier-')),...experience.streets];
+   scene.streets=structuredClone(cell.streets);
    scene.layoutMeta={...scene.layoutMeta,...experience.layoutMeta};if(experience.layoutMeta.harbor)scene.mapSize=experience.layoutMeta.harbor.extent*2;scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;if(cell.mapId==='public-commons')scene.commonsNeighborhoodVersion=COMMONS_NEIGHBORHOOD_VERSION;cell.environment.description=experience.description;
    changed=true;
   }

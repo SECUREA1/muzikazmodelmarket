@@ -6,6 +6,7 @@ python3 scripts/render-native-designs.py --only-missing
 python3 scripts/render-native-designs.py --ids studio-desk,material:wood
 
 Thumbnails are accessible SVG wrappers containing their rendered PNG artwork.
+Authored source vectors are preserved; their runtime models are still audited.
 Category sheets and an overview are exported to /workspace by default.
 """
 import argparse
@@ -18,6 +19,7 @@ from collections import defaultdict
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
+from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright
 
 REPO = Path(__file__).resolve().parents[1]
@@ -152,7 +154,7 @@ try:
         for index, item in enumerate(catalog, 1):
             if selected and item['id'] not in selected:
                 continue
-            target = REPO / item['thumbnailUrl'].lstrip('/')
+            target = REPO / urlsplit(item['thumbnailUrl']).path.lstrip('/')
             if args.only_missing and target.exists():
                 continue
             current[0] = item['id']
@@ -161,7 +163,12 @@ try:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 stats = result['stats']
                 svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {args.size} {args.size}" role="img" aria-labelledby="title desc"><title id="title">{html.escape(item["name"])}</title><desc id="desc">{html.escape(item["description"])}</desc><image width="{args.size}" height="{args.size}" href="{result["data"]}"/></svg>\n'
-                target.write_text(svg)
+                # Source vectors are maintained by their own deterministic art
+                # generator. Rendering a runtime audit must not replace them
+                # with larger raster wrappers.
+                authored_vector = target.exists() and 'data-native-vector=' in target.read_text()
+                if not authored_vector:
+                    target.write_text(svg)
                 rendered.append(stats)
             except Exception as error:
                 failures.append({'id': item['id'], 'error': str(error)})
@@ -172,7 +179,7 @@ try:
         groups = defaultdict(list)
         available = []
         for item in catalog:
-            if (REPO / item['thumbnailUrl'].lstrip('/')).exists():
+            if (REPO / urlsplit(item['thumbnailUrl']).path.lstrip('/')).exists():
                 groups[item['category']].append(item)
                 available.append(item)
         for category, items in groups.items():

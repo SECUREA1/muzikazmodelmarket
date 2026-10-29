@@ -1,5 +1,5 @@
 """Real Timberland snake placement, passing captions, movement, interaction and mobile layout."""
-import os, socket, subprocess, tempfile, time, uuid
+import math, os, socket, subprocess, tempfile, time, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1];os.chdir(ROOT)
@@ -32,7 +32,9 @@ with tempfile.TemporaryDirectory(prefix='mossback-browser-') as directory:
                     proof=context.request.get(base+'/api/game/room-session').json()['data']['csrfToken'];headers={'x-csrf-token':proof};endpoint=base+'/api/rooms/forest-harvest/gameplay'
                     def send(action,**fields):
                         response=context.request.post(endpoint,headers=headers,data={'action':action,'requestId':'mossback-'+uuid.uuid4().hex,**fields});assert response.ok,response.text();return response.json()['data']
-                    state=send('forest-status');snake=state['forestSnake'];start=snake['position'];target={'x':snake['headPosition']['x']+1,'z':snake['headPosition']['z']+2}
+                    # Approach ahead of its head so the walking patrol passes us
+                    # while the browser finishes reconciling the movement snapshot.
+                    state=send('forest-status');snake=state['forestSnake'];start=snake['position'];yaw=snake['rotation']['y'];target={'x':snake['headPosition']['x']-math.sin(yaw)*4+math.cos(yaw),'z':snake['headPosition']['z']-math.cos(yaw)*4-math.sin(yaw)}
                     send('map-access',position=target)
                     page.wait_for_function('t=>{const p=window.MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-t.x,p[2]-t.z)<1;}',arg=target,timeout=20000)
                     # A real nearby E / Use interaction requests the existing shared remark.

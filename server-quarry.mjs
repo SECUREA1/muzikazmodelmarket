@@ -1,13 +1,40 @@
 import {constructionAccessPoint} from './public/js/construction-access.js';
 import {randomUUID} from 'node:crypto';
 import {quarryConfig,QUARRY_MATERIALS} from './public/js/quarry-config.js';
-import {earthCargoVolume,earthCargo,earthworksTake,earthworksDeposit,earthworksSurfaceAt} from './public/js/construction-earthworks.js';
+import {EARTH_MATERIALS,earthCargoVolume,earthCargo,earthworksTake,earthworksDeposit,earthworksSurfaceAt,refreshEarthworksTotals} from './public/js/construction-earthworks.js';
 import {constructionMachineKind} from './public/js/construction-state.js';
+import {CONSTRUCTION_CAPACITY} from './server-construction.mjs';
 import {constructionMatrix,constructionTransform} from './public/js/construction-kinematics.js';
 const fail=(message,statusCode=409)=>{throw Object.assign(Error(message),{statusCode});};
 const gap=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),keys=Object.keys(QUARRY_MATERIALS);
 const center=patch=>({x:patch.origin.x+patch.columns*patch.cellSize/2,y:Infinity,z:patch.origin.z+patch.rows*patch.cellSize/2});
 const add=(into,cargo)=>{for(const [key,value]of Object.entries(cargo))into[key]=(into[key]||0)+value;};
+const materialName=key=>QUARRY_MATERIALS[key]?.name||(key==='soil'?'Raw topsoil':'Unscreened gravel');
+export function seedQuarryStock(sim,environment,now=sim.time||0){
+ const config=quarryConfig(environment),q=sim.quarry,earth=sim.construction?.earthworks;if(!config?.initialStock||!q||!earth)return;
+ q.initialStock||={version:config.initialStock.version,lots:{}};q.initialStock.version=config.initialStock.version;
+ for(const lot of (config.initialStock.lots||[]).slice(0,24)){
+  if(!lot.id||q.initialStock.lots[lot.id]||!EARTH_MATERIALS.includes(lot.material)||!Number.isFinite(lot.quantity)||lot.quantity<=0||lot.quantity>10000)continue;
+  const patch=earth.patches.find(p=>p.id===lot.patchId&&p.kind==='stockpile');if(!patch)continue;
+  const point=center(patch);if(Number.isFinite(lot.x))point.x=lot.x;if(Number.isFinite(lot.z))point.z=lot.z;
+  const deposited=earthworksDeposit(earth,point,{[lot.material]:lot.quantity},{radius:Math.max(1,Math.min(24,lot.radius||10)),maxHeight:Math.max(.1,Math.min(5,lot.maxHeight||1)),cellFilter:cell=>cell.patch.id===patch.id}),quantity=earthCargoVolume(deposited);
+  // This is authored opening inventory, rather than a worker's delivery.
+  patch.initialVolume+=quantity;earth.initialVolume+=quantity;earth.deposited=Math.max(0,earth.deposited-quantity);
+  q.initialStock.lots[lot.id]={id:lot.id,patchId:lot.patchId,material:lot.material,quantity,seededAt:now,name:lot.name||materialName(lot.material)};
+ }
+}
+export function quarryStockInventory(sim,environment){
+ const config=quarryConfig(environment),q=sim.quarry,earth=sim.construction?.earthworks;if(!config||!q||!earth)return null;
+ const lots=Object.values(q.initialStock?.lots||{}),piles=[];
+ for(const patch of earth.patches.filter(p=>p.kind==='stockpile'))for(const material of EARTH_MATERIALS){
+  const volume=(material==='soil'||material==='gravel'?patch[material]||[]:patch.products?.[material]||[]).reduce((sum,v)=>sum+v,0),seed=lots.find(l=>l.patchId===patch.id&&l.material===material),output=config.outputPatches?.[material]===patch.id;
+  if(volume<1e-8&&!seed&&!output)continue;const p=center(patch);
+  piles.push({id:patch.id+':'+material,patchId:patch.id,name:seed?.name||materialName(material)+(output?' · Processing output':' · '+patch.id),material,volume,seededVolume:seed?.quantity||0,x:p.x,z:p.z});
+ }
+ const loadout=config.loadout,vehicles=Object.values(sim.actors).filter(actor=>actor.active!==false&&constructionMachineKind(actor)&&constructionMachineKind(actor)!=='crane').map(actor=>{const kind=constructionMachineKind(actor),cargo=earthCargo(actor.construction?.cargo);return {id:actor.id,name:actor.name||actor.asset?.name||actor.id,kind,cargo,volume:earthCargoVolume(cargo),capacity:CONSTRUCTION_CAPACITY[kind],holderId:actor.holderId||null,parked:Math.abs(actor.driving?.speed||0)<.15&&(actor.construction?.bed||0)<=.08&&!actor.construction?.workCycle,atLoadout:!!loadout&&gap(actor.position,loadout)<=loadout.radius&&Math.abs(actor.position.y-(loadout.y||0))<2};});
+ return {piles,vehicles,buffers:{...q.bins},loadout:loadout?{...loadout}:null,initialStock:{version:q.initialStock?.version,totalVolume:lots.reduce((sum,l)=>sum+l.quantity,0),lots}};
+}
+function refreshStockInventory(sim,environment){sim.quarry.stockInventory=quarryStockInventory(sim,environment);}
 export function quarryLinkConnected(link,actors){
  const actor=actors[link.actorId];if(!actor||actor.active===false||actor.health<=0||actor.modelId!=='quarry-conveyor')return false;
  const matrix=constructionMatrix(['x','y','z'].map(key=>actor.position?.[key]||0),['x','y','z'].map(key=>actor.rotation?.[key]||0),['x','y','z'].map(key=>actor.scale?.[key]??1));
@@ -24,6 +51,7 @@ export function ensureQuarry(sim,environment){
  const crew=sim.construction.crew;
  for(const worker of crew?.workers||[]){const id=worker.id==='crew-noor'?'quarry-excavator':worker.id==='crew-jules'?'quarry-truck':worker.id==='crew-ellis'?'quarry-dozer':null,actor=sim.actors[id],home=worker.id==='crew-maya'?config.operatorHome:actor?constructionAccessPoint(actor):null;if(home&&!worker.quarryStationed){worker.position={...home};worker.home={...home};worker.quarryStationed=true;}}
  const worker=crew?.workers?.find(worker=>worker.id==='crew-maya');if(worker){worker.role='Quarry plant operator';worker.home={...config.operatorHome};}
+ seedQuarryStock(sim,environment);refreshStockInventory(sim,environment);
  return sim.quarry;
 }
 function feed(sim,patchId,amount,materials){const patch=sim.construction.earthworks.patches.find(p=>p.id===patchId);return patch?earthworksTake(sim.construction.earthworks,center(patch),amount,{radius:Math.max(patch.columns,patch.rows)*patch.cellSize,looseOnly:true,materials,patchId}):{soil:0,gravel:0};}
@@ -73,6 +101,7 @@ export function stepQuarry(sim,environment,now,dt){
  const routeFlow={'screen-feed':flow.screenFeed,'screen-stone':flow.stoneTransfer,'crusher-feed':flow.crusherFeed,'screen-output':flow.screenOutput,'crusher-output':flow.crusherOutput,'product-output':flow.products};
  for(const link of config.links||[]){const actor=sim.actors[link.actorId];if(!actor)continue;const source=quarryLinkConnected(link,sim.actors)?routeFlow[link.kind]||{}:{},cargo=link.material?{[link.material]:source[link.material]||0}:source,throughput=dt?volume(cargo)/dt:0;actor.quarryMachine={kind:'conveyor',running:throughput>1e-8,throughput,material:link.material||Object.keys(cargo).find(key=>cargo[key]>1e-8)||null,materialVolumes:rate(cargo),payloadVolume:volume(cargo),linkId:link.id,dischargeDrop:link.kind==='product-output'?Math.max(0,link.to.y-(earthworksSurfaceAt(sim.construction.earthworks,link.to)?.y||0)):0};}
  if(!config.links?.length){const transfer=sim.actors['quarry-transfer'];if(transfer)transfer.quarryMachine={kind:'conveyor',running:volume(flow.stoneTransfer)>1e-8,throughput:dt?volume(flow.stoneTransfer)/dt:0,material:'stone'};}
+ refreshStockInventory(sim,environment);
 }
 function requireVisitor(sim,player,environment){const config=quarryConfig(environment);if(!config?.enabled||!sim.quarry||!player||player.health<=0||player.replacedByRoom)fail('Join the live quarry to use these controls.',403);const yard=(environment.construction||environment.builderScene?.layoutMeta?.construction)?.yard;if(yard&&(player.position.x<yard.minX-12||player.position.x>yard.maxX+12||player.position.z<yard.minZ-12||player.position.z>yard.maxZ+12))fail('Return to the quarry yard.');return config;}
 export async function quarryCommand(sim,player,environment,command,now,{identity={},inventory}={}){
@@ -94,11 +123,25 @@ export async function quarryCommand(sim,player,environment,command,now,{identity
   station.enabled=operation==='start';station.manualOwner=operation==='start'?player.actorId:null;station.running=operation==='start';return {message:operation==='start'?'Plant engaged. Feed material and free output space are still required.':'Plant parked; material retained.'};
  }
  if(operation==='reserve-stock'){
+  if(typeof identity.walletId!=='string'||!identity.walletId)fail('Sign in before reserving quarry stock.',403);
   const key=command.material,amount=command.quantity;if(!QUARRY_MATERIALS[key]||!Number.isSafeInteger(amount)||amount<1||amount>1000)fail('Choose a material and 1–1,000 whole cubic metres.',422);
-  const patch=sim.construction.earthworks.patches.find(p=>p.id===config.outputPatches[key]);if(!patch)fail('The product stockpile is unavailable.');
-  const available=earthworksTake(sim.construction.earthworks,center(patch),amount,{radius:18,looseOnly:true,materials:[key],dryRun:true,patchId:patch.id});if(earthCargoVolume(available)<amount-1e-7)fail('Stack enough of this material before booking warehouse stock.');
-  const cargo=earthworksTake(sim.construction.earthworks,center(patch),amount,{radius:18,looseOnly:true,materials:[key],patchId:patch.id}),id=q.id+':'+ ++q.sequence;
-  q.pendingExports[id]={id,ownerId:identity.walletId,material:key,quantity:amount,sourceMapId:environment.id,status:'reserved',createdAt:now};
+  let sourcePatchId=null,sourceVehicleId=null;
+  if(command.source==='vehicle'){
+   const actor=sim.actors[player.vehicleId],state=actor?.construction,loadout=config.loadout;
+   if(!actor||constructionMachineKind(actor)!=='truck'||actor.holderId!==player.actorId||actor.active===false||actor.health<=0)fail('Board your loaded haul truck to book its cargo.');
+   if(!loadout||gap(actor.position,loadout)>loadout.radius||Math.abs(actor.position.y-(loadout.y||0))>=2)fail('Drive to the stockyard weighbridge / booking bay first.');
+   if(Math.abs(actor.driving?.speed||0)>=.15||(state.bed||0)>.08||state.workCycle||Object.values(state.axes||{}).some(value=>Math.abs(value)>.01))fail('Park the truck and lower its body before booking cargo.');
+   const cargo=earthCargo(state.cargo);if((cargo[key]||0)<amount-1e-7)fail('This truck does not carry enough of the selected material.');
+   cargo[key]-=amount;state.cargo=earthCargo(cargo);state.load=earthCargoVolume(state.cargo);sourceVehicleId=actor.id;
+   refreshEarthworksTotals(sim.construction.earthworks,Object.values(sim.actors).filter(a=>constructionMachineKind(a)).map(a=>a.construction?.cargo));
+  }else{
+   const patch=sim.construction.earthworks.patches.find(p=>p.id===(command.patchId||config.outputPatches[key])&&p.kind==='stockpile');if(!patch)fail('The product stockpile is unavailable.');
+   const radius=Math.hypot(patch.columns,patch.rows)*patch.cellSize/2,options={radius,looseOnly:true,materials:[key],patchId:patch.id};
+   const available=earthworksTake(sim.construction.earthworks,center(patch),amount,{...options,dryRun:true});if(earthCargoVolume(available)<amount-1e-7)fail('Stock enough of this material in the selected pile before booking warehouse stock.');
+   earthworksTake(sim.construction.earthworks,center(patch),amount,options);sourcePatchId=patch.id;
+  }
+  const id=q.id+':'+ ++q.sequence;
+  q.pendingExports[id]={id,ownerId:identity.walletId,material:key,quantity:amount,sourceMapId:environment.id,sourcePatchId,sourceVehicleId,status:'reserved',createdAt:now};refreshStockInventory(sim,environment);
   return {message:'Material reserved for warehouse booking. Complete booking before ordering freight.',exportId:id};
  }
  if(operation==='book-stock'){

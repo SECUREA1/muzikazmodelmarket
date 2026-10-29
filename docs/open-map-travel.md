@@ -15,6 +15,33 @@ recover. An unavailable connection keeps the selection pending for a bounded
 reconnection period; failure leaves a visible retry message instead of hiding
 controls or permanently closing the room.
 
+The world atlas also groups destinations by region and shows the transport
+locations available in each map. Regional dispatch courts and courier bays
+have local road access and appear in the location directory. The route planner
+can connect up to eight selected stops, including multiple deed destinations,
+using the current public gateway graph. Region filters, saved-map searches and
+route links use the same directory, so newly published maps and deeds join
+their regional network when it refreshes. Removed or private destinations
+cannot remain valid route stops.
+
+Cross-map steps are marked **Map gateway** and name the actual gateway
+destinations. Roads, shipping lanes and flights describe travel inside their
+own maps; a gateway does not carry a piloted vehicle or complete its cargo job.
+The Strait transport directory includes its six ports, shore-road connections
+and five cargo airfields; Qeshm has sea and road service. The International
+Airport joins the Strait through its existing gateway and cargo service road.
+
+Supply orders carry a separate, saved-ledger travel quest showing production,
+sea passage, optional air freight, receiving transport and final delivery.
+**Visit next travel stop** opens the required map; **Open next stop on this map**
+focuses a local waypoint. **Plan world
+route** brings the remaining public map stops into the atlas. Progress is read
+from verified production and freight receipts. Visiting a map, opening a route
+or changing rooms does not complete a shipment. The quest completes only when
+the exact ordered quantity reaches its receiving inventory or deed door.
+Local vehicle assignments still follow the cancellation rules below; an order's
+delivery progress remains in the supply ledger across map travel and reloads.
+
 Vehicle, route and location selections show an immediate, indeterminate loading
 display. It never captures pointer or keyboard input. Boarding waits for the
 confirmed vehicle model to reach the scene, then exposes the vehicle controls

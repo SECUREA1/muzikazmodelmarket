@@ -1,9 +1,10 @@
 import {neonMarina} from './neon-marina.mjs';
 import {districtNeighborhood} from './district-neighborhoods.mjs';
 import {commonsNeighborhood} from './commons-neighborhood.mjs';
+import {regionalTravelLocations} from './regional-travel-locations.mjs';
 import {furnishBuildings} from './public/js/building-furnishing.js';
 // Shared scene data uses the same models and interaction rules as authored maps.
-export const GENERATED_EXPERIENCE_VERSION=9;
+export const GENERATED_EXPERIENCE_VERSION=10;
 const themes={
  'studio-ridge':{name:'Creator courtyard',landmark:'recording-booth',guide:'forest-ranger',prop:'studio-desk',color:'#af8cff'},
  'volt-city':{name:'Neon makers plaza',landmark:'sci-fi-bunker',guide:'clockwork-knight',prop:'lever-switch',color:'#ffd45c'},
@@ -38,6 +39,7 @@ export function generatedExperience(environment){
  add('garden-bed-a','flower-bed',3,46);add('garden-bed-b','flower-bed',25,46);
  const neighborhood=environment.id==='public-commons'?commonsNeighborhood():districtNeighborhood(environment);if(neighborhood)objects.push(...neighborhood.objects);
  const marina=environment.atlasDistrict?.id==='neon-docks'&&!environment.atlasDistrict.page?neonMarina():null;if(marina){objects.push(...marina.objects);neighborhood.locations.push(...marina.locations);}
+ const regionalTravel=regionalTravelLocations(environment);if(regionalTravel){objects.push(...regionalTravel.objects);neighborhood.locations.push(...regionalTravel.locations);}
  const accent=parseInt(theme.color.slice(1),16),color=(((accent>>16&255)*.18+30)|0)<<16|(((accent>>8&255)*.18+48)|0)<<8|(((accent&255)*.18+32)|0);
- return {objects,layoutMeta:{color,sky:0x17252d,...(marina?{harbor:marina.harbor}:{}),...(neighborhood?{locations:neighborhood.locations,...(environment.id==='public-commons'?{commonsLocations:neighborhood.locations,color:0x637e4d,cleanGround:true}:{})}:{})},name:theme.name,description:`${theme.name} · lounge seating, a creator corner, a local guide, discovery items, health restoration, shared media, shopping, arcade games and linked garden pads.${environment.id==='public-commons'?' Explore the brick-built Makers Workshop, Commons Cafe, Discovery Library, Community Hall, Performance Garden and Builder Exchange, then follow paved paths to the Woodland Reading Garden, Water Garden and shaded Makers Picnic Terrace.':neighborhood?' Explore '+neighborhood.title+' and its live district deed directory.':''}`};
+ return {objects,streets:regionalTravel?.streets||[],layoutMeta:{color,sky:0x17252d,...(regionalTravel?{regionalTravelVersion:regionalTravel.version}:{}),...(marina?{harbor:marina.harbor}:{}),...(neighborhood?{locations:neighborhood.locations,...(environment.id==='public-commons'?{commonsLocations:neighborhood.locations,color:0x637e4d,cleanGround:true}:{})}:{})},name:theme.name,description:`${theme.name} · lounge seating, a creator corner, a local guide, discovery items, health restoration, shared media, shopping, arcade games and linked garden pads.${environment.id==='public-commons'?' Explore the brick-built Makers Workshop, Commons Cafe, Discovery Library, Community Hall, Performance Garden and Builder Exchange, then follow paved paths to the Woodland Reading Garden, Water Garden and shaded Makers Picnic Terrace.':neighborhood?' Explore '+neighborhood.title+', its live district deed directory and the road-connected Regional Route Dispatch with a public courier pickup.':''}`};
 }

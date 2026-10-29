@@ -30,6 +30,7 @@ test('quarry products begin at zero, cannot be factory-created, and trusted book
 });
 test('material orders verify current deeds, charge once, and reserve finite source stock',async t=>{
  const f=await fixture(t);await book(f);await assert.rejects(order(f,{},OTHER),/deed holder/);const accepted=await order(f);assert.deepEqual(await order(f),accepted);assert.equal((await f.database.get(OWNER)).tokens.MZK,9980);
+ assert.equal(accepted.journey.stages[0].mapId,f.mine.id);assert.equal(accepted.journey.stages[0].status,'completed');assert.equal(accepted.journey.nextStop.id,'departure');
  const state=await f.service.state({walletId:OWNER});assert.equal(state.maps.find(m=>m.id===f.mine.id).stock['quarry:topsoil'],5);assert.equal(state.maps.find(m=>m.id===MAP).stock['quarry:topsoil']||0,0);assert.equal(state.shipments.length,1);
  await assert.rejects(order(f,{quantity:6,requestId:'exhausted-order'}),/enough processed stock/);
  await assert.rejects(f.service.action(OTHER,'dispatch',{sourceMapId:f.mine.id,destinationMapId:MAP,itemId:'quarry:topsoil',quantity:1,requestId:'bypass-quarry-order'}),/quarry material order/);
@@ -39,9 +40,9 @@ test('cancelling unsent quarry freight restores stock and refunds payment once',
 });
 test('quarry freight reaches deed inventory only after sea unloading and real last-mile delivery',async t=>{
  const f=await fixture(t);await book(f);const accepted=await order(f),state=await f.service.state(),shipment=state.shipments.find(s=>s.orderId===accepted.id),trip=await voyage(f,shipment);
- let current=await f.service.state({walletId:OWNER});assert.equal(current.maps.find(m=>m.id===MAP).stock['quarry:topsoil']||0,0,'port unloading alone does not credit a deed');
+ let current=await f.service.state({walletId:OWNER});assert.equal(current.maps.find(m=>m.id===MAP).stock['quarry:topsoil']||0,0,'port unloading alone does not credit a deed');assert.equal(current.orders.find(o=>o.id===accepted.id).journey.status,'active');
  for(let i=0;i<25&&current.orders.find(o=>o.id===accepted.id).phase!=='delivered';i++){const tasks=current.deliveryTasks.filter(task=>task.shipmentId===shipment.id);assert.ok(tasks.length);assert.ok(!tasks.some(task=>task.phase==='blocked'),tasks.map(t=>t.blockedReason).join(' '));f.now+=Math.max(1000,...tasks.map(task=>task.totalDurationMs||0))+100;current=await f.service.state({walletId:OWNER});}
- assert.equal(current.orders.find(o=>o.id===accepted.id).phase,'delivered');assert.equal(current.maps.find(m=>m.id===MAP).stock['quarry:topsoil'],5);await f.service.deliver(trip.identity,trip.result,f.sea,f.now);assert.equal((await f.service.state()).maps.find(m=>m.id===MAP).stock['quarry:topsoil'],5);
+ assert.equal(current.orders.find(o=>o.id===accepted.id).phase,'delivered');assert.equal(current.orders.find(o=>o.id===accepted.id).journey.status,'completed');assert.equal(current.orders.find(o=>o.id===accepted.id).journey.deliveredQuantity,5);assert.equal(current.maps.find(m=>m.id===MAP).stock['quarry:topsoil'],5);await f.service.deliver(trip.identity,trip.result,f.sea,f.now);assert.equal((await f.service.state()).maps.find(m=>m.id===MAP).stock['quarry:topsoil'],5);
 });
 test('deed gardening and recoverable stock bays consume delivered material and respect ownership',async t=>{
  const f=await fixture(t);await f.service.state();await f.database.transaction(data=>{data.worldSupply.maps[MAP].stock['quarry:topsoil']=4;return {};});const sim={actors:{}},player={actorId:'owner',health:100,position:{x:0,y:.02,z:10},yaw:0,progress:{}},context={identity:{walletId:OWNER},inventory:(...args)=>f.service.quarryInventory(...args),collision:new ServerBuilderCollision(),objects:{}};

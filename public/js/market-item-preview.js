@@ -1,7 +1,7 @@
 import {disposeModelResources} from './game-graphics-resources.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {mountDeviceDemo} from './device-demos.js';
-import {toolPreviewArt} from './tool-preview-art.js';
+import {toolPreviewArt,equipmentArtworkUrl} from './tool-preview-art.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function safePreviewUrl(value,{allowBlob=false}={}){
  if(typeof value!=='string'||!value.trim())return '';
@@ -21,7 +21,7 @@ export function previewDescriptor(record={}){
  const worldId=publicWorld?record.worldPreviewId||record.worldId||String(record.id||'').replace(/^native-map:/,''):null;
  const descriptor={
   id:record.id||item.id,sku:record.sku||item.sku,name,
-  image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(imageModel?modelUrl:'')),
+  image:equipmentArtworkUrl(item.toolId)||equipmentArtworkUrl(item.buildAssetId||config.buildAssetId||config.modelId)||safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(imageModel?modelUrl:'')),
   model:safePreviewUrl(imageModel?'':modelUrl,{allowBlob:true}),
   buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,
   deviceId:item.deviceId||config.device||item.functionalSettings?.device||item.device,

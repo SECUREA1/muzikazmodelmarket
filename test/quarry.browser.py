@@ -53,8 +53,11 @@ await db.transaction(data=>{data.worldSupply.maps['plot-deed-quarry-browser']={i
      use=page.locator('.builder-nearby-action:not(.builder-portal-action)');use.wait_for(state='visible');page.wait_for_function("document.querySelector('.builder-nearby-action:not(.builder-portal-action)').getAttribute('aria-label').includes('Operate')");use.tap()
      wait(lambda s:any(p.get('vehicleId')=='quarry-excavator' for p in s['players'].values()),'pit excavator boarding')
      controls=page.locator('.construction-controls');controls.wait_for(state='visible')
-     if state()['actors']['quarry-excavator']['construction']['load']<=0:controls.locator('.sports-primary-trigger').click();wait(lambda s:s['actors']['quarry-excavator']['construction']['load']>0 and not s['actors']['quarry-excavator']['construction'].get('workCycle'),'real gravel dig')
-     controls.locator('.sports-primary-trigger').click();wait(lambda s:s['actors']['quarry-truck']['construction']['load']>0 and not s['actors']['quarry-excavator']['construction'].get('workCycle'),'real truck loading')
+     controls.get_by_role('button',name='More machine functions',exact=True).click()
+     functions=page.get_by_role('dialog',name='Machine functions',exact=True);functions.get_by_role('button',name='Auto scoop & load',exact=True).click()
+     wait(lambda s:s['actors']['quarry-truck']['construction']['load']>0,'real automatic scoop and truck loading')
+     functions.get_by_role('button',name='Close functions',exact=True).click();controls.get_by_role('button',name='Park construction machine',exact=True).click()
+     wait(lambda s:not s['actors']['quarry-excavator']['construction'].get('repeatWork') and not s['actors']['quarry-excavator']['construction'].get('workCycle'),'park automatic loading')
      print('Native digging and truck loading passed.',flush=True)
      controls.locator('[data-operation=exit]').click();wait(lambda s:all(not p.get('vehicleId') for p in s['players'].values()),'exit pit excavator')
      command('map-access',position={'x':80,'z':-25});page.wait_for_function("Math.abs(MuzikazHouseExplorer.snapshot().player.position[0]-80)<1")
@@ -71,9 +74,14 @@ await db.transaction(data=>{data.worldSupply.maps['plot-deed-quarry-browser']={i
       hide.click();panel.get_by_role('button',name='Show quarry panel',exact=True).click()
      page.screenshot(path='/tmp/quarry-operations-mobile.png')
      panel.get_by_label('Delivery deed',exact=True).select_option('deed-quarry-browser');panel.get_by_label('Material',exact=True).select_option('sand');panel.get_by_label('Material quantity',exact=True).fill('1')
+     stock_inventory=state()['quarry']['stockInventory'];assert abs(stock_inventory['initialStock']['totalVolume']-1200)<.001;assert len(stock_inventory['vehicles'])==12
+     panel.get_by_label('Stockpile source',exact=True).select_option('yard-sand:sand');panel.get_by_label('Material quantity',exact=True).fill('2')
+     panel.get_by_role('button',name='Book stock from the selected pile',exact=True).click();wait(lambda s:abs(next(p['volume'] for p in s['quarry']['stockInventory']['piles'] if p['id']=='yard-sand:sand')-158)<.001,'opening stock booking')
+     page.wait_for_function("document.querySelector('.quarry-hud [aria-label=\"Screened garden sand inventory\"]').textContent.includes('7.0')")
+     panel.get_by_label('Material quantity',exact=True).fill('1')
      panel.get_by_role('button',name='Order freight · 4 MZK',exact=True).click()
      page.wait_for_function("document.querySelector('.quarry-hud [data-order-id]')!==null",timeout=30000)
-     catalog=context.request.get(base+'/api/market/catalog').json()['data'];assert next(item for item in catalog if item['id']=='quarry:sand')['availableStock']==4
+     catalog=context.request.get(base+'/api/market/catalog').json()['data'];assert next(item for item in catalog if item['id']=='quarry:sand')['availableStock']==6
      stock=context.request.get(base+'/api/world-supply/quarry?mapId=surface-mine-quarry').json()['data'];assert len(stock['orders'])==1;assert stock['maps'][next(i for i,x in enumerate(stock['maps']) if x['id']=='plot-deed-quarry-browser')]['stock'].get('quarry:sand',0)==0
      page.evaluate('window.quarryPageToken=crypto.randomUUID()');token=page.evaluate('quarryPageToken')
      panel.get_by_role('button',name='Travel to selected deed',exact=True).click()

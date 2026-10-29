@@ -1,12 +1,24 @@
 import * as T from '../vendor/three/three.module.min.js';
+import {articulateLimb,updateArticulatedCharacter,finalizeArticulatedCharacter} from './articulated-character-rig.js';
 import {PRISON_ID,PRISON_SIZE,PRISON_WALLS,PRISON_CELLS,PRISON_STATIONS,PRISON_NPCS} from './prison-config.js';
+
+// Facial markings are part of the existing head draw, with no image/texture
+// request or extra material. The shared white hand colors retain each skin tone.
+function residentHeadGeometry(){
+ const sphere=new T.SphereGeometry(1,10,8),positions=Array.from(sphere.attributes.position.array),normals=Array.from(sphere.attributes.normal.array),uvs=Array.from(sphere.attributes.uv.array),indices=Array.from(sphere.index.array),colors=Array(sphere.attributes.position.count*3).fill(1);
+ const mark=(x,y,z,w,h,shade)=>{const offset=positions.length/3;positions.push(x-w/2,y-h/2,z,x+w/2,y-h/2,z,x+w/2,y+h/2,z,x-w/2,y+h/2,z);for(let i=0;i<4;i++){normals.push(0,0,1);uvs.push(0,0);colors.push(shade,shade,shade);}indices.push(offset,offset+1,offset+2,offset,offset+2,offset+3);};
+ for(const x of [-.27,.27]){mark(x,.11,.985,.12,.105,.09);mark(x,.31,.94,.21,.035,.15);}
+ mark(0,-.27,.965,.23,.035,.24);
+ sphere.setAttribute('position',new T.Float32BufferAttribute(positions,3));sphere.setAttribute('normal',new T.Float32BufferAttribute(normals,3));sphere.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));sphere.setAttribute('color',new T.Float32BufferAttribute(colors,3));sphere.setIndex(indices);sphere.computeBoundingBox();sphere.computeBoundingSphere();return sphere;
+}
 
 /** Ironwood is intentionally open-roofed: first person reads as a substantial
  * secure facility while the overview can still show every playable room. */
 export function createPrisonLand(environment={}){
  const root=new T.Group();root.name='MUZIKAZ_IRONWOOD_PRISON';
  root.userData={proceduralLand:true,layout:'prison',prison:true,streetHeightAt:()=>0};
- const cube=new T.BoxGeometry(1,1,1),round=new T.CylinderGeometry(1,1,1,10),ball=new T.SphereGeometry(1,10,8),materials=new Map(),doors=new Map(),people=new Map(),animations=[];
+ const cube=new T.BoxGeometry(1,1,1),round=new T.CylinderGeometry(1,1,1,10),ball=new T.SphereGeometry(1,10,8),handBall=new T.SphereGeometry(1,8,6),headGeometry=residentHeadGeometry(),materials=new Map(),doors=new Map(),people=new Map(),animations=[];
+ handBall.setAttribute('color',new T.Float32BufferAttribute(Array(handBall.attributes.position.count*3).fill(1),3));
  const mat=(color,glow=false)=>{const key=color+':'+glow;if(!materials.has(key))materials.set(key,new T.MeshStandardMaterial({color,roughness:.76,metalness:color==='#a0b5bc'?.52:.12,emissive:glow?color:0,emissiveIntensity:glow?.55:0}));return materials.get(key);};
  function box(name,x,y,z,w,h,d,color='#647277',solid=false,parent=root){const m=new T.Mesh(cube,typeof color==='string'?mat(color):color);m.name='PRISON_'+name;m.position.set(x,y,z);m.scale.set(w,h,d);m.castShadow=solid;m.receiveShadow=true;if(!solid)m.userData.collisionDisabled=true;parent.add(m);return m;}
  function cylinder(name,x,y,z,r,h,color='#a0b5bc',solid=false,parent=root){const m=new T.Mesh(round,mat(color));m.name='PRISON_'+name;m.position.set(x,y,z);m.scale.set(r,h,r);m.castShadow=solid;m.receiveShadow=true;if(!solid)m.userData.collisionDisabled=true;parent.add(m);return m;}
@@ -104,17 +116,26 @@ export function createPrisonLand(environment={}){
  // Low-detail articulated residents keep the large facility inhabited without
  // loading model assets or duplicating the game's player-avatar rigs.
  for(const npc of PRISON_NPCS){const actor=new T.Group();actor.name='PRISON_RESIDENT_'+npc.id;actor.position.set(npc.position.x,0,npc.position.z);actor.userData={prisonNpcId:npc.id,collisionDisabled:true};root.add(actor);const guard=npc.role==='guard',uniform=guard?'#304e67':'#d0874b',skin=['#bc896b','#d3ad86','#785541'][people.size%3];
-  box('RESIDENT_TORSO',0,1.22,0,.62,.8,.35,uniform,false,actor);sphere('RESIDENT_HEAD',0,1.93,0,.25,skin,actor);box('RESIDENT_HAIR',0,2.11,-.02,.46,.14,.4,guard?'#263f54':'#44392e',false,actor);
-  const limbs=[];for(const side of [-1,1]){const leg=box('RESIDENT_LEG',side*.17,.46,0,.25,.78,.26,guard?'#253c50':'#bd7846',false,actor);box('RESIDENT_SHOE',side*.17,.1,.08,.28,.2,.44,'#293835',false,actor);const arm=box('RESIDENT_ARM',side*.43,1.2,0,.2,.75,.24,uniform,false,actor);sphere('RESIDENT_HAND',side*.43,.79,0,.11,skin,actor);limbs.push(leg,arm);}
-  if(guard){box('GUARD_BELT',0,.93,.01,.65,.12,.37,'#172f40',false,actor);box('GUARD_BADGE',-.15,1.45,.19,.13,.18,.03,'#e7c777',false,actor);box('GUARD_RADIO',.2,1.4,.23,.14,.24,.1,'#182d34',false,actor);}else box('PRISONER_NUMBER',0,1.4,.19,.3,.13,.02,'#ecdbb3',false,actor);
-  actor.userData.limbs=limbs;actor.userData.home=actor.position.clone();people.set(npc.id,actor);
+  const hips=new T.Group();hips.name='PRISON_RESIDENT_HIPS';hips.position.y=.85;hips.userData.articulatedHips=true;actor.add(hips);
+  box('RESIDENT_TORSO',0,.37,0,.62,.8,.35,uniform,false,hips);const head=sphere('RESIDENT_HEAD',0,1.08,0,.25,skin,hips);head.geometry=headGeometry;head.material.vertexColors=true;box('RESIDENT_HAIR',0,1.26,-.02,.46,.14,.4,guard?'#263f54':'#44392e',false,hips);
+  const limbs=[];for(const side of [-1,1]){
+   const leg=new T.Group();leg.name='PRISON_RESIDENT_HIP_'+(side<0?'LEFT':'RIGHT');leg.position.x=side*.17;hips.add(leg);
+   const legMesh=box('RESIDENT_LEG',0,-.39,0,.25,.78,.26,guard?'#253c50':'#bd7846',false,leg),shoe=box('RESIDENT_SHOE',0,-.75,.08,.28,.2,.44,'#293835',false,leg);
+   articulateLimb(T,leg,{mesh:legMesh,bend:[0,-.39,0],end:[0,-.67,0],attachments:[shoe],kind:'leg',side,forward:1,prefix:'PRISON_RESIDENT'});
+   const arm=new T.Group();arm.name='PRISON_RESIDENT_SHOULDER_'+(side<0?'LEFT':'RIGHT');arm.position.set(side*.43,.725,0);hips.add(arm);
+   const armMesh=box('RESIDENT_ARM',0,-.375,0,.2,.75,.24,uniform,false,arm),hand=sphere('RESIDENT_HAND',0,-.785,0,.11,skin,arm);hand.geometry=handBall;
+   articulateLimb(T,arm,{mesh:armMesh,bend:[0,-.375,0],end:[0,-.75,0],attachments:[hand],kind:'arm',side,forward:1,prefix:'PRISON_RESIDENT'});limbs.push(leg,arm);
+  }
+  if(guard){box('GUARD_BELT',0,.08,.01,.65,.12,.37,'#172f40',false,hips);box('GUARD_BADGE',-.15,.6,.19,.13,.18,.03,'#e7c777',false,hips);box('GUARD_RADIO',.2,.55,.23,.14,.24,.1,'#182d34',false,hips);}else box('PRISONER_NUMBER',0,.55,.19,.3,.13,.02,'#ecdbb3',false,hips);
+  finalizeArticulatedCharacter(actor);actor.userData.limbs=limbs;actor.userData.home=actor.position.clone();people.set(npc.id,actor);
  }
  // Activity beacons sit on the floor and carry station ids for UI/raycast use.
  for(const station of PRISON_STATIONS){if(station.kind==='cell')continue;const ring=new T.Mesh(new T.TorusGeometry(.75,.045,5,24),mat(['security','gate','vent'].includes(station.kind)?'#e5b970':'#a8d7bb',true));ring.name='PRISON_STATION_'+station.id;ring.rotation.x=-Math.PI/2;ring.position.set(station.position.x,.08,station.position.z);ring.userData={collisionDisabled:true,prisonStationId:station.id};root.add(ring);}
  let state=null;
  root.userData.setPrisonDoor=(id,open)=>{const door=doors.get(id);if(!door||door.userData.open===!!open)return false;door.userData.open=!!open;door.position.x=(id==='service-gate'?0:PRISON_CELLS.find(cell=>cell.id===id).doorPosition.x)+(open?(id==='service-gate'?19:3.1):0);door.traverse(child=>{if(child.userData.collider)child.userData.collisionDisabled=!!open;});root.updateMatrixWorld(true);return true;};
  root.userData.setPrisonState=view=>{state=view||null;let changed=false;for(const cell of PRISON_CELLS){const status=view?.cells?.[cell.id];if(status)changed=root.userData.setPrisonDoor(cell.id,status.locked===false)||changed;}if(view&&('gateOpen'in view||view.gate))changed=root.userData.setPrisonDoor('service-gate',view.gateOpen===true||view.gate?.open===true)||changed;for(const npc of Object.values(view?.npcs||{})){const actor=people.get(npc.id);if(!actor)continue;if(npc.position&&Number.isFinite(npc.position.x)&&Number.isFinite(npc.position.z))actor.position.set(npc.position.x,Number(npc.position.y)||0,npc.position.z);if(Number.isFinite(npc.rotationY))actor.rotation.y=npc.rotationY;actor.userData.state=npc.state;}root.updateMatrixWorld(true);return changed;};
- root.userData.updatePrisonEffects=(elapsed,reducedMotion=false)=>{const t=reducedMotion?0:Number(elapsed)||0;for(const animate of animations)animate(t);for(const actor of people.values()){const moving=['patrolling','walking','chasing','fighting','pursuing','meal queue','yard time','work detail','cell check'].includes(String(actor.userData.state||'').toLowerCase());for(const [i,limb]of actor.userData.limbs.entries())limb.rotation.x=moving&&!reducedMotion?Math.sin(t*5+i%2*Math.PI)*.25:0;}tv.material.emissiveIntensity=state?.phase==='lockdown'?.2:.55;};
+ const movingStates=new Set(['patrolling','walking','chasing','fighting','pursuing','meal queue','yard time','work detail','cell check']),motionOptions={moving:false,reducedMotion:false};
+ root.userData.updatePrisonEffects=(elapsed,reducedMotion=false)=>{const t=reducedMotion?0:Number(elapsed)||0;for(const animate of animations)animate(t);motionOptions.reducedMotion=reducedMotion;for(const actor of people.values()){motionOptions.moving=movingStates.has(String(actor.userData.state||'').toLowerCase());updateArticulatedCharacter(actor,t,motionOptions);}tv.material.emissiveIntensity=state?.phase==='lockdown'?.2:.55;};
  root.userData.prisonDoors=doors;root.userData.prisonNpcs=people;root.userData.prisonId=PRISON_ID;
  // Hundreds of repeating bars and bunk details share a handful of GPU draws.
  // Dynamic doors, articulated people and every physical collider retain their

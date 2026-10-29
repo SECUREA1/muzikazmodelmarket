@@ -9,3 +9,11 @@
 .quarry-hud .quarry-market-link{display:block;min-height:44px;box-sizing:border-box;padding:10px;margin-top:8px;border:1px solid #c5ad6a;border-radius:8px;color:#eddfb1}
 .quarry-hud details summary{cursor:pointer;min-height:44px;padding:10px 0;box-sizing:border-box}
 .quarry-hud details output{font:12px/1.5 ui-monospace,monospace;margin:5px 0}
+.quarry-stock-summary{padding:7px 0;color:#f1dfa9;font:12px/1.5 ui-monospace,monospace}
+.quarry-stock-guide{margin:7px 0;color:#bad0c8;font-size:12px}
+.quarry-inventory>div{display:grid;gap:3px;padding:5px 0}
+.quarry-inventory output{font:12px/1.5 ui-monospace,monospace}
+.quarry-vehicle-loads{display:grid;gap:8px}
+.quarry-vehicle-loads output{padding:6px 0;border-bottom:1px solid #78938333;font:12px/1.5 ui-monospace,monospace}
+.quarry-hud [aria-label="Selected stockpile"]{padding:7px;border-left:3px solid #c5ad6a;background:#1b353b}
+.quarry-hud [aria-label="Truck booking requirements"]{margin:6px 0;color:#bed5c9;font-size:12px}

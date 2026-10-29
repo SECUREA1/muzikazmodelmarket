@@ -50,7 +50,7 @@ export function createFunhouseModel(id){
   if(height>0){const scale=1.8/height;content.scale.setScalar(scale);content.position.y=-bounds.min.y*scale;}
  }
  root.userData={builderObject:true,modelId:id,funhouseModel:true,label:item.name,description:item.description,dimensions:[...item.dimensions],animated:true};
- root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false,serverTime)=>content.userData.updateFunhouseEffects?.(elapsed,reducedMotion,serverTime);
+ root.userData.updateFunhouseEffects=(elapsed,reducedMotion=false,serverTime,motion)=>content.userData.updateFunhouseEffects?.(elapsed,reducedMotion,serverTime,motion);
  root.userData.animateFunhouseStation=(station=stationIds[id]||id,result={})=>content.userData.animateFunhouseStation?.(station,result);
  root.userData.playFunhouse=(result={})=>content.userData.animateFunhouseStation?.(stationIds[id]||id,result);
  root.userData.setFunhouseState=(state,serverTime)=>content.userData.setFunhouseState?.(state,serverTime);
@@ -62,11 +62,11 @@ export function createFunhouseModel(id){
  return finishVehicleDesign(THREE,root,id);
 }
 
-export function updateFunhouseModel(root,elapsed,reducedMotion=false){
+export function updateFunhouseModel(root,elapsed,reducedMotion=false,motion){
  if(!root?.userData.funhouseModel)return;
  const state=root.userData,lastUsed=state.lastUsedAt??state.serverLastUsedAt;
  if(lastUsed!==undefined&&lastUsed!==state.funhouseLastUsedAt){state.funhouseLastUsedAt=lastUsed;state.playFunhouse?.();}
  const animation=state.animationState||{},speed=Number.isFinite(animation.speed)?Math.max(0,animation.speed):1;
- state.updateFunhouseEffects?.((Number.isFinite(elapsed)?elapsed:0)*speed,reducedMotion||state.animationEnabled===false||animation.enabled===false);
+ state.updateFunhouseEffects?.((Number.isFinite(elapsed)?elapsed:0)*speed,reducedMotion||state.animationEnabled===false||animation.enabled===false,undefined,motion);
 }
 export {FUNHOUSE_MODEL_INFO};

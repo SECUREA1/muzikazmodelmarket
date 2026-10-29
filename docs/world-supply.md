@@ -4,6 +4,30 @@ Open **World item factory** in the game controls. Search native assets, reposito
 
 Each canonical item starts with **1,000 units across the world**, once. Aliases for the same native item or model share one count. Catalog refreshes, server restarts, and visiting a new map never reset depleted stock. Existing owned items and authored map scenery are preserved.
 
+## Regional order travel quests
+
+Order and dispatch views include a receipt-backed `journey`, also available in
+the lineage trace. It identifies the current destination, deed/address when
+present, required map stops, transport modes, completed quantity and next stop.
+Factory, quarry and existing-stock dispatches keep their own source stage.
+Sea unloading unlocks receiving road transport or the selected air leg; air
+unloading unlocks only that flight's counted final-delivery slice. Held routes
+and partial quantities stay visible until the full order is delivered.
+
+The board's next-stop control uses existing local map and map-travel controls.
+The world-route link opens the atlas with remaining public map stops, where
+players can add more deed visits. Links carry map identifiers rather than
+private order, address or owner credentials. The public atlas graph refreshes
+from the current directory; delivery routes still use the current receiving
+address and retain their existing stale-address and ownership checks.
+
+Journey projection does not write stock, pay a bonus, or create completion
+proof. Authoritative production and transport state advance preparation stages;
+verified receiving receipts confirm the delivered quantities and completion.
+Saved orders remain visible after
+map travel or server restart, and legacy orders are projected without changing
+their historical stock accounting.
+
 ## Build and ship
 
 1. Choose an item and whole-unit quantity. Request a server quote. Production uses the authoritative catalog MZK price, with **20% off batches of 10 or more**. MZK amounts must be valid whole numbers; USD catalog prices convert at the shared rate of **100 MZK per USD**. Missing, negative or invalid prices cannot silently become cheap production orders. Free catalog items have a minimum base manufacturing cost of **1 MZK per unit before the bulk discount**. A current server quote overrides the earlier lineup price. Every eligible catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.

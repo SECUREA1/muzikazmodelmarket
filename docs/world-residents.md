@@ -72,3 +72,27 @@ The shared implementation is in `server-resident-life.mjs`,
 `public/js/resident-personalities.js`, `server-resident-dialogue.mjs`,
 `server-resident-progress.mjs` and `server-world-residents.mjs`. Runtime dressing
 uses `server-resident-furnishings.mjs` and `public/js/resident-furnishings.js`.
+
+Resident designs also include map-specific details: park locals wear moss or
+flowers, harbor crews carry satchels or scarves, and other maps draw from local
+accessory combinations. Outfit patterns, detail colors and mossling fern,
+blossom or mushroom growth vary by resident and remain stable across reloads.
+Saved appearance fields override generated defaults. Botanical head details
+hide under construction and security headwear. These visual details share the
+existing animation rig and do not enlarge resident collision footprints.
+
+Some locals now use the existing built character designs. Parks can include
+forest rangers and moss golems; arcade residents can include clockwork knights
+and friendly or spectral spirits; community, music and creator maps can include
+travelling merchants and friendly spirits. Selection is stable per resident and
+map, with ordinary residents retained in each cast. These are visual designs on
+the same resident actors: local conversation, objectives, favors, relationships
+and saved learning still use the resident system. Their design appears in the
+People profile. Hostile creature behavior is not added to public residents.
+
+Built designs have resident-sized silhouettes, local color variations and
+movement, speaking and greeting animation. Shared work props remain available.
+Safety and sports uniforms and the specialized funhouse cast take precedence.
+Older saves receive missing detail fields without replacing saved appearance
+choices. Set `appearance.characterModel` to `none` to keep the standard rig, or
+to a supported friendly built design to choose it explicitly in resident data.
