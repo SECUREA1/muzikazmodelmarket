@@ -23,10 +23,16 @@ const serviceName=/BODY|COWLING|COWL|ENGINE|ACCOMMODATION|CONSOLE|PEDESTAL|FUNNE
  * change, and the original precise bounds contain every new cosmetic surface.
  */
 export function finishTransportDesign(THREE,root,id){
- if(!root||!supported.has(id)||root.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION)return root;
- root.updateMatrixWorld(true);
+ if(!root||!supported.has(id)||root.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION&&root.userData.transportDesign?.id===id)return root;
+ root.updateWorldMatrix(true,true);
  const bounds=new THREE.Box3().setFromObject(root,true),source=[];
- root.traverse(node=>{if(!node.userData.nativeDesignDetail)source.push(node);});
+ root.traverse(node=>{
+  if(node.userData.nativeDesignDetail)return;
+  // A patrol or fishing launch can wrap an already-finished skiff. Finish the
+  // new outer assembly without repeating hardware on its original child hull.
+  for(let parent=node.parent;parent&&parent!==root;parent=parent.parent)if(parent.userData.transportDesignVersion===TRANSPORT_DESIGN_VERSION)return;
+  source.push(node);
+ });
  const metal=new THREE.MeshStandardMaterial({name:'CRAFTED_TRANSPORT_BRUSHED_ALLOY',color:0x9caeb5,roughness:.36,metalness:.78});
  const graphite=new THREE.MeshStandardMaterial({name:'CRAFTED_TRANSPORT_GRAPHITE_FASTENER',color:0x26353e,roughness:.48,metalness:.66});
  const materialCopies=new Map();let details=0,finishedMaterials=0;
@@ -52,7 +58,7 @@ export function finishTransportDesign(THREE,root,id){
  function attach(parent,node,name){
   if(details>=30){node.geometry?.dispose();return false;}
   node.name=name;node.userData={nativeDesignDetail:true,transportDesignDetail:true,collisionDisabled:true,collider:false,builderRoot:root};
-  node.castShadow=false;node.receiveShadow=true;parent.add(node);root.updateMatrixWorld(true);
+  node.castShadow=false;node.receiveShadow=true;parent.add(node);parent.updateWorldMatrix(true,false);
   const fitted=new THREE.Box3().setFromObject(node,true);
   const tolerance=.00001;
   if(bounds.isEmpty()||!Number.isFinite(fitted.min.x)||['x','y','z'].some(axis=>fitted.min[axis]<bounds.min[axis]-tolerance||fitted.max[axis]>bounds.max[axis]+tolerance)){

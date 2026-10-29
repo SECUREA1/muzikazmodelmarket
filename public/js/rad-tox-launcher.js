@@ -1,6 +1,9 @@
+import {activateGameAudio,mountGameAudioActivation} from './game-audio-activation.js';
+
 /* One-click game bootstrap shared by desktop, mobile, Safari, and WebViews. */
 (function () {
   'use strict';
+  mountGameAudioActivation();
   var requested = false;
   var engineReady = false;
   var moduleFailed = false;
@@ -60,7 +63,7 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var enginePath = './house-explorer-glb.js?v=startup-recovery-20261027';
+    var enginePath = './house-explorer-glb.js?v=fresh-map-room-20261028';
     var recovery = new URLSearchParams(window.location.search).get('gameRecovery');
     if (recovery) enginePath += '&recovery=' + encodeURIComponent(recovery);
     loadTimer = window.setTimeout(function () { showStall(revision); }, 30000);
@@ -69,7 +72,7 @@
       showError('The game engine could not start: ' + (error && error.message || 'Please reload this page.'), true);
     });
   }
-  if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });
+  if (button) button.addEventListener('click', function (click) { click.preventDefault(); activateGameAudio(); begin(); });
   document.addEventListener('muzikaz:rad-tox-engine-ready', function () {
     if (restarting) return;
     engineReady = true;

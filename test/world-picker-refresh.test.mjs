@@ -10,8 +10,8 @@ const body=section.slice(0,section.lastIndexOf('}'));
 function fixture(backpack){
  let pouchUpdates=0,mapUpdates=0,inventoryReads=0;
  const library={innerHTML:'<input data-world-search value="studio"><button data-world-view="list">List</button>',classList:{contains:name=>name==='backpack-panel'&&backpack,toggle(){}},querySelector:()=>null,querySelectorAll:()=>[]};
- const render=new Function('library','refreshPouchInventory','registry','syncEnvironmentSelect','gameEconomy','backpackRecords','BACKPACK_CATEGORIES','backpackCategory','backpackPieSlice','backpackIcon','backpackSelectionOpen','mobileBackpackQuery',body);
- return {library,run(){render(library,()=>pouchUpdates++,{all:()=>[]},()=>mapUpdates++,null,()=>{inventoryReads++;return [];},[['avatars','Avatars']],'avatars',()=>'',()=>'',false,{matches:false});},counts:()=>({pouchUpdates,mapUpdates,inventoryReads})};
+ const render=new Function('library','refreshPouchInventory','registry','syncEnvironmentSelect','gameEconomy','backpackRecords','BACKPACK_CATEGORIES','backpackCategory','backpackPieSlice','backpackIcon','backpackSelectionOpen','mobileBackpackQuery','readGameObject',body);
+ return {library,run(){render(library,()=>pouchUpdates++,{all:()=>[]},()=>mapUpdates++,null,()=>{inventoryReads++;return [];},[['avatars','Avatars']],'avatars',()=>'',()=>'',false,{matches:false},()=>null);},counts:()=>({pouchUpdates,mapUpdates,inventoryReads})};
 }
 
 test('late inventory refresh preserves the open destination picker contents',()=>{

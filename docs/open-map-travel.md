@@ -1,5 +1,14 @@
 # Map travel, vehicle loading and spoken objectives
 
+Opening a destination from Maps, the map list, or a world exit launches a fresh
+page with automatic gameplay startup. Reopening the current map also reloads it.
+Each launch prepares the selected scene and joins its server room with a new
+client, so an earlier connection or initialization cannot leave only the map
+loaded. The destination activates after its server confirms the player and game
+systems. Previous room chat, camera, conversations and pending controls close.
+Previous meeting links and one-time item deployments are cleared unless
+a new meeting is selected. Account progress and shared room contents remain saved.
+
 The public-map directory lists public destinations across all districts. The
 local map remains available while styles or a previously joined connection
 recover. An unavailable connection keeps the selection pending for a bounded
@@ -25,12 +34,23 @@ Static map footprints retain their DOM elements between snapshots. Occupancy
 updates do not reorder and replace vehicle buttons during a tap. Touch boarding
 dispatches once on pointer release and suppresses the delayed compatibility click.
 
-Spoken audio starts after the player's first gesture. Each map visit has one short
+Spoken audio starts during **Begin Game**, before the deferred 3D engine loads.
+Autoplay visits attempt to start audio when gameplay is ready; a browser that
+requires a gesture uses the next normal game control. Audio also follows window
+focus, visibility and output interruptions. There is no separate Resume audio
+button or startup voice preview. Saved mute choices remain in effect. Each map visit has one short
 guide explaining its activities and how to find jobs or help. Returning to a
 previously visited map plays its guide again; repeated snapshots stay quiet. Initial snapshots establish the job baseline without reading existing work
 or past traffic aloud. Subsequent new jobs, changed objectives, completions,
-walking quests and requested game interactions are announced once. Nearby NPCs
-and periodic traffic chatter remain visible without automatic speech. Private
+walking quests and requested game interactions are announced once.
+AI dispatch calls include the instructions from the map's actual offered job.
+Personal factory orders, model tests, shipping checkpoints and requested AI work
+also report new stages through the radio voice. Existing freight-control calls
+and spoken NPC replies supply their own information without a duplicate reading;
+progress ticks and autonomous production remain quiet.
+Fresh conversations between nearby AI residents are audible when the guide and direct
+replies are idle. Existing conversations, distant residents, other floors and
+periodic work or traffic captions stay quiet. Private
 calls stay restricted to their recipients, and stale or muted calls are discarded.
 
 Open **Settings → Audio settings** to mute all audio or independently mute world
@@ -45,46 +65,139 @@ relative to the camera, with distance falloff and orientation updates as you
 move or look around. NPC browser voices use distance-based volume; browser speech
 synthesis does not expose a Web Audio source for stereo positioning. Map
 introductions and radio-style objectives stay clear regardless of distance.
+NPC voice distance is measured from your avatar, so an overhead camera does
+not mute a resident standing beside you.
 NPCs, AI contacts, map introductions and optional chat reading use two app-owned
-neural voices: **MUZIKAZ Natural Female** and **MUZIKAZ Natural Male**. The server
-generates speech with the local Kokoro model; phones and browsers play the same
-24 kHz WAV output even when they have no installed voices. No speech API key or
-external speech provider is needed. These are generated voices, not recordings
-or clones of players. Model and speaker attribution is in
+neural voices: **MUZIKAZ Natural Female** and **MUZIKAZ Natural Male**. All 38
+authored map introductions, Public Commons and eight public districts ship as
+exact, pre-generated sentence recordings in both voices. Their MP3s and the WAV voice previews load from the page's static
+host without a speech API request. New NPC dialogue and custom map names use
+the server's local Kokoro model and 24 kHz WAV output. No speech API key or
+external speech provider is needed. These voices do not clone players. Model
+and speaker attribution is in
 [voice-engine/NOTICE.md](../voice-engine/NOTICE.md).
 
 In **Settings → Audio settings**, choose **Automatic**, **Female** or **Male**,
 select a generated voice, and use **Preview voice** to hear it. Optional real
-device voices remain selectable. Known robotic engines, unavailable selections
-and wrong-language fallbacks are excluded; the app does not silently use the
-browser's unknown default. Preview reports errors while captions remain visible.
+device voices remain selectable. If a saved device voice is missing or fails
+before speaking, playback uses a named generated voice with the selected gender.
+Known robotic engines and wrong-language voices are excluded; the app does not
+use the browser's unknown default. Preview reports errors while captions remain visible.
 Changes preview immediately and save to the member account with the other audio
 preferences.
+
+If voices or effects are silent, use **Enable all audio** in Audio settings.
+This resumes the browser's audio output, clears the six mute switches, restores
+a zero effects volume and previews the voice. Save settings to keep those
+changes. A blocked first gesture leaves the unheard guide queued for the next
+tap without starting a synthesis timeout while browser permission is pending. Explicit
+voice preview also clears a local radio mute while honoring saved master and
+NPC conversation mutes.
+
+Solo worlds run a private AI resident simulation alongside local movement and
+walking quests. Residents walk, work and converse without joining a public room.
+Use **People and AI** to talk to a resident nearby. These practice conversations
+do not write public-world rewards, wallet balances or member progress. Replies
+are delivered to speech even while the People panel is closed.
+Within 10 metres on the same floor, a living friendly AI offers **Talk** even
+when it is quiet or working. Use the nearby prompt, E or the touch action to
+open its conversation. Invitations and active visits keep their own controls.
+The prompt follows the nearest eligible resident and disappears out of reach.
+Residents can step away if a player crowds them after a conversation and then
+continue walking, working, practising and socializing.
+
+The room **Mic** control shares your microphone with human players in a shared
+room. Turning it on requests microphone permission directly from the tap;
+output resume cannot block that request. Later gestures can resume interrupted
+output. A browser permission error remains visible with retry instructions.
+AI voices and introductions do not require your microphone to be on.
+
+Open **Chat → Talk to AI** or the **People and AI** controls to meet nearby
+residents. Starting a conversation reveals the active transcript above the
+resident list. Type a question and press Enter or use a suggested reply. A
+requested NPC reply takes priority over the guide and ambient speech; the
+player's own typed question stays in the transcript without being synthesized.
+**Replay reply** speaks the latest NPC response again. Playback failures appear
+beside the conversation controls so the same reply can be retried.
+
+Room chat sends text to the human players in that shared room. New messages
+from other players are read automatically after Start or normal game controls.
+Your own messages and earlier history stay silent. **Read text** stores an
+explicit opt-out; legacy versions that saved their default off value migrate
+to the new automatic default. **Read aloud** on an existing message plays
+that message directly and changes to **Stop** during playback. Turning on
+automatic reading does not read earlier messages. One fresh message can wait
+up to 15 seconds behind a requested NPC reply; newer arrivals replace it and
+mute, travel or opting out clears it. Missing saved device voices
+use a named generated voice, and microphone sharing remains a separate control.
+If generated speech is unavailable, a suitable installed local voice of the
+selected gender can play the reply or message before any words have started.
+Robotic engines are excluded, and a partially spoken line is never restarted
+automatically.
 
 Playback stays at native pitch through a direct gain path with no added reverb,
 delay or HRTF on speech. NPC distance changes adjust volume. The unrelated
 continuous battle synthesizer is removed from all pages that host the NPC game.
 One speech owner prevents radio, NPC and chat voices from competing, and passive
 gestures do not trigger an extra tower introduction. Generation and playback
-have separate deadlines so model startup cannot clip a short reply.
+have separate deadlines so model startup cannot clip a short reply. Generated
+requests keep their own aborting deadline through the shared API connection,
+instead of its usual 15-second limit. Guides play in recorded sentence sections
+of up to 180 characters, with only the next section prefetched. Their first
+words can play immediately while the backend prepares new dialogue. Mute and map changes cancel
+both playback and any pending section.
 
-`npm run build` prepares a checksum-pinned 109 MB model from the official Kokoro
-release using `curl`, then builds the site. Models stay in `.speech-models/`
-(outside Git and public assets); `MUZIKAZ_SPEECH_MODEL_DIR` can select another
-cache directory. The build converts signed convolution tensors to mathematically
+`npm run build` optionally prepares a checksum-pinned 109 MB model from the
+official Kokoro release using `curl`, then builds the site. A download failure
+does not block the site or its packaged introductions and previews. At server
+startup, both Node and Rust compatibility hosting prepare missing voice
+dependencies and the model in a bounded background process. Dynamic speech
+requests wait for that shared preparation within their existing deadline;
+canceled requests cannot stop installation for other players. Failed preparation
+retries on a later request after a bounded backoff. `/api/speech/voices` reports
+actual readiness, preparation status and retry information.
+
+Models stay outside Git and public assets. A prepared `.speech-models/` build
+cache is reused; otherwise `MUZIKAZ_DATA_DIR/voices/` stores the runtime model,
+with a writable repository cache as fallback. `MUZIKAZ_SPEECH_MODEL_DIR` or
+`MUZIKAZ_SPEECH_MODEL_PATH` selects an explicit cache location;
+`MUZIKAZ_VOICE_AUTO_INSTALL=0` disables automatic preparation. The build converts signed convolution tensors to mathematically
 equivalent unsigned tensors for the CPU runtime. The CPU-only Node inference
 process serializes work, recycles after two jobs, and stops when idle. Typical
 short replies generate in several seconds; repeated text is cached in bounded
 private server memory. Public speech requests have text, queue, deadline and
-rate limits. Hosting must run the Node server rather than only serve static
-files. Render's build command prepares the model automatically and skips CUDA.
+rate limits. New dialogue requires the Node API; static hosting alone can play
+the packaged introductions and voice previews. Render skips CUDA installation.
+To regenerate the committed narration assets, run
+`node scripts/build-world-voices.mjs` with the model and FFmpeg installed. The
+manifest records each clip's exact text, duration and checksum.
 
 Static samples are available at
 [`female-preview.wav`](../public/audio/voices/female-preview.wav) and
 [`male-preview.wav`](../public/audio/voices/male-preview.wav). Run
 `MUZIKAZ_TEST_NEURAL_VOICES=1 node --test test/neural-voice-engine.test.mjs` for
 real inference/cancellation checks, and `python3 test/neural-speech.browser.py`
-for real inference → HTTP → browser audio playback. Controlled voice-list tests
+for real NPC inference → shared API connection → conversation queue → browser
+audio playback, together with the complete packaged map guide.
+`python3 test/bundled-voices.browser.py` verifies audible introductions and
+male/female previews while every API request fails.
+`python3 test/game-audio-entrypoint.browser.py` exercises the actual full game
+page using one Begin click and an ordinary control on an autoplay visit, with
+no audio activation button.
+`python3 test/voice-device-recovery.browser.py` checks missing device voices,
+late settings and explicit unmute with the speech API unavailable.
+`python3 test/audio-page-entrypoints.browser.py` verifies real voice output on
+Home, Model Market and Model Explorer from the Start gesture while the speech
+API is unavailable.
+`python3 test/conversation-controls.browser.py` checks typing, held buttons and
+conversation visibility during live updates. The shared-world counterpart is
+`python3 test/shared-conversation-controls.browser.py`.
+`python3 test/room-microphone.browser.py` checks real browser capture and output
+recovery. `python3 test/resident-conversation-audio.browser.py` checks audible
+generated male and female voices for fresh nearby resident exchanges.
+`python3 test/voice-unlock-recovery.browser.py` checks a rejected first
+gesture and suspended-output recovery using stored neural WAVs and real Web
+Audio. Controlled voice-list tests
 only test selection and lifecycle; the real tests validate generated waveforms.
 
 Disabling spatial audio centers world sounds and removes distance falloff.

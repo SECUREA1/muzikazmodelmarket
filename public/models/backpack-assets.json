@@ -207,13 +207,13 @@
       "type": "lands",
       "builderLayoutId": "mountain-pass",
       "builderUrl": "/environment-builder.html?layout=mountain-pass",
-      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass.svg",
+      "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg",
       "format": "builder-layout",
       "visibility": "public",
       "description": "High ridges, a winding pass and overlooks for adventure builds.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass.svg"
+        "thumbnailUrl": "/public/images/native-designs/layout-mountain-pass-mountain-v1.svg"
       }
     },
     {
@@ -1337,7 +1337,7 @@
       "name": "Blackwing Corsair",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/corsair-aircraft.svg",
+      "thumbnailUrl": "/public/images/native-designs/corsair-aircraft-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -1349,7 +1349,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/corsair-aircraft.svg"
+        "thumbnailUrl": "/public/images/native-designs/corsair-aircraft-vehicle-v1.svg"
       }
     },
     {
@@ -1357,7 +1357,7 @@
       "name": "Nightcrawler Dune Quad",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/dune-quad.svg",
+      "thumbnailUrl": "/public/images/native-designs/dune-quad-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -1365,7 +1365,7 @@
       "description": "Nightcrawler Dune Quad from the Environment Builder, ready to drop into the running game.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/dune-quad.svg"
+        "thumbnailUrl": "/public/images/native-designs/dune-quad-vehicle-v1.svg"
       }
     },
     {
@@ -1716,7 +1716,7 @@
       "name": "Alpine Snow Mountain",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg",
+      "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1732,7 +1732,7 @@
       "description": "A grounded, pointed rock ridge with irregular stone faces and a broad snowy upper third.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/alpine-mountain.svg"
+        "thumbnailUrl": "/public/images/native-designs/alpine-mountain-mountain-v1.svg"
       }
     },
     {
@@ -1740,7 +1740,7 @@
       "name": "Weathered Cliff",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1753,7 +1753,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-cliff.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-cliff-mountain-v1.svg"
       }
     },
     {
@@ -1782,7 +1782,7 @@
       "name": "Impact Crater",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1795,7 +1795,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-crater.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-crater-mountain-v1.svg"
       }
     },
     {
@@ -1803,7 +1803,7 @@
       "name": "Snow Bank",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg",
+      "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "terrain",
@@ -1816,7 +1816,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank.svg"
+        "thumbnailUrl": "/public/images/native-designs/terrain-snowbank-mountain-v1.svg"
       }
     },
     {
@@ -2013,7 +2013,7 @@
       "name": "Wooden Cart",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/wooden-cart.svg",
+      "thumbnailUrl": "/public/images/native-designs/wooden-cart-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "props",
@@ -2026,7 +2026,7 @@
       ],
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/wooden-cart.svg"
+        "thumbnailUrl": "/public/images/native-designs/wooden-cart-vehicle-v1.svg"
       }
     },
     {
@@ -2497,7 +2497,7 @@
       "name": "Neon Junction · Park express",
       "owner": "MUZIKAZ",
       "type": "interactive",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train.svg",
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "arcade",
@@ -2513,7 +2513,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-vehicle-v1.svg"
       }
     },
     {
@@ -2521,7 +2521,7 @@
       "name": "Neon Junction · Skyline coaster",
       "owner": "MUZIKAZ",
       "type": "interactive",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster.svg",
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "arcade",
@@ -2537,7 +2537,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-vehicle-v1.svg"
       }
     },
     {
@@ -2753,7 +2753,7 @@
       "name": "Neon Junction · Train passenger carriage",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage.svg",
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "arcade",
@@ -2761,7 +2761,7 @@
       "description": "Passenger carriage prop; use Park express for the running ride.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-carriage-vehicle-v1.svg"
       }
     },
     {
@@ -2769,7 +2769,7 @@
       "name": "Neon Junction · Coaster car",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car.svg",
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "arcade",
@@ -2777,7 +2777,7 @@
       "description": "Restrained coaster car prop; use Skyline coaster for the running ride.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-coaster-car-vehicle-v1.svg"
       }
     },
     {
@@ -2913,7 +2913,7 @@
       "name": "Neon Junction · Train locomotive",
       "owner": "MUZIKAZ",
       "type": "props",
-      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine.svg",
+      "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "arcade",
@@ -2921,7 +2921,7 @@
       "description": "Locomotive equipment prop; use Park express for the running ride.",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine.svg"
+        "thumbnailUrl": "/public/images/native-designs/arcade-part-train-engine-vehicle-v1.svg"
       }
     },
     {
@@ -4612,7 +4612,7 @@
         7,
         42
       ],
-      "thumbnailUrl": "/public/images/native-designs/harbor-yacht.svg",
+      "thumbnailUrl": "/public/images/native-designs/harbor-yacht-vehicle-v1.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 24,
@@ -4625,7 +4625,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-yacht.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-yacht-vehicle-v1.svg"
       }
     },
     {
@@ -4641,7 +4641,7 @@
         1.5,
         4.8
       ],
-      "thumbnailUrl": "/public/images/native-designs/harbor-skiff.svg",
+      "thumbnailUrl": "/public/images/native-designs/harbor-skiff-vehicle-v1.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 5,
@@ -4654,7 +4654,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-skiff.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-skiff-vehicle-v1.svg"
       }
     },
     {
@@ -4670,7 +4670,7 @@
         4.8,
         4.8
       ],
-      "thumbnailUrl": "/public/images/native-designs/harbor-sailboat.svg",
+      "thumbnailUrl": "/public/images/native-designs/harbor-sailboat-vehicle-v1.svg",
       "function_data": {
         "behavior": "vehicle",
         "interactionDistance": 5,
@@ -4683,7 +4683,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-sailboat.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-sailboat-vehicle-v1.svg"
       }
     },
     {
@@ -4842,13 +4842,13 @@
         2.2,
         1.7
       ],
-      "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack.svg",
+      "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack-vehicle-v1.svg",
       "function_data": {
         "behavior": "decor"
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack.svg"
+        "thumbnailUrl": "/public/images/native-designs/camp-canoe-rack-vehicle-v1.svg"
       }
     },
     {
@@ -5640,7 +5640,7 @@
       "visibility": "public",
       "buildAssetId": "diamond-da40",
       "format": "procedural-3d",
-      "thumbnailUrl": "/public/images/native-designs/diamond-da40.svg",
+      "thumbnailUrl": "/public/images/native-designs/diamond-da40-vehicle-v1.svg",
       "previewImages": [
         "/public/images/aircraft/diamond-da40.svg",
         "/public/images/aircraft/diamond-da40-cockpit.svg"
@@ -5655,7 +5655,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/diamond-da40.svg"
+        "thumbnailUrl": "/public/images/native-designs/diamond-da40-vehicle-v1.svg"
       }
     },
     {
@@ -5665,7 +5665,7 @@
       "visibility": "public",
       "buildAssetId": "piper-cub",
       "format": "procedural-3d",
-      "thumbnailUrl": "/public/images/native-designs/piper-cub.svg",
+      "thumbnailUrl": "/public/images/native-designs/piper-cub-vehicle-v1.svg",
       "previewImages": [
         "/public/images/aircraft/piper-cub.svg",
         "/public/images/aircraft/piper-cub-cockpit.svg"
@@ -5680,7 +5680,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/piper-cub.svg"
+        "thumbnailUrl": "/public/images/native-designs/piper-cub-vehicle-v1.svg"
       }
     },
     {
@@ -5872,7 +5872,7 @@
         2.9,
         7.8
       ],
-      "thumbnailUrl": "/public/images/native-designs/harbor-patrol.svg",
+      "thumbnailUrl": "/public/images/native-designs/harbor-patrol-vehicle-v1.svg",
       "function_data": {
         "behavior": "vehicle",
         "health": 650,
@@ -5887,7 +5887,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-patrol.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-patrol-vehicle-v1.svg"
       }
     },
     {
@@ -5895,7 +5895,7 @@
       "name": "Atlas Trail Quad",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/alpine-quad.svg",
+      "thumbnailUrl": "/public/images/native-designs/alpine-quad-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5904,7 +5904,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/alpine-quad.svg"
+        "thumbnailUrl": "/public/images/native-designs/alpine-quad-vehicle-v1.svg"
       }
     },
     {
@@ -5912,7 +5912,7 @@
       "name": "Aurelia Grand Tourer",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/grand-tourer.svg",
+      "thumbnailUrl": "/public/images/native-designs/grand-tourer-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5921,7 +5921,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/grand-tourer.svg"
+        "thumbnailUrl": "/public/images/native-designs/grand-tourer-vehicle-v1.svg"
       }
     },
     {
@@ -5929,7 +5929,7 @@
       "name": "Veloce Touring Motorcycle",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/touring-motorcycle.svg",
+      "thumbnailUrl": "/public/images/native-designs/touring-motorcycle-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5938,7 +5938,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/touring-motorcycle.svg"
+        "thumbnailUrl": "/public/images/native-designs/touring-motorcycle-vehicle-v1.svg"
       }
     },
     {
@@ -5946,7 +5946,7 @@
       "name": "Titan 78 Tower Crane",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/tower-crane.svg",
+      "thumbnailUrl": "/public/images/native-designs/tower-crane-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5955,7 +5955,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/tower-crane.svg"
+        "thumbnailUrl": "/public/images/native-designs/tower-crane-vehicle-v1.svg"
       }
     },
     {
@@ -5963,7 +5963,7 @@
       "name": "Terra 40 Articulated Dump Truck",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/site-dumptruck.svg",
+      "thumbnailUrl": "/public/images/native-designs/site-dumptruck-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5972,7 +5972,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-dumptruck.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-dumptruck-vehicle-v1.svg"
       }
     },
     {
@@ -5980,7 +5980,7 @@
       "name": "D9 Crawler Bulldozer",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/site-bulldozer.svg",
+      "thumbnailUrl": "/public/images/native-designs/site-bulldozer-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -5989,7 +5989,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-bulldozer.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-bulldozer-vehicle-v1.svg"
       }
     },
     {
@@ -5997,7 +5997,7 @@
       "name": "HX350 Hydraulic Excavator",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/site-excavator.svg",
+      "thumbnailUrl": "/public/images/native-designs/site-excavator-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -6006,7 +6006,7 @@
       "behavior": "vehicle",
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/site-excavator.svg"
+        "thumbnailUrl": "/public/images/native-designs/site-excavator-vehicle-v1.svg"
       }
     },
     {
@@ -7200,7 +7200,7 @@
         2.3,
         8.7
       ],
-      "thumbnailUrl": "/public/images/native-designs/factory-training-missile.svg",
+      "thumbnailUrl": "/public/images/native-designs/factory-training-missile-vehicle-v1.svg",
       "collection": "Factory & engineering",
       "productTier": "factory",
       "priceMzk": 180,
@@ -7217,7 +7217,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/factory-training-missile.svg"
+        "thumbnailUrl": "/public/images/native-designs/factory-training-missile-vehicle-v1.svg"
       }
     },
     {
@@ -7235,7 +7235,7 @@
         3.7,
         12.8
       ],
-      "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket.svg",
+      "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket-vehicle-v1.svg",
       "collection": "Factory & engineering",
       "productTier": "factory",
       "priceMzk": 320,
@@ -7252,7 +7252,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket.svg"
+        "thumbnailUrl": "/public/images/native-designs/factory-cargo-rocket-vehicle-v1.svg"
       }
     },
     {
@@ -7772,7 +7772,7 @@
         2.7,
         6.3
       ],
-      "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat.svg",
+      "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat-vehicle-v1.svg",
       "function_data": {
         "behavior": "vehicle",
         "action": "boat",
@@ -7789,7 +7789,7 @@
       },
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat.svg"
+        "thumbnailUrl": "/public/images/native-designs/harbor-fishing-boat-vehicle-v1.svg"
       }
     },
     {
@@ -7797,7 +7797,7 @@
       "name": "Frontier Crew Pickup",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/frontier-pickup.svg",
+      "thumbnailUrl": "/public/images/native-designs/frontier-pickup-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -7807,7 +7807,7 @@
       "priceMzk": 800,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/frontier-pickup.svg"
+        "thumbnailUrl": "/public/images/native-designs/frontier-pickup-vehicle-v1.svg"
       }
     },
     {
@@ -7815,7 +7815,7 @@
       "name": "Frontier Tandem Cargo Trailer",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer.svg",
+      "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer-vehicle-v1.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
@@ -7825,7 +7825,7 @@
       "priceMzk": 350,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer.svg"
+        "thumbnailUrl": "/public/images/native-designs/utility-cargo-trailer-vehicle-v1.svg"
       }
     },
     {
@@ -7887,12 +7887,12 @@
       "builderCategory": "vehicles",
       "visibility": "public",
       "format": "procedural-3d",
-      "thumbnailUrl": "/public/images/native-designs/shipping-feeder.svg",
+      "thumbnailUrl": "/public/images/native-designs/shipping-feeder-vehicle-v1.svg",
       "priceMzk": 750,
       "useCostMzk": 5,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-feeder.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-feeder-vehicle-v1.svg"
       }
     },
     {
@@ -7936,12 +7936,12 @@
       "builderCategory": "vehicles",
       "visibility": "public",
       "format": "procedural-3d",
-      "thumbnailUrl": "/public/images/native-designs/shipping-container.svg",
+      "thumbnailUrl": "/public/images/native-designs/shipping-container-vehicle-v1.svg",
       "priceMzk": 750,
       "useCostMzk": 5,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-container.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-container-vehicle-v1.svg"
       }
     },
     {
@@ -7985,12 +7985,12 @@
       "builderCategory": "vehicles",
       "visibility": "public",
       "format": "procedural-3d",
-      "thumbnailUrl": "/public/images/native-designs/shipping-tanker.svg",
+      "thumbnailUrl": "/public/images/native-designs/shipping-tanker-vehicle-v1.svg",
       "priceMzk": 750,
       "useCostMzk": 5,
       "visualDesign": {
         "version": "crafted-native-v3",
-        "thumbnailUrl": "/public/images/native-designs/shipping-tanker.svg"
+        "thumbnailUrl": "/public/images/native-designs/shipping-tanker-vehicle-v1.svg"
       }
     },
     {
@@ -8644,6 +8644,120 @@
         "version": "crafted-native-v3",
         "thumbnailUrl": "/public/images/native-designs/prison-supply-crate.svg"
       }
+    },
+    {
+      "id": "builder-construction-site-office",
+      "buildAssetId": "construction-site-office",
+      "name": "Modular Site Office",
+      "description": "A fitted steel site office with framed glazing, panel seams, lift-plan furniture and rooftop services.",
+      "dimensions": [
+        12.4,
+        3.9,
+        7.4
+      ],
+      "type": "interior",
+      "category": "buildings",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-site-office.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Modular Site Office"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-site-office.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-site-office.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "buildings",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
+    },
+    {
+      "id": "builder-construction-service-canopy",
+      "buildAssetId": "construction-service-canopy",
+      "name": "Steel Service Canopy",
+      "description": "An open six-post maintenance shelter with braced roof trusses and corrugated weather sheets.",
+      "dimensions": [
+        33,
+        4.3,
+        7
+      ],
+      "type": "interior",
+      "category": "buildings",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-service-canopy.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Steel Service Canopy"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-service-canopy.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-service-canopy.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "buildings",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
+    },
+    {
+      "id": "builder-construction-floodlight",
+      "buildAssetId": "construction-floodlight",
+      "name": "Four-head Site Floodlight",
+      "description": "A narrow generator base, telescopic mast, cable winch and four individually framed LED optics.",
+      "dimensions": [
+        1.3,
+        8.1,
+        1.3
+      ],
+      "type": "interior",
+      "category": "props",
+      "size": 88,
+      "procedural": true,
+      "assetKind": "premade",
+      "behavior": "decor",
+      "image": "/public/images/native-designs/construction-floodlight.svg",
+      "function_data": {
+        "behavior": "decor",
+        "action": "none",
+        "interactionKey": "e",
+        "interactionDistance": 3,
+        "destructible": false,
+        "prompt": "Four-head Site Floodlight"
+      },
+      "color": "#53727b",
+      "thumbnailUrl": "/public/images/native-designs/construction-floodlight.svg",
+      "visualDesign": {
+        "version": "crafted-native-v3",
+        "thumbnailUrl": "/public/images/native-designs/construction-floodlight.svg"
+      },
+      "owner": "MUZIKAZ",
+      "builderCategory": "props",
+      "visibility": "public",
+      "format": "procedural-3d",
+      "priceMzk": 100,
+      "useCostMzk": 1
     }
   ]
 }

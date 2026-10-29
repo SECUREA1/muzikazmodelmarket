@@ -7,6 +7,7 @@ import {bindFactoryShippingVoyage,reconcileFactoryShippingVoyage} from './server
 import {worldPopulation} from './public/js/world-population.js';
 import {worldRadioCalls} from './server-world-radio.mjs';
 import {compactRoomSnapshot} from './public/js/room-snapshot.js';
+import {residentAudienceSnapshot} from './server-resident-audience.mjs';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
 import {LAND_LOTS,landLotById,lotVisitUrl} from './public/js/land-lots.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
@@ -26,6 +27,8 @@ import {isHockeyMap} from './public/js/hockey-rules.js';
 
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
 import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
+import {RoomIdentityCache} from './room-identity-cache.mjs';
+import {RPG_DEFAULT_STATS} from './public/js/rpg-rules.js';
 import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
 import {backpackPackage,ownedPackageItem} from './backpack-files.mjs';
 import {resolveStoreCart} from './store-catalog.mjs';
@@ -35,16 +38,19 @@ import {EthereumMemberAuth} from './ethereum-member-auth.mjs';
 import {ServerBackups} from './server-backups.mjs';
 import {WorldAtlas,attachAtlas} from './world-atlas.mjs';
 import {AuthoritativeRooms} from './authoritative-room.mjs';
+import {PrivateResidentRooms} from './server-private-residents.mjs';
 import {memberPlotEnvironment,plotSpaceId,plotPlayUrl} from './member-plots.mjs';
 import {SharedRoomStore} from './shared-room-store.mjs';
 import {GAME_ECONOMY,economyItem,ownsEconomyItem,economyInventory,economyBundles} from './game-economy.mjs';
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir,stat,lstat,unlink,rename} from 'node:fs/promises';
 import {createReadStream,createWriteStream} from 'node:fs';
+import {pipeline} from 'node:stream';
 import {extname,join,normalize} from 'node:path';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {normalizePlayerPreferences} from './public/js/player-preferences.js';
 import {createSpeechService} from './server-speech.mjs';
+import {startVoiceRuntime} from './server-voice-runtime.mjs';
 import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
 import {normalizeFactoryCatalogItem} from './world-factory-catalog.mjs';
 import {grantFitnessReward,fitnessAccountState} from './server-fitness.mjs';
@@ -58,8 +64,10 @@ import {LoadoutCodeStore} from './loadout-code-store.mjs';
 import {PaymentOrderStore,MUZIKAZ_PAYMENT_NETWORKS} from './payment-order-store.mjs';
 import {verifyPaymentTransaction} from './payment-verifier.mjs';
 import {DurableSessionStore} from './session-store.mjs';
+import {readRuntimeMessages,writeRuntimeMessages} from './server-runtime-state.mjs';
 
 const root = process.cwd();
+const repositoryStaticSource = process.env.MUZIKAZ_STATIC_SOURCE === 'repository';
 const LAND_PRODUCTS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
 const serviceStartedAt = new Date().toISOString();
 const serviceVersion = process.env.npm_package_version || '1.0.0';
@@ -69,6 +77,7 @@ const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
+const modelUploadDir = process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
 const mediaUploadDir=join(dataDir,'uploads','media');
 const deviceMediaUploads=new DeviceMediaUploads(mediaUploadDir,join(dataDir,'shared-media.json'));
@@ -114,8 +123,15 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.bin':'application/octet-stream','.ktx2':'image/ktx2','.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+function streamFile(res,filePath,options){
+  // File removal or a broken download can fail after the async handler has
+  // returned. Keep those stream errors inside the response, not the process.
+  pipeline(createReadStream(filePath,options),res,error=>{
+    if(error&&error.code!=='ERR_STREAM_PREMATURE_CLOSE')console.error('[File response]',error.code||error.message);
+  });
+}
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
 let paymentRatesCache = null;
@@ -209,14 +225,14 @@ const serverBackups = new ServerBackups(process.env.MUZIKAZ_BACKUP_DIR || join(d
   payments: paymentOrderStore.file, accountSessions: accountSessionsFile, gameSessions: gameSessionsFile,
   environments: environmentDataFile, customMaps: customMapsFile,
   avatarUploads: uploadDir, assetUploads: assetUploadDir, environmentUploads: environmentUploadDir,
-  modelUploads: process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models')
+  modelUploads: modelUploadDir
 });
 const masterRuntimeFile=join(dataDir,'server-runtime.json');
 const masterState=new MasterServerState({
  data:{path:dataDir,type:'directory'},accounts:{path:loadoutCodeStore.file,type:'file'},users:{path:userDatabaseFile,type:'file'},payments:{path:paymentOrderStore.file,type:'file'},
  accountSessions:{path:accountSessionsFile,type:'file'},gameSessions:{path:gameSessionsFile,type:'file'},
  environments:{path:environmentDataFile,type:'file'},customMaps:{path:customMapsFile,type:'file'},atlas:{path:worldAtlas.file,type:'file'},rooms:{path:sharedRooms.file,type:'file'},runtime:{path:masterRuntimeFile,type:'file'},
- avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:process.env.UPLOAD_STORAGE_PATH||join(dataDir,'uploads','models'),type:'directory'}
+ avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:modelUploadDir,type:'directory'}
 },{backupDirectory:serverBackups.directory});
 let masterMaintenance=false,activeServerRequests=0;
 const backgroundJobs=new Set();
@@ -232,20 +248,24 @@ async function exclusiveMasterState(work){
  masterMaintenance=true;
  try{await drainServerState();return await work();}finally{masterMaintenance=false;}
 }
-async function saveMasterRuntime(){await mkdir(dataDir,{recursive:true});await writeFile(masterRuntimeFile,JSON.stringify({chatMessages,supportMessages}),{mode:0o600});}
-async function loadMasterRuntime(){let data;try{data=JSON.parse(await readFile(masterRuntimeFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;data={};}chatMessages.splice(0,chatMessages.length,...(Array.isArray(data.chatMessages)?data.chatMessages.slice(-100):[]));supportMessages.splice(0,supportMessages.length,...(Array.isArray(data.supportMessages)?data.supportMessages.slice(-500):[]));}
-function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.activeWorlds.clear();authoritativeRooms.manifestCache.clear();authoritativeRooms.collision.cache.clear();authoritativeRooms.collision.clearPlacedWorlds();roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
+async function saveMasterRuntime(){await writeRuntimeMessages(masterRuntimeFile,{chatMessages,supportMessages});}
+async function loadMasterRuntime(){const data=await readRuntimeMessages(masterRuntimeFile);chatMessages.splice(0,chatMessages.length,...data.chatMessages);supportMessages.splice(0,supportMessages.length,...data.supportMessages);}
+function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.clearCaches();roomIdentityCache.clear();roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
 async function snapshotServer() {
   await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue, deviceMediaUploads.queue]);
   return serverBackups.snapshot();
 }
 const hockeyRooms=new HockeyRooms();
+const privateResidents=new PrivateResidentRooms();
 const arcadeRooms=new ArcadeRooms();
 setInterval(()=>arcadeRooms.tick(),50).unref();
 setInterval(()=>hockeyRooms.tick(),50).unref();
-const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,fishingReward:(identity,result)=>grantFishingReward(userDatabase,identity.walletId,result),fishingState:identity=>fishingAccountState(userDatabase,identity.walletId),shippingReward:(identity,result)=>grantShippingReward(userDatabase,identity.walletId,result),shippingState:identity=>shippingAccountState(userDatabase,identity.walletId),supplyAction:(...args)=>worldSupply.shippingAction(...args),supplyDelivery:(...args)=>worldSupply.deliver(...args),consumeAsset:consumeSupplyAsset,shippingBind:(identity,player,command,now)=>bindFactoryShippingVoyage(userDatabase,identity.walletId,player,command,now),shippingReturn:(identity,player,now)=>reconcileFactoryShippingVoyage(userDatabase,identity.walletId,player,now),resolveDestination:async id=>Boolean(await roomEnvironment(id)),fitnessReward:(identity,result)=>grantFitnessReward(userDatabase,identity.walletId,result),fitnessState:identity=>fitnessAccountState(userDatabase,identity.walletId),logisticsState:(identity,now,environment,sim)=>logisticsAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),logisticsAction:(identity,sim,player,environment,command,now)=>logisticsCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryState:(identity,now,environment,sim)=>factoryAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),prisonState:identity=>prisonAccountState(userDatabase,identity.walletId),prisonClaim:(identity,sim,player,environment,command,now)=>claimPrisonItem(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),testingState:(identity,now,environment,sim)=>testingAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),testingAccess:(identity,options)=>assertCompoundAccess(userDatabase,identity.walletId,options),testingAction:(identity,sim,player,environment,command,now)=>testingCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryAction:(identity,sim,player,environment,command,now)=>factoryCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{await assertFactoryDeploymentAvailable(userDatabase,identity.walletId,command);const prisonAsset=await resolvePrisonAsset(userDatabase,identity.walletId,command.itemId);if(prisonAsset)return prisonAsset;const factoryAsset=await resolveFactoryAsset(userDatabase,identity.walletId,command.itemId);if(factoryAsset)return factoryAsset;const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);const candidate=state.items.find(item=>item.id===command.itemId);if(String(candidate?.id||'').startsWith('prison-item:')||candidate?.source==='prison-earned'||prisonRewardFor(candidate?.buildAssetId)||prisonRewardFor(catalog?.buildAssetId))return null;if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&(item.modelUrl||isRoadVehicle({asset:item})));if(purchased)return {...purchased,behavior:isRoadVehicle({asset:purchased})?'vehicle':'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {...owned,id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',function_data:config,behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:async(identity,sku,requestId,environment)=>{const mapId=environment?.id;if(mapId)await registerSupplyMap(mapId);return userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId,mapId);},telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
-setInterval(()=>backgroundJob(()=>sharedRooms.flush()),1000).unref();
+const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,scheduledInputs:true,capacity:maxHouseUsers,fishingReward:(identity,result)=>grantFishingReward(userDatabase,identity.walletId,result),fishingState:identity=>fishingAccountState(userDatabase,identity.walletId),shippingReward:(identity,result)=>grantShippingReward(userDatabase,identity.walletId,result),shippingState:identity=>shippingAccountState(userDatabase,identity.walletId),supplyAction:(...args)=>worldSupply.shippingAction(...args),supplyDelivery:(...args)=>worldSupply.deliver(...args),consumeAsset:consumeSupplyAsset,shippingBind:(identity,player,command,now)=>bindFactoryShippingVoyage(userDatabase,identity.walletId,player,command,now),shippingReturn:(identity,player,now)=>reconcileFactoryShippingVoyage(userDatabase,identity.walletId,player,now),resolveDestination:async id=>Boolean(await roomEnvironment(id)),fitnessReward:(identity,result)=>grantFitnessReward(userDatabase,identity.walletId,result),fitnessState:identity=>fitnessAccountState(userDatabase,identity.walletId),logisticsState:(identity,now,environment,sim)=>logisticsAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),logisticsAction:(identity,sim,player,environment,command,now)=>logisticsCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryState:(identity,now,environment,sim)=>factoryAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),prisonState:identity=>prisonAccountState(userDatabase,identity.walletId),prisonClaim:(identity,sim,player,environment,command,now)=>claimPrisonItem(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),testingState:(identity,now,environment,sim)=>testingAccountState(userDatabase,identity.walletId,{now,environment,actors:sim?.actors}),testingAccess:(identity,options)=>assertCompoundAccess(userDatabase,identity.walletId,options),testingAction:(identity,sim,player,environment,command,now)=>testingCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),factoryAction:(identity,sim,player,environment,command,now)=>factoryCommand(sim,player,environment,command,now,{database:userDatabase,walletId:identity.walletId}),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{await assertFactoryDeploymentAvailable(userDatabase,identity.walletId,command);const prisonAsset=await resolvePrisonAsset(userDatabase,identity.walletId,command.itemId);if(prisonAsset)return prisonAsset;const factoryAsset=await resolveFactoryAsset(userDatabase,identity.walletId,command.itemId);if(factoryAsset)return factoryAsset;const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);const candidate=state.items.find(item=>item.id===command.itemId);if(String(candidate?.id||'').startsWith('prison-item:')||candidate?.source==='prison-earned'||prisonRewardFor(candidate?.buildAssetId)||prisonRewardFor(catalog?.buildAssetId))return null;if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&(item.modelUrl||isRoadVehicle({asset:item})));if(purchased)return {...purchased,behavior:isRoadVehicle({asset:purchased})?'vehicle':'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {...owned,id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',function_data:config,behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:async(identity,sku,requestId,environment)=>{const mapId=environment?.id;if(mapId)await registerSupplyMap(mapId);return userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId,mapId);},telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
+// Persist only changed rooms during gameplay. Backup/master operations still
+// force a canonical JSON checkpoint through the default flush() API.
+setInterval(()=>backgroundJob(()=>sharedRooms.flush({checkpoint:false})),1000).unref();
 setInterval(()=>backgroundJob(()=>authoritativeRooms.tickActive()),50).unref();
+setInterval(()=>backgroundJob(()=>privateResidents.tickActive()),150).unref();
 
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 let roomEnvironmentRefresh=null;
@@ -274,13 +294,13 @@ async function consumeSupplyAsset(identity,asset,requestId,environment){
   consumeWorldStock(data,item,1,{mapId});return ledger.receipts[key]={itemId:item.supplyId,quantity:1,mapId,signature};
  });
 }
-function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||!player.basketballAI&&!player.isAI&&!player.replacedByRoom&&Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(!player.basketballAI&&!player.isAI&&!player.replacedByRoom&&Date.now()-player.lastSeen<15000)members.add(id);if(isHockeyMap(map))for(const player of hockeyRooms.rooms.get(roomId)?.state.players||[])if(player.human)members.add(player.human);if(isArcadeMap(map))for(const slot of arcadeRooms.rooms.get(roomId)?.slots||[])if(slot.actor)members.add(slot.actor);const playerCount=members.size;return {...map,roomId,playerCount,aiCount:worldPopulation(rooms[roomId]?.simulation||{},Date.now()).aiCount+(isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.players||[]).filter(p=>!p.human).length:0),spectatorCount:isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.spectators.length||0):isArcadeMap(map)?[...(arcadeRooms.rooms.get(roomId)?.members.values()||[])].filter(m=>m.role==='spectator').length:0,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
+function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||!player.basketballAI&&!player.isAI&&!player.replacedByRoom&&Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(!player.basketballAI&&!player.isAI&&!player.replacedByRoom&&Date.now()-player.lastSeen<15000)members.add(id);if(isHockeyMap(map))for(const player of hockeyRooms.rooms.get(roomId)?.state.players||[])if(player.human)members.add(player.human);if(isArcadeMap(map))for(const slot of arcadeRooms.rooms.get(roomId)?.slots||[])if(slot.actor)members.add(slot.actor);const playerCount=members.size;return {...map,roomId,playerCount,aiCount:(rooms[roomId]?.population||worldPopulation(rooms[roomId]?.simulation||{},Date.now())).aiCount+(isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.players||[]).filter(p=>!p.human).length:0),spectatorCount:isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.spectators.length||0):isArcadeMap(map)?[...(arcadeRooms.rooms.get(roomId)?.members.values()||[])].filter(m=>m.role==='spectator').length:0,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
   const published=[...liveMaps,...repo,...uploaded.filter(publicEnvironment)].filter(map=>map.visibility!=='private'&&map.playable!==false);
-  const {environments}=await synchronizeWorldDirectory(worldAtlas,published,await userDatabase.memberPlots());
-  const rooms=await sharedRooms.read();return environments.map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount);
+  const {environments}=await synchronizeWorldDirectory(worldAtlas,published,await userDatabase.memberPlots(),{readonly:true});
+  const rooms=await sharedRooms.populationSnapshot();return environments.map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount);
 }
 async function saveEnvironmentUpload(req) {
   const parts = await multipartFields(req, maxEnvironmentBytes + 2_000_000); const fields = {}; parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
@@ -299,6 +319,7 @@ async function saveEnvironmentUpload(req) {
 
 async function readAssets() { await ensureStorage(); return JSON.parse(await readFile(assetsFile, 'utf8')); }
 async function readModels() { await ensureStorage(); return JSON.parse(await readFile(modelsFile, 'utf8')); }
+const isPublishedModel = model => model && model.visibility !== 'private' && (model.status === 'published' || model.visibility === 'public');
 async function writeModels(records) { await ensureStorage(); await writeFile(modelsFile, JSON.stringify(records, null, 2)); }
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) {
@@ -368,13 +389,25 @@ async function roomAuthentication(req,res,csrf=false){
  if(proof){const recovered=await recoverRoomSession(accountSessionStore,gameSessionStore,proof);if(recovered)return recovered;}
  authorizationError(res,401,'SESSION_REQUIRED','Sign in through Members to join the live game server.','authentication');return null;
 }
-const roomIdentityCache=new Map();
+async function roomViewerId(req){
+ const authentication=await resolveAccountSession(req)||await recoverRoomSession(accountSessionStore,gameSessionStore,String(req.headers['x-game-session']||''));
+ return authentication?.accountId?'account:'+authentication.accountId:null;
+}
+function roomRecordAudienceSnapshot(room,viewerId){
+ return room?.simulation?{...room,simulation:residentAudienceSnapshot(room.simulation,viewerId)}:room;
+}
+const roomIdentityCache=new RoomIdentityCache();
 async function roomIdentity(req,res,join=false){
  const authentication=await roomAuthentication(req,res,true);if(!authentication)return null;
- const key=authentication.accountId,cached=roomIdentityCache.get(key);if(!join&&cached&&Date.now()-cached.at<5000)return cached.identity;
- const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account){authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');return null;}const state=await userDatabase.ensureAccount(account);const context={account,walletId:state.walletId};
- const identity={accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member',avatar:await designatedAvatar(req,{id:context.walletId},authentication,account,state),stats:(await userDatabase.rpgState(context.walletId)).stats};
- roomIdentityCache.set(key,{at:Date.now(),identity});if(roomIdentityCache.size>1000)roomIdentityCache.delete(roomIdentityCache.keys().next().value);return identity;
+ try{return await roomIdentityCache.resolve(authentication.accountId,async()=>{
+  const account=await loadoutCodeStore.getAccount(authentication.accountId);
+  if(!account)throw Object.assign(new Error('The game account no longer exists.'),{statusCode:401,code:'ACCOUNT_NOT_FOUND'});
+  const state=await userDatabase.ensureAccount(account),walletId=state.walletId;
+  return {accountId:account.accountId,walletId,username:account.username||'Member',avatar:await designatedAvatar(req,{id:walletId},authentication,account,state),stats:{...RPG_DEFAULT_STATS,...state.memory?.ioncoreRpg?.stats}};
+ },{refresh:join});}catch(error){
+  if(error.code==='ACCOUNT_NOT_FOUND'){authorizationError(res,401,error.code,error.message,'account');return null;}
+  throw error;
+ }
 }
 async function builderContext(req, res, csrf = false) {
   const context=await memberContext(req,res,csrf);if(!context)return null;
@@ -668,8 +701,18 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/designer/drafts'&&['GET','POST'].includes(req.method)){const context=await memberContext(req,res,req.method==='POST');if(!context)return;return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId):await userDatabase.saveDesignerDraft(context.walletId,await bodyJson(req,8500000))));}
     const designerDraft=url.pathname.match(/^\/api\/designer\/drafts\/([^/]+)$/);
     if(designerDraft&&['GET','DELETE'].includes(req.method)){const context=await memberContext(req,res,req.method==='DELETE');if(!context)return;const id=decodeURIComponent(designerDraft[1]);return sendJson(res,200,assetResponse(req.method==='GET'?await userDatabase.designerDrafts(context.walletId,id):await userDatabase.deleteDesignerDraft(context.walletId,id)));}
-    if(url.pathname==='/api/speech/voices'&&req.method==='GET'||url.pathname==='/api/speech'&&req.method==='POST'){
-      try{speechService.checkRateLimit(req.socket?.remoteAddress);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
+    // Readiness polling is passive; it must not spend the quota for spoken
+    // lines while an engine is being prepared or another player checks status.
+    if(url.pathname==='/api/speech'&&req.method==='POST'){
+      // Hosting proxies can give every player the same socket address. Use a
+      // verified account/game proof so one busy player cannot mute the room.
+      // Anonymous previews retain their address limit; claimed user IDs and
+      // forwarding headers cannot select a different speech allowance.
+      let authentication=await resolveAccountSession(req);
+      const proof=String(req.headers['x-game-session']||'');
+      if(!authentication&&proof)authentication=await recoverRoomSession(accountSessionStore,gameSessionStore,proof);
+      const client=authentication?.accountId?'account:'+authentication.accountId:'address:'+String(req.socket?.remoteAddress||'unknown');
+      try{speechService.checkRateLimit(client);}catch(error){if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));throw error;}
     }
     if(url.pathname==='/api/speech/voices'&&req.method==='GET'){
       return sendJson(res,200,{success:true,data:await speechService.voices()});
@@ -873,7 +916,7 @@ const server = createServer(async (req, res) => {
       const current=await resolveAccountSession(req);
       if(current)return sendJson(res,200,assetResponse({authenticated:true}));
       const attempt=throttleAccess(req);
-      try{const account=await loadoutCodeStore.freePlayLogin('Guest-'+randomUUID().replaceAll('-','').slice(0,16),randomUUID()+randomUUID());await userDatabase.ensureAccount(account);const opened=await openAccountSession(res,account);attempt.success();return sendJson(res,201,assetResponse({...opened,guest:true}));}catch(error){attempt.failure();throw error;}
+      try{const account=await loadoutCodeStore.createGuestAccount();await userDatabase.ensureAccount(account);const opened=await openAccountSession(res,account);attempt.success();return sendJson(res,201,assetResponse({...opened,guest:true}));}catch(error){attempt.failure();throw error;}
     }
     if (url.pathname === '/api/access/free-play' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const account = await loadoutCodeStore.freePlayLogin(body.username, body.password); await userDatabase.ensureAccount(account); const opened = await openAccountSession(res, account); attempt.success(); return sendJson(res, 200, assetResponse({ ...opened, backpack: await backpackFor(account), permissions: loadoutPermissions(account) })); } catch (error) { attempt.failure(); throw error; } }
     if (url.pathname === '/api/access/wallet/challenge' && req.method === 'POST') {
@@ -1083,20 +1126,41 @@ const server = createServer(async (req, res) => {
       return sendJson(res,200,assetResponse(snapshot));
 
     }
+    const soloResidents=url.pathname.match(/^\/api\/rooms\/([^/]+)\/residents$/);
+    if(soloResidents&&req.method==='POST'){
+      const environment=await roomEnvironment(decodeURIComponent(soloResidents[1]));if(!environment)return sendJson(res,404,{message:'Map not found.'});
+      const command=await bodyJson(req,4000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
+      return sendJson(res,200,assetResponse(privateResidents.command(environment,identity,command)));
+    }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
-    if(roomGameplay&&['GET','POST'].includes(req.method)){const environment=await roomEnvironment(decodeURIComponent(roomGameplay[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(compactRoomSnapshot(snapshot,command,environment)));}
+    if(roomGameplay&&['GET','POST'].includes(req.method)){
+      const environment=await roomEnvironment(decodeURIComponent(roomGameplay[1]));
+      if(!environment)return sendJson(res,404,{message:'Room not found.'});
+      const id=environment.roomId||environment.id;
+      if(req.method==='GET'){
+        const viewerId=await roomViewerId(req);
+        return sendJson(res,200,assetResponse(residentAudienceSnapshot(await authoritativeRooms.snapshot(id,environment),viewerId)));
+      }
+      const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');
+      if(!identity)return;
+      // Filter recipient-only dialogue before constructing any reusable wire
+      // component, while the room still avoids cloning the full snapshot.
+      const snapshot=await authoritativeRooms.command(id,environment,identity,command,{projectResult:value=>compactRoomSnapshot(residentAudienceSnapshot(value,'account:'+identity.accountId),command,environment)});
+      broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});
+      return sendJson(res,200,assetResponse(snapshot));
+    }
     const buildSettings=url.pathname.match(/^\/api\/rooms\/([^/]+)\/building$/);
     if(buildSettings&&req.method==='POST'){
       const environment=await roomEnvironment(decodeURIComponent(buildSettings[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;
       const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,1000),actor='account:'+context.account.accountId;
       const native=sportsBuildingAccess(hockeyRooms.rooms.get(id),arcadeRooms.rooms.get(id),actor);
       const room=await sharedRooms.update(id,current=>{changeBuildingPolicy(current,actor,command.enabled,native?.hostId||buildingPolicy(current).hostId);current.revision++;return current;});
-      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));
+      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(roomRecordAudienceSnapshot(room,actor)));
     }
     const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
     if(sharedRoom&&['GET','POST'].includes(req.method)){
       const environment=await roomEnvironment(decodeURIComponent(sharedRoom[1]));if(!environment)return sendJson(res,404,{message:'Room not found.'});const id=environment.roomId||environment.id;
-      if(req.method==='GET'){const room=await sharedRooms.get(id),nativeHost=hockeyRooms.rooms.get(id)?.state.host||arcadeRooms.rooms.get(id)?.host;return sendJson(res,200,assetResponse({...room,building:{...buildingPolicy(room,environment),hostId:nativeHost||buildingPolicy(room).hostId}}));}
+      if(req.method==='GET'){const room=await sharedRooms.get(id),viewerId=await roomViewerId(req),nativeHost=hockeyRooms.rooms.get(id)?.state.host||arcadeRooms.rooms.get(id)?.host;return sendJson(res,200,assetResponse({...roomRecordAudienceSnapshot(room,viewerId),building:{...buildingPolicy(room,environment),hostId:nativeHost||buildingPolicy(room).hostId}}));}
       const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,20000),actor='account:'+context.account.accountId;
       const builder=async()=>{const native=sportsBuildingAccess(hockeyRooms.rooms.get(id),arcadeRooms.rooms.get(id),actor);if(native)return native;const player=await authoritativeRooms.player(id,actor);return player&&Date.now()-player.lastSeen<15000?{position:player.position}:null;};
       if(!await builder())return authorizationError(res,409,'ROOM_REQUIRED','Join this server room before building.','room');
@@ -1108,9 +1172,9 @@ const server = createServer(async (req, res) => {
         if(!prior)await userDatabase.economyAction(context.walletId,'use',item.sku,'build:'+id+':'+command.id,await registerSupplyMap(environment.id));
       });
       if(command.action!=='delete'&&command.revision===0){await userDatabase.memberReward(context.walletId,'progress',{scope:'field',event:'brick',requestId:'build:'+id+':'+command.id});await sharedRooms.update(id,current=>{const player=current.simulation?.players[actor];if(player){player.progress ||= {};player.progress.brick=(player.progress.brick||0)+1;}});}
-      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));
+      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(roomRecordAudienceSnapshot(room,actor)));
     }
-    if(url.pathname==='/api/custom-maps'&&req.method==='GET'){const rooms=await sharedRooms.read();return sendJson(res,200,assetResponse((await readCustomMaps()).map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount)));}
+    if(url.pathname==='/api/custom-maps'&&req.method==='GET'){const rooms=await sharedRooms.populationSnapshot();return sendJson(res,200,assetResponse((await readCustomMaps()).map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount)));}
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
       const input = await bodyJson(req,2_000_000); const serialized = JSON.stringify(input);
       if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
@@ -1127,7 +1191,15 @@ const server = createServer(async (req, res) => {
     if (environmentItem && req.method === 'PATCH') { if (!requireAdmin(req, res)) return; const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const index = records.findIndex((env) => env.id === id); if (index < 0) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); records[index] = { ...records[index], ...environmentRecord({ ...records[index], ...(await bodyJson(req)) }, records[index]), id: records[index].id, modelUrl: records[index].modelUrl, source: 'uploaded', updatedAt: new Date().toISOString() }; await writeUploadedEnvironments(records); return sendJson(res, 200, assetResponse(records[index])); }
     if (environmentItem && req.method === 'DELETE') { if (!requireAdmin(req, res)) return; const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const record = records.find((env) => env.id === id); if (!record) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); await writeUploadedEnvironments(records.filter((env) => env.id !== id)); if (record.storedFilename) await unlink(join(environmentUploadDir, record.storedFilename)).catch(() => {}); return sendJson(res, 200, assetResponse({ id })); }
 
-    if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'GET') { const models = (await readModels()).filter((m) => m.status === 'published' || m.visibility === 'public').sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))); return sendJson(res, 200, assetResponse(models)); }
+    if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'GET') { const models = (await readModels()).filter(isPublishedModel).sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))); return sendJson(res, 200, assetResponse(models)); }
+    const publishedModelItem = url.pathname.match(/^\/api\/models\/([^/]+)$/);
+    if (publishedModelItem && req.method === 'GET') {
+      let id;
+      try { id = decodeURIComponent(publishedModelItem[1]); }
+      catch { return sendJson(res, 400, { success: false, code: 'MODEL_ID_INVALID', message: 'Invalid model identifier.' }); }
+      const record = (await readModels()).find(model => isPublishedModel(model) && model.id === id);
+      return record ? sendJson(res, 200, assetResponse(record)) : sendJson(res, 404, { success: false, code: 'MODEL_NOT_FOUND', message: 'Published model not found.' });
+    }
     if(['/api/avatar-options','/api/profile/avatar'].includes(url.pathname)){await resolveAccountSession(req);if(req.method==='PUT'&&!await accountSession(req,res,true))return;}
     if (url.pathname === '/api/avatar-options' && req.method === 'GET') return sendJson(res, 200, assetResponse(await avatarCatalog(user(req))));
     if (url.pathname === '/api/profile/avatar' && req.method === 'GET') { const actor = user(req); const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id); if (!profile) { const account=req.muzikazAuthentication?.accountId&&await loadoutCodeStore.getAccount(req.muzikazAuthentication.accountId),asset=account?.selectedAvatarId&&account.selectedAvatarId!==STARTER_AVATAR.id?await designatedAvatar(req,actor,req.muzikazAuthentication,account):null;return sendJson(res,200,assetResponse(asset?{valid:true,profile:{userId:actor.id,assetId:asset.id,modelUrl:asset.modelUrl||null,buildAssetId:asset.buildAssetId||null,displayName:asset.name,accessType:'owned',selectedAt:account.updatedAt,scale:1,animation:'auto'}}:{valid:false,reason:'not-selected',profile:null}));} const asset = await validatedAvatar(actor, profile.assetId); return sendJson(res, 200, assetResponse(asset ? { valid: true, profile: { ...profile, modelUrl: asset.modelUrl||null, buildAssetId:asset.buildAssetId||null, displayName: asset.name, accessType: asset.accessType } } : { valid: false, reason: 'removed-or-revoked', profile: null })); }
@@ -1177,7 +1249,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/avatars' && req.method === 'POST') { const owner = session(req); const record = sanitizeRecord(await bodyJson(req), owner); const records = await readAvatars(); records.push(record); await writeAvatars(records); broadcast('avatar-created', record); return sendJson(res, 201, record); }
     const avatarDelete = url.pathname.match(/^\/api\/houses\/ioncore-house\/avatars\/([^/]+)$/);
     if (avatarDelete && req.method === 'DELETE') { const owner = session(req); const id = decodeURIComponent(avatarDelete[1]); const records = await readAvatars(); const record = records.find((item) => item.id === id); if (!record) return sendJson(res, 404, { error: 'Not found' }); if (record.ownerId !== owner && process.env.MUZIKAZ_ALLOW_MOD_DELETE !== 'true') return sendJson(res, 403, { error: 'Forbidden' }); await writeAvatars(records.filter((item) => item.id !== id)); broadcast('avatar-deleted', { id }); return sendJson(res, 200, { id }); }
-    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })); res.muzikazSessionId = session(req); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
+    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' }, res.muzikazRequestOrigin)); res.muzikazSessionId = session(req); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'GET') { if (!await accountSession(req, res)) return; activePresence(); return sendJson(res, 200, presencePayload()); }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const asset = await designatedAvatar(req, actor); activePresence(); const targetRoom=cleanText(body.roomId,''),voiceCapacity=(await roomEnvironment(targetRoom))?.publicDestination?128:maxHouseUsers;const roomMembers=new Set(activePresence().filter(member=>member.roomId===targetRoom&&member.accountId!==req.muzikazAuthentication.accountId).map(member=>member.accountId));if(roomMembers.size>=voiceCapacity)return sendJson(res,409,{error:'This room is full.',...presencePayload()}); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const authoritativePlayer=await authoritativeRooms.player(cleanText(body.roomId,''),'account:'+req.muzikazAuthentication.accountId);if(!authoritativePlayer||Date.now()-authoritativePlayer.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join the authoritative room before sending presence.','presence');body.position=authoritativePlayer.position;body.rotation={y:authoritativePlayer.yaw};actor.name=authoritativePlayer.username;const position = { x: clampNumber(body.position?.x, -100000, 100000, previous.position?.x || 0), y: clampNumber(body.position?.y, -10000, 10000, previous.position?.y || 0), z: clampNumber(body.position?.z, -100000, 100000, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, accountId: req.muzikazAuthentication.accountId, voiceEnabled: body.voiceEnabled === true, voiceCaption: body.voiceEnabled===true?cleanText(body.voiceCaption,'').slice(0,140):'', voiceCaptionAt: body.voiceEnabled===true&&body.voiceCaption?Math.min(Date.now(),Math.max(Date.now()-10000,Number(body.voiceCaptionAt)||0)):0, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl||authoritativePlayer.modelUrl||null, avatarBuildAssetId:asset?.buildAssetId||authoritativePlayer.avatarBuildAssetId||null, avatarName: asset?.name||authoritativePlayer.username, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
@@ -1216,14 +1288,15 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); if(person.accountId!==req.muzikazAuthentication.accountId)return sendJson(res,403,{error:'This chat presence belongs to another account.'});const player=await authoritativeRooms.player(person.roomId,'account:'+req.muzikazAuthentication.accountId);if(!player||player.replacedByRoom||Date.now()-player.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join this multiplayer room before chatting.','chat'); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' });
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
-    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
+    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media|models)\/([a-zA-Z0-9._-]+)$/);
+    const modelResource = uploadMatch&&['assets','models'].includes(uploadMatch[1])&&/\.(?:bin|ktx2)$/i.test(uploadMatch[2]);
+    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|tmp)$/i.test(path) || /\.bin$/i.test(path)&&!modelResource) return sendJson(res,404,{error:'Not found'});
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
-    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media)\/([a-zA-Z0-9._-]+)$/);
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
     let uploadedFile = '',privateUpload=false;
     if (uploadMatch) {
       const [,kind,name] = uploadMatch;
-      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
+      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)&&!modelResource) return sendJson(res,404,{error:'Not found'});
       if (kind === 'assets') {
         const asset = (await readAssets()).find(item => item.storedFilename === name);
         if (!asset) return sendJson(res,404,{error:'Not found'});
@@ -1234,21 +1307,38 @@ const server = createServer(async (req, res) => {
           if (!isAdmin(req) && owner !== asset.ownerId) return sendJson(res,404,{error:'Not found'});
         }
       }
+      if (kind === 'models') {
+        // Retain the persisted URLs produced by the original model service.
+        // Only a registered model file may be served from its legacy directory.
+        const allowedOrigins = new Set(['https://muzikaz.com','https://www.muzikaz.com','https://muzikazmodelmarket.onrender.com']);
+        try { if(process.env.PUBLIC_BASE_URL)allowedOrigins.add(new URL(process.env.PUBLIC_BASE_URL).origin); } catch {}
+        const refersToFile = value => {
+          if(typeof value !== 'string')return false;
+          if(/^\/?uploads\/models\//.test(value)) {
+            try { return new URL(value.replace(/^\//,''),'https://model-reference.invalid/').pathname==='/uploads/models/'+name; } catch { return false; }
+          }
+          try { const url = new URL(value);return allowedOrigins.has(url.origin)&&url.pathname==='/uploads/models/'+name; } catch { return false; }
+        };
+        const models = (await readModels()).filter(model => [model.modelUrl,model.iosModelUrl,model.thumbnailUrl].some(refersToFile));
+        const published = models.some(isPublishedModel);
+        if(!models.length || (!published && !isAdmin(req)))return sendJson(res,404,{error:'Not found'});
+        privateUpload=!published;
+      }
       if (kind === 'environments') {
         const environment = (await readUploadedEnvironments()).find(item => item.storedFilename === name || item.thumbnailUrl === '/uploads/environments/' + name);
         if (!environment || (environment.visibility === 'private' && !isAdmin(req))) return sendJson(res,404,{error:'Not found'});
         if(environment.visibility==='private')privateUpload=true;
       }
       if(kind==='media'&&!(await deviceMediaUploads.records()).some(record=>record.id===name))return sendJson(res,404,{error:'Not found'});
-      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir}[kind], name);
+      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir,models:modelUploadDir}[kind], name);
       const info = await lstat(uploadedFile).catch(()=>null);
       if (!info?.isFile() || info.isSymbolicLink()) return sendJson(res,404,{error:'Not found'});
     }
-    const pathsToTry = uploadedFile ? [uploadedFile] : [join(root, 'dist', path), join(root, path)];
-    if (!extname(path)) pathsToTry.push(join(root, 'dist', path + '.html'), join(root, path + '.html'));
+    const pathsToTry = uploadedFile ? [uploadedFile] : repositoryStaticSource ? [join(root,path)] : [join(root, 'dist', path), join(root, path)];
+    if (!extname(path)) pathsToTry.push(...(repositoryStaticSource ? [join(root,path+'.html')] : [join(root, 'dist', path + '.html'), join(root, path + '.html')]));
     let filePath = '';
     for (const possiblePath of pathsToTry) {
-      try { await stat(possiblePath); filePath = possiblePath; break; } catch {}
+      try { if((await stat(possiblePath)).isFile()){filePath = possiblePath; break;} } catch {}
     }
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
@@ -1256,11 +1346,11 @@ const server = createServer(async (req, res) => {
     const cacheControl = staticCacheControl(extension, {privateUpload});
     if(uploadMatch?.[1]==='media'){
       const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
-      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
-      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
+      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return streamFile(res,filePath,{start,end});}
+      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return streamFile(res,filePath);
     }
-    res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
-    createReadStream(filePath).pipe(res);
+    res.writeHead(200, corsHeaders({ 'Content-Type': path==='feed.xml' ? 'application/rss+xml; charset=utf-8' : mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }, res.muzikazRequestOrigin));
+    streamFile(res,filePath);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });
 
@@ -1283,4 +1373,4 @@ await loadMasterRuntime();
 const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayments()),30000);storeDeliveryTimer.unref();
 const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
 backgroundJob(()=>snapshotServer());
-server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
+server.listen(port, () => {console.log(`MUZIKAZ shared house server running on http://localhost:${port}`);startVoiceRuntime().catch(()=>{});});

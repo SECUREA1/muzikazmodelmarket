@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import {finishMarineDesign} from './marine-design-finish.js';
 import {createYachtBilliards} from './yacht-billiards.js';
 import * as THREE from '../vendor/three/three.module.min.js';
@@ -82,7 +83,7 @@ export function createHarborBoat(id){
  }
  const flag=new THREE.Group();flag.name='MARINA_ENSIGN';flag.position.set(-.65,1.22,1.65);tube(detail,[-.65,.36,1.65],[-.65,1.44,1.65],.012,chrome,'ENSIGN_STAFF');flag.add(part(new THREE.PlaneGeometry(.26,.16,4,2),material(0x65c3b7,.76,.01,{side:THREE.DoubleSide}),[.13,0,0]),part(new THREE.PlaneGeometry(.08,.16),ivory,[.045,0,.003]));detail.add(flag);cosmetic(detail);root.add(detail);
  const wake=cosmetic(new THREE.Group());wake.name='BOAT_WAKE_FOAM';const foam=[];for(let i=0;i<8;i++){const mesh=part(new THREE.RingGeometry(.21,.25,14,1,0,Math.PI),new THREE.MeshBasicMaterial({color:0xe1f9f5,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}),[0,-.165,2.3],[Math.PI/2,0,0]);mesh.name='COSMETIC_WAKE_RIPPLE';wake.add(mesh);foam.push(mesh);}cosmetic(wake);wake.visible=false;root.add(wake);
- root.userData={builderObject:true,modelId:id,watercraft:true,boatModel:true,vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES[id].position],speed:sailboat?8:11,turnSpeed:.8},dimensions:[2,sailboat?5.15:1.52,4.8],helmPose:HARBOR_HELM_POSES[id],boatRig:{wheel,throttle,propeller,rudder,boom,sail,flag,needles,wake,foam}};return finishMarineDesign(root,id);
+ root.userData={builderObject:true,modelId:id,watercraft:true,boatModel:true,vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES[id].position],speed:sailboat?8:11,turnSpeed:.8},dimensions:[2,sailboat?5.15:1.52,4.8],helmPose:HARBOR_HELM_POSES[id],boatRig:{wheel,throttle,propeller,rudder,boom,sail,flag,needles,wake,foam}};return finishVehicleDesign(THREE,finishMarineDesign(root,id),id);
 }
 export function updateHarborBoat(root,state={},elapsed=0){
  const rig=root?.userData?.boatRig;if(!rig)return;const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback,time=finite(elapsed),speed=finite(state.speed),throttle=THREE.MathUtils.clamp(finite(state.throttle),-1,1),rudder=THREE.MathUtils.clamp(finite(state.rudder,finite(state.steering)),-1,1),rpm=Math.max(0,finite(state.rpm,Math.abs(throttle)*4800)),trim=THREE.MathUtils.clamp(finite(state.sailTrim,.45),0,1),power=THREE.MathUtils.clamp(finite(state.sailPower,.6),0,1);
@@ -141,5 +142,5 @@ function createSuperyacht(){
  box('FLYBRIDGE_HELM',[2,1.1,.7],[0,5.55,-10.5],navy);box('HELM_DISPLAY',[1.6,.35,.06],[0,5.85,-10.1],glass);const wheel=new THREE.Group();wheel.position.set(0,5.45,-10);wheel.add(part(new THREE.TorusGeometry(.32,.035,8,24),chrome));root.add(wheel);
  const aimGeometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),billiardAim=new THREE.Line(aimGeometry,new THREE.LineBasicMaterial({color:0xffdf85}));billiardAim.name='BILLIARDS_AIM_GUIDE';billiardAim.visible=false;root.add(billiardAim);
  const throttle=new THREE.Group(),flag=new THREE.Group(),wake=new THREE.Group();root.add(throttle,flag,wake);
- root.userData={builderObject:true,modelId:'harbor-yacht',watercraft:true,boatModel:true,dimensions:[12,7,42],helmPose:HARBOR_HELM_POSES['harbor-yacht'],vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES['harbor-yacht'].position],speed:9,turnSpeed:.3},boatRig:{wheel,throttle,flag,wake,foam:[],needles:[],dancer,billiardBalls,billiardAim}};return finishMarineDesign(root,'harbor-yacht');
+ root.userData={builderObject:true,modelId:'harbor-yacht',watercraft:true,boatModel:true,dimensions:[12,7,42],helmPose:HARBOR_HELM_POSES['harbor-yacht'],vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES['harbor-yacht'].position],speed:9,turnSpeed:.3},boatRig:{wheel,throttle,flag,wake,foam:[],needles:[],dancer,billiardBalls,billiardAim}};return finishVehicleDesign(THREE,finishMarineDesign(root,'harbor-yacht'),'harbor-yacht');
 }

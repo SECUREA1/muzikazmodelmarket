@@ -18,7 +18,7 @@ function lifeState(sim,environment,now){
  const life=sim.residentLife ||= {version:1,worldId:environment.id||FITNESS_ID,worldName:environment.name||'MUZIKAZ Fitness Centre',sequence:0,conversations:[],events:[],stats:{conversations:0,practices:0,work:0}};
  life.conversations||=[];life.events||=[];life.stats||={};for(const field of ['conversations','practices','work'])life.stats[field]||=0;life.sequence||=0;return life;
 }
-function say(npc,text,now,duration=4500){const info=npc.resident;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.pauseUntil=now+duration;info.gesture=info.duty==='trainer'||info.duty==='referee'?'explain':'talk';}
+function say(npc,text,now,duration=4500){const info=npc.resident;delete info.speechRecipients;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.pauseUntil=now+duration;info.gesture=info.duty==='trainer'||info.duty==='referee'?'explain':'talk';}
 function baseSkills(source,index){const activity=source.activity||'stretching',main=skillFor(activity);return {...(source.duty==='trainer'?Object.fromEntries((source.specialties||[]).map(skill=>[skill,88+index%3*3])):{[main]:45+hash(source.id)%37,social:38+hash(source.id+'social')%30}),...source.skills};}
 function ensureResident(sim,source,index,now){
  let npc=sim.actors[source.id];

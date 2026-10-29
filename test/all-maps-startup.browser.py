@@ -22,12 +22,15 @@ def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--shard', default='0/1', help='zero-based shard/count')
     parser.add_argument('--map', action='append', dest='maps', help='limit to exact map ID (repeatable)')
+    parser.add_argument('--first-map', action='append', default=[], help='validate these selected map IDs first (repeatable; coverage is unchanged)')
     parser.add_argument('--list', action='store_true', help='list the real public directory without launching maps')
     parser.add_argument('--timeout', type=int, default=120000, help='startup timeout per map in milliseconds')
+    parser.add_argument('--device-scale-factor', type=float, default=.5, help='render resolution multiplier; CSS viewport and model geometry remain unchanged')
     parser.add_argument('--report', type=Path, help='JSON result artifact')
     value = parser.parse_args()
     value.shard_index, value.shard_count = map(int, value.shard.split('/'))
     assert 0 <= value.shard_index < value.shard_count
+    assert .25 <= value.device_scale_factor <= 2
     return value
 
 
@@ -43,6 +46,7 @@ CORRUPT_STORAGE = {
 }
 WEBGL_PROBE = """() => {
   window.__mapStartupDraws = 0;
+  window.__mapStartupTriangles = 0;
   window.__mapStartupContexts = [];
   const getContext = HTMLCanvasElement.prototype.getContext;
   HTMLCanvasElement.prototype.getContext = function(...args) {
@@ -53,7 +57,12 @@ WEBGL_PROBE = """() => {
       for(const name of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']) {
         if(typeof context[name] !== 'function')continue;
         const draw=context[name];
-        context[name]=function(...values){window.__mapStartupDraws++;return draw.apply(this,values);};
+        context[name]=function(...values){
+          window.__mapStartupDraws++;
+          const mode=values[0],count=values[name.startsWith('drawArrays')?2:1],instances=name.endsWith('Instanced')?values[name==='drawArraysInstanced'?3:4]:1;
+          window.__mapStartupTriangles+=(mode===4?Math.floor(count/3):mode===5||mode===6?Math.max(0,count-2):0)*instances;
+          return draw.apply(this,values);
+        };
       }
     }
     return context;
@@ -87,7 +96,7 @@ await database.transaction(data=>{for(const profile of PROVING_PROFILES)data.tra
 
 def diagnostics(page):
     try:
-        return page.evaluate("""() => ({url:location.href,game:window.MuzikazHouseExplorer?.snapshot(),hockey:window.MuzikazHockey?.snapshot(),arcade:window.NeonJunction?.snapshot(),status:document.querySelector('#house-game-load-status')?.textContent,bodyControls:document.body.dataset.gameControls,draws:window.__mapStartupDraws,contextLost:window.__mapStartupContexts?.some(gl=>gl.isContextLost())})""")
+        return page.evaluate("""() => ({url:location.href,game:window.MuzikazHouseExplorer?.snapshot(),models:window.MuzikazHouseExplorer?.inspectModels?.(),hockey:window.MuzikazHockey?.snapshot(),arcade:window.NeonJunction?.snapshot(),status:document.querySelector('#house-game-load-status')?.textContent,bodyControls:document.body.dataset.gameControls,draws:window.__mapStartupDraws,submittedTriangles:window.__mapStartupTriangles,contextLost:window.__mapStartupContexts?.some(gl=>gl.isContextLost())})""")
     except Exception as error:
         return {'diagnosticError': str(error)}
 
@@ -130,10 +139,14 @@ def main():
                         assert response.ok, response.text()
                         worlds = response.json()['data']
                         worlds = sorted((world for world in worlds if world.get('visibility') != 'private' and world.get('playable') is not False), key=lambda world: world['id'])
+                        public_count = len(worlds)
                         if args.maps:
                             requested = set(args.maps)
                             assert requested <= {world['id'] for world in worlds}, requested
                             worlds = [world for world in worlds if world['id'] in requested]
+                        priority = {world_id: index for index, world_id in enumerate(args.first_map)}
+                        assert set(priority) <= {world['id'] for world in worlds}, 'unknown prioritized map'
+                        worlds.sort(key=lambda world: (priority.get(world['id'], len(priority)), world['id']))
                         worlds = [world for index, world in enumerate(worlds) if index % args.shard_count == args.shard_index]
                         assert worlds, 'no public maps selected'
                         if args.list:
@@ -143,20 +156,24 @@ def main():
                         print(f'Starting {len(worlds)} public maps in shard {args.shard}.', flush=True)
                         for index, world in enumerate(worlds):
                             started = time.monotonic()
-                            context = browser.new_context(storage_state=auth, service_workers='block', viewport={'width': 800, 'height': 650}, is_mobile=True, has_touch=True, reduced_motion='reduce')
+                            context = browser.new_context(storage_state=auth, service_workers='block', viewport={'width': 800, 'height': 650}, device_scale_factor=args.device_scale_factor, is_mobile=True, has_touch=True, reduced_motion='reduce')
                             context.add_init_script('for(const [key,value] of Object.entries(' + json.dumps(CORRUPT_STORAGE) + '))localStorage.setItem(key,value)')
                             context.add_init_script('(' + WEBGL_PROBE + ')();')
                             page = context.new_page()
-                            errors, modules, invalid_json, shader_errors = [], [], [], []
-                            page.on('pageerror', lambda error: errors.append(str(error)))
-                            page.on('console', lambda message: shader_errors.append(message.text) if message.type == 'error' and ('WebGLProgram' in message.text or 'VALIDATE_STATUS' in message.text) else None)
-                            def response_check(value):
+                            errors, modules, invalid_json, shader_errors, asset_errors, api_errors = [], [], [], [], [], []
+                            page.on('pageerror', lambda error, errors=errors: errors.append(str(error)))
+                            page.on('console', lambda message, shader_errors=shader_errors: shader_errors.append(message.text) if message.type == 'error' and ('WebGLProgram' in message.text or 'VALIDATE_STATUS' in message.text) else None)
+                            def response_check(value, modules=modules, invalid_json=invalid_json, asset_errors=asset_errors, api_errors=api_errors):
                                 path = urlsplit(value.url).path
                                 if not value.url.startswith(base + '/'):
                                     return
                                 content_type = value.headers.get('content-type', '').lower()
                                 if value.request.resource_type == 'script' and (value.status >= 400 or 'javascript' not in content_type):
                                     modules.append({'url': value.url, 'status': value.status, 'contentType': content_type})
+                                if value.status >= 400 and (path.endswith(('.glb', '.gltf', '.bin', '.ktx2', '.wasm')) or value.request.resource_type == 'image'):
+                                    asset_errors.append({'path': path, 'status': value.status})
+                                if value.status >= 400 and path.startswith('/api/'):
+                                    api_errors.append({'path': path, 'status': value.status})
                                 if value.status == 200 and (path.endswith('.json') or path == '/api/environments'):
                                     try:
                                         value.json()
@@ -167,7 +184,7 @@ def main():
                                         # observer limitation, not a JSON parse
                                         # failure in the game itself.
                                         detail = str(error)
-                                        if 'Protocol error (Network.getResponseBody)' in detail or 'Response body is not available for a response that was navigated away from' in detail:
+                                        if 'Protocol error (Network.getResponseBody)' in detail or 'Response body is not available for a response that was navigated away from' in detail or 'Target page, context or browser has been closed' in detail:
                                             return
                                         invalid_json.append({'url': value.url, 'contentType': content_type, 'error': str(error)})
                             page.on('response', response_check)
@@ -179,7 +196,7 @@ def main():
                                   if(window.MuzikazHouseExplorer){const state=MuzikazHouseExplorer.snapshot();return state.controlsReady&&state.gameplayStarted&&state.roomId===id&&(!state.serverHostedRoom||state.serverReady&&state.serverPlayerInitialized);}
                                   if(window.MuzikazHockey)return MuzikazHockey.snapshot().ready;
                                   return window.NeonJunction?.ready===true;
-                                }""", arg=world['id'], timeout=args.timeout)
+                                }""", arg=world['id'], timeout=args.timeout, polling=250)
                                 # The two dedicated sports pages have an honest
                                 # lobby readiness state. Start their real live
                                 # match too instead of accepting a loaded menu.
@@ -196,28 +213,51 @@ def main():
                                     page.locator('#join-game').click()
                                     page.locator('#start-round').click()
                                     page.wait_for_function('NeonJunction.snapshot().gameStarted && NeonJunction.snapshot().liveGame', timeout=30000)
-                                page.wait_for_function('window.__mapStartupDraws > 0 && !window.__mapStartupContexts.some(gl=>gl.isContextLost())', timeout=30000)
+                                page.wait_for_function('window.__mapStartupTriangles > 0 && !window.__mapStartupContexts.some(gl=>gl.isContextLost())', timeout=30000)
+                                if page.evaluate('!!window.MuzikazHouseExplorer'):
+                                    page.wait_for_function("""() => {const models=MuzikazHouseExplorer.inspectModels();return !Object.values(models.pending).some(count=>count>0);}""", timeout=30000, polling=1000)
                                 state = diagnostics(page)
                                 assert not errors, errors
                                 assert not modules, modules
                                 assert not invalid_json, invalid_json
                                 assert not shader_errors, shader_errors
+                                assert not asset_errors, asset_errors
+                                assert not api_errors, api_errors
                                 game = state.get('game') or {}
                                 hockey = state.get('hockey') or {}
                                 arcade = state.get('arcade') or {}
+                                models = state.get('models')
+                                if game:
+                                    assert models and models['environment']['meshes'] > 0, models
+                                    assert models['environment']['visibleMeshes'] > 0, models
+                                    assert not models['environment']['invalid'] and not models['placed']['invalid'], models
+                                    assert not models['environment']['empty'] and not models['placed']['empty'], models
+                                    assert not models['placements']['missing'] and not models['placements']['empty'], models
+                                    assert not models['placements']['duplicates'], models
+                                    assert models['placements']['loaded'] == models['placements']['expected'], models
+                                    assert models['embedded']['loaded'] == models['embedded']['expected'], models
+                                    assert models['actors']['loaded'] == models['actors']['expected'], models
+                                else:
+                                    assert (hockey or arcade)['render']['triangles'] > 0, state
                                 record.update({'passed': True, 'draws': state.get('draws'), 'roomId': game.get('roomId'), 'serverReady': game.get('serverReady'),
                                                'controlsReady': game.get('controlsReady', hockey.get('ready', bool(arcade.get('gameStarted')))),
                                                'gameplayStarted': game.get('gameplayStarted', hockey.get('running', bool(arcade.get('gameStarted')))),
-                                               'contextLost': state.get('contextLost'), 'pageErrors': errors, 'modules': modules, 'invalidJson': invalid_json, 'shaderErrors': shader_errors})
+                                               'contextLost': state.get('contextLost'), 'pageErrors': errors.copy(), 'modules': modules.copy(), 'invalidJson': invalid_json.copy(), 'shaderErrors': shader_errors.copy(),
+                                               'submittedTriangles': state.get('submittedTriangles'), 'models': models, 'assetErrors': asset_errors.copy(), 'apiErrors': api_errors.copy(),
+                                               'renderResolution': args.device_scale_factor, 'sportsGraphics': hockey.get('surfaceStatus') or arcade.get('graphics')})
                             except Exception as error:
-                                record.update({'passed': False, 'error': str(error), 'diagnostic': diagnostics(page), 'pageErrors': errors, 'modules': modules, 'invalidJson': invalid_json, 'shaderErrors': shader_errors})
+                                record.update({'passed': False, 'error': str(error), 'diagnostic': diagnostics(page), 'pageErrors': errors.copy(), 'modules': modules.copy(), 'invalidJson': invalid_json.copy(), 'shaderErrors': shader_errors.copy(), 'assetErrors': asset_errors.copy(), 'apiErrors': api_errors.copy()})
                             finally:
                                 record['seconds'] = round(time.monotonic() - started, 2)
                                 results.append(record)
-                                print(('PASS' if record['passed'] else 'FAIL') + f" {index+1}/{len(worlds)} {world['id']} ({record['seconds']}s)" + ('' if record['passed'] else '\n' + json.dumps(record, default=str)[:7000]), flush=True)
+                                failure = {key: record.get(key) for key in ['id', 'error', 'assetErrors', 'apiErrors', 'pageErrors', 'modules', 'invalidJson', 'shaderErrors']}
+                                if not record['passed']:
+                                    failure['models'] = record.get('diagnostic', {}).get('models')
+                                    failure['status'] = record.get('diagnostic', {}).get('status')
+                                print(('PASS' if record['passed'] else 'FAIL') + f" {index+1}/{len(worlds)} {world['id']} ({record['seconds']}s)" + ('' if record['passed'] else '\n' + json.dumps(failure, default=str)[:7000]), flush=True)
                                 if args.report:
                                     args.report.parent.mkdir(parents=True, exist_ok=True)
-                                    args.report.write_text(json.dumps({'shard': args.shard, 'results': results}, indent=2))
+                                    args.report.write_text(json.dumps({'shard': args.shard, 'publicDirectoryCount': public_count, 'selectedCount': len(worlds), 'completedCount': len(results), 'renderResolution': args.device_scale_factor, 'results': results}, indent=2))
                                 context.close()
                         failures = [record for record in results if not record['passed']]
                         print(f"All-map startup shard {args.shard}: {len(results)-len(failures)}/{len(results)} passed.", flush=True)

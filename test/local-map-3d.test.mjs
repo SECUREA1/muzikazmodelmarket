@@ -1,7 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {mirrorMapMeshes} from '../public/js/local-map-3d.js';
+
+// Exercise the actual mount path and the actual adapter helper. Stopping at
+// renderer construction keeps these policy cases independent of a GPU/DOM.
+const qualitySource=await readFile(new URL('../public/js/environments/environment-quality.js',import.meta.url),'utf8');
+const mapSource=await readFile(new URL('../public/js/local-map-3d.js',import.meta.url),'utf8');
+const withoutModuleSyntax=source=>source.replace(/^import .*;\n/gm,'').replace(/export /g,'');
+for(const {name,masked=false,antialias}of [
+ {name:'ANGLE (Google, Vulkan (SwiftShader Device))',antialias:false},
+ {name:'ANGLE (NVIDIA GeForce RTX)',antialias:true},
+ {name:'SwiftShader',masked:true,antialias:true}
+])test('3D map retains low-power adapter and chooses antialiasing for '+(masked?'masked GPU':name),async()=>{
+ let options,probeOptions,released=0;
+ const stopped=new Error('renderer construction observed'),gl={RENDERER:1,
+  getExtension(extension){if(extension==='WEBGL_debug_renderer_info')return masked?null:{UNMASKED_RENDERER_WEBGL:2};if(extension==='WEBGL_lose_context')return {loseContext(){released++;}};return null;},
+  getParameter(key){return key===2?name:'WebKit WebGL';}
+ };
+ const context=vm.createContext({THREE:{...THREE,WebGLRenderer:class{constructor(value){options=value;throw stopped;}}},
+  document:{createElement(kind){assert.equal(kind,'canvas');return {getContext(kind,value){assert.equal(kind,'webgl2');probeOptions=value;return gl;}};}}
+ });
+ vm.runInContext(withoutModuleSyntax(qualitySource)+'\n'+withoutModuleSyntax(mapSource)+'\nglobalThis.mount=mountLocalMap3D;',context);
+ await assert.rejects(context.mount({}, {environment:{name:'Policy fixture'},getRoots:()=>[]}),error=>error===stopped);
+ assert.equal(options.antialias,antialias);
+ assert.equal(options.powerPreference,'low-power');
+ assert.equal(probeOptions.powerPreference,'low-power','probe the adapter the map will actually request');
+ assert.equal(probeOptions.antialias,false,'the temporary capability probe stays lightweight');
+ assert.equal(released,1,'the temporary context is released before map renderer construction');
+});
+
 test('map owns disposable wrappers while sharing transformed game mesh data',()=>{
  const texture=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1);texture.needsUpdate=true;
  const parent=new THREE.Group(),root=new THREE.Group(),geometry=new THREE.BoxGeometry(2,3,4),material=new THREE.MeshBasicMaterial({map:texture}),mesh=new THREE.Mesh(geometry,material);parent.position.set(10,2,-8);root.rotation.y=.7;root.scale.setScalar(2);mesh.position.set(3,0,9);parent.add(root);root.add(mesh);
@@ -53,4 +83,36 @@ test('live material colors and scalar properties update without a source shader 
  assert.equal(material.version,version);assert.equal(map.update(),true);assert.equal(copy.version,copyVersion,'uniform/state changes retain the map shader version');assert.equal(copy.color,color);assert.equal(copy.normalScale,normalScale);
  for(const key of ['emissiveIntensity','opacity','roughness','metalness','clearcoat','transmission','iridescence','depthWrite'])assert.equal(copy[key],material[key],key);
  assert.equal(copy.color.getHex(),material.color.getHex());assert.equal(copy.emissive.getHex(),material.emissive.getHex());assert.deepEqual(copy.normalScale,material.normalScale);assert.deepEqual(copy.iridescenceThicknessRange,material.iridescenceThicknessRange);assert.notEqual(copy.iridescenceThicknessRange,material.iridescenceThicknessRange);assert.equal(map.update(),false);map.dispose();
+});
+
+test('map transform synchronization updates shared ancestors once and follows reparented meshes',()=>{
+ const parent=new THREE.Group(),root=new THREE.Group(),geometry=new THREE.BoxGeometry(),material=new THREE.MeshBasicMaterial();parent.add(root);
+ for(let i=0;i<300;i++)root.add(new THREE.Mesh(geometry,material));
+ const map=mirrorMapMeshes([root]);let updates=0;const update=parent.updateWorldMatrix;
+ parent.updateWorldMatrix=function(...args){updates++;return update.apply(this,args);};
+ parent.position.x=7;root.position.z=4;assert.equal(map.update(),true);assert.equal(updates,1,'shared parent is refreshed once, not once per mirrored mesh');
+ for(const {source,mesh}of map.pairs)assert.deepEqual(mesh.matrix.elements,source.matrixWorld.elements);
+ const outside=new THREE.Group(),moved=root.children[0];outside.position.y=12;outside.add(moved);moved.position.x=3;
+ assert.equal(map.update(),true);assert.equal(map.pairs[0].mesh.matrix.elements[13],12);assert.equal(map.pairs[0].mesh.matrix.elements[12],3);
+ root.visible=false;map.update();assert.equal(map.pairs[1].mesh.visible,false);assert.equal(map.pairs[0].mesh.visible,true);
+ map.dispose();parent.updateWorldMatrix=update;geometry.dispose();material.dispose();
+});
+
+test('expensive map frames leave input time after completing their work',async()=>{
+ const {mapFrameDeadline}=await import('../public/js/local-map-3d.js');
+ assert.equal(mapFrameDeadline(100,105),155);
+ assert.equal(mapFrameDeadline(100,300),700,'a 200ms frame leaves 400ms after completion, rather than drawing immediately again');
+ assert.equal(mapFrameDeadline(100,2100),3100,'cooldown stays bounded after a very slow frame');
+});
+
+
+test('the open map suspends duplicate world rendering without changing XR rendering',async()=>{
+ const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
+ const begin=source.indexOf('    if(!districtMap.dialog.open||renderer.xr.isPresenting){');
+ const code=source.slice(begin,source.indexOf('    // WebXR publishes',begin));
+ for(const [open,xr,expected]of [[false,false,1],[true,false,0],[true,true,1]]){
+  let draws=0,sceneryUpdates=0;
+  vm.runInNewContext(code,{districtMap:{dialog:{open}},renderer:{xr:{isPresenting:xr},render(){draws++;}},worldScenery:{update(){sceneryUpdates++;}},reducedMotion:false,clock:{elapsedTime:1},displayCamera:()=>({}),dayNightLighting:{update:()=>({})},playerRig:{position:{}},yachtGames:{presentCamera(){}},islandBuzz:{render:()=>false},scene:{},islandUI:{visual:()=>({}),reduced:()=>false},time:10,playerPreferences:{}});
+  assert.equal(draws,expected);assert.equal(sceneryUpdates,expected);
+ }
 });

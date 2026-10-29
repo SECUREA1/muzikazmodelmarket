@@ -288,7 +288,7 @@ test('environment builder places grounded 3D assets and persists complete runtim
   for (const control of ['scene-canvas', 'side-view-canvas', 'elevation-control', 'snap-ground', 'animation-enabled', 'interact-object']) {
     assert.match(html, new RegExp(`id="${control}"`));
   }
-  for (const feature of ['GLTFLoader', 'cloneSkeleton', 'Raycaster', 'groundAt', 'groundOffset', 'materialSettings', 'animationState', 'functionalSettings', 'OrbitControls']) {
+  for (const feature of ['createGameModelLoader', 'cloneSkeleton', 'Raycaster', 'groundAt', 'groundOffset', 'materialSettings', 'animationState', 'functionalSettings', 'OrbitControls']) {
     assert.match(script, new RegExp(feature));
   }
   assert.match(script, /outputColorSpace=THREE\.SRGBColorSpace/);

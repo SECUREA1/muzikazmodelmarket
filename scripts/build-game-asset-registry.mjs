@@ -4,7 +4,13 @@ import {normalizeCatalogModel} from '../public/js/builder-catalog.js';
 
 const root = resolve(import.meta.dirname, '..');
 const publicRoot = resolve(root, 'public');
-const output = resolve(publicRoot, 'models/game-asset-registry.json');
+const args = process.argv.slice(2);
+const outputArgs = args.filter(value => value.startsWith('--output='));
+if (args.some(value => value !== '--check' && !value.startsWith('--output=')) || args.filter(value => value === '--check').length > 1 || outputArgs.length > 1 || outputArgs.some(value => value === '--output=')) {
+  throw new Error('Use --check to verify without writing, or --output=/path/registry.json to choose an artifact destination.');
+}
+const check = args.includes('--check');
+const output = outputArgs.length ? resolve(outputArgs[0].slice('--output='.length)) : resolve(publicRoot, 'models/game-asset-registry.json');
 const manifests = ['public/models/backpack-assets.json', 'public/models/glb-models.json', 'public/models/toolkit-assets.json'];
 const webPath = path => `/${relative(root, path).split(sep).join('/')}`;
 const id = value => String(value).toLowerCase().replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -86,6 +92,7 @@ for (const manifest of manifests) {
         builderCategory: normalized?.category || raw.builderCategory || 'props', category: normalized?.category || raw.builderCategory || 'props',
         assetType: normalized?.type || 'prop', basketballTeam: normalized?.basketballTeam || null,
         format: 'procedural-3d', native: true, dimensions: raw.dimensions || null,
+        ...(raw.visualDesign ? {visualDesign:{...raw.visualDesign}} : {}),
         priceMzk: raw.priceMzk, description: raw.description || '',
         ...Object.fromEntries(['earnedOnly','earnedWorld','tradable'].filter(key=>Object.hasOwn(raw,key)).map(key=>[key,raw[key]])),
         behavior: normalized?.behavior || settings.behavior || raw.behavior || 'decor', function_data: settings,
@@ -119,5 +126,16 @@ for (const path of files.filter(path => /\.(glb|gltf)$/i.test(path))) {
   records.set(item.assetId, item);
 }
 const registry = { schemaVersion: 1, discoveryRoots: ['/public/models', '/public/images', '/public/assets'], assets: [...records.values()].sort((a, b) => a.assetId.localeCompare(b.assetId)), audit: { assetCount: records.size, generatedCount: [...records.values()].filter(item => item.generated).length, warnings } };
-await writeFile(output, `${JSON.stringify(registry, null, 2)}\n`);
-console.log(`Registered ${registry.audit.assetCount} assets (${registry.audit.generatedCount} generated recipes); ${warnings.filter(item => item.level === 'error').length} broken paths.`);
+const encoded = `${JSON.stringify(registry, null, 2)}\n`;
+if (check) {
+  let actual = null;
+  try { actual = await readFile(output, 'utf8'); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (actual !== encoded) {
+    console.error('Generated asset registry is missing or out of date. Run npm run build:asset-registry and review the changes.');
+    process.exitCode = 1;
+  } else console.log(`Verified ${registry.audit.assetCount} registered assets; generated registry is current.`);
+} else {
+  await writeFile(output, encoded);
+  console.log(`Registered ${registry.audit.assetCount} assets (${registry.audit.generatedCount} generated recipes); ${warnings.filter(item => item.level === 'error').length} broken paths.`);
+}

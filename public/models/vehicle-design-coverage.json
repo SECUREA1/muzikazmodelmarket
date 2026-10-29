@@ -1,0 +1,346 @@
+{
+  "version": "crafted-vehicles-v1",
+  "counts": {
+    "catalog": 33,
+    "rendered": 33,
+    "baselineCompared": 33,
+    "families": {
+      "road": 5,
+      "air-marine": 13,
+      "industrial-rides": 15
+    }
+  },
+  "failures": [],
+  "items": [
+    {
+      "id": "frontier-pickup",
+      "family": "road",
+      "version": "crafted-vehicles-v1",
+      "details": 58,
+      "meshes": 181,
+      "triangles": 18060,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "alpine-quad",
+      "family": "road",
+      "version": "crafted-vehicles-v1",
+      "details": 42,
+      "meshes": 162,
+      "triangles": 16632,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "grand-tourer",
+      "family": "road",
+      "version": "crafted-vehicles-v1",
+      "details": 59,
+      "meshes": 178,
+      "triangles": 17852,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "touring-motorcycle",
+      "family": "road",
+      "version": "crafted-vehicles-v1",
+      "details": 28,
+      "meshes": 105,
+      "triangles": 10176,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "dune-quad",
+      "family": "road",
+      "version": "crafted-vehicles-v1",
+      "details": 29,
+      "meshes": 59,
+      "triangles": 9176,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "corsair-aircraft",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 36,
+      "meshes": 276,
+      "triangles": 19046,
+      "uvMissing": 0,
+      "uvGeometries": 6
+    },
+    {
+      "id": "diamond-da40",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 36,
+      "meshes": 128,
+      "triangles": 10368,
+      "uvMissing": 0,
+      "uvGeometries": 3
+    },
+    {
+      "id": "piper-cub",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 36,
+      "meshes": 226,
+      "triangles": 10348,
+      "uvMissing": 0,
+      "uvGeometries": 3
+    },
+    {
+      "id": "harbor-skiff",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 13,
+      "meshes": 163,
+      "triangles": 15566,
+      "uvMissing": 0,
+      "uvGeometries": 1
+    },
+    {
+      "id": "harbor-sailboat",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 14,
+      "meshes": 173,
+      "triangles": 18828,
+      "uvMissing": 0,
+      "uvGeometries": 3
+    },
+    {
+      "id": "harbor-yacht",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 35,
+      "meshes": 270,
+      "triangles": 34462,
+      "uvMissing": 0,
+      "uvGeometries": 1
+    },
+    {
+      "id": "harbor-patrol",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 29,
+      "meshes": 196,
+      "triangles": 17969,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "harbor-fishing-boat",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 31,
+      "meshes": 306,
+      "triangles": 22771,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "resort-paddle-boat",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 13,
+      "meshes": 42,
+      "triangles": 3026,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "resort-pontoon",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 16,
+      "meshes": 81,
+      "triangles": 5650,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "shipping-feeder",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 22,
+      "meshes": 159,
+      "triangles": 11680,
+      "uvMissing": 0,
+      "uvGeometries": 1
+    },
+    {
+      "id": "shipping-container",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 26,
+      "meshes": 217,
+      "triangles": 15656,
+      "uvMissing": 0,
+      "uvGeometries": 1
+    },
+    {
+      "id": "shipping-tanker",
+      "family": "air-marine",
+      "version": "crafted-vehicles-v1",
+      "details": 24,
+      "meshes": 137,
+      "triangles": 10592,
+      "uvMissing": 0,
+      "uvGeometries": 1
+    },
+    {
+      "id": "tower-crane",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 10,
+      "meshes": 667,
+      "triangles": 31348,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "site-dumptruck",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 28,
+      "meshes": 422,
+      "triangles": 27024,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "site-bulldozer",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 25,
+      "meshes": 239,
+      "triangles": 10564,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "site-excavator",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 26,
+      "meshes": 258,
+      "triangles": 11648,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "utility-cargo-trailer",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 11,
+      "meshes": 48,
+      "triangles": 3920,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "wooden-cart",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 5,
+      "meshes": 72,
+      "triangles": 6008,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "camp-canoe-rack",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 6,
+      "meshes": 22,
+      "triangles": 2188,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "funhouse-clown-car",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 2,
+      "meshes": 176,
+      "triangles": 54634,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "arcade-part-train",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 52,
+      "meshes": 239,
+      "triangles": 20798,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "arcade-part-coaster",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 9,
+      "meshes": 156,
+      "triangles": 9576,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "arcade-part-train-engine",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 16,
+      "meshes": 26,
+      "triangles": 3204,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "arcade-part-train-carriage",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 12,
+      "meshes": 23,
+      "triangles": 3186,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "arcade-part-coaster-car",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 9,
+      "meshes": 17,
+      "triangles": 1004,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "factory-training-missile",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 5,
+      "meshes": 28,
+      "triangles": 2856,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    },
+    {
+      "id": "factory-cargo-rocket",
+      "family": "industrial-rides",
+      "version": "crafted-vehicles-v1",
+      "details": 5,
+      "meshes": 32,
+      "triangles": 3080,
+      "uvMissing": 0,
+      "uvGeometries": 0
+    }
+  ]
+}

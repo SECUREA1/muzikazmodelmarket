@@ -84,7 +84,7 @@ export function createSpeechService({generate=defaultGenerate,getStatus=generate
   async voices(){
    let state;try{state=await getStatus();}catch{state={available:false,modelReady:false,status:'unavailable'};}
    const available=state?.available===true,modelReady=state?.modelReady===true;
-   return {available,modelReady,status:available&&modelReady?'ready':state?.status==='loading'?'loading':'unavailable',voices:definitions.map(item=>({...item,available,modelReady}))};
+   return {available,modelReady,status:available&&modelReady?'ready':state?.status==='loading'?'loading':'unavailable',...(typeof state?.message==='string'?{message:state.message}:{}),...(Number.isFinite(state?.retryAfter)?{retryAfter:state.retryAfter}:{}),voices:definitions.map(item=>({...item,available,modelReady}))};
   },
   async generate(value,{clientId='unknown',rateChecked=false,signal}={}){
    if(!rateChecked)checkRateLimit(clientId);

@@ -9,7 +9,7 @@ const sameFloor=(a,b)=>Math.abs((a.y||0)-(b.y||0))<1.2;
 const present=actor=>actor?.resident&&actor.active!==false&&(actor.health===undefined||actor.health>0)&&finite(actor.position)&&finite(actor.resident.home);
 const occupied=actor=>{
  const r=actor.resident;
- return r.casino||r.factory||r.fitness||r.activitySuspended||actor.aiTask?.status==='active'||r.machineWork?.status==='active'||r.objective?.status==='active'||r.goal?.kind==='objective'||r.conversationId;
+ return r.casino||r.factory||r.fitness||r.activitySuspended||r.visitorApproach||actor.aiTask?.status==='active'||r.machineWork?.status==='active'||r.objective?.status==='active'||r.goal?.kind==='objective'||r.conversationId;
 };
 const plans={
  play:{title:'Practice passing and welcome players',duties:[['Set up the passing drill','Check spacing and welcome the next player'],['Lead a controlled passing sequence','Receive passes and return them'],['Review timing with the team','Share one improvement for the next round']]},
@@ -42,6 +42,7 @@ function setGoal(actor,task,now){
   if(r.goal?.familyTaskId!==task.id)r.goal={kind:'social',target:{...task.workPosition},reason:task.title,status:'planned',startedAt:now,familyTaskId:task.id};
  }else r.goal={...task.workPosition};
 }
+const blockedApproach=(actor,task)=>actor.resident.goal?.familyTaskId===task.id&&actor.resident.goal.status==='blocked';
 function recordHistory(info,task,partner,status,now){
  info.communityHistory||=[];
  info.communityHistory.push({id:task.id,title:task.title,kind:task.kind,partnerId:task.partnerId,partnerName:partner?.resident?.name||'Teammate',responsibility:task.assignments?.[1]||task.responsibility,status,at:now});
@@ -72,7 +73,7 @@ function complete(sim,a,b,now){
   if(info.needs.purpose!==undefined)info.needs.purpose=residentClamp(info.needs.purpose+20);
   if(info.skills){residentSkillGain(info.skills,'social',.45);const skill=info.context?.primarySkill;if(skill&&Object.hasOwn(info.skills,skill))residentSkillGain(info.skills,skill,.35);}
   info.memory||=[];info.memory.push({kind:'community-task',subjectId:partner.id,text:'Completed '+task.title.toLowerCase()+' with '+partner.resident.name+'. My part: '+own.assignments[1]+'.',at:now});info.memory=info.memory.slice(-8);
-  info.speech='Thanks, '+partner.resident.name+'! '+(task.kind==='music'?'That duet is coming together.':task.kind==='park'?'I will remember what we noticed.':'Let’s share a break before the next task.');
+  delete info.speechRecipients;info.speech='Thanks, '+partner.resident.name+'! '+(task.kind==='music'?'That duet is coming together.':task.kind==='park'?'I will remember what we noticed.':'Let’s share a break before the next task.');
   info.speechUntil=now+6000;info.speaking=true;info.phase='socialising';info.gesture='wave';info.pauseUntil=now+2000;
   release(person,partner,'completed',now);
  }
@@ -98,7 +99,7 @@ export function stepCommunityLife(sim,cast,now,dt){
  for(const actor of cast){
   const r=actor.resident,task=r?.sharedTask;if(!task)continue;
   const friend=cast.find(other=>other.id===task.partnerId),other=friend?.resident?.sharedTask;
-  if(!present(actor)||!present(friend)||!other||other.id!==task.id||occupied(actor)||occupied(friend)||now>task.deadline||task.worldId&&(r.context?.worldId!==task.worldId||friend.resident.context?.worldId!==task.worldId)){
+  if(!present(actor)||!present(friend)||!other||other.id!==task.id||occupied(actor)||occupied(friend)||blockedApproach(actor,task)||blockedApproach(friend,other)||now>task.deadline||task.worldId&&(r.context?.worldId!==task.worldId||friend.resident.context?.worldId!==task.worldId)){
    if(other?.id===task.id)release(friend,actor,'interrupted',now);release(actor,friend,'interrupted',now);continue;
   }
   setGoal(actor,task,now);

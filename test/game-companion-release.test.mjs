@@ -2,15 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {residentSocialPrompt} from '../public/js/resident-social-prompt.js';
 
 for(const [file,prefix]of [['world-resident-ui.js','resident'],['transport-activity.js','transport']]){
  test(prefix+' companion releases only actual open and close transitions',()=>{
   const source=readFileSync(new URL('../public/js/'+file,import.meta.url),'utf8');
   const start=source.indexOf(' const open='),end=source.indexOf(';toggle.onclick',start);
   assert.ok(start>=0&&end>start,'exercise the companion panel’s real lifecycle');
-  const releases=[],panel={hidden:true,scrollTop:12,querySelector:()=>({focus(){}})},attributes={};
-  const context=vm.createContext({panel,toggle:{setAttribute:(key,value)=>attributes[key]=value,focus(){}},shell:{contains:()=>false},document:{exitPointerLock(){},activeElement:null},worldRadio:{refresh(){}},requestGameInputRelease:reason=>releases.push(reason),revealGameViewControl:()=>false,render(){},fit(){},fitPanel(){}});
-  vm.runInContext(source.slice(start,end+1)+';globalThis.setPanelOpen=open;',context);
+  const releases=[],panel={hidden:true,scrollTop:12,querySelector:selector=>selector==='.quest-conversation:not([hidden])'?null:({focus(){}})},attributes={},status={textContent:''};
+  const context=vm.createContext({panel,toggle:{setAttribute:(key,value)=>attributes[key]=value,focus(){}},shell:{contains:()=>false},document:{exitPointerLock(){},activeElement:null,querySelectorAll:()=>[],querySelector:()=>null,documentElement:{classList:{remove(){}}}},worldRadio:{refresh(){}},requestGameInputRelease:reason=>releases.push(reason),revealGameViewControl:()=>false,render(){},fit(){},fitPanel(){},$:()=>status,latest:null,selfId:'visitor',worldId:'companion-fixture',residentSocialPrompt,visitorPrompt:{hidden:true},dismissedPrompts:new Set(),currentPrompt:null,stage:{querySelector:()=>panel.hidden?null:panel}});
+  let promptSource='';
+  if(prefix==='resident'){
+   const promptStart=source.indexOf(' function renderVisitorPrompt(){'),promptEnd=source.indexOf(" visitorPrompt.querySelector('[data-visitor-talk]')",promptStart);
+   assert.ok(promptStart>=0&&promptEnd>promptStart,'exercise the real visitor-prompt dependency');
+   promptSource=source.slice(promptStart,promptEnd);
+  }
+  vm.runInContext(promptSource+source.slice(start,end+1)+';globalThis.setPanelOpen=open;',context);
   context.setPanelOpen(false);assert.deepEqual(releases,[],'closed-panel snapshot updates preserve fresh input');
   context.setPanelOpen(true);assert.equal(panel.hidden,false);assert.equal(attributes['aria-expanded'],'true');
   assert.deepEqual(releases,[prefix+'-panel-open']);

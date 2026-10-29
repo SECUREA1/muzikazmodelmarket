@@ -60,7 +60,7 @@ function tableMarkup(kind,round,active,holds,receipt){
 export function mountCasinoUI({stage,getEnvironment,getPosition,request,announce=()=>{},onOpen=()=>{},onBalance=()=>{},onOutcome=()=>{},onConversations=()=>{}}){
  loadGameMenuStyles();
  if(!document.querySelector('#casino-ui-styles')){const link=document.createElement('link');link.id='casino-ui-styles';link.rel='stylesheet';link.href='/public/css/casino.css';document.head.append(link);}
- const trigger=document.createElement('button');trigger.type='button';trigger.className='casino-use';trigger.hidden=true;trigger.setAttribute('aria-controls','muzikaz-casino-panel');stage.append(trigger);
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='casino-use game-nearby-prompt';trigger.hidden=true;trigger.setAttribute('aria-controls','muzikaz-casino-panel');trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded','false');stage.append(trigger);
  const panel=document.createElement('section');panel.id='muzikaz-casino-panel';panel.className='casino-panel';panel.hidden=true;panel.setAttribute('aria-label','MUZIKAZ Casino');
  panel.innerHTML='<div class="casino-panel__top"><div><span class="casino-eyebrow">STARLIGHT GRAND · MUZIKAZ CASINO</span><h3 data-casino-title></h3><p data-casino-subtitle></p></div><div class="casino-balance"><small>WALLET BALANCE</small><strong data-casino-balance>— MZK</strong></div></div><div data-casino-content></div><p class="casino-message" data-casino-message role="status" aria-live="polite"></p><div class="casino-panel__footer"><span>All bets and winnings settle in MZK.</span><button type="button" data-casino-people>Meet staff &amp; find a favor</button><button type="button" data-casino-close>Return to walking</button></div>';
  stage.append(panel);
@@ -170,7 +170,7 @@ export function mountCasinoUI({stage,getEnvironment,getPosition,request,announce
  function update(){
   if(disposed)return;nearby=nearestCasinoStation(getEnvironment(),getPosition());
   const visible=Boolean(nearby)&&!screen.dialog.open&&!gameplayOverlayOpen();trigger.hidden=!visible;
-  if(nearby){const label=(isGame(nearby.kind)?'Play ':nearby.kind==='vault'?'Inspect ':'Use ')+(GAME_NAMES[nearby.kind]||nearby.name);if(trigger.dataset.station!==nearby.id){trigger.dataset.station=nearby.id;trigger.innerHTML='<span class="casino-use__key">E</span><span><small>STARLIGHT GRAND</small>'+escape(label)+'</span>';trigger.setAttribute('aria-label',label);}}
+  if(nearby){const label=(isGame(nearby.kind)?'Play ':nearby.kind==='vault'?'Inspect ':'Use ')+(GAME_NAMES[nearby.kind]||nearby.name);if(trigger.dataset.station!==nearby.id){trigger.dataset.station=nearby.id;trigger.innerHTML='<span class="casino-use__key game-nearby-prompt__key" aria-hidden="true">E</span><span class="game-nearby-prompt__copy"><strong>'+escape(label)+'</strong><small>Starlight Grand</small></span>';trigger.setAttribute('aria-label',label);}}
   if(current){const pos=getPosition(),env=getEnvironment();if((typeof env==='string'?env:env?.id)!==CASINO_ID){reset();return;}if(Math.hypot(pos.x-current.position.x,pos.z-current.position.z)>8)close();}
  }
  function reset(){loadToken++;commandGeneration++;loading=pending=false;clearAccount();message='';close();nearby=null;trigger.hidden=true;}

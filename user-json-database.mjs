@@ -4,10 +4,10 @@ import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { economyItem, ownsEconomyItem, economyInventory, GAME_BUNDLES, economyBundleQuote, economyBundles } from './game-economy.mjs';
-import {ensureWorldSupply,consumeWorldStock,canonicalSupplyId,supplyAvailability} from './world-supply.mjs';
+import {ensureWorldSupply,worldSupplyIsCurrent,consumeWorldStock,canonicalSupplyId,supplyAvailability} from './world-supply.mjs';
 import { MEMBER_REWARDS } from './public/js/member-reward-rules.js';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { mkdir, readFile, rename, open, stat, unlink, link, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
 import {migrateGameplayWallet} from './gameplay-wallet-migration.mjs';
@@ -22,6 +22,32 @@ const EMPTY_DATABASE = { schemaVersion: SCHEMA_VERSION, users: {}, trades: [], m
 const BUILDER_CATEGORIES = new Set(['WORLD', 'BUILDINGS', 'PROPS', 'TERRAIN', 'NPC', 'AI', 'VEHICLES', 'GAME SYSTEMS', 'FUNCTIONS', 'AUDIO', 'EFFECTS', 'SCRIPTS', 'INTERACTIVE', 'UTILITIES']);
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
+const fileStamp = value => [value.dev, value.ino, value.size, value.mtimeNs, value.ctimeNs].join(':');
+const userFileQueues = new Map();
+const GROUP_COMMIT_WINDOW_MS = 2;
+const matchingFields = (actual, expected) => Object.entries(expected).every(([key, value]) =>
+  value === undefined || JSON.stringify(actual?.[key]) === JSON.stringify(value));
+function synchronizedAccount(data, account, wallet, accountKey, entitlements) {
+  const user = data.users[wallet];
+  if (!user || user.walletId !== wallet || wallet !== accountKey && data.users[accountKey] || !Array.isArray(user.items)) return;
+  const memory = user.memory || {}, metadata = memory.account || {};
+  if (!matchingFields(metadata, {
+    accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus,
+    gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess),
+    selectedAvatarId: account.selectedAvatarId || 'starter-avatar', bottleClaims: account.bottleClaims || [],
+    bottlePurchases: account.bottlePurchases || [], purchaseTierUsd: Number(account.purchaseTierUsd || 0),
+    paymentMzkValue: Number(account.paymentMzkValue || 0)
+  }) || !matchingFields(memory.backpack, {backpackId: account.backpackId, bottleClaims: account.bottleClaims || [], bottlePurchases: account.bottlePurchases || []})) return;
+  if (account.username && (memory.profile?.username !== account.username || !memory.profile?.displayName)) return;
+  if (user.tokens?.MZK === undefined || !(Number(metadata.mzkGranted) >= Math.max(0, Number(account.mzkBalance || 0))) || !Array.isArray(metadata.issuedEntitlements)) return;
+  const definitions = new Map(entitlements.map(item => [item.id, item]));
+  const issued = new Set(metadata.issuedEntitlements);
+  // An issued entitlement may have been sold. Its absence from current items
+  // is intentional and must never trigger another grant.
+  if (entitlements.some(item => !issued.has(item.id))) return;
+  if (user.items.some(item => item.type !== 'land-deed' && definitions.has(item.id) && !matchingFields(item, definitions.get(item.id)))) return;
+  return user;
+}
 function prisonReceipt(data,wallet,itemId){return (data.transactions||[]).find(row=>row.type==='PRISON_ITEM_EARNED'&&row.walletId===wallet&&row.itemId===itemId&&prisonRewardFor(row.buildAssetId));}
 function prisonBoundItem(data,wallet,item){return item&&(item.source==='prison-earned'||prisonRewardFor(item.buildAssetId)||prisonReceipt(data,wallet,item.id));}
 function plainObject(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
@@ -79,46 +105,168 @@ function modelMarketMetadata(data,proof){
 }
 
 export class UserJsonDatabase {
-  constructor(file) { this.file = file; this.queue = Promise.resolve(); }
+  #cachedSnapshot; #cachedStamp; #pendingTransactions; #drainingTransactions; #initializing; #hasCommittedSnapshot = false;
+  constructor(file) {
+    this.file = file; this.queueKey = resolve(file); this.queue = Promise.resolve();
+    this.#cachedSnapshot = null; this.#cachedStamp = null;
+    this.#pendingTransactions = []; this.#drainingTransactions = false;
+    this.#initializing = null;
+  }
 
-  async initialize() {
-    await mkdir(dirname(this.file), { recursive: true });
-    try { await this.read(); } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      await this.write(EMPTY_DATABASE);
+  async initialize() { await this.#snapshot(); }
+
+  async #snapshot() {
+    try { return await this.#loadSnapshot(); }
+    catch (error) {
+      if (error.code !== 'ENOENT' || this.#hasCommittedSnapshot) throw error;
+      if (!this.#initializing) this.#initializing = (async () => {
+        await mkdir(dirname(this.file), {recursive: true});
+        const temporary = `${this.file}.${process.pid}.${randomUUID()}.tmp`;
+        try {
+          await writeFile(temporary, `${JSON.stringify(EMPTY_DATABASE)}\n`, {mode: 0o600, flag: 'wx'});
+          // Install only if absent. Concurrent initializers must never replace
+          // a store another instance already created or populated.
+          try { await link(temporary, this.file); }
+          catch (failure) { if (failure.code !== 'EEXIST') throw failure; }
+        } finally { await unlink(temporary).catch(() => {}); }
+      })().finally(() => { this.#initializing = null; });
+      await this.#initializing;
+      return this.#loadSnapshot();
     }
   }
 
-  async read() {
-    const data = JSON.parse(await readFile(this.file, 'utf8'));
-    if (!data || ![1, 2, SCHEMA_VERSION].includes(data.schemaVersion) || !plainObject(data.users)) throw new Error('Unsupported user database schema.');
-    if (data.schemaVersion < SCHEMA_VERSION) Object.assign(data, { schemaVersion: SCHEMA_VERSION, transactions: data.transactions || [], landDeeds: data.landDeeds || {}, builderAssets: data.builderAssets || {}, builderOwnership: data.builderOwnership || {}, builderListings: data.builderListings || {}, builderPlacements: data.builderPlacements || {} });
-    return data;
+  async #loadSnapshot() {
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const observed = await stat(this.file, {bigint: true});
+        if (this.#cachedSnapshot && fileStamp(observed) === this.#cachedStamp) return this.#cachedSnapshot;
+        const handle = await open(this.file, 'r');
+        try {
+          const before = await handle.stat({bigint: true});
+          const encoded = await handle.readFile('utf8');
+          const after = await handle.stat({bigint: true}), visible = await stat(this.file, {bigint: true});
+          // A rename can leave our old file descriptor readable. Only publish
+          // a complete snapshot of the inode still visible at the store path.
+          if (fileStamp(before) !== fileStamp(after) || fileStamp(after) !== fileStamp(visible)) continue;
+          const data = JSON.parse(encoded);
+          if (!data || ![1, 2, SCHEMA_VERSION].includes(data.schemaVersion) || !data.users || typeof data.users !== 'object' || Array.isArray(data.users)) throw new Error('Unsupported user database schema.');
+          if (data.schemaVersion < SCHEMA_VERSION) Object.assign(data, { schemaVersion: SCHEMA_VERSION, transactions: data.transactions || [], landDeeds: data.landDeeds || {}, builderAssets: data.builderAssets || {}, builderOwnership: data.builderOwnership || {}, builderListings: data.builderListings || {}, builderPlacements: data.builderPlacements || {} });
+          this.#cachedSnapshot = data; this.#cachedStamp = fileStamp(after); this.#hasCommittedSnapshot = true;
+          return data;
+        } finally { await handle.close(); }
+      }
+      throw Object.assign(new Error('User database changed while reading. Retry the operation.'), {code: 'DATABASE_CHANGED', statusCode: 409});
+    } catch (error) {
+      this.#cachedSnapshot = null; this.#cachedStamp = null;
+      throw error;
+    }
   }
 
+  async read() { return clone(await this.#snapshot()); }
+
+  // Direct snapshot writes are for serialized commits and offline fixtures.
+  // Concurrent application mutations must use transaction()/the named methods.
   async write(data) {
-    const temporary = `${this.file}.${process.pid}.${Date.now()}.tmp`;
-    await writeFile(temporary, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 });
-    await rename(temporary, this.file);
+    const temporary = `${this.file}.${process.pid}.${randomUUID()}.tmp`;
+    const encoded = `${JSON.stringify(data, null, 2)}\n`;
+    await mkdir(dirname(this.file), {recursive: true});
+    const handle = await open(temporary, 'wx', 0o600);
+    try {
+      await handle.writeFile(encoded);
+      await rename(temporary, this.file);
+      // Reload through the validated snapshot path next time. Stamping our
+      // encoded bytes with a later fstat could associate them with somebody
+      // else's in-place edit between rename and stat, hiding that edit.
+      this.#cachedSnapshot = null; this.#cachedStamp = null; this.#hasCommittedSnapshot = true;
+    } finally {
+      await handle.close();
+      await unlink(temporary).catch(() => {});
+    }
   }
 
-  transaction(operation) {
-    const run = this.queue.then(async () => {
-      await this.initialize();
-      const data = await this.read();
-      ensureWorldSupply(data);
-      const result = await operation(data);
-      await this.write(data);
-      return clone(result);
+  transaction(operation) { return this.#enqueue(operation); }
+
+  #enqueue(operation, unchanged, prepare) {
+    const priorBarrier = this.queue;
+    const result = new Promise((resolve, reject) => this.#pendingTransactions.push({operation, unchanged, prepare, resolve, reject}));
+    // A captured queue is a finite barrier for already-enqueued work. Future
+    // traffic must not keep backups/master-state capture waiting forever. A
+    // rejected callback can settle before preceding accepted writes, so its
+    // barrier must still include the prior durable prefix.
+    this.queue = Promise.allSettled([priorBarrier, result]).then(() => {});
+    this.#scheduleTransactions();
+    return result;
+  }
+
+  #walletTransaction(wallet, operation) {
+    // Only spendGameplay, recordRpgTelemetry and grantMzkCoin use this scope.
+    // They mutate one wallet, append receipts, and may initialize supply. Old
+    // receipts and all other domain records remain read-only. Arbitrary public
+    // transaction callbacks always receive a fully detached database instead.
+    return this.#enqueue(operation, undefined, data => {
+      const users = {...data.users};
+      if (Object.hasOwn(users, wallet)) users[wallet] = clone(users[wallet]);
+      const worldSupply = worldSupplyIsCurrent(data) ? data.worldSupply : data.worldSupply ? clone(data.worldSupply) : undefined;
+      return {...data, users, transactions: [...(data.transactions || [])], worldSupply};
     });
-    this.queue = run.catch(() => {});
-    return run;
+  }
+
+  #scheduleTransactions() {
+    if (this.#drainingTransactions || !this.#pendingTransactions.length) return;
+    this.#drainingTransactions = true;
+    const run = (async () => {
+      // A short, fixed window also collects writes arriving in adjacent I/O
+      // phases. It never resets when more requests arrive, so steady traffic
+      // cannot postpone a commit indefinitely. Results still wait for disk.
+      await new Promise(resolve => setTimeout(resolve, GROUP_COMMIT_WINDOW_MS));
+      const batch = this.#pendingTransactions.splice(0, 32);
+      // Independent store objects in this process share one writer order for
+      // the same resolved path. This is deliberately not a distributed lock.
+      const prior = userFileQueues.get(this.queueKey) || Promise.resolve();
+      const commit = prior.then(() => this.#commitTransactions(batch));
+      const tail = commit.catch(() => {});
+      userFileQueues.set(this.queueKey, tail);
+      void tail.then(() => { if (userFileQueues.get(this.queueKey) === tail) userFileQueues.delete(this.queueKey); });
+      try { await commit; }
+      catch (error) { for (const entry of batch) entry.reject(error); }
+    })();
+    void run.finally(() => {
+      this.#drainingTransactions = false;
+      this.#scheduleTransactions();
+    }).catch(() => {});
+  }
+
+  async #commitTransactions(batch) {
+    const committed = await this.#snapshot(), accepted = [];
+    let data = committed;
+    let changed = false;
+    for (const entry of batch) {
+      try {
+        const unchanged = entry.unchanged?.(data);
+        if (unchanged !== undefined) {
+          accepted.push({...entry, result: clone(unchanged)});
+          continue;
+        }
+        // Keep callbacks on ordinary JSON objects: several native services
+        // legitimately use structuredClone inside transactions. A private
+        // candidate also makes rejected mutations independent of later work.
+        const candidate = entry.prepare ? entry.prepare(data) : clone(data);
+        ensureWorldSupply(candidate);
+        const value = await entry.operation(candidate);
+        // Capture the operation's result before later operations modify a
+        // shared wallet. Returned objects never alias uncommitted store data.
+        const result = value === undefined ? undefined : clone(value);
+        data = candidate; changed = true;
+        accepted.push({...entry, result});
+      } catch (error) { entry.reject(error); }
+    }
+    if (changed) await this.write(data);
+    for (const entry of accepted) entry.resolve(entry.result);
   }
 
   async get(walletId) {
     const wallet = cleanWallet(walletId);
-    await this.initialize();
-    const record = (await this.read()).users[wallet];
+    const record = (await this.#snapshot()).users[wallet];
     return clone(record || { walletId: wallet, tokens: { MZK: 0 }, items: [], memory: {}, createdAt: null, updatedAt: null, revision: 0 });
   }
 
@@ -167,7 +315,7 @@ export class UserJsonDatabase {
         return { id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: sales.length ? 'verified-sale' : 'mzk-access-code', saleOrderIds: sales.map((purchase) => purchase.orderId) };
       })
     ];
-    return this.transaction((data) => {
+    return this.#enqueue((data) => {
       // Code-only signup begins under a stable account key. Move that exact
       // game record to the Ethereum address on first connection so balances,
       // inventory, and memory remain one Backpack rather than being copied.
@@ -209,7 +357,7 @@ export class UserJsonDatabase {
         delete data.users[accountKey];
       }
       return record;
-    });
+    }, data => synchronizedAccount(data, account, wallet, accountKey, entitlementItems));
   }
 
   async members() {
@@ -506,7 +654,7 @@ export class UserJsonDatabase {
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1_000_000) throw new Error('Gameplay spend must be from 1 to 1,000,000 MZK.');
     if (!requestId || requestId.length > 140) throw new Error('A gameplay spend request id is required.');
     if (!gameId) throw new Error('A game id is required.');
-    return this.transaction((data) => {
+    return this.#walletTransaction(wallet, (data) => {
       data.transactions ||= [];
       const duplicate = data.transactions.find((entry) => entry.type === 'GAMEPLAY_SPEND' && entry.walletId === wallet && entry.requestId === requestId);
       if (duplicate) return duplicate;
@@ -645,20 +793,22 @@ export class UserJsonDatabase {
   deleteDesignerDraft(walletId,id){const owner=cleanWallet(walletId);return this.transaction(data=>{const draft=data.designerDrafts?.[id];if(!draft||draft.owner_id!==owner)throw Object.assign(new Error('Design draft not found.'),{statusCode:404});delete data.designerDrafts[id];return {id};});}
 
   async rpgState(walletId) {
-    const user=await this.get(walletId);const recentCare=(await this.read()).transactions.filter(entry=>entry.walletId===user.walletId&&entry.type==='RPG_USE').slice(-50);
-    return {recentCare,owner_id:user.walletId,balance:Number(user.tokens.MZK||0),stats:{...RPG_DEFAULT_STATS,...user.memory?.ioncoreRpg?.stats},history:user.memory?.ioncoreRpg?.history||[],items:user.items.filter(item=>item.type==='rpg-consumable')};
+    const wallet=cleanWallet(walletId),data=await this.#snapshot();
+    const user=data.users[wallet]||{walletId:wallet,tokens:{MZK:0},items:[],memory:{}};
+    const recentCare=(data.transactions||[]).filter(entry=>entry.walletId===wallet&&entry.type==='RPG_USE').slice(-50);
+    return clone({recentCare,owner_id:user.walletId,balance:Number(user.tokens.MZK||0),stats:{...RPG_DEFAULT_STATS,...user.memory?.ioncoreRpg?.stats},history:user.memory?.ioncoreRpg?.history||[],items:user.items.filter(item=>item.type==='rpg-consumable')});
   }
 
   recordRpgTelemetry(walletId,input){
     const wallet=cleanWallet(walletId),health=Number(input?.health);
     if(!Number.isFinite(health)||health<0||health>100)throw new Error('Health must be between 0 and 100.');
-    return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
+    return this.#walletTransaction(wallet, data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
   }
 
   grantMzkCoin(walletId,requestId){
     const wallet=cleanWallet(walletId);
     if(!/^coin:[a-f0-9-]{36}$/.test(requestId))throw new Error('Invalid server coin receipt.');
-    return this.transaction(data=>{
+    return this.#walletTransaction(wallet, data=>{
       const duplicate=data.transactions.find(entry=>entry.type==='MZK_COIN'&&entry.requestId===requestId);
       if(duplicate)return duplicate.walletId===wallet?duplicate:{claimedByOther:true};
       const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');

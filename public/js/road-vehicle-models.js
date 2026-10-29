@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import {updateFreightVisual} from './freight-models.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {ROAD_VEHICLES,roadVehicleType} from './road-vehicles.js';
@@ -15,6 +16,6 @@ export function createRoadVehicle(id){
  const dash=box([car?.53:.3,.19,.025],[car?-.38:0,car?1.13:1.2,car?-.49:-.61],dark);dash.name='ROAD_DIGITAL_DASHBOARD';
  if(typeof document!=='undefined'){const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;const ctx=canvas.getContext('2d');ctx.scale(4,4);ctx.fillStyle='#0b202d';ctx.fillRect(0,0,256,96);ctx.fillStyle='#9ee8e2';ctx.font='bold 22px system-ui';ctx.fillText('MUZIKAZ',12,27);ctx.fillStyle='#fff';ctx.font='bold 36px system-ui';ctx.fillText('READY',12,68);ctx.fillStyle=c.color;ctx.fillRect(12,80,232,4);const texture=new T.CanvasTexture(canvas);dash.material=new T.MeshBasicMaterial({map:texture});root.userData.roadDash={canvas,ctx,texture,reading:''};}
  if(pickup){box([1.82,.1,2],[0,.85,1.6],dark);for(const x of [-.96,.96]){box([.13,.6,2.15],[x,1.12,1.55]);tube([x,1.45,.55],[x,1.45,2.55],.035,chrome);}box([1.95,.6,.12],[0,1.12,2.6]);box([1.6,.08,.1],[0,.55,2.8],chrome);box([.15,.12,.38],[0,.65,2.9],dark);box([1.7,.12,.8],[0,.91,-2]);}
- root.traverse(m=>{if(m.isMesh)m.userData.builderRoot=root;});return root;
+ root.traverse(m=>{if(m.isMesh)m.userData.builderRoot=root;});return finishVehicleDesign(T,root,id);
 }
 export function updateRoadVehicle(root,elapsed){updateFreightVisual(root);const state=root.userData.driving||{},speed=state.speed||0;for(const child of root.children){if(child.userData.roadWheel)child.rotation.x=(state.distance||0)/.35;if(child.userData.roadSteering)child.rotation.z=-(state.steering||0)*.5;if(child.userData.roadLight)child.material.emissiveIntensity=state.lights===false?.05:.9;}const dash=root.userData.roadDash,reading=Math.round(Math.abs(speed)*3.6)+' km/h';if(dash&&dash.reading!==reading){dash.reading=reading;dash.ctx.fillStyle='#0b202d';dash.ctx.fillRect(0,30,256,46);dash.ctx.fillStyle='#fff';dash.ctx.font='bold 32px system-ui';dash.ctx.fillText(reading,12,68);dash.texture.needsUpdate=true;}}

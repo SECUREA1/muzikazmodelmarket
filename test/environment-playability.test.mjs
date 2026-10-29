@@ -7,6 +7,7 @@ import {environmentGeometry} from '../server-glb-geometry.mjs';
 import {furnishBuildings} from '../public/js/building-furnishing.js';
 import {createBuildingDistrict,BUILDING_DISTRICTS} from '../public/js/building-districts.js';
 import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
+import {EnvironmentLoader} from '../public/js/environments/environment-loader.js';
 const threeUrl=new URL('../public/vendor/three/three.module.min.js',import.meta.url).href;
 const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8')).replace("'../walking-triangles.js'",JSON.stringify(new URL('../public/js/walking-triangles.js',import.meta.url).href)).replace("'./layout-terrain.js'",JSON.stringify(new URL('../public/js/environments/layout-terrain.js',import.meta.url).href)).replace("'../../vendor/three/three.module.min.js'",JSON.stringify(threeUrl)).replace(/https:\/\/cdn.jsdelivr.net\/npm\/three@0.160.0\/\+esm/g,threeUrl).replace(/import \{ Octree \} from '[^']+';/,"class Octree {fromGraphNode(){}}" );
 const {buildCollision,resolveSafeSpawn}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
@@ -40,17 +41,15 @@ test('automatic furnishing is deterministic, compiles interactive actors and pre
  assert.equal(furnishBuildings(bare,{backpack:true,models:[]}).length,0);
  const owned=furnishBuildings(bare,{backpack:true,models:[{id:'owned-atm',buildAssetId:'market-atm',category:'backpack'},{id:'unowned',buildAssetId:'cinema-screen',category:'interactive'}]});assert.equal(owned.length,1);assert.equal(owned[0].modelId,'owned-atm');assert.equal(owned[0].position.y,2.36);assert.equal(owned[0].functionalSettings.device,'market-atm');
 });
-const loaderSource=(await readFile(new URL('../public/js/environments/environment-loader.js',import.meta.url),'utf8')).replace(/^import .+;\n/gm,'');
-const loaderDependencies=`import {isTropicalIslandEnvironment} from '${new URL('../public/js/tropical-island-config.js',import.meta.url).href}';import {isFitnessEnvironment} from '${new URL('../public/js/fitness-config.js',import.meta.url).href}';import {isProvingEnvironment,isCompoundEnvironment} from '${new URL('../public/js/factory-test-config.js',import.meta.url).href}';import {isPrisonEnvironment} from '${new URL('../public/js/prison-config.js',import.meta.url).href}';import {isBasketballEnvironment} from '${new URL('../public/js/basketball-rules.js',import.meta.url).href}';import {isCleanSportsEnvironment} from '${new URL('../public/js/sports-worlds.js',import.meta.url).href}';import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from '${new URL('../public/js/environments/builder-base.js',import.meta.url).href}';import * as THREE from '${threeUrl}';import {createBuilderLand} from '${new URL('../public/js/environments/builder-land.js',import.meta.url).href}';import {buildCollision,resolveSafeSpawn} from '${'data:text/javascript;base64,'+Buffer.from(source).toString('base64')}';class Octree {fromGraphNode(){}}const applyWorldQuality=()=>({});`;
-const {EnvironmentLoader}=await import('data:text/javascript;base64,'+Buffer.from(loaderDependencies+loaderSource).toString('base64'));
-function testLoader(){return Object.assign(Object.create(EnvironmentLoader.prototype),{token:0,scene:new THREE.Scene(),renderer:{},serverAuthoritative:()=>true,onProgress:()=>{},mixers:[],supplementalCollisionRoots:[],refreshFloorEffects(){},clearFloorEffects(){},createBuilderLand});}
+function testLoader(){return Object.assign(Object.create(EnvironmentLoader.prototype),{token:0,pendingLoads:new Set(),scene:new THREE.Scene(),renderer:{capabilities:{getMaxAnisotropy:()=>8}},serverAuthoritative:()=>true,onProgress:()=>{},mixers:[],supplementalCollisionRoots:[],refreshFloorEffects(){},clearFloorEffects(){},createBuilderLand});}
 test('loader enters empty saved builder maps and keeps the previous world if a new asset fails',async()=>{
  const loader=testLoader();const result=await loader.load({id:'empty',builderScene:{layout:'urban-downtown',objects:[]}});assert.ok(result.meshes.length);assert.ok(result.collision.floorMeshes.length);const previous=loader.world;
  loader.loadOne=async()=>{throw Error('offline');};await assert.rejects(loader.load({id:'broken',modelUrl:'missing.glb'}),/offline/);assert.equal(loader.world,previous);assert.ok(loader.scene.children.includes(previous));
 });
-test('model requests retry a transient error once',async()=>{
- const loader=testLoader();let calls=0;loader.loader={load(url,success,progress,error){calls++;if(calls===1)error(Error('temporary'));else success({scene:new THREE.Group()});}};
- const result=await loader.loadOne('test.glb',0,1);assert.ok(result.scene);assert.equal(calls,2);
+test('model requests retry a transient error once',async t=>{
+ const loader=testLoader();let calls=0,parses=0;loader.loader={parseAsync:async()=>{parses++;return {scene:new THREE.Group()};}};
+ t.mock.method(globalThis,'fetch',async(url,{signal})=>{assert.equal(new URL(url).pathname,'/public/models/test.glb');assert.equal(signal.aborted,false);calls++;if(calls===1)throw Error('temporary');return new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':'model/gltf-binary'}});});
+ const result=await loader.loadOne('/public/models/test.glb',0,1);assert.ok(result.scene);assert.equal(calls,2);assert.equal(parses,1);assert.equal(loader.pendingLoads.size,0);
 });
 test('a superseded map failure cannot interrupt the newly loaded map',async()=>{
  const loader=testLoader();let rejectOld;loader.loadOne=()=>new Promise((resolve,reject)=>{rejectOld=reject;});const old=loader.load({id:'slow',modelUrl:'slow.glb',scale:9});

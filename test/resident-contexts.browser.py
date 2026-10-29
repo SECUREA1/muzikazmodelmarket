@@ -18,6 +18,28 @@ try:
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/resident-contexts.html')
         page.wait_for_function('window.ready')
+        # Incoming NPC replies must reach speech while the People panel is
+        # closed. Capture utterances here; full audio tests cover PCM output.
+        page.evaluate('''async()=>{
+            const {gameSpeech}=await import('/public/js/neural-character-speech.js');
+            const {questConversationVoice}=await import('/public/js/quest-conversation-voice.js');
+            window.residentSpoken=[];
+            gameSpeech().speak=utterance=>{residentSpoken.push(utterance.text);queueMicrotask(()=>{utterance.onstart?.();utterance.onend?.();});};
+            const enable=document.createElement('button');enable.id='resident-audio-test';enable.textContent='Enable resident test audio';
+            enable.onclick=()=>questConversationVoice().unlock();document.body.prepend(enable);
+        }''')
+        page.locator('#resident-audio-test').click()
+        page.evaluate('''()=>{
+            const id='host-'+world.id;
+            state.players.me.npcConversation={type:'resident',instanceId:'closed-panel-reply',entityId:id,status:'active',contact:{name:current.person,role:current.role,channel:current.place,color:'#98caae'},dialogueChoices:[],conversation:[{id:'closed-panel-voice',text:'Welcome to the pier. Your crew is ready.',speaker:current.person,speakerId:id,role:'guide',conversation:true,interaction:true,recipients:['me'],questInstance:'closed-panel-reply',at:state.serverTime}]};
+            ui.update(state,'me',world);
+        }''')
+        page.wait_for_function('residentSpoken.length===1')
+        assert page.locator('.world-resident-panel').is_hidden()
+        assert page.evaluate('residentSpoken[0]')=='Welcome to the pier. Your crew is ready.'
+        page.evaluate("ui.update(state,'me',world)")
+        assert page.evaluate('residentSpoken.length')==1
+        page.evaluate("delete state.players.me.npcConversation;ui.update(state,'me',world);document.querySelector('#resident-audio-test').remove()")
         page.get_by_role('button',name='Residents, conversations and daily objectives',exact=True).click()
         assert 'Harbor Marina' in page.locator('.world-resident-panel>header').inner_text()
         assert 'Navigation' in page.locator('.resident-life-card').first.inner_text()

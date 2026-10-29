@@ -66,6 +66,24 @@ test('collision discontinuities and blocked routes cannot move residents through
  const guarded={...collision,groundAt:(_env,point)=>({...point,y:point.x>1?3:0}),resolve:(_env,previous,next)=>next.x>.5?{...previous}:{...next}};const f=setup(environment(),guarded);advance(f,100000,220);for(const npc of Object.values(f.sim.actors)){assert.ok(npc.position.x<=3,'no unbounded move beyond home');assert.equal(npc.position.y,0);assert.ok((npc.resident.navigation?.attempts||0)<=3);}
 });
 
+test('residents resume after a player chat by walking out of an overlap without walking into people',()=>{
+ for(const [playerX,shouldEscape]of [[-.4,true],[.05,false],[.4,false],[1.2,false]]){
+  const env=environment(),npc=actor(),sim={actors:{[npc.id]:npc},players:{},events:[]};
+  const info=ensureResidentIntelligence(sim,npc,env,100000);
+  Object.assign(info,{goal:{kind:'work',target:{x:3,y:0,z:0},status:'planned',startedAt:100000},nextObjectiveAt:1e9,nextSocialAt:1e9,nextAmbientAt:1e9,nextVisitorAt:1e9});
+  const player=sim.players.alice={actorId:'alice',username:'Alice',health:100,lastSeen:100000,position:{x:playerX,y:0,z:0},residentGreetAt:100000};
+  observeResidentInteraction(sim,npc.id,{kind:'player-conversation',actorId:'alice',text:'How is your work going?',requestId:'resume-after-chat'},100000);
+  stepResidentLife(sim,env,104750,.25,{collision});
+  assert.equal(npc.position.x,0,'the resident finishes the brief conversation pause');
+  for(let step=0;step<8;step++){
+   const now=105000+step*250;player.lastSeen=now;
+   stepResidentLife(sim,env,now,.25,{collision});
+  }
+  if(shouldEscape)assert.ok(npc.position.x>1,'a nearby stationary player must not pin a resident who is walking away');
+  else assert.equal(npc.position.x,0,'personal space still blocks a step toward the player');
+ }
+});
+
 test('expanded construction terrain and active crew machinery keep generic residents on public approaches',()=>{
  const env=constructionWorld(),sim={time:100000,actors:{},players:{},construction:{earthworks:createEarthworks(env.construction)}};
  for(const patch of sim.construction.earthworks.patches){const center={x:patch.origin.x+patch.columns*patch.cellSize/2,y:0,z:patch.origin.z+patch.rows*patch.cellSize/2};assert.equal(residentActivityRestricted(env,center,sim),true,patch.id);assert.equal(residentActivityRestricted(env,{...center,x:patch.origin.x-.5},sim),true,'clearance outside '+patch.id);}

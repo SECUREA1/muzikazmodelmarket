@@ -1,0 +1,63 @@
+name: Conversation and audio checks
+on:
+  push:
+    branches: [main, work]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: conversation-audio-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  conversations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ONNXRUNTIME_NODE_INSTALL: skip
+      MUZIKAZ_TEST_NEURAL_VOICES: '1'
+      MUZIKAZ_TEST_ARTIFACTS: ${{ runner.temp }}/conversation-audio-results
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: .speech-models
+          key: kokoro-v1.0-uint8-voice-model
+      - run: npm ci
+      - run: npm run build:voices
+      - run: npm run build
+      - run: npm run check
+      - name: Verify conversation routing, ownership, queues and generated voices
+        run: node --test test/quest-voice-audio.test.mjs test/neural-character-speech.test.mjs test/neural-voice-engine.test.mjs test/game-speech-owner.test.mjs test/gameplay-announcements.test.mjs test/native-world-guide.test.mjs test/gameplay-audio-entrypoints.test.mjs test/crib-multiplayer-client.test.mjs test/ai-conversation-ui.test.mjs test/quest-conversations.test.mjs test/private-residents.test.mjs test/private-residents-api.test.mjs test/solo-resident-client.test.mjs test/resident-conversation-audio.test.mjs
+      - name: Install browser test tools
+        run: |
+          python -m pip install playwright
+          sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
+      - name: Verify automatic audio, nearby interactions and continued AI activity
+        run: node --test test/game-audio-activation.test.mjs test/gameplay-actions.test.mjs test/resident-social-ui.test.mjs test/resident-life.test.mjs test/private-resident-activity.test.mjs
+      - name: Verify real microphone, guides and NPC replies in the game
+        run: |
+          python test/room-microphone.browser.py
+          python test/voice-device-recovery.browser.py
+          python test/voice-unlock-recovery.browser.py
+          python test/audio-page-entrypoints.browser.py
+          python test/chat-speech-clarity.browser.py
+          python test/room-chat-audio.browser.py
+          python test/npc-reply-priority.browser.py
+          python test/conversation-controls.browser.py
+          python test/resident-social-ui.browser.py
+          python test/game-audio-entrypoint.browser.py
+          python test/solo-residents.browser.py
+          python test/shared-conversation-controls.browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conversation-audio-results
+          path: ${{ runner.temp }}/conversation-audio-results
+          if-no-files-found: ignore

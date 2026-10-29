@@ -1,0 +1,7 @@
+.game-flashlight-toggle{position:absolute;top:8px;left:60px;z-index:27;display:grid;place-items:center;box-sizing:border-box;width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:8px;border:1px solid #8ca982;border-radius:9px;background:#112c30ed;color:#efffd7;cursor:pointer;pointer-events:auto;touch-action:manipulation}
+.game-flashlight-toggle svg{width:24px;height:24px}
+.game-flashlight-toggle[aria-pressed=true]{background:#dbf5a6;color:#17251a;border-color:#dbf5a6}
+.game-flashlight-toggle:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.game-flashlight-toggle:disabled{opacity:.5;cursor:default}
+.game-flashlight-toggle[hidden]{display:none!important}
+.game-display-flow-views>.game-flashlight-toggle{position:static!important;inset:auto!important;order:-2;margin:0!important;transform:none!important}

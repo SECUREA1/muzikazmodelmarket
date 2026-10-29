@@ -16,7 +16,7 @@ function fixture(){
     THREE,Capsule,player,playerCollider:new Capsule(feet.clone().add(new THREE.Vector3(0,player.radius,0)),feet.clone().add(new THREE.Vector3(0,player.height-player.radius,0)),player.radius),
     playerRig:{position:new THREE.Vector3(4,.99,-3)},localGroundViewY:.99,
     alignSpawnToCurrentFloor:point=>point.setY(1.23),updateLandingFrame(){},setStatus(){},
-    serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},soloMapQuests:{relocate(){}},soloQuestWorld:null,
+    serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},soloMapQuests:{relocate(){}},soloQuestWorld:null,soloResidentMovementRevision:0,
     envLoader:{world:{},setSpaceScale:scale=>({scale})},
     scaleControl:{querySelector:()=>({})},toxicBubbleSystem:{handleSpaceScaleChanged(){}}
   });
@@ -40,6 +40,7 @@ test('explicit teleport resets both capsule feet and eased view height atomicall
   evaluateSection(context,'  function movePlayerTo(point','  let groundTravelPending');
   const requested=new THREE.Vector3(8,1.1,6),original=requested.clone();
   context.movePlayerTo(requested);
+  assert.equal(context.soloResidentMovementRevision,1,'teleport invalidates an older resident pose');
   consistentPose(context,new THREE.Vector3(8,1.23,6));
   closeVector(requested,original);
   closeVector(context.player.velocity,new THREE.Vector3());
@@ -51,6 +52,7 @@ test('verified ground travel preserves the selected surface height beneath anoth
   evaluateSection(context,'  function movePlayerTo(point','  let groundTravelPending');
   const requested=new THREE.Vector3(8,.42,6),original=requested.clone();
   context.movePlayerTo(requested,{align:false});
+  assert.equal(context.soloResidentMovementRevision,1,'ground travel invalidates an older resident pose');
   consistentPose(context,requested);
   closeVector(requested,original);
   closeVector(context.player.velocity,new THREE.Vector3());

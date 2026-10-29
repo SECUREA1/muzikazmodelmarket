@@ -75,7 +75,12 @@ function input(){if(groundTravelPending||xrControls?.menuOpen||document.querySel
  if(!aimFromPointer&&p){const heading=HOCKEY_PLAYER_VIEWS.includes(view)?viewHeading:hockeyViewHeading(attackDirection(state,p.team));aim={x:p.x+Math.sin(heading)*30,z:p.z+Math.cos(heading)*30};}
  const pose=hockeyCameraPose(view,{player:p,attack:p?attackDirection(state,p.team):1,heading:viewHeading,aspect:camera.aspect}),movement=hockeySkateVector(Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'))+controllerMove.x,Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'))-controllerMove.y,pose.heading);
  return {...movement,aimX:aim.x,aimZ:aim.z,...hockeyTrigger.read(state,p,{pressed:keys.has(' '),mode:triggerMode,aim,manual:{shoot:keys.has('shoot'),pass:keys.has('e'),check:keys.has('q'),poke:keys.has('f'),hook:keys.has('h'),slash:keys.has('j'),hold:keys.has('k')}}),lift:keys.has('shift')};}
-async function command(action,fields={}){session ||= await api.roomSession();try{return await api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({action,...fields})});}catch(e){if(e.code!=='CSRF_INVALID')throw e;session=await api.roomSession();return api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({action,...fields})});}}
+async function command(action,fields={}){
+ const body=JSON.stringify({action,...fields}),timeout=['join','spectate'].includes(action)?25000:8000;
+ session ||= await api.roomSession();
+ const request=()=>api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',timeout,headers:{'X-CSRF-Token':session.csrfToken},body});
+ try{return await request();}catch(error){if(error.code!=='CSRF_INVALID')throw error;session=await api.roomSession();return request();}
+}
 function accept(snapshot,timing={}){if(snapshot.sequence<=sequence)return;sequence=snapshot.sequence;connectionError='';state=snapshot.state;selfId=snapshot.selfId;hockeyInputEpoch=snapshot.inputEpoch||hockeyInputEpoch;spectating=snapshot.role==='spectator';if(spectating){localSkating.reset();localSkater=null;}else{localSkating.accept(state,selfId,{...timing,serverTime:snapshot.serverTime});localSkater=localSkating.sample(performance.now(),0,{});}}
 async function inputFailure(error){
  const replaced=error.code==='ROOM_SWITCHED',rejoin=error.status===409&&!replaced;

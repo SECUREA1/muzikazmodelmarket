@@ -212,3 +212,67 @@ Backpack/economy identity each. They retain their milestone receipts, zero use
 cost, and non-tradable status. They are excluded from purchasable bundles and
 factory production/stock recipes, so manufacturing cannot duplicate an earned
 radio, chess set, escape trophy, or workshop keepsake crate.
+
+## Crafted vehicle collection
+
+The `crafted-vehicles-v1` pass extends the shared native finish with substantial
+vehicle-specific geometry. Its explicit registry covers all 23 mobile or towed
+vehicles: five road vehicles, three aircraft, ten boats and ships, four site
+machines, and the cargo trailer. Ten related native designs are included too:
+the clown car, wooden handcart, canoe rack, five train/coaster pieces, and two
+factory flight craft. Catalog category alone is insufficient: the two resort
+boats and trailer keep their established decor metadata and gameplay settings.
+
+Road models have formed bodywork, curved fenders, tyre tread, wheel/brake details
+and tailored trim. Aircraft have conformal airframe panels and articulated
+control-surface inserts; boats have fitted decking, safety equipment and deck
+markings. Industrial vehicles have hazard panels, hydraulic collars, cab seals
+and track treatments. Missing UVs on custom hulls, fuselages, wings and sails are
+generated without changing their original vertex positions or indices.
+
+`vehicle-design-profile.js` is renderer-free and supplies the same 33 identities
+to catalog thumbnails and runtime finishing. Their artwork uses versioned
+`*-vehicle-v1.svg` paths, so existing browsers request the completed designs.
+The factories used directly by public worlds and the shared native builder both
+call the idempotent vehicle finish. Cosmetic additions remain under their
+authored wheel, gear, boom, helm and ride-car parents, with collision disabled.
+Prices, saved identities, seats, control settings and placement bounds remain
+compatible with the existing collection.
+
+Run `node scripts/audit-vehicle-designs.mjs` for complete physical renderer
+coverage and `node --test test/vehicle-*-design.test.mjs` for the focused
+regressions. An optional `--baseline <snapshot.json>` also compares bounds,
+collision geometry, rig references and economy contracts against a captured
+pre-upgrade collection. The recorded result is
+`public/models/vehicle-design-coverage.json`. The native exporter records both
+native and vehicle design versions and creates a complete vehicle contact sheet
+alongside the other category sheets.
+
+## Mountain and terrain cleanup
+
+`crafted-mountains-v1` covers the Alpine mountain, weathered cliff, crater and
+snowbank. The Alpine ridge is a single closed landform split into two matching
+rock/snow surfaces, with branching buttresses, gullies, flared foothills and an
+irregular integrated snowline. It keeps the existing six-metre footprint,
+five-metre summit and two draw calls, with a bounded 3,500-triangle budget.
+
+The cliff has outward-facing joined sediment layers and fitted mineral seams.
+Collapsed crater and ice-tip faces are removed, the snow crest is supported by
+its drift, and the terrain surfaces have finite texture coordinates. Named
+stone, powder snow and translucent ice receive their own surface finish instead
+of falling through to timber or generic stone heuristics.
+
+The same cleanup replaces 26 decorative mountain-pass, ski-summit and proving
+ground ridges while preserving their mesh identities, transforms, envelopes and
+collision flags. Nineteen compound rock faces keep their excavation geometry.
+All 100 walkable ski tiles retain their original position, normal and index
+buffers and gain continuous world-aligned UVs. Shared height functions, valley
+trails, ski routes, lift pads and the six airport peak placements stay intact.
+
+Run `node scripts/audit-mountain-designs.mjs` for the four native designs and
+four affected worlds. Its optional `--baseline <snapshot.json>` also checks
+original collision envelopes, walkable geometry, economy records and world
+placements. The recorded report is `public/models/mountain-design-coverage.json`.
+Mountain model and template thumbnails use `*-mountain-v1.svg`; legacy terrain
+icons are refreshed from the same actual factory renders. The native exporter
+also creates a dedicated mountain contact sheet.

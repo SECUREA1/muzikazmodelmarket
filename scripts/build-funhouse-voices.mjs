@@ -6,6 +6,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {FUNHOUSE_CLOWN_LINES} from '../public/js/funhouse-audio-dialogue.js';
 import {generateNeuralVoice,neuralVoiceStatus,shutdownNeuralVoiceEngine} from '../server-neural-voice-engine.mjs';
+import {ensureVoiceRuntime} from '../server-voice-runtime.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url)),directory=resolve(root,'public/audio/funhouse/voices'),manifestPath=resolve(directory,'manifest.json');
 const run=promisify(execFile),sha=value=>createHash('sha256').update(value).digest('hex');
@@ -24,7 +25,7 @@ export async function buildFunhouseVoices({force=false}={}){
   for(const [index,line]of FUNHOUSE_CLOWN_LINES.entries()){
    const signature=sha(JSON.stringify([line.text,line.voice,line.speed,'kokoro-normalized-v1'])),target=resolve(directory,line.id+'.wav'),old=saved.get(line.id);
    if(!force&&old?.signature===signature){try{const audio=await readFile(target);if(sha(audio)===old.sha256&&wavDuration(audio)===old.durationMs){clips.push(old);durations[line.id]=old.durationMs;console.log(`${index+1}/${FUNHOUSE_CLOWN_LINES.length} ready: ${line.id}`);continue;}}catch{}}
-   const status=neuralVoiceStatus();if(!status.available)throw Error(status.status+' Run npm ci and node scripts/prepare-neural-voices.mjs first.');
+   await ensureVoiceRuntime();const status=neuralVoiceStatus();if(!status.available)throw Error(status.status+' Run npm ci and node scripts/prepare-neural-voices.mjs first.');
    const raw=target+'.raw.wav';
    try{
     await writeFile(raw,await generateNeuralVoice({text:line.text,voice:line.voice,speed:line.speed}));

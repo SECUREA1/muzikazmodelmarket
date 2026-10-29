@@ -3773,3 +3773,5 @@ body[data-game-launcher] #house-explorer [data-legacy-game-controls]{display:non
 /* Direct builder shortcut alongside the mobile account icons. */
 body .site-header.global-site-header .icons .header-builder-action{display:none!important}
 @media(max-width:720px){body .site-header.global-site-header .icons .header-builder-action{display:inline-flex!important}body .site-header.global-site-header .world-logo{flex:0 1 100px;min-width:48px}body .site-header.global-site-header .world-logo img{max-width:100%}}
+
+.crib-chat-messages .crib-chat-read{grid-column:1/-1;justify-self:start;min-height:32px;padding:5px 8px;border:1px solid #779f63;border-radius:7px;background:#14231a;color:#dfffba;font:600 11px system-ui;cursor:pointer}.crib-chat-messages .crib-chat-read[aria-pressed="true"]{background:#365226}.crib-chat-messages .crib-chat-read:focus-visible,.crib-chat-ai-entry:focus-visible{outline:2px solid #dfff70;outline-offset:2px}.crib-chat-ai-entry{flex:1 0 100%;min-height:40px;padding:7px 10px;border:1px solid #91ba79;border-radius:8px;background:#1b3021;color:#e4ffd0;font:700 12px system-ui;cursor:pointer}

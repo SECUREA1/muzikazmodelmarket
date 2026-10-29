@@ -48,6 +48,7 @@ test('legacy Render executable starts the canonical member API instead of the in
   const source = await readFile(new URL('../src/main.rs', import.meta.url), 'utf8');
   const main = source.slice(source.indexOf('fn main()'), source.indexOf('fn legacy_main()'));
   assert.match(main, /join\("server\.mjs"\)/);
+  assert.match(main, /join\("scripts\/start-hosted\.mjs"\)/);
   assert.match(main, /Command::new\("node"\)/);
   assert.match(main, /command\.exec\(\)/);
   assert.doesNotMatch(main, /TcpListener|legacy_main\(\)/);

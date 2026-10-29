@@ -81,7 +81,7 @@ test('idle and vacated machines do not carry a previous operator link warning in
 });
 test('shared room exposes machines and steel, enforces exclusive boarding, and preserves construction progress across reconnect',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'construction-room-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,sequence=0;
- const roomPath=join(dir,'rooms.json'),runtime=new AuthoritativeRooms({store:new SharedRoomStore(roomPath),now:()=>now});
+ const roomPath=join(dir,'rooms.json');let runtime=new AuthoritativeRooms({store:new SharedRoomStore(roomPath),now:()=>now});
  const world={id:'skyscraper-construction',name:'Skyscraper Construction',proceduralLand:true,spawn:{x:-20,y:0,z:20},construction:{enabled:true},builderScene:{layout:'grand-floor',mapSize:160,objects:[machine('crane','tower-crane',-18,-4),machine('truck','site-dumptruck',25,24),machine('dozer','site-bulldozer',29,28),machine('excavator','site-excavator',25,17)].map(actor=>({...actor,behavior:'vehicle',asset:{buildAssetId:actor.modelId,type:'vehicles'}}))}};
  const alice={accountId:'alice',username:'Alice'},bob={accountId:'bob',username:'Bob'},send=(who,action,fields={})=>runtime.command(world.id,world,who,{action,requestId:'build-'+ ++sequence,...fields});
  let state=await send(alice,'join');assert.equal(Object.values(state.actors).filter(isConstructionMachine).length,4);assert.equal(state.construction.beams.length,6);assert.equal(state.radTox,null);await send(bob,'join');
@@ -92,6 +92,8 @@ test('shared room exposes machines and steel, enforces exclusive boarding, and p
  await send(alice,'construction-controls',{operation:'park'});state=await send(alice,'interact');assert.equal(state.players['account:alice'].vehicleId,null);assert.equal(state.actors.crane.holderId,null);
  state=await send(alice,'join');assert.equal(state.construction.tower.placed,1);assert.equal(state.construction.beams.filter(beam=>beam.state==='placed').length,1);
  const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(roomPath),now:()=>now});state=await reloaded.command(world.id,world,alice,{action:'join',requestId:'server-restart'});assert.equal(state.construction.tower.placed,1);assert.equal(state.construction.beams.filter(beam=>beam.state==='placed').length,1);
+ // A restart retires the previous single writer; continue through the restored runtime.
+ runtime=reloaded;
  state=await send(alice,'map-access',{entityId:'excavator'});await send(alice,'construction-controls',{operation:'control',axes:{boom:1}});now+=150;await send(alice,'input',{input:{}});await send(alice,'construction-controls',{operation:'control',axes:{}});await send(alice,'construction-controls',{operation:'work'});
  const cycleStarted=now;for(let index=0;index<100;index++){now+=100;state=await send(alice,'input',{input:{}});if(!state.actors.excavator.construction.workCycle)break;}assert.ok(now-cycleStarted>=3500&&now-cycleStarted<=10000);
  assert.equal(state.construction.excavation.volume,2);assert.equal(state.actors.excavator.construction.load,2);

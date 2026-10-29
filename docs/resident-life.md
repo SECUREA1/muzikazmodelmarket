@@ -22,4 +22,18 @@ These are resident-owned activities. They do not synthesize authenticated player
 
 ## Validation
 
+The social integration review follows the resident changes in `d36cddc8`
+(voiced contacts), `58abf2bf` (reactive residents and daily objectives),
+`3857698d` (map context and saved progress), `c20d34ef` (identity, objectives
+and teamwork), `20b8ef60` (bounded collision planning), and `77ab3ed0`
+(solo resident simulation and conversation audio). Casino, fitness and native
+game controllers retain their specialist behavior.
+
+The integration adds collision-aware visitor approaches, addressed greetings,
+public experience sharing, consent-based activity visits and audience-filtered
+private dialogue. The original daily-favor rewards and requested machine-work
+adapters remain separate from the new reward-free visits. Tests cover both
+layers, persistence, collision budgets, map edits, personal space and client
+controls.
+
 `npm test` covers the resident planner, staged cooperation, world interactions, identity, rendering, dialogue, persistence and existing game systems. `python3 test/world-residents.browser.py` and `python3 test/resident-contexts.browser.py` exercise mobile/landscape conversation controls, live objective progress and character rendering in Chromium.

@@ -19,16 +19,19 @@ export function aiConversationActions(sim,player,npc,environment,now){
  return actions;
 }
 
-export function aiWorkReading(sim,context){
+export function aiWorkReading(sim,context,actorId){
  if(!context)return null;
- if(context.kind==='factory')return factoryCrewStatus(sim,{entityId:context.workerId});
+ if(context.kind==='factory'){
+  const job=sim.factoryCrewWork?.job;
+  return {...factoryCrewStatus(sim,{entityId:context.workerId}),id:job?.id||null,requested:!!actorId&&job?.requestedBy===actorId};
+ }
  if(context.kind==='construction'){
   const worker=sim.construction?.crew?.workers?.find(worker=>worker.id===context.workerId);if(!worker)return {status:'unavailable',message:'This crew member is no longer on the site.'};
   const job=sim.construction.crew.jobs.find(job=>job.id===worker.jobId),machine=sim.actors[worker.machineId];
-  return {workerId:worker.id,workerName:worker.name,status:worker.demonstration?.status||worker.state,phase:worker.state,message:worker.message||job?.message||'Ready for a site job.',machineName:machine?.name||machine?.definition?.name||machine?.modelId||'',progress:worker.demonstration?.status==='completed'?1:job?.progress||0};
+  return {id:worker.demonstration?worker.id+':'+worker.demonstration.startedAt:null,requested:!!actorId&&worker.demonstration?.requestedBy===actorId,workerId:worker.id,workerName:worker.name,status:worker.demonstration?.status||worker.state,phase:worker.state,message:worker.message||job?.message||'Ready for a site job.',machineName:machine?.name||machine?.definition?.name||machine?.modelId||'',progress:worker.demonstration?.status==='completed'?1:job?.progress||0};
  }
  const actor=sim.actors[context.workerId],task=actor?.aiTask;
- return task?{...task,workerId:actor.id,workerName:actor.resident?.name||actor.name,phase:task.stage,message:task.message||task.targetName}:null;
+ return task?{...task,requested:!!actorId&&task.ownerId===actorId&&!task.autonomous,workerId:actor.id,workerName:actor.resident?.name||actor.name,phase:task.stage,message:task.message||task.targetName}:null;
 }
 
 export function attachAIConversation(sim,player,npc,environment,conversation,now){
@@ -39,7 +42,7 @@ export function attachAIConversation(sim,player,npc,environment,conversation,now
   else if(npc?.resident?.factory)conversation.aiWorkContext={kind:'factory',workerId:npc.id};
   else if(npc?.crewWorker)conversation.aiWorkContext={kind:'construction',workerId:npc.id};
  }
- conversation.aiWork=aiWorkReading(sim,conversation.aiWorkContext);
+ conversation.aiWork=aiWorkReading(sim,conversation.aiWorkContext,player.actorId);
 }
 
 // Match explicit requests to do something. Questions about how the player can
@@ -113,6 +116,6 @@ export function performAIConversation(sim,player,npc,environment,conversation,{c
 
 export function refreshAIConversationWork(sim){
  for(const player of Object.values(sim.players||{}))for(const conversation of [player.vehicleMission,player.npcConversation]){
-  if(conversation?.aiWorkContext)conversation.aiWork=aiWorkReading(sim,conversation.aiWorkContext);
+  if(conversation?.aiWorkContext)conversation.aiWork=aiWorkReading(sim,conversation.aiWorkContext,player.actorId);
  }
 }

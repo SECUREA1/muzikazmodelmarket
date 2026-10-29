@@ -210,8 +210,13 @@ struct State {
 fn main() -> std::io::Result<()> {
     let entry = env::current_dir()?.join("server.mjs");
     if entry.is_file() {
+        let startup = env::current_dir()?.join("scripts/start-hosted.mjs");
+        if !startup.is_file() {
+            return Err(std::io::Error::new(std::io::ErrorKind::NotFound,
+                "Hosted startup entrypoint scripts/start-hosted.mjs is missing. Deploy the complete repository root."));
+        }
         let mut command = std::process::Command::new("node");
-        command.arg(&entry);
+        command.arg(&startup);
         #[cfg(unix)]
         {
             use std::os::unix::process::CommandExt;

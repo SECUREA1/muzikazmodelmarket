@@ -1,0 +1,19 @@
+.game-panel .game-panel-visibility{display:flex!important;align-items:center;justify-content:space-between;gap:10px;min-width:0;margin:0 0 5px;pointer-events:auto;color:inherit;font:700 11px/1.3 system-ui}
+.game-panel .game-panel-visibility>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;font:inherit}
+.game-panel .game-panel-visibility>button{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto;width:auto!important;min-width:54px!important;max-width:none!important;min-height:44px!important;margin:0!important;padding:6px 10px!important;border:1px solid #799b89!important;border-radius:7px!important;background:#112c30!important;color:#efffd7!important;box-shadow:none!important;font:700 11px/1.2 system-ui!important;letter-spacing:normal!important;text-transform:none!important;cursor:pointer;touch-action:manipulation;pointer-events:auto}
+.game-panel .game-panel-visibility>button:focus-visible{outline:3px solid #eaffbf;outline-offset:2px}
+.game-panel.game-panel-collapsed{display:block!important;min-height:0!important;padding:5px 9px!important;gap:0!important}
+.game-panel.game-panel-collapsed:not(:has(.basketball-score-strip,.scoreboard,.funhouse-experience-metrics,[data-funhouse-adventure-progress])){align-self:flex-end;width:max-content!important;max-width:100%!important}
+.game-panel.game-panel-collapsed>.game-panel-visibility{margin:0}
+.game-panel.game-panel-collapsed>:not(:where(.game-panel-visibility,.sports-action-bar,.funhouse-experience-metrics,.firing-range-strip)){display:none!important}
+.game-panel.game-panel-collapsed>.sports-action-bar:not(:has(.basketball-score-strip,.scoreboard)),
+.game-panel.game-panel-collapsed>.sports-action-bar>:not(.sports-action-header),
+.game-panel.game-panel-collapsed .sports-action-header>:not(.basketball-score-strip,.scoreboard){display:none!important}
+.funhouse-adventure-hud.game-panel.game-panel-collapsed>[data-funhouse-adventure-details]{display:block!important}
+.funhouse-adventure-hud.game-panel.game-panel-collapsed>[data-funhouse-adventure-details]>:not([data-funhouse-adventure-progress]){display:none!important}
+.house-stage.player-hide-action-bars .game-panel-visibility{display:none!important}
+.house-stage.player-hide-action-bars .game-panel-collapsed:not(:has(.basketball-score-strip,.scoreboard,.funhouse-experience-metrics,[data-funhouse-adventure-progress])){display:none!important}
+.game-panel[hidden]{display:none!important}
+
+.construction-header>.game-panel-visibility{flex:0 0 auto;margin:0;gap:0}
+.construction-header>.game-panel-visibility>strong{display:none}

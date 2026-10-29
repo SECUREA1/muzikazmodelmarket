@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import {createTowerRadioAudio} from '../public/js/tower-radio-audio.js';
 import {createAircraftCannonTrigger} from '../public/js/aircraft-cannon-trigger.js';
 import {speechTimeout} from '../public/js/character-voice-profile.js';
+import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
 const fixtureVoice={name:'Natural English Test Voice',voiceURI:'test:english',lang:'en-US',localService:true};
 function clock(){let time=0,id=0;const timers=new Map();return {now:()=>time,setTimer:(run,delay)=>{timers.set(++id,{run,at:time+delay});return id;},clearTimer:key=>timers.delete(key),advance(delta){const target=time+delta;for(let count=0;count<1000;count++){const next=[...timers].filter(([,timer])=>timer.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;time=next[1].at;timers.delete(next[0]);next[1].run();}time=target;}};}
-function radioFixture(){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={getVoices:()=>[fixtureVoice],speak:utterance=>spoken.push(utterance),cancel(){},resume(){}};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory:()=>null});return {time,spoken,captions,states,tones,radio};}
+function radioFixture({resume=()=>{},audioFactory=()=>null,voices=[fixtureVoice]}={}){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={getVoices:()=>voices,speak:utterance=>spoken.push(utterance),cancel(){},resume};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory});return {time,spoken,captions,states,tones,radio};}
 test('tower audio waits for a gesture, then prioritizes audible stall calls and replaces stale queued speech',()=>{
  const f=radioFixture();f.radio.call('Tower. Request your clearance.',{key:'ready'});assert.equal(f.spoken.length,0);assert.equal(f.captions.length,1);f.radio.unlock();assert.equal(f.spoken[0].text,'Tower. Request your clearance.');
  f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);f.time.advance(1000);f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);
@@ -88,4 +89,53 @@ test('passive audio unlock stays quiet until a radio introduction is explicitly 
 
 test('replay on a locked tower speaks one introduction rather than starting and cancelling two copies',()=>{
  const f=radioFixture();f.radio.replay();assert.equal(f.spoken.length,1);assert.match(f.spoken[0].text,/Radio connected/);f.spoken[0].onend();f.radio.unlock();assert.equal(f.spoken.length,1,'replay has already introduced this radio');f.radio.dispose();
+});
+
+test('each tower gesture resumes actual output without restarting an active call or looping an introduction',async()=>{
+ let resumes=0,contextResumes=0,factories=0;
+ const context={state:'suspended',resume(){contextResumes++;this.state='running';return Promise.resolve();},close(){return Promise.resolve();}};
+ const f=radioFixture({resume(){resumes++;return resumes===3?Promise.reject(new Error('Activation required')):Promise.resolve(true);},audioFactory:()=>{factories++;return context;}});
+ f.radio.unlock({introduce:false});f.radio.unlock({introduce:false});
+ assert.equal(resumes,2);assert.equal(contextResumes,2);assert.equal(factories,1);assert.equal(f.spoken.length,0);
+ f.radio.call('Tower. Continue approach.',{key:'approach'});context.state='suspended';f.radio.unlock({introduce:false});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(context.state,'running');assert.equal(resumes,3);assert.equal(f.spoken.length,1,'a recovery gesture cannot restart the current call');
+ f.spoken[0].onend();f.radio.replay();assert.equal(resumes,4);assert.equal(f.spoken.length,2,'replay resumes and speaks exactly one copy');f.radio.dispose();
+});
+
+test('an unheard tower warning waits for another gesture and preserves only the fresh follow-up without a second tone',()=>{
+ let resumes=0;const f=radioFixture({resume:()=>{resumes++;},voices:GENERATED_VOICES});
+ f.radio.unlock({introduce:false});f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning'});
+ const failed=f.spoken[0];failed.onerror({error:'not-allowed'});
+ assert.equal(f.radio.state.unlocked,false);assert.equal(f.radio.state.speaking,false);assert.equal(f.spoken.length,1);assert.equal(f.tones.length,1);
+ f.time.advance(30000);assert.equal(f.spoken.length,1,'blocked output never retries itself');
+ f.radio.call('Old queued call.',{key:'old'});f.radio.call('Tower. Follow the new approach.',{key:'new'});
+ f.radio.unlock({introduce:false});assert.equal(resumes,2);assert.equal(f.spoken.length,2);assert.equal(f.spoken[1].text,failed.text);assert.equal(f.tones.length,1,'the warning tone already sounded before the voice was blocked');
+ failed.onend();failed.onerror({error:'not-allowed'});assert.equal(f.radio.state.speaking,true,'failed-attempt callbacks cannot affect the retry');
+ f.spoken[1].onstart();f.spoken[1].onend();assert.equal(f.spoken.length,3);assert.equal(f.spoken[2].text,'Tower. Follow the new approach.');
+ f.spoken[2].onend();f.radio.unlock({introduce:false});assert.equal(f.spoken.length,3);f.radio.dispose();
+});
+
+test('saved mutes and map reset discard blocked tower calls before later resume gestures',()=>{
+ for(const drop of [radio=>{radio.setPreferences({announcementsMuted:true});radio.setPreferences({});},radio=>radio.reset()]){
+  const f=radioFixture();f.radio.unlock({introduce:false});f.radio.call('A blocked assignment.',{key:'blocked'});f.spoken[0].onerror({error:'not-allowed'});
+  drop(f.radio);f.radio.unlock({introduce:false});assert.equal(f.spoken.length,1,'cleared calls must not return after output resumes');f.radio.dispose();
+ }
+ const f=radioFixture();f.radio.unlock();f.spoken[0].onerror({error:'not-allowed'});
+ f.radio.setPreferences({introductionMuted:true});f.radio.setPreferences({});f.radio.unlock();
+ assert.equal(f.spoken.length,1,'discarding a blocked introduction does not create another automatic introduction');f.radio.dispose();
+});
+
+test('a new control gesture recovers transient speech failures without repeating partly heard calls',()=>{
+ const f=radioFixture();f.radio.unlock({introduce:false});f.radio.call('A partly heard clearance.',{key:'clearance'});
+ f.spoken[0].onstart();f.spoken[0].onerror({error:'not-allowed'});assert.equal(f.radio.state.speechAvailable,false);
+ f.radio.unlock({introduce:false});assert.equal(f.radio.state.speechAvailable,true);assert.equal(f.spoken.length,1,'a partly heard sentence must not restart');
+ f.radio.call('A new clearance.',{key:'new'});assert.equal(f.spoken.length,2);f.spoken[1].onerror({error:'synthesis-unavailable'});
+ assert.equal(f.radio.state.speechAvailable,false);f.radio.replay();assert.equal(f.radio.state.speechAvailable,true);assert.equal(f.spoken.length,3);assert.equal(f.spoken[2].text,'A new clearance.');f.radio.dispose();
+});
+
+test('generated tower segments retain their generation budget before the final playback deadline',()=>{
+ const f=radioFixture({voices:GENERATED_VOICES});f.radio.unlock({introduce:false});f.radio.call('A guide with several sentences.',{key:'guide'});
+ const line=f.spoken[0];line.onstart();line.onboundary({audioDuration:8,remainingSegments:2});f.time.advance(70000);assert.equal(f.radio.state.speaking,true);
+ line.onboundary({audioDuration:4,remainingSegments:0});f.time.advance(8999);assert.equal(f.radio.state.speaking,true);line.onend();f.time.advance(10000);assert.equal(f.radio.state.speaking,false);f.radio.dispose();
 });
