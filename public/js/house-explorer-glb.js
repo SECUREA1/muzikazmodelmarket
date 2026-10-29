@@ -4,6 +4,7 @@ import {pingPongCommand,stepPingPong,pingPongView} from './ping-pong-rules.js';
 import {createPingPongScene} from './ping-pong-scene.js';
 import {mountPingPongUI} from './ping-pong-ui.js';
 import {updateAvatarPaddle,disposeAvatarPaddle} from './avatar-paddle.js';
+import {createLocalWeather} from './local-weather.js';
 import {mountQuarryUI} from './quarry-ui.js';
 import {localMapLocations} from './local-map-locations.js';
 import {mountForestHarvestUI} from './forest-harvest-ui.js';
@@ -584,6 +585,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localTimeDisplay=document.createElement('p');localTimeDisplay.className='game-local-time';
   localTimeDisplay.title='The outdoor world follows your computer clock: sunrise at 6 AM, sunset at 6 PM.';
   explorerOptions.append(localTimeDisplay);
+  const weatherButton=document.createElement('button');weatherButton.type='button';
+  weatherButton.textContent='Sync local weather';weatherButton.setAttribute('aria-pressed','false');
+  const weatherStatus=document.createElement('p');weatherStatus.setAttribute('role','status');
+  weatherStatus.textContent='Map weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
+  explorerOptions.append(weatherButton,weatherStatus);
+  const localWeather=createLocalWeather({onChange:state=>{
+    worldScenery.setLocalWeather(state.weather);
+    weatherStatus.textContent=state.status==='synced'?`Local weather: ${state.weather} · Updated ${new Date(state.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Open-Meteo`:state.status==='loading'?'Finding local weather…':state.status==='unavailable'?'Local weather unavailable. Using map weather; check location permission and connection.':'Map weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
+  }});
+  weatherButton.addEventListener('click',()=>{if(localWeather.enabled)localWeather.stop();else localWeather.start();weatherButton.setAttribute('aria-pressed',String(localWeather.enabled));weatherButton.textContent=localWeather.enabled?'Use map weather':'Sync local weather';});
   let previousDayNightPhase='';
   const dayNightLighting=createDayNightLighting({scene,hemi,fill,sun,onChange:(state,date)=>{
     const label=state.phase[0].toUpperCase()+state.phase.slice(1);
@@ -2201,7 +2212,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
-  window.addEventListener('pagehide', event => {funhouseAudio.pause();gameplayVoice.reset();gameplayAnnouncements.reset();residentConversationAudio.reset();guideAudio.leave();airportOps.stopAudio();factoryLogisticsUI.close();factoryLogisticsXRMenu=false;factoryTestingVR.setVisible(false);factoryTestingVR.pointerUp();if(event.persisted)return;flashlight.dispose();vehicleNightLights.dispose();worldNightLights.dispose();soloResidentClient?.stop();guideAudio.dispose();factoryLogisticsUI.dispose();factoryTestingVR.dispose();forestSnakeSpeech.dispose();forestUI.dispose();prisonUI.dispose();airportOps.dispose();shippingUI.dispose();deedDeliveryScene.dispose();shippingScene.dispose();shippingPortScene.dispose();shippingActivityAnnouncements.dispose();casinoUI.dispose();funhouseAudio.dispose();funhouseUI.dispose();funhouseVR.dispose();funhouseWaterEffects.dispose();clearFunhouseCostume(playerIndicator);quarryUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
+  window.addEventListener('pagehide', event => {funhouseAudio.pause();gameplayVoice.reset();gameplayAnnouncements.reset();residentConversationAudio.reset();guideAudio.leave();airportOps.stopAudio();factoryLogisticsUI.close();factoryLogisticsXRMenu=false;factoryTestingVR.setVisible(false);factoryTestingVR.pointerUp();if(event.persisted)return;localWeather.dispose();flashlight.dispose();vehicleNightLights.dispose();worldNightLights.dispose();soloResidentClient?.stop();guideAudio.dispose();factoryLogisticsUI.dispose();factoryTestingVR.dispose();forestSnakeSpeech.dispose();forestUI.dispose();prisonUI.dispose();airportOps.dispose();shippingUI.dispose();deedDeliveryScene.dispose();shippingScene.dispose();shippingPortScene.dispose();shippingActivityAnnouncements.dispose();casinoUI.dispose();funhouseAudio.dispose();funhouseUI.dispose();funhouseVR.dispose();funhouseWaterEffects.dispose();clearFunhouseCostume(playerIndicator);quarryUI.dispose();constructionUI.dispose();roadVehicleUI.dispose();constructionScene.dispose();window.clearInterval(livePollTimer);disposeVoiceOverlay(playerRig); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
   async function checkForHouseUpdates({ startup = false } = {}) {
