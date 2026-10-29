@@ -1,10 +1,11 @@
+import {RESIDENT_PLAY_CHOICES,residentPlayIntent,residentPlay,residentPlayChoices,residentPlayJoke} from './server-resident-play.mjs';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {residentIntelligence,observeResidentInteraction} from './server-resident-life.mjs';
 import {residentActivitySummary} from './public/js/resident-activity-summary.js';
 
 export const RESIDENT_DIALOGUE_CHOICES=[
  ['day','How is your day?'],['resident-invite','What can we do together?'],['resident-join','Join suggested activity'],['resident-other','Suggest something different'],['resident-decline','Maybe later'],['resident-experience','Share a recent experience'],['resident-visit-confirm','Confirm activity arrival'],['resident-visit-cancel','End activity visit'],['help','Do you need help?'],['accept','Accept daily objective'],['progress','Daily objective progress'],['confirm','Confirm pickup / check-in'],['resident-activity','What are you doing now?'],['resident-personality','Tell me about yourself'],['resident-skills','Our skills and progress'],['resident-staff','Who else is nearby?'],['resident-memory','What do you remember?'],['joke','Tell me something fun'],['question','Ask about this location'],['thanks','Thank you'],['cancel','Cancel daily objective'],['bye','See you later']
-].map(([id,label])=>({id,label}));
+].map(([id,label])=>({id,label})).concat(RESIDENT_PLAY_CHOICES);
 const gap=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),day=now=>Math.floor(now/86400000);
 const activityFrom=text=>{
  const choices=[['basketball',/\b(basketball|hoops)\b/i],['hockey',/\b(hockey|skating)\b/i],['skiing',/\b(ski|skiing|snowboarding)\b/i],['aviation',/\b(flying|aviation|planes|pilot)\b/i],['seamanship',/\b(sailing|boats|boating|marinas)\b/i],['music',/\b(music|singing|dancing|guitar|jazz)\b/i],['construction',/\b(building|construction|machines|cranes)\b/i],['craftsmanship',/\b(crafting|crafts|design|drawing)\b/i],['exploration',/\b(exploring|exploration|walking|hiking|travelling)\b/i],['rangeSafety',/\b(targets|shooting|target practice|range)\b/i],['games',/\b(games|puzzles|arcade)\b/i]];
@@ -107,9 +108,11 @@ function directionReply(environment,npc,text){
  return 'This is '+npc.resident.placeName+' in '+(environment.name||environment.id)+'. '+(places.length>1?'The local map also lists '+places.slice(0,4).map(place=>place.name).join(', ')+'. ':'')+'Use the marked public routes and keep active play and working areas clear.';
 }
 export function residentDialogue(sim,player,npc,environment,choice,text,now){
- const info=npc.resident,memory=relationship(player,npc,environment,now),message=String(text||'').trim().slice(0,180),intent=residentDialogueIntent(choice,message),intelligence=residentIntelligence(info)||{},interest=activityFrom(message)||statedInterest(message),inherited=player.residentPreferences?.interest,visits=memory.visits||0,variant=visits%3;
+ const info=npc.resident,memory=relationship(player,npc,environment,now),message=String(text||'').trim().slice(0,180),baseIntent=residentDialogueIntent(choice,message),intent=residentPlayIntent(choice,message,baseIntent,memory,now),intelligence=residentIntelligence(info)||{},interest=activityFrom(message)||statedInterest(message),inherited=player.residentPreferences?.interest,visits=memory.visits||0,variant=visits%3;
+ const playful=residentPlay(info,memory,intent,message,now);
  let reply='',offer=null;
- if(intent==='preference'){
+ if(playful)reply=playful.text;
+ else if(intent==='preference'){
   memory.preferences.activity=interest;player.residentPreferences={...player.residentPreferences,interest};
   reply=['I will remember your interest in ','Then we have a good starting point: ','Good to know you enjoy '][variant]+describe(interest)+'. '+(info.context?.primarySkill===interest?'That connects with my work here. ':'')+'Do you enjoy learning the details or getting straight into an activity?';
  }else if(intent==='memory')reply=visits?'Good to see you again, '+player.username+'. We have spoken '+visits+' time'+(visits===1?'':'s')+'. '+(memory.preferences.activity?'You told me you enjoy '+describe(memory.preferences.activity)+'. ':inherited?'Our hosts remember your interest in '+describe(inherited)+'. ':'')+(memory.preferences.pace?'You prefer '+memory.preferences.pace+'. ':'')+'We were last talking about '+describe(memory.topic)+'.':(inherited?'Our hosts note that you enjoy '+describe(inherited)+'. ':'')+'This is our first conversation here. Tell me what interests you, and I can keep it in mind.';
@@ -136,7 +139,7 @@ export function residentDialogue(sim,player,npc,environment,choice,text,now){
  }else if(intent==='directions')reply=directionReply(environment,npc,message);
  else if(intent==='help'){
   offer=residentFavorOffer(info,environment,now);reply=info.ask+' '+offer.description+' Choose Accept daily objective to help. You can also explore this map’s activities in Quests.';
- }else if(intent==='joke')reply=['Ha! My warm-up lap became a sightseeing tour. That is my kind of route planning.','I brought a snack for a quick break. The snack has finished its task; the break is still working on it.','A smile is the only leaderboard entry I can improve while standing still.'][variant];
+ }else if(intent==='joke'){reply=residentPlayJoke(info,memory.jokeRound||0);memory.jokeRound=((memory.jokeRound||0)+1)%1000000;}
  else if(intent==='thanks')reply=(visits>3?'It is always good to see you, ':'You are welcome, ')+player.username+'. '+(player.residentTask?.status==='active'?'Your next stop is '+player.residentTask.checkpoints[player.residentTask.index].name+'.':'Thank you for taking an interest in our community.');
  else if(intent==='bye')reply='See you around, '+player.username+'! Enjoy '+info.placeName+'.'+(memory.preferences.activity?' I will remember your interest in '+describe(memory.preferences.activity)+'.':'');
  else if(intent==='comfort'){
@@ -147,5 +150,5 @@ export function residentDialogue(sim,player,npc,environment,choice,text,now){
  }
  memory.visits=visits+1;memory.affinity=Math.min(100,Math.max(-20,Number(memory.affinity||0)+(/\b(idiot|stupid|hate you)\b/i.test(message)?-2:1)));memory.lastAt=now;memory.topic=intent;memory.lastPlayerMessage=message||choice;memory.turns=[...memory.turns,{text:message||choice,intent,at:now}].slice(-6);
  observeResidentInteraction(sim,npc.id,{actorId:player.actorId,kind:'player-conversation',text:player.username+' asked about '+intent,skill:'social',requestId:'conversation:'+player.actorId+':'+npc.id+':'+now},now);
- return {intent,text:reply,metadata:{relationship:{visits:memory.visits,affinity:memory.affinity,topic:intent,rememberedInterest:memory.preferences.activity||inherited||null},personality:intelligence.personality||info.personality||'',backstory:intelligence.backstory||'',skills:intelligence.skills||info.skills||{},activity:intelligence.activity||info.task||'',taskOffer:offer,invitation:player.residentInvitation?.residentId===npc.id?player.residentInvitation:null,visit:player.residentVisit?.residentId===npc.id?player.residentVisit:null}};
+ return {intent,text:reply,metadata:{play:memory.play?{kind:memory.play.kind,expiresAt:memory.play.expiresAt}:null,playChoices:residentPlayChoices(memory.play),gesture:playful?.gesture||null,relationship:{visits:memory.visits,affinity:memory.affinity,topic:intent,rememberedInterest:memory.preferences.activity||inherited||null},personality:intelligence.personality||info.personality||'',backstory:intelligence.backstory||'',skills:intelligence.skills||info.skills||{},activity:intelligence.activity||info.task||'',taskOffer:offer,invitation:player.residentInvitation?.residentId===npc.id?player.residentInvitation:null,visit:player.residentVisit?.residentId===npc.id?player.residentVisit:null}};
 }

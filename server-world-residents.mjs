@@ -165,7 +165,7 @@ export function residentCommand(sim,player,environment,command,now,{collision,ob
  else{reply=response.text;if(intent==='bye')player.npcConversation.status='closed';}
  player.npcConversation.residentContext.invitation=player.residentInvitation?.residentId===npc.id?player.residentInvitation:null;
  player.npcConversation.residentContext.visit=player.residentVisit?.residentId===npc.id?player.residentVisit:null;
- line(sim,player,npc,now,reply);if(intent==='confirm'&&player.residentTask?.status==='completed')info.gesture='cheer';return info.name+' replied.';
+ line(sim,player,npc,now,reply);if(response.metadata.gesture)info.gesture=response.metadata.gesture;if(intent==='confirm'&&player.residentTask?.status==='completed')info.gesture='cheer';return info.name+' replied.';
 }
 export function stepWorldResidents(sim,environment,now,dt,{collision,objects={}}={}){
  updateResidentVisits(sim,environment,now);

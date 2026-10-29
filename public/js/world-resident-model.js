@@ -175,9 +175,9 @@ function updateMapCharacter(root,state,time,appearance,uniform,height,build){
   delete root.userData.mapCharacterVisual;visual=null;
  }
  if(id&&!visual){
-  const model=createCraftedCharacterModel(id),dimensions=CRAFTED_CHARACTER_MODEL_INFO[id][2],tints=[];
-  model.name='RESIDENT_MAP_CHARACTER';model.traverse(node=>{node.userData.collisionDisabled=true;if(node.isMesh&&/MOSS|TAILORED_TUNIC|CLOAK_LAPEL|LAYERED_TRADER_ROBE|LUMINOUS_VISOR_SLIT/.test(node.name))tints.push(node.material);});
-  root.add(model);visual={id,model,dimensions,tints};root.userData.mapCharacterVisual=visual;
+  const model=createCraftedCharacterModel(id),dimensions=CRAFTED_CHARACTER_MODEL_INFO[id][2],tints=[],arms=[];
+  model.name='RESIDENT_MAP_CHARACTER';model.traverse(node=>{node.userData.collisionDisabled=true;if(node.isGroup&&/TRAVELLER_ARM|CLOCKWORK_ARM|GOLEM_ARM|WELCOMING_ARM/.test(node.name))arms.push(node);if(node.isMesh&&/MOSS|TAILORED_TUNIC|CLOAK_LAPEL|LAYERED_TRADER_ROBE|LUMINOUS_VISOR_SLIT/.test(node.name))tints.push(node.material);});
+  root.add(model);visual={id,model,dimensions,tints,arms};root.userData.mapCharacterVisual=visual;
  }
  if(!visual)return;
  root.userData.residentParts.body.visible=false;
@@ -185,7 +185,8 @@ function updateMapCharacter(root,state,time,appearance,uniform,height,build){
  const {model,dimensions,tints}=visual;model.scale.set(.55/dimensions[0]*build,1.78/dimensions[1]*height,.4/dimensions[2]*build);
  for(const material of tints)material.color.set(id==='moss-golem'?appearance.detailColor||appearance.hair:appearance.outfit);
  updateCraftedCharacterModel(model,time);model.position.y=state.moving?Math.abs(Math.sin(time*6))*.025:0;
- const gesture=state.gesture;model.traverse(node=>{if(/TRAVELLER_ARM|CLOCKWORK_ARM|GOLEM_ARM|WELCOMING_ARM/.test(node.name)&&node.isGroup){node.rotation.x=node.userData.characterMotion?.axis==='x'?node.rotation.x:0;if(state.moving)node.rotation.x+=Math.sin(time*6+node.position.x)*.15;else if(['wave','greet','cheer'].includes(gesture))node.rotation.x-=1.2;else if(state.speaking)node.rotation.x+=Math.sin(time*3)*.12;}});
+ model.rotation.z=state.gesture==='dance'?Math.sin(time*5)*.06:0;
+ const gesture=state.gesture;for(const node of visual.arms){node.rotation.x=node.userData.characterMotion?.axis==='x'?node.rotation.x:0;if(state.moving)node.rotation.x+=Math.sin(time*6+node.position.x)*.15;else if(['wave','greet','cheer','dance'].includes(gesture))node.rotation.x-=gesture==='dance'?1+Math.sin(time*5+node.position.x)*.35:1.2;else if(state.speaking)node.rotation.x+=Math.sin(time*3)*.12;}
 }
 
 export function updateWorldResident(root,elapsed,options={}){
@@ -213,6 +214,7 @@ export function updateWorldResident(root,elapsed,options={}){
  for(const side of [-1,1]){
   const {arm,leg}=root.userData.residentLimbs[side];leg.rotation.x=moving?Math.sin(time*6)*side*.35:0;arm.rotation.set(0,0,0);
   if(moving)arm.rotation.x=-Math.sin(time*6)*side*.3;
+  else if(gesture==='dance'){arm.rotation.x=-.8+Math.sin(time*5+side)*.4;arm.rotation.z=side*.45;}
   else if(['wave','greet'].includes(gesture)&&side===1||gesture==='cheer'){arm.rotation.x=-2.25+Math.sin(time*6)*.15;arm.rotation.z=side===1?-.35:.35;}
   else if(gesture==='deal'){arm.rotation.x=-.95+Math.sin(time*3+side)*.3;arm.rotation.z=side*.12;}
   else if(gesture==='roll')arm.rotation.x=-.85+Math.sin(time*5+side)*.25;
@@ -223,7 +225,7 @@ export function updateWorldResident(root,elapsed,options={}){
   if(!moving)arm.rotation.x*=-1;
  }
  updateArticulatedCharacter(root,time,{moving,gesture,reducedMotion,upperBody:false});
- if(!state.fitness){parts.body.rotation.y=moving&&!reducedMotion?Math.sin(time*6)*.025:0;parts.body.rotation.z=moving&&!reducedMotion?Math.sin(time*6)*.018:0;}
+ if(!state.fitness){parts.body.rotation.y=moving&&!reducedMotion?Math.sin(time*6)*.025:0;parts.body.rotation.z=!reducedMotion?(gesture==='dance'?Math.sin(time*5)*.06:moving?Math.sin(time*6)*.018:0):0;}
  const prop=root.userData.residentProp;for(const child of prop.children)child.visible=child.name===(state.prop||'crate');prop.visible=!moving&&(['working','practising','playing','serving','learning'].includes(state.phase)||['serve','pass','pass-item','deal','count','roll','practise','practice'].includes(gesture));prop.rotation.set(state.prop==='music'?-.5:gesture==='deal'?-.45+Math.sin(time*3)*.1:gesture==='roll'?Math.sin(time*5)*.2:0,0,0);prop.position.set(gesture==='deal'?Math.sin(time*3)*.12:['pass','pass-item','handshake'].includes(gesture)?.18:0,state.prop==='ball'?.3+Math.abs(Math.sin(time*4))*.5:gesture==='roll'?.95+Math.abs(Math.sin(time*5))*.08:.95,['serve','pass','pass-item'].includes(gesture)?-.55:-.31);
  prop.scale.set(build,height,build);prop.position.multiply(new T.Vector3(build,height,build));
  const label=root.userData.residentLabel,text=state.speaking?state.speech||'':'',key=[casino,state.name,state.role,text,state.color].join('|');

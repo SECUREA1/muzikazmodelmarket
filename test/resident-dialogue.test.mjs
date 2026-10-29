@@ -98,3 +98,30 @@ test('the actual basketball sideline supports a nearby resident pair that comple
  const completed=sim.residentLife.conversations.filter(conversation=>conversation.status==='complete');assert.ok(sim.residentLife.stats.conversations>=1);assert.ok(completed.length>=1);
  for(const conversation of completed){assert.equal(conversation.lines.length,3);assert.equal(new Set(conversation.lines.map(line=>line.speakerId)).size,2);for(let index=1;index<conversation.lines.length;index++){assert.notEqual(conversation.lines[index-1].speakerId,conversation.lines[index].speakerId);assert.ok(conversation.lines[index].at-conversation.lines[index-1].at>=3100);}}
 });
+
+test('players can finish riddles with guesses, hints and reveal buttons without rewards',()=>{
+ const f=fixture();f.say('resident-riddle');let context=f.player.npcConversation.residentContext;
+ assert.equal(context.play.kind,'riddle');assert.ok(context.playChoices.some(c=>c.id==='resident-reveal'));
+ f.say('question','a banana');assert.match(f.player.npcConversation.conversation.at(-1).text,/hint:/);
+ f.say('resident-reveal');assert.match(f.player.npcConversation.conversation.at(-1).text,/The answer is/);assert.equal(f.player.npcConversation.residentContext.play,null);
+ f.say('resident-riddle');f.say('resident-play-stop');assert.equal(f.player.npcConversation.residentContext.play,null);
+ assert.equal(f.player.tokens.MZK,900);assert.equal(f.player.score,0);assert.equal(residentProgressView(f.player).completedTasks,0);
+});
+
+test('would-you-rather and coauthored stories have bounded follow-ups and animated celebrations',()=>{
+ const f=fixture();f.say('resident-rather');assert.equal(f.player.npcConversation.residentContext.play.kind,'rather');assert.match(f.player.npcConversation.conversation.at(-1).text,/concert for clouds/);
+ f.say('resident-answer-a');assert.equal(f.player.npcConversation.residentContext.play,null);
+ f.say('resident-story');f.say('question','a dancing teapot arrived');assert.match(f.player.npcConversation.conversation.at(-1).text,/dancing teapot/);
+ f.say('question','The Great Teapot Adventure');assert.match(f.player.npcConversation.conversation.at(-1).text,/The end!/);assert.equal(f.player.npcConversation.residentContext.play,null);assert.equal(f.npc.resident.gesture,'cheer');
+ f.npc.resident.appearance.form='mossling';f.say('resident-dance');assert.match(f.player.npcConversation.conversation.at(-1).text,/leaf shuffle/);assert.equal(f.npc.resident.gesture,'dance');
+ f.say('resident-highfive');assert.equal(f.npc.resident.gesture,'cheer');
+});
+
+test('mini-games stay private to a contact and player, expire and preserve navigation and task commands',()=>{
+ const f=fixture();f.say('resident-story');const bob={actorId:'bob',username:'Bob'};
+ const answer=residentDialogue(f.sim,bob,f.npc,f.world,'resident-answer-a','',f.advance());assert.match(answer.text,/last mini-game has ended/);
+ f.say('question','Where is the community garden?');assert.match(f.player.npcConversation.conversation.at(-1).text,/metres/);assert.equal(f.player.npcConversation.residentContext.play.kind,'story');
+ f.say('resident-riddle');f.advance(300001);f.say('resident-reveal');assert.match(f.player.npcConversation.conversation.at(-1).text,/last mini-game has ended/);
+ f.say('resident-story');f.say('bye');assert.equal(f.player.npcConversation.residentContext.play,null);
+ f.player.position.x+=50;assert.throws(()=>f.say('resident-highfive'),/Move closer/);
+});

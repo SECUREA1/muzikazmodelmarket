@@ -75,3 +75,14 @@ test('built map characters animate on resident actors and safely switch to work 
   assert.equal(root.userData.mapCharacterVisual,undefined);
  }finally{dispose(root);}
 });
+
+test('dance poses animate ordinary and crafted residents without accumulating or scanning the crafted hierarchy',()=>{
+ const root=createWorldResident();try{
+  root.userData.residentState={gesture:'dance',appearance:{characterModel:'none'}};updateWorldResident(root,1);
+  const first=root.userData.residentParts.body.rotation.z;updateWorldResident(root,2);assert.notEqual(root.userData.residentParts.body.rotation.z,first);
+  root.userData.residentState.appearance.characterModel='forest-ranger';updateWorldResident(root,1);
+  const model=root.userData.mapCharacterVisual.model,original=model.traverse;let scans=0;model.traverse=function(fn){scans++;return original.call(this,fn);};
+  updateWorldResident(root,2);updateWorldResident(root,2);assert.equal(scans,0);model.traverse=original;
+  updateWorldResident(root,4,{reducedMotion:true});const frozen=model.rotation.z;updateWorldResident(root,8,{reducedMotion:true});assert.equal(model.rotation.z,frozen);
+ }finally{dispose(root);}
+});

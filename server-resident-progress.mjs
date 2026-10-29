@@ -18,6 +18,7 @@ function memory(value){
  const source=object(value),saved={visits:Math.floor(number(source.visits)),affinity:Math.max(-20,Math.min(100,Number(source.affinity)||0)),preferences:{},topic:text(source.topic,60)||'greeting',lastAt:number(source.lastAt,Number.MAX_SAFE_INTEGER)};
  for(const key of ['activity','game','pace'])if(text(source.preferences?.[key],100))saved.preferences[key]=text(source.preferences[key],100);
  if(text(source.lastPlayerMessage))saved.lastPlayerMessage=text(source.lastPlayerMessage);
+ for(const key of ['jokeRound','riddleRound'])saved[key]=Math.floor(number(source[key],1000000));
  saved.turns=(Array.isArray(source.turns)?source.turns:[]).slice(-6).map(turn=>({text:text(turn?.text),intent:text(turn?.intent,60),at:number(turn?.at,Number.MAX_SAFE_INTEGER)}));
  return saved;
 }

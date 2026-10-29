@@ -107,7 +107,8 @@ export function mountQuestConversationPanel(root,{command}){
     const invited=invitation?.status==='offered'&&invitation.residentId===q.entityId&&invitation.worldId===world&&invitation.expiresAt>latest.serverTime;
     const visiting=visit?.status==='active'&&visit.residentId===q.entityId&&visit.worldId===world;
     const social=visiting?['resident-visit-confirm','resident-visit-cancel']:invited?['resident-join','resident-other','resident-decline']:['resident-invite','resident-experience'];
-    const priorities=inCasino?['casino-task','casino-accept','casino-progress','casino-skills','casino-activity','casino-personality']:[...social,'help','accept','progress','resident-skills','resident-activity','resident-personality','resident-memory'];
+    const play=context?.play?.expiresAt>latest.serverTime?(context.playChoices||[]).map(item=>item.id):[];
+    const priorities=inCasino?['casino-task','casino-accept','casino-progress','casino-skills','casino-activity','casino-personality']:[...play,'resident-riddle','resident-rather','resident-story','resident-highfive','resident-dance',...social,'help','accept','progress','resident-skills','resident-activity','resident-personality','resident-memory'];
     const options=priorities.map(id=>(q.dialogueChoices||[]).find(reply=>reply.id===id)).filter(Boolean);
     for(const reply of options){const button=make('button',reply.label,suggestions);button.type='button';if(inCasino)button.dataset.casinoReply=reply.id;button.dataset.residentReply=reply.id;button.disabled=busy||!command;button.onclick=()=>sendChoice(q,reply.id);}
    }

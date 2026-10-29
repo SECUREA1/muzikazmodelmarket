@@ -96,3 +96,30 @@ Safety and sports uniforms and the specialized funhouse cast take precedence.
 Older saves receive missing detail fields without replacing saved appearance
 choices. Set `appearance.characterModel` to `none` to keep the standard rig, or
 to a supported friendly built design to choose it explicitly in resident data.
+
+**Play a riddle**, **Would you rather?**, and **Make a silly story together**
+start short conversational mini-games from the resident conversation panel.
+Type a guess or a story sentence, or use the offered follow-up buttons. Riddles
+provide a hint before revealing the answer after a second missed guess. Stories
+finish after two contributions. **End our mini-game** ends a round, and inactive
+rounds expire after five minutes. Each player/contact has one current round;
+starting another replaces it. These casual rounds do not award currency or favor
+progress. Navigation questions and daily objective commands remain available.
+
+**High five!** and **Show me your dance** trigger short resident celebrations.
+Mosslings, foxfolk and automatons describe their own signature moves; local joke
+and would-you-rather topics draw on the map. Ordinary and built resident designs
+animate the celebrations through their existing visual models. Conversations
+and game replies retain the existing nearby-player access and private speech
+routing. Casino staff and fitness trainers keep their specialized conversations.
+
+The humor library contains 35 riddles, with local selections for map activities
+and character forms, and joke sets for 20 map themes. Rangers, merchants,
+clockwork knights, moss golems and both spirit designs have their own jokes.
+Casino staff combine their duty-specific jokes with the expanded library, and
+gym residents use fitness jokes. Riddle and joke counters advance independently
+of ordinary conversation so asking directions does not skip the next item.
+Each local pool cycles without repeating until exhausted, and rotation counters
+follow the existing server-owned contact memory. Natural guesses such as
+“It's a compass!” are accepted, including answers that otherwise resemble a
+navigation or skill question.
