@@ -1,5 +1,5 @@
 import {constructionStructure} from './public/js/construction-workplans.js';
-import {createEarthworks,expandEarthworks,earthworksSurfaceAt,earthworksTake,earthworksDeposit,earthworksPush,earthCargo,earthCargoVolume,refreshEarthworksTotals} from './public/js/construction-earthworks.js';
+import {EARTH_MATERIALS,createEarthworks,expandEarthworks,earthworksSurfaceAt,earthworksTake,earthworksDeposit,earthworksPush,earthCargo,earthCargoVolume,refreshEarthworksTotals} from './public/js/construction-earthworks.js';
 import {constructionMachineKind,isConstructionMachine,constructionClamp as clamp,initialConstructionState,craneHookPosition,constructionTarget,stepConstructionHydraulics,stepCraneAlignment,constructionTravelStatus,CONSTRUCTION_LOAD_OFFSET} from './public/js/construction-state.js';
 import {constructionJointPose} from './public/js/construction-kinematics.js';
 import {constructionColliders,constructionBox,constructionBoxContact,constructionMotionBlocked,constructionColliderBounds} from './public/js/construction-collision.js';
@@ -66,9 +66,9 @@ function normalizeCargo(sim,actor,{accountImport=true}={}){
  state.cargo=cargo;state.load=earthCargoVolume(cargo);
 }
 function updateCargo(state,cargo){state.cargo=earthCargo(cargo);state.load=earthCargoVolume(state.cargo);}
-const addCargo=(a,b)=>({soil:(a?.soil||0)+(b?.soil||0),gravel:(a?.gravel||0)+(b?.gravel||0)});
-const subtractCargo=(a,b)=>({soil:Math.max(0,(a?.soil||0)-(b?.soil||0)),gravel:Math.max(0,(a?.gravel||0)-(b?.gravel||0))});
-const partCargo=(source,volume)=>{const total=earthCargoVolume(source),factor=total?Math.min(1,volume/total):0;return {soil:(source?.soil||0)*factor,gravel:(source?.gravel||0)*factor};};
+const addCargo=(a,b)=>earthCargo(Object.fromEntries(EARTH_MATERIALS.map(key=>[key,(a?.[key]||0)+(b?.[key]||0)])));
+const subtractCargo=(a,b)=>earthCargo(Object.fromEntries(EARTH_MATERIALS.map(key=>[key,Math.max(0,(a?.[key]||0)-(b?.[key]||0))])));
+const partCargo=(source,volume)=>{const total=earthCargoVolume(source),factor=total?Math.min(1,volume/total):0;return earthCargo(Object.fromEntries(EARTH_MATERIALS.map(key=>[key,(source?.[key]||0)*factor])));};
 function dumpOutlet(actor){const yaw=actor.rotation?.y||0;return {x:actor.position.x+Math.sin(yaw)*4,y:actor.position.y+1.55,z:actor.position.z+Math.cos(yaw)*4};}
 function receivingTruck(sim,actor,tip=constructionJointPose(actor).bucketTip){
  return Object.values(sim.actors).find(truck=>{if(constructionMachineKind(truck)!=='truck'||truck.active===false||Math.abs(truck.driving?.speed||0)>.15||(truck.construction?.bed||0)>.08)return false;const yaw=truck.rotation?.y||0,center={x:truck.position.x+Math.sin(yaw)*1.4,z:truck.position.z+Math.cos(yaw)*1.4};return Math.hypot(tip.x-center.x,tip.z-center.z)<2.5&&tip.y>=truck.position.y+2.7;});
@@ -100,7 +100,9 @@ function bladePass(sim,actor,requested,now,distance=.8){
  const blade=constructionJointPose(actor).bladeEdge,yaw=actor.rotation?.y||0,surface=earthworksSurfaceAt(sim.construction.earthworks,blade);if(!surface)return 0;
  const to={x:blade.x-Math.sin(yaw)*distance,y:Number.isFinite(actor.construction.gradeTarget)?actor.construction.gradeTarget:Math.max(blade.y+1.5,surface.y+.5),z:blade.z-Math.cos(yaw)*distance},cutY=Number.isFinite(actor.construction.gradeTarget)?Math.max(actor.construction.gradeTarget,blade.y-.12):Math.max(actor.position.y-.15,blade.y-.12),moved=earthworksPush(sim.construction.earthworks,blade,to,requested,{radius:1.9,cutY,looseOnly:surface.patch.kind!=='excavation'}),volume=earthCargoVolume(moved);recordEarthMove(sim,actor,volume,'push',now);return volume;
 }
-function digPose(actor,earthworks){const initial={...actor,construction:{...actor.construction,boom:.4,stick:-1.5,bucket:1}},tip=constructionJointPose(initial).bucketTip,surface=earthworksSurfaceAt(earthworks,tip);initial.construction.boom=clamp(.4+Math.max(0,(surface?.y||0)-actor.position.y)*.28,.4,1.3);return initial;}
+// Raise the linkage above an elevated bank before curling the bucket. The
+// previous shallow approach buried the bucket ram and stalled the whole cycle.
+function digPose(actor,earthworks){const initial={...actor,construction:{...actor.construction,boom:.4,stick:-1.5,bucket:1}},tip=constructionJointPose(initial).bucketTip,surface=earthworksSurfaceAt(earthworks,tip);const rise=Math.max(0,(surface?.y||0)-actor.position.y);initial.construction.boom=clamp(.4+rise*.28+Math.min(.14,Math.max(0,rise-.25)*.85),.4,1.3);return initial;}
 function workReadiness(sim,actor){
  const state=actor.construction,kind=constructionMachineKind(actor),site=sim.construction;
  if(state.workCycle)return {allowed:false,reason:'Wait for the current hydraulic work cycle to finish.'};
@@ -116,7 +118,7 @@ function workReadiness(sim,actor){
 export function constructionTelemetry(sim,actor,now,context={}){
  const state=actor.construction,kind=constructionMachineKind(actor),travel=constructionTravelStatus(actor),attach=kind==='crane'?attachReadiness(sim,actor,context):{allowed:false,reason:'This machine has no lifting hook.'},release=kind==='crane'?releaseReadiness(sim,actor,context):{allowed:false,reason:'This machine has no lifting hook.'},work=workReadiness(sim,actor),hookLoadTonnes=kind==='crane'&&state.load?3.2:0,safeWorkingLoadTonnes=kind==='crane'?Math.min(12,168/Math.max(4,state.trolley||4)):null;
  const axes=now-state.controlAt<MANUAL_CONTROL_LEASE_MS?{...state.axes}:{},cycle=state.workCycle,limits={};for(const [axis,min,max]of [['trolley',4,42],['hoist',.8,74],['boom',.3,1.3],['stick',-1.5,-.2],['bucket',-1.2,1.2],['blade',0,1.2],['bed',0,.95]])limits[axis]={min:state[axis]<=min+.001,max:state[axis]>=max-.001};
- return {cargo:earthCargo(state.cargo),material:state.cargo?.gravel>0?'gravel':state.load>0?'soil':null,earthMoved:state.earthMoved||0,terrainRevision:sim.construction.earthworks?.revision||0,travelAllowed:travel.allowed,travelReason:travel.reason,canAttach:attach.allowed,attachReason:attach.reason,canRelease:release.allowed,canPlaceTower:!!(release.allowed&&release.target),releaseReason:release.reason,canWork:work.allowed,workReason:work.reason,load:kind==='crane'?hookLoadTonnes:state.load||0,loadCapacity:CONSTRUCTION_CAPACITY[kind],loadPercent:kind==='crane'?hookLoadTonnes/(safeWorkingLoadTonnes||1)*100:(state.load||0)/Math.max(1,CONSTRUCTION_CAPACITY[kind])*100,hookLoadTonnes,safeWorkingLoadTonnes,loadMomentPercent:hookLoadTonnes*(state.trolley||0)/168*100,cycleProgress:cycle?clamp((cycle.elapsed||0)/cycle.duration,0,1):0,cyclePhase:cycle?.mode||state.assist||'idle',hydraulicsActive:!!state.working,precision:!!state.precision,blocked:!!state.blocked,blockedPart:state.blocked?.part||null,blockedReason:state.blocked?.reason||'',limits,status:state.blocked?.reason||(cycle?'Hydraulic cycle active':state.assist?'Alignment assistance active':'Hydraulics neutral'),axes};
+ return {cargo:earthCargo(state.cargo),material:EARTH_MATERIALS.slice(2).find(key=>state.cargo?.[key]>0)||(state.cargo?.gravel>0?'gravel':state.load>0?'soil':null),earthMoved:state.earthMoved||0,terrainRevision:sim.construction.earthworks?.revision||0,travelAllowed:travel.allowed,travelReason:travel.reason,canAttach:attach.allowed,attachReason:attach.reason,canRelease:release.allowed,canPlaceTower:!!(release.allowed&&release.target),releaseReason:release.reason,canWork:work.allowed,workReason:work.reason,load:kind==='crane'?hookLoadTonnes:state.load||0,loadCapacity:CONSTRUCTION_CAPACITY[kind],loadPercent:kind==='crane'?hookLoadTonnes/(safeWorkingLoadTonnes||1)*100:(state.load||0)/Math.max(1,CONSTRUCTION_CAPACITY[kind])*100,hookLoadTonnes,safeWorkingLoadTonnes,loadMomentPercent:hookLoadTonnes*(state.trolley||0)/168*100,cycleProgress:cycle?clamp((cycle.elapsed||0)/cycle.duration,0,1):0,cyclePhase:cycle?.mode||state.assist||'idle',hydraulicsActive:!!state.working,precision:!!state.precision,blocked:!!state.blocked,blockedPart:state.blocked?.part||null,blockedReason:state.blocked?.reason||'',limits,status:state.blocked?.reason||(cycle?'Hydraulic cycle active':state.assist?'Alignment assistance active':'Hydraulics neutral'),axes};
 }
 function addBeam(sim,index){
  const site=sim.construction,id='construction-beam-'+index,supply=site.supply,position={x:supply.x,y:supply.y,z:supply.z+(index%6)*1.1};
@@ -145,8 +147,8 @@ export function ensureConstruction(sim,environment){
  if(!sim.construction){
   const tower={...point(config?.tower,{x:5,z:-10,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16}),placed:0,floors:0};
   tower.width=clamp(tower.width,6,26);tower.depth=clamp(tower.depth,6,26);tower.floorHeight=clamp(tower.floorHeight,2,5);tower.maxFloors=Math.floor(clamp(tower.maxFloors,1,Math.floor(68/tower.floorHeight)));tower.target=constructionTarget(tower);
-  sim.construction={version:1,tower,supply:point(config?.supply,{x:-8,y:.8,z:15}),excavation:{...point(config?.excavation,{x:25,z:17,radius:12}),depth:0,volume:0},stockpile:{...point(config?.stockpile,{x:30,z:39}),volume:0},graded:0,nextBeam:6,message:'Lower the crane hook to the steel store, attach a beam, then place it on the illuminated frame target.'};
-  for(let index=0;index<6;index++)addBeam(sim,index);
+  sim.construction={version:1,tower:config?.steelEnabled===false?null:tower,supply:point(config?.supply,{x:-8,y:.8,z:15}),excavation:{...point(config?.excavation,{x:25,z:17,radius:12}),depth:0,volume:0},stockpile:{...point(config?.stockpile,{x:30,z:39}),volume:0},graded:0,nextBeam:6,message:'Lower the crane hook to the steel store, attach a beam, then place it on the illuminated frame target.'};
+  if(config?.steelEnabled!==false)for(let index=0;index<6;index++)addBeam(sim,index);
  }
  if(config?.facility&&!sim.construction.facility){const facility={...point(config.facility,{x:-41,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:3}),placed:0,floors:0,frameOnly:true};facility.width=clamp(facility.width,6,26);facility.depth=clamp(facility.depth,6,26);facility.floorHeight=clamp(facility.floorHeight,2,5);facility.maxFloors=Math.floor(clamp(facility.maxFloors,1,12));facility.target=constructionTarget(facility);sim.construction.facility=facility;}
  const migratingLegacy=hadSite&&!sim.construction.earthworks,legacy=migratingLegacy?{excavated:Math.max(0,Number(sim.construction.excavation.volume)||0),stockpile:Math.max(0,Number(sim.construction.stockpile.volume)||0)}:null;
@@ -272,7 +274,7 @@ export function stepConstruction(sim,now,dt,context={}){
   refreshTelemetry(sim,actor,now,context);
  }
  refreshEarthworksTotals(sim.construction.earthworks,Object.values(sim.actors).filter(isConstructionMachine).map(actor=>actor.construction.cargo));
- if(availableBeams(sim).length<2&&sim.construction.tower.target)addBeam(sim,sim.construction.nextBeam++);
+ if(availableBeams(sim).length<2&&(sim.construction.tower?.target||sim.construction.facility?.target))addBeam(sim,sim.construction.nextBeam++);
 }
 export function constructionView(sim){
  if(!sim.construction)return null;

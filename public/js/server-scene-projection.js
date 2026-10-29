@@ -42,6 +42,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,is
 
 export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
+ if(actor.quarryMachine){root.userData.quarryMachine=actor.quarryMachine;root.traverse(child=>{if(child.userData.quarryModel)child.userData.quarryMachine=actor.quarryMachine;});}
  if(actor.construction){root.userData.construction=actor.construction;root.traverse(child=>{if(child.userData.constructionModel){child.userData.construction=actor.construction;child.userData.driving=actor.driving||{};}});}
  if(actor.constructionStructure?.kind==='facade')root.traverse(mesh=>{if(mesh.isMesh){mesh.userData.collider=true;mesh.userData.collisionOnly=true;mesh.castShadow=false;for(const material of [].concat(mesh.material||[]))material.visible=false;}});
  root.userData.freight=actor.freight||{crates:[],secured:true};

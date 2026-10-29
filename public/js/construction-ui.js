@@ -1,3 +1,4 @@
+import {QUARRY_MATERIALS} from './quarry-config.js';
 import {constructionStructure,constructionMachineChoices,constructionWorkAreas} from './construction-workplans.js';
 import {constructionOperations} from './construction-operations.js';
 import {gameplayOverlayOpen} from './game-menu-controls.js';
@@ -195,7 +196,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   const site=snapshot?.construction||{},earth=site.earthworks,steel=(site.tower?.placed||0)+':'+(site.facility?.placed||0);
   if(operationsEarth===earth&&operationsRevision===earth?.revision&&operationsSteel===steel)return;
   operationsEarth=earth;operationsRevision=earth?.revision;operationsSteel=steel;
-  const tasks=constructionOperations(site);
+  const tasks=constructionOperations(site);setHidden(operations,!tasks.length);
   for(const [id,node]of operationNodes)if(!tasks.some(task=>task.id===id)){node.root.remove();operationNodes.delete(id);}
   for(const task of tasks){
    let node=operationNodes.get(task.id);
@@ -276,7 +277,7 @@ export function mountConstructionUI(stage,command,{onInput=()=>{}}={}){
   else if(kind==='excavator')setText(readout,'Bucket '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||2).toFixed(1)+' m³ · '+(telemetry.status||'Manual ISO hydraulics'));
   else if(kind==='truck')setText(readout,'Payload '+Number(state.load||0).toFixed(1)+' / '+Number(telemetry.loadCapacity||40).toFixed(1)+' m³ · '+(telemetry.travelAllowed===false?telemetry.travelReason||'Travel interlocked':'Body and drive ready'));
   else setText(readout,'Blade '+Number(state.blade||0).toFixed(2)+' m · '+(telemetry.blockedReason||telemetry.status||'Cutting edge position is live'));
-  const earth=site.earthworks,cargo=state.cargo||telemetry.cargo;setHidden(materials,!earth&&!cargo);setText(materials,[cargo?'Onboard · soil '+Number(cargo.soil||0).toFixed(1)+' m³ · gravel '+Number(cargo.gravel||0).toFixed(1)+' m³':'',earth?'Site moved · excavated '+Number(earth.excavated||0).toFixed(1)+' m³ · deposited '+Number(earth.deposited||0).toFixed(1)+' m³ · pushed '+Number(earth.pushed||0).toFixed(1)+' m³':'',earth?.totals?'In ground · soil '+Number(earth.totals.soil||0).toFixed(1)+' m³ · gravel '+Number(earth.totals.gravel||0).toFixed(1)+' m³ · carried '+Number((earth.totals.carriedSoil||0)+(earth.totals.carriedGravel||0)).toFixed(1)+' m³':'',Number.isFinite(telemetry.earthMoved)?'This machine moved '+telemetry.earthMoved.toFixed(1)+' m³':''].filter(Boolean).join('\n'));
+  const earth=site.earthworks,cargo=state.cargo||telemetry.cargo;setHidden(materials,!earth&&!cargo);setText(materials,[cargo?'Onboard · '+Object.entries(cargo).filter(([,amount])=>amount>0).map(([key,amount])=>(QUARRY_MATERIALS[key]?.name||key)+' '+Number(amount).toFixed(1)+' m³').join(' · '):'',earth?'Site moved · excavated '+Number(earth.excavated||0).toFixed(1)+' m³ · deposited '+Number(earth.deposited||0).toFixed(1)+' m³ · pushed '+Number(earth.pushed||0).toFixed(1)+' m³':'',earth?.totals?'In ground · soil '+Number(earth.totals.soil||0).toFixed(1)+' m³ · gravel '+Number(earth.totals.gravel||0).toFixed(1)+' m³ · carried '+Number((earth.totals.carriedSoil||0)+(earth.totals.carriedGravel||0)).toFixed(1)+' m³':'',Number.isFinite(telemetry.earthMoved)?'This machine moved '+telemetry.earthMoved.toFixed(1)+' m³':''].filter(Boolean).join('\n'));
   const job=site.crew?.jobs?.find(job=>job.machineId===current?.id);setHidden(jobReadings,!job);if(job)setText(jobReadings,(job.label||CONSTRUCTION_CREW_JOBS[job.type]?.label||job.id)+' · '+Math.round(Math.max(0,Math.min(1,Number(job.progress)||0))*100)+'% · '+Number(job.completed||0).toFixed(1)+' / '+Number(job.goal||0).toFixed(1)+' '+(job.unit||'')+' · '+(job.message||job.status||''));
   const tower=site.tower;setHidden(progress,!tower);if(tower)setText(progress,'Tower '+(tower.floors||0)+' / '+(tower.maxFloors||16)+' floors · '+(tower.placed||0)+' steel members · Pit '+Number(site.excavation?.depth||0).toFixed(1)+' m · Spoil '+Number(site.stockpile?.volume||0).toFixed(1)+' m³');
   updateAxisFeedback();

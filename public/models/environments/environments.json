@@ -73387,5 +73387,4782 @@
       }
     },
     "playUrl": "model-explorer.html?environment=world-item-factory&house=world-item-factory&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "surface-mine-quarry",
+    "name": "Surface Mine · Quarry & Materials",
+    "label": "Dig, screen, crush and supply your deed",
+    "description": "A working surface mine with a six-metre pit, graded access ramp, gravel bank, topsoil stripping, two excavators, two haul trucks, a dozer, twin-deck screening plant, jaw crusher, transfer conveyor, radial stacker and six live product stockpiles. Process finite sand, fines, stone, crushed aggregate, seed-ready topsoil and mulch; stock, order and ship materials to owned deeds using shared freight and delivery inventories.",
+    "category": "Construction & machinery",
+    "game": "construction",
+    "quarry": {
+      "enabled": true,
+      "stations": {
+        "screener": {
+          "actorId": "quarry-screen",
+          "x": 85,
+          "z": -34,
+          "feedPatch": "screen-feed",
+          "rate": 1.2
+        },
+        "crusher": {
+          "actorId": "quarry-crusher",
+          "x": 134,
+          "z": -34,
+          "feedPatch": "crusher-feed",
+          "rate": 0.9
+        },
+        "stacker": {
+          "actorId": "quarry-stacker",
+          "x": 104,
+          "z": -7,
+          "rate": 2
+        }
+      },
+      "operatorHome": {
+        "x": 84,
+        "y": 0,
+        "z": -25
+      },
+      "outputPatches": {
+        "sand": "product-sand",
+        "fines": "product-fines",
+        "stone": "product-stone",
+        "crushed": "product-crushed",
+        "topsoil": "product-topsoil",
+        "mulch": "product-mulch"
+      }
+    },
+    "construction": {
+      "enabled": true,
+      "steelEnabled": false,
+      "yard": {
+        "minX": -145,
+        "maxX": 165,
+        "minZ": -120,
+        "maxZ": 125
+      },
+      "excavation": {
+        "x": 0,
+        "z": -35,
+        "width": 96,
+        "depth": 128,
+        "maxDepth": 12,
+        "cutDepth": 6,
+        "accessRamp": {
+          "width": 18,
+          "slope": 0.06
+        },
+        "material": "gravel",
+        "height": 4,
+        "radius": 19,
+        "bankOffsetX": 25,
+        "bankOffsetZ": 0
+      },
+      "stockpile": {
+        "x": -80,
+        "z": 65,
+        "width": 30,
+        "depth": 24
+      },
+      "earthworks": {
+        "cellSize": 2,
+        "patches": [
+          {
+            "id": "topsoil-strip",
+            "kind": "excavation",
+            "x": -95,
+            "z": -25,
+            "width": 44,
+            "depth": 54,
+            "maxDepth": 2,
+            "material": "soil"
+          },
+          {
+            "id": "screen-feed",
+            "kind": "stockpile",
+            "x": 68,
+            "z": -34,
+            "width": 18,
+            "depth": 18,
+            "maxDepth": 0
+          },
+          {
+            "id": "crusher-feed",
+            "kind": "stockpile",
+            "x": 117,
+            "z": -34,
+            "width": 18,
+            "depth": 18,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-sand",
+            "kind": "stockpile",
+            "material": "sand",
+            "x": 62,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-fines",
+            "kind": "stockpile",
+            "material": "fines",
+            "x": 96,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-stone",
+            "kind": "stockpile",
+            "material": "stone",
+            "x": 130,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-crushed",
+            "kind": "stockpile",
+            "material": "crushed",
+            "x": 62,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-topsoil",
+            "kind": "stockpile",
+            "material": "topsoil",
+            "x": 96,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          },
+          {
+            "id": "product-mulch",
+            "kind": "stockpile",
+            "material": "mulch",
+            "x": 130,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "maxDepth": 0
+          }
+        ]
+      },
+      "crew": {
+        "autoStart": true,
+        "quarryRoutes": true,
+        "muster": {
+          "x": -32,
+          "y": 0,
+          "z": 47
+        },
+        "jobBoard": {
+          "x": -32,
+          "y": 0,
+          "z": 43
+        },
+        "staging": {
+          "x": -28,
+          "y": 0,
+          "z": 54
+        },
+        "loading": {
+          "x": 30,
+          "y": -6,
+          "z": -15,
+          "rotationY": 0
+        },
+        "dump": {
+          "x": 68,
+          "y": 0,
+          "z": -34
+        },
+        "grade": {
+          "x": -80,
+          "y": 0,
+          "z": 65
+        },
+        "walkWaypoints": [
+          {
+            "x": -25,
+            "z": 20
+          },
+          {
+            "x": 0,
+            "z": 20
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 0,
+            "z": -15
+          },
+          {
+            "x": 20,
+            "z": -15
+          }
+        ],
+        "approachWaypoints": [
+          {
+            "x": 0,
+            "z": 40
+          },
+          {
+            "x": 0,
+            "z": -78
+          },
+          {
+            "x": 25,
+            "z": -78
+          },
+          {
+            "x": 30,
+            "z": -35
+          },
+          {
+            "x": 30,
+            "z": -15
+          }
+        ],
+        "haulWaypoints": [
+          {
+            "x": 0,
+            "z": 40
+          },
+          {
+            "x": 55,
+            "z": 40
+          },
+          {
+            "x": 68,
+            "z": 0
+          }
+        ],
+        "dumpApproachWaypoints": [
+          {
+            "x": 68,
+            "z": 0
+          },
+          {
+            "x": 68,
+            "z": -34
+          }
+        ]
+      }
+    },
+    "worldId": "skyline-deck",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-29T18:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 512,
+    "thumbnailUrl": "/public/images/construction/surface-mine-quarry.svg",
+    "spawn": {
+      "x": -25,
+      "y": 0.02,
+      "z": 40,
+      "rotationY": 0
+    },
+    "portalTargets": [
+      "skyscraper-construction",
+      "hormuz-shipping",
+      "public-commons"
+    ],
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "layout": "grand-floor",
+      "mapSize": 512,
+      "objects": [
+        {
+          "id": "quarry-excavator",
+          "modelId": "site-excavator",
+          "name": "Pit EX-300 · Gravel Bank",
+          "position": {
+            "x": 25,
+            "y": -6,
+            "z": -15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionDistance": 5,
+            "interactionKey": "f",
+            "prompt": "Operate Pit EX-300 · Gravel Bank",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "quarry-truck",
+          "modelId": "site-dumptruck",
+          "name": "HT-40 · Pit Haul Truck",
+          "position": {
+            "x": 30,
+            "y": -6,
+            "z": -15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionDistance": 5,
+            "interactionKey": "f",
+            "prompt": "Operate HT-40 · Pit Haul Truck",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "quarry-dozer",
+          "modelId": "site-bulldozer",
+          "name": "D9 · Topsoil & Stockpiles",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionDistance": 5,
+            "interactionKey": "f",
+            "prompt": "Operate D9 · Topsoil & Stockpiles",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "quarry-excavator-soil",
+          "modelId": "site-excavator",
+          "name": "EX-300 · Topsoil Stripping",
+          "position": {
+            "x": -95,
+            "y": 0,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionDistance": 5,
+            "interactionKey": "f",
+            "prompt": "Operate EX-300 · Topsoil Stripping",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "quarry-truck-soil",
+          "modelId": "site-dumptruck",
+          "name": "HT-40 · Soil Haul Truck",
+          "position": {
+            "x": -90,
+            "y": 0,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionDistance": 5,
+            "interactionKey": "f",
+            "prompt": "Operate HT-40 · Soil Haul Truck",
+            "destructible": false,
+            "health": 1000
+          }
+        },
+        {
+          "id": "quarry-screen",
+          "modelId": "quarry-screening-plant",
+          "name": "Twin-deck screening plant",
+          "position": {
+            "x": 85,
+            "y": 0,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionKey": "e",
+            "interactionDistance": 9,
+            "prompt": "Operate screener",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-crusher",
+          "modelId": "quarry-jaw-crusher",
+          "name": "Jaw crusher",
+          "position": {
+            "x": 134,
+            "y": 0,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionKey": "e",
+            "interactionDistance": 9,
+            "prompt": "Operate crusher",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-stacker",
+          "modelId": "quarry-stacker",
+          "name": "Radial stockpile stacker",
+          "position": {
+            "x": 104,
+            "y": 0,
+            "z": -7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionKey": "e",
+            "interactionDistance": 9,
+            "prompt": "Operate stacker",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-transfer",
+          "modelId": "quarry-conveyor",
+          "name": "Stone transfer conveyor",
+          "position": {
+            "x": 108,
+            "y": 0,
+            "z": -16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0.6,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-south-haul",
+          "modelId": "material:baseplate",
+          "name": "quarry-south-haul",
+          "position": {
+            "x": 0,
+            "y": -0.07,
+            "z": 108
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 60.41666666666667,
+            "y": 0.35,
+            "z": 2.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-east-haul",
+          "modelId": "material:baseplate",
+          "name": "quarry-east-haul",
+          "position": {
+            "x": 155,
+            "y": -0.07,
+            "z": -2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.5,
+            "y": 0.35,
+            "z": 43.75
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-west-haul",
+          "modelId": "material:baseplate",
+          "name": "quarry-west-haul",
+          "position": {
+            "x": -136,
+            "y": -0.07,
+            "z": -2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.5,
+            "y": 0.35,
+            "z": 43.75
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-north-haul",
+          "modelId": "material:baseplate",
+          "name": "quarry-north-haul",
+          "position": {
+            "x": 0,
+            "y": -0.07,
+            "z": -111
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 58.333333333333336,
+            "y": 0.35,
+            "z": 2.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-pit-entry",
+          "modelId": "material:baseplate",
+          "name": "quarry-pit-entry",
+          "position": {
+            "x": 0,
+            "y": -0.07,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.75,
+            "y": 0.35,
+            "z": 3.75
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-plant-crossroad",
+          "modelId": "material:baseplate",
+          "name": "quarry-plant-crossroad",
+          "position": {
+            "x": 100,
+            "y": -0.07,
+            "z": 8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 22.916666666666668,
+            "y": 0.35,
+            "z": 2.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-pit-to-plant",
+          "modelId": "material:baseplate",
+          "name": "quarry-pit-to-plant",
+          "position": {
+            "x": 30,
+            "y": -0.07,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12.5,
+            "y": 0.35,
+            "z": 2.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-west-link",
+          "modelId": "material:baseplate",
+          "name": "quarry-west-link",
+          "position": {
+            "x": -96,
+            "y": -0.07,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 16.666666666666668,
+            "y": 0.35,
+            "z": 2.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-soil-haul",
+          "modelId": "material:baseplate",
+          "name": "quarry-soil-haul",
+          "position": {
+            "x": -58,
+            "y": -0.07,
+            "z": -30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.5,
+            "y": 0.35,
+            "z": 18.75
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#8c8b7b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-pit--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-pit--1",
+          "position": {
+            "x": -48.4,
+            "y": 0.003,
+            "z": -35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 107.00000000000001
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-pit--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-pit--1",
+          "position": {
+            "x": 0,
+            "y": 0.003,
+            "z": -99.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 80.33333333333334,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-pit-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-pit-1",
+          "position": {
+            "x": 48.4,
+            "y": 0.003,
+            "z": -35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 107.00000000000001
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-pit-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-pit-1",
+          "position": {
+            "x": 0,
+            "y": 0.003,
+            "z": 29.400000000000006
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 80.33333333333334,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-topsoil-strip--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-topsoil-strip--1",
+          "position": {
+            "x": -117.4,
+            "y": 0.003,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 45.333333333333336
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-topsoil-strip--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-topsoil-strip--1",
+          "position": {
+            "x": -95,
+            "y": 0.003,
+            "z": -52.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 37,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-topsoil-strip-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-topsoil-strip-1",
+          "position": {
+            "x": -72.6,
+            "y": 0.003,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 45.333333333333336
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-topsoil-strip-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-topsoil-strip-1",
+          "position": {
+            "x": -95,
+            "y": 0.003,
+            "z": 2.3999999999999986
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 37,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-screen-feed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-screen-feed--1",
+          "position": {
+            "x": 58.6,
+            "y": 0.003,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 15.333333333333332
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-screen-feed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-screen-feed--1",
+          "position": {
+            "x": 68,
+            "y": 0.003,
+            "z": -43.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.333333333333332,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-screen-feed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-screen-feed-1",
+          "position": {
+            "x": 77.4,
+            "y": 0.003,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 15.333333333333332
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-screen-feed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-screen-feed-1",
+          "position": {
+            "x": 68,
+            "y": 0.003,
+            "z": -24.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.333333333333332,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-crusher-feed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-crusher-feed--1",
+          "position": {
+            "x": 107.6,
+            "y": 0.003,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 15.333333333333332
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-crusher-feed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-crusher-feed--1",
+          "position": {
+            "x": 117,
+            "y": 0.003,
+            "z": -43.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.333333333333332,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-crusher-feed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-crusher-feed-1",
+          "position": {
+            "x": 126.4,
+            "y": 0.003,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 15.333333333333332
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-crusher-feed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-crusher-feed-1",
+          "position": {
+            "x": 117,
+            "y": 0.003,
+            "z": -24.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.333333333333332,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-sand--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-sand--1",
+          "position": {
+            "x": 50.6,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-sand--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-sand--1",
+          "position": {
+            "x": 62,
+            "y": 0.003,
+            "z": 23.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-sand-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-sand-1",
+          "position": {
+            "x": 73.4,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-sand-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-sand-1",
+          "position": {
+            "x": 62,
+            "y": 0.003,
+            "z": 46.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-fines--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-fines--1",
+          "position": {
+            "x": 84.6,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-fines--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-fines--1",
+          "position": {
+            "x": 96,
+            "y": 0.003,
+            "z": 23.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-fines-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-fines-1",
+          "position": {
+            "x": 107.4,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-fines-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-fines-1",
+          "position": {
+            "x": 96,
+            "y": 0.003,
+            "z": 46.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-stone--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-stone--1",
+          "position": {
+            "x": 118.6,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-stone--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-stone--1",
+          "position": {
+            "x": 130,
+            "y": 0.003,
+            "z": 23.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-stone-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-stone-1",
+          "position": {
+            "x": 141.4,
+            "y": 0.003,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-stone-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-stone-1",
+          "position": {
+            "x": 130,
+            "y": 0.003,
+            "z": 46.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-crushed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-crushed--1",
+          "position": {
+            "x": 50.6,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-crushed--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-crushed--1",
+          "position": {
+            "x": 62,
+            "y": 0.003,
+            "z": 61.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-crushed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-crushed-1",
+          "position": {
+            "x": 73.4,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-crushed-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-crushed-1",
+          "position": {
+            "x": 62,
+            "y": 0.003,
+            "z": 84.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-topsoil--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-topsoil--1",
+          "position": {
+            "x": 84.6,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-topsoil--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-topsoil--1",
+          "position": {
+            "x": 96,
+            "y": 0.003,
+            "z": 61.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-topsoil-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-topsoil-1",
+          "position": {
+            "x": 107.4,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-topsoil-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-topsoil-1",
+          "position": {
+            "x": 96,
+            "y": 0.003,
+            "z": 84.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-mulch--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-mulch--1",
+          "position": {
+            "x": 118.6,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-mulch--1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-mulch--1",
+          "position": {
+            "x": 130,
+            "y": 0.003,
+            "z": 61.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-x-product-mulch-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-x-product-mulch-1",
+          "position": {
+            "x": 141.4,
+            "y": 0.003,
+            "z": 73
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.005,
+            "z": 18.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-survey-z-product-mulch-1",
+          "modelId": "material:cube",
+          "name": "quarry-survey-z-product-mulch-1",
+          "position": {
+            "x": 130,
+            "y": 0.003,
+            "z": 84.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 18.666666666666668,
+            "y": 0.005,
+            "z": 0.06666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#e7c66b"
+          }
+        },
+        {
+          "id": "quarry-fence--145--116",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -116
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--104",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -104
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--92",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -92
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--80",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--68",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--56",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--44",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -44
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--32",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -32
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--20",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145--8",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-4",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-16",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-28",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-40",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-52",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 52
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-64",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 64
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-76",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 76
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-88",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-100",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--145-112",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -145,
+            "y": 0,
+            "z": 112
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--116",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -116
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--104",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -104
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--92",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -92
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--80",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--68",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--56",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--44",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -44
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--32",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -32
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--20",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165--8",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": -8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-4",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-16",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-28",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-40",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-52",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 52
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-64",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 64
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-76",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 76
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-88",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-100",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-165-112",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 165,
+            "y": 0,
+            "z": 112
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--140--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -140,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--128--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -128,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--116--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -116,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--104--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -104,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--92--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -92,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--80--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--68--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -68,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--56--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -56,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--44--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -44,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--32--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--20--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--8--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -8,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-4--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 4,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-16--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-28--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 28,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-40--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-52--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 52,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-64--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 64,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-76--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 76,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-88--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 88,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-100--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 100,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-112--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 112,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-124--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 124,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-136--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 136,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-148--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 148,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-160--120",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 160,
+            "y": 0,
+            "z": -120
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--140-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -140,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--128-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -128,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--116-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -116,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--104-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -104,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--92-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -92,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--80-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--68-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -68,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--56-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -56,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--44-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -44,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--32-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence--20-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": -20,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-28-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 28,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-40-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-52-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 52,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-64-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 64,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-76-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 76,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-88-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 88,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-100-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 100,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-112-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 112,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-124-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 124,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-136-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 136,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-148-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 148,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-fence-160-125",
+          "modelId": "material:crowd-barrier",
+          "name": "Boundary fence",
+          "position": {
+            "x": 160,
+            "y": 0,
+            "z": 125
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5,
+            "y": 1.5,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-office",
+          "modelId": "construction-site-office",
+          "name": "Weighbridge & dispatch office",
+          "position": {
+            "x": -70,
+            "y": 0,
+            "z": 95
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-maintenance",
+          "modelId": "construction-service-canopy",
+          "name": "Plant maintenance",
+          "position": {
+            "x": -108,
+            "y": 0,
+            "z": 80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          }
+        },
+        {
+          "id": "quarry-welcome",
+          "modelId": "street-sign",
+          "name": "SURFACE MINE · Mine → Screen → Crush → Ship",
+          "position": {
+            "x": -25,
+            "y": 0,
+            "z": 37
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "prompt": "Read SURFACE MINE · Mine → Screen → Crush → Ship",
+            "interactionDistance": 5,
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Drive down the ramp into the gravel pit. Scoop the bank, load a truck, haul to a marked feed bay and tip. The screen separates sand, fines, stone and topsoil; organic rejects become mulch. Feed screened stone through the crusher. Stack products, book them into the quarry warehouse and order real freight to your own deed."
+          }
+        },
+        {
+          "id": "quarry-plant-board",
+          "modelId": "street-sign",
+          "name": "QUARRY OPERATIONS · Processing & Deed Freight",
+          "position": {
+            "x": 80,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "prompt": "Read QUARRY OPERATIONS · Processing & Deed Freight",
+            "interactionDistance": 5,
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Open Quarry operations. Start or stop each plant, route screened stone to the crusher, use the stacker, book actual stock, select your deed and order shipping. The named AI operator can run the plant while you handle digging and hauling."
+          }
+        },
+        {
+          "id": "quarry-ramp-guide",
+          "modelId": "street-sign",
+          "name": "PIT RAMP · Keep the centre lane clear",
+          "position": {
+            "x": -12,
+            "y": 0,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "prompt": "Read PIT RAMP · Keep the centre lane clear",
+            "interactionDistance": 5,
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "The pit is six metres deep. Follow the gently sloping centre ramp; do not drive over the banks. Raise and curl the bucket, lower the truck body and use Drive for travel."
+          }
+        },
+        {
+          "id": "quarry-topsoil-guide",
+          "modelId": "street-sign",
+          "name": "TOPSOIL · Strip, pile & screen",
+          "position": {
+            "x": -118,
+            "y": 0,
+            "z": 8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "prompt": "Read TOPSOIL · Strip, pile & screen",
+            "interactionDistance": 5,
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Strip topsoil in shallow lifts and keep it separate from the gravel bank. Tip it into the screening feed bay. Screened topsoil is seed-ready; organic oversize becomes mulch for your deed garden."
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 9142378,
+        "construction": {
+          "enabled": true,
+          "steelEnabled": false,
+          "yard": {
+            "minX": -145,
+            "maxX": 165,
+            "minZ": -120,
+            "maxZ": 125
+          },
+          "excavation": {
+            "x": 0,
+            "z": -35,
+            "width": 96,
+            "depth": 128,
+            "maxDepth": 12,
+            "cutDepth": 6,
+            "accessRamp": {
+              "width": 18,
+              "slope": 0.06
+            },
+            "material": "gravel",
+            "height": 4,
+            "radius": 19,
+            "bankOffsetX": 25,
+            "bankOffsetZ": 0
+          },
+          "stockpile": {
+            "x": -80,
+            "z": 65,
+            "width": 30,
+            "depth": 24
+          },
+          "earthworks": {
+            "cellSize": 2,
+            "patches": [
+              {
+                "id": "topsoil-strip",
+                "kind": "excavation",
+                "x": -95,
+                "z": -25,
+                "width": 44,
+                "depth": 54,
+                "maxDepth": 2,
+                "material": "soil"
+              },
+              {
+                "id": "screen-feed",
+                "kind": "stockpile",
+                "x": 68,
+                "z": -34,
+                "width": 18,
+                "depth": 18,
+                "maxDepth": 0
+              },
+              {
+                "id": "crusher-feed",
+                "kind": "stockpile",
+                "x": 117,
+                "z": -34,
+                "width": 18,
+                "depth": 18,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-sand",
+                "kind": "stockpile",
+                "material": "sand",
+                "x": 62,
+                "z": 35,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-fines",
+                "kind": "stockpile",
+                "material": "fines",
+                "x": 96,
+                "z": 35,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-stone",
+                "kind": "stockpile",
+                "material": "stone",
+                "x": 130,
+                "z": 35,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-crushed",
+                "kind": "stockpile",
+                "material": "crushed",
+                "x": 62,
+                "z": 73,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-topsoil",
+                "kind": "stockpile",
+                "material": "topsoil",
+                "x": 96,
+                "z": 73,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              },
+              {
+                "id": "product-mulch",
+                "kind": "stockpile",
+                "material": "mulch",
+                "x": 130,
+                "z": 73,
+                "width": 22,
+                "depth": 22,
+                "maxDepth": 0
+              }
+            ]
+          },
+          "crew": {
+            "autoStart": true,
+            "quarryRoutes": true,
+            "muster": {
+              "x": -32,
+              "y": 0,
+              "z": 47
+            },
+            "jobBoard": {
+              "x": -32,
+              "y": 0,
+              "z": 43
+            },
+            "staging": {
+              "x": -28,
+              "y": 0,
+              "z": 54
+            },
+            "loading": {
+              "x": 30,
+              "y": -6,
+              "z": -15,
+              "rotationY": 0
+            },
+            "dump": {
+              "x": 68,
+              "y": 0,
+              "z": -34
+            },
+            "grade": {
+              "x": -80,
+              "y": 0,
+              "z": 65
+            },
+            "walkWaypoints": [
+              {
+                "x": -25,
+                "z": 20
+              },
+              {
+                "x": 0,
+                "z": 20
+              },
+              {
+                "x": 0,
+                "z": 10
+              },
+              {
+                "x": 0,
+                "z": -15
+              },
+              {
+                "x": 20,
+                "z": -15
+              }
+            ],
+            "approachWaypoints": [
+              {
+                "x": 0,
+                "z": 40
+              },
+              {
+                "x": 0,
+                "z": -78
+              },
+              {
+                "x": 25,
+                "z": -78
+              },
+              {
+                "x": 30,
+                "z": -35
+              },
+              {
+                "x": 30,
+                "z": -15
+              }
+            ],
+            "haulWaypoints": [
+              {
+                "x": 0,
+                "z": 40
+              },
+              {
+                "x": 55,
+                "z": 40
+              },
+              {
+                "x": 68,
+                "z": 0
+              }
+            ],
+            "dumpApproachWaypoints": [
+              {
+                "x": 68,
+                "z": 0
+              },
+              {
+                "x": 68,
+                "z": -34
+              }
+            ]
+          }
+        },
+        "quarry": {
+          "enabled": true,
+          "stations": {
+            "screener": {
+              "actorId": "quarry-screen",
+              "x": 85,
+              "z": -34,
+              "feedPatch": "screen-feed",
+              "rate": 1.2
+            },
+            "crusher": {
+              "actorId": "quarry-crusher",
+              "x": 134,
+              "z": -34,
+              "feedPatch": "crusher-feed",
+              "rate": 0.9
+            },
+            "stacker": {
+              "actorId": "quarry-stacker",
+              "x": 104,
+              "z": -7,
+              "rate": 2
+            }
+          },
+          "operatorHome": {
+            "x": 84,
+            "y": 0,
+            "z": -25
+          },
+          "outputPatches": {
+            "sand": "product-sand",
+            "fines": "product-fines",
+            "stone": "product-stone",
+            "crushed": "product-crushed",
+            "topsoil": "product-topsoil",
+            "mulch": "product-mulch"
+          }
+        },
+        "locations": [
+          {
+            "id": "quarry-screener",
+            "name": "screener",
+            "x": 85,
+            "z": -34,
+            "width": 12,
+            "depth": 14,
+            "description": "Live processing machinery; use Quarry operations to control it."
+          },
+          {
+            "id": "quarry-crusher",
+            "name": "crusher",
+            "x": 134,
+            "z": -34,
+            "width": 12,
+            "depth": 14,
+            "description": "Live processing machinery; use Quarry operations to control it."
+          },
+          {
+            "id": "quarry-stacker",
+            "name": "stacker",
+            "x": 104,
+            "z": -7,
+            "width": 12,
+            "depth": 14,
+            "description": "Live processing machinery; use Quarry operations to control it."
+          },
+          {
+            "id": "pit",
+            "name": "pit",
+            "x": 0,
+            "z": -35,
+            "width": 96,
+            "depth": 128,
+            "description": "Six-metre open pit, gravel bank and real sloping access ramp."
+          },
+          {
+            "id": "topsoil-strip",
+            "name": "topsoil strip",
+            "x": -95,
+            "z": -25,
+            "width": 44,
+            "depth": 54,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "screen-feed",
+            "name": "screen feed",
+            "x": 68,
+            "z": -34,
+            "width": 18,
+            "depth": 18,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "crusher-feed",
+            "name": "crusher feed",
+            "x": 117,
+            "z": -34,
+            "width": 18,
+            "depth": 18,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-sand",
+            "name": "product sand",
+            "x": 62,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-fines",
+            "name": "product fines",
+            "x": 96,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-stone",
+            "name": "product stone",
+            "x": 130,
+            "z": 35,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-crushed",
+            "name": "product crushed",
+            "x": 62,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-topsoil",
+            "name": "product topsoil",
+            "x": 96,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          },
+          {
+            "id": "product-mulch",
+            "name": "product mulch",
+            "x": 130,
+            "z": 73,
+            "width": 22,
+            "depth": 22,
+            "description": "Finite material work area shared by all operators."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "construction": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=surface-mine-quarry&autoplay=1&mode=multiplayer"
   }
 ]

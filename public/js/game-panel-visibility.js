@@ -1,6 +1,7 @@
 import {requestGameInputRelease} from './game-input-release.js';
 
 const panels=[
+ ['quarry-hud','quarry','Quarry'],
  ['shipping-hud','shipping','Shipping'],['fishing-hud','fishing','Fishing'],
  ['road-vehicle-controls','road','Road vehicle'],['harbor-helm-controls','helm','Boat helm'],
  ['airport-flight-controls','flight','Flight'],['construction-controls','construction','Construction'],

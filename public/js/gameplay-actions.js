@@ -28,9 +28,9 @@ export function sharedNearbyActions(self,actors={},manifest={},key=null,crew=nul
   if(distance>watercraftInteractionReach(actor,self.position,config.interactionDistance||3))continue;
   const label=config.urbanMission?'Start courier mission':(actor.construction?'Operate '+(actor.name||roadVehicleType(actor)?.name||actor.modelId)+(actor.construction.crewOperator?' · take over from crew':''):config.prompt)||labels[config.behavior]||'Use item';
   const portal=Boolean(actor.worldGateway||config.action==='teleport'&&config.portal?.destinationType==='map'),device=deviceDefinition(actor.asset?.buildAssetId||actor.modelId,config),arcade=device&&['arcade','slots','poker','trivia'].includes(device.kind);
-  choices.push({distance,...action(config.behavior==='vehicle'?'vehicle':'item',nextKey,label,{entityId:actor.id,portal,...(portal?{title:'ENTER WORLD',hint:actor.worldGateway?.name||label}:arcade?{title:'OPEN ARCADE',hint:device.name||label,label:'Open '+(device.name||label)}:{})})});
+  choices.push({distance,cabPriority:!!actor.construction&&config.behavior==='vehicle'&&distance<=1.5,...action(config.behavior==='vehicle'?'vehicle':'item',nextKey,label,{entityId:actor.id,portal,...(portal?{title:'ENTER WORLD',hint:actor.worldGateway?.name||label}:arcade?{title:'OPEN ARCADE',hint:device.name||label,label:'Open '+(device.name||label)}:{})})});
  }
  for(const worker of crew?.workers||[]){if(key&&key!=='e'||!worker.position||worker.active===false||(worker.health??100)<=0)continue;const p=worker.position,distance=residentContactDistance(self.position,p);if(residentCanTalk(self.position,p))choices.push({distance,...action('resident','e','Talk to '+worker.name,{entityId:worker.id,resident:true})});}
- return choices.sort((a,b)=>a.distance-b.distance||a.entityId.localeCompare(b.entityId)).map(({distance,...result})=>result);
+ return choices.sort((a,b)=>Number(!!b.cabPriority)-Number(!!a.cabPriority)||a.distance-b.distance||a.entityId.localeCompare(b.entityId)).map(({distance,cabPriority,...result})=>result);
 }
 export function sharedNearbyAction(self,actors={},manifest={},key=null){return sharedNearbyActions(self,actors,manifest,key)[0]||none();}
