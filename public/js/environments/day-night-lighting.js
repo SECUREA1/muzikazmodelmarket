@@ -48,7 +48,9 @@ export function createDayNightLighting({scene, hemi, fill, sun, now = () => new 
         materialSample = scan;
         scene.traverse(object => {
           for (const material of [].concat(object.material || [])) {
-            if (typeof material.envMapIntensity === 'number' && !environmentMaterials.has(material)) {
+            // Night fixtures mirror their authored source and dispose their
+            // own clones; retaining those here would double-dim reflections.
+            if (typeof material.envMapIntensity === 'number' && !material.userData?.nightWorldOwned && !environmentMaterials.has(material)) {
               environmentMaterials.set(material, material.envMapIntensity);
             }
           }

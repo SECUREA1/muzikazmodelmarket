@@ -80,7 +80,7 @@
 .house-stage .game-display-flow>.funhouse-passport-hud small{font:700 11px system-ui;color:#efffd7}
 
 /* Settings can remove the bars completely while live scores keep updating. */
-.house-stage.player-hide-action-bars .game-display-flow-views>:not(.game-viewport-toggle),
+.house-stage.player-hide-action-bars .game-display-flow-views>:not(.game-viewport-toggle,.game-flashlight-toggle),
 .house-stage.player-hide-action-bars .game-viewport-toggle:not([aria-pressed=true]),
 .house-stage.player-hide-action-bars .game-display-flow>:not(.basketball-hud,.hockey-sports-bar,.shipping-hud,.funhouse-passport-hud,.funhouse-experience-hud,.funhouse-adventure-hud),
 .house-stage.player-hide-action-bars .sports-action-modes,
