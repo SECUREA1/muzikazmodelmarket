@@ -2,7 +2,7 @@ import {Object3D,Material,StaticDrawUsage} from '../vendor/three/three.module.mi
 import {cloneBuilderRuntime} from './builder-runtime-clone.js';
 
 const sceneIds=new Set(['grand-floor','open-studio','connected-suite','garden-courtyard','estate-house','estate-yard','drive-in-garage','open-office']);
-const dynamicFlags=['proceduralLand','nativeWorldDesign','layoutScene','generated','generatedAsset','savedCustomModel','customModel','imported','nativeAvatar','residentModel','craftedCharacterModel','funhouseModel','factoryModel','factoryLogisticsModel','testingModel','arcadePart','constructionModel','constructionParts','roadVehicle','aircraftModel','watercraft','boatModel','cargoTrailer','portalModel','roadDash'];
+const dynamicFlags=['proceduralLand','nativeWorldDesign','layoutScene','generated','generatedAsset','savedCustomModel','customModel','imported','nativeAvatar','residentModel','craftedCharacterModel','funhouseModel','factoryModel','factoryLogisticsModel','testingModel','arcadePart','constructionModel','constructionParts','forestHarvestModel','roadVehicle','aircraftModel','watercraft','boatModel','cargoTrailer','portalModel','roadDash'];
 const mediaFlags=['mediaScreen','mediaSurface','mediaFace','video','videoFeed','screenSource','screenCanvas'];
 const nodeCallbacks=['onBeforeRender','onAfterRender','onBeforeShadow','onAfterShadow'];
 const isPlain=value=>[Object.prototype,Array.prototype,null].includes(Object.getPrototypeOf(value));

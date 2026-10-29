@@ -1,4 +1,5 @@
 import {QUARRY_MODEL_INFO} from './quarry-config.js';
+import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';
 import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
 import {HOCKEY_ITEMS} from './hockey-models.js';
 import {ARCADE_PARTS} from './arcade-rules.js';
@@ -6,7 +7,7 @@ import {BUILDER_MODEL_INFO} from './builder-models-3d.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {BUILDING_MATERIALS,buildingDimensions} from './building-materials.js';
-import {ROAD_VEHICLES} from './road-vehicles.js';
+import {roadVehicleType} from './road-vehicles.js';
 import {LAYOUT_SCENES} from './builder-layout-scenes.js';
 import {nativeItemGameplay} from './editable-map-import.js';
 import {FISHING_GEAR} from './fishing-config.js';
@@ -28,6 +29,7 @@ export const BUILTIN_BUILDER_ITEMS=[
 ].map(([id,name,type,size])=>({id,name,type,size,image:`public/images/builder-pack/${id}.svg`,behavior:['pillow-ring','sofa','armchair'].includes(id)?'seat':'decor',procedural:true,assetKind:'premade'}));
 export const GAMEPLAY_BUILDER_ITEMS=[
  ...Object.entries(QUARRY_MODEL_INFO).map(([id,[name,description,dimensions]])=>({id,buildAssetId:id,name,description,dimensions,type:'interior',category:'props',size:95,image:'public/images/native-designs/'+id+'.svg',behavior:'decor',procedural:true,assetKind:'premade',function_data:{behavior:'decor',destructible:false,prompt:name}})),
+ ...Object.keys(FOREST_HARVEST_ITEMS).map(id=>forestHarvestNativeItem(id)),
  ...CONSTRUCTION_SITE_ITEMS,
  ...FISHING_GEAR.map(item=>({...item,image:'public/images/fishing/'+item.id+'.svg',type:'interactive',category:'tools',buildAssetId:item.id,behavior:'interact',action:'fishing',procedural:true,size:70,function_data:{behavior:'interact',action:'fishing',fishingGear:item.id,damage:0,prompt:'Equip '+item.name}})),
  {id:'basketball',name:'Basketball',type:'interactive',category:'interactive',size:58,image:'public/images/backpack/basketball.svg',buildAssetId:'basketball',behavior:'pickup',color:'#ec822f',scale:'24 cm regulation ball',procedural:true,basic:true,priceMzk:0,function_data:{prompt:'Basketball · E catch · T pass · R shoot',damage:0}},
@@ -84,7 +86,7 @@ const craftedIds=new Set([...PORTAL_ITEMS,...COMMON_PROP_ITEMS,...EQUIPMENT_PROP
 const definitions=[];
 for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])){
  const [name,description,dimensions]=BUILDER_MODEL_INFO[id]||[],device=INTERACTIVE_DEVICES[id],building=ENTERABLE_BUILDINGS[id],source=authored.get(id)||{};
- const native=nativeItemGameplay(id),road=ROAD_VEHICLES[id];
+ const native=nativeItemGameplay(id),road=roadVehicleType({modelId:id});
  const base={id,buildAssetId:id,name:name||source.name,description:description||source.description||'',dimensions,type:'props',category:building?'buildings':device?'interactive':'props',size:72,procedural:true,assetKind:'premade',behavior:device?'interact':'decor',image:building?.thumbnailUrl||(device?'/public/images/interactive-devices/'+id+'.svg':undefined),function_data:device?{device:id,prompt:'Use '+(name||source.name)}:undefined,...source,...native};
  if(!source.category&&!native.category)base.category=({avatar:'characters',enemy:'creatures',vehicle:'vehicles',interactive:'interactive',landscape:'landscape',interior:'interior',wearable:'wearables'})[base.type]||base.category;
  if(LAYOUT_SCENES[id])base.category='scene-layouts';

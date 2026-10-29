@@ -1,4 +1,6 @@
 import {createWorldItemFactoryLand} from '../world-item-factory-scene.js';
+import {createForestHarvestLand} from '../forest-harvest-scene.js';
+import {isForestHarvestEnvironment} from '../forest-harvest-config.js';
 import {createPrisonLand} from '../prison-world.js';
 import {createFactoryProvingGroundsLand,createMountainCompoundLand} from '../factory-testing-model.js';
 import {createMissileFactoryLand} from '../missile-factory-model.js';
@@ -35,6 +37,7 @@ export function createBuilderLand(environment) {
     return finishNativeWorldDesign(THREE,createProceduralBuilderLand(environment),environment);
 }
 function createProceduralBuilderLand(environment) {
+    if(isForestHarvestEnvironment(environment))return createForestHarvestLand(environment);
     if(environment.id==='world-item-factory'||environment.builderScene?.layout==='world-item-factory')return createWorldItemFactoryLand(environment);
     if(isTropicalIslandEnvironment(environment))return createTropicalIslandLand(environment);
     if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);

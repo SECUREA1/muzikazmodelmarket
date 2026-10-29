@@ -1,3 +1,4 @@
+import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';
 import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
 import {editableFactoryLogisticsScene} from './factory-logistics-builder.js';
 import {FACTORY_LOGISTICS_ITEMS,factoryLogisticsItemSettings} from './factory-logistics-items.js';
@@ -22,6 +23,7 @@ export function editableMapScene(map,{id='custom-'+map.id,layout='repository-'+m
 }
 export function editableMapChoices(...sources){const found=new Map();for(const source of sources){const rows=Array.isArray(source)?source:Array.isArray(source?.data)?source.data:Array.isArray(source?.environments)?source.environments:[];for(const map of rows)if(map?.id&&map.playable!==false&&map.visibility!=='private')found.set(map.id,map);}return [...found.values()];}
 export function nativeItemGameplay(id){
+ if(FOREST_HARVEST_ITEMS[id])return forestHarvestNativeItem(id);
  if(PRISON_ITEMS[id])return prisonNativeItem(id);
  if(FACTORY_LOGISTICS_ITEMS[id]){const item=FACTORY_LOGISTICS_ITEMS[id],settings=factoryLogisticsItemSettings(id);return {type:'props',category:'factory',image:item.thumbnailUrl,behavior:settings.behavior,priceMzk:item.priceMzk,function_data:settings};}
  if(FACTORY_TESTING_ITEMS[id]){const item=FACTORY_TESTING_ITEMS[id];return {type:'props',category:'factory-testing',image:item.thumbnailUrl,behavior:factoryTestingItemSettings(id).behavior,priceMzk:item.priceMzk,function_data:factoryTestingItemSettings(id)};}
