@@ -6,8 +6,8 @@ function fitnessEquipment(root){
  const steel=new T.MeshStandardMaterial({color:'#a5b3be',metalness:.75,roughness:.3}),rubber=new T.MeshStandardMaterial({color:'#253449',roughness:.9}),gloveMat=new T.MeshStandardMaterial({color:'#ed7650',roughness:.65});
  const gloves=[],weights=[];
  for(const side of [-1,1]){
-  const glove=new T.Mesh(new T.SphereGeometry(.115,12,10),gloveMat);glove.name='FITNESS_GLOVE';glove.position.set(0,-.49,-.025);glove.scale.set(1,1.1,1.2);limbs[side].arm.add(glove);gloves.push(glove);
-  const weight=new T.Group();weight.name='FITNESS_DUMBBELL';weight.position.set(0,-.49,0);limbs[side].arm.add(weight);
+  const glove=new T.Mesh(new T.SphereGeometry(.115,12,10),gloveMat);glove.name='FITNESS_GLOVE';glove.position.set(0,-.03,-.025);glove.scale.set(1,1.1,1.2);(limbs[side].wrist||limbs[side].arm).add(glove);gloves.push(glove);
+  const weight=new T.Group();weight.name='FITNESS_DUMBBELL';weight.position.set(0,-.03,0);(limbs[side].wrist||limbs[side].arm).add(weight);
   const handle=new T.Mesh(new T.CylinderGeometry(.022,.022,.35,8),steel);handle.rotation.z=Math.PI/2;weight.add(handle);
   for(const x of [-.16,.16]){const plate=new T.Mesh(new T.CylinderGeometry(.1,.1,.1,12),rubber);plate.rotation.z=Math.PI/2;plate.position.x=x;weight.add(plate);}weights.push(weight);
  }
@@ -17,7 +17,7 @@ function fitnessEquipment(root){
  for(const x of [-.7,.7]){const plate=new T.Mesh(new T.CylinderGeometry(.2,.2,.14,16),rubber);plate.rotation.z=Math.PI/2;plate.position.x=x;bar.add(plate);}
  const ball=new T.Group();ball.name='FITNESS_BASKETBALL';props.add(ball);const orange=new T.MeshStandardMaterial({color:'#e89637',roughness:.9}),black=new T.MeshStandardMaterial({color:'#243445',roughness:.8});ball.add(new T.Mesh(new T.SphereGeometry(.14,16,12),orange));
  for(const angle of [0,Math.PI/2]){const seam=new T.Mesh(new T.TorusGeometry(.142,.006,5,24),black);seam.rotation.y=angle;ball.add(seam);}const equator=new T.Mesh(new T.TorusGeometry(.142,.006,5,24),black);equator.rotation.x=Math.PI/2;ball.add(equator);
- const paddle=new T.Group();paddle.name='FITNESS_TABLE_TENNIS_PADDLE';paddle.position.set(0,-.5,-.03);limbs[1].arm.add(paddle);const blade=new T.Mesh(new T.CylinderGeometry(.095,.095,.025,16),new T.MeshStandardMaterial({color:'#b95767',roughness:.8}));blade.rotation.x=Math.PI/2;blade.position.y=-.07;blade.scale.y=1.12;paddle.add(blade);const handle=new T.Mesh(new T.BoxGeometry(.035,.12,.025),rubber);paddle.add(handle);
+ const paddle=new T.Group();paddle.name='FITNESS_TABLE_TENNIS_PADDLE';paddle.position.set(0,-.04,-.03);(limbs[1].wrist||limbs[1].arm).add(paddle);const blade=new T.Mesh(new T.CylinderGeometry(.095,.095,.025,16),new T.MeshStandardMaterial({color:'#b95767',roughness:.8}));blade.rotation.x=Math.PI/2;blade.position.y=-.07;blade.scale.y=1.12;paddle.add(blade);const handle=new T.Mesh(new T.BoxGeometry(.035,.12,.025),rubber);paddle.add(handle);
  const tableBall=new T.Mesh(new T.SphereGeometry(.025,10,8),new T.MeshStandardMaterial({color:'#fff4d7',roughness:.65}));tableBall.name='FITNESS_TABLE_TENNIS_BALL';props.add(tableBall);
  const stripes=new T.Group();stripes.name='FITNESS_REFEREE_STRIPES';body.add(stripes);const white=new T.MeshStandardMaterial({color:'#f7f4e7',roughness:.8});for(const x of [-.16,-.08,0,.08,.16]){const stripe=new T.Mesh(new T.BoxGeometry(.025,.35,.025),white);stripe.position.set(x,1.1,-.235);stripes.add(stripe);}
  const equipment={props,gloves,weights,rope,bar,ball,paddle,tableBall,stripes};root.userData.fitnessEquipment=equipment;return equipment;
@@ -69,7 +69,7 @@ export function updateFitnessResident(root,time){
   for(const side of [-1,1]){limbs[side].arm.rotation.set(-.25,0,-side*.4);limbs[side].leg.rotation.x=-Math.max(0,Math.sin(phase*6))*.12;}
   rope.visible=true;rope.rotation.x=phase*6;rope.position.y=.8;
  }else if(activity==='stretching'){
-  body.rotation.z=Math.sin(phase*.8)*.18;limbs[-1].arm.rotation.set(-2.6,0,.2);limbs[1].arm.rotation.set(-2.6,0,-.2);limbs[-1].leg.rotation.z=.12;limbs[1].leg.rotation.z=-.12;
+  body.rotation.z=Math.sin(phase*.8)*.18;limbs[-1].arm.rotation.set(2.6,0,.2);limbs[1].arm.rotation.set(2.6,0,-.2);limbs[-1].leg.rotation.z=.12;limbs[1].leg.rotation.z=-.12;
  }else if(activity==='bench-press'){
   body.position.set(0,.65,-.7);body.rotation.x=Math.PI/2;
   for(const side of [-1,1]){limbs[side].arm.rotation.set(1.2+pulse*.55,0,-side*.25);limbs[side].leg.rotation.x=.5;}
@@ -84,5 +84,27 @@ export function updateFitnessResident(root,time){
   else{const shot=(cycle-1.7)/1.3;limbs[1].arm.rotation.set(2.5,0,-.15);limbs[-1].arm.rotation.set(2.3,0,.2);body.position.y=Math.sin(shot*Math.PI)*.12;ball.position.set(.12,1.55+Math.sin(shot*Math.PI)*1.6,-.35-shot*2.6);ball.rotation.x=-phase*3;}
  }else if(activity==='table-tennis'){
   paddle.visible=true;tableBall.visible=true;const stroke=Math.sin(phase*4);limbs[1].arm.rotation.set(.9+Math.max(0,stroke)*.7,.3+stroke*.55,-.15);limbs[-1].arm.rotation.set(.7,0,.25);body.rotation.y=stroke*.12;body.position.y=-.025;tableBall.position.set(stroke*.25,.92+Math.abs(stroke)*.12,-.35-Math.abs(stroke)*.8);parts.head.rotation.y=stroke*.15;
+ }
+}
+
+// Applied after station-specific shoulders/hips, so gloves and equipment follow
+// the real wrists while elbows and knees stay within anatomical hinge limits.
+export function updateFitnessArticulation(root,time){
+ const state=root.userData.residentState||{},limbs=root.userData.residentLimbs;if(!state.fitness||!limbs||state.moving||state.workoutPaused||state.speaking)return;
+ const activity=state.currentActivity||state.activity||state.workout?.kind,phase=(state.reducedMotion?0:time)+(state.index||0)*.63,pulse=(Math.sin(phase*2.1)+1)/2;
+ for(const side of [-1,1]){
+  const limb=limbs[side];if(!limb.elbow)continue;let elbow=.08,knee=0,wrist=0;
+  if(['boxing','sparring','boxing-sparring'].includes(activity)){elbow=1.15;const punching=activity==='boxing'||['jab','cross','hook','uppercut'].includes(state.combatPose);if(punching){const beat=Math.max(0,Math.sin(phase*(activity==='boxing'?5:7)+(activity==='boxing'?side*Math.PI/2:0))),lead=state.combatPose==='cross'||state.combatPose==='uppercut'?1:-1;elbow=activity==='boxing'||side===lead?1.15-beat*.95:1.15;}if(state.combatPose==='duck')knee=-.7;}
+  else if(activity==='lifting'){limb.arm.rotation.x=.15;elbow=.25+pulse*1.55;}
+  else if(activity==='running'||activity==='sprint'){const step=Math.sin(phase*(activity==='sprint'?11:8)+side*Math.PI/2);elbow=1.05;knee=-Math.max(0,-step)*1.05;}
+  else if(activity==='rowing'){elbow=.15+pulse*.85;knee=-1.2+pulse*.6;}
+  else if(activity==='jump-rope'){elbow=.25;knee=-Math.max(0,-Math.sin(phase*6))*.25;}
+  else if(activity==='stretching')elbow=.12;
+  else if(activity==='bench-press'){elbow=.9-pulse*.75;knee=-.75;}
+  else if(activity==='deadlift'){knee=-(1-pulse)*.65;elbow=.02;}
+  else if(activity==='basketball'){const cycle=(phase%3+3)%3;elbow=cycle<1.7?.7:.3;wrist=cycle<1.7?-.08:-.3;}
+  else if(activity==='table-tennis'){elbow=side===1?.65:.35;wrist=side===1?-.12:0;knee=-.08;}
+  else if(activity==='spectating')elbow=.55;
+  limb.elbow.rotation.x=elbow;limb.knee.rotation.x=knee;limb.ankle.rotation.x=-limb.leg.rotation.x-knee;limb.wrist.rotation.x=wrist;
  }
 }

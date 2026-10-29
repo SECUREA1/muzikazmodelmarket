@@ -6,12 +6,14 @@ import {placementBounds} from './placed-item-collision.js';
 import {ServerMotion} from './server-motion.js';
 import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
 import {constructionOperatorPose} from './construction-kinematics.js';
+import {configureAvatarAnimations,clearAvatarAnimations} from './avatar-motion.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
- root.userData.serverMixer?.stopAllAction();
- root.userData.serverMixer?.uncacheRoot(root.userData.serverMixerRoot||root);
+ clearAvatarAnimations(root);
  root.removeFromParent();
- root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay||object.name==='CABINET_ARTWORK')material.map?.dispose();material.dispose();}});
+ const skeletons=new Set();
+ root.traverse(object=>{if(object.skeleton)skeletons.add(object.skeleton);object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay||object.name==='CABINET_ARTWORK')material.map?.dispose();material.dispose();}});
+ for(const skeleton of skeletons)skeleton.dispose();
 }
 
 export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,isCurrent,now=Date.now()}) {
@@ -19,7 +21,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,is
  const state=root.userData;
  if(state.serverAvatarUrl!==key){
   state.serverAvatarUrl=key;state.serverAvatarRequest=null;state.serverAvatarRetryAt=0;
-  state.serverMixer?.stopAllAction();state.serverMixer?.uncacheRoot(state.serverAvatarModel);state.serverMixer=null;
+  clearAvatarAnimations(root);
   if(state.serverAvatarModel)disposeProjection(state.serverAvatarModel);
   state.serverAvatarModel=null;state.serverBody.visible=true;
  }
@@ -36,7 +38,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,is
   state.serverAvatarRequest=null;
   const model=prepare(gltf.scene,{targetHeight:1.8});root.add(model);
   state.serverAvatarModel=model;state.serverBody.visible=false;
-  if(gltf.animations?.length){state.serverMixer=new THREE.AnimationMixer(model);const clip=gltf.animations.find(clip=>/idle/i.test(clip.name))||gltf.animations[0];state.serverMixer.clipAction(clip).play();}
+  configureAvatarAnimations(THREE,root,model,gltf.animations);
  },undefined,()=>{if(state.serverAvatarRequest===request){state.serverAvatarRequest=null;state.serverAvatarRetryAt=Date.now()+5000;}});
 }
 

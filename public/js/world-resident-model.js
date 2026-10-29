@@ -1,7 +1,8 @@
 import * as T from '../vendor/three/three.module.min.js';
-import {updateFitnessResident} from './fitness-resident-model.js';
+import {updateFitnessResident,updateFitnessArticulation} from './fitness-resident-model.js';
 import {createFunhouseModel,updateFunhouseModel} from './clown-funhouse-models.js';
 import {RESIDENT_FORMS} from './resident-personalities.js';
+import {articulateLimb,finalizeArticulatedCharacter,updateArticulatedCharacter} from './articulated-character-rig.js';
 
 // Speech remains legible nearby without turning a character into a fullscreen
 // billboard. Values are CSS pixels converted to world units for each camera.
@@ -72,10 +73,12 @@ export function createWorldResident(){
  const cap=new T.Group();cap.name='RESIDENT_GUARD_CAP';head.add(cap);add(cap,new T.CylinderGeometry(.18,.21,.11,16),dark,[0,.3,.01]);const brim=add(cap,new T.CylinderGeometry(.23,.23,.025,16),dark,[0,.245,-.05]);brim.scale.z=.8;box(cap,[.07,.055,.02],accent,[0,.31,-.18]);
  const limbs={};
  for(const side of [-1,1]){
-  const leg=new T.Group();leg.name=side<0?'RESIDENT_LEFT_LEG':'RESIDENT_RIGHT_LEG';leg.position.set(side*.12,.72,0);body.add(leg);add(leg,new T.CapsuleGeometry(.085,.42,4,10),dark,[0,-.26,0]);box(leg,[.17,.12,.29],dark,[0,-.64,-.045]);
-  const arm=new T.Group();arm.name=side<0?'RESIDENT_LEFT_ARM':'RESIDENT_RIGHT_ARM';arm.position.set(side*.27,1.26,0);body.add(arm);add(arm,new T.CapsuleGeometry(.07,.35,4,10),outfit,[0,-.22,0]);sphere(arm,.075,skin,[0,-.47,0]);const cuff=box(arm,[.14,.065,.14],white,[0,-.39,0],'RESIDENT_SHIRT_CUFF');cuff.visible=false;
-  if(side===1){const watch=add(arm,new T.CylinderGeometry(.075,.075,.045,12),accent,[0,-.405,0],'RESIDENT_WATCH');watch.visible=false;}
-  limbs[side]={arm,leg};
+  const leg=new T.Group();leg.name=side<0?'RESIDENT_LEFT_LEG':'RESIDENT_RIGHT_LEG';leg.position.set(side*.12,.72,0);body.add(leg);const trouser=add(leg,new T.CapsuleGeometry(.085,.42,4,10),dark,[0,-.26,0]),shoe=box(leg,[.17,.12,.29],dark,[0,-.64,-.045]);
+  const legRig=articulateLimb(T,leg,{mesh:trouser,bend:[0,-.29,0],end:[0,-.58,0],attachments:[shoe],kind:'leg',side,prefix:'RESIDENT'});
+  const arm=new T.Group();arm.name=side<0?'RESIDENT_LEFT_ARM':'RESIDENT_RIGHT_ARM';arm.position.set(side*.27,1.26,0);body.add(arm);const sleeve=add(arm,new T.CapsuleGeometry(.07,.35,4,10),outfit,[0,-.22,0]),hand=sphere(arm,.075,skin,[0,-.47,0]),cuff=box(arm,[.14,.065,.14],white,[0,-.39,0],'RESIDENT_SHIRT_CUFF');cuff.visible=false;
+  const attachments=[hand,cuff];let watch=null;if(side===1){watch=add(arm,new T.CylinderGeometry(.075,.075,.045,12),accent,[0,-.405,0],'RESIDENT_WATCH');watch.visible=false;attachments.push(watch);}
+  const armRig=articulateLimb(T,arm,{mesh:sleeve,bend:[0,-.23,0],end:[0,-.46,0],attachments,kind:'arm',side,prefix:'RESIDENT'});
+  limbs[side]={arm,leg,elbow:armRig.bend,wrist:armRig.end,knee:legRig.bend,ankle:legRig.end,cuff,watch};
  }
  root.userData.residentLimbs=limbs;
  const formal=new T.Group();formal.name='RESIDENT_FORMAL_UNIFORM';body.add(formal);
@@ -112,10 +115,10 @@ export function createWorldResident(){
   const worldPosition=new T.Vector3(),cameraPoint=new T.Vector3(),eye=new T.Vector3(),parentScale=new T.Vector3(),size=new T.Vector2();
   label.onBeforeRender=(renderer,_scene,camera)=>{const state=root.userData.residentState||{};label.getWorldPosition(worldPosition);camera.getWorldPosition(eye);renderer.getSize(size);cameraPoint.copy(worldPosition).applyMatrix4(camera.matrixWorldInverse);const layout=residentLabelLayout({distance:camera.isOrthographicCamera?1:Math.max(.1,-cameraPoint.z),visibilityDistance:eye.distanceTo(worldPosition),viewportWidth:size.x,viewportHeight:size.y,projectionY:camera.projectionMatrix.elements[5],speaking:Boolean(state.speaking&&state.speech)});root.getWorldScale(parentScale);label.scale.set(layout.width/Math.max(.01,parentScale.x),layout.height/Math.max(.01,parentScale.y),1);label.updateMatrixWorld(true);label.material.opacity=layout.opacity;label.userData.residentLabelLayout=layout;};
  }
- return root;
+ finalizeArticulatedCharacter(root);return root;
 }
 
-function updateFunhouseResidentAppearance(root,state,time,{height,build}){
+function updateFunhouseResidentAppearance(root,state,time,{height,build,reducedMotion=false}){
  const body=root.userData.residentParts.body,themed=state.funhouseClown===true;
  let visual=root.userData.funhouseResidentVisual;
  if(themed&&!visual){
@@ -128,18 +131,19 @@ function updateFunhouseResidentAppearance(root,state,time,{height,build}){
  body.visible=!themed;
  if(!visual)return;
  visual.model.visible=themed;if(!themed)return;
- visual.model.scale.set(build,height,build);updateFunhouseModel(visual.model,time);
+ visual.model.scale.set(build,height,build);updateFunhouseModel(visual.model,time,reducedMotion);
  visual.model.position.y=state.moving?Math.abs(Math.sin(time*6))*.025:0;
  visual.arms.forEach((arm,index)=>{
   const side=index%2?1:-1;
-  if(state.moving)arm.rotation.x=-Math.sin(time*6+side*Math.PI/2)*.35;
+  if(state.moving)arm.rotation.x=Math.sin(time*6)*side*.35;
   else if(['wave','greet','cheer'].includes(state.gesture))arm.rotation.x=-2.1+Math.sin(time*6)*.14;
   else if(state.speaking)arm.rotation.x=-.45+Math.sin(time*3+side)*.14;
  });
+ updateArticulatedCharacter(visual.model,time,{moving:state.moving,gesture:state.gesture,reducedMotion,upperBody:false});
 }
 
-export function updateWorldResident(root,time){
- const state=root.userData.residentState||{},moving=state.moving,gesture=state.gesture||'work',parts=root.userData.residentParts,head=parts.head;
+export function updateWorldResident(root,elapsed,options={}){
+ const state=root.userData.residentState||{},reducedMotion=Boolean(options.reducedMotion??state.reducedMotion),time=reducedMotion?0:(Number.isFinite(elapsed)?elapsed:0),moving=state.moving&&!reducedMotion,gesture=state.gesture||'work',parts=root.userData.residentParts,head=parts.head;
  const {appearance,uniform}=residentVisualStyle(state),casino=Boolean(state.casino),materials=root.userData.residentMaterials;
  materials.outfit.color.set(appearance.outfit);materials.skin.color.set(appearance.skin);materials.hair.color.set(appearance.hair);materials.accent.color.set(appearance.accent);
  const height=state.ageGroup==='child'?.74:T.MathUtils.clamp(Number(appearance.height)||1,.9,1.12),build=T.MathUtils.clamp(Number(appearance.build)||1,.85,1.15);
@@ -149,13 +153,13 @@ export function updateWorldResident(root,time){
  parts.tail.visible=appearance.form==='foxfolk';parts.tail.rotation.z=Math.sin(time*(moving?5:1.2))*(moving?.18:.08);parts.nose.visible=!['foxfolk','automaton'].includes(appearance.form);
  parts.glasses.visible=appearance.accessory==='glasses';parts.earrings.visible=appearance.accessory==='earrings';parts.necklace.visible=appearance.accessory==='necklace';parts.cap.visible=uniform==='security';parts.badge.visible=uniform==='security';parts.radio.visible=uniform==='security';parts.formal.visible=uniform==='formal';parts.nameTag.visible=['formal','hospitality','training','aviation','arcade'].includes(uniform);
  parts.highVis.visible=['construction','aviation','training'].includes(uniform);parts.hardHat.visible=uniform==='construction';parts.earProtection.visible=['aviation','training'].includes(uniform);parts.nautical.visible=uniform==='nautical';parts.sport.visible=uniform==='sports';parts.apron.visible=uniform==='hospitality';parts.arcade.visible=uniform==='arcade';parts.scarf.visible=uniform==='music';parts.toolBelt.visible=uniform==='construction';
- root.getObjectByName('RESIDENT_WATCH').visible=appearance.accessory==='watch';root.traverse(node=>{if(node.name==='RESIDENT_SHIRT_CUFF')node.visible=parts.formal.visible;});
+ root.userData.residentLimbs[1].watch.visible=appearance.accessory==='watch';for(const side of [-1,1])root.userData.residentLimbs[side].cuff.visible=parts.formal.visible;
  head.rotation.set(gesture==='laugh'?Math.sin(time*8)*.1:state.speaking?Math.sin(time*7)*.035:Math.sin(time*.7)*.015,0,gesture==='laugh'?Math.sin(time*5)*.06:gesture==='listen'?.04:0);
  const look=state.lookAt||state.conversationTargetPosition;if(look&&Number.isFinite(look.x)&&Number.isFinite(look.z)){root.updateWorldMatrix(true,false);const local=root.worldToLocal(new T.Vector3(look.x,Number.isFinite(look.y)?look.y:root.getWorldPosition(new T.Vector3()).y+1.6,look.z));head.rotation.y=T.MathUtils.clamp(Math.atan2(-local.x,-local.z),-1.05,1.05);head.rotation.x+=T.MathUtils.clamp(Math.atan2(local.y-height*1.6,Math.hypot(local.x,local.z)),-.22,.22);}
  parts.smile.scale.y=state.speaking?.8+Math.sin(time*10)*.14:1;
  for(const side of [-1,1]){
-  const {arm,leg}=root.userData.residentLimbs[side];leg.rotation.x=moving?Math.sin(time*6+side*Math.PI/2)*.35:0;arm.rotation.set(0,0,0);
-  if(moving)arm.rotation.x=-Math.sin(time*6+side*Math.PI/2)*.3;
+  const {arm,leg}=root.userData.residentLimbs[side];leg.rotation.x=moving?Math.sin(time*6)*side*.35:0;arm.rotation.set(0,0,0);
+  if(moving)arm.rotation.x=-Math.sin(time*6)*side*.3;
   else if(['wave','greet'].includes(gesture)&&side===1||gesture==='cheer'){arm.rotation.x=-2.25+Math.sin(time*6)*.15;arm.rotation.z=side===1?-.35:.35;}
   else if(gesture==='deal'){arm.rotation.x=-.95+Math.sin(time*3+side)*.3;arm.rotation.z=side*.12;}
   else if(gesture==='roll')arm.rotation.x=-.85+Math.sin(time*5+side)*.25;
@@ -163,7 +167,10 @@ export function updateWorldResident(root,time){
   else if(['serve','pass','pass-item','handshake'].includes(gesture)){arm.rotation.x=side===1?-1.15+Math.sin(time*3)*.07:-.6;arm.rotation.z=side===1?-.12:.16;}
   else if(['thought','think','listen'].includes(gesture)&&side===1){arm.rotation.x=-1.1;arm.rotation.z=-.45;}
   else if(['talk','explain'].includes(gesture)){arm.rotation.x=-.5+(Math.sin(time*3+side)*.16);arm.rotation.z=side*.13;}
+  if(!moving)arm.rotation.x*=-1;
  }
+ updateArticulatedCharacter(root,time,{moving,gesture,reducedMotion,upperBody:false});
+ if(!state.fitness){parts.body.rotation.y=moving&&!reducedMotion?Math.sin(time*6)*.025:0;parts.body.rotation.z=moving&&!reducedMotion?Math.sin(time*6)*.018:0;}
  const prop=root.userData.residentProp;for(const child of prop.children)child.visible=child.name===(state.prop||'crate');prop.visible=!moving&&(['working','practising','playing','serving','learning'].includes(state.phase)||['serve','pass','pass-item','deal','count','roll','practise','practice'].includes(gesture));prop.rotation.set(state.prop==='music'?-.5:gesture==='deal'?-.45+Math.sin(time*3)*.1:gesture==='roll'?Math.sin(time*5)*.2:0,0,0);prop.position.set(gesture==='deal'?Math.sin(time*3)*.12:['pass','pass-item','handshake'].includes(gesture)?.18:0,state.prop==='ball'?.3+Math.abs(Math.sin(time*4))*.5:gesture==='roll'?.95+Math.abs(Math.sin(time*5))*.08:.95,['serve','pass','pass-item'].includes(gesture)?-.55:-.31);
  const label=root.userData.residentLabel,text=state.speaking?state.speech||'':'',key=[casino,state.name,state.role,text,state.color].join('|');
  if(label&&key!==label.key){
@@ -175,6 +182,6 @@ export function updateWorldResident(root,time){
   }
   label.texture.needsUpdate=true;
  }
- updateFitnessResident(root,time);
- updateFunhouseResidentAppearance(root,state,time,{height,build});
+ updateFitnessResident(root,time);updateFitnessArticulation(root,time);
+ updateFunhouseResidentAppearance(root,state,time,{height,build,reducedMotion});
 }

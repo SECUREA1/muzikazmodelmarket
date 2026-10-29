@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.6.8-regional-order-journeys';
+const CACHE = 'muzikaz-world-v2.6.9-articulated-people-vector-gear';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
