@@ -28,7 +28,7 @@ export function ensureConstructionCrew(sim,environment,now=0){
  const config=configFor(environment),muster=position(config.muster,{x:-58,y:0,z:35});
  if(!sim.construction.crew){
   const workers=CONSTRUCTION_CREW_DEFAULTS.map((definition,index)=>{const home={x:muster.x+(index%2)*1.8,y:muster.y,z:muster.z+Math.floor(index/2)*1.8};return {id:definition.id,name:definition.name,role:definition.role,appearance:{...definition.appearance},position:{...home},home,heading:0,state:'paused',enabled:true,jobId:null,machineId:null,phase:'standby',progress:0,message:'Ready at the crew muster point.'};});
-  const jobs=Object.entries(CONSTRUCTION_CREW_JOBS).map(([id,definition])=>({id,type:id,label:definition.label,status:'queued',workerId:CONSTRUCTION_CREW_DEFAULTS.find(worker=>worker.jobs.includes(id))?.id||null,machineId:null,progress:0,completed:0,goal:definition.goal,unit:definition.unit,message:'Waiting for the crew to start.'}));
+  const jobs=Object.entries(CONSTRUCTION_CREW_JOBS).filter(([id])=>id!=='steel'||(environment.construction||environment.builderScene?.layoutMeta?.construction)?.steelEnabled!==false).map(([id,definition])=>({id,type:id,label:definition.label,status:'queued',workerId:CONSTRUCTION_CREW_DEFAULTS.find(worker=>worker.jobs.includes(id))?.id||null,machineId:null,progress:0,completed:0,goal:definition.goal,unit:definition.unit,message:'Waiting for the crew to start.'}));
   sim.construction.crew={version:1,enabled:config.autoStart===true,workers,jobs,muster,message:'Named crew ready. Start the crew or assign an operator to a job.',updatedAt:now};
  }
  if(config.autoStart===true&&!sim.construction.crew.dailyLifeReady){if(sim.construction.crew.message.startsWith('Named crew ready'))sim.construction.crew.enabled=true;sim.construction.crew.dailyLifeReady=true;}
@@ -253,10 +253,11 @@ function cycle(sim,worker,job,now,context,metric){
  if(issue(sim,worker,job,'work',now,context))worker.phase='cycle';
 }
 function looseMaterial(sim,reference,patchId=null,gradeTarget=null){
- const cells=[];for(const patch of sim.construction.earthworks?.patches||[]){if(patchId?patch.id!==patchId:!['fill','stockpile'].includes(patch.kind))continue;for(let index=0;index<patch.soil.length;index++){const volume=patch.soil[index]+patch.gravel[index]-patch.initialSoil[index];if(volume>(Number.isFinite(gradeTarget)?Math.max(0,gradeTarget-patch.baseY)*patch.cellSize**2:0)+.025)cells.push({x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,y:patch.heights[index],z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize,volume});}}
+ const cells=[];for(const patch of sim.construction.earthworks?.patches||[]){if(patchId?patch.id!==patchId:!['fill','stockpile'].includes(patch.kind))continue;for(let index=0;index<patch.soil.length;index++){const volume=patch.soil[index]+patch.gravel[index]+Object.values(patch.products||{}).reduce((sum,array)=>sum+(array[index]||0),0)-patch.initialSoil[index];if(volume>(Number.isFinite(gradeTarget)?Math.max(0,gradeTarget-patch.baseY)*patch.cellSize**2:0)+.025)cells.push({x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,y:patch.heights[index],z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize,volume});}}
  return cells.sort((a,b)=>gap(a,reference)-gap(b,reference))[0]||null;
 }
-function workRoute(actor,target){
+function workRoute(actor,target,config={}){
+ if(config.quarryRoutes){const pit=p=>Math.abs(p.x)<48&&p.z<29&&p.z>-99,points=pit(actor.position)?[{x:25,z:-78},{x:0,z:-78},{x:0,z:40}]:[];if(pit(target))return [...points,{x:0,z:40},{x:0,z:-78},{x:25,z:-78},{x:target.x,z:-78}];return [...points,...(target.x>48?[{x:55,z:40},{x:target.x,z:40}]:target.x< -48?[{x:-60,z:40},{x:-60,z:target.z}]:[])];}
  const p=actor.position;
  if(target.x>=164&&p.x>=164)return [{x:235,z:p.z},{x:235,z:target.z}];
  if(target.x>=164)return [...(p.z>125?[{x:145,z:p.z},{x:145,z:125}]:[{x:49,z:56}]),{x:145,z:56},{x:235,z:56},{x:235,z:target.z}];
@@ -285,7 +286,7 @@ function executeJob(sim,worker,job,now,dt,context,config){
     const cells=patch.heights.map((height,index)=>({height,index,x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize})).filter(cell=>cell.height>patch.minY+.025).sort((a,b)=>gap(a,actor.position)-gap(b,actor.position));
     const cell=cells[0];if(!cell){message(worker,job,'Selected work area has no remaining reachable material.');worker.retryAt=now+1500;return;}
     const aligned={...candidate,rotation:{...candidate.rotation,y:-(state.swing||0)}},alignedTip=constructionJointPose(aligned).bucketTip,offset={x:alignedTip.x-actor.position.x,z:alignedTip.z-actor.position.z},destination={x:cell.x-offset.x,y:actor.position.y,z:cell.z-offset.z};
-    if(gap(actor.position,destination)>12){if(!routeTo(sim,worker,job,destination,workRoute(actor,destination),now,dt,context))return;}else if(!driveTo(sim,worker,job,destination,now,dt,context,{radius:.5,rotationY:-(state.swing||0)}))return;
+    if(gap(actor.position,destination)>12){if(!routeTo(sim,worker,job,destination,workRoute(actor,destination,config),now,dt,context))return;}else if(!driveTo(sim,worker,job,destination,now,dt,context,{radius:.5,rotationY:-(state.swing||0)}))return;
     message(worker,job,'Working selected '+job.workArea+'. Ground reach and collisions remain active.');return;
    }
   }
@@ -298,9 +299,10 @@ function executeJob(sim,worker,job,now,dt,context,config){
   const excavator=Object.values(sim.actors).find(a=>constructionMachineKind(a)==='excavator'&&a.active!==false),yaw=excavator?.rotation?.y||0,loading=excavator?{x:excavator.position.x+Math.cos(yaw)*5,y:excavator.position.y,z:excavator.position.z-Math.sin(yaw)*5,rotationY:yaw}:position(config.loading,{x:30,y:0,z:17}),dump=center||position(config.dump,{x:sim.construction.stockpile.x,y:0,z:sim.construction.stockpile.z});
   if(!worker.phase.startsWith('haul-'))worker.phase=load(actor)>.001?'haul-out':'haul-loading';
   if(worker.phase==='haul-loading'){
-   if(routeTo(sim,worker,job,loading,excavator&&gap(loading,position(config.loading,loading))>12?workRoute(actor,{...loading,z:loading.z+20}).concat([{x:loading.x,z:loading.z+20}]):config.approachWaypoints,now,dt,context)){worker.phase='haul-wait';message(worker,job,'Parked in the actual excavator loading envelope.');}
+   if(config.quarryRoutes&&gap(actor.position,loading)<=1.4){neutral(actor);worker.phase='haul-wait';message(worker,job,'Parked in the actual excavator loading envelope.');return;}
+   if(routeTo(sim,worker,job,loading,excavator&&gap(loading,position(config.loading,loading))>12?workRoute(actor,{...loading,z:loading.z+20},config).concat([{x:loading.x,z:loading.z+20}]):config.approachWaypoints,now,dt,context)){worker.phase='haul-wait';message(worker,job,'Parked in the actual excavator loading envelope.');}
   }else if(worker.phase==='haul-wait'){neutral(actor);if(load(actor)>.001){worker.phase='haul-out';worker.haulStartDistance=actor.driving?.distance||0;}else message(worker,job,'Waiting for the excavator to transfer its real bucket.');}
-  else if(routeTo(sim,worker,job,dump,patch?workRoute(actor,dump):[...(config.approachWaypoints||[]).slice().reverse(),...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context)){
+  else if(routeTo(sim,worker,job,dump,patch?workRoute(actor,dump,config):[...(config.approachWaypoints||[]).slice().reverse(),...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context)){
    job.completed=Math.min(job.goal,load(actor));if(job.completed>=job.goal-.001)complete(sim,worker,job,now,context);else message(worker,job,'Delivered a partial load; more material is needed for this job.');
   }
  }else if(type==='dump'){
@@ -308,7 +310,7 @@ function executeJob(sim,worker,job,now,dt,context,config){
   if(worker.phase==='dump-clear'){
    const yaw=actor.rotation?.y||0;worker.clearanceTarget||={x:actor.position.x-Math.sin(yaw)*8,y:actor.position.y,z:actor.position.z-Math.cos(yaw)*8};message(worker,job,'Body lowered and material delivered. Moving forward clear of the rear discharge.');if(routeTo(sim,worker,job,worker.clearanceTarget,[],now,dt,context))complete(sim,worker,job,now,context);return;
   }
-  if(gap(actor.position,dump)>12){worker.phase='dump-approach';routeTo(sim,worker,job,dump,patch?workRoute(actor,dump):[...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context);return;}
+  if(gap(actor.position,dump)>12){worker.phase='dump-approach';routeTo(sim,worker,job,dump,patch?workRoute(actor,dump,config):[...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context);return;}
   if(worker.phase==='cycle'&&!working(actor)){
    const actual=Math.max(0,worker.workBaseline-load(actor));job.completed=Math.min(job.goal,job.completed+actual);job.progress=clamp(job.completed/job.goal,0,1);worker.progress=job.progress;
    if(job.completed>=job.goal-.001){const yaw=actor.rotation?.y||0;worker.clearanceTarget={x:actor.position.x-Math.sin(yaw)*8,y:actor.position.y,z:actor.position.z-Math.cos(yaw)*8};worker.travelReverse=false;worker.phase='dump-clear';return;}worker.phase='prepare';
@@ -322,7 +324,7 @@ function executeJob(sim,worker,job,now,dt,context,config){
   const cell=looseMaterial(sim,center||position(config.grade,sim.construction.stockpile),patch?.id,targetGrade);
   if(!cell){neutral(actor);message(worker,job,'Waiting for actual deposited soil or gravel to grade.');worker.retryAt=now+1200;return;}
   const target={x:cell.x,y:actor.position.y,z:cell.z+3.15,rotationY:0};
-  if(patch&&gap(actor.position,target)>12){if(!routeTo(sim,worker,job,target,workRoute(actor,target),now,dt,context))return;}else if(!driveTo(sim,worker,job,target,now,dt,context,{radius:.65,rotationY:0}))return;
+  if(patch&&gap(actor.position,target)>12){if(!routeTo(sim,worker,job,target,workRoute(actor,target,config),now,dt,context))return;}else if(!driveTo(sim,worker,job,target,now,dt,context,{radius:.65,rotationY:0}))return;
   cycle(sim,worker,job,now,context,a=>a.construction.earthMoved||0);
  }
 }

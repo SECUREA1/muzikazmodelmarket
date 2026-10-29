@@ -1,3 +1,4 @@
+import {QUARRY_MATERIALS,quarryMaterialItem} from './public/js/quarry-config.js';
 import {createHash} from 'node:crypto';
 import {GAME_ECONOMY,CARE_SUPPLIES} from './game-economy.mjs';
 import {ownedCustomFactoryItem} from './world-factory-catalog.mjs';
@@ -35,6 +36,7 @@ for(const item of CARE_SUPPLIES){
  // Bare care ids do not collide with economy ids in this catalog.
  if(!staticAliases.has(item.id))staticAliases.set(item.id,id);
 }
+for(const key of Object.keys(QUARRY_MATERIALS)){const item=quarryMaterialItem(key);staticItems.set(item.supplyId,item);for(const alias of aliasesFor(item))staticAliases.set(alias,item.supplyId);}
 const STATIC_REVISION=createHash('sha256').update(JSON.stringify([...staticItems.values()])).digest('hex');
 const LEDGER_FIELDS=Object.freeze(['catalog','aliases','worldStock','factoryStock','maps','production','shipments','receipts']);
 
@@ -50,7 +52,7 @@ export function canonicalSupplyId(item){
  return null;
 }
 
-function register(ledger,item,{initialStock=item?.privateFactoryBlueprint?0:INITIAL_WORLD_STOCK}={}){
+function register(ledger,item,{initialStock=item?.quarryMaterial||item?.privateFactoryBlueprint?0:INITIAL_WORLD_STOCK}={}){
  if(!physical(item))return;
  const aliases=aliasesFor(item),known=aliases.map(alias=>own(ledger.aliases,alias)?ledger.aliases[alias]:null).find(Boolean);
  const canonical=canonicalSupplyId(item),id=item.factoryVariant?canonical:staticItems.has(canonical)?canonical:known||canonical;
@@ -126,7 +128,7 @@ export function factoryLineupItems(data,items=[],{walletId}={}){
   if(!customItemId)continue;
   try{ownedCustomFactoryItem(data,walletId,customItemId);ids.add(item.supplyId);}catch{}
  }
- return [...ids].map(id=>ledger.catalog[id]).filter(Boolean);
+ return [...ids].map(id=>ledger.catalog[id]).filter(item=>item&&!item.quarryMaterial);
 }
 
 export function factoryProductionItem(data,id,items=[],{walletId}={}){

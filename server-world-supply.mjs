@@ -1,3 +1,6 @@
+import {quarryMarketCatalog} from './public/js/quarry-market.js';
+import {QUARRY_MATERIALS} from './public/js/quarry-config.js';
+import {requireSupplyDeed} from './world-factory-orders.mjs';
 import {randomUUID} from 'node:crypto';
 import {createFactoryProduction,advanceFactoryProduction,pauseFactoryProduction,resumeFactoryProduction} from './world-factory-runtime.mjs';
 import {ensureFactoryLineage,recordFactoryOutput,allocateFactoryLots,returnFactoryLots,deliverFactoryLots} from './world-factory-lineage.mjs';
@@ -241,6 +244,34 @@ export class WorldSupplyService {
   if(!mapId||!directory.maps.some(map=>map.id===mapId))fail('Choose an available delivery map.',404);
   return this.supplyTransaction(data=>{const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);return projectWorldDeliveries(ledger,mapId,now);});
  }
+ async quarryMarketCatalog(){const [maps,data]=await Promise.all([this.maps(),this.database.read()]);return quarryMarketCatalog(data.worldSupply||{},maps);}
+ async quarryState({mapId,walletId}={}){
+  const state=await this.state({mapId,walletId});return {ownerId:state.ownerId,deeds:state.deeds,orders:state.orders.filter(order=>String(order.itemId).startsWith('quarry:')),shipments:state.shipments.filter(shipment=>String(shipment.itemId).startsWith('quarry:')),maps:state.maps.map(map=>({id:map.id,name:map.name,stock:Object.fromEntries(Object.entries(map.stock||{}).filter(([key])=>key.startsWith('quarry:')))})),routes:state.routes.map(route=>({id:route.id,name:route.name,from:route.from,to:route.to})),shippingMaps:state.shippingMaps,serverTime:state.serverTime};
+ }
+ async quarryInventory(identity,input,now=this.now()){
+  const wallet=cleanWallet(identity.walletId);
+  return this.database.transaction(data=>{
+   const user=data.users[wallet];if(!user)fail('Sign in to manage quarry stock.',401);const ledger=ensureWorldSupply(data);ledger.quarryBookings||={};ledger.quarryUses||={};
+   if(input.operation==='export'){
+    const item=supplyItem(data,'quarry:'+input.material),count=quantity(input.quantity),signature=JSON.stringify([wallet,input.sourceMapId,item.supplyId,count]),prior=ledger.quarryBookings[input.id];
+    if(prior){if(prior.signature!==signature)fail('This quarry booking is already assigned to another reservation.');return prior;}
+    ensureWorldSupply(data,{maps:[input.sourceMapId]});const stock=ledger.maps[input.sourceMapId].stock;stock[item.supplyId]=(stock[item.supplyId]||0)+count;
+    const receipt={id:input.id,signature,ownerId:wallet,sourceMapId:input.sourceMapId,itemId:item.supplyId,quantity:count,bookedAt:now};ledger.quarryBookings[input.id]=receipt;return receipt;
+   }
+   const deed=ownedSupplyDeeds(data,wallet).find(deed=>deed.destinationMapId===input.mapId);if(!deed)fail('Only the current deed holder can manage these materials.',403);
+   const stock=ledger.maps[input.mapId]?.stock||{},uses=Object.values(ledger.quarryUses).filter(use=>use.mapId===input.mapId&&!use.recovered);
+   if(input.operation==='deed-state')return {stock,uses,deed};
+   if(input.operation==='recover'){
+    const use=ledger.quarryUses[input.useId];if(!use||use.mapId!==input.mapId||use.ownerId!==wallet||use.kind!=='storage')fail('Choose your aggregate storage bay.',403);
+    if(!use.recovered){stock[use.itemId]=(stock[use.itemId]||0)+use.quantity;use.recovered=true;use.recoveredAt=now;}return use;
+   }
+   if(input.operation!=='apply')fail('Choose a quarry inventory operation.',422);
+   const item=supplyItem(data,'quarry:'+input.material),count=quantity(input.quantity),signature=JSON.stringify([wallet,input.mapId,input.kind,item.supplyId,count,input.position]);
+   const prior=ledger.quarryUses[input.id];if(prior){if(prior.signature!==signature)fail('This placement receipt belongs to another material use.');return prior;}
+   if((stock[item.supplyId]||0)<count)fail('Wait for delivered stock before using these materials.');stock[item.supplyId]-=count;
+   const record={id:input.id,signature,ownerId:wallet,deedId:deed.id,mapId:input.mapId,kind:input.kind,material:input.material,itemId:item.supplyId,quantity:count,position:input.position,rotationY:input.rotationY||0,createdAt:now,seedReady:input.kind==='garden',recovered:false};ledger.quarryUses[input.id]=record;return record;
+  });
+ }
  async action(walletId,operation,input={}){
   const wallet=cleanWallet(walletId),directory=await this.directory({walletId:wallet,addressId:input.addressId,mapId:input.destinationMapId}),now=this.now();
   return this.supplyTransaction(data=>{
@@ -270,6 +301,18 @@ export class WorldSupplyService {
     const job=own(ledger.production,input.productionId)&&ledger.production[input.productionId];
     if(!job||job.ownerId!==wallet)fail('This production batch is not yours.',403);
     result=operation==='pause'?pauseFactoryProduction(job,now):resumeFactoryProduction(job,now);
+   }else if(operation==='order-quarry'){
+    const item=supplyItem(data,input.itemId),count=quantity(input.quantity);if(!item.quarryMaterial)fail('Choose a processed quarry material.',422);
+    const target=orderDestination(data,wallet,{...input,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:input.contractId||'gulf-gateway'},directory,routes),sourceMapId=input.sourceMapId;
+    const source=directory.maps.find(map=>map.id===sourceMapId&&(map.quarry||map.builderScene?.layoutMeta?.quarry)?.enabled);if(!source)fail('Choose a live quarry warehouse.',422);if(source.memberPlot&&source.ownerId!==wallet)fail('Only the current deed holder can sell stock from this private quarry.',403);
+    const stock=ledger.maps[sourceMapId]?.stock,priceMzk=QUARRY_MATERIALS[item.quarryMaterial].priceMzk*count;
+    if((stock?.[item.supplyId]||0)<count)fail('The quarry warehouse does not have enough processed stock. Mine, screen and book more material first.');if(Number(user.tokens.MZK||0)<priceMzk)fail('Not enough MZK for this material order.');
+    const max=(target.route.units||4)*1000;if(count>max)fail('Split this material order into smaller freight manifests.',422);
+    stock[item.supplyId]-=count;user.tokens.MZK-=priceMzk;
+    const order={id:randomUUID(),quarryOrder:true,deliverySchemaVersion:1,ownerId:wallet,deedId:target.deed.id,deedName:target.deed.name,destinationMapId:target.destinationMapId,productionId:null,itemId:item.supplyId,itemName:item.name,quantity:count,priceMzk,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:target.route.id,shipmentIds:[],deliveredQuantity:0,phase:'awaiting-shipping',sourceMapId,createdAt:now,updatedAt:now};
+    const shipment=createShipment({id:randomUUID(),deliverySchemaVersion:1,recipientId:wallet,ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing:{recipeId:'quarry-material',unitsPerContainer:1000,containersRequired:Math.ceil(count/1000),containerSlots:target.route.units||4,maxShipmentQuantity:max,sealed:true},sourceMapId,destinationMapId:target.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:target.deed.id},target.route,now);
+    ledger.shipments[shipment.id]=shipment;allocateFactoryLots(ledger,shipment,{now});order.shipmentIds.push(shipment.id);ledger.orders[order.id]=order;
+    data.transactions.push({id:'quarry-order:'+order.id,type:'QUARRY_MATERIAL_ORDER',walletId:wallet,amountMzk:-priceMzk,balanceAfterMzk:user.tokens.MZK,itemId:item.supplyId,quantity:count,deedId:target.deed.id,createdAt:new Date(now).toISOString()});result=order;
    }else if(operation==='dispatch'){
     const item=supplyItem(data,input.itemId),count=quantity(input.quantity),receivingAddress=input.addressId?directory.addressFor(data,input.addressId):null,destinationMapId=receivingAddress?.mapId||input.destinationMapId,sourceMapId=input.sourceMapId||'factory',shippingMapId=input.shippingMapId||SHIPPING_ID,contractId=input.contractId||'gulf-gateway',route=routes.find(route=>route.id===contractId);
     if(!route)fail('Choose a shipping lane with a destination port.',422);
@@ -286,6 +329,7 @@ export class WorldSupplyService {
     if(sourceMapId!=='factory'&&sourceMapId!=='world'&&!directory.maps.some(map=>map.id===sourceMapId))fail('Choose an available source inventory.',404);
     if(sourceMapId===destinationMapId)fail('Choose a different destination inventory for this transfer.',422);
     const challenge=distributionChallengeForDispatch(ledger,directory,input,item);
+    if(item.quarryMaterial){const sourceDeed=Object.values(data.landDeeds||{}).find(deed=>'plot-'+deed.id===sourceMapId);if(!sourceDeed||!ownedSupplyDeeds(data,wallet).some(deed=>deed.id===sourceDeed.id))fail('Use the quarry material order to buy and ship warehouse stock; only your own delivered deed stock can be transferred.',403);const destinationDeed=Object.values(data.landDeeds||{}).find(deed=>'plot-'+deed.id===destinationMapId);const jobSite=directory.maps.find(map=>map.id===destinationMapId&&(map.quarry||map.construction||map.builderScene?.layoutMeta?.construction)?.enabled);if(!jobSite&&(!destinationDeed||!ownedSupplyDeeds(data,wallet).some(deed=>deed.id===destinationDeed.id)))fail('Choose your own deed or a shared quarry/construction receiving site for this material transfer.',403);}
     const sourceStock=sourceMapId==='factory'?ledger.factoryStock:sourceMapId==='world'?ledger.worldStock:ledger.maps[sourceMapId].stock;
     if((sourceStock[item.supplyId]||0)<count)fail(sourceMapId==='factory'?'Complete enough factory production before dispatching this item.':'The source warehouse has insufficient stock for this transfer.');
     if(sourceMapId!=='factory')sourceStock[item.supplyId]-=count;

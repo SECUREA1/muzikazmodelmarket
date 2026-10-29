@@ -78,12 +78,13 @@ export function cancelFactoryOrder(ledger,data,orderId,walletId,requestId,now,on
  const shipments=order.shipmentIds.map(id=>ledger.shipments[id]).filter(Boolean);
  if(shipments.some(shipment=>shipment.phase==='reserved'))fail('Cancel the active sea voyage before cancelling the remaining order. Delivered cargo cannot be recalled.');
  const job=ledger.production[order.productionId],user=data.users[walletId];
+ if(order.quarryOrder){const unsent=shipments.filter(shipment=>shipment.phase==='queued').reduce((sum,shipment)=>sum+shipment.quantity,0),refund=unsent*order.priceMzk/order.quantity;if(refund){user.tokens.MZK+=refund;order.refundedMzk=refund;data.transactions.push({id:'quarry-refund:'+order.id,type:'QUARRY_ORDER_REFUND',walletId,requestId,amountMzk:refund,balanceAfterMzk:user.tokens.MZK,orderId:order.id,createdAt:new Date(now).toISOString()});}}
  if(['building','paused'].includes(job?.phase)){
   job.phase='cancelled';job.cancelledAt=now;user.tokens.MZK+=job.priceMzk;
   data.transactions.push({id:'factory-refund:'+job.id,type:'WORLD_FACTORY_REFUND',walletId,requestId,amountMzk:job.priceMzk,balanceAfterMzk:user.tokens.MZK,orderId:order.id,createdAt:new Date(now).toISOString()});
  }
  for(const shipment of shipments)if(shipment.phase==='queued'){
-  shipment.phase='cancelled';shipment.cancelledAt=now;if(shipment.transferTask)shipment.transferTask.phase='cancelled';onReturned(shipment,now);returnFactoryLots(ledger,shipment,{now});
+  shipment.phase='cancelled';shipment.cancelledAt=now;if(shipment.transferTask)shipment.transferTask.phase='cancelled';onReturned(shipment,now);if(!returnFactoryLots(ledger,shipment,{now})){const stock=shipment.sourceMapId==='world'?ledger.worldStock:ledger.maps[shipment.sourceMapId]?.stock;if(!stock)fail('The source warehouse is unavailable.');stock[shipment.itemId]=(stock[shipment.itemId]||0)+shipment.quantity;}
  }
  for(const shipment of shipments)if(shipment.seaReceipt&&shipment.phase!=='delivered')holdShipmentAtPort(ledger,shipment,now);
  for(const lot of Object.values(ledger.factoryLots))if(lot.reservedOrderId===order.id)delete lot.reservedOrderId;

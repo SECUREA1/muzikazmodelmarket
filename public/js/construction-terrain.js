@@ -1,3 +1,4 @@
+import {QUARRY_MATERIALS} from './quarry-config.js';
 // The rendered cut, walking surface and machine ground share these triangles.
 // Coordinates are world metres; construction land itself stays unscaled.
 export function constructionPatchBounds(patch){
@@ -50,7 +51,8 @@ export function createConstructionEarthGeometry(THREE,patch){
   const i=z*cols+x,y=height(x,z),x0=bounds.minX+x*cell,x1=x0+cell,z0=bounds.minZ+z*cell,z1=z0+cell;
   const gravelVolume=Number(patch.gravel?.[i])||0;
   const intactPavement=patch.surface==='asphalt'&&y>base+.01&&gravelVolume>1e-8;
-  tint.copy(intactPavement?asphalt:gravelVolume>1e-8?gravel:soil).multiplyScalar(.96+((x*17+z*31)%13)/160);
+  const product=Object.keys(QUARRY_MATERIALS).find(key=>patch.products?.[key]?.[i]>1e-8);
+  tint.copy(product?new THREE.Color(QUARRY_MATERIALS[product].color):intactPavement?asphalt:gravelVolume>1e-8?gravel:soil).multiplyScalar(.96+((x*17+z*31)%13)/160);
   face([[x0,y,z0],[x0,y,z1],[x1,y,z1],[x1,y,z0]],tint);
   for(const [dx,dz,edge]of [[-1,0,[[x0,z1],[x0,z0]]],[1,0,[[x1,z0],[x1,z1]]],[0,-1,[[x0,z0],[x1,z0]]],[0,1,[[x1,z1],[x0,z1]]]]){
    const other=height(x+dx,z+dz),outside=x+dx<0||z+dz<0||x+dx>=cols||z+dz>=rows;
