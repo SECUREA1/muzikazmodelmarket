@@ -7,8 +7,10 @@ import {ServerMotion} from './server-motion.js';
 import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
 import {constructionOperatorPose} from './construction-kinematics.js';
 import {configureAvatarAnimations,clearAvatarAnimations} from './avatar-motion.js';
+import {disposeAvatarPaddle} from './avatar-paddle.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
+ disposeAvatarPaddle(root);
  clearAvatarAnimations(root);
  root.removeFromParent();
  const skeletons=new Set();
@@ -20,6 +22,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,createNative,is
  const nativeId=peer.avatarBuildAssetId||'',url=nativeId?'':peer.modelUrl||'',key=nativeId?'native:'+nativeId:url;
  const state=root.userData;
  if(state.serverAvatarUrl!==key){
+  disposeAvatarPaddle(root);
   state.serverAvatarUrl=key;state.serverAvatarRequest=null;state.serverAvatarRetryAt=0;
   clearAvatarAnimations(root);
   if(state.serverAvatarModel)disposeProjection(state.serverAvatarModel);
