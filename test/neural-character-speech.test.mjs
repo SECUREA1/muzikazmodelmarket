@@ -186,3 +186,15 @@ test('a delivered recording is not abandoned by a network timer while the 3D pag
  assert.equal(f.timers.size,0,'The completed file request cannot leave a network deadline racing the audio decoder.');
  decoding.resolve({duration:7});await tick();assert.equal(f.sources[0].started,1);assert.equal(f.engine.lastError,null);f.engine.dispose();
 });
+
+test('live and recorded voices share speech leveling while mute retains control',async()=>{
+ const samples=Float32Array.from({length:2400},(_,i)=>.05*Math.sin(2*Math.PI*i/100));
+ const f=fixture({decode:async()=>({duration:.1,sampleRate:24000,numberOfChannels:1,getChannelData:()=>samples})});
+ await f.engine.resume();
+ const line=new GameSpeechUtterance('A clear natural reply.');line.voice=GENERATED_VOICES[1];line.volume=.8;
+ f.engine.speak(line);await tick();await tick();
+ assert.ok(f.gains[0].gain.value> .8,'quiet generated speech is lifted');
+ assert.equal(f.sources[0].playbackRate.value,1);
+ line.volume=0;for(const update of f.intervals.values())update();assert.equal(f.gains[0].gain.value,0);
+ f.engine.dispose();
+});

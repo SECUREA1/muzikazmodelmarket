@@ -15,7 +15,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   const source=call.source||actors[call.speakerId||call.entityId]?.position;
   // Browser speech synthesis exposes volume, but cannot connect to a Web Audio
   // panner. World voices use distance attenuation; radio/objectives stay clear.
-  if(call.category==='introduction')return .85;
+  if(call.category==='introduction'||call.focusedConversation)return .85;
   return .9*(preferences.spatialAudio!==false&&source&&listener?spatialEffectGain({...source,y:source.y??0},{...listener,y:listener.y??0},call.range||32):1);
  }
  function characterFor(call){
@@ -155,7 +155,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
     // Initial history stays quiet. After sound has run, fresh replies may wait
     // through a temporary output interruption for automatic/control recovery.
     const awaitingRequest=requested?.worldId===scope&&(!requested.entityId||!call.speakerId||requested.entityId===call.speakerId);
-    if(unlocked||activated||awaitingRequest){enqueue({...call,category:'dialogue'});receivedReply ||= awaitingRequest;}else latest={...call,category:'dialogue',queuedAt:now()};
+    if(unlocked||activated||awaitingRequest){enqueue({...call,category:'dialogue',focusedConversation:!!awaitingRequest});receivedReply ||= awaitingRequest;}else latest={...call,category:'dialogue',queuedAt:now()};
    }if(receivedReply)replyRequest=null;play();
   },
   replay(call){if(call)latest={...call,category:call.category||'dialogue',queuedAt:now()};if(!latest||disposed)return false;muted=false;if(blocked(latest))return false;const replay={...latest,queuedAt:now()};stop();queue.push(replay);api.unlock();return true;},

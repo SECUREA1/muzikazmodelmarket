@@ -1,3 +1,4 @@
+import {speechClarityGain} from './speech-clarity.js';
 import {speechVoiceOptions} from './character-voice-profile.js';
 import {splitBundledSpeech,bundledVoiceURL} from './bundled-character-voices.js';
 
@@ -57,7 +58,7 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
  function clearJob(job){clearTimer(job.timeout);clearRepeat(job.volumeTimer);job.timeout=null;job.volumeTimer=null;clearSource(job);}
  function finish(job){if(!isCurrent(job))return;active=null;clearJob(job);status='Generated male and female voices are ready.';notify();event(job,'end',{elapsedTime:job.duration||0});}
  function fail(job,code,message){if(!isCurrent(job))return;active=null;clearJob(job);job.abort.abort();lastError={code,message};status=message;notify();event(job,'error',{error:code,message});}
- function volume(job){const value=clamp(job.utterance.volume,0,1);if(job.gain){if(job.gain.gain.setValueAtTime)job.gain.gain.setValueAtTime(value,context.currentTime);else job.gain.gain.value=value;}if(job.native){try{job.native.volume=value;}catch{}}}
+ function volume(job){const value=clamp(job.utterance.volume,0,1),level=value*(job.clarityGain||1);if(job.gain){if(job.gain.gain.setValueAtTime)job.gain.gain.setValueAtTime(level,context.currentTime);else job.gain.gain.value=level;}if(job.native){try{job.native.volume=value;}catch{}}}
  function cancel(){const job=active;if(!job)return;active=null;clearJob(job);job.abort.abort();if(job.native){try{nativeSpeech?.cancel?.();}catch{}}status='Speech stopped.';notify();event(job,'error',{error:'canceled',message:'Speech stopped.'});}
  async function generated(job,voice){
   if(unlocking)await unlocking;
@@ -101,6 +102,7 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
    const next=index+1<chunks.length?load(chunks[index+1]):null;
    try{
     job.source=context.createBufferSource();job.gain=context.createGain();job.source.buffer=buffer;job.source.playbackRate.value=1;
+    job.clarityGain=speechClarityGain(buffer);
     job.source.connect(job.gain);job.gain.connect(context.destination);volume(job);job.duration=(job.duration||0)+buffer.duration;
     job.source.onended=()=>{if(!isCurrent(job))return;clearSource(job);if(next){status=`Preparing ${voice.gender} voice…`;notify();void playChunk(next,index+1);}else finish(job);};
     job.source.start();status=`Playing ${voice.name}.`;lastError=null;
