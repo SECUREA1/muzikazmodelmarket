@@ -1,3 +1,4 @@
+import {constructionStructure} from './construction-workplans.js';
 import {constructionOperatorPose} from './construction-kinematics.js';
 import {CONSTRUCTION_CREW_COLORS} from './construction-crew.js';
 import {createConstructionEarthGeometry} from './construction-terrain.js';
@@ -73,13 +74,13 @@ export function createConstructionScene(THREE,scene){
  }
  function update(snapshot){
   const site=snapshot?.construction;if(!site){if(currentSnapshot?.construction)reset();return;}currentSnapshot=snapshot;root.visible=true;updateEarth(site);updateCrew(snapshot);updateSteel(site);
-  const t=site.tower;if(!t)return;
-  const placed=Math.max(0,Math.floor(t.placed||0)),perFloor=t.beamsPerFloor||4,floors=Math.floor(placed/perFloor),partial=placed%perFloor,structures=Object.values(snapshot.actors||{}).filter(actor=>actor.active!==false&&actor.constructionStructure),physicalLevels=new Set(structures.filter(actor=>actor.constructionStructure.kind==='floor').map(actor=>actor.constructionStructure.floor)),glazedLevels=new Set(structures.filter(actor=>actor.constructionStructure.kind==='facade').map(actor=>actor.constructionStructure.floor));
+  const crane=Object.values(snapshot.actors||{}).find(actor=>actor.construction?.kind==='crane'||actor.modelId==='tower-crane'),structureId=crane?.construction?.structureId||'tower',t=constructionStructure(site,crane);if(!t)return;
+  const placed=Math.max(0,Math.floor(t.placed||0)),perFloor=t.beamsPerFloor||4,floors=Math.floor(placed/perFloor),partial=placed%perFloor,structures=Object.values(snapshot.actors||{}).filter(actor=>actor.active!==false&&actor.constructionStructure&&(actor.constructionStructure.structureId||'tower')===structureId),physicalLevels=new Set(structures.filter(actor=>actor.constructionStructure.kind==='floor').map(actor=>actor.constructionStructure.floor)),glazedLevels=new Set(structures.filter(actor=>actor.constructionStructure.kind==='facade').map(actor=>actor.constructionStructure.floor));
   const x=t.x||0,z=t.z||0,base=t.baseY||0,h=t.floorHeight||4,w=t.width||18,d=t.depth||18,max=t.maxFloors||16,nextSignature=JSON.stringify([x,z,base,h,w,d,max,placed,[...physicalLevels],[...glazedLevels]]);
   if(nextSignature!==signature){
    signature=nextSignature;clear(frame);clear(guides);box(frame,[w+2,.3,d+2],[x,base+.02,z],slab);
    const visibleFloors=Math.min(max,floors+(floors<max?1:0));
-   for(let level=0;level<visibleFloors;level++){const y=base+level*h;if(!physicalLevels.has(level+1))for(const dx of [-w/2,w/2])for(const dz of [-d/2,d/2])box(frame,[.45,h,.45],[x+dx,y+h/2,z+dz]);const beams=level<floors?perFloor:partial;for(let side=0;!site.beams&&side<Math.min(4,beams);side++){const alongX=side%2===0;box(frame,alongX?[w+.5,.55,.42]:[.42,.55,d+.5],[x+(side===1?w/2:side===3?-w/2:0),y+h,z+(side===0?-d/2:side===2?d/2:0)]);}if(level<floors){if(!physicalLevels.has(level+1))box(frame,[w-.4,.16,d-.4],[x,y+h-.36,z],slab);if(glazedLevels.has(level+1)||level<floors-1||floors===max){box(frame,[w-.7,h-.7,.08],[x,y+h/2,z-d/2+.08],glass);box(frame,[.08,h-.7,d-.7],[x+w/2-.08,y+h/2,z],glass);}}}
+   for(let level=0;level<visibleFloors;level++){const y=base+level*h;if(!physicalLevels.has(level+1))for(const dx of [-w/2,w/2])for(const dz of [-d/2,d/2])box(frame,[.45,h,.45],[x+dx,y+h/2,z+dz]);const beams=level<floors?perFloor:partial;for(let side=0;!site.beams&&side<Math.min(4,beams);side++){const alongX=side%2===0;box(frame,alongX?[w+.5,.55,.42]:[.42,.55,d+.5],[x+(side===1?w/2:side===3?-w/2:0),y+h,z+(side===0?-d/2:side===2?d/2:0)]);}if(level<floors){if(!physicalLevels.has(level+1))box(frame,[w-.4,.16,d-.4],[x,y+h-.36,z],slab);if(!t.frameOnly&&(glazedLevels.has(level+1)||level<floors-1||floors===max)){box(frame,[w-.7,h-.7,.08],[x,y+h/2,z-d/2+.08],glass);box(frame,[.08,h-.7,d-.7],[x+w/2-.08,y+h/2,z],glass);}}}
    const ghost=box(guides,[w,max*h,d],[x,base+max*h/2,z],wire);ghost.name='PLANNED_SKYSCRAPER';
    targetAssembly=new THREE.Group();targetAssembly.name='ACTIVE_STEEL_RECEIVER';guides.add(targetAssembly);target=box(guides,[w,.14,.5],[0,0,0],amber);target.name='NEXT_STEEL_PLACEMENT';
    for(const side of [-1,1]){box(targetAssembly,[.16,1.1,1.25],[side*w/2,.45,0],cyan);box(targetAssembly,[1.4,.12,1.25],[side*w/2,-.04,0],cyan);const chevron=box(targetAssembly,[.12,.7,.12],[side*(w/2-.7),1.2,0],safetyMaterial);chevron.rotation.z=side*.7;}

@@ -1,3 +1,4 @@
+import {constructionStructure} from './construction-workplans.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {constructionOperatorPose,constructionCollisionBoxes,constructionTransform} from './construction-kinematics.js';
 import {isConstructionMachine,constructionMachineKind} from './construction-state.js';
@@ -7,7 +8,7 @@ import {isConstructionMachine,constructionMachineKind} from './construction-stat
 export function constructionWorkPose(actor,site,aspect=1,fov=60){
  const kind=constructionMachineKind(actor)||'crane',verticalHalf=THREE.MathUtils.degToRad(THREE.MathUtils.clamp(Number(fov)||60,1,150)/2);
  if(kind==='crane'){
-  const hook=actor.construction?.hook||actor.position,tower=site?.tower,destination=tower?.target||hook;
+  const hook=actor.construction?.hook||actor.position,tower=constructionStructure(site,actor),destination=tower?.target||hook;
   const x=(hook.x+destination.x)/2,z=(hook.z+destination.z)/2,y=Math.max(hook.y,destination.y);
   const zoomFit=Math.max(1,Math.tan(Math.PI/6)/Math.tan(verticalHalf)),span=Math.max(32,Math.hypot(hook.x-destination.x,hook.z-destination.z)+18)*zoomFit/Math.max(.4,Math.min(1,aspect));
   return {position:{x:x-span*.65,y:y+span*.72,z:z+span},target:{x,y:Math.max(2,y*.85),z}};

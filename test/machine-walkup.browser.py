@@ -70,10 +70,15 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
        page.screenshot(path='/tmp/construction-boarding-failure.png')
        raise
       assert 'Operate' in button.get_attribute('aria-label'),button.get_attribute('aria-label')
-      if index<2:button.tap()
+      if index==1:
+       if not page.locator('.construction-crew-toggle').is_visible():page.get_by_role('button',name='More view controls',exact=True).click()
+       page.get_by_role('button',name='Construction crew and jobs',exact=True).click()
+       page.locator('.construction-machine-roster summary').click()
+       page.locator('[data-machine-id="'+machine_id+'"] button').tap()
+      elif index==0:button.tap()
       else:page.keyboard.press('f')
       s=wait(lambda s:s['players'][next(iter(s['players']))].get('vehicleId')==machine_id,'walk-up failed for '+machine)
-      if index<2:
+      if index==0:
        page.wait_for_timeout(600);button.dispatch_event('click',{'detail':1})
        page.wait_for_timeout(300)
        assert state()['players'][next(iter(s['players']))].get('vehicleId')==machine_id,'Delayed touch click exited '+machine
@@ -81,6 +86,17 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       if index==0:
        page.evaluate('window.dispatchEvent(new PageTransitionEvent("pagehide",{persisted:true}));window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));')
        assert panel.is_visible(),'Cached-page restore disposed the machine dashboard'
+      if machine=='crane':
+       panel.locator('[data-construction-more]').click()
+       page.get_by_label('Crane steel destination',exact=True).select_option('facility')
+       wait(lambda s:s['actors'][machine_id]['construction'].get('structureId')=='facility','facility crane destination did not apply')
+       page.screenshot(path='/tmp/construction-facility-machine.png')
+       page.get_by_role('button',name='Close functions',exact=True).click()
+      if machine=='dozer':
+       panel.locator('[data-construction-more]').click()
+       page.get_by_label('Bulldozer finished grade',exact=True).select_option('0.2')
+       wait(lambda s:s['actors'][machine_id]['construction'].get('gradeTarget')==.2,'finished grade did not apply')
+       page.get_by_role('button',name='Close functions',exact=True).click()
       before=s['actors'][machine_id]['construction'][field]
       lever=panel.locator('.construction-work-sticks .construction-stick').last
       lever.focus();page.keyboard.down('ArrowDown');page.wait_for_timeout(450)
@@ -91,8 +107,9 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
       s=wait(lambda s:s['actors'][machine_id]['construction'][field]>before+.005,'hydraulic lever did not move '+machine)
       wait(lambda s:all(abs(v)<.001 for v in s['actors'][machine_id]['construction']['axes'].values()),'release did not neutralise '+machine)
       if machine=='truck':
-       lever.focus();page.keyboard.down('ArrowUp');page.wait_for_timeout(900);page.keyboard.up('ArrowUp')
-       wait(lambda s:s['actors'][machine_id]['construction']['bed']<=.08,'body did not lower')
+       lever.focus();page.keyboard.down('ArrowUp')
+       try:wait(lambda s:s['actors'][machine_id]['construction']['bed']<=.04,'body did not lower')
+       finally:page.keyboard.up('ArrowUp')
       panel.locator('[data-operation=park]').click()
       if machine!='crane':
        panel.locator('[data-construction-mode=drive]').click()
@@ -109,14 +126,14 @@ with tempfile.TemporaryDirectory(prefix='walkup-browser-') as data:
      if not page.locator('.construction-crew-toggle').is_visible():page.get_by_role('button',name='More view controls',exact=True).click()
      page.get_by_role('button',name='Construction crew and jobs',exact=True).click()
      plan=page.get_by_role('region',name='Site operations plan')
-     assert plan.locator('[data-operation-id]').count()==7
+     assert plan.locator('[data-operation-id]').count()==8
      assert '20 cm road base' in plan.inner_text()
      assert plan.locator('[data-operation-id=new-road] progress').evaluate('node=>node.value')==0
      assert plan.locator('[data-operation-id=pavement-reclamation]').is_visible()
      assert not plan.evaluate('node=>node.scrollWidth>node.clientWidth+1'),'Site plan overflows on a phone'
      page.screenshot(path='/tmp/construction-operations-plan.png')
      page.get_by_role('button',name='Close crew',exact=True).click()
-     print('Expanded site: seven operations, live road progress and mobile site plan passed',flush=True)
+     print('Expanded site: eight operations, live road progress and mobile site plan passed',flush=True)
      s=state();worker=s['construction']['crew']['workers'][0];command('map-access',position={'x':worker['position']['x']-1,'z':worker['position']['z']})
      nearby=page.get_by_role('button',name='Talk to Maya Chen',exact=True)
      nearby.wait_for(state='visible',timeout=15000);nearby.tap()

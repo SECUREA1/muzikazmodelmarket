@@ -1,3 +1,6 @@
+import {constructionStructure,constructionWorkAreas} from './public/js/construction-workplans.js';
+import {constructionJointPose} from './public/js/construction-kinematics.js';
+import {earthworksSurfaceAt} from './public/js/construction-earthworks.js';
 import {CONSTRUCTION_CREW_DEFAULTS,CONSTRUCTION_CREW_JOBS,CONSTRUCTION_CREW_PALETTES} from './public/js/construction-crew.js';
 import {constructionMachineKind,constructionTravelStatus} from './public/js/construction-state.js';
 import {constructionOperatorPose} from './public/js/construction-kinematics.js';
@@ -14,7 +17,7 @@ const position=(value,fallback)=>({x:Number.isFinite(value?.x)?value.x:fallback.
 const load=actor=>typeof actor?.construction?.load==='number'?Math.max(0,actor.construction.load):0;
 const working=actor=>!!(actor?.construction?.workCycle||actor?.construction?.assist);
 const configFor=environment=>(environment?.construction||environment?.builderScene?.layoutMeta?.construction||{}).crew||{};
-const machineFor=(sim,kind,id)=>id?sim.actors[id]:Object.values(sim.actors).find(actor=>actor.active!==false&&constructionMachineKind(actor)===kind&&!actor.holderId);
+const machineFor=(sim,kind,id)=>id?sim.actors[id]:Object.values(sim.actors).find(actor=>actor.active!==false&&constructionMachineKind(actor)===kind&&!actor.holderId&&!actor.construction?.crewOperator);
 const operator=(context)=>context.setOperator||constructionCrewSetOperator;
 const operate=(context)=>context.operate||constructionCrewCommand;
 const message=(worker,job,text)=>{worker.message=text;if(job)job.message=text;};
@@ -70,7 +73,7 @@ function demoChoices(sim,crew,worker,now,machineId){
   if(!reason&&jobId==='load'&&load(machine)<=.001)reason='Excavate a real bucket of material before loading.';
   if(!reason&&['haul','dump'].includes(jobId)&&load(machine)<=.001)reason='Load real material into the truck before this job.';
   if(!reason&&jobId==='grade'&&!looseMaterial(sim,sim.construction.stockpile))reason='Deposit real loose material before grading.';
-  if(!reason&&jobId==='steel'&&!sim.construction.tower?.target)reason='All available structural steel has already been placed.';
+  if(!reason&&jobId==='steel'&&!constructionStructure(sim.construction,{construction:{structureId:job?.workArea}})?.target)reason='All available structural steel has already been placed.';
   return {jobId,label:definition.label,machine:definition.machine,workerId:assigned?.id||null,machineId:machine?.id||null,available:!reason,reason};
  });
 }
@@ -78,7 +81,7 @@ function demoChoices(sim,crew,worker,now,machineId){
 /** Conversation requests enter the same machine scheduler and hydraulic commands
  * as the site's crew controls. They never manufacture cargo or skip work time. */
 export function constructionCrewInteraction(sim,player,command,now,context={}){
- const crew=requireManager(sim,player,now),operation=command.operation||'status',worker=command.workerId?crew.workers.find(member=>member.id===command.workerId):null;
+ const crew=requireManager(sim,player,now,context),operation=command.operation||'status',worker=command.workerId?crew.workers.find(member=>member.id===command.workerId):null;
  if(command.workerId&&!worker)fail('Choose an existing site worker.',422);
  if(!['status','demonstrate','resume','stop'].includes(operation))fail('Ask for status, a demonstration, resume or stop.',422);
  const choices=demoChoices(sim,crew,worker,now,command.machineId),snapshot=member=>({workerId:member.id,name:member.name,state:member.state,jobId:member.jobId,machineId:member.machineId,progress:member.progress||0,message:member.message,demonstration:member.demonstration?{...member.demonstration}:null});
@@ -109,7 +112,7 @@ export function constructionCrewInteraction(sim,player,command,now,context={}){
  const machine=command.machineId?sim.actors[command.machineId]:sim.actors[choice.machineId];
  if(!machine||machine.active===false||machine.health===0||constructionMachineKind(machine)!==choice.machine)fail('Choose an available '+choice.machine+' for this demonstration.',422);
  if(machine.holderId)fail('A player is using that machine. Players always have priority.');
- constructionCrewAction(sim,player,{operation:'assign',workerId:member.id,jobId:choice.jobId,machineId:machine.id},now,context);
+ constructionCrewAction(sim,player,{operation:'assign',workerId:member.id,jobId:choice.jobId,machineId:machine.id,workArea:command.workArea??crew.jobs.find(value=>value.id===choice.jobId)?.workArea??null},now,context);
  member.demonstration={status:'active',requestedBy:player.actorId,jobId:choice.jobId,startedAt:now};
  const job=crew.jobs.find(value=>value.id===choice.jobId);job.requestedBy=player.actorId;job.requestedAt=now;
  constructionCrewAction(sim,player,{operation:'start',workerId:member.id},now,context);player.constructionCrewTurn=(player.constructionCrewTurn||0)+1;
@@ -117,14 +120,15 @@ export function constructionCrewInteraction(sim,player,command,now,context={}){
  return {message:member.message,workers:[snapshot(member)],choices:demoChoices(sim,crew,worker,now)};
 }
 
-function requireManager(sim,player,now){
+function requireManager(sim,player,now,context={}){
  const crew=sim.construction?.crew;if(!crew)fail('This world has no construction crew.');
  if(!player||player.health<=0||player.replacedByRoom||now-(player.lastSeen??now)>15000)fail('Join the live site before managing its crew.',403);
- if(!player.position||gap(player.position,crew.muster)>280)fail('Return to the construction site to manage the crew.',403);
+ const yard=(context.environment?.construction||context.environment?.builderScene?.layoutMeta?.construction)?.yard,p=player.position,atSite=p&&(yard?p.x>=yard.minX-12&&p.x<=yard.maxX+12&&p.z>=yard.minZ-12&&p.z<=yard.maxZ+12:gap(p,crew.muster)<=280);
+ if(!atSite)fail('Return to the construction site to manage the crew.',403);
  return crew;
 }
 export function constructionCrewAction(sim,player,command,now,context={}){
- const crew=requireManager(sim,player,now),operation=command.operation,worker=command.workerId?crew.workers.find(worker=>worker.id===command.workerId):null;
+ const crew=requireManager(sim,player,now,context),operation=command.operation,worker=command.workerId?crew.workers.find(worker=>worker.id===command.workerId):null;
  if(['status','demonstrate','resume','stop'].includes(operation))return constructionCrewInteraction(sim,player,command,now,context).message;
  if(command.workerId&&!worker)fail('Choose an existing site worker.',422);
  if(operation==='start'||operation==='pause'){
@@ -152,11 +156,13 @@ export function constructionCrewAction(sim,player,command,now,context={}){
   if(command.machineId&&(!machine||machine.active===false||constructionMachineKind(machine)!==definition.machine))fail('That machine cannot perform this job.',422);
   if(machine?.holderId)fail('A player is using that machine. Choose another machine or wait.');
   if(machine?.construction?.crewOperator&&machine.construction.crewOperator.workerId!==worker.id)fail('Another crew worker is operating that machine. Pause or reassign that worker first.');
+  const workArea=command.workArea||null;if(workArea&&!constructionWorkAreas(sim.construction,job.type).some(([id])=>id===workArea))fail('Choose a listed work area for this job.',422);
   const previous=crew.workers.find(member=>member.jobId===job.id);if(previous){retireMachine(sim,previous,now,context,'Job reassigned.');previous.jobId=null;if(previous.demonstration?.status==='active'){previous.demonstration.status='cancelled';previous.demonstration.finishedAt=now;}}
   if(worker.demonstration?.status==='active'){worker.demonstration.status='cancelled';worker.demonstration.finishedAt=now;}
   const interrupted=crew.jobs.find(current=>current.id===worker.jobId&&current.id!==job.id);if(interrupted)interrupted.status='queued';
   retireMachine(sim,worker,now,context,'New job assigned.');worker.jobId=job.id;worker.enabled=true;worker.retryAt=0;
-  Object.assign(job,{workerId:worker.id,machineId:machine?.id||null,status:'queued',completed:0,progress:0,message:'Assigned to '+worker.name+'.'});
+  Object.assign(job,{workerId:worker.id,machineId:machine?.id||null,workArea,status:'queued',completed:0,progress:0,message:'Assigned to '+worker.name+'.'});
+  if(job.type==='haul'&&workArea){const tip=crew.jobs.find(value=>value.type==='dump');if(tip&&(!tip.machineId||tip.machineId===machine?.id)&&!['operating','walking'].includes(tip.status))Object.assign(tip,{workArea,status:'queued',completed:0,progress:0});}
   return job.message;
  }
  fail('Choose start, pause, assign or customize for the construction crew.',422);
@@ -246,14 +252,24 @@ function cycle(sim,worker,job,now,context,metric){
  worker.workBaseline=metric(actor);
  if(issue(sim,worker,job,'work',now,context))worker.phase='cycle';
 }
-function looseMaterial(sim,reference){
- const cells=[];for(const patch of sim.construction.earthworks?.patches||[]){if(!['fill','stockpile'].includes(patch.kind))continue;for(let index=0;index<patch.soil.length;index++){const volume=patch.soil[index]+patch.gravel[index]-patch.initialSoil[index];if(volume>.025)cells.push({x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,y:patch.heights[index],z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize,volume});}}
+function looseMaterial(sim,reference,patchId=null,gradeTarget=null){
+ const cells=[];for(const patch of sim.construction.earthworks?.patches||[]){if(patchId?patch.id!==patchId:!['fill','stockpile'].includes(patch.kind))continue;for(let index=0;index<patch.soil.length;index++){const volume=patch.soil[index]+patch.gravel[index]-patch.initialSoil[index];if(volume>(Number.isFinite(gradeTarget)?Math.max(0,gradeTarget-patch.baseY)*patch.cellSize**2:0)+.025)cells.push({x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,y:patch.heights[index],z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize,volume});}}
  return cells.sort((a,b)=>gap(a,reference)-gap(b,reference))[0]||null;
 }
+function workRoute(actor,target){
+ const p=actor.position;
+ if(target.x>=164&&p.x>=164)return [{x:235,z:p.z},{x:235,z:target.z}];
+ if(target.x>=164)return [...(p.z>125?[{x:145,z:p.z},{x:145,z:125}]:[{x:49,z:56}]),{x:145,z:56},{x:235,z:56},{x:235,z:target.z}];
+ if(target.z>=145)return [{x:26,z:56},{x:26,z:125},{x:40,z:125},{x:40,z:214},{x:target.x,z:214}];
+ if(target.z< -16)return target.x>96?[{x:49,z:56},{x:145,z:56},{x:156,z:-21},{x:target.x,z:-21}]:[{x:49,z:56},{x:49,z:-21},{x:target.x,z:-21}];
+ return [{x:49,z:56},{x:49,z:target.z}];
+}
 function executeJob(sim,worker,job,now,dt,context,config){
- const actor=sim.actors[worker.machineId],state=actor.construction,type=job.type;
+ const actor=sim.actors[worker.machineId],state=actor.construction,type=job.type,patch=sim.construction.earthworks?.patches.find(patch=>patch.id===job.workArea),center=patch?{x:patch.origin.x+patch.columns*patch.cellSize/2,y:patch.baseY,z:patch.origin.z+patch.rows*patch.cellSize/2}:null;
+ const targetGrade=patch?.id==='new-road'?.2:patch?.id==='earth-platform'?.3:null;
  if(type==='steel'){
-  if(!sim.construction.tower.target){job.goal=job.completed;job.progress=1;complete(sim,worker,job,now,context);return;}
+  if(job.workArea&&state.structureId!==job.workArea){if(!issue(sim,worker,job,'structure-target',now,context,{structureId:job.workArea}))return;}
+  if(!constructionStructure(sim.construction,actor)?.target){job.goal=job.completed;job.progress=1;complete(sim,worker,job,now,context);return;}
   if(worker.phase==='prepare')worker.phase=state.load?'target':'supply';
   if(worker.phase==='supply'&&issue(sim,worker,job,'aim-supply',now,context))worker.phase='wait-supply';
   else if(worker.phase==='wait-supply'&&!working(actor)&&issue(sim,worker,job,'attach',now,context)){worker.beamId=state.load;worker.phase='target';}
@@ -263,26 +279,36 @@ function executeJob(sim,worker,job,now,dt,context,config){
    worker.phase='supply';if(job.completed>=job.goal)complete(sim,worker,job,now,context);
   }
  }else if(type==='dig'){
+  if(patch&&worker.phase!=='cycle'&&load(actor)<=.001){
+   const candidate={...actor,construction:{...state,boom:.4,stick:-1.5,bucket:1}},tip=constructionJointPose(candidate).bucketTip,surface=earthworksSurfaceAt(sim.construction.earthworks,tip);
+   if(surface?.patchId!==patch.id||surface.y<=tip.y-.3+.01){
+    const cells=patch.heights.map((height,index)=>({height,index,x:patch.origin.x+(index%patch.columns+.5)*patch.cellSize,z:patch.origin.z+(Math.floor(index/patch.columns)+.5)*patch.cellSize})).filter(cell=>cell.height>patch.minY+.025).sort((a,b)=>gap(a,actor.position)-gap(b,actor.position));
+    const cell=cells[0];if(!cell){message(worker,job,'Selected work area has no remaining reachable material.');worker.retryAt=now+1500;return;}
+    const aligned={...candidate,rotation:{...candidate.rotation,y:-(state.swing||0)}},alignedTip=constructionJointPose(aligned).bucketTip,offset={x:alignedTip.x-actor.position.x,z:alignedTip.z-actor.position.z},destination={x:cell.x-offset.x,y:actor.position.y,z:cell.z-offset.z};
+    if(gap(actor.position,destination)>12){if(!routeTo(sim,worker,job,destination,workRoute(actor,destination),now,dt,context))return;}else if(!driveTo(sim,worker,job,destination,now,dt,context,{radius:.5,rotationY:-(state.swing||0)}))return;
+    message(worker,job,'Working selected '+job.workArea+'. Ground reach and collisions remain active.');return;
+   }
+  }
   if(worker.phase!=='cycle'&&load(actor)>.001){message(worker,job,'Bucket already contains material. Assign loading before another dig.');worker.retryAt=now+1000;return;}
   cycle(sim,worker,job,now,context,a=>load(a));
  }else if(type==='load'){
   if(worker.phase!=='cycle'&&load(actor)<=.001){message(worker,job,'Waiting for an excavated bucket to load.');worker.retryAt=now+1000;return;}
   cycle(sim,worker,job,now,context,a=>-load(a));
  }else if(type==='haul'){
-  const loading=position(config.loading,{x:30,y:0,z:17}),dump=position(config.dump,{x:sim.construction.stockpile.x,y:0,z:sim.construction.stockpile.z});
+  const excavator=Object.values(sim.actors).find(a=>constructionMachineKind(a)==='excavator'&&a.active!==false),yaw=excavator?.rotation?.y||0,loading=excavator?{x:excavator.position.x+Math.cos(yaw)*5,y:excavator.position.y,z:excavator.position.z-Math.sin(yaw)*5,rotationY:yaw}:position(config.loading,{x:30,y:0,z:17}),dump=center||position(config.dump,{x:sim.construction.stockpile.x,y:0,z:sim.construction.stockpile.z});
   if(!worker.phase.startsWith('haul-'))worker.phase=load(actor)>.001?'haul-out':'haul-loading';
   if(worker.phase==='haul-loading'){
-   if(routeTo(sim,worker,job,loading,config.approachWaypoints,now,dt,context)){worker.phase='haul-wait';message(worker,job,'Parked in the actual excavator loading envelope.');}
+   if(routeTo(sim,worker,job,loading,excavator&&gap(loading,position(config.loading,loading))>12?workRoute(actor,{...loading,z:loading.z+20}).concat([{x:loading.x,z:loading.z+20}]):config.approachWaypoints,now,dt,context)){worker.phase='haul-wait';message(worker,job,'Parked in the actual excavator loading envelope.');}
   }else if(worker.phase==='haul-wait'){neutral(actor);if(load(actor)>.001){worker.phase='haul-out';worker.haulStartDistance=actor.driving?.distance||0;}else message(worker,job,'Waiting for the excavator to transfer its real bucket.');}
-  else if(routeTo(sim,worker,job,dump,[...(config.approachWaypoints||[]).slice().reverse(),...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context)){
+  else if(routeTo(sim,worker,job,dump,patch?workRoute(actor,dump):[...(config.approachWaypoints||[]).slice().reverse(),...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context)){
    job.completed=Math.min(job.goal,load(actor));if(job.completed>=job.goal-.001)complete(sim,worker,job,now,context);else message(worker,job,'Delivered a partial load; more material is needed for this job.');
   }
  }else if(type==='dump'){
-  const dump=position(config.dump,sim.construction.stockpile);
+  const dump=center||position(config.dump,sim.construction.stockpile);
   if(worker.phase==='dump-clear'){
    const yaw=actor.rotation?.y||0;worker.clearanceTarget||={x:actor.position.x-Math.sin(yaw)*8,y:actor.position.y,z:actor.position.z-Math.cos(yaw)*8};message(worker,job,'Body lowered and material delivered. Moving forward clear of the rear discharge.');if(routeTo(sim,worker,job,worker.clearanceTarget,[],now,dt,context))complete(sim,worker,job,now,context);return;
   }
-  if(gap(actor.position,dump)>12){worker.phase='dump-approach';routeTo(sim,worker,job,dump,[...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context);return;}
+  if(gap(actor.position,dump)>12){worker.phase='dump-approach';routeTo(sim,worker,job,dump,patch?workRoute(actor,dump):[...(config.haulWaypoints||[]).slice(0,3),...(config.dumpApproachWaypoints||[])],now,dt,context);return;}
   if(worker.phase==='cycle'&&!working(actor)){
    const actual=Math.max(0,worker.workBaseline-load(actor));job.completed=Math.min(job.goal,job.completed+actual);job.progress=clamp(job.completed/job.goal,0,1);worker.progress=job.progress;
    if(job.completed>=job.goal-.001){const yaw=actor.rotation?.y||0;worker.clearanceTarget={x:actor.position.x-Math.sin(yaw)*8,y:actor.position.y,z:actor.position.z-Math.cos(yaw)*8};worker.travelReverse=false;worker.phase='dump-clear';return;}worker.phase='prepare';
@@ -290,12 +316,13 @@ function executeJob(sim,worker,job,now,dt,context,config){
   if(worker.phase!=='cycle'&&load(actor)>.001){worker.workBaseline=load(actor);if(issue(sim,worker,job,'work',now,context))worker.phase='cycle';}
   else if(!load(actor)&&worker.phase!=='cycle'){message(worker,job,'Waiting for a loaded truck at a real fill or stockpile patch.');worker.retryAt=now+1000;}
  }else if(type==='grade'){
+  if(patch&&state.gradeTarget!==targetGrade){if(!issue(sim,worker,job,'grade-target',now,context,{height:targetGrade}))return;}
   if(worker.phase==='cycle'){cycle(sim,worker,job,now,context,a=>a.construction.earthMoved||0);return;}
-  if(state.telemetry?.canWork&&Math.abs(actor.driving?.speed||0)<.15){cycle(sim,worker,job,now,context,a=>a.construction.earthMoved||0);return;}
-  const cell=looseMaterial(sim,position(config.grade,sim.construction.stockpile));
+  if((!patch||earthworksSurfaceAt(sim.construction.earthworks,constructionJointPose(actor).bladeEdge)?.patchId===patch.id)&&state.telemetry?.canWork&&Math.abs(actor.driving?.speed||0)<.15){cycle(sim,worker,job,now,context,a=>a.construction.earthMoved||0);return;}
+  const cell=looseMaterial(sim,center||position(config.grade,sim.construction.stockpile),patch?.id,targetGrade);
   if(!cell){neutral(actor);message(worker,job,'Waiting for actual deposited soil or gravel to grade.');worker.retryAt=now+1200;return;}
   const target={x:cell.x,y:actor.position.y,z:cell.z+3.15,rotationY:0};
-  if(!driveTo(sim,worker,job,target,now,dt,context,{radius:.65,rotationY:0}))return;
+  if(patch&&gap(actor.position,target)>12){if(!routeTo(sim,worker,job,target,workRoute(actor,target),now,dt,context))return;}else if(!driveTo(sim,worker,job,target,now,dt,context,{radius:.65,rotationY:0}))return;
   cycle(sim,worker,job,now,context,a=>a.construction.earthMoved||0);
  }
 }
