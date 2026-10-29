@@ -2,6 +2,17 @@ export const residentClamp=(value,min=0,max=100)=>Math.max(min,Math.min(max,Numb
 export function residentHash(seed){let value=2166136261;for(const letter of String(seed))value=Math.imul(value^letter.charCodeAt(0),16777619);value=Math.imul(value^(value>>>16),0x7feb352d);value=Math.imul(value^(value>>>15),0x846ca68b);return (value^(value>>>16))>>>0;}
 const pick=(values,seed)=>values[residentHash(seed)%values.length];
 export const RESIDENT_FORMS=['human','foxfolk','mossling','automaton'];
+// Small, deterministic details follow the map and resident through reloads.
+export function residentCustomization(id,kind='community'){
+ const details={park:['moss','flowers','moss'],harbor:['satchel','scarf'],airport:['satchel','patch'],music:['scarf','patch'],arcade:['patch','satchel'],construction:['satchel','patch'],factory:['patch','satchel'],skiing:['scarf','satchel'],basketball:['patch','scarf'],hockey:['scarf','patch'],range:['patch','satchel'],custom:['satchel','scarf','patch'],community:['scarf','satchel','flowers']};
+ return {detail:pick(details[kind]||details.community,id+':detail'),pattern:pick(['plain','stripes','patchwork'],id+':pattern'),botanical:pick(['fern','flowers','mushrooms'],id+':botanical'),detailColor:pick(['#88a96a','#d8a3ae','#e3bf73','#8fc8cb'],id+':detail-color')};
+}
+export const RESIDENT_CHARACTER_MODELS=Object.freeze(['forest-ranger','desert-merchant','clockwork-knight','moss-golem','friendly-ghost','spectral-ghost']);
+export function residentMapCharacter(id,kind,form){
+ const casts={park:{human:['forest-ranger'],mossling:['moss-golem']},custom:{human:['desert-merchant','friendly-ghost'],automaton:['clockwork-knight'],mossling:['moss-golem']},community:{human:['desert-merchant','friendly-ghost']},arcade:{human:['friendly-ghost','spectral-ghost'],automaton:['clockwork-knight']},music:{human:['desert-merchant','friendly-ghost']}};
+ const choices=casts[kind]?.[form];
+ return choices&&residentHash(id+':crafted-presence')%3===0?pick(choices,id+':crafted-model'):'none';
+}
 const givenNames=['Amira','Leo','Sofia','Theo','Nora','Jules','Maya','Ellis','Robin','Alex','Ivo','Zara','Finn','Lumi','Kiran','Esme','Soren','Tala','Niko','Ada','Ren','Cleo','Bram','Noor','Milo','Suri','Orin','Wren','Remy','Iris','Jun','Asha'];
 const familyNames=['Vale','Reed','Stone','Lane','Brook','Voss','Finch','Sol','Moss','Quill','Rowan','Ash','Rivers','Ember','Hale','Wilder','Cove','Bloom','Marsh','Lark','Kestrel','Pike','Bright','Dale','Swift','North','Fern','Cedar','Gale','Hart','Moon','Rook'];
 // Identity is scoped to the map and the actor, rather than the selected job.
@@ -47,7 +58,7 @@ export function residentPersonality(environment,place,npcId,name='Resident'){
  const origin=pick(['helping at community events','learning from a patient mentor','organizing activities with friends','working on a personal project','volunteering at a busy local venue','following a lifelong curiosity'],id+':origin');
  const traits={sociability:.3+(seed%65)/100,patience:.5+(residentHash(id+'patience')%45)/100,curiosity:.35+(residentHash(id+'curiosity')%60)/100,diligence:.45+(residentHash(id+'diligence')%50)/100};
  const skills={hospitality:25+residentHash(id+'hospitality')%35,social:Math.round(25+traits.sociability*45),observation:30+residentHash(id+'observation')%35,[spec.skill]:35+residentHash(id+spec.skill)%40};
- const appearance={form:identity.form,outfit:pick(spec.palette,id+'outfit'),accent:pick(['#d8b779','#a1c9c4','#c2a2d5'],id+'accent'),hair:pick(['#32251f','#593d2b','#746351','#172029','#6e5140'],id+'hair'),skin:pick(['#b78361','#e5ba98','#76503d','#c99275','#946343'],id+'skin'),hairstyle:pick(['short','swept','curly','bob','bald','bun'],id+'style'),accessory:pick(['glasses','earrings','necklace','watch','none'],id+'accessory'),height:.94+(seed%7)*.022,build:.94+(seed%5)*.035};
+ const appearance={...residentCustomization(id,context.kind),form:identity.form,characterModel:residentMapCharacter(id,context.kind,identity.form),outfit:pick(spec.palette,id+'outfit'),accent:pick(['#d8b779','#a1c9c4','#c2a2d5'],id+'accent'),hair:pick(['#32251f','#593d2b','#746351','#172029','#6e5140'],id+'hair'),skin:pick(['#b78361','#e5ba98','#76503d','#c99275','#946343'],id+'skin'),hairstyle:pick(['short','swept','curly','bob','bald','bun'],id+'style'),accessory:pick(['glasses','earrings','necklace','watch','none'],id+'accessory'),height:.94+(seed%7)*.022,build:.94+(seed%5)*.035};
  if(identity.form==='foxfolk'){appearance.skin=pick(['#b97645','#bc8b60','#9b7154','#d4b99a'],id+':fur');appearance.hair=pick(['#654735','#483c35','#9a7655'],id+':mane');}
  else if(identity.form==='mossling'){appearance.skin=pick(['#7c9c72','#93ad80','#67876b','#a8b08a'],id+':leaf');appearance.hair='#41624a';}
  else if(identity.form==='automaton'){appearance.skin=pick(['#8dabb1','#acb2aa','#889cae','#b1a48a'],id+':shell');appearance.hairstyle='bald';}

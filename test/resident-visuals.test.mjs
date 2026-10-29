@@ -33,3 +33,45 @@ test('distinct resident forms keep the shared animation rig and work uniforms wh
   assert.equal(residentVisualStyle({appearance:{form:'unknown'}}).appearance.form,'human');
  }finally{dispose(root);}
 });
+
+test('custom details and mossling growth reset correctly when reusing a resident rig',()=>{
+ const root=createWorldResident();try{
+  root.userData.residentState={appearance:{form:'mossling',detail:'moss',botanical:'mushrooms',pattern:'patchwork',detailColor:'#88aa44'}};
+  updateWorldResident(root,1);
+  const {details,patterns,botanicals}=root.userData.residentCustomization;
+  assert.deepEqual(details.children.filter(n=>n.visible).map(n=>n.name),['moss']);
+  assert.equal(botanicals.visible,true);
+  assert.deepEqual(botanicals.children.filter(n=>n.visible).map(n=>n.name),['mushrooms']);
+  assert.equal(patterns.visible,true);
+  assert.equal(root.userData.residentMaterials.detail.color.getHexString(),'88aa44');
+  root.userData.residentState={uniform:'construction',appearance:{form:'mossling',detail:'satchel',pattern:'plain'}};
+  updateWorldResident(root,2);
+  assert.equal(botanicals.visible,false);
+  assert.equal(patterns.visible,false);
+  assert.deepEqual(details.children.filter(n=>n.visible).map(n=>n.name),['satchel']);
+  root.userData.residentState={appearance:{form:'human',detail:'flowers'}};
+  updateWorldResident(root,3);assert.equal(botanicals.visible,false);
+ }finally{dispose(root);}
+});
+
+test('built map characters animate on resident actors and safely switch to work uniforms',()=>{
+ const root=createWorldResident();try{
+  for(const id of ['forest-ranger','desert-merchant','clockwork-knight','moss-golem','friendly-ghost','spectral-ghost']){
+   root.userData.residentState={uniform:'casual',appearance:{characterModel:id},gesture:'wave',moving:false};
+   updateWorldResident(root,1);
+   const visual=root.userData.mapCharacterVisual;
+   assert.equal(visual.id,id);assert.equal(root.userData.residentParts.body.visible,false);
+   const rotations=[];visual.model.traverse(n=>{if(n.isGroup&&/ARM/.test(n.name))rotations.push(n.rotation.x);});
+   updateWorldResident(root,1);
+   const repeated=[];visual.model.traverse(n=>{if(n.isGroup&&/ARM/.test(n.name))repeated.push(n.rotation.x);});
+   assert.deepEqual(repeated,rotations,'gestures do not accumulate across frames');
+   assert.ok(visual.model.scale.x*visual.dimensions[0]<.7);
+  }
+  root.userData.residentState.uniform='construction';updateWorldResident(root,2);
+  assert.equal(root.userData.mapCharacterVisual,undefined);
+  assert.equal(root.userData.residentParts.body.visible,true);
+  assert.equal(root.userData.residentParts.hardHat.visible,true);
+  root.userData.residentState={appearance:{characterModel:'cave-spider'}};updateWorldResident(root,3);
+  assert.equal(root.userData.mapCharacterVisual,undefined);
+ }finally{dispose(root);}
+});

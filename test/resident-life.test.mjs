@@ -112,3 +112,9 @@ test('specialized casino residents and simulation remain untouched by the genera
 });
 
 function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
+
+test('existing residents acquire map appearance details while retaining saved customization and progress',()=>{
+ const f=setup(),info=f.a.resident;info.appearance={form:'mossling',outfit:'#112233',detail:'flowers',characterModel:'none'};info.skills.natureObservation=89;
+ ensureResidentIntelligence(f.sim,f.a,f.env,100250);
+ assert.equal(info.appearance.outfit,'#112233');assert.equal(info.appearance.detail,'flowers');assert.equal(info.appearance.characterModel,'none');assert.ok(info.appearance.botanical);assert.ok(info.appearance.pattern);assert.equal(info.skills.natureObservation,89);
+});

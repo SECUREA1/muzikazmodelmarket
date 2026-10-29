@@ -1,7 +1,7 @@
 // Rebind animated rig references to cloned meshes instead of JSON copies.
 export function cloneBuilderRuntime(source,clone=object=>object.clone(true)){
  const original=[],copies=[],rigs=[];source.traverse(node=>original.push(node));
- for(const node of original){const keys=['boatRig','fishingRig','tip','aircraftRig','constructionParts','residentMaterials','residentParts','residentLimbs','residentProp','fitnessEquipment','builderRoot'].filter(key=>node.userData[key]);if(!keys.length)continue;rigs.push({node,data:node.userData,keys});node.userData={...node.userData};for(const key of keys)delete node.userData[key];}
+ for(const node of original){const keys=['boatRig','fishingRig','tip','aircraftRig','constructionParts','residentMaterials','residentParts','residentLimbs','residentProp','residentCustomization','mapCharacterVisual','fitnessEquipment','builderRoot'].filter(key=>node.userData[key]);if(!keys.length)continue;rigs.push({node,data:node.userData,keys});node.userData={...node.userData};for(const key of keys)delete node.userData[key];}
  let root;try{root=clone(source);}finally{for(const {node,data}of rigs)node.userData=data;}
  root.traverse(node=>copies.push(node));const nodes=new Map(original.map((node,index)=>[node,copies[index]]));
  // Object3D.clone copies a SkinnedMesh's Skeleton reference. Each placement
