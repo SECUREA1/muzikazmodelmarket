@@ -51,6 +51,7 @@ function synchronizedAccount(data, account, wallet, accountKey, entitlements) {
 }
 function prisonReceipt(data,wallet,itemId){return (data.transactions||[]).find(row=>row.type==='PRISON_ITEM_EARNED'&&row.walletId===wallet&&row.itemId===itemId&&prisonRewardFor(row.buildAssetId));}
 function prisonBoundItem(data,wallet,item){return item&&(item.source==='prison-earned'||prisonRewardFor(item.buildAssetId)||prisonReceipt(data,wallet,item.id));}
+function forestBoundItem(data,wallet,item){return item&&(item.source==='forest-harvest-earned'||String(item.id||'').startsWith('forest-item:')||(data.transactions||[]).some(row=>row.type==='FOREST_ITEM_EXPORTED'&&row.walletId===wallet&&row.itemIds?.includes(item.id)));}
 function plainObject(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
 function cleanWallet(value) {
   const wallet = String(value || '').trim().toLowerCase();
@@ -387,7 +388,7 @@ export class UserJsonDatabase {
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.visibility!=='private'&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.visibility!=='private'&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!forestBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
@@ -409,6 +410,7 @@ export class UserJsonDatabase {
       if (!item) throw new Error('Pack not found in this Backpack.');
       if(item.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if(prisonBoundItem(data,wallet,item))throw Object.assign(Error('Earned prison collectibles are bound to your Backpack and cannot be resold.'),{statusCode:403});
+      if(forestBoundItem(data,wallet,item))throw Object.assign(Error('Earned forest items are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(item.shippingSupplyId||item.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403});
       if(active)assertFactoryTradeAvailable(data,wallet,item);
       item.listing = { active: Boolean(active), priceMzk: amount, updatedAt: new Date().toISOString() };
@@ -428,7 +430,7 @@ export class UserJsonDatabase {
       const buyerUser = data.users[buyer]; const sellerUser = data.users[seller];
       if (!buyerUser || !sellerUser) throw new Error('Both members must have a market profile.');
       const index = sellerUser.items.findIndex((item) => item.id === itemId);
-      const item = sellerUser.items[index];if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
+      const item = sellerUser.items[index];if(forestBoundItem(data,seller,item))throw Object.assign(Error('Earned forest items are bound to their owner and cannot be traded.'),{statusCode:403});if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
       if(item?.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
       const factoryProof=assertFactoryTradeAvailable(data,seller,item);

@@ -84167,5 +84167,2215 @@
       }
     },
     "playUrl": "model-explorer.html?environment=surface-mine-quarry&autoplay=1&mode=multiplayer"
+  },
+  {
+    "id": "forest-harvest",
+    "name": "Timberland · Forest Harvest & Lumber Mill",
+    "label": "Grow · fell · haul · mill · build",
+    "description": "An advanced working forest with mixed-species timber stands, a tree nursery, marked haul roads, forestry machinery, a log receiving yard, sawmill, drying kiln and woodworking shop. Farm trees, select tools, fell and buck trunks, load and haul logs, remove stumps to reclaim land, and mill selected species and lumber profiles for building pieces, furniture and item creation. Forestry challenges reward the full tree-to-land production cycle and replanting.",
+    "category": "Forestry & resource farming",
+    "game": "forest-harvest",
+    "mapTheme": "forest",
+    "mapColor": "#72a365",
+    "forestHarvest": {
+      "enabled": true,
+      "stations": [
+        {
+          "id": "forest-mill",
+          "kind": "mill",
+          "name": "Precision Lumber Mill",
+          "position": {
+            "x": 32,
+            "y": 0.02,
+            "z": 18
+          },
+          "approach": {
+            "x": 32,
+            "y": 0.02,
+            "z": 26
+          }
+        },
+        {
+          "id": "forest-kiln",
+          "kind": "dry",
+          "name": "Drying Kiln",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 18
+          },
+          "approach": {
+            "x": 50,
+            "y": 0.02,
+            "z": 26
+          }
+        },
+        {
+          "id": "forest-workbench",
+          "kind": "craft",
+          "name": "Timber & Furniture Workshop",
+          "position": {
+            "x": 50,
+            "y": 0.02,
+            "z": 38
+          },
+          "approach": {
+            "x": 50,
+            "y": 0.02,
+            "z": 44
+          }
+        },
+        {
+          "id": "forest-nursery",
+          "kind": "nursery",
+          "name": "Tree Nursery",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": 40
+          },
+          "approach": {
+            "x": -42,
+            "y": 0.02,
+            "z": 46
+          }
+        },
+        {
+          "id": "forest-tool-depot",
+          "kind": "equipment",
+          "name": "Logging Equipment Depot",
+          "position": {
+            "x": -18,
+            "y": 0.02,
+            "z": 40
+          },
+          "approach": {
+            "x": -18,
+            "y": 0.02,
+            "z": 46
+          }
+        }
+      ],
+      "trees": [
+        {
+          "id": "pine-ridge-1",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "pine-ridge-2",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "pine-ridge-3",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "pine-ridge-4",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "pine-ridge-5",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "pine-ridge-6",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "pine-ridge-7",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "pine-ridge-8",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "pine-ridge-9",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "pine-ridge-10",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "pine-ridge-11",
+          "speciesId": "pine",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "pine-ridge-12",
+          "speciesId": "spruce",
+          "plotId": "pine-ridge",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "hardwood-grove-1",
+          "speciesId": "oak",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "hardwood-grove-2",
+          "speciesId": "birch",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "hardwood-grove-3",
+          "speciesId": "walnut",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "hardwood-grove-4",
+          "speciesId": "oak",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -43
+          }
+        },
+        {
+          "id": "hardwood-grove-5",
+          "speciesId": "birch",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "hardwood-grove-6",
+          "speciesId": "walnut",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "hardwood-grove-7",
+          "speciesId": "oak",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "hardwood-grove-8",
+          "speciesId": "birch",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -30
+          }
+        },
+        {
+          "id": "hardwood-grove-9",
+          "speciesId": "walnut",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "hardwood-grove-10",
+          "speciesId": "oak",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "hardwood-grove-11",
+          "speciesId": "birch",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "hardwood-grove-12",
+          "speciesId": "walnut",
+          "plotId": "hardwood-grove",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -17
+          }
+        },
+        {
+          "id": "cedar-hollow-1",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "cedar-hollow-2",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "cedar-hollow-3",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "cedar-hollow-4",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "cedar-hollow-5",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "cedar-hollow-6",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "cedar-hollow-7",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "cedar-hollow-8",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "cedar-hollow-9",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -90,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "cedar-hollow-10",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "cedar-hollow-11",
+          "speciesId": "cedar",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -58,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "cedar-hollow-12",
+          "speciesId": "spruce",
+          "plotId": "cedar-hollow",
+          "position": {
+            "x": -42,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "reclamation-1",
+          "speciesId": "oak",
+          "plotId": "reclamation",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "reclamation-2",
+          "speciesId": "pine",
+          "plotId": "reclamation",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "reclamation-3",
+          "speciesId": "birch",
+          "plotId": "reclamation",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "reclamation-4",
+          "speciesId": "oak",
+          "plotId": "reclamation",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -105
+          }
+        },
+        {
+          "id": "reclamation-5",
+          "speciesId": "pine",
+          "plotId": "reclamation",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "reclamation-6",
+          "speciesId": "birch",
+          "plotId": "reclamation",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "reclamation-7",
+          "speciesId": "oak",
+          "plotId": "reclamation",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "reclamation-8",
+          "speciesId": "pine",
+          "plotId": "reclamation",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -92
+          }
+        },
+        {
+          "id": "reclamation-9",
+          "speciesId": "birch",
+          "plotId": "reclamation",
+          "position": {
+            "x": 38,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "reclamation-10",
+          "speciesId": "oak",
+          "plotId": "reclamation",
+          "position": {
+            "x": 54,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "reclamation-11",
+          "speciesId": "pine",
+          "plotId": "reclamation",
+          "position": {
+            "x": 70,
+            "y": 0.02,
+            "z": -79
+          }
+        },
+        {
+          "id": "reclamation-12",
+          "speciesId": "birch",
+          "plotId": "reclamation",
+          "position": {
+            "x": 86,
+            "y": 0.02,
+            "z": -79
+          }
+        }
+      ],
+      "vehicles": [
+        {
+          "id": "forest-harvester",
+          "kind": "harvester",
+          "name": "Tracked Tree Harvester",
+          "position": {
+            "x": -24,
+            "y": 0.02,
+            "z": 24
+          },
+          "capacity": 4
+        },
+        {
+          "id": "forest-forwarder",
+          "kind": "forwarder",
+          "name": "Grapple Forwarder",
+          "position": {
+            "x": -38,
+            "y": 0.02,
+            "z": 24
+          },
+          "capacity": 12
+        },
+        {
+          "id": "forest-log-truck",
+          "kind": "log-truck",
+          "name": "Timber Haul Truck",
+          "position": {
+            "x": -54,
+            "y": 0.02,
+            "z": 24
+          },
+          "capacity": 24
+        },
+        {
+          "id": "forest-stump-grinder",
+          "kind": "stump-grinder",
+          "name": "Stump Grinder",
+          "position": {
+            "x": -68,
+            "y": 0.02,
+            "z": 24
+          },
+          "capacity": 2
+        }
+      ]
+    },
+    "worldId": "echo-gardens",
+    "source": "repository",
+    "visibility": "public",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-29T06:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "thumbnailUrl": "/public/images/forest-harvest/timberland.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 69,
+      "rotationY": 0
+    },
+    "streets": [
+      {
+        "id": "forest-haul-main",
+        "name": "Timber Spine · Haul Road",
+        "from": {
+          "x": 0,
+          "z": -124
+        },
+        "to": {
+          "x": 0,
+          "z": 66
+        },
+        "width": 10
+      },
+      {
+        "id": "forest-haul-cross",
+        "name": "North Stand Access",
+        "from": {
+          "x": -116,
+          "z": -60
+        },
+        "to": {
+          "x": 116,
+          "z": -60
+        },
+        "width": 8
+      },
+      {
+        "id": "forest-yard-road",
+        "name": "Sawmill Service Loop",
+        "from": {
+          "x": -80,
+          "z": 59
+        },
+        "to": {
+          "x": 102,
+          "z": 59
+        },
+        "width": 10
+      },
+      {
+        "id": "forest-mill-road",
+        "name": "Log Receiving Lane",
+        "from": {
+          "x": 15,
+          "z": 3
+        },
+        "to": {
+          "x": 105,
+          "z": 3
+        },
+        "width": 9
+      },
+      {
+        "id": "forest-yard-return",
+        "name": "East Return Road",
+        "from": {
+          "x": 102,
+          "z": 3
+        },
+        "to": {
+          "x": 102,
+          "z": 59
+        },
+        "width": 9
+      }
+    ],
+    "builderScene": {
+      "version": 3,
+      "layout": "forest-harvest",
+      "mapSize": 288,
+      "objects": [
+        {
+          "id": "forest-mill",
+          "modelId": "forestry-sawmill",
+          "asset": {
+            "buildAssetId": "forestry-sawmill"
+          },
+          "name": "Precision Lumber Mill",
+          "position": {
+            "x": 32,
+            "y": 0,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "forest-harvest",
+            "forestStation": "mill",
+            "forestStationId": "forest-mill",
+            "interactionDistance": 8,
+            "prompt": "Precision Lumber Mill · Forestry controls / E"
+          }
+        },
+        {
+          "id": "forest-kiln",
+          "modelId": "forestry-drying-kiln",
+          "asset": {
+            "buildAssetId": "forestry-drying-kiln"
+          },
+          "name": "Drying Kiln",
+          "position": {
+            "x": 50,
+            "y": 0,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "forest-harvest",
+            "forestStation": "dry",
+            "forestStationId": "forest-kiln",
+            "interactionDistance": 8,
+            "prompt": "Drying Kiln · Forestry controls / E"
+          }
+        },
+        {
+          "id": "forest-workbench",
+          "modelId": "forestry-workbench",
+          "asset": {
+            "buildAssetId": "forestry-workbench"
+          },
+          "name": "Timber & Furniture Workshop",
+          "position": {
+            "x": 50,
+            "y": 0,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "forest-harvest",
+            "forestStation": "craft",
+            "forestStationId": "forest-workbench",
+            "interactionDistance": 8,
+            "prompt": "Timber & Furniture Workshop · Forestry controls / E"
+          }
+        },
+        {
+          "id": "forest-nursery",
+          "modelId": "forestry-nursery",
+          "asset": {
+            "buildAssetId": "forestry-nursery"
+          },
+          "name": "Tree Nursery",
+          "position": {
+            "x": -42,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "forest-harvest",
+            "forestStation": "nursery",
+            "forestStationId": "forest-nursery",
+            "interactionDistance": 8,
+            "prompt": "Tree Nursery · Forestry controls / E"
+          }
+        },
+        {
+          "id": "forest-tool-depot",
+          "modelId": "supply-crate",
+          "asset": {
+            "buildAssetId": "supply-crate"
+          },
+          "name": "Logging Equipment Depot",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "forest-harvest",
+            "forestStation": "equipment",
+            "forestStationId": "forest-tool-depot",
+            "interactionDistance": 8,
+            "prompt": "Logging Equipment Depot · Forestry controls / E"
+          }
+        },
+        {
+          "id": "forest-harvester",
+          "modelId": "forestry-harvester",
+          "asset": {
+            "buildAssetId": "forestry-harvester"
+          },
+          "name": "Tracked Tree Harvester",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "destructible": false,
+            "damage": 0,
+            "action": "drive",
+            "forestVehicleId": "forest-harvester",
+            "forestVehicleKind": "harvester",
+            "interactionDistance": 8,
+            "prompt": "Tracked Tree Harvester · Enter / E"
+          }
+        },
+        {
+          "id": "forest-forwarder",
+          "modelId": "forestry-forwarder",
+          "asset": {
+            "buildAssetId": "forestry-forwarder"
+          },
+          "name": "Grapple Forwarder",
+          "position": {
+            "x": -38,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "destructible": false,
+            "damage": 0,
+            "action": "drive",
+            "forestVehicleId": "forest-forwarder",
+            "forestVehicleKind": "forwarder",
+            "interactionDistance": 8,
+            "prompt": "Grapple Forwarder · Enter / E"
+          }
+        },
+        {
+          "id": "forest-log-truck",
+          "modelId": "forestry-log-truck",
+          "asset": {
+            "buildAssetId": "forestry-log-truck"
+          },
+          "name": "Timber Haul Truck",
+          "position": {
+            "x": -54,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "destructible": false,
+            "damage": 0,
+            "action": "drive",
+            "forestVehicleId": "forest-log-truck",
+            "forestVehicleKind": "log-truck",
+            "interactionDistance": 8,
+            "prompt": "Timber Haul Truck · Enter / E"
+          }
+        },
+        {
+          "id": "forest-stump-grinder",
+          "modelId": "forestry-stump-grinder",
+          "asset": {
+            "buildAssetId": "forestry-stump-grinder"
+          },
+          "name": "Stump Grinder",
+          "position": {
+            "x": -68,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "destructible": false,
+            "damage": 0,
+            "action": "drive",
+            "forestVehicleId": "forest-stump-grinder",
+            "forestVehicleKind": "stump-grinder",
+            "interactionDistance": 8,
+            "prompt": "Stump Grinder · Enter / E"
+          }
+        },
+        {
+          "id": "forest-commons-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "World Commons",
+          "position": {
+            "x": -14,
+            "y": 0,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "World Commons · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "public-commons"
+            }
+          }
+        },
+        {
+          "id": "forest-construction-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Skyline Construction",
+          "position": {
+            "x": 14,
+            "y": 0,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Skyline Construction · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "skyscraper-construction"
+            }
+          }
+        },
+        {
+          "id": "forest-factory-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "World Item Factory",
+          "position": {
+            "x": 29,
+            "y": 0,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "destructible": false,
+            "damage": 0,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "World Item Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-item-factory"
+            }
+          }
+        },
+        {
+          "id": "forest-tool-axe",
+          "modelId": "forestry-axe",
+          "asset": {
+            "buildAssetId": "forestry-axe"
+          },
+          "name": "Forester’s felling axe",
+          "position": {
+            "x": -21,
+            "y": 0,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-tool-chainsaw",
+          "modelId": "forestry-chainsaw",
+          "asset": {
+            "buildAssetId": "forestry-chainsaw"
+          },
+          "name": "Forester’s chainsaw",
+          "position": {
+            "x": -16,
+            "y": 0,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-seedling-planter",
+          "modelId": "forestry-planter",
+          "asset": {
+            "buildAssetId": "forestry-planter"
+          },
+          "name": "Seedling planting tool",
+          "position": {
+            "x": -37,
+            "y": 0,
+            "z": 44
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-yard-lamp-0",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Timber yard service light",
+          "position": {
+            "x": -65,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-yard-lamp-1",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Timber yard service light",
+          "position": {
+            "x": -31,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-yard-lamp-2",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Timber yard service light",
+          "position": {
+            "x": 5,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forest-yard-lamp-3",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Timber yard service light",
+          "position": {
+            "x": 67,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false,
+            "damage": 0
+          }
+        }
+      ],
+      "streets": [
+        {
+          "id": "forest-haul-main",
+          "name": "Timber Spine · Haul Road",
+          "from": {
+            "x": 0,
+            "z": -124
+          },
+          "to": {
+            "x": 0,
+            "z": 66
+          },
+          "width": 10
+        },
+        {
+          "id": "forest-haul-cross",
+          "name": "North Stand Access",
+          "from": {
+            "x": -116,
+            "z": -60
+          },
+          "to": {
+            "x": 116,
+            "z": -60
+          },
+          "width": 8
+        },
+        {
+          "id": "forest-yard-road",
+          "name": "Sawmill Service Loop",
+          "from": {
+            "x": -80,
+            "z": 59
+          },
+          "to": {
+            "x": 102,
+            "z": 59
+          },
+          "width": 10
+        },
+        {
+          "id": "forest-mill-road",
+          "name": "Log Receiving Lane",
+          "from": {
+            "x": 15,
+            "z": 3
+          },
+          "to": {
+            "x": 105,
+            "z": 3
+          },
+          "width": 9
+        },
+        {
+          "id": "forest-yard-return",
+          "name": "East Return Road",
+          "from": {
+            "x": 102,
+            "z": 3
+          },
+          "to": {
+            "x": 102,
+            "z": 59
+          },
+          "width": 9
+        }
+      ],
+      "layoutMeta": {
+        "color": 5465156,
+        "forestHarvest": {
+          "enabled": true,
+          "stations": [
+            {
+              "id": "forest-mill",
+              "kind": "mill",
+              "name": "Precision Lumber Mill",
+              "position": {
+                "x": 32,
+                "y": 0.02,
+                "z": 18
+              },
+              "approach": {
+                "x": 32,
+                "y": 0.02,
+                "z": 26
+              }
+            },
+            {
+              "id": "forest-kiln",
+              "kind": "dry",
+              "name": "Drying Kiln",
+              "position": {
+                "x": 50,
+                "y": 0.02,
+                "z": 18
+              },
+              "approach": {
+                "x": 50,
+                "y": 0.02,
+                "z": 26
+              }
+            },
+            {
+              "id": "forest-workbench",
+              "kind": "craft",
+              "name": "Timber & Furniture Workshop",
+              "position": {
+                "x": 50,
+                "y": 0.02,
+                "z": 38
+              },
+              "approach": {
+                "x": 50,
+                "y": 0.02,
+                "z": 44
+              }
+            },
+            {
+              "id": "forest-nursery",
+              "kind": "nursery",
+              "name": "Tree Nursery",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": 40
+              },
+              "approach": {
+                "x": -42,
+                "y": 0.02,
+                "z": 46
+              }
+            },
+            {
+              "id": "forest-tool-depot",
+              "kind": "equipment",
+              "name": "Logging Equipment Depot",
+              "position": {
+                "x": -18,
+                "y": 0.02,
+                "z": 40
+              },
+              "approach": {
+                "x": -18,
+                "y": 0.02,
+                "z": 46
+              }
+            }
+          ],
+          "trees": [
+            {
+              "id": "pine-ridge-1",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "pine-ridge-2",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "pine-ridge-3",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "pine-ridge-4",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "pine-ridge-5",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "pine-ridge-6",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "pine-ridge-7",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "pine-ridge-8",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "pine-ridge-9",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "pine-ridge-10",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "pine-ridge-11",
+              "speciesId": "pine",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "pine-ridge-12",
+              "speciesId": "spruce",
+              "plotId": "pine-ridge",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "hardwood-grove-1",
+              "speciesId": "oak",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "hardwood-grove-2",
+              "speciesId": "birch",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "hardwood-grove-3",
+              "speciesId": "walnut",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "hardwood-grove-4",
+              "speciesId": "oak",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -43
+              }
+            },
+            {
+              "id": "hardwood-grove-5",
+              "speciesId": "birch",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "hardwood-grove-6",
+              "speciesId": "walnut",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "hardwood-grove-7",
+              "speciesId": "oak",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "hardwood-grove-8",
+              "speciesId": "birch",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -30
+              }
+            },
+            {
+              "id": "hardwood-grove-9",
+              "speciesId": "walnut",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "hardwood-grove-10",
+              "speciesId": "oak",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "hardwood-grove-11",
+              "speciesId": "birch",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "hardwood-grove-12",
+              "speciesId": "walnut",
+              "plotId": "hardwood-grove",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -17
+              }
+            },
+            {
+              "id": "cedar-hollow-1",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "cedar-hollow-2",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "cedar-hollow-3",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "cedar-hollow-4",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "cedar-hollow-5",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "cedar-hollow-6",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "cedar-hollow-7",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "cedar-hollow-8",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "cedar-hollow-9",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -90,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "cedar-hollow-10",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -74,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "cedar-hollow-11",
+              "speciesId": "cedar",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -58,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "cedar-hollow-12",
+              "speciesId": "spruce",
+              "plotId": "cedar-hollow",
+              "position": {
+                "x": -42,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "reclamation-1",
+              "speciesId": "oak",
+              "plotId": "reclamation",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "reclamation-2",
+              "speciesId": "pine",
+              "plotId": "reclamation",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "reclamation-3",
+              "speciesId": "birch",
+              "plotId": "reclamation",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "reclamation-4",
+              "speciesId": "oak",
+              "plotId": "reclamation",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -105
+              }
+            },
+            {
+              "id": "reclamation-5",
+              "speciesId": "pine",
+              "plotId": "reclamation",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "reclamation-6",
+              "speciesId": "birch",
+              "plotId": "reclamation",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "reclamation-7",
+              "speciesId": "oak",
+              "plotId": "reclamation",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "reclamation-8",
+              "speciesId": "pine",
+              "plotId": "reclamation",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -92
+              }
+            },
+            {
+              "id": "reclamation-9",
+              "speciesId": "birch",
+              "plotId": "reclamation",
+              "position": {
+                "x": 38,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "reclamation-10",
+              "speciesId": "oak",
+              "plotId": "reclamation",
+              "position": {
+                "x": 54,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "reclamation-11",
+              "speciesId": "pine",
+              "plotId": "reclamation",
+              "position": {
+                "x": 70,
+                "y": 0.02,
+                "z": -79
+              }
+            },
+            {
+              "id": "reclamation-12",
+              "speciesId": "birch",
+              "plotId": "reclamation",
+              "position": {
+                "x": 86,
+                "y": 0.02,
+                "z": -79
+              }
+            }
+          ],
+          "vehicles": [
+            {
+              "id": "forest-harvester",
+              "kind": "harvester",
+              "name": "Tracked Tree Harvester",
+              "position": {
+                "x": -24,
+                "y": 0.02,
+                "z": 24
+              },
+              "capacity": 4
+            },
+            {
+              "id": "forest-forwarder",
+              "kind": "forwarder",
+              "name": "Grapple Forwarder",
+              "position": {
+                "x": -38,
+                "y": 0.02,
+                "z": 24
+              },
+              "capacity": 12
+            },
+            {
+              "id": "forest-log-truck",
+              "kind": "log-truck",
+              "name": "Timber Haul Truck",
+              "position": {
+                "x": -54,
+                "y": 0.02,
+                "z": 24
+              },
+              "capacity": 24
+            },
+            {
+              "id": "forest-stump-grinder",
+              "kind": "stump-grinder",
+              "name": "Stump Grinder",
+              "position": {
+                "x": -68,
+                "y": 0.02,
+                "z": 24
+              },
+              "capacity": 2
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "forest-harvester",
+            "name": "Tracked Tree Harvester",
+            "x": -21,
+            "y": 0.02,
+            "z": 26,
+            "width": 12,
+            "depth": 12,
+            "description": "Enter this shared forestry vehicle, drive along the haul roads and use the forestry controls for its work."
+          },
+          {
+            "id": "forest-forwarder",
+            "name": "Grapple Forwarder",
+            "x": -35,
+            "y": 0.02,
+            "z": 26,
+            "width": 12,
+            "depth": 12,
+            "description": "Enter this shared forestry vehicle, drive along the haul roads and use the forestry controls for its work."
+          },
+          {
+            "id": "forest-log-truck",
+            "name": "Timber Haul Truck",
+            "x": -51,
+            "y": 0.02,
+            "z": 26,
+            "width": 12,
+            "depth": 12,
+            "description": "Enter this shared forestry vehicle, drive along the haul roads and use the forestry controls for its work."
+          },
+          {
+            "id": "forest-stump-grinder",
+            "name": "Stump Grinder",
+            "x": -65,
+            "y": 0.02,
+            "z": 26,
+            "width": 12,
+            "depth": 12,
+            "description": "Enter this shared forestry vehicle, drive along the haul roads and use the forestry controls for its work."
+          },
+          {
+            "id": "pine-ridge",
+            "name": "Pine Ridge",
+            "x": -66,
+            "z": -30,
+            "width": 76,
+            "depth": 40,
+            "arrival": {
+              "x": -90,
+              "y": 0.02,
+              "z": -13
+            },
+            "description": "Harvest every tree and remove its stump to reclaim this plot. Replant your selected species for the next growing cycle."
+          },
+          {
+            "id": "hardwood-grove",
+            "name": "Hardwood Grove",
+            "x": 62,
+            "z": -30,
+            "width": 76,
+            "depth": 40,
+            "arrival": {
+              "x": 38,
+              "y": 0.02,
+              "z": -13
+            },
+            "description": "Harvest every tree and remove its stump to reclaim this plot. Replant your selected species for the next growing cycle."
+          },
+          {
+            "id": "cedar-hollow",
+            "name": "Cedar Hollow",
+            "x": -66,
+            "z": -92,
+            "width": 76,
+            "depth": 40,
+            "arrival": {
+              "x": -90,
+              "y": 0.02,
+              "z": -75
+            },
+            "description": "Harvest every tree and remove its stump to reclaim this plot. Replant your selected species for the next growing cycle."
+          },
+          {
+            "id": "reclamation",
+            "name": "East Reclamation Lot",
+            "x": 62,
+            "z": -92,
+            "width": 76,
+            "depth": 40,
+            "arrival": {
+              "x": 38,
+              "y": 0.02,
+              "z": -75
+            },
+            "description": "Harvest every tree and remove its stump to reclaim this plot. Replant your selected species for the next growing cycle."
+          },
+          {
+            "id": "forest-arrival",
+            "name": "Forestry camp · tools & challenges",
+            "x": 0,
+            "z": 69,
+            "width": 34,
+            "depth": 12,
+            "description": "Get your tools, choose a forestry challenge and follow the marked haul roads."
+          },
+          {
+            "id": "forest-mill",
+            "name": "Precision Lumber Mill",
+            "x": 32,
+            "z": 26,
+            "width": 12,
+            "depth": 10,
+            "description": "Deliver harvested logs, select a wood species and lumber profile, then run the sawmill."
+          },
+          {
+            "id": "forest-kiln",
+            "name": "Drying Kiln",
+            "x": 50,
+            "z": 26,
+            "width": 12,
+            "depth": 10,
+            "description": "Dry sawn timber into construction and furniture grade lumber."
+          },
+          {
+            "id": "forest-workbench",
+            "name": "Timber & Furniture Workshop",
+            "x": 50,
+            "z": 44,
+            "width": 12,
+            "depth": 10,
+            "description": "Turn your harvested lumber into building pieces, furniture and useful items."
+          },
+          {
+            "id": "forest-nursery",
+            "name": "Tree Nursery",
+            "x": -42,
+            "z": 46,
+            "width": 12,
+            "depth": 10,
+            "description": "Choose a species, plant cleared ground and tend the next generation of harvestable trees."
+          },
+          {
+            "id": "forest-tool-depot",
+            "name": "Logging Equipment Depot",
+            "x": -18,
+            "z": 46,
+            "width": 12,
+            "depth": 10,
+            "description": "Select tools and vehicles for felling, moving logs and removing stumps."
+          },
+          {
+            "id": "forest-west-stand",
+            "name": "West mixed woodland",
+            "x": -62,
+            "z": -30,
+            "width": 80,
+            "depth": 44,
+            "description": "Farm mixed timber species, fell mature trees and move the logs out to the mill."
+          },
+          {
+            "id": "forest-east-stand",
+            "name": "East hardwood stand",
+            "x": 58,
+            "z": -32,
+            "width": 84,
+            "depth": 44,
+            "description": "Dense harvest blocks with marked access lanes, merchantable hardwood and clearable stumps."
+          },
+          {
+            "id": "forest-north-stand",
+            "name": "Northern ridge timber",
+            "x": 0,
+            "z": -102,
+            "width": 200,
+            "depth": 35,
+            "description": "A long haul from the northern timberline tests your equipment and production planning."
+          },
+          {
+            "id": "forest-land-project",
+            "name": "Reclaimed land & restoration plots",
+            "x": 78,
+            "z": 88,
+            "width": 42,
+            "depth": 32,
+            "description": "Complete tree-to-land challenges, clear stumps and replant harvested plots for a sustainable forest."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "forestHarvest": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=forest-harvest&house=forest-harvest&mode=multiplayer&autoplay=1"
   }
 ]
