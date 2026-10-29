@@ -63,3 +63,46 @@ test('oversized shoes squeak with walking distance and never become a rapid held
  f.advance(600);f.audio.update();assert.equal(f.effects.filter(value=>value.kind==='squeak').length,2);
  f.position.x+=20;f.advance(600);f.audio.update();assert.equal(f.effects.filter(value=>value.kind==='squeak').length,2,'relocation does not synthesize a burst of footsteps');f.audio.dispose();
 });
+
+test('Night Watch confirmations play one spatial cue and exact caption per seal, then a separate finale',async()=>{
+ const f=fixture();f.audio.setSettings({voiceMuted:true});f.receive();await f.audio.unlock();
+ const haunt={id:'watch',status:'active',startedAt:100000,endsAt:280000,wardIndex:0,sealed:[]};
+ f.receive({haunt});f.audio.update();
+ assert.equal(f.effects.filter(value=>value.kind==='haunt-start').length,1);
+ assert.match(f.captions.at(-1).text,/nightlight/i);
+ const sealed={...haunt,wardIndex:1,sealed:['nursery-lantern'],lastWardId:'nursery-lantern',lastSealedAt:100000};
+ const ownEvent={id:'seal-event',actorId:'me',at:100000,funhouseEffect:{kind:'haunt',phase:'seal',position:{x:20,y:.02,z:-16}}};
+ f.position.x=20;f.position.z=-16;f.receive({haunt:sealed},{events:[ownEvent]});f.receive({haunt:sealed},{events:[ownEvent]});
+ assert.equal(f.effects.filter(value=>value.kind==='haunt-seal').length,1);
+ assert.deepEqual(f.effects.find(value=>value.kind==='haunt-seal').position,{x:20,y:.02,z:-16});
+ assert.match(f.captions.at(-1).text,/toy chest/i);
+ const complete={...sealed,status:'complete',wardIndex:4,sealed:['nursery-lantern','clockwork-lantern','mirror-lantern','portrait-lantern'],lastWardId:'portrait-lantern'};
+ f.receive({haunt:complete});f.audio.update();assert.match(f.captions.at(-1).text,/blink/i);
+ f.advance(6500);f.audio.update();assert.match(f.captions.at(-1).text,/refund/i);
+ assert.equal(f.effects.filter(value=>value.kind==='haunt-complete').length,1);
+ f.audio.dispose();
+});
+
+test('Night Watch atmosphere follows the room clock, skips missed beats and ends on expiry, stop or pause',async()=>{
+ const f=fixture();f.audio.setSettings({voiceMuted:true});f.receive();await f.audio.unlock();
+ f.position.x=20;f.position.z=-16;
+ const haunt={id:'watch',status:'active',startedAt:100000,endsAt:280000,wardIndex:0,sealed:[]};
+ f.receive({haunt});f.audio.update();assert.equal(f.effects.filter(value=>value.kind==='haunt-heartbeat').length,0);
+ f.advance(12000);f.audio.update();assert.equal(f.effects.filter(value=>value.kind==='haunt-whisper').length,1);
+ // Authoritative time can run ahead of the local device clock.
+ f.receive({haunt},{serverTime:225000});f.audio.update();
+ assert.equal(f.effects.filter(value=>value.kind==='haunt-heartbeat').length,1);
+ f.advance(10000);f.audio.update();assert.equal(f.effects.filter(value=>value.kind==='haunt-heartbeat').length,2,'a slow frame never emits a backlog');
+ f.receive({haunt:{...haunt,status:'cancelled'}});const count=f.effects.length;
+ f.advance(5000);f.audio.update();assert.equal(f.effects.length,count);
+ f.receive({haunt:{...haunt,id:'watch-two',startedAt:127000,endsAt:177000}});f.audio.pause();
+ const paused=f.effects.length;f.advance(4000);f.audio.update();assert.equal(f.effects.length,paused);
+ f.audio.dispose();
+});
+
+test('a saved completed Night Watch never replays its finale when joining or resuming',async()=>{
+ const f=fixture();f.audio.setSettings({voiceMuted:true});await f.audio.unlock();
+ const haunt={id:'saved',status:'complete',startedAt:1,endsAt:90000,wardIndex:4,sealed:['nursery-lantern','clockwork-lantern','mirror-lantern','portrait-lantern'],lastWardId:'portrait-lantern',lastSealedAt:80000};
+ f.receive({haunt});f.advance(7000);f.audio.update();assert.equal(f.effects.filter(value=>value.kind.startsWith('haunt')).length,0);
+ assert.doesNotMatch(f.captions.at(-1)?.text||'',/refund/i);f.audio.dispose();
+});

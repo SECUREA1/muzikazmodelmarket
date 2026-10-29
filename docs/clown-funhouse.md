@@ -60,6 +60,28 @@ You can enjoy attractions between discoveries. Using map travel or leaving the
 world ends the active trail. This adventure belongs to the permanent funhouse;
 individual placed attractions retain their own games and rides.
 
+## Night Watch
+
+Enter the grinning doorway and approach the watch lantern in the house lobby
+to start **Night Watch**. You have three minutes to seal four haunted lanterns:
+the nursery, clockwork theatre, crooked mirrors and watching portraits. Follow
+the current hint, walk close to the glowing lantern, and use **F / Seal lantern**
+or aim at its physical seal control. Each seal wakes a theatrical shadow or
+clown reveal. The fourth seal ends the watch with the final reveal.
+
+Each lantern earns 35 points toward the round. Completing all four awards those
+140 points plus a time bonus of up to 60; stopping or running out of time does
+not award a partial round. Your best completed watch is saved in this shared
+room. The Lost Laugh Trail can remain active while you play. Starting another
+carnival game ends the watch, and you can stop at any time from its controls.
+
+In VR, either controller can select the actual lantern controls, or use the
+Night Watch page on the floating board for the next hint, seal and Stop actions.
+The haunted house adds watching faces, shadow figures and eerie sound cues
+without changing your view direction. Reduced motion keeps decorative movement
+still while retaining the lantern cues and reveals. Existing voice, effects and
+master mute settings continue to apply.
+
 In a WebXR headset, either controller trigger selects physical attraction
 controls and targets. **X / B** opens the game menu, which includes the nearby
 attraction actions and a floating control board. The board is part of the 3D
@@ -81,7 +103,7 @@ activities. Regular world travel remains available from the toolbar.
 
 ## Clown voices, sounds and music
 
-The carnival has 24 original voiced clown lines, with matching captions. The
+The carnival has 30 original voiced clown lines, with matching captions. The
 hosts welcome visitors, tease missed shots, celebrate catches and discoveries,
 and offer suspiciously cheerful advice. Honks, squeaky shoes, winding cranks,
 water splashes, ball tosses, bells and short scare stings accompany the real

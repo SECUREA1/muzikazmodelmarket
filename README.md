@@ -114,6 +114,11 @@ Original clown voices, captioned jokes, attraction sound effects and the
 **Midnight Motor Waltz** car soundtrack add carnival audio, with separate
 voice, music and effects controls in first person and VR.
 
+The house also hosts **Night Watch**, a three-minute haunted-lantern challenge
+with four ordered seals, shadow and clown reveals, a completion score and a
+time bonus. Physical lantern controls and compact hints work in first person
+and VR; reduced motion and the existing audio settings apply to the scares.
+
 Neon Harbor includes Angler fishing boats, side casting, freshwater and coastal
 fishing grounds, tackle in the existing tools and markets, saved catches, MZK
 sales and shared fishing tournaments with AI rivals. See [fishing controls,

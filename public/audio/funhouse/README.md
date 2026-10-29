@@ -5,6 +5,9 @@ exact words spoken in each clip. The WAV files are rendered locally with the
 project's existing Kokoro-82M natural male and female voice engine, then
 normalized to -20 LUFS without pitch shifting or voice effects.
 
+The 30 clips include the attraction hosts, all six Lost Laugh discoveries, and
+six Night Watch responses: its welcome, four haunted lanterns and the finale.
+
 The Kokoro model and voice attribution is retained in
 [`voice-engine/NOTICE.md`](../../../voice-engine/NOTICE.md), with its Apache-2.0
 license files beside it. No third-party music or recorded performances were

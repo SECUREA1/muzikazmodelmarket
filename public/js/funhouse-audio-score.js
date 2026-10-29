@@ -37,6 +37,9 @@ const whirl=()=>Array.from({length:7},(_,i)=>note(i*.065,.1,180+i*38,.021,'trian
 const wind=()=>Array.from({length:3},(_,i)=>note(i*.11,.065,420+i*65,.026,'square',300+i*35));
 const toss=hit=>[note(0,.16,310,.025,'triangle',620),note(.18,.16,220,.025,'sine',105),...(hit?success().map(n=>({...n,at:n.at+.3})):[])];
 const eerie=()=>[note(0,.38,164.81,.028,'sine',155.56),note(.13,.55,233.08,.023,'triangle',220),note(.36,.5,329.63,.014,'sine',311.13)];
+const heartbeat=()=>[note(0,.16,66,.033,'sine',45),note(.24,.19,58,.026,'sine',42)];
+const whisper=()=>[note(0,.8,740,.009,'sine',480),note(.17,.8,493.88,.012,'triangle',466.16),note(.31,.65,311.13,.012,'sine',293.66)];
+const seal=()=>[...eerie(),...bell().map(n=>({...n,at:n.at+.75,gain:n.gain*.7}))];
 
 /** Event aliases follow the existing attraction commands and show effects. */
 export function funhouseEffectScore(kind,{hit=true}={}){
@@ -58,6 +61,12 @@ export function funhouseEffectScore(kind,{hit=true}={}){
   case 'ball-miss':return toss(false);
   case 'ring':case 'maze-finish':case 'bell':return bell();
   case 'adventure':case 'creak':return eerie();
+  case 'haunt-start':return [...heartbeat(),...eerie().map(n=>({...n,at:n.at+.4}))];
+  case 'haunt':case 'haunt-seal':return seal();
+  case 'haunt-complete':return [...seal(),...laugh().map(n=>({...n,at:n.at+1.1,gain:n.gain*.65}))];
+  case 'haunt-timeout':return [...failure(),...whisper().map(n=>({...n,at:n.at+.3}))];
+  case 'haunt-heartbeat':return heartbeat();
+  case 'haunt-whisper':return whisper();
   case 'laugh':case 'chuckle':return laugh();
   default:return [];
  }

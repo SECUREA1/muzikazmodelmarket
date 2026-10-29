@@ -2,6 +2,7 @@ import {randomInt,randomUUID} from 'node:crypto';
 import {FUNHOUSE_STATIONS,funhouseStations} from './public/js/clown-funhouse-config.js';
 import {FUNHOUSE_EXPERIENCE_RULES as RULES,funhouseRideCue,funhouseRidePose,funhouseMazeCheckpoints,funhouseAimedTarget} from './public/js/funhouse-experience-rules.js';
 import {FUNHOUSE_ADVENTURE_RULES,FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './public/js/funhouse-adventure-rules.js';
+import {FUNHOUSE_HAUNT_RULES,FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS,funhouseHauntAvailable,funhouseHauntNextWard,funhouseHauntNear} from './public/js/funhouse-haunt-rules.js';
 
 export const FUNHOUSE_ROUND_MS=30000;
 export const FUNHOUSE_SHOT_MS=300;
@@ -60,6 +61,51 @@ function finishAdventure(player,now,{cancel=false,message}={}){
 function requireAdventureFloor(player){
  if(player.health<=0||player.vehicleId||player.seatedId||player.grounded===false||player.funhouse?.ride?.status==='active')fail('Step off the ride and stand on the funhouse floor before searching.');
 }
+function finishHaunt(player,now,{cancel=false,message}={}){
+ const state=player?.funhouse,haunt=state?.haunt;if(haunt?.status!=='active')return;
+ haunt.status=cancel?'cancelled':'complete';haunt.finishedAt=now;
+ if(cancel){haunt.score=0;haunt.bonus=0;haunt.settled=false;}
+ else{
+  haunt.bonus=Math.min(FUNHOUSE_HAUNT_RULES.maximumBonus,Math.max(0,Math.floor((haunt.endsAt-now)/1000)));
+  haunt.score=FUNHOUSE_HAUNT_WARDS.length*FUNHOUSE_HAUNT_RULES.wardPoints+haunt.bonus;
+  haunt.settled=true;player.score=(player.score||0)+haunt.score;
+  state.bestScores||={};state.bestScores.haunt=Math.max(state.bestScores.haunt||0,haunt.score);
+ }
+ haunt.hint=cancel?'Return to the haunted house lobby to start another Night Watch.':'All four lanterns sealed. Return to the house lobby to replay.';
+ haunt.message=message||(cancel?'Night Watch ended without awarding points.':'Night Watch complete · '+haunt.score+' points! The midnight shadows retreat.');
+ state.message=haunt.message;
+}
+function hauntCommand(player,environment,command,now){
+ const state=progress(player),haunt=state.haunt,operation=command.operation;
+ if(!['start','seal','stop'].includes(operation))fail('Choose whether to start, seal or stop Night Watch.',422);
+ if(command.hauntId&&command.hauntId!==haunt?.id)fail('That Night Watch is no longer available.');
+ if(operation==='stop'){
+  finishHaunt(player,now,{cancel:true});return {message:haunt?.message||'No Night Watch is active.',funhouse:state};
+ }
+ if(!funhouseHauntAvailable(environment))fail('Visit the complete Midnight Laughs map to play Night Watch.');
+ requireAdventureFloor(player);
+ if(operation==='start'){
+  if(haunt?.status==='active')fail('Finish or stop the current Night Watch before starting again.');
+  if(!funhouseHauntNear(player.position,FUNHOUSE_HAUNT_START))fail('Walk to the haunted house lobby to start Night Watch.');
+  cancelFunhouseActivities(player,now,'Starting Night Watch ended the previous carnival game.',{preserveAdventure:true});
+  state.haunt={id:randomUUID(),name:FUNHOUSE_HAUNT_START.name,status:'active',startedAt:now,endsAt:now+FUNHOUSE_HAUNT_RULES.durationMs,durationMs:FUNHOUSE_HAUNT_RULES.durationMs,wardIndex:0,sealed:[],score:0,bonus:0,settled:false,hint:FUNHOUSE_HAUNT_WARDS[0].hint,message:'Four lanterns are keeping the shadows awake. Seal them in order before the midnight bell!'};
+  state.message=state.haunt.message;
+  const effect={stationId:FUNHOUSE_HAUNT_START.id,canonicalStationId:FUNHOUSE_HAUNT_START.id,objectId:null,kind:'haunt',phase:'start',position:{...FUNHOUSE_HAUNT_START.position},at:now,until:now+4500};
+  state.effects['haunt:start']=effect;return {message:state.message,funhouse:state,funhouseEffect:effect};
+ }
+ if(haunt?.status!=='active')fail('Start Night Watch in the haunted house lobby before sealing a lantern.');
+ const ward=funhouseHauntNextWard(haunt);
+ if(!ward||command.wardId!==ward.id)fail('Follow the next Night Watch lantern in order.');
+ if(!funhouseHauntNear(player.position,ward))fail('Walk closer to the '+ward.name+' before sealing it.');
+ haunt.sealed.push(ward.id);haunt.wardIndex++;haunt.score=haunt.sealed.length*FUNHOUSE_HAUNT_RULES.wardPoints;
+ haunt.lastWardId=ward.id;haunt.lastSealedAt=now;haunt.message=ward.discovery;
+ const next=funhouseHauntNextWard(haunt);haunt.hint=next?.hint||'All four lanterns sealed!';
+ if(haunt.wardIndex===FUNHOUSE_HAUNT_WARDS.length)finishHaunt(player,now);
+ state.message=haunt.message;
+ const effect={stationId:FUNHOUSE_HAUNT_START.id,canonicalStationId:FUNHOUSE_HAUNT_START.id,objectId:null,kind:'haunt',phase:haunt.status==='complete'?'complete':'seal',wardId:ward.id,position:{...ward.position},at:now,until:now+4500};
+ state.effects['haunt:'+ward.id]=effect;
+ return {message:haunt.message,funhouse:state,funhouseEffect:effect};
+}
 function adventureCommand(player,environment,command,now){
  const state=progress(player),adventure=state.adventure,operation=command.operation;
  if(!['start','inspect','stop'].includes(operation))fail('Choose whether to start, inspect or stop the adventure.',422);
@@ -93,6 +139,7 @@ function adventureCommand(player,environment,command,now){
 export function cancelFunhouseActivities(player,now,reason='Changing activity ended this carnival game.',{preserveAdventure=false}={}){
  if(!player?.funhouse)return;
  finish(player,now,{cancel:true});finishChallenge(player,now,{cancel:true,message:reason});finishRide(player,now,{cancel:true,message:reason});
+ finishHaunt(player,now,{cancel:true,message:reason});
  if(!preserveAdventure)finishAdventure(player,now,{cancel:true,message:reason});
 }
 function updateRideCue(ride,now){Object.assign(ride,funhouseRideCue(ride,now));}
@@ -117,6 +164,11 @@ function activeChallenge(sim,player,environment,command,now){
  * or relocated visitor cannot leave a scoring round behind in the gallery. */
 export function stepFunhouse(sim,environment,now){
  for(const player of Object.values(sim.players||{})){
+  const haunt=player.funhouse?.haunt;
+  if(haunt?.status==='active'){
+   if(!funhouseHauntAvailable(environment)||player.health<=0||player.replacedByRoom||now-player.lastSeen>15000||player.vehicleId||player.seatedId)finishHaunt(player,now,{cancel:true,message:'Night Watch stopped. Return to the haunted house lobby when you are ready.'});
+   else if(now>=haunt.endsAt)finishHaunt(player,now,{cancel:true,message:'The midnight bell rang before all four lanterns were sealed. Return to the house lobby to try again.'});
+  }
   const adventure=player.funhouse?.adventure;
   if(adventure?.status==='active'){
    if(!funhouseAdventureAvailable(environment)||player.health<=0||player.replacedByRoom||now-player.lastSeen>15000)finishAdventure(player,now,{cancel:true,message:'The adventure stopped. Return to the welcome board when you are ready.'});
@@ -149,13 +201,14 @@ export function stepFunhouse(sim,environment,now){
 }
 export function funhouseCommand(sim,player,environment,command,now,{integer=randomInt}={}){
  if(!Number.isFinite(now))fail('The attraction clock is unavailable.');
- const supported=['funhouse-start','funhouse-squirt','funhouse-use','funhouse-dress','funhouse-stop','funhouse-ride','funhouse-ride-exit','funhouse-challenge','funhouse-action','funhouse-adventure'];
+ const supported=['funhouse-start','funhouse-squirt','funhouse-use','funhouse-dress','funhouse-stop','funhouse-ride','funhouse-ride-exit','funhouse-challenge','funhouse-action','funhouse-adventure','funhouse-haunt'];
  if(!supported.includes(command.action))fail('Choose a supported funhouse activity.',422);
  stepFunhouse(sim,environment,now);
  const state=progress(player);
- const exitCommand=['funhouse-ride-exit','funhouse-stop'].includes(command.action)||['funhouse-action','funhouse-adventure'].includes(command.action)&&command.operation==='stop';
+ const exitCommand=['funhouse-ride-exit','funhouse-stop'].includes(command.action)||['funhouse-action','funhouse-adventure','funhouse-haunt'].includes(command.action)&&command.operation==='stop';
  if(!exitCommand&&!funhouseStations(environment,{actors:sim.actors}).length)fail('Visit Midnight Laughs Funhouse or place a carnival attraction before playing.');
  if(command.action==='funhouse-adventure')return adventureCommand(player,environment,command,now);
+ if(command.action==='funhouse-haunt')return hauntCommand(player,environment,command,now);
  if(state.ride?.status==='active'&&!['funhouse-action','funhouse-ride-exit','funhouse-ride'].includes(command.action))fail('Use the ride controls or step off before choosing another attraction.');
  if(command.action==='funhouse-ride-exit'){
   if(!state.ride||command.rideId&&command.rideId!==state.ride.id)fail('That ride seat is no longer available.');
@@ -269,5 +322,5 @@ export function funhouseCommand(sim,player,environment,command,now,{integer=rand
 /** Keep projection explicit so private room fields cannot leak into snapshots. */
 export function playerFunhouseView(player){
  const state=player?.funhouse;if(!state)return null;
- return {stamps:[...state.stamps],costume:{...state.costume},tool:state.tool||null,equipment:{...state.equipment},bestScore:state.bestScore,bestScores:{...state.bestScores},rounds:state.rounds,round:state.round?{...state.round}:null,ride:state.ride?structuredClone(state.ride):null,challenge:state.challenge?structuredClone(state.challenge):null,adventure:state.adventure?structuredClone(state.adventure):null,effects:structuredClone(state.effects),message:state.message};
+ return {stamps:[...state.stamps],costume:{...state.costume},tool:state.tool||null,equipment:{...state.equipment},bestScore:state.bestScore,bestScores:{...state.bestScores},rounds:state.rounds,round:state.round?{...state.round}:null,ride:state.ride?structuredClone(state.ride):null,challenge:state.challenge?structuredClone(state.challenge):null,adventure:state.adventure?structuredClone(state.adventure):null,haunt:state.haunt?structuredClone(state.haunt):null,effects:structuredClone(state.effects),message:state.message};
 }

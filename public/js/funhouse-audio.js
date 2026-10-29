@@ -3,6 +3,7 @@ import {funhouseClownLine} from './funhouse-audio-dialogue.js';
 import {normalizeFunhouseAudioSettings,funhouseAudioAllowed} from './funhouse-audio-settings.js';
 import {funhouseStations,isFunhouseEnvironment} from './clown-funhouse-config.js';
 import {FUNHOUSE_ADVENTURE_CLUES} from './funhouse-adventure-rules.js';
+import {FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS,funhouseHauntAvailable,funhouseHauntNextWard} from './funhouse-haunt-rules.js';
 import {gameSpeech} from './neural-character-speech.js';
 import {claimGameSpeech,releaseGameSpeech,isGameSpeechActive} from './game-speech-owner.js';
 
@@ -22,6 +23,7 @@ export function createFunhouseAudio({getContext=()=>null,getEnvironment=()=>null
  let scope=null,sequence=-1,state={},previous=null,unlocked=false,disposed=false,paused=false,generation=0;
  let caption=null,lastLine=null,pendingLine=null,voiceOwned=false,voiceLoading=false,lastSpokenAt=-Infinity,lastQueuedAt=-Infinity,nextAmbientAt=Infinity;
  let previewUntil=0,showUntil=0,showStationId=null,welcomePending=true,voiceSequence=0,lastStepPosition=null,stepDistance=0,lastStepAt=0;
+ let serverOffset=0,nextHauntWhisperAt=0,nextHauntBeatAt=0,hauntFinale=null;
  const stations=()=>funhouseStations(getEnvironment(),{actors:getActors()});
  const stationFor=(id,kind)=>stations().find(value=>value.id===id)||(kind?stations().find(value=>value.kind===kind):null);
  const prefs=()=>getPreferences()||{};
@@ -120,11 +122,30 @@ export function createFunhouseAudio({getContext=()=>null,getEnvironment=()=>null
    effect('adventure',{position,key:'clue:'+adventure.id+':'+adventure.lastClueId});
    line(adventure.status==='complete'?'adventure-complete':'adventure:'+adventure.lastClueId,position,{priority:true});
   }
+  const haunt=next.haunt,oldHaunt=old.haunt;
+  if(!funhouseHauntAvailable(getEnvironment()))return;
+  if(active(haunt)&&haunt.id!==oldHaunt?.id&&fresh(haunt)){
+   welcomePending=false;hauntFinale=null;nextHauntWhisperAt=now()+12000;nextHauntBeatAt=now();
+   effect('haunt-start',{position:FUNHOUSE_HAUNT_START.position,key:'haunt-start:'+haunt.id});
+   line('haunt-start',FUNHOUSE_HAUNT_START.position,{priority:true});
+  }
+  if(haunt&&oldHaunt&&haunt.id===oldHaunt.id&&haunt.sealed?.length>oldHaunt.sealed?.length&&serverTime-(haunt.lastSealedAt||0)<3000){
+   const ward=FUNHOUSE_HAUNT_WARDS.find(value=>value.id===haunt.lastWardId),position=ward?.position||getPosition();
+   effect(haunt.status==='complete'?'haunt-complete':'haunt-seal',{position,key:'haunt-seal:'+haunt.id+':'+haunt.lastWardId});
+   line('haunt:'+haunt.lastWardId,position,{priority:true});
+   nextHauntWhisperAt=now()+12000;
+   if(haunt.status==='complete')hauntFinale={id:haunt.id,position:copyPoint(position),at:now()+6500,expiresAt:now()+16000};
+  }
+  if(haunt&&oldHaunt&&haunt.id===oldHaunt.id&&active(oldHaunt)&&haunt.status==='cancelled'){
+   hauntFinale=null;
+   if(serverTime>=oldHaunt.endsAt)effect('haunt-timeout',{position:getPosition(),key:'haunt-timeout:'+haunt.id});
+  }
  }
  function receive(snapshot,selfId){
   if(disposed)return;const id=getEnvironment()?.id||null;
   if(scope!==id){if(scope!==null)reset();scope=id;}
   if(Number.isFinite(snapshot?.sequence)){if(snapshot.sequence<=sequence)return;sequence=snapshot.sequence;}
+  if(Number.isFinite(snapshot.serverTime))serverOffset=snapshot.serverTime-now();
   const next=snapshot?.players?.[selfId]?.funhouse||{};
   if(inWorld())changes(next,snapshot.serverTime||now());
   for(const event of snapshot.events||[]){
@@ -135,8 +156,8 @@ export function createFunhouseAudio({getContext=()=>null,getEnvironment=()=>null
    // Scores and owned actions above come from snapshots; remote shows use the
    // public event so a nearby friend's horn can still be heard in space.
    const own=event.actorId===selfId;
-   if(own&&['honk','balance','wind','catch','toss','squirt','dressup','adventure','ride-start','challenge-start'].includes(value.kind))continue;
-   const kind={car:'honk',spinner:'spinner',jackbox:'pop',ballpit:'ball-hit','maze-finish':'bell',dressup:'squeak',squirt:value.hit?'water-hit':'water-miss',toss:value.hit?'ball-hit':'ball-miss',balance:'spinner'}[value.kind]||value.kind;
+   if(own&&['honk','balance','wind','catch','toss','squirt','dressup','adventure','haunt','ride-start','challenge-start'].includes(value.kind))continue;
+   const kind={car:'honk',spinner:'spinner',jackbox:'pop',ballpit:'ball-hit','maze-finish':'bell',dressup:'squeak',squirt:value.hit?'water-hit':'water-miss',toss:value.hit?'ball-hit':'ball-miss',balance:'spinner',haunt:value.phase==='complete'?'haunt-complete':value.phase==='start'?'haunt-start':'haunt-seal'}[value.kind]||value.kind;
    effect(kind,{position,key:event.id,hit:value.hit});
    if(own&&value.kind==='car'){showUntil=now()+6500;showStationId=value.stationId;line('car-honk',position,{priority:true});}
   }
@@ -169,8 +190,24 @@ export function createFunhouseAudio({getContext=()=>null,getEnvironment=()=>null
    if(stepDistance>.75&&now()-lastStepAt>450){lastStepAt=now();stepDistance=0;effect('squeak',{position:{...listener,y:Math.max(0,(listener.y||0)-1.5)},volume:.25,range:12,key:'step:'+now()});}
   }else stepDistance=0;
   lastStepPosition=copyPoint(listener);
+  const haunt=state.haunt,ward=funhouseHauntNextWard(haunt),hauntTime=now()+serverOffset;
+  if(active(haunt)&&hauntTime<haunt.endsAt&&funhouseHauntAvailable(getEnvironment())){
+   if(now()>=nextHauntWhisperAt){
+    nextHauntWhisperAt=now()+12000;
+    if(ward&&gap(listener,ward.position)<24)effect('haunt-whisper',{position:ward.position,range:24,volume:.55,key:'haunt-whisper:'+haunt.id+':'+now()});
+   }
+   if(haunt.endsAt-hauntTime<=60000&&now()>=nextHauntBeatAt){
+    nextHauntBeatAt=now()+3000;effect('haunt-heartbeat',{position:listener,volume:.45,range:8,key:'haunt-heartbeat:'+haunt.id+':'+now()});
+   }
+  }
+  if(hauntFinale){
+   if(hauntFinale.expiresAt<now()||haunt?.id!==hauntFinale.id||haunt.status!=='complete')hauntFinale=null;
+   else if(now()>=hauntFinale.at&&!pendingLine&&!voiceOwned&&!voiceLoading&&!isGameSpeechActive(speech)){
+    line('haunt-complete',hauntFinale.position,{priority:true});hauntFinale=null;
+   }
+  }
   engine.update(delta);void playPending();
-  if(now()>=nextAmbientAt&&!pendingLine&&!voiceOwned&&!voiceLoading&&!active(state.ride)&&!active(state.round)&&!active(state.challenge)&&!isGameSpeechActive(speech)){
+  if(now()>=nextAmbientAt&&!pendingLine&&!voiceOwned&&!voiceLoading&&!active(state.ride)&&!active(state.round)&&!active(state.challenge)&&!active(state.haunt)&&!hauntFinale&&!isGameSpeechActive(speech)){
    nextAmbientAt=now()+45000;
    const nearby=Object.values(getActors()||{}).find(actor=>actor.active!==false&&actor.resident?.funhouseClown&&gap(getPosition(),actor.position)<12);
    if(nearby)line('ambient',nearby.position);
@@ -179,8 +216,8 @@ export function createFunhouseAudio({getContext=()=>null,getEnvironment=()=>null
  function setSettings(patch){settings=normalizeFunhouseAudioSettings({...settings,...patch});try{storage?.setItem(storageKey,JSON.stringify(settings));}catch{}if(!permitted('voice'))stopVoice('muted');engine.update(0);return {...settings};}
  function replay(){if(disposed||!inWorld())return false;if(!lastLine){void unlock();return line('welcome',stationFor(null,'welcome')?.position||getPosition(),{priority:true});}void unlock();pendingLine={...lastLine,key:'replay:'+ ++voiceSequence,expiresAt:now()+12000};if(!permitted('voice')){subtitle(pendingLine);pendingLine=null;return false;}void playPending();return true;}
  function previewMusic(){if(disposed||!inWorld())return false;void unlock();previewUntil=now()+10000;update(0);return permitted('music');}
- function pause(){paused=true;unlocked=false;previewUntil=showUntil=0;lastStepPosition=null;stepDistance=0;for(const abort of fetches)abort.abort();stopVoice('paused');engine.reset();caption=null;onCaption(null);}
- function reset(){pause();scope=null;sequence=-1;state={};previous=null;seen.clear();welcomePending=true;nextAmbientAt=Infinity;lastLine=null;lastSpokenAt=lastQueuedAt=-Infinity;lastStepPosition=null;stepDistance=0;lastStepAt=0;}
+ function pause(){paused=true;unlocked=false;previewUntil=showUntil=0;hauntFinale=null;lastStepPosition=null;stepDistance=0;for(const abort of fetches)abort.abort();stopVoice('paused');engine.reset();caption=null;onCaption(null);}
+ function reset(){pause();scope=null;sequence=-1;serverOffset=0;state={};previous=null;seen.clear();welcomePending=true;nextAmbientAt=Infinity;nextHauntWhisperAt=nextHauntBeatAt=0;lastLine=null;lastSpokenAt=lastQueuedAt=-Infinity;lastStepPosition=null;stepDistance=0;lastStepAt=0;}
  return {unlock,receive,update,reset,pause,engine,active:inWorld,settings:()=>({...settings}),setSettings,replay,previewMusic,
   snapshot:()=>({...engine.snapshot(),unlocked,scope,active:inWorld(),paused,caption:caption?{...caption}:null,lastLine:lastLine?{id:lastLine.clip.id,text:lastLine.clip.text,speaker:lastLine.clip.speaker}:null,voicePlaying:voiceOwned,voiceLoading,settings:{...settings}}),
   dispose(){if(disposed)return;reset();disposed=true;engine.dispose();buffers.clear();pendingBuffers.clear();}};

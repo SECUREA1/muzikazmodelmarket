@@ -1,17 +1,20 @@
 import {normalizeFunhouseAudioSettings,funhouseAudioNotice,funhouseAudioAllowed} from './funhouse-audio-settings.js';
 import {funhouseRideCue} from './funhouse-experience-rules.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './funhouse-adventure-rules.js';
+import {FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS,funhouseHauntAvailable,funhouseHauntNextWard,funhouseHauntNear} from './funhouse-haunt-rules.js';
 import {fullscreenPanel} from './fullscreen-panels.js';
 import {gameplayOverlayOpen,loadGameMenuStyles} from './game-menu-controls.js';
 import {FUNHOUSE_STATIONS,funhouseStations} from './clown-funhouse-config.js';
 
 const stampKinds=['water','car','spinner','dressup','maze-finish','jackbox'];
-const icons={water:'◉',car:'▰',spinner:'✶',dressup:'♧',mirrors:'◇','maze-finish':'◇',ballpit:'●',jackbox:'★',welcome:'☾'};
+const hauntStation=()=>({...FUNHOUSE_HAUNT_START,kind:'haunt',canonicalStationId:FUNHOUSE_HAUNT_START.id,prompt:'Begin the Night Watch · E / Use'});
+const uiStations=(environment,options={})=>[...funhouseStations(environment,options),...(funhouseHauntAvailable(environment)?[hauntStation()]:[])];
+const icons={haunt:'☽',water:'◉',car:'▰',spinner:'✶',dressup:'♧',mirrors:'◇','maze-finish':'◇',ballpit:'●',jackbox:'★',welcome:'☾'};
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function nearestFunhouseStation(environment,position,{actors}={}){
  if(!position||!Number.isFinite(position.x)||!Number.isFinite(position.z))return null;
  let found=null,distance=6;
- for(const station of funhouseStations(environment,{actors})){const gap=Math.hypot(position.x-station.position.x,(Number(position.y)||0)-station.position.y,position.z-station.position.z);if(gap<Math.min(distance,station.interactionDistance||6.5)){distance=gap;found=station;}}
+ for(const station of uiStations(environment,{actors})){const gap=Math.hypot(position.x-station.position.x,(Number(position.y)||0)-station.position.y,position.z-station.position.z);if(gap<Math.min(distance,station.interactionDistance||6.5)){distance=gap;found=station;}}
  return found;
 }
 
@@ -22,7 +25,9 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  const passport=document.createElement('div');passport.className='funhouse-passport-hud';passport.hidden=true;passport.setAttribute('aria-label','Funhouse attraction passport');stage.append(passport);
  const audioToggle=document.createElement('button');audioToggle.type='button';audioToggle.className='funhouse-audio-toggle';audioToggle.hidden=true;audioToggle.dataset.funhouseAudioOpen='';audioToggle.setAttribute('aria-label','Clown audio settings');audioToggle.setAttribute('aria-expanded','false');audioToggle.textContent='♫';stage.append(audioToggle);
  const experienceHUD=document.createElement('section');experienceHUD.className='funhouse-experience-hud';experienceHUD.hidden=true;experienceHUD.setAttribute('aria-label','Funhouse first-person controls');experienceHUD.innerHTML='<header><strong data-funhouse-experience-title></strong><span data-funhouse-experience-time></span><button type="button" data-funhouse-hud-toggle aria-expanded="false" aria-controls="funhouse-world-actions">Actions</button></header><div class="funhouse-experience-metrics"><span>Score <b data-funhouse-experience-score>0</b></span><span>Best <b data-funhouse-experience-best>0</b></span><span data-funhouse-experience-progress></span></div><p data-funhouse-experience-message></p><div id="funhouse-world-actions" data-funhouse-experience-actions></div><p class="funhouse-experience-help" data-funhouse-experience-help></p>';stage.append(experienceHUD);
- const adventureHUD=document.createElement('section');adventureHUD.className='funhouse-adventure-hud';adventureHUD.hidden=true;adventureHUD.setAttribute('aria-label','Funhouse adventure trail');adventureHUD.innerHTML='<header><strong>The Lost Laugh Trail</strong><span data-funhouse-adventure-time></span><button type="button" data-funhouse-adventure-toggle aria-expanded="false" aria-controls="funhouse-adventure-details">Trail</button></header><p data-funhouse-adventure-next></p><div id="funhouse-adventure-details" data-funhouse-adventure-details><p data-funhouse-adventure-hint></p><p data-funhouse-adventure-progress></p><div><button type="button" data-funhouse-adventure-inspect>Inspect clue · F</button><button type="button" data-funhouse-adventure-stop>Stop trail</button><button type="button" data-funhouse-adventure-replay>Start again</button><button type="button" data-funhouse-adventure-dismiss>Back to exploring</button></div></div>';stage.append(adventureHUD);
+ const questStack=document.createElement('div');questStack.className='funhouse-quest-stack';stage.append(questStack);
+ const adventureHUD=document.createElement('section');adventureHUD.className='funhouse-adventure-hud';adventureHUD.hidden=true;adventureHUD.setAttribute('aria-label','Funhouse adventure trail');adventureHUD.innerHTML='<header><strong>The Lost Laugh Trail</strong><span data-funhouse-adventure-time></span><button type="button" data-funhouse-adventure-toggle aria-expanded="false" aria-controls="funhouse-adventure-details">Trail</button></header><p data-funhouse-adventure-next></p><div id="funhouse-adventure-details" data-funhouse-adventure-details><p data-funhouse-adventure-hint></p><p data-funhouse-adventure-progress></p><div><button type="button" data-funhouse-adventure-inspect>Inspect clue · F</button><button type="button" data-funhouse-adventure-stop>Stop trail</button><button type="button" data-funhouse-adventure-replay>Start again</button><button type="button" data-funhouse-adventure-dismiss>Back to exploring</button></div></div>';questStack.append(adventureHUD);
+ const hauntHUD=document.createElement('section');hauntHUD.className='funhouse-haunt-hud';hauntHUD.hidden=true;hauntHUD.setAttribute('aria-label','Night Watch haunted lanterns');hauntHUD.innerHTML='<header><strong>Night Watch</strong><span data-funhouse-haunt-time></span><button type="button" data-funhouse-haunt-toggle aria-expanded="false" aria-controls="funhouse-haunt-details">Hint</button></header><p data-funhouse-haunt-next></p><div id="funhouse-haunt-details" data-funhouse-haunt-details><p data-funhouse-haunt-hint></p><p data-funhouse-haunt-progress></p></div><div class="funhouse-haunt-actions"><button type="button" data-funhouse-haunt-seal>Seal lantern · F</button><button type="button" data-funhouse-haunt-stop>Stop watch · Esc</button><button type="button" data-funhouse-haunt-replay>Start again</button><button type="button" data-funhouse-haunt-dismiss>Keep exploring</button></div>';questStack.prepend(hauntHUD);
  const panel=document.createElement('section');panel.id='clown-funhouse-panel';panel.hidden=true;panel.className='funhouse-panel';panel.setAttribute('aria-label','Midnight Laughs Funhouse');
  panel.innerHTML='<div class="funhouse-heading"><span class="funhouse-eyebrow">MUZIKAZ · OPEN ALL NIGHT</span><h3 data-funhouse-title></h3><p data-funhouse-description></p></div><div data-funhouse-content></div><p class="funhouse-message" data-funhouse-message role="status" aria-live="polite"></p><div class="funhouse-passport" data-funhouse-passport></div><details class="funhouse-audio-settings" data-funhouse-audio-details><summary>Clown voices, sounds &amp; music</summary><div data-funhouse-audio-controls></div></details><footer><span>Free carnival play · collect all six passport stamps</span><button type="button" data-funhouse-close>Back to the midway</button></footer>';
  stage.append(panel);
@@ -32,13 +37,13 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  const audioSettings=()=>normalizeFunhouseAudioSettings({...localAudioSettings,...(getAudioSettings()||{})});
  const audioControls=()=>'<p class="funhouse-audio-note" data-funhouse-audio-notice></p><p class="funhouse-audio-last-line" data-funhouse-audio-last-line hidden></p><div class="funhouse-audio-grid">'+[['music','Clown-car music'],['voice','Clown voices'],['effects','Attraction effects']].map(([channel,label])=>'<section><button type="button" data-funhouse-audio-mute="'+channel+'" aria-pressed="false">'+label+'</button><label>'+label+' volume <output data-funhouse-audio-output="'+channel+'"></output><input type="range" min="0" max="100" step="5" data-funhouse-audio-volume="'+channel+'" aria-label="'+label+' volume"></label></section>').join('')+'</div><div class="funhouse-audio-actions"><button type="button" data-funhouse-audio-replay>Replay last clown line</button><button type="button" data-funhouse-audio-preview>Preview scary car music</button></div>';
  for(const controls of [panel.querySelector('[data-funhouse-audio-controls]'),audioPanel.querySelector('[data-funhouse-audio-controls]')])controls.innerHTML=audioControls();
- let nearby=null,current=null,worldStation=null,state={},selfId=null,pending=false,generation=0,disposed=false,message='',signature='',passportSignature=null,serverOffset=0,lastSequence=-1,hudSignature='',hudExpanded=false,hudActivityId=null,adventureExpanded=false,adventureDismissed=null;
+ let nearby=null,current=null,worldStation=null,state={},selfId=null,pending=false,generation=0,disposed=false,message='',signature='',passportSignature=null,serverOffset=0,lastSequence=-1,hudSignature='',hudExpanded=false,hudActivityId=null,adventureExpanded=false,adventureDismissed=null,hauntExpanded=false,hauntDismissed=null;
  const seenEffects=new Set();
  const $=selector=>panel.querySelector(selector),content=$('[data-funhouse-content]');
  const screen=fullscreenPanel(panel,{onOpen:()=>{document.exitPointerLock?.();onOpen();},onClose:()=>{current=null;signature='';trigger.setAttribute('aria-expanded','false');}});
  screen.dialog.classList.add('funhouse-dialog');
  const now=()=>getServerTime?getServerTime():Date.now()+serverOffset;
- const stations=(actors=getActors())=>funhouseStations(getEnvironment(),{actors});
+ const stations=(actors=getActors())=>uiStations(getEnvironment(),{actors});
  const near=()=>nearestFunhouseStation(getEnvironment(),getPosition(),{actors:getActors()});
  const liveFor=id=>stations().find(station=>station.id===id);
  const isActive=value=>value?.status==='active'&&(!Number.isFinite(value.endsAt)||value.endsAt>now());
@@ -78,16 +83,18 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   if(!current||disposed)return;
   const round=!state.round?.stationId||state.round.stationId===current.id?state.round:null,active=round?.status==='active'&&round.endsAt>now(),kind=current.kind;
   $('[data-funhouse-title]').textContent=current.name;
-  const descriptions={water:'Aim your water blaster at the glowing clown. Hit three or more targets in 30 seconds to earn your stamp.',car:'Board the impossible clown car for a 20-second ride. Honk on the glowing cues to score, or give its horn a squeeze from the midway.',spinner:'Board a 15-second spinner ride. Match the left and right balance cues, choose gentle mode, and leave the ride whenever you like.',dressup:'Big shoes, big trouble. Wear both pieces to earn your dressing-room stamp. Your friends can see your outfit.',mirrors:'Start your maze visit here, then weave around the crooked mirrors in the west wing. Ring the bell at the far end to earn your stamp.','maze-finish':'You found the far end of the mirror maze. Ring the exit bell to claim your stamp.',ballpit:'Toss carnival balls into the glowing colored target in a 20-second challenge. Every correct toss earns 10 points.',jackbox:'Wind the crank three times, wait for the catch cue, then catch the surprise clown before the window closes.',welcome:'Welcome to Midnight Laughs: follow the lit midway, explore the haunted house, and fill your carnival passport.'};
+  const descriptions={haunt:'Take the Night Watch: follow four haunted lanterns through the house and seal them in order before three minutes pass. Watching portraits, distant shadows and a final reveal accompany your search. Stop whenever you like; your view stays under your control.',water:'Aim your water blaster at the glowing clown. Hit three or more targets in 30 seconds to earn your stamp.',car:'Board the impossible clown car for a 20-second ride. Honk on the glowing cues to score, or give its horn a squeeze from the midway.',spinner:'Board a 15-second spinner ride. Match the left and right balance cues, choose gentle mode, and leave the ride whenever you like.',dressup:'Big shoes, big trouble. Wear both pieces to earn your dressing-room stamp. Your friends can see your outfit.',mirrors:'Start your maze visit here, then weave around the crooked mirrors in the west wing. Ring the bell at the far end to earn your stamp.','maze-finish':'You found the far end of the mirror maze. Ring the exit bell to claim your stamp.',ballpit:'Toss carnival balls into the glowing colored target in a 20-second challenge. Every correct toss earns 10 points.',jackbox:'Wind the crank three times, wait for the catch cue, then catch the surprise clown before the window closes.',welcome:'Welcome to Midnight Laughs: follow the lit midway, explore the haunted house, and fill your carnival passport.'};
   $('[data-funhouse-description]').textContent=descriptions[kind]||'';
-  const next=[current.id,round?.id,active,state.costume?.hat,state.costume?.shoes,state.ride?.id,state.ride?.status,state.challenge?.id,state.challenge?.status].join(':');
+  const next=[current.id,round?.id,active,state.costume?.hat,state.costume?.shoes,state.ride?.id,state.ride?.status,state.challenge?.id,state.challenge?.status,state.haunt?.id,state.haunt?.status].join(':');
   if(next!==signature){signature=next;
    if(kind==='water'){
     content.innerHTML='<div class="funhouse-gallery"><div class="funhouse-scoreboard"><span>ROUND SCORE <b data-funhouse-score>0</b></span><span>TIME <b data-funhouse-time>30s</b></span><span>PERSONAL BEST <b data-funhouse-best>0</b></span></div><div class="funhouse-targets" aria-label="Water-gun clown targets">'+Array.from({length:6},(_,id)=>'<button type="button" class="funhouse-target" data-funhouse-target="'+id+'" aria-label="Splash clown '+(id+1)+'"><span class="funhouse-clown-face" aria-hidden="true"><i class="funhouse-clown-hair"></i><i class="funhouse-clown-eyes"></i><i class="funhouse-clown-nose"></i><i class="funhouse-clown-smile"></i></span><span class="funhouse-target-label">'+(id+1)+' <small>WAIT</small></span><span class="funhouse-splash" aria-hidden="true">✳</span></button>').join('')+'</div><div class="funhouse-blaster" aria-hidden="true"><span>WATER BLASTER</span><i></i></div><p class="funhouse-gallery-help">Click / tap a clown or press <kbd>1</kbd>–<kbd>6</kbd>. Follow the cyan light.</p><button type="button" data-funhouse-start>'+(round?'Play another round':'Start 30-second round')+'</button><button type="button" class="funhouse-world-play" data-funhouse-world-play>Play in first person</button></div>';
    }else if(kind==='dressup'){
     content.innerHTML='<div class="funhouse-costume-card"><div class="funhouse-costume-art" aria-hidden="true">✶<span>◒</span><b>▰ ▰</b></div><div><button type="button" data-funhouse-dress="hat" aria-pressed="'+Boolean(state.costume?.hat)+'">'+(state.costume?.hat?'Remove':'Wear')+' propeller hat</button><button type="button" data-funhouse-dress="shoes" aria-pressed="'+Boolean(state.costume?.shoes)+'">'+(state.costume?.shoes?'Remove':'Wear')+' giant clown shoes</button><p>Use <b>View</b> to see your outfit from above.</p></div></div>';
+   }else if(kind==='haunt'){
+    content.innerHTML='<div class="funhouse-trail-invitation funhouse-haunt-invitation"><strong>Four lanterns. One suspicious night shift.</strong><p>The nursery, clockwork theatre, crooked mirrors and portrait hall each hide a haunted lantern. Follow the glowing ward, walk close and press F or select Seal lantern. Finish in three minutes for 140 points plus a time bonus. Stopping ends the watch without awarding points.</p><button type="button" data-funhouse-haunt-start>Begin the Night Watch</button><button type="button" data-funhouse-haunt-return>Return to my watch</button></div>';
    }else if(kind==='welcome'){
-    content.innerHTML='<div class="funhouse-directory">'+FUNHOUSE_STATIONS.filter(s=>stampKinds.includes(s.kind)).map(s=>'<article><span aria-hidden="true">'+icons[s.kind]+'</span><b>'+escape(s.name)+'</b><small>'+({water:'West midway',car:'East midway',spinner:'East court',dressup:'West dressing tent','maze-finish':'Inside the haunted house',jackbox:'Inside the haunted house'}[s.kind])+'</small></article>').join('')+'</div><p class="funhouse-welcome-note">Walk with WASD / the stick. Press E or tap the attraction prompt nearby. Maps shows every attraction. Every game and costume here is free.</p>'+(funhouseAdventureAvailable(getEnvironment())?'<div class="funhouse-trail-invitation"><strong>The Lost Laugh Trail</strong><p>Follow six mysterious clues across the midway and haunted house. Inspect each discovery, unlock its surprise, and bring the lost laughs home before ten minutes pass. You can enjoy the rides along the way.</p><button type="button" data-funhouse-adventure-start>Start the adventure trail</button></div>':'');
+    content.innerHTML='<div class="funhouse-directory">'+FUNHOUSE_STATIONS.filter(s=>stampKinds.includes(s.kind)).map(s=>'<article><span aria-hidden="true">'+icons[s.kind]+'</span><b>'+escape(s.name)+'</b><small>'+({water:'West midway',car:'East midway',spinner:'East court',dressup:'West dressing tent','maze-finish':'Inside the haunted house',jackbox:'Inside the haunted house'}[s.kind])+'</small></article>').join('')+'</div><p class="funhouse-welcome-note">Walk with WASD / the stick. Press E or tap the attraction prompt nearby. Maps shows every attraction. Every game and costume here is free.</p>'+(funhouseAdventureAvailable(getEnvironment())?'<div class="funhouse-trail-invitation"><strong>The Lost Laugh Trail</strong><p>Follow six mysterious clues across the midway and haunted house. Inspect each discovery, unlock its surprise, and bring the lost laughs home before ten minutes pass. You can enjoy the rides along the way.</p><button type="button" data-funhouse-adventure-start>Start the adventure trail</button></div><div class="funhouse-trail-invitation funhouse-haunt-invitation"><strong>Night Watch</strong><p>Enter the grinning house doorway and find the watch lantern in its lobby. Seal four haunted lanterns during a three-minute shift, with watching portraits, shadows and a final clown reveal.</p></div>':'');
    }else{
     const labels={car:'Honk! Release the clowns',spinner:'Start the dizzy show',mirrors:'Start the mirror maze','maze-finish':'Ring the exit bell',ballpit:'Bounce the monster',jackbox:'Wind the fright box'};
     content.innerHTML='<div class="funhouse-attraction-card" data-kind="'+kind+'"><span class="funhouse-attraction-icon" aria-hidden="true">'+icons[kind]+'</span><p>'+(kind==='mirrors'?'Follow the maze checkpoints around the crooked partitions, then ring the exit bell. The first gap is on your right.':['car','spinner'].includes(kind)?'Ride in first person with live controls and a safe exit. Gentle mode keeps the ride comfortable.':'Play the timed challenge in the world, or trigger the attraction show.')+'</p><div class="funhouse-attraction-actions">'+(['car','spinner'].includes(kind)?'<button type="button" data-funhouse-board>'+('car'===kind?'Board the clown car':'Board the dizzy spinner')+'</button>':['jackbox','ballpit','mirrors'].includes(kind)?'<button type="button" data-funhouse-challenge>'+({jackbox:'Start wind-and-catch challenge',ballpit:'Start ball-toss challenge',mirrors:'Start maze checkpoint run'}[kind])+'</button>':'')+'<button type="button" class="funhouse-secondary-action" data-funhouse-use>'+escape(labels[kind]||'Play')+'</button></div></div>';
@@ -95,6 +102,7 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   }
   for(const button of content.querySelectorAll('button'))button.disabled=pending;
   const trailStart=content.querySelector('[data-funhouse-adventure-start]');if(trailStart){trailStart.disabled=pending||isActive(state.ride)||isActive(state.adventure)||!funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START);trailStart.textContent=isActive(state.adventure)?'Adventure trail underway':'Start the adventure trail';}
+  const hauntStart=content.querySelector('[data-funhouse-haunt-start]');if(hauntStart){hauntStart.hidden=isActive(state.haunt);hauntStart.disabled=pending||isActive(state.ride)||!funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START);content.querySelector('[data-funhouse-haunt-return]').hidden=!isActive(state.haunt);}
   if(kind==='water'){
    $('[data-funhouse-score]').textContent=String(round?.score||0);$('[data-funhouse-best]').textContent=String(state.bestScore||0);
    const start=$('[data-funhouse-start]');start.hidden=active;start.disabled=pending||(!round&&state.round?.status==='active'&&state.round.endsAt>now());
@@ -200,6 +208,25 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   const replay=adventureHUD.querySelector('[data-funhouse-adventure-replay]');replay.hidden=running;replay.disabled=pending||isActive(state.ride)||!funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START);replay.textContent=funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START)?'Start again':'Return to the welcome board';
   adventureHUD.querySelector('[data-funhouse-adventure-dismiss]').hidden=running;
  }
+ function renderHauntHUD(){
+  const haunt=state.haunt,available=funhouseHauntAvailable(getEnvironment()),running=isActive(haunt);
+  hauntHUD.hidden=!available||!haunt||hauntDismissed===haunt.id||getImmersive()||screen.dialog.open||gameplayOverlayOpen()||!running&&!experienceHUD.hidden;if(hauntHUD.hidden)return;
+  const ward=funhouseHauntNextWard(haunt),nearbyWard=running&&!isActive(state.ride)&&funhouseHauntNear(getPosition(),ward);
+  hauntHUD.dataset.expanded=String(hauntExpanded||!running);
+  hauntHUD.querySelector('[data-funhouse-haunt-time]').textContent=running?Math.max(0,Math.ceil((haunt.endsAt-now())/1000))+'s':haunt.status==='complete'?'COMPLETE':'STOPPED';
+  const toggle=hauntHUD.querySelector('[data-funhouse-haunt-toggle]');toggle.hidden=!running;toggle.setAttribute('aria-expanded',String(hauntExpanded));toggle.textContent=hauntExpanded?'Hide hint':'Hint';
+  hauntHUD.querySelector('[data-funhouse-haunt-next]').textContent=running?(haunt.sealed?.length||0)+' / '+FUNHOUSE_HAUNT_WARDS.length+' sealed · '+(ward?.name||'Find the next lantern')+(nearbyWard?' · F to seal':''):haunt.message||'The watch ended.';
+  hauntHUD.querySelector('[data-funhouse-haunt-hint]').textContent=ward?.hint||haunt.hint||haunt.message||'';
+  hauntHUD.querySelector('[data-funhouse-haunt-progress]').textContent=Number(haunt.score||0)+' points'+(haunt.status==='complete'?' · Best '+Number(state.bestScores?.haunt||haunt.score||0):' · Points awarded when all four lanterns are sealed.');
+  const seal=hauntHUD.querySelector('[data-funhouse-haunt-seal]');seal.hidden=!running;seal.disabled=pending||!nearbyWard;seal.textContent=nearbyWard?'Seal lantern · F':'Find the glowing lantern';
+  const stop=hauntHUD.querySelector('[data-funhouse-haunt-stop]');stop.hidden=!running;stop.disabled=pending;
+  const replay=hauntHUD.querySelector('[data-funhouse-haunt-replay]');replay.hidden=running;replay.disabled=pending||isActive(state.ride)||!funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START);replay.textContent=funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START)?'Start again':'Return to the house lobby';
+  hauntHUD.querySelector('[data-funhouse-haunt-dismiss]').hidden=running;
+ }
+ function startHaunt(){if(pending||!funhouseHauntAvailable(getEnvironment())||isActive(state.ride)||!funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START))return false;return command('funhouse-haunt',{operation:'start'},{station:hauntStation(),haunt:true});}
+ function sealHaunt(){const ward=funhouseHauntNextWard(state.haunt);if(pending||!ward||isActive(state.ride)||!funhouseHauntNear(getPosition(),ward))return false;return command('funhouse-haunt',{operation:'seal',hauntId:state.haunt.id,wardId:ward.id},{station:hauntStation()});}
+ function stopHaunt(){return command('funhouse-haunt',{operation:'stop',hauntId:state.haunt?.id},{station:hauntStation()});}
+ hauntHUD.addEventListener('click',event=>{if(event.target.closest('[data-funhouse-haunt-toggle]')){hauntExpanded=!hauntExpanded;renderHauntHUD();}if(event.target.closest('[data-funhouse-haunt-seal]'))void sealHaunt();if(event.target.closest('[data-funhouse-haunt-stop]'))void stopHaunt();if(event.target.closest('[data-funhouse-haunt-replay]'))void startHaunt();if(event.target.closest('[data-funhouse-haunt-dismiss]')){hauntDismissed=state.haunt?.id;renderHauntHUD();}});
  function startAdventure(){const station=adventureStation();if(!station||pending||isActive(state.ride)||!funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START))return false;return command('funhouse-adventure',{operation:'start'},{station,adventure:true});}
  function inspectAdventure(){const station=adventureStation(),clue=funhouseAdventureNextClue(state.adventure);if(!station||!clue||pending||isActive(state.ride)||!funhouseAdventureNear(getPosition(),clue))return false;return command('funhouse-adventure',{operation:'inspect',adventureId:state.adventure.id,clueId:clue.id},{station});}
  function stopAdventure(){const station=adventureStation();return station&&command('funhouse-adventure',{operation:'stop',adventureId:state.adventure?.id},{station});}
@@ -258,18 +285,19 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  });
  async function command(action,fields={},options={}){
   const station=options.station||current||worldStation;if(pending||disposed||!station)return false;const token=generation;
-  pending=true;message='';render();renderExperienceHUD();renderAdventureHUD();
+  pending=true;message='';render();renderExperienceHUD();renderAdventureHUD();renderHauntHUD();
   try{
    const snapshot=await send(action,fields);if(disposed||token!==generation||!snapshot)return false;
-   if(!receive(snapshot,snapshot.selfId||selfId)){const liveActivity=[state.ride,state.challenge,state.round].find(value=>value?.stationId===station.id&&isActive(value));if(options.adventure&&isActive(state.adventure)){adventureDismissed=null;adventureExpanded=false;screen.close();onPlayInWorld(station);return true;}if(options.worldMode&&liveActivity){worldStation=station;screen.close();onPlayInWorld(station);hudSignature='';return true;}if(options.clearWorld&&!liveActivity){worldStation=null;return true;}return false;}
+   if(!receive(snapshot,snapshot.selfId||selfId)){const liveActivity=[state.ride,state.challenge,state.round].find(value=>value?.stationId===station.id&&isActive(value));if(options.haunt&&isActive(state.haunt)){hauntDismissed=null;hauntExpanded=false;screen.close();onPlayInWorld(station);return true;}if(options.adventure&&isActive(state.adventure)){adventureDismissed=null;adventureExpanded=false;screen.close();onPlayInWorld(station);return true;}if(options.worldMode&&liveActivity){worldStation=station;screen.close();onPlayInWorld(station);hudSignature='';return true;}if(options.clearWorld&&!liveActivity){worldStation=null;return true;}return false;}
    message=snapshot.result?.message||state.message||'Enjoy the show!';
    if(action!=='funhouse-squirt')announce(message);
+   if(options.haunt){hauntDismissed=null;hauntExpanded=false;screen.close();onPlayInWorld(station);}
    if(options.adventure){adventureDismissed=null;adventureExpanded=false;screen.close();onPlayInWorld(station);}
    if(options.worldMode){worldStation=station;screen.close();onPlayInWorld(station);hudSignature='';}
    if(options.clearWorld)worldStation=null;
    return true;
   }catch(error){if(token===generation){message=error.message;announce(message);}return false;}
-  finally{if(token===generation&&!disposed){pending=false;panel.setAttribute('aria-busy','false');render();renderExperienceHUD();renderAdventureHUD();}}
+  finally{if(token===generation&&!disposed){pending=false;panel.setAttribute('aria-busy','false');render();renderExperienceHUD();renderAdventureHUD();renderHauntHUD();}}
  }
  function receive(snapshot,id){
   if(disposed)return false;
@@ -281,12 +309,12 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   // expensive world projection and the visible walking rig is still behind.
   if(current){const live=stations(snapshot.actors).find(station=>station.id===current.id);if(!live||position&&gap(position,live)>7)screen.close();else current=live;}
   const next=player?.funhouse;
-  if(next){if(next.message!==state.message)message='';state=next;onState(state,snapshot.serverTime,snapshot);const activity=isActive(state.ride)?state.ride:isActive(state.challenge)?state.challenge:null;if(activity&&(!worldStation||worldStation.id!==activity.stationId))worldStation=stations(snapshot.actors).find(station=>station.id===activity.stationId)||null;render();renderPassport();renderExperienceHUD();renderAdventureHUD();}
+  if(next){if(next.message!==state.message)message='';state=next;onState(state,snapshot.serverTime,snapshot);const activity=isActive(state.ride)?state.ride:isActive(state.challenge)?state.challenge:null;if(activity&&(!worldStation||worldStation.id!==activity.stationId))worldStation=stations(snapshot.actors).find(station=>station.id===activity.stationId)||null;render();renderPassport();renderExperienceHUD();renderAdventureHUD();renderHauntHUD();}
   for(const event of snapshot?.events||[]){
    const effect=event.funhouseEffect;if(!effect||seenEffects.has(event.id))continue;
    seenEffects.add(event.id);if(seenEffects.size>128)seenEffects.delete(seenEffects.values().next().value);
    if(Math.abs((snapshot.serverTime||now())-event.at)>4500)continue;
-   const clue=effect.clueId&&FUNHOUSE_ADVENTURE_CLUES.find(value=>value.id===effect.clueId),station=effect.kind==='adventure'?{id:FUNHOUSE_ADVENTURE_START.id,kind:'adventure',position:effect.position||clue?.position||FUNHOUSE_ADVENTURE_START.position}:stations(snapshot.actors).find(station=>station.id===effect.stationId);if(station)onEffect(station,effect);
+   const ward=effect.wardId&&FUNHOUSE_HAUNT_WARDS.find(value=>value.id===effect.wardId),clue=effect.clueId&&FUNHOUSE_ADVENTURE_CLUES.find(value=>value.id===effect.clueId),station=effect.kind==='haunt'?{...hauntStation(),position:effect.position||ward?.position||FUNHOUSE_HAUNT_START.position}:effect.kind==='adventure'?{id:FUNHOUSE_ADVENTURE_START.id,kind:'adventure',position:effect.position||clue?.position||FUNHOUSE_ADVENTURE_START.position}:stations(snapshot.actors).find(station=>station.id===effect.stationId);if(station)onEffect(station,effect);
   }
   return true;
  }
@@ -296,7 +324,7 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  }
  function update(){
   if(disposed)return;renderAudio();const immersive=getImmersive();if(immersive&&screen.dialog.open)screen.close();const available=stations();
-  if(!available.length){nearby=null;if(current)screen.close();trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=true;worldStation=null;return;}
+  if(!available.length){nearby=null;if(current)screen.close();trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=hauntHUD.hidden=true;worldStation=null;return;}
   nearby=near();
   trigger.hidden=immersive||!nearby||screen.dialog.open||gameplayOverlayOpen()||isActive(state.ride);
   passport.hidden=immersive||screen.dialog.open||gameplayOverlayOpen();audioToggle.hidden=passport.hidden;renderPassport();renderExperienceHUD();
@@ -304,12 +332,13 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   if(current){const live=available.find(station=>station.id===current.id);if(!live||gap(getPosition(),live)>7)screen.close();else current=live;}
   if(current?.kind==='water')render();
   if(worldStation&&!isActive(state.ride)&&state.challenge?.kind!=='mirrors'){const live=available.find(station=>station.id===worldStation.id);if(!live||gap(getPosition(),live)>8)worldStation=null;}
-  renderExperienceHUD();renderAdventureHUD();
+  renderExperienceHUD();renderAdventureHUD();renderHauntHUD();
  }
- function reset(){audioCaptionValue=null;audioCaption.hidden=audioPanel.hidden=true;generation++;pending=false;state={};selfId=null;message='';signature='';passportSignature=null;lastSequence=-1;nearby=null;worldStation=null;hudSignature='';hudActivityId=null;hudExpanded=adventureExpanded=false;adventureDismissed=null;seenEffects.clear();screen.close();current=null;trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=true;onState(state);}
+ function reset(){audioCaptionValue=null;audioCaption.hidden=audioPanel.hidden=true;generation++;pending=false;state={};selfId=null;message='';signature='';passportSignature=null;lastSequence=-1;nearby=null;worldStation=null;hudSignature='';hudActivityId=null;hudExpanded=adventureExpanded=hauntExpanded=false;adventureDismissed=hauntDismissed=null;seenEffects.clear();screen.close();current=null;trigger.hidden=passport.hidden=audioToggle.hidden=experienceHUD.hidden=adventureHUD.hidden=hauntHUD.hidden=true;onState(state);}
  function keydown(event){
   if(event.key==='Escape'&&!audioPanel.hidden){audioPanel.hidden=true;event.preventDefault();event.stopImmediatePropagation();renderAudio();return;}
   if(getImmersive()||event.defaultPrevented||event.repeat||event.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+  if(!screen.dialog.open&&!gameplayOverlayOpen()&&isActive(state.haunt)){const key=event.key.toLowerCase(),ward=funhouseHauntNextWard(state.haunt);if(key==='escape'||key==='f'&&funhouseHauntNear(getPosition(),ward)){event.preventDefault();event.stopImmediatePropagation();if(key==='escape')void stopHaunt();else void sealHaunt();return;}}
   if(!screen.dialog.open&&worldStation&&handleExperienceKey(event)){event.preventDefault();event.stopImmediatePropagation();return;}
   if(!screen.dialog.open&&!gameplayOverlayOpen()&&event.key.toLowerCase()==='f'&&isActive(state.adventure)){event.preventDefault();event.stopImmediatePropagation();void inspectAdventure();return;}
   if(event.key.toLowerCase()==='e'&&!screen.dialog.open&&!gameplayOverlayOpen()&&near()){event.preventDefault();event.stopImmediatePropagation();open();}
@@ -317,6 +346,8 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
  }
  trigger.onclick=open;$('[data-funhouse-close]').onclick=()=>screen.close();
  content.addEventListener('click',event=>{
+  if(event.target.closest('[data-funhouse-haunt-start]')){void startHaunt();return;}
+  if(event.target.closest('[data-funhouse-haunt-return]')){screen.close();hauntDismissed=null;renderHauntHUD();return;}
   if(event.target.closest('[data-funhouse-adventure-start]')){void startAdventure();return;}
   if(event.target.closest('[data-funhouse-world-play],[data-funhouse-board],[data-funhouse-challenge]')){void playInWorld(current);return;}
   if(event.target.closest('[data-funhouse-start]'))void command('funhouse-start',{stationId:current.id});
@@ -325,8 +356,8 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   if(event.target.closest('[data-funhouse-use]'))void command('funhouse-use',{stationId:current.id});
   const dress=event.target.closest('[data-funhouse-dress]');if(dress){const costume={hat:Boolean(state.costume?.hat),shoes:Boolean(state.costume?.shoes)};costume[dress.dataset.funhouseDress]=!costume[dress.dataset.funhouseDress];void command('funhouse-dress',{...costume,stationId:current.id});}
  });
- for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,adventureHUD,audioPanel])element.addEventListener(type,event=>event.stopPropagation());
+ for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,adventureHUD,hauntHUD,audioPanel])element.addEventListener(type,event=>event.stopPropagation());
  window.addEventListener('keydown',keydown,true);
  const timer=setInterval(update,100);
- return {open,close:()=>screen.close(),update,receive,receiveAudioCaption,reset,playInWorld,setExpanded:expanded=>{hudExpanded=!!expanded;renderExperienceHUD();},currentStation:()=>current||worldStation||near(),snapshot:()=>state,available:()=>!getImmersive()&&!isActive(state.ride)&&Boolean(near()),visible:()=>screen.dialog.open,dispose(){if(disposed)return;reset();disposed=true;clearInterval(timer);window.removeEventListener('keydown',keydown,true);screen.disconnect();screen.dialog.remove();trigger.remove();passport.remove();audioToggle.remove();experienceHUD.remove();adventureHUD.remove();audioPanel.remove();audioCaption.remove();}};
+ return {open,close:()=>screen.close(),update,receive,receiveAudioCaption,reset,playInWorld,setExpanded:expanded=>{hudExpanded=!!expanded;renderExperienceHUD();},currentStation:()=>current||worldStation||near(),snapshot:()=>state,available:()=>!getImmersive()&&!isActive(state.ride)&&Boolean(near()),visible:()=>screen.dialog.open,dispose(){if(disposed)return;reset();disposed=true;clearInterval(timer);window.removeEventListener('keydown',keydown,true);screen.disconnect();screen.dialog.remove();trigger.remove();passport.remove();audioToggle.remove();experienceHUD.remove();adventureHUD.remove();hauntHUD.remove();questStack.remove();audioPanel.remove();audioCaption.remove();}};
 }

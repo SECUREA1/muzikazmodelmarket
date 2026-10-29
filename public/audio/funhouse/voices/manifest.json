@@ -313,6 +313,84 @@
       "bytes": 228078,
       "sha256": "504d15ca2ca3c8550eeffcf07941092c631230965e9b567cd718b7cc71fdc712",
       "signature": "4f12aeabfe0e4a813bc21a1e3ece19cb53bf61e49143317f9c16b92a4d829a48"
+    },
+    {
+      "id": "watch-nervous-nightlight",
+      "url": "/public/audio/funhouse/voices/watch-nervous-nightlight.wav",
+      "text": "Night Watch begins! Four lanterns, three minutes, and one very nervous nightlight.",
+      "caption": "Night Watch begins! Four lanterns, three minutes, and one very nervous nightlight.",
+      "speaker": "The Ringmaster",
+      "voice": "male",
+      "speed": 0.99,
+      "durationMs": 6950,
+      "bytes": 333678,
+      "sha256": "3b99dde73b9a935dd99cc37dc959248410380ccdf424104df17b47fa9565e660",
+      "signature": "b8df07c3dde0bde4bd5082135eaf366e6d75b6f56c7b53cfdc5934d44b603e8d"
+    },
+    {
+      "id": "nursery-toy-chest-breathing",
+      "url": "/public/audio/funhouse/voices/nursery-toy-chest-breathing.wav",
+      "text": "The toys are asleep. That breathing? Probably the toy chest.",
+      "caption": "The toys are asleep. That breathing? Probably the toy chest.",
+      "speaker": "The Mirror Keeper",
+      "voice": "female",
+      "speed": 0.95,
+      "durationMs": 4325,
+      "bytes": 207678,
+      "sha256": "df4f1d76bf6a29f3e97876287119b7d936fc3e9039e6cbd4ab152623b9ab08bb",
+      "signature": "6401cb08441a98e235badfc157d712212a37c2c16ddb23514388094346077738"
+    },
+    {
+      "id": "clock-screams-on-hour",
+      "url": "/public/audio/funhouse/voices/clock-screams-on-hour.wav",
+      "text": "You stopped the clock! Now it only screams on the hour.",
+      "caption": "You stopped the clock! Now it only screams on the hour.",
+      "speaker": "Jack the Fright",
+      "voice": "male",
+      "speed": 1.02,
+      "durationMs": 4225,
+      "bytes": 202878,
+      "sha256": "048a8d79423ee1ed96f4b4c29337425a947a59a9df0be61bbec97fc20bf85e5a",
+      "signature": "e2adaecc4001bbe80423212b0e4601c766189edb667ca610e666240c9bb38bb4"
+    },
+    {
+      "id": "reflection-owes-rent",
+      "url": "/public/audio/funhouse/voices/reflection-owes-rent.wav",
+      "text": "One reflection sealed. The other one owes me rent.",
+      "caption": "One reflection sealed. The other one owes me rent.",
+      "speaker": "The Mirror Keeper",
+      "voice": "female",
+      "speed": 0.98,
+      "durationMs": 3700,
+      "bytes": 177678,
+      "sha256": "63b4754e98fe5fb913c377880f808743003e039e127f9ea85a432ee32bde6145",
+      "signature": "8fedefbe20db5741a242d942df846f97e2b0e3a961aa665d4350aa00a998cc20"
+    },
+    {
+      "id": "portrait-blinked-first",
+      "url": "/public/audio/funhouse/voices/portrait-blinked-first.wav",
+      "text": "The portrait blinked first. I call that a professional victory.",
+      "caption": "The portrait blinked first. I call that a professional victory.",
+      "speaker": "Madame Giggles",
+      "voice": "female",
+      "speed": 1.03,
+      "durationMs": 3850,
+      "bytes": 184878,
+      "sha256": "a0bff80b61ef6a049850804530fe6a6d7a6c55d8801ee67245a17448e6b01e71",
+      "signature": "099082c0e460f9ee183698ecb7a4d9ddf7b3122fe7095059c4dca4f7b10d78db"
+    },
+    {
+      "id": "ghosts-demand-refund",
+      "url": "/public/audio/funhouse/voices/ghosts-demand-refund.wav",
+      "text": "Four lanterns lit! The ghosts demand a refund for excellent customer scaring.",
+      "caption": "Four lanterns lit! The ghosts demand a refund for excellent customer scaring.",
+      "speaker": "The Ringmaster",
+      "voice": "male",
+      "speed": 1.01,
+      "durationMs": 6825,
+      "bytes": 327678,
+      "sha256": "42e19f45bf3710f72cfa585b1e34236ebc842ecb0c5bbc94b5d31f468b32e0f8",
+      "signature": "d6e3d87145fbdd603049073c626a0dce1fed424545311b486653196242d43895"
     }
   ]
 }

@@ -23,7 +23,13 @@ const CLIP_DURATIONS=Object.freeze({
  "toys-pretend-sleep": 3575,
  "lantern-suspicious-glow": 6675,
  "six-lost-laughs": 6825,
- "stage-fright-follows": 4750
+ "stage-fright-follows": 4750,
+ "watch-nervous-nightlight": 6950,
+ "nursery-toy-chest-breathing": 4325,
+ "clock-screams-on-hour": 4225,
+ "reflection-owes-rent": 3700,
+ "portrait-blinked-first": 3850,
+ "ghosts-demand-refund": 6825
 });
 const line=(id,event,speaker,voice,speed,style,text)=>Object.freeze({id,event,speaker,voice,speed,style,text,caption:text,url:'/public/audio/funhouse/voices/'+id+'.wav',durationMs:CLIP_DURATIONS[id]||null});
 
@@ -51,7 +57,13 @@ export const FUNHOUSE_CLOWN_LINES=Object.freeze([
  line('toys-pretend-sleep','adventure:playroom-secret','The Mirror Keeper','female',.95,'quiet storyteller','Shh. The toys are pretending to be asleep.'),
  line('lantern-suspicious-glow','adventure:last-laugh','The Ringmaster','male',.97,'theatrical host','The last laugh! I knew it was hiding behind that extremely suspicious glow.'),
  line('six-lost-laughs','adventure-complete','The Ringmaster','male',1.00,'proud host','Six lost laughs returned! The house promises to stop giggling at you. Probably.'),
- line('stage-fright-follows','ambient','The Mirror Keeper','female',.96,'dry comic storyteller','I used to have stage fright. Then the stage started following me.')
+ line('stage-fright-follows','ambient','The Mirror Keeper','female',.96,'dry comic storyteller','I used to have stage fright. Then the stage started following me.'),
+ line('watch-nervous-nightlight','haunt-start','The Ringmaster','male',.99,'theatrical night watch host','Night Watch begins! Four lanterns, three minutes, and one very nervous nightlight.'),
+ line('nursery-toy-chest-breathing','haunt:nursery-lantern','The Mirror Keeper','female',.95,'quiet comic storyteller','The toys are asleep. That breathing? Probably the toy chest.'),
+ line('clock-screams-on-hour','haunt:clockwork-lantern','Jack the Fright','male',1.02,'delighted clockwork prankster','You stopped the clock! Now it only screams on the hour.'),
+ line('reflection-owes-rent','haunt:mirror-lantern','The Mirror Keeper','female',.98,'dry comic storyteller','One reflection sealed. The other one owes me rent.'),
+ line('portrait-blinked-first','haunt:portrait-lantern','Madame Giggles','female',1.03,'playful keeper','The portrait blinked first. I call that a professional victory.'),
+ line('ghosts-demand-refund','haunt-complete','The Ringmaster','male',1.01,'proud theatrical host','Four lanterns lit! The ghosts demand a refund for excellent customer scaring.')
 ]);
 
 export const FUNHOUSE_LINES_BY_EVENT=Object.freeze(Object.fromEntries([...new Set(FUNHOUSE_CLOWN_LINES.map(value=>value.event))].map(event=>[event,Object.freeze(FUNHOUSE_CLOWN_LINES.filter(value=>value.event===event))])));

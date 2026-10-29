@@ -15,9 +15,9 @@ function pcmWave(bytes){
  assert.ok(format&&data,'every clip contains a playable format and sample chunk');return {format,data};
 }
 
-test('the clown cast has original captioned lines for every attraction and all six trail discoveries',()=>{
- assert.equal(FUNHOUSE_CLOWN_LINES.length,24);assert.equal(new Set(FUNHOUSE_CLOWN_LINES.map(line=>line.id)).size,24);
- for(const event of ['welcome','car-start','car-honk','car-complete','spinner-start','spinner-hit','water-hit','water-miss','jack-wind','jack-catch','jack-miss','maze-start','maze-complete','dressup','adventure-complete','ambient',...['ticket-trick','wardrobe-whisper','drowned-mask','spinner-shadow','playroom-secret','last-laugh'].map(id=>'adventure:'+id)]){
+test('the clown cast has original captioned lines for every attraction, trail discovery and Night Watch lantern',()=>{
+ assert.equal(FUNHOUSE_CLOWN_LINES.length,30);assert.equal(new Set(FUNHOUSE_CLOWN_LINES.map(line=>line.id)).size,30);
+ for(const event of ['welcome','car-start','car-honk','car-complete','spinner-start','spinner-hit','water-hit','water-miss','jack-wind','jack-catch','jack-miss','maze-start','maze-complete','dressup','adventure-complete','ambient','haunt-start','haunt-complete',...['ticket-trick','wardrobe-whisper','drowned-mask','spinner-shadow','playroom-secret','last-laugh'].map(id=>'adventure:'+id),...['nursery-lantern','clockwork-lantern','mirror-lantern','portrait-lantern'].map(id=>'haunt:'+id)]){
   assert.ok(FUNHOUSE_LINES_BY_EVENT[event]?.length,event+' has a playable captioned response');
  }
  for(const line of FUNHOUSE_CLOWN_LINES){

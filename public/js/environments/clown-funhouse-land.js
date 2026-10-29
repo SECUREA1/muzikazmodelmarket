@@ -4,6 +4,7 @@ import * as T from '../../vendor/three/three.module.min.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import {createCreepyClownFace} from '../creepy-clown-face.js';
 import {FUNHOUSE_WALLS} from '../clown-funhouse-config.js';
+import {createFunhouseHauntScenery} from '../funhouse-haunt-scenery.js';
 
 // One metre-based scene supplies both the visible world and its walking solids.
 // Set dressing and animated performers never become invisible walking barriers.
@@ -18,7 +19,7 @@ export function createClownFunhouseLand(environment={}) {
  const clownFaceMaterials={pallor:clownPallor,ink:clownInk,crimson:clownCrimson,ivory:clownIvory,iris:clownIris};
  const animations=[],targets=[],jackPops=[],performers=[],balloons=[],bulbs=[],bursts=[],interactionTargets=[],ballTargets=[],tossBalls=[];
  const rideAnchors={},balanceControls=[],adventureMarkers=[],adventureRigs=[],storyDetails=[];
- let hornCue=null;
+ let hornCue=null,hauntScenery=null;
  let galleryRoot=null,splashRay=null,tossRay=null;
  let experienceState={},experienceTime=0,experienceReceivedAt=0,ballTarget=-1,tossTargetId=0,tossUntil=-1;
  const liveLabels={};
@@ -487,6 +488,7 @@ export function createClownFunhouseLand(environment={}) {
  if(!environment.id||funhouseAdventureAvailable(environment)){
   adventureMarker(FUNHOUSE_ADVENTURE_START);
   FUNHOUSE_ADVENTURE_CLUES.forEach(adventureMarker);
+  hauntScenery=createFunhouseHauntScenery();root.add(hauntScenery.root);interactionTargets.push(...hauntScenery.targets);
  }
  // Soft theatre light, stable without flashes or a ceiling over the overview.
  root.add(new T.HemisphereLight('#b8afdd','#241328',2.1));
@@ -501,6 +503,8 @@ export function createClownFunhouseLand(environment={}) {
  root.userData.funhouseRideAnchors=rideAnchors;
  root.userData.funhouseBallTargets=ballTargets;
  root.userData.funhouseAdventureMarkers=adventureMarkers;
+ root.userData.funhouseHauntMarkers=hauntScenery?.markers||[];
+ root.userData.funhouseHauntScenery=hauntScenery;
  root.userData.funhouseScenery=storyDetails;
  root.userData.splashFunhouseTarget=splashTarget;
  root.userData.animateFunhouseStation=(id,result={})=>{
@@ -533,6 +537,8 @@ export function createClownFunhouseLand(environment={}) {
   const ridingCar=carRide?.status==='active'&&now<carRide.endsAt,ridingSpinner=spinnerRide?.status==='active'&&now<spinnerRide.endsAt;
   if(!reducedMotion)for(const animate of animations)animate(time);
   const adventures=stateFrames().map(value=>value.adventure).filter(Boolean),adventure=experienceState.funhouse?experienceState.funhouse.adventure:adventures.find(value=>value.status==='active')||adventures[0];
+  const haunts=stateFrames().map(value=>value.haunt).filter(Boolean),haunt=experienceState.funhouse?experienceState.funhouse.haunt:haunts.find(value=>value.status==='active')||haunts[0];
+  hauntScenery?.update(haunt,time,reducedMotion,now);
   for(const marker of adventureMarkers){
    const found=marker.clueId&&adventure?.found?.includes(marker.clueId),next=marker.index<0?adventure?.status!=='active':adventure?.status==='active'&&marker.index===adventure.clueIndex;
    marker.highlight.visible=Boolean(next);marker.seal.visible=Boolean(found);

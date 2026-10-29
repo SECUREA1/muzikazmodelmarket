@@ -4,8 +4,8 @@ import {funhouseNativeComponents} from './public/js/clown-funhouse-builder.js';
 
 export function clownFunhouseWorld(){
  return {
-  id:FUNHOUSE_ID,name:'Midnight Laughs Funhouse',label:'Haunted adventure · interactive clown carnival',
-  description:'A complete spooky clown carnival with a giant grinning horror house, crooked mirror maze, monster ball pit, surprise jack-in-the-box, impossible clown car, dizzy hat spinner, propeller hats, giant clown shoes and a playable water-gun gallery. Follow the six-clue Lost Laugh Trail through a lantern-lit midway, whispering wardrobe, clockwork theatre and haunted playroom. Play every attraction with clear first-person views and tracked VR controls, then brave the crooked passages for the final lantern.',
+  id:FUNHOUSE_ID,name:'Midnight Laughs Funhouse',label:'Night Watch · haunted clown carnival',
+  description:'A complete spooky clown carnival with a giant grinning horror house, crooked mirror maze, monster ball pit, surprise jack-in-the-box, impossible clown car, dizzy hat spinner, propeller hats, giant clown shoes and a playable water-gun gallery. Follow the six-clue Lost Laugh Trail through a lantern-lit midway, whispering wardrobe, clockwork theatre and haunted playroom. Brave the three-minute Night Watch to seal four haunted lanterns as shadow clowns, watching portraits and eerie whispers lead to a final ringmaster reveal. Enjoy original clown voices and carnival music with clear first-person views and tracked VR controls.',
   category:'Funhouse & carnival',game:'funhouse',indoor:true,outdoor:false,worldId:'crew-plaza',mapColor:'#e56ca8',
   permanent:true,publicDestination:true,proceduralLand:true,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false,
   ownerId:'muzikaz',ownerName:'MUZIKAZ',scale:1,spaceScale:1,playableSize:120,

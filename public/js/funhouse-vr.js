@@ -1,6 +1,7 @@
 import {normalizeFunhouseAudioSettings,funhouseAudioNotice,funhouseAudioAllowed} from './funhouse-audio-settings.js';
 import {funhouseRideCue,funhouseRidePose} from './funhouse-experience-rules.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES,funhouseAdventureAvailable,funhouseAdventureNextClue,funhouseAdventureNear} from './funhouse-adventure-rules.js';
+import {FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS,funhouseHauntAvailable,funhouseHauntNextWard,funhouseHauntNear} from './funhouse-haunt-rules.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {funhouseStations,isFunhouseEnvironment} from './clown-funhouse-config.js';
 import {funhouseInteractionHit} from './funhouse-scene-actions.js';
@@ -28,7 +29,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  const audioSettings=()=>normalizeFunhouseAudioSettings({...localAudioSettings,...(getAudioSettings()||{})});
  const audioCaption=()=>{const caption=getAudioCaption();return caption?.text&&(!Number.isFinite(caption.expiresAt)||caption.expiresAt>Date.now())?caption:null;};
  const now=()=>getServerTime?getServerTime():Date.now()+offset;
- const allStations=()=>funhouseStations(getEnvironment(),{actors:latestActors||getActors()});
+ const allStations=()=>[...funhouseStations(getEnvironment(),{actors:latestActors||getActors()}),...(funhouseHauntAvailable(getEnvironment())?[{...FUNHOUSE_HAUNT_START,kind:'haunt'}]:[])];
  function nearest(){let result=null,limit=6.5;for(const station of allStations()){const gap=distance(getPosition(),station.position);if(gap<Math.min(limit,station.interactionDistance||6.5)){limit=gap;result=station;}}return result;}
  function currentStation(){
   const stations=allStations(),running=active(state.ride)?state.ride:active(state.round)?state.round:active(state.challenge)?state.challenge:null;
@@ -45,6 +46,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   return Promise.resolve().then(()=>send(action,fields)).then(async snapshot=>{
    if(disposed||token!==generation||getEnvironment()?.id!==environmentId||!snapshot)return false;
    const accepted=receive(snapshot,snapshot.selfId||selfId);
+   if(action==='funhouse-haunt'&&fields.operation==='start'&&active(state.haunt)){boardMode='haunt';actionPage=0;}
    if(action==='funhouse-adventure'&&fields.operation==='start'&&active(state.adventure)){boardMode='adventure';actionPage=0;}
    if(action==='funhouse-ride'&&beganPresenting&&!getPresenting()&&active(state.ride)){const ended=await send('funhouse-ride-exit',{rideId:state.ride.id});if(!disposed&&token===generation&&ended)receive(ended,ended.selfId||selfId);return false;}
    if(!accepted)return false;message=snapshot.result?.message||state.message||'Attraction ready.';
@@ -57,6 +59,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  const entry=(id,label,run,enabled=true)=>({id,label,run,enabled});
  function attractionActions(station=currentStation()){
   if(!station)return [];
+  if(station.kind==='haunt')return hauntActions();
   const ride=active(state.ride)&&state.ride.stationId===station.id?{...state.ride,...funhouseRideCue(state.ride,now())}:null,challenge=active(state.challenge)&&state.challenge.stationId===station.id?state.challenge:null,round=active(state.round)&&state.round.stationId===station.id?state.round:null,kind=station.kind;
   if(ride){
    const ready=!finite(ride.lastActionAt)||now()>=Number(ride.lastActionAt)+(kind==='car'?400:300);
@@ -89,6 +92,13 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   if(active(adventure))return [entry('adventure-inspect','Inspect '+(clue?.name||'the next clue'),()=>run('funhouse-adventure',{operation:'inspect',adventureId:adventure.id,clueId:clue?.id}),!riding&&funhouseAdventureNear(getPosition(),clue)),entry('adventure-stop','Stop the adventure trail',()=>run('funhouse-adventure',{operation:'stop',adventureId:adventure.id}))];
   return [entry('adventure-start',adventure?'Start the trail again':'Start the adventure trail',()=>run('funhouse-adventure',{operation:'start'}),!riding&&funhouseAdventureNear(getPosition(),FUNHOUSE_ADVENTURE_START))];
  }
+ function hauntActions(){
+  if(!funhouseHauntAvailable(getEnvironment()))return [];
+  const haunt=state.haunt,ward=funhouseHauntNextWard(haunt),riding=active(state.ride);
+  if(active(haunt))return [entry('haunt-seal','Seal '+(ward?.name||'the next lantern'),()=>run('funhouse-haunt',{operation:'seal',hauntId:haunt.id,wardId:ward?.id}),!riding&&funhouseHauntNear(getPosition(),ward)),entry('haunt-stop','Stop the Night Watch',()=>run('funhouse-haunt',{operation:'stop',hauntId:haunt.id}))];
+  return [entry('haunt-start',haunt?'Take the Night Watch again':'Begin the Night Watch',()=>run('funhouse-haunt',{operation:'start'}),!riding&&funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START))];
+ }
+ function showHaunt(){setVisible(true);boardMode='haunt';actionPage=0;redraw();}
  function changeAudio(patch){localAudioSettings=normalizeFunhouseAudioSettings({...audioSettings(),...patch});onAudioSettings(patch);redraw();}
  function showAudio(){setVisible(true);boardMode='audio';actionPage=0;redraw();}
  function audioActions(){
@@ -102,6 +112,12 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function summary(station){
   if(boardMode==='audio')return {title:'Midnight sound booth',headline:'Funny voices · eerie carnival music',detail:funhouseAudioNotice(getAudioPreferences()||{}),cue:'VOLUME '+audioSettings().musicVolume+'% MUSIC · '+audioSettings().voiceVolume+'% VOICES'};
+  if(boardMode==='haunt'){
+   const haunt=state.haunt,ward=funhouseHauntNextWard(haunt);
+   if(active(haunt))return {title:'Night Watch',headline:(haunt.sealed?.length||0)+' / '+FUNHOUSE_HAUNT_WARDS.length+' lanterns · '+Math.max(0,Math.ceil((haunt.endsAt-now())/1000))+'s',detail:ward?.hint||haunt.hint||'Explore the haunted house.',cue:ward?.name||'Find the glowing lantern'};
+   if(haunt)return {title:'Night Watch',headline:(haunt.status==='complete'?'Watch complete':'Watch stopped')+' · '+Number(haunt.score||0)+' points',detail:haunt.message||'Return to the house lobby to take another shift.',cue:'BEST WATCH '+Number(state.bestScores?.haunt||0)};
+   return {title:'Night Watch',headline:'Four haunted lanterns · three minutes',detail:'Begin at the house lobby lantern. Follow the glowing ward and seal four haunted lanterns in order.',cue:'STOP THE WATCH WHENEVER YOU LIKE'};
+  }
   if(boardMode==='adventure'){
    const adventure=state.adventure,clue=funhouseAdventureNextClue(adventure);
    if(active(adventure))return {title:'The Lost Laugh Trail',headline:(adventure.found?.length||0)+' / '+FUNHOUSE_ADVENTURE_CLUES.length+' clues · '+Math.max(0,Math.ceil((adventure.endsAt-now())/1000))+'s',detail:clue?.hint||adventure.hint||'Explore the midway.',cue:clue?.name||'Find the next discovery'};
@@ -117,15 +133,16 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function redraw(){
   if(disposed||!visible){lastSignature='';return;}
-  const station=currentStation(),info=summary(station),actions=boardMode==='audio'?audioActions():boardMode==='adventure'?[...adventureActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:attractionActions(station);
+  const station=currentStation(),info=summary(station),actions=boardMode==='audio'?audioActions():boardMode==='haunt'?[...hauntActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:boardMode==='adventure'?[...adventureActions(),entry('attraction-board','Ride and attraction controls',()=>{boardMode='attraction';actionPage=0;redraw();},!!station)]:attractionActions(station);
   if(boardMode!=='audio')actions.push(entry('audio-board','Clown voices, sounds & music',showAudio));
   if(boardMode!=='audio'&&boardMode!=='adventure'&&funhouseAdventureAvailable(getEnvironment()))actions.push(entry('adventure-board',active(state.adventure)?'Adventure trail · '+(state.adventure.found?.length||0)+' / 6':'Explore the adventure trail',()=>{boardMode='adventure';actionPage=0;redraw();}));
+  if(boardMode!=='audio'&&boardMode!=='haunt'&&funhouseHauntAvailable(getEnvironment()))actions.push(entry('haunt-board',active(state.haunt)?'Night Watch · '+(state.haunt.sealed?.length||0)+' / 4':'Explore the Night Watch',showHaunt));
   const pages=Math.max(1,Math.ceil(actions.length/5));actionPage=Math.min(actionPage,pages-1);
   const pageActions=actions.slice(actionPage*5,actionPage*5+5);
   if(actionPage>0)pageActions.push(entry('previous-actions','Previous actions',()=>{actionPage--;redraw();}));
   if(actionPage+1<pages)pageActions.push(entry('next-actions','Next actions',()=>{actionPage++;redraw();}));
   pageActions.push(entry('close','Hide this board',()=>setVisible(false)));
-  buttons=pageActions.map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||['close','next-actions','previous-actions','adventure-board','attraction-board','audio-board','audio-back'].includes(item.id)),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
+  buttons=pageActions.map((item,index)=>{const column=index%2,row=Math.floor(index/2),x=28+column*494,y=310+row*92;return {...item,enabled:item.enabled&&(!pending||['close','next-actions','previous-actions','adventure-board','haunt-board','attraction-board','audio-board','audio-back'].includes(item.id)),x,y,w:474,h:74,position:[((x+237)/width-.5)*panelWidth,(.5-(y+37)/height)*panelHeight,.002],width:474/width*panelWidth,height:74/height*panelHeight};});
   const caption=audioCaption(),signature=JSON.stringify([station?.id,info,pending,message,caption,hovered,buttons.map(button=>[button.id,button.label,button.enabled])]);
   if(signature===lastSignature)return;lastSignature=signature;drawCount++;
   if(!ink)return;
@@ -151,7 +168,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function liveRidePosition(){const ride=state.ride;if(!active(ride))return null;const station=allStations().find(station=>station.id===ride.stationId);return station&&Number.isFinite(ride.startedAt)&&Number.isFinite(ride.durationMs)?funhouseRidePose(ride,station,now()).position:ride.pose?.position||null;}
  function setVisible(next){
-  next=!!next&&!disposed&&getPresenting();if(next&&!visible){const station=currentStation();selectedId=station?.id||nearest()?.id||null;if(active(state.adventure)&&!station)boardMode='adventure';actionPage=0;anchor();onInputRelease('funhouse-vr-board');lastSignature='';}
+  next=!!next&&!disposed&&getPresenting();if(next&&!visible){const station=currentStation();selectedId=station?.id||nearest()?.id||null;if(active(state.haunt))boardMode='haunt';else if(active(state.adventure)&&!station)boardMode='adventure';actionPage=0;anchor();onInputRelease('funhouse-vr-board');lastSignature='';}
   visible=next;root.visible=next;if(!next){held.clear();hovered=null;}redraw();return next;
  }
  function receive(snapshot,id){
@@ -163,7 +180,7 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
   const next=snapshot?.players?.[selfId]?.funhouse||getState();if(next){if(next.message!==state.message)message='';state=next;}
   if(state.ride?.id){const key=state.ride.id+':'+state.ride.status;if(key!==observedRideId){observedRideId=key;pendingRideAnchor={key,position:active(state.ride)?state.ride.pose?.position:state.ride.pose?.exitPosition||allStations().find(station=>station.id===state.ride.stationId)?.position};if(active(state.ride)){boardMode='attraction';actionPage=0;}}}
   available=isFunhouseEnvironment(getEnvironment())||allStations().length>0;
-  if(visible){const station=currentStation(),trail=boardMode==='adventure'&&funhouseAdventureAvailable(getEnvironment())||boardMode==='audio'&&isAvailable(),running=active(state.ride)||active(state.round)||active(state.challenge);if(!trail&&(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7))setVisible(false);}
+  if(visible){const station=currentStation(),trail=boardMode==='haunt'&&funhouseHauntAvailable(getEnvironment())||boardMode==='adventure'&&funhouseAdventureAvailable(getEnvironment())||boardMode==='audio'&&isAvailable(),running=active(state.ride)||active(state.round)||active(state.challenge);if(!trail&&(!station||!running&&distance(snapshot?.players?.[selfId]?.position||getPosition(),station.position)>7))setVisible(false);}
   if(!getPresenting()&&visible)setVisible(false);redraw();return true;
  }
  function hitPanel(ray){
@@ -184,6 +201,13 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  function aimFields(ray){const origin=point(ray?.origin),direction=point(ray?.direction);return Object.values(origin).every(Number.isFinite)&&Object.values(direction).every(Number.isFinite)?{origin,direction:[direction.x,direction.y,direction.z]}:{};}
  function worldTrigger(ray,controller='primary'){
   if(disposed||pending)return !!pending;
+  if(funhouseHauntAvailable(getEnvironment())){
+   const target=funhouseInteractionHit(ray,getRoots(),{kind:'haunt',maxDistance:20});
+   if(target){
+    if(target.operation==='start'||target.operation==='haunt-start'){if(!active(state.ride)&&funhouseHauntNear(getPosition(),FUNHOUSE_HAUNT_START))void run('funhouse-haunt',{operation:'start'});else onStatus('Walk to the house lobby lantern and step off your ride to begin the Night Watch.');return true;}
+    if(target.operation==='seal'){const ward=funhouseHauntNextWard(state.haunt);if(!ward)onStatus('Begin the Night Watch at the house lobby lantern.');else if(active(state.ride))onStatus('Step off your ride before sealing a haunted lantern.');else if(ward.id!==target.wardId)onStatus(ward.hint);else if(funhouseHauntNear(getPosition(),ward))void run('funhouse-haunt',{operation:'seal',hauntId:state.haunt.id,wardId:ward.id});else onStatus('Walk closer to '+ward.name+'.');return true;}
+   }
+  }
   if(funhouseAdventureAvailable(getEnvironment())){
    const discovery=funhouseInteractionHit(ray,getRoots(),{kind:'adventure',maxDistance:20});
    if(discovery){
@@ -220,12 +244,12 @@ export function createFunhouseVR({THREE=T,scene,camera,getCamera=()=>camera,getE
  }
  function trigger(ray,controller='primary'){if(pointerDown(ray,controller))return true;if(held.has(controller))return true;const handled=worldTrigger(ray,controller);if(handled)held.add(controller);return handled;}
  function menuItems(){
-  const station=currentStation(),items=[...attractionActions(station),...adventureActions()].map(action=>({id:'funhouse:'+action.id,label:action.label,disabled:!action.enabled,run:()=>action.enabled?action.run():onStatus(action.id.startsWith('adventure')?'Follow the trail hint and move close to the correct discovery.':'Wait for the next attraction cue.')}));
+  const station=currentStation(),items=[...attractionActions(station),...adventureActions(),...(station?.kind==='haunt'?[]:hauntActions())].map(action=>({id:'funhouse:'+action.id,label:action.label,disabled:!action.enabled,run:()=>action.enabled?action.run():onStatus(action.id.startsWith('haunt')?'Follow the Night Watch hint and move close to the glowing lantern.':action.id.startsWith('adventure')?'Follow the trail hint and move close to the correct discovery.':'Wait for the next attraction cue.')}));
   if(isAvailable())items.push({id:'funhouse:audio-board',label:'Clown voices, sounds & music',run:showAudio},{label:visible?'Hide attraction controls':'Show attraction controls',run:()=>setVisible(!visible)},{label:'Recenter attraction board',run:()=>{setVisible(true);anchor();}});
   return items;
  }
  function release(){held.clear();hovered=null;redraw();}
  function tick(){if(disposed||!visible)return;if(!getPresenting())setVisible(false);if(pendingRideAnchor){const tracked=getCamera(),pose=pendingRideAnchor.position;tracked?.updateWorldMatrix?.(true,false);tracked?.getWorldPosition?.(head);if(pose&&Math.hypot(head.x-pose.x,head.z-pose.z)<2.5){anchor();pendingRideAnchor=null;}}const ridePosition=liveRidePosition();if(ridePosition&&boardRideFollow?.id===state.ride.id&&!pendingRideAnchor){root.position.x+=ridePosition.x-boardRideFollow.position.x;root.position.y+=ridePosition.y-boardRideFollow.position.y;root.position.z+=ridePosition.z-boardRideFollow.position.z;boardRideFollow.position={...ridePosition};}if(!ridePosition)boardRideFollow=null;if(now()-lastTickAt<80)return;lastTickAt=now();redraw();}
  function reset(){generation++;pending=false;state={};latestActors=null;sequence=-1;selfId=null;selectedId=null;message='';lastSignature='';worldId=null;lastTickAt=-Infinity;boardMode='attraction';actionPage=0;observedRideId=pendingRideAnchor=boardRideFollow=null;held.clear();visible=available=false;root.visible=false;buttons=[];}
- return {root,update:receive,receive,tick,showAudio,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,mode:boardMode,page:actionPage,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,audioSettings:audioSettings(),audioCaption:audioCaption(),message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null,adventure:state.adventure?{...state.adventure}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
+ return {root,update:receive,receive,tick,showAudio,showHaunt,setVisible,isActive:isAvailable,pointerDown,pointerMove,pointerUp,trigger,worldTrigger,menuItems,release,reset,snapshot:()=>({visible,disposed,pending,mode:boardMode,page:actionPage,stationId:currentStation()?.id||null,kind:currentStation()?.kind||null,audioSettings:audioSettings(),audioCaption:audioCaption(),message:message||state.message||'',drawCount,position:root.position.toArray(),quaternion:root.quaternion.toArray(),buttons:buttons.map(({id,label,enabled,position,width,height})=>({id,label,enabled,position:[...position],width,height})),round:state.round?{...state.round}:null,ride:state.ride?{...state.ride}:null,challenge:state.challenge?{...state.challenge}:null,adventure:state.adventure?{...state.adventure}:null,haunt:state.haunt?{...state.haunt}:null}),dispose(){if(disposed)return;reset();disposed=true;root.removeFromParent();geometry.dispose();material.dispose();texture.dispose();}};
 }

@@ -4,6 +4,8 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 import {createFunhouseVR} from '../public/js/funhouse-vr.js';
 import {FUNHOUSE_STATIONS} from '../public/js/clown-funhouse-config.js';
 import {FUNHOUSE_ADVENTURE_START,FUNHOUSE_ADVENTURE_CLUES} from '../public/js/funhouse-adventure-rules.js';
+import {FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS} from '../public/js/funhouse-haunt-rules.js';
+import {nearestFunhouseStation} from '../public/js/clown-funhouse-ui.js';
 import {funhouseRidePose} from '../public/js/funhouse-experience-rules.js';
 
 const turns=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
@@ -213,4 +215,41 @@ test('ride stop controls and ball colors match the server contract while comfort
  const pit=FUNHOUSE_STATIONS.find(station=>station.kind==='ballpit'),balls=fixture('ballpit',{state:{challenge:{id:'balls',kind:'ballpit',stationId:pit.id,status:'active',endsAt:Date.now()+20000,targetId:1,score:0}}});
  const actions=balls.vr.menuItems();assert.ok(actions.some(item=>item.label==='● Toss at Gold'));assert.ok(actions.some(item=>item.label==='Toss at Cyan'));
  await actions.find(item=>item.label==='● Toss at Gold').run();assert.deepEqual(balls.commands[0],{action:'funhouse-action',stationId:pit.id,operation:'toss',targetId:1});balls.vr.dispose();
+});
+
+
+test('the house lobby exposes Night Watch only in the permanent unedited funhouse',()=>{
+ const start=FUNHOUSE_HAUNT_START.position;
+ assert.equal(nearestFunhouseStation({id:'muzikaz-clown-funhouse'},start).kind,'haunt');
+ assert.equal(nearestFunhouseStation({id:'ordinary-world'},start),null);
+ assert.equal(nearestFunhouseStation({id:'muzikaz-clown-funhouse',builderScene:{sourceFunhouse:{editableItems:true}}},start),null);
+});
+
+test('Night Watch headset controls show live hints and preserve stop access away from the lobby',async()=>{
+ const state={},f=fixture('welcome',{state});Object.assign(f.position,FUNHOUSE_HAUNT_START.position);
+ f.vr.update(f.snapshot(),'me');
+ const start=f.vr.menuItems().find(item=>item.id==='funhouse:haunt-start');assert.equal(start.disabled,false);
+ state.haunt={id:'watch',status:'active',startedAt:Date.now(),endsAt:Date.now()+180000,wardIndex:0,sealed:[],score:0};
+ await start.run();assert.deepEqual(f.commands[0],{action:'funhouse-haunt',operation:'start'});
+ Object.assign(f.position,FUNHOUSE_HAUNT_WARDS[0].position);f.vr.update(f.snapshot(state),'me');f.vr.setVisible(true);
+ assert.equal(f.vr.snapshot().mode,'haunt');assert.equal(f.vr.snapshot().buttons.find(item=>item.id==='haunt-seal').enabled,true);
+ await f.vr.menuItems().find(item=>item.id==='funhouse:haunt-seal').run();
+ assert.deepEqual(f.commands[1],{action:'funhouse-haunt',operation:'seal',hauntId:'watch',wardId:'nursery-lantern'});
+ Object.assign(f.position,{x:45,y:.02,z:45});f.vr.update(f.snapshot(state),'me');
+ assert.equal(f.vr.snapshot().visible,true,'quest board stays open away from ordinary attractions');
+ assert.equal(f.vr.snapshot().buttons.find(item=>item.id==='haunt-seal').enabled,false);
+ await f.vr.menuItems().find(item=>item.id==='funhouse:haunt-stop').run();assert.deepEqual(f.commands[2],{action:'funhouse-haunt',operation:'stop',hauntId:'watch'});
+ f.vr.reset();assert.equal(f.vr.snapshot().haunt,null);assert.equal(f.vr.snapshot().visible,false);f.vr.dispose();
+});
+
+test('physical haunted lantern rays validate proximity and order while a held trigger seals once',async()=>{
+ const ward=FUNHOUSE_HAUNT_WARDS[0],root=new THREE.Group(),lantern=new THREE.Group();lantern.position.set(ward.position.x,1.5,ward.position.z-1);root.add(lantern);
+ root.userData.funhouseInteractionTargets=[{kind:'haunt',operation:'seal',wardId:ward.id,root:lantern,radius:.5}];
+ const state={haunt:{id:'watch',status:'active',startedAt:Date.now(),endsAt:Date.now()+180000,wardIndex:0,sealed:[]}},f=fixture('welcome',{roots:[root],state});
+ Object.assign(f.position,ward.position);f.camera.position.set(f.position.x,1.5,f.position.z);
+ const ray={origin:f.camera.position,direction:[0,0,-1]};assert.equal(f.vr.trigger(ray,'left'),true);assert.equal(f.vr.trigger(ray,'left'),true);await turns();
+ assert.equal(f.commands.length,1);assert.deepEqual(f.commands[0],{action:'funhouse-haunt',operation:'seal',hauntId:'watch',wardId:ward.id});f.vr.pointerUp('left');
+ state.haunt={...state.haunt,wardIndex:1,sealed:[ward.id]};f.vr.update(f.snapshot(state),'me');
+ assert.equal(f.vr.worldTrigger(ray),true);await turns();assert.equal(f.commands.length,1);assert.equal(f.statuses.at(-1),FUNHOUSE_HAUNT_WARDS[1].hint);
+ f.vr.dispose();
 });

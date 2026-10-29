@@ -19,7 +19,7 @@ test('the original clown-car waltz loops cleanly in three with restrained callio
 });
 
 test('attraction cues have bounded envelopes, distinctive action shapes and real hit/miss responses',()=>{
- const kinds=['car','car-start','car-stop','honk','water-hit','water-miss','ball-hit','ball-miss','bell','spinner','balance','water','squirt','wind','catch','jackbox','ballpit','toss','ring','maze-finish','dressup','shoes','hat','adventure','laugh'];
+ const kinds=['car','car-start','car-stop','honk','water-hit','water-miss','ball-hit','ball-miss','bell','spinner','balance','water','squirt','wind','catch','jackbox','ballpit','toss','ring','maze-finish','dressup','shoes','hat','adventure','laugh','haunt-start','haunt-seal','haunt-complete','haunt-timeout','haunt-heartbeat','haunt-whisper'];
  for(const kind of kinds){
   const notes=funhouseEffectScore(kind);assert.ok(notes.length>0,kind+' is audible');
   for(const n of notes){assert.ok(n.at>=0&&n.at<2);assert.ok(n.duration>0&&n.duration<=1);assert.ok(n.gain>0&&n.gain<=.12);assert.ok(n.frequency>=40&&n.frequency<=4000);if(n.endFrequency!==undefined)assert.ok(n.endFrequency>=40&&n.endFrequency<=4000);}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Night Watch browser fixture</title></head><body>
+<main></main><button id="audio">Check haunted sound effects</button>
+<script type="module">
+import * as T from '../../public/vendor/three/three.module.min.js';
+import {createClownFunhouseLand} from '../../public/js/environments/clown-funhouse-land.js';
+import {createFunhouseVR} from '../../public/js/funhouse-vr.js';
+import {mountXRGameControls} from '../../public/js/xr-game-controls.js';
+import {funhouseInteractionTargets} from '../../public/js/funhouse-scene-actions.js';
+import {FUNHOUSE_HAUNT_START,FUNHOUSE_HAUNT_WARDS} from '../../public/js/funhouse-haunt-rules.js';
+import {createFunhouseAudioEngine} from '../../public/js/funhouse-audio-engine.js';
+
+const scene=new T.Scene(),rig=new T.Group(),camera=new T.PerspectiveCamera(68,1,.05,150);
+scene.add(rig);rig.add(camera);
+const environment={id:'muzikaz-clown-funhouse'},world=createClownFunhouseLand(environment);scene.add(world);
+const sources=['left','right'].map(handedness=>({handedness,gamepad:{axes:[0,0,0,0],buttons:Array.from({length:6},()=>({pressed:false,value:0}))}}));
+const controllers=[new T.Group(),new T.Group()],session=new T.EventDispatcher(),xr=new T.EventDispatcher();
+session.visibilityState='visible';session.inputSources=sources;session.requestReferenceSpace=async()=>({});
+xr.isPresenting=true;xr.setReferenceSpaceType=()=>{};xr.getController=index=>controllers[index];xr.getCamera=()=>camera;xr.getSession=()=>session;
+session.end=async()=>{xr.isPresenting=false;xr.dispatchEvent({type:'sessionend'});};
+Object.defineProperty(navigator,'xr',{configurable:true,value:{isSessionSupported:async()=>true}});
+let position={...FUNHOUSE_HAUNT_START.position},state={stamps:[],costume:{}},sequence=0;
+window.commands=[];window.combatCalls=0;
+function snapshot(){return {sequence:++sequence,serverTime:Date.now(),selfId:'me',players:{me:{position:{...position},health:100,funhouse:structuredClone(state)}},actors:{},events:[]};}
+function publish(){const value=snapshot();vr.update(value,'me');world.userData.setFunhouseState({funhouse:state},value.serverTime);world.userData.updateFunhouseEffects(performance.now()/1000,true,value.serverTime);scene.updateMatrixWorld(true);return value;}
+function respond(action,fields){
+ const now=Date.now();
+ if(action==='funhouse-haunt'&&fields.operation==='start')state.haunt={id:'fixture-watch',name:'Night Watch',status:'active',startedAt:now,endsAt:now+180000,durationMs:180000,wardIndex:0,sealed:[],score:0,bonus:0,settled:false,hint:FUNHOUSE_HAUNT_WARDS[0].hint,message:'Keep the watch.'};
+ if(action==='funhouse-haunt'&&fields.operation==='seal'){
+  const ward=FUNHOUSE_HAUNT_WARDS[state.haunt.wardIndex];if(fields.wardId!==ward.id)throw Error('Wrong lantern.');
+  state.haunt.sealed.push(ward.id);state.haunt.wardIndex++;state.haunt.lastWardId=ward.id;state.haunt.lastSealedAt=now;state.haunt.score+=35;
+  state.haunt.hint=FUNHOUSE_HAUNT_WARDS[state.haunt.wardIndex]?.hint||'All lanterns sealed.';
+  if(state.haunt.wardIndex===FUNHOUSE_HAUNT_WARDS.length){state.haunt.status='complete';state.haunt.finishedAt=now;state.haunt.settled=true;}
+ }
+ if(action==='funhouse-haunt'&&fields.operation==='stop'){state.haunt.status='cancelled';state.haunt.score=0;}
+ const value=publish();return value;
+}
+const vr=createFunhouseVR({scene,camera,getEnvironment:()=>environment,getPosition:()=>position,getActors:()=>({}),getRoots:()=>[world],getPresenting:()=>xr.isPresenting,getReducedMotion:()=>true,send:async(action,fields)=>{commands.push({action,...fields});return respond(action,fields);}});
+const controls=mountXRGameControls({renderer:{xr},scene,camera,rig,parent:document.querySelector('main'),menuOnEnter:()=>false,menuItems:()=>vr.menuItems(),onTrigger:(_hand,ray,controller)=>{if(!vr.trigger(ray,controller))combatCalls++;},onTriggerEnd:(_hand,_ray,controller)=>vr.pointerUp(controller),onInputRelease:()=>vr.release(),onExit:()=>vr.reset()});
+controllers.forEach((controller,index)=>controller.dispatchEvent({type:'connected',data:sources[index]}));xr.dispatchEvent({type:'sessionstart'});
+const settle=()=>new Promise(resolve=>setTimeout(resolve,0));
+function aim(point,index){const origin=camera.getWorldPosition(new T.Vector3()),direction=point.clone().sub(origin).normalize();controllers[index].position.copy(origin);controllers[index].quaternion.setFromUnitVectors(new T.Vector3(0,0,-1),direction);scene.updateMatrixWorld(true);}
+window.visit=target=>{const point=target==='start'?FUNHOUSE_HAUNT_START:FUNHOUSE_HAUNT_WARDS[target];position={...point.position,z:point.position.z+2.8};camera.position.set(position.x,position.y+1.65,position.z);camera.rotation.set(0,0,0);publish();return point.id;};
+window.pressControl=async(operation,wardId=null,index=1)=>{vr.setVisible(false);const target=funhouseInteractionTargets([world]).find(target=>target.kind==='haunt'&&target.operation===operation&&(!wardId||target.wardId===wardId));if(!target)throw Error('Missing physical haunt control '+operation+' '+wardId);aim(target.position,index);controllers[index].dispatchEvent({type:'selectstart'});await settle();return vr.snapshot();};
+window.release=async(index=1)=>{controllers[index].dispatchEvent({type:'selectend'});await settle();};
+window.rawTrigger=async(index=1)=>{controllers[index].dispatchEvent({type:'selectstart'});await settle();};
+window.runMenu=async id=>{const item=vr.menuItems().find(item=>item.id===id);if(!item||item.disabled)throw Error('Missing/enabled haunt menu item '+id);await item.run();await settle();return vr.snapshot();};
+window.sceneReport=()=>({markers:(world.userData.funhouseHauntMarkers||[]).map(marker=>({id:marker.id,wardId:marker.wardId,lit:marker.highlight.visible,sealed:marker.seal.visible})),reveal:world.userData.funhouseHauntScenery?.reveal?.visible,controls:funhouseInteractionTargets([world]).filter(target=>target.kind==='haunt').map(target=>({operation:target.operation,wardId:target.wardId}))});
+window.expireReveal=()=>{world.userData.updateFunhouseEffects(performance.now()/1000+8,true,Date.now()+8000);return window.sceneReport();};
+window.finishSession=()=>session.end();window.vr=vr;window.controls=controls;window.world=world;window.scene=scene;window.wards=FUNHOUSE_HAUNT_WARDS;window.visit('start');
+
+document.querySelector('#audio').onclick=async()=>{
+ let context,engine;try{
+  context=new AudioContext();const analyser=context.createAnalyser();analyser.fftSize=2048;analyser.connect(context.destination);
+  const preferences={masterMuted:false,effectsMuted:false,effectsVolume:100,spatialAudio:true};
+  const settings={effectsMuted:false,effectsVolume:75};
+  engine=createFunhouseAudioEngine({getContext:()=>context,destination:analyser,getPreferences:()=>preferences,getSettings:()=>settings,getPosition:()=>({x:0,y:1.6,z:0}),getCameraDirection:()=>({x:0,y:0,z:-1})});
+  await engine.unlock();const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  async function peak(ms){let maximum=0;const end=performance.now()+ms;while(performance.now()<end){engine.update(.025);await sleep(25);const values=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(values);maximum=Math.max(maximum,...values.map(Math.abs));}return maximum;}
+  const peaks={};for(const kind of ['haunt-start','haunt-seal','haunt-complete','haunt-timeout','haunt-heartbeat','haunt-whisper']){
+   engine.stop();if(!engine.effect(kind,{key:kind,position:{x:0,y:1.6,z:-1}}))throw Error('Haunted effect rejected: '+kind);
+   if(engine.effect(kind,{key:kind,position:{x:0,y:1.6,z:-1}})!==false)throw Error('Haunted effect replayed its event.');
+   peaks[kind]=await peak(550);if(peaks[kind]<.00001||peaks[kind]>=1)throw Error('Silent or clipped haunt effect '+kind+': '+peaks[kind]);
+  }
+  preferences.masterMuted=true;engine.update(0);await peak(150);if(await peak(120)>.00001)throw Error('Master mute leaked haunted audio.');
+  engine.dispose();if(context.state!=='running')throw Error('Haunted cleanup closed the shared context.');await context.close();window.audioReport={peaks};
+ }catch(error){window.audioError=error.stack||error.message;engine?.dispose();await context?.close();}
+};
+window.ready=true;
+</script></body></html>
