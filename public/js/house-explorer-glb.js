@@ -3096,7 +3096,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(!pouchInventory)return;
     if(!force&&sprayTools.hidden)return;
     const state=pouchSnapshot(),signature=JSON.stringify([state.equippedLabel,state.worldName,...[...state.items,...state.active].map(item=>[item.id,item.name,item.status,item.description,item.disabled,item.image,item.deployedCount])]);
-    if(force||signature!==pouchSignature){pouchSignature=signature;pouchInventory.refresh();}
+    if(force||signature!==pouchSignature){pouchSignature=signature;pouchInventory.refresh(state);}
   }
   pouchInventory=mountToolsPouchInventory({panel:sprayTools,getSnapshot:pouchSnapshot,onBrowse:()=>{closeTools();openPicker('backpack');},onUse:async item=>{
     // Resolve again at activation: ownership or supplies can change while open.

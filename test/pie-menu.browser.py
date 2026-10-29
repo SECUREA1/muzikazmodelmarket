@@ -32,6 +32,9 @@ try:
    preview=page.locator('.tools-pouch-screen .game-pie-preview')
    assert preview.is_visible()
    assert preview.locator('h4').inner_text()=='Tool 0'
+   assert page.evaluate("""()=>{const art=document.querySelector('.tools-pouch-screen .game-pie-preview-art');const original=art.firstChild;for(let i=0;i<100;i++)pieMenu.buttons[0].dispatchEvent(new PointerEvent('pointermove',{bubbles:true}));return art.firstChild===original;}"""), 'Pointer movement over the same tool must reuse its preview'
+   page.evaluate("pieMenu.buttons[0].dataset.pieDescription='Updated tool description'")
+   page.wait_for_function("document.querySelector('.tools-pouch-screen .game-pie-preview p').textContent==='Updated tool description'")
    assert page.locator('.tools-pouch-screen .game-pie-sector').count()==6
    wheel=page.locator('.tools-pouch-screen .game-pie-wheel').bounding_box()
    detail=preview.bounding_box()
