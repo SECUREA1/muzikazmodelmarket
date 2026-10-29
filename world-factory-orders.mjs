@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {plotSpaceId,plotPlayUrl} from './member-plots.mjs';
 import {allocateFactoryLots,returnFactoryLots} from './world-factory-lineage.mjs';
 import {isShippingEnvironment} from './public/js/shipping-config.js';
+import {holdShipmentAtPort} from './world-delivery-runtime.mjs';
 
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
 const terminal=new Set(['cancelled','delivered']);
@@ -28,7 +29,8 @@ export function refreshFactoryOrders(ledger,data,now){
  for(const order of Object.values(ledger.orders)){
   if(terminal.has(order.phase))continue;
   const job=ledger.production[order.productionId],shipments=order.shipmentIds.map(id=>ledger.shipments[id]).filter(Boolean);
-  order.deliveredQuantity=shipments.filter(shipment=>shipment.phase==='delivered').reduce((sum,shipment)=>sum+shipment.quantity,0);
+  order.deliveredQuantity=shipments.reduce((sum,shipment)=>sum+(shipment.deliverySchemaVersion?Number(shipment.deliveredQuantity||0):shipment.phase==='delivered'?shipment.quantity:0),0);
+  order.receivedAtPortQuantity=shipments.filter(shipment=>shipment.seaReceipt||shipment.phase==='delivered').reduce((sum,shipment)=>sum+shipment.quantity,0);
   if(order.deliveredQuantity===order.quantity){order.phase='delivered';order.deliveredAt ||= now;delete order.attentionReason;continue;}
   if(job?.phase==='cancelled'){order.phase='cancelled';order.cancelledAt ||= job.cancelledAt||now;continue;}
   // Once a deed changes hands, hold the paid output. A later owner must never
@@ -36,7 +38,9 @@ export function refreshFactoryOrders(ledger,data,now){
   if(!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId)){
    order.phase='attention';order.attentionReason='Deed ownership changed. Cancel the remaining order to release unsent output; delivered stock stays at its destination.';
   }else if(order.phase!=='attention'){
-   order.phase=job?.phase==='paused'?'paused':job?.phase==='building'?'building':shipments.some(shipment=>shipment.phase==='reserved')?'in-transit':'awaiting-shipping';
+   const tasks=shipments.flatMap(shipment=>(shipment.deliveryTaskIds||[]).map(id=>ledger.deliveryTasks?.[id]).filter(Boolean)),blocked=tasks.find(task=>task.phase==='blocked');
+   order.deliveryBlockedReason=blocked?.blockedReason||null;
+   order.phase=job?.phase==='paused'?'paused':job?.phase==='building'?'building':tasks.some(task=>['courier','dropoff'].includes(task.phase))?'doorstep-delivery':shipments.some(shipment=>shipment.phase==='land-transit')?'land-transit':shipments.some(shipment=>shipment.phase==='port-received')?'port-received':shipments.some(shipment=>shipment.phase==='reserved')?'in-transit':'awaiting-shipping';
   }
   order.updatedAt=now;
  }
@@ -55,7 +59,7 @@ export function stageFactoryOrders(ledger,data,directory,routes,now,createShipme
   if(!Number.isSafeInteger(capacity)||capacity<1)fail('This order has an invalid saved packing plan.');
   let remaining=order.quantity;
   while(remaining){
-   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
+   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),...(order.deliverySchemaVersion?{deliverySchemaVersion:order.deliverySchemaVersion,recipientId:order.ownerId}:{}),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
    ledger.shipments[shipment.id]=shipment;
    allocateFactoryLots(ledger,shipment,{now,lotId:lot.id,orderId:order.id});order.shipmentIds.push(shipment.id);remaining-=quantity;
   }
@@ -81,8 +85,9 @@ export function cancelFactoryOrder(ledger,data,orderId,walletId,requestId,now,on
  for(const shipment of shipments)if(shipment.phase==='queued'){
   shipment.phase='cancelled';shipment.cancelledAt=now;if(shipment.transferTask)shipment.transferTask.phase='cancelled';onReturned(shipment,now);returnFactoryLots(ledger,shipment,{now});
  }
+ for(const shipment of shipments)if(shipment.seaReceipt&&shipment.phase!=='delivered')holdShipmentAtPort(ledger,shipment,now);
  for(const lot of Object.values(ledger.factoryLots))if(lot.reservedOrderId===order.id)delete lot.reservedOrderId;
- order.deliveredQuantity=shipments.filter(shipment=>shipment.phase==='delivered').reduce((sum,shipment)=>sum+shipment.quantity,0);
+ order.deliveredQuantity=shipments.reduce((sum,shipment)=>sum+(shipment.deliverySchemaVersion?Number(shipment.deliveredQuantity||0):shipment.phase==='delivered'?shipment.quantity:0),0);
  order.cancelledQuantity=order.quantity-order.deliveredQuantity;
  order.phase='cancelled';order.cancelledAt=now;order.updatedAt=now;delete order.attentionReason;return order;
 }

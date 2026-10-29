@@ -171,7 +171,7 @@ export function filterSupplyState(state,{walletId,data}={}){
  for(const field of ['production','orders','shipments'])if(Array.isArray(state[field]))output[field]=state[field].filter(record=>visible(record.itemId)||paidByViewer(record));
  const productionIds=new Set((output.production||[]).map(record=>record.id).filter(Boolean)),shipmentIds=new Set((output.shipments||[]).map(record=>record.id).filter(Boolean));
  if(Array.isArray(state.lots))output.lots=state.lots.filter(record=>visible(record.itemId)||productionIds.has(record.productionId));
- for(const field of ['allocations','stockReceipts'])if(Array.isArray(state[field]))output[field]=state[field].filter(record=>visible(record.itemId)||shipmentIds.has(record.shipmentId));
+ for(const field of ['allocations','stockReceipts','deliveryTasks','portReceipts','portEscrow','dropoffReceipts'])if(Array.isArray(state[field]))output[field]=state[field].filter(record=>visible(record.itemId)||paidByViewer(record)||shipmentIds.has(record.shipmentId));
  if(Array.isArray(state.challenges))output.challenges=state.challenges.filter(record=>visible(record.itemId));
  return output;
 }

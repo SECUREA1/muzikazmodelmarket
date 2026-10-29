@@ -87,7 +87,7 @@ const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
 const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
 const casinoService = new CasinoService(userDatabase);
-const worldSupply=new WorldSupplyService(userDatabase,{catalog:factoryCatalog,maps:combinedEnvironments});
+const worldSupply=new WorldSupplyService(userDatabase,{catalog:factoryCatalog,maps:combinedEnvironments,rooms:async ids=>Object.fromEntries(await Promise.all(ids.map(async id=>[id,await sharedRooms.get(id)]))),collision:()=>authoritativeRooms.collision,routingWorker:true});
 async function factoryCatalog(){
  const [repository,published,marketplace]=await Promise.all([repositoryGameCatalog({includeEnvironments:false}),readModels(),userDatabase.factoryCatalog()]);
  return [...repository,...published.filter(item=>item.status==='published')].map(item=>normalizeFactoryCatalogItem(item)).filter(Boolean).concat(marketplace);
@@ -978,6 +978,7 @@ const server = createServer(async (req, res) => {
     }
 
     if(['/api/wallet/rewards/progress','/api/wallet/rewards/claim'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const input=await bodyJson(req);if(url.pathname.endsWith('/progress')&&input.scope==='field')return authorizationError(res,403,'SERVER_EVENT_REQUIRED','Gameplay quest progress is recorded by the room server.','rewards');return sendJson(res,200,assetResponse(await userDatabase.memberReward(context.walletId,url.pathname.endsWith('/progress')?'progress':'claim',input)));}
+    if(url.pathname==='/api/world-supply/deliveries'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.projection({mapId:url.searchParams.get('mapId')})));
     if(['/api/world-supply/workspace','/api/world-supply/workspace/recipe','/api/world-supply/workspace/trace'].includes(url.pathname)&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;
       const options={walletId:context.walletId};

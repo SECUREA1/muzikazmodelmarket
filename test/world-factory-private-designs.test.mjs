@@ -10,6 +10,7 @@ import {ownedCustomFactoryItem,marketplaceFactoryCatalog} from '../world-factory
 import {cleanCustomItem} from '../custom-item-rules.mjs';
 import {GAME_ECONOMY} from '../game-economy.mjs';
 import {SHIPPING_ROUTES,SHIPPING_RULES} from '../public/js/shipping-config.js';
+import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 
 const ALICE='account:private-designer',BOB='account:private-recipient';
 const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
@@ -50,12 +51,12 @@ test('private records and every related stock dictionary stay out of public and 
  const f=await fixture(t),data=await f.database.read(),item=registerPrivateFactoryBlueprint(data,ALICE,f.drawing.id),id=item.supplyId,publicId='tool:scanner';
  const privateRecord={itemId:id,name:f.drawing.name},publicRecord={itemId:publicId};
  const state={catalog:[{...item,id},{id:publicId,supplyId:publicId}],transferCatalog:[{...item,id}],worldStock:{[id]:0,[publicId]:1000},factoryStock:{[id]:7,[publicId]:2},availableFactoryStock:{[id]:4,[publicId]:2},maps:[{id:'receiving-map',stock:{[id]:3,[publicId]:4}}]};
- for(const field of ['production','orders','lots','allocations','stockReceipts','shipments','challenges'])state[field]=[privateRecord,publicRecord];
+ for(const field of ['production','orders','lots','allocations','stockReceipts','shipments','challenges','deliveryTasks','portReceipts','portEscrow','dropoffReceipts'])state[field]=[privateRecord,publicRecord];
  for(const walletId of [undefined,BOB]){
   const view=filterSupplyState(state,{walletId,data});
   assert.equal(JSON.stringify(view).includes(id),false);assert.equal(JSON.stringify(view).includes(f.drawing.name),false);
   assert.equal(view.worldStock[publicId],1000);assert.equal(view.availableFactoryStock[publicId],2);assert.equal(view.maps[0].stock[publicId],4);
-  for(const field of ['production','orders','lots','allocations','stockReceipts','shipments','challenges'])assert.deepEqual(view[field],[publicRecord]);
+  for(const field of ['production','orders','lots','allocations','stockReceipts','shipments','challenges','deliveryTasks','portReceipts','portEscrow','dropoffReceipts'])assert.deepEqual(view[field],[publicRecord]);
  }
  const own=filterSupplyState(state,{walletId:ALICE,data});assert.equal(own.catalog.length,2);assert.equal(own.factoryStock[id],7);assert.equal(own.availableFactoryStock[id],4);
  assert.equal(state.catalog.length,2,'filtering must not mutate the authoritative state');
@@ -123,9 +124,10 @@ test('a previous private-design holder retains their paid production and freight
  const ownJob={id:'own-paid-job',itemId:id,ownerId:ALICE,blueprint:{thumbnailUrl:PNG}},otherJob={id:'other-paid-job',itemId:id,ownerId:'account:other-payer'};
  const ownShipment={id:'own-paid-shipment',itemId:id,ownerId:ALICE},otherShipment={id:'other-paid-shipment',itemId:id,ownerId:'account:other-payer'};
  const state={catalog:[{...item,id}],transferCatalog:[{...item,id}],worldStock:{[id]:0},factoryStock:{[id]:7},availableFactoryStock:{[id]:4},maps:[{id:'receiving-map',stock:{[id]:3}}],production:[ownJob,otherJob],orders:[{id:'own-paid-order',itemId:id,ownerId:ALICE},{id:'other-paid-order',itemId:id,ownerId:'account:other-payer'}],shipments:[ownShipment,otherShipment],lots:[{id:'own-lot',itemId:id,productionId:ownJob.id},{id:'other-lot',itemId:id,productionId:otherJob.id}],allocations:[{itemId:id,shipmentId:ownShipment.id},{itemId:id,shipmentId:otherShipment.id}],stockReceipts:[{itemId:id,shipmentId:ownShipment.id},{itemId:id,shipmentId:otherShipment.id}],challenges:[{itemId:id}]};
+ for(const field of ['deliveryTasks','portReceipts','portEscrow','dropoffReceipts'])state[field]=[{itemId:id,shipmentId:ownShipment.id},{itemId:id,shipmentId:otherShipment.id}];
  const view=filterSupplyState(state,{walletId:ALICE,data});
  assert.deepEqual(view.catalog,[]);assert.deepEqual(view.transferCatalog,[]);assert.deepEqual(view.worldStock,{});assert.deepEqual(view.factoryStock,{});assert.deepEqual(view.availableFactoryStock,{});assert.deepEqual(view.maps[0].stock,{});assert.deepEqual(view.challenges,[]);
- for(const field of ['production','orders','shipments','lots','allocations','stockReceipts'])assert.deepEqual(view[field],[state[field][0]],field+' keeps only the payer’s linked record');
+ for(const field of ['production','orders','shipments','lots','allocations','stockReceipts','deliveryTasks','portReceipts','portEscrow','dropoffReceipts'])assert.deepEqual(view[field],[state[field][0]],field+' keeps only the payer’s linked record');
  assert.equal(view.production[0].blueprint.thumbnailUrl,PNG,'the payer retains their purchased immutable blueprint snapshot');
  for(const walletId of [undefined,'account:unrelated-member'])assert.equal(JSON.stringify(filterSupplyState(state,{walletId,data})).includes(id),false);
  assert.equal(filterSupplyState(state,{walletId:BOB,data}).production.length,2,'the current design holder retains existing SKU visibility');
@@ -172,4 +174,33 @@ test('the original payer can trace completed private lots, freight and delivery 
  }
  await assert.rejects(f.service.trace({shipmentId:shipment.id,walletId:'account:unrelated-member'}),{statusCode:404});
  assert.equal(JSON.stringify(await f.service.state()).includes(itemId),false);
+});
+
+test('private deed cargo stays in port escrow until the verified truck and doorstep handover and its payer retains road history after resale',async t=>{
+ const f=await fixture(t),deed=await f.database.claimLand({walletId:ALICE,worldId:'private-road-plot',name:'Private road plot',priceMzk:0,requestId:'claim-private-road-plot'}),map={id:'plot-'+deed.id,name:'Private road plot',deedId:deed.id,memberPlot:true,builderScene:{layout:'grand-floor',mapSize:80,objects:[]},spawn:{x:0,y:0,z:0}},environment={id:'hormuz-shipping'};
+ const service=new WorldSupplyService(f.database,{catalog:()=>f.database.factoryCatalog(),maps:async()=>[environment,map],collision:new ServerBuilderCollision(),now:()=>f.now});
+ const {itemId}=await service.action(ALICE,'register-design',{customItemId:f.drawing.id,requestId:'register-private-road-design'}),order=await service.action(ALICE,'order',{deedId:deed.id,itemId,quantity:2,requestId:'order-private-road-design'});
+ let state=await service.state({walletId:ALICE});f.now=state.production.find(row=>row.id===order.productionId).readyAt;state=await service.state({walletId:ALICE});
+ const shipment=state.shipments.find(row=>row.orderId===order.id),identity={walletId:ALICE},player={shipping:{job:null}},startedAt=f.now;
+ await service.shippingAction(identity,{},player,environment,{operation:'reserve',shipmentId:shipment.id,contractId:shipment.contractId});
+ player.shipping.job={id:'private-road-voyage',phase:'loading',contractId:shipment.contractId,environmentId:environment.id,deadline:startedAt+SHIPPING_RULES.contractLimitMs};
+ await service.shippingAction(identity,{},player,environment,{operation:'bind',shipmentId:shipment.id,jobId:player.shipping.job.id});
+ const route=SHIPPING_ROUTES.find(row=>row.id===shipment.contractId);f.now+=120000;
+ await service.deliver(identity,{type:'delivery',shipmentId:shipment.id,jobId:player.shipping.job.id,deliveryId:player.shipping.job.id,contractId:shipment.contractId,cargoId:route.cargoId,units:route.units||4,quality:100,startedAt,departedAt:startedAt+10000,deliveredAt:f.now},environment);
+ state=await service.state({walletId:ALICE});assert.equal(state.shipments.find(row=>row.id===shipment.id).phase,'port-received');assert.equal(state.maps.find(row=>row.id===map.id).stock[itemId],undefined);assert.equal(state.stockReceipts.length,0);assert.equal(state.portEscrow.find(row=>row.shipmentId===shipment.id).remainingQuantity,2);assert.equal(state.portReceipts.filter(row=>row.shipmentId===shipment.id).length,1);
+ for(const walletId of [undefined,'account:unrelated-member']){
+  const view=await service.state({walletId});assert.equal(JSON.stringify(view).includes(itemId),false);assert.equal(JSON.stringify(view).includes(f.drawing.name),false);
+ }
+ for(let step=0;step<20&&state.shipments.find(row=>row.id===shipment.id).phase!=='delivered';step++){
+  const tasks=state.deliveryTasks.filter(row=>row.shipmentId===shipment.id);assert.ok(tasks.length);assert.equal(tasks.some(row=>row.phase==='blocked'),false);
+  f.now+=Math.max(1000,...tasks.map(row=>Number(row.totalDurationMs)||0))+10;state=await service.state({walletId:ALICE});
+ }
+ assert.equal(state.shipments.find(row=>row.id===shipment.id).phase,'delivered');assert.equal(state.maps.find(row=>row.id===map.id).stock[itemId],2);assert.equal(state.dropoffReceipts.reduce((sum,row)=>sum+row.quantity,0),2);assert.equal(state.stockReceipts.length,1);
+ await f.database.listItem(ALICE,f.drawing.id,31);await f.database.trade({buyerId:BOB,sellerId:ALICE,itemId:f.drawing.id,requestId:'resell-private-road-design',expectedPriceMzk:31});
+ const previousHolder=await service.state({walletId:ALICE});assert.equal(previousHolder.maps.find(row=>row.id===map.id).stock[itemId],undefined);assert.equal(previousHolder.catalog.some(row=>row.id===itemId),false);
+ const trace=await service.trace({productionId:order.productionId,walletId:ALICE});
+ for(const field of ['deliveryTasks','portReceipts','portEscrow','dropoffReceipts']){assert.ok(trace[field].length,field+' remains in the payer’s immutable paid history');assert.equal(trace[field].every(row=>row.shipmentId===shipment.id),true);}
+ assert.equal(trace.stockReceipts[0].quantity,2);assert.equal(trace.production[0].blueprint.thumbnailUrl,PNG);
+ await assert.rejects(service.trace({shipmentId:shipment.id,walletId:'account:unrelated-member'}),{statusCode:404});
+ f.now+=120000;const repeated=await service.state({walletId:BOB});assert.equal(repeated.maps.find(row=>row.id===map.id).stock[itemId],2);assert.equal(repeated.dropoffReceipts.reduce((sum,row)=>sum+row.quantity,0),2);assert.equal(repeated.stockReceipts.length,1);
 });

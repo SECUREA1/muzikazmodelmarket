@@ -7,10 +7,11 @@ import {UserJsonDatabase} from '../user-json-database.mjs';
 import {WorldSupplyService} from '../server-world-supply.mjs';
 import {plotSpaceId} from '../member-plots.mjs';
 import {SHIPPING_ROUTES,SHIPPING_RULES} from '../public/js/shipping-config.js';
+import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 
 const OWNER='deed-order-owner',OTHER='deed-order-other',ITEM='tool:scanner';
 const deed={id:'deed-order-home',worldId:'order-home',name:'Order Home',ownerId:OWNER,status:'active',hostedSpace:{environmentId:'public-commons'}};
-const maps=[{id:'hormuz-shipping',name:'Hormuz Shipping',visibility:'public'},{id:'city-market',name:'City Market'}, {id:plotSpaceId(deed),name:'Order Home plot',memberPlot:true,deedId:deed.id}];
+const maps=[{id:'hormuz-shipping',name:'Hormuz Shipping',visibility:'public'},{id:'city-market',name:'City Market'}, {id:plotSpaceId(deed),name:'Order Home plot',memberPlot:true,deedId:deed.id,builderScene:{layout:'grand-floor',mapSize:80,objects:[]},spawn:{x:0,y:0,z:0}}];
 async function fixture(t){
  const dir=await mkdtemp(join(tmpdir(),'world-factory-orders-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const db=new UserJsonDatabase(join(dir,'users.json'));
@@ -18,7 +19,7 @@ async function fixture(t){
  await db.put(OTHER,{tokens:{MZK:1000000},items:[]});
  await db.transaction(data=>{data.landDeeds[deed.worldId]={...deed};return {};});
  let clock=1000000;
- const options={maps:async()=>maps,now:()=>clock},service=new WorldSupplyService(db,options);
+ const options={maps:async()=>maps,collision:new ServerBuilderCollision(),now:()=>clock},service=new WorldSupplyService(db,options);
  const f={db,service,options,get now(){return clock;},set now(value){clock=value;}};
  f.order=(input={},wallet=OWNER)=>service.action(wallet,'order',{deedId:deed.id,itemId:ITEM,quantity:10,shippingMapId:'hormuz-shipping',contractId:'gulf-gateway',requestId:'order-home-supplies',...input});
  f.ready=async(input={})=>{const order=await f.order(input),state=await service.state();f.now=state.production.find(job=>job.id===order.productionId).readyAt;return {order,state:await service.state()};};
@@ -35,6 +36,17 @@ async function voyage(f,shipment,id='deed-sea-voyage'){
  await f.service.shippingAction(identity,{},player,environment,{operation:'bind',shipmentId:shipment.id,jobId:id});
  const route=SHIPPING_ROUTES.find(route=>route.id===shipment.contractId);
  return {environment,identity,player,result:{type:'delivery',shipmentId:shipment.id,jobId:id,deliveryId:id,contractId:route.id,cargoId:route.cargoId,units:route.units||4,quality:100,startedAt,departedAt:startedAt+10000,deliveredAt:startedAt+120000}};
+}
+async function finishRoadDelivery(f,shipmentId){
+ let state=await f.service.state();
+ for(let step=0;step<20;step++){
+  if(state.shipments.find(row=>row.id===shipmentId)?.phase==='delivered')return state;
+  const tasks=state.deliveryTasks.filter(task=>task.shipmentId===shipmentId);assert.ok(tasks.length,'port cargo must have an authoritative last-mile task');
+  assert.equal(tasks.some(task=>task.phase==='blocked'),false,'the real unobstructed grand-floor map must support road delivery');
+  f.now+=Math.max(1000,...tasks.map(task=>Number(task.totalDurationMs)||0))+10;
+  state=await f.service.state();
+ }
+ assert.fail('The verified truck and courier route did not finish within its server timer phases.');
 }
 
 test('deed factory orders verify current entitlement, destination and sea lane before charging',async t=>{
@@ -81,13 +93,16 @@ test('ready deed batches split within route capacity and reserve their exact lot
  assert.deepEqual(again.shipments,state.shipments);assert.deepEqual(orderOf(again,order.id),current);assert.equal(again.factoryStock[ITEM],7);
 });
 
-test('only verified complete sea delivery fulfills the deed order and credits its plot once',async t=>{
+test('verified sea unloading escrows deed cargo until the actual truck and courier route credits its plot once',async t=>{
  const f=await fixture(t),{order,state}=await f.ready(),shipment=state.shipments.find(row=>row.orderId===order.id),v=await voyage(f,shipment);
  let current=await f.service.state();assert.equal(orderOf(current,order.id).phase,'in-transit');assert.equal(plotStock(current)[ITEM],undefined);
  const before=await snapshot(f);await assert.rejects(f.service.deliver(v.identity,{...v.result,quality:0},v.environment));assert.equal(await snapshot(f),before);
  f.now=v.result.deliveredAt;
- const delivered=await f.service.deliver(v.identity,v.result,v.environment);assert.equal(delivered.phase,'delivered');assert.deepEqual(await f.service.deliver(v.identity,v.result,v.environment),delivered);
- current=await f.service.state();const finished=orderOf(current,order.id);assert.equal(finished.phase,'delivered');assert.equal(finished.deliveredQuantity,10);assert.equal(plotStock(current)[ITEM],10);assert.equal(current.stockReceipts.filter(row=>row.shipmentId===shipment.id).length,1);assert.equal(current.worldStock[ITEM],1000);
+ const delivered=await f.service.deliver(v.identity,v.result,v.environment);assert.equal(delivered.phase,'port-received');assert.deepEqual(await f.service.deliver(v.identity,v.result,v.environment),delivered);
+ current=await f.service.state();assert.equal(plotStock(current)[ITEM],undefined,'sea unloading cannot credit the deed inventory');assert.equal(orderOf(current,order.id).deliveredQuantity,0);assert.equal(current.stockReceipts.filter(row=>row.shipmentId===shipment.id).length,0);assert.equal(current.portReceipts.filter(row=>row.shipmentId===shipment.id).length,1);
+ assert.equal(current.portEscrow.find(row=>row.shipmentId===shipment.id).remainingQuantity,10);assert.equal(current.deliveryTasks.filter(row=>row.shipmentId===shipment.id).reduce((sum,row)=>sum+row.quantity,0),10);
+ current=await finishRoadDelivery(f,shipment.id);const finished=orderOf(current,order.id);assert.equal(finished.phase,'delivered');assert.equal(finished.deliveredQuantity,10);assert.equal(plotStock(current)[ITEM],10);assert.equal(current.stockReceipts.filter(row=>row.shipmentId===shipment.id).length,1);assert.equal(current.dropoffReceipts.filter(row=>row.shipmentId===shipment.id).reduce((sum,row)=>sum+row.quantity,0),10);assert.equal(current.worldStock[ITEM],1000);
+ const finalReceipt=current.stockReceipts.find(row=>row.shipmentId===shipment.id);f.now+=120000;const repeated=await f.service.state();assert.equal(plotStock(repeated)[ITEM],10);assert.deepEqual(repeated.stockReceipts.find(row=>row.shipmentId===shipment.id),finalReceipt);await f.service.deliver(v.identity,v.result,v.environment);assert.equal(plotStock(await f.service.state())[ITEM],10);
  await assert.rejects(f.service.action(OWNER,'cancel',{orderId:order.id,requestId:'cancel-delivered-order'}));assert.equal(plotStock(await f.service.state())[ITEM],10);
 });
 
@@ -143,7 +158,11 @@ test('a partially delivered order can cancel only its unsent remainder after a d
  const f=await fixture(t),quote=await f.service.action(OWNER,'quote',{itemId:ITEM,quantity:1}),route=SHIPPING_ROUTES.find(route=>route.id==='gulf-gateway'),capacity=(route.units||4)*quote.recipe.unitsPerContainer;
  const {order,state}=await f.ready({quantity:capacity+1}),shipments=state.shipments.filter(row=>row.orderId===order.id),first=shipments.find(row=>row.quantity===capacity),unsent=shipments.find(row=>row.quantity===1),v=await voyage(f,first,'partial-order-voyage');
  f.now=v.result.deliveredAt;await f.service.deliver(v.identity,v.result,v.environment);
- let next=await f.service.state();assert.equal(orderOf(next,order.id).deliveredQuantity,capacity);assert.equal(orderOf(next,order.id).phase,'awaiting-shipping');assert.equal(plotStock(next)[ITEM],capacity);
+ let next=await f.service.state();assert.equal(plotStock(next)[ITEM],undefined,'even a split order has no inventory before its truck arrives');assert.equal(orderOf(next,order.id).deliveredQuantity,0);
+ const roadTasks=next.deliveryTasks.filter(row=>row.shipmentId===first.id);assert.ok(roadTasks.length>1,'shipping containers unpack into several capacity-limited road loads');assert.equal(roadTasks.reduce((sum,row)=>sum+row.quantity,0),capacity);
+ for(const task of roadTasks){assert.ok(task.crateCount<=task.truckSlots);assert.equal(task.lotAllocations.reduce((sum,row)=>sum+row.quantity,0),task.quantity);assert.equal(task.lotAllocations.every(row=>row.lotId==='production:'+order.productionId),true);}
+ next=await finishRoadDelivery(f,first.id);assert.equal(orderOf(next,order.id).deliveredQuantity,capacity);assert.equal(orderOf(next,order.id).phase,'awaiting-shipping');assert.equal(plotStock(next)[ITEM],capacity);
+ assert.equal(next.dropoffReceipts.filter(row=>row.shipmentId===first.id).reduce((sum,row)=>sum+row.quantity,0),capacity);assert.equal(next.stockReceipts.filter(row=>row.shipmentId===first.id).reduce((sum,row)=>sum+row.lotAllocations.reduce((count,line)=>count+line.quantity,0),0),capacity,'each doorstep receipt carries its exact unduplicated share of the factory lot');
  const receipt=next.stockReceipts.find(row=>row.shipmentId===first.id);assert.equal(receipt.orderId,order.id);assert.equal(receipt.deedId,deed.id);assert.equal(receipt.productionId,order.productionId);
  const paid=(await f.db.get(OWNER)).tokens.MZK;
  await f.db.transaction(data=>{data.landDeeds[deed.worldId].ownerId=OTHER;return {};});
