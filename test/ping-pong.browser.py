@@ -30,10 +30,18 @@ def run_checks(browser,base,*,mobile=False):
         page.goto(base+'/model-explorer.html?environment=force-training-range&mode=multiplayer&autoplay=1',wait_until='domcontentloaded',timeout=90000)
         page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady',timeout=180000)
         canvas=page.locator('#house-explorer-canvas');canvas.focus()
-        if mobile:page.locator('.ping-pong-toggle').click()
+        if mobile:
+            page.locator('.ping-pong-toggle').click()
+            page.locator('[data-ping-action="equip"]').click()
         else:page.keyboard.press('p')
         page.wait_for_function('MuzikazHouseExplorer.snapshot().pingPong.player?.equipped===true',timeout=15000)
         panel=page.locator('.ping-pong-controls');assert panel.is_visible()
+        panel.locator('[data-ping-close]').click()
+        assert panel.is_hidden()
+        assert snapshot()['pingPong']['player']['equipped']
+        page.wait_for_timeout(150)
+        assert panel.is_hidden()
+        page.locator('.ping-pong-toggle').click()
         panel.locator('[data-ping-action="serve"]').click()
         page.wait_for_function('MuzikazHouseExplorer.snapshot().pingPong.balls?.length===1',timeout=15000)
         value=snapshot()['pingPong'];assert len(value['partners'])==1,value
@@ -93,7 +101,7 @@ def run_fixture(browser,base,*,mobile=False):
     page.route('**/__ping_pong_fixture',lambda route:route.fulfill(body=FIXTURE,content_type='text/html'))
     try:
         page.goto(base+'/__ping_pong_fixture');page.wait_for_function('window.ready')
-        page.locator('.ping-pong-toggle').click();page.locator('[data-ping-action="serve"]').click()
+        page.locator('.ping-pong-toggle').click();page.locator('[data-ping-action="equip"]').click();page.locator('[data-ping-action="serve"]').click()
         assert page.evaluate('report().view.balls.length')==1
         for stroke in ['forehand','backhand','forehand']:
             before=page.evaluate('advanceToIncoming()')
