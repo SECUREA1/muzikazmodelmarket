@@ -48,7 +48,7 @@ test('invalid, stale and failed forecasts restore map weather',async()=>{
  ].map(current=>({ok:true,json:async()=>({current})}))];
  for(const response of responses){
   const states=[],service=createLocalWeather({now:()=>1000000,geolocation:{getCurrentPosition(resolve){resolve({coords:{latitude:1,longitude:2}});}},fetchWeather:async()=>response,onChange:s=>states.push(s)});
-  try{service.start();await flush();assert.deepEqual(states.at(-1),{status:'unavailable',weather:null});}finally{service.dispose();}
+  try{service.start();await flush();assert.equal(states.at(-1).status,'unavailable');assert.equal(states.at(-1).weather,null);}finally{service.dispose();}
  }
 });
 test('local weather survives map changes, restores defaults and respects indoor maps',()=>{
@@ -59,4 +59,24 @@ test('local weather survives map changes, restores defaults and respects indoor 
  scenery.setEnvironment({id:'desert'});sky=scene.getObjectByName('WEATHER_SKY_SPHERE');assert.equal(sky.material.uniforms.rain.value,1);
  scenery.setLocalWeather(null);assert.equal(sky.material.uniforms.rain.value,0);
  scenery.setEnvironment({indoor:true});scenery.setLocalWeather('rain');assert.equal(scene.getObjectByName('WEATHER_SKY_SPHERE'),undefined);scenery.dispose();
+});
+
+test('permission prompts that never finish time out and a manual retry can connect',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ let locate,requests=0;const states=[];
+ const service=createLocalWeather({now:()=>1000000,geolocation:{getCurrentPosition(resolve){locate=resolve;}},fetchWeather:async()=>{requests++;return {ok:true,json:async()=>({current:{time:1000,weather_code:61,temperature_2m:12,wind_speed_10m:10}})};},onChange:state=>states.push(state)});
+ t.after(()=>service.dispose());service.start();assert.equal(states.at(-1).status,'locating');
+ const lateLocation=locate;t.mock.timers.tick(60000);await flush();
+ assert.equal(states.at(-1).reason,'location_timeout');
+ lateLocation({coords:{latitude:1,longitude:2}});await flush();assert.equal(requests,0);
+ service.refresh();locate({coords:{latitude:1,longitude:2}});await flush();
+ assert.equal(states.at(-1).status,'synced');assert.equal(states.at(-1).temperature,12);
+ assert.ok(states.some(state=>state.status==='checking'));
+});
+
+test('blocked location and insecure origins never send forecast requests',async()=>{
+ for(const options of [{secure:false},{geolocation:null},{geolocation:{getCurrentPosition(_resolve,reject){reject({code:1});}}}]){
+  let requests=0;const service=createLocalWeather({...options,fetchWeather:()=>{requests++;},onChange(){}});
+  service.start();await flush();assert.equal(service.state.status,'unavailable');assert.equal(requests,0);service.dispose();
+ }
 });

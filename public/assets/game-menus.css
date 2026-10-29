@@ -457,3 +457,9 @@ dialog.game-fullscreen-dialog.game-companion-dialog{inset:max(64px,env(safe-area
 .world-lobby .world-lobby-detail[data-kind=prison]{border-color:#a77e48;background:linear-gradient(145deg,#39352c,#162425)}
 .world-lobby-detail[data-kind=prison] .world-lobby-join{background:#e9a34b;border-color:#ffdc9c;color:#201c13}
 .world-lobby .world-lobby-filters button[data-world-filter=prison]{border-color:#a77e48;color:#f3d3a2}
+
+.weather-mirroring{padding:14px;margin:12px 0;border:1px solid #709464;border-radius:10px;background:#17251d;color:#ecf5e8;min-width:0;overflow-wrap:anywhere;}
+.weather-mirroring h3{margin:0 0 8px;}
+.weather-mirroring p{line-height:1.5;}
+.weather-mirroring button{min-height:44px;max-width:100%;padding:10px 14px;margin:4px 6px 4px 0;white-space:normal;}
+.weather-mirroring button[hidden]{display:none;}

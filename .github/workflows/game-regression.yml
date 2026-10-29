@@ -94,6 +94,7 @@ jobs:
           python test/airport-operations.browser.py
           python test/mobile-flight-controls.browser.py
           python test/outdoor-scenery.browser.py
+          python test/weather-mirroring.browser.py
           python test/commons-landscape.browser.py
           python test/harbor-operations.browser.py
           python test/vehicle-actions.browser.py
