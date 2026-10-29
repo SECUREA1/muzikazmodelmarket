@@ -22,3 +22,11 @@ The canonical data is `public/js/forest-harvest-config.js`. `server-forest-harve
 ## Validation
 
 Run `node --test test/forest*.test.mjs test/authoritative-forest-harvest.test.mjs` for lifecycle, conservation, persistence, vehicles, inventory, map geometry, UI helpers and compact snapshot checks. `python3 test/forest-harvest.browser.py` runs the real desktop/mobile controls against an isolated server with temporary data, including harvesting through Backpack export. It requires the repository's existing Playwright and Chromium setup.
+
+## Forestry graphics
+
+Timberland uses authored 2,048-pixel color maps, 1,024-pixel normal maps and 512-pixel roughness maps for bark, timber, cut end grain, soil, gravel, painted metal and rubber. Alpha-cut leaf and needle sprays use separate 1,024-pixel textures. Mobile and low-memory browsers load 512-pixel color variants. Textures are shared across instances; changing one item's paint does not change another's finish. Generate the committed texture assets with `python3 scripts/build-forestry-textures.py` (NumPy and Pillow); normal application builds use the baked files.
+
+Tree trunks have flared roots and individual branches; layered leaf sprays replace solid cone canopies. Instanced undergrowth, cut faces, subtle wind, falling trunks, gravel haul roads and smoother distant ridges follow the saved harvest state. Machinery has finer cylinders, bevelled body panels, hydraulic hoses, cab instruments, wipers, seals and grilles. Added cosmetic detail does not change machinery collision surfaces, station approaches or the forest's walkable floor.
+
+Hardware rendering uses a tighter player-follow shadow area and a 2K shadow map, with up to twice the CSS pixel resolution when the display supports it. The existing mobile/software-renderer performance mode remains available. `test/forestry-*.test.mjs` and the forestry graphics model/scene tests check texture dimensions, shared resource disposal, geometry budgets and preserved gameplay surfaces. `python3 test/forest-harvest-graphics.browser.py` verifies desktop/mobile texture loading and shader compilation, and captures trees and machinery for inspection.

@@ -1,0 +1,19 @@
+{
+  "version": "forestry-realism-v2",
+  "albedoResolution": 2048,
+  "normalResolution": 1024,
+  "roughnessResolution": 512,
+  "foliageResolution": 1024,
+  "mobileAlbedoResolution": 512,
+  "surfaces": [
+    "bark",
+    "wood",
+    "endgrain",
+    "soil",
+    "gravel",
+    "metal",
+    "rubber",
+    "foliage",
+    "pineFoliage"
+  ]
+}

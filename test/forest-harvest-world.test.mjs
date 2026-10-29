@@ -45,7 +45,7 @@ test('forestry stations, plot access and haul roads have supported clear ground'
 test('instanced forest follows felling, stump removal and species replacement without static tree colliders',()=>{
  const scene=createBuilderLand(forestHarvestWorld()),tree=FOREST_TREES[0],index=0,matrix=new THREE.Matrix4(),scale=new THREE.Vector3(),position=new THREE.Vector3(),rotation=new THREE.Quaternion();
  const treeScale=species=>{scene.getObjectByName('FOREST_'+species+'_trunk').getMatrixAt(index,matrix);matrix.decompose(position,rotation,scale);return scale.x;};
- assert.equal(scene.userData.forestTreeCount,48);assert.ok(scene.userData.forestDrawBatches<=31);
+ assert.equal(scene.userData.forestTreeCount,48);assert.ok(scene.userData.forestDrawBatches<=36);
  assert.equal(treeScale(tree.speciesId),1);
  scene.userData.setForestHarvestState({trees:{[tree.id]:{...tree,phase:'felled'}},logs:{}});
  assert.equal(treeScale(tree.speciesId),0);
