@@ -50,7 +50,10 @@ export function createFunhouseHauntScenery(){
   mesh(node,faceGeometry,faceMaterial,'FUNHOUSE_HAUNT_GRINNING_MASK',0,1.83,.27);return node;
  }
  for(const [index,ward]of FUNHOUSE_HAUNT_WARDS.entries()){
-  const node=phantom('FUNHOUSE_HAUNT_SHADOW_'+ward.id,ward.position.x+(index%2?.9:-.9),ward.position.z-1.35);node.visible=false;shadows.push(node);
+  // The nursery already has its own standing clown at (19,-17). Keep the
+  // spectral mask beside it, with a clear silhouette from the lantern path.
+  const x=index===0?22:ward.position.x+(index%2?.9:-.9),z=index===0?-18:ward.position.z-1.35;
+  const node=phantom('FUNHOUSE_HAUNT_SHADOW_'+ward.id,x,z);node.visible=false;shadows.push(node);
  }
  const reveal=phantom('FUNHOUSE_HAUNT_FINAL_RINGMASTER',-20,-21.5,2.2);reveal.visible=false;
  // Back-wall eyes and fine corner webs use a single draw call apiece. Their

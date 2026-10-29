@@ -357,7 +357,7 @@ export function mountClownFunhouseUI({stage,getEnvironment,getPosition,getActors
   if(event.target.closest('[data-funhouse-use]'))void command('funhouse-use',{stationId:current.id});
   const dress=event.target.closest('[data-funhouse-dress]');if(dress){const costume={hat:Boolean(state.costume?.hat),shoes:Boolean(state.costume?.shoes)};costume[dress.dataset.funhouseDress]=!costume[dress.dataset.funhouseDress];void command('funhouse-dress',{...costume,stationId:current.id});}
  });
- for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,adventureHUD,hauntHUD,audioPanel])element.addEventListener(type,event=>event.stopPropagation());
+ for(const type of ['pointerdown','click','wheel'])for(const element of [experienceHUD,questStack,adventureHUD,hauntHUD,audioPanel])element.addEventListener(type,event=>event.stopPropagation());
  window.addEventListener('keydown',keydown,true);
  const timer=setInterval(update,100);
  return {open,close:()=>screen.close(),update,receive,receiveAudioCaption,reset,playInWorld,setExpanded:expanded=>{hudExpanded=!!expanded;renderExperienceHUD();},currentStation:()=>current||worldStation||near(),snapshot:()=>state,available:()=>!getImmersive()&&!isActive(state.ride)&&Boolean(near()),visible:()=>screen.dialog.open,dispose(){if(disposed)return;reset();disposed=true;clearInterval(timer);window.removeEventListener('keydown',keydown,true);screen.disconnect();screen.dialog.remove();trigger.remove();passport.remove();audioToggle.remove();experienceHUD.remove();adventureHUD.remove();hauntHUD.remove();questStack.remove();audioPanel.remove();audioCaption.remove();}};

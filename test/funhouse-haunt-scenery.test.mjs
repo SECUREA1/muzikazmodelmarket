@@ -64,6 +64,9 @@ test('spectres, webs and lanterns keep all physical routes, seated views and the
  for(const node of [api.funhouseHauntScenery.root,api.funhouseHauntScenery.reveal,...api.funhouseHauntScenery.shadows])assert.equal(node.userData.collisionDisabled,true);
  assert.ok(root.getObjectByName('FUNHOUSE_HAUNT_CORNER_WEBS'));assert.equal(root.getObjectByName('FUNHOUSE_HAUNT_WATCHING_EYES').count,8);
  const carSeat=api.funhouseRideAnchors.car.root.localToWorld(new T.Vector3(0,1.7,0));assert.ok(!new T.Box3().setFromObject(api.funhouseHauntScenery.root).containsPoint(carSeat));
+ const nursery=api.funhouseHauntScenery.shadows[0],playroom=root.getObjectByName('FUNHOUSE_PLAYROOM_CLOWN');
+ assert.ok(Math.hypot(nursery.position.x-playroom.position.x,nursery.position.z-playroom.position.z)>3,'the nursery spectre keeps its own silhouette beside the existing playroom clown');
+ assert.ok(!new T.Box3().setFromObject(nursery).intersectsBox(new T.Box3().setFromObject(playroom)),'the nursery mask does not overlap the solid-looking performer');
 });
 
 test('market item previews and copied or editable maps allocate no authored Night Watch scenery',t=>{
