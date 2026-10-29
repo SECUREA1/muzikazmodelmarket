@@ -6,7 +6,8 @@ import {worldFactoryRecipe,worldFactoryPlan} from './public/js/world-factory-rec
 import {factoryUnitPriceMzk} from './world-factory-pricing.mjs';
 export {factoryUnitPriceMzk} from './world-factory-pricing.mjs';
 import {cleanWallet} from './user-json-database.mjs';
-import {ensureWorldSupply,supplyItem,factoryLineupItems,factoryProductionItem} from './world-supply.mjs';
+import {ensureWorldSupply,supplyItem,factoryLineupItems,factoryProductionItem,registerPrivateFactoryBlueprint,supplyItemVisibleTo,filterSupplyState} from './world-supply.mjs';
+import {ownedSupplyDeeds,orderDestination,refreshFactoryOrders,stageFactoryOrders,assertOrderFreightAvailable,cancelFactoryOrder} from './world-factory-orders.mjs';
 import {SHIPPING_ID,SHIPPING_ROUTES,SHIPPING_RULES,isShippingEnvironment} from './public/js/shipping-config.js';
 import {distributionChallenges,distributionChallengeForDispatch,distributionChallengeResult} from './server-distribution-challenges.mjs';
 
@@ -41,9 +42,14 @@ function updatePortTransfer(shipment,phase,now){
  if(phase==='delivered')task.deliveredAt ||= now;
  if(phase==='returned')task.returnedAt ||= now;
 }
-function advance(ledger,now){
+function createShipment(fields,route,now){
+ const shipment={...fields,phase:'queued',createdAt:now,transferMode:'simulated-onward-freight'};
+ shipment.transferTask={id:'transfer:'+shipment.id,phase:'awaiting-sea-delivery',fromPortId:route.to,destinationMapId:shipment.destinationMapId,mode:'simulated-onward-freight',quantity:shipment.quantity};portTransferTask(shipment,now);return shipment;
+}
+function advance(ledger,now,data,directory){
  ensureFactoryLineage(ledger,{now});
  for(const job of Object.values(ledger.production))if(advanceFactoryProduction(job,now))recordFactoryOutput(ledger,job,{now});
+ if(directory)stageFactoryOrders(ledger,data,directory,routes,now,createShipment);
  for(const shipment of Object.values(ledger.shipments)){
   portTransferTask(shipment,now);
   if(shipment.phase==='reserved'&&now>=shipment.leaseUntil){
@@ -51,6 +57,7 @@ function advance(ledger,now){
    shipment.phase='queued';delete shipment.jobId;delete shipment.captainId;delete shipment.leaseUntil;updatePortTransfer(shipment,'staged',now);
   }
  }
+ refreshFactoryOrders(ledger,data,now);
 }
 function requestKey(wallet,operation,input){
  if(typeof input.requestId!=='string'||!input.requestId.trim()||input.requestId.length>140)fail('A supply request id is required.',422);
@@ -67,22 +74,24 @@ export class WorldSupplyService {
   const [items,maps]=await Promise.all([this.catalog(),this.maps()]);
   return {items,maps:maps.filter(map=>map.visibility!=='private'&&map.playable!==false)};
  }
- async state({mapId}={}){
+ async state({mapId,walletId}={}){
   const directory=await this.directory(),now=this.now();
   return this.database.transaction(data=>{
-   const ledger=ensureWorldSupply(data,directory);advance(ledger,now);
+   const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);
    if(mapId&&mapId!=='world'&&!directory.maps.some(map=>map.id===mapId))fail('Choose an available map.',404);
-   const catalog=nativeMarketCatalog(factoryLineupItems(data,directory.items),directory.maps).items.filter(item=>{try{factoryUnitPriceMzk(item);return true;}catch{return false;}});
+   const catalog=nativeMarketCatalog(factoryLineupItems(data,directory.items,{walletId}),directory.maps).items.filter(item=>{try{factoryUnitPriceMzk(item);return true;}catch{return false;}});
    const activeIds=new Set(catalog.map(item=>item.supplyId));
    const transferCatalog=Object.values(ledger.catalog).filter(item=>!activeIds.has(item.supplyId)).map(item=>({...item,id:item.supplyId,factoryProducible:false,recipe:recipeSummary(item)}));
-   return {serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))};
+   const availableFactoryStock={...ledger.factoryStock};
+   for(const lot of Object.values(ledger.factoryLots))if(lot.reservedOrderId)availableFactoryStock[lot.itemId]=Math.max(0,(availableFactoryStock[lot.itemId]||0)-lot.availableQuantity);
+   return filterSupplyState({ownerId:walletId||null,deeds:walletId?ownedSupplyDeeds(data,walletId):[],orders:Object.values(ledger.orders),serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,availableFactoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))},{walletId,data});
   });
  }
- async recipe(itemId,count=1){
-  const directory=await this.directory();return this.database.transaction(data=>{ensureWorldSupply(data,directory);const item=factoryProductionItem(data,itemId,directory.items);return {itemId:item.supplyId,...worldFactoryPlan(item,quantity(count),WORLD_SUPPLY_RULES)};});
+ async recipe(itemId,count=1,{walletId}={}){
+  const directory=await this.directory();return this.database.transaction(data=>{ensureWorldSupply(data,directory);const item=factoryProductionItem(data,itemId,directory.items,{walletId});return {itemId:item.supplyId,...worldFactoryPlan(item,quantity(count),WORLD_SUPPLY_RULES)};});
  }
- async trace({productionId,shipmentId,lotId}={}){
-  const state=await this.state();
+ async trace({productionId,shipmentId,lotId,walletId}={}){
+  const state=await this.state({walletId});
   if(!productionId&&!shipmentId&&!lotId)fail('Choose a production batch, stock lot or shipment.',422);
   if(productionId&&!state.production.some(job=>job.id===productionId)||shipmentId&&!state.shipments.some(shipment=>shipment.id===shipmentId)||lotId&&!state.lots.some(lot=>lot.id===lotId))fail('The requested factory record is unavailable.',404);
   const ids=new Set(state.lots.filter(lot=>lot.id===lotId||productionId&&lot.productionId===productionId).map(lot=>lot.id));
@@ -96,20 +105,27 @@ export class WorldSupplyService {
  async action(walletId,operation,input={}){
   const wallet=cleanWallet(walletId),directory=await this.directory(),now=this.now();
   return this.database.transaction(data=>{
-   const ledger=ensureWorldSupply(data,directory);advance(ledger,now);
+   const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);
    const user=data.users[wallet];if(!user)fail('Sign in to operate the world factory.',401);
-   if(operation==='quote')return quoteFor(factoryProductionItem(data,input.itemId,directory.items),input.quantity);
-   const key=requestKey(wallet,operation,input),signature=JSON.stringify([input.itemId,input.quantity,input.destinationMapId,input.shippingMapId,input.contractId,input.productionId,input.shipmentId,input.expectedPriceMzk,input.sourceMapId,...(input.challengeId?[input.challengeId]:[])]);
+   if(operation==='quote')return quoteFor(factoryProductionItem(data,input.itemId,directory.items,{walletId:wallet}),input.quantity);
+   const key=requestKey(wallet,operation,input),signature=JSON.stringify([input.itemId,input.quantity,input.destinationMapId,input.shippingMapId,input.contractId,input.productionId,input.shipmentId,input.expectedPriceMzk,input.sourceMapId,...(input.challengeId?[input.challengeId]:[]),...(input.deedId?[{deedId:input.deedId}]:[]),...(input.orderId?[{orderId:input.orderId}]:[]),...(input.customItemId?[{customItemId:input.customItemId}]:[])]);
    const prior=priorReceipt(ledger,key,signature);if(prior)return prior;
    let result;
-   if(operation==='produce'){
-    const item=factoryProductionItem(data,input.itemId,directory.items),quote=quoteFor(item,input.quantity);
+   if(operation==='register-design'){
+    const item=registerPrivateFactoryBlueprint(data,wallet,input.customItemId);result={itemId:item.supplyId,item};
+   }else if(operation==='produce'||operation==='order'){
+    const item=factoryProductionItem(data,input.itemId,directory.items,{walletId:wallet}),quote=quoteFor(item,input.quantity),target=operation==='order'?orderDestination(data,wallet,{...input,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:input.contractId||'gulf-gateway'},directory,routes):null;
     if(input.expectedPriceMzk!==undefined&&input.expectedPriceMzk!==quote.priceMzk)fail('The factory quote changed. Review the current cost.');
     if(Number(user.tokens.MZK||0)<quote.priceMzk)fail('Not enough MZK for this production batch.');
     if(Object.values(ledger.production).filter(job=>job.ownerId===wallet&&['building','paused'].includes(job.phase)).length>=20)fail('Finish an existing production batch before starting another.');
     user.tokens.MZK-=quote.priceMzk;
     result=createFactoryProduction(quote,{id:randomUUID(),ownerId:wallet,now});ledger.production[result.id]=result;
-    data.transactions.push({id:'factory:'+result.id,type:'WORLD_FACTORY_PRODUCTION',walletId:wallet,requestId:input.requestId,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,itemId:item.supplyId,quantity:quote.quantity,createdAt:new Date(now).toISOString()});
+    if(target){
+     const job=result,order={id:randomUUID(),ownerId:wallet,deedId:target.deed.id,deedName:target.deed.name,destinationMapId:target.destinationMapId,productionId:job.id,itemId:item.supplyId,itemName:item.name,quantity:quote.quantity,priceMzk:quote.priceMzk,shippingMapId:input.shippingMapId||SHIPPING_ID,contractId:target.route.id,shipmentIds:[],deliveredQuantity:0,phase:'building',createdAt:now,updatedAt:now};
+     job.orderId=order.id;ledger.orders[order.id]=order;result=order;
+    }
+    const fundedJob=target?ledger.production[result.productionId]:result;
+    data.transactions.push({id:'factory:'+fundedJob.id,type:'WORLD_FACTORY_PRODUCTION',walletId:wallet,requestId:input.requestId,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,itemId:item.supplyId,quantity:quote.quantity,...(target?{orderId:result.id,deedId:result.deedId}:{}),createdAt:new Date(now).toISOString()});
    }else if(operation==='pause'||operation==='resume'){
     const job=own(ledger.production,input.productionId)&&ledger.production[input.productionId];
     if(!job||job.ownerId!==wallet)fail('This production batch is not yours.',403);
@@ -117,6 +133,7 @@ export class WorldSupplyService {
    }else if(operation==='dispatch'){
     const item=supplyItem(data,input.itemId),count=quantity(input.quantity),destinationMapId=input.destinationMapId,sourceMapId=input.sourceMapId||'factory',shippingMapId=input.shippingMapId||SHIPPING_ID,contractId=input.contractId||'gulf-gateway',route=routes.find(route=>route.id===contractId);
     if(!route)fail('Choose a shipping lane with a destination port.',422);
+    if(!supplyItemVisibleTo(data,item.supplyId,wallet))fail('This factory blueprint belongs to another member.',403);
     const recipe=worldFactoryRecipe(item),containerSlots=route.units||4,maxShipmentQuantity=containerSlots*recipe.unitsPerContainer;
     if(count>maxShipmentQuantity)fail('This manifest carries up to '+maxShipmentQuantity+' '+item.name+' units ('+recipe.unitsPerContainer+' per container). Split the batch or choose a larger manifest.',422);
     const packing={recipeId:recipe.id,unitsPerContainer:recipe.unitsPerContainer,containersRequired:Math.ceil(count/recipe.unitsPerContainer),containerSlots,maxShipmentQuantity,sealed:true};
@@ -128,9 +145,11 @@ export class WorldSupplyService {
     const sourceStock=sourceMapId==='factory'?ledger.factoryStock:sourceMapId==='world'?ledger.worldStock:ledger.maps[sourceMapId].stock;
     if((sourceStock[item.supplyId]||0)<count)fail(sourceMapId==='factory'?'Complete enough factory production before dispatching this item.':'The source warehouse has insufficient stock for this transfer.');
     if(sourceMapId!=='factory')sourceStock[item.supplyId]-=count;
-    result={id:randomUUID(),ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing,phase:'queued',sourceMapId,destinationMapId,shippingMapId,contractId,createdAt:now,transferMode:'simulated-onward-freight',...(challenge?{challenge}: {})};result.transferTask={id:'transfer:'+result.id,phase:'awaiting-sea-delivery',fromPortId:route.to,destinationMapId,mode:'simulated-onward-freight',quantity:count};portTransferTask(result,now);ledger.shipments[result.id]=result;allocateFactoryLots(ledger,result,{now});
+    result=createShipment({id:randomUUID(),ownerId:wallet,itemId:item.supplyId,itemName:item.name,quantity:count,packing,sourceMapId,destinationMapId,shippingMapId,contractId,...(challenge?{challenge}:{})},route,now);ledger.shipments[result.id]=result;allocateFactoryLots(ledger,result,{now});
    }else if(operation==='cancel'){
-    if(input.productionId){
+    const linkedProduction=input.productionId&&ledger.production[input.productionId],linkedShipment=input.shipmentId&&ledger.shipments[input.shipmentId],orderId=input.orderId||linkedProduction?.orderId||linkedShipment?.orderId;
+    if(orderId){result=cancelFactoryOrder(ledger,data,orderId,wallet,input.requestId,now,(shipment,time)=>updatePortTransfer(shipment,'returned',time));}
+    else if(input.productionId){
      const job=own(ledger.production,input.productionId)&&ledger.production[input.productionId];if(!job||job.ownerId!==wallet)fail('This production batch is not yours.',403);
      if(!['building','paused'].includes(job.phase))fail('Only a batch still being built can be cancelled.');
      job.phase='cancelled';job.cancelledAt=now;user.tokens.MZK+=job.priceMzk;
@@ -143,6 +162,7 @@ export class WorldSupplyService {
      if(!sourceStock)fail('The source warehouse is unavailable.');if(!returnFactoryLots(ledger,shipment,{now}))sourceStock[shipment.itemId]=(sourceStock[shipment.itemId]||0)+shipment.quantity;result=shipment;
     }
    }else fail('Choose a listed world supply action.',422);
+   refreshFactoryOrders(ledger,data,now);
    user.updatedAt=new Date(now).toISOString();user.revision=Number(user.revision||0)+1;
    // Snapshot receipts: later state changes cannot change a replay response.
    return saveReceipt(ledger,key,signature,JSON.parse(JSON.stringify(result)));
@@ -150,12 +170,14 @@ export class WorldSupplyService {
  }
  async shippingAction(identity,sim,player,environment,command,now=this.now()){
   if(!isShippingEnvironment(environment))fail('Enter a shipping map to carry factory goods.',422);
-  const wallet=cleanWallet(identity.walletId);
+  const wallet=cleanWallet(identity.walletId),directory=await this.directory();
   return this.database.transaction(data=>{
-   const ledger=ensureWorldSupply(data);advance(ledger,now);
+   const ledger=ensureWorldSupply(data,directory);advance(ledger,now,data,directory);
    const shipment=own(ledger.shipments,command.shipmentId)&&ledger.shipments[command.shipmentId];if(!shipment)fail('This factory shipment is unavailable.',404);
    if(shipment.shippingMapId!==environment.id)fail('Enter the assigned shipping map to collect this manifest.');
    if(command.operation==='reserve'){
+    if(!supplyItemVisibleTo(data,shipment.itemId,wallet))fail('Only the current design owner can captain this private factory freight.',403);
+    assertOrderFreightAvailable(ledger,data,shipment);
     if(activePhases.has(player.shipping?.job?.phase))fail('Finish or cancel your current manifest first.');
     if(shipment.phase!=='queued')fail('Another captain has reserved this shipment or it has already finished.');
     if(command.contractId!==shipment.contractId)fail('Choose the shipping route assigned to these factory goods.',422);
@@ -185,6 +207,8 @@ export class WorldSupplyService {
    const ledger=ensureWorldSupply(data),shipment=own(ledger.shipments,result.shipmentId)&&ledger.shipments[result.shipmentId];
    if(!shipment||shipment.captainId!==wallet||shipment.jobId!==result.jobId||result.deliveryId!==result.jobId||shipment.shippingMapId!==environment.id||shipment.contractId!==result.contractId)fail('This sea delivery does not match the reserved factory manifest.',422);
    if(shipment.phase==='delivered')return shipment;
+   assertOrderFreightAvailable(ledger,data,shipment);
+   if(!supplyItemVisibleTo(data,shipment.itemId,wallet))fail('This private design is no longer authorized for this captain.',403);
    if(shipment.phase!=='reserved'||now>=shipment.leaseUntil)fail('The factory shipment reservation expired.');
    const route=routes.find(route=>route.id===shipment.contractId);
    const validTimes=[result.startedAt,result.departedAt,result.deliveredAt].every(time=>Number.isSafeInteger(time)&&time>=0),minimumHandlingMs=SHIPPING_RULES.loadingSeconds*((route?.units||4)*2-2)*1000;
@@ -194,8 +218,9 @@ export class WorldSupplyService {
    if(!Number.isSafeInteger(stock[shipment.itemId]))fail('The destination inventory is at capacity.');
    Object.assign(shipment,{phase:'delivered',deliveredAt:now,deliveryId:result.deliveryId,transferTask:{id:'transfer:'+shipment.id,phase:'delivered',fromPortId:route.to,destinationMapId:shipment.destinationMapId,mode:'simulated-onward-freight',quantity:shipment.quantity}});
    updatePortTransfer(shipment,'delivered',now);
-   ensureFactoryLineage(ledger,{now});deliverFactoryLots(ledger,shipment,{now});ledger.factoryStockReceipts[shipment.id]={id:'stock:'+shipment.id,shipmentId:shipment.id,deliveryId:result.deliveryId,itemId:shipment.itemId,quantity:shipment.quantity,destinationMapId:shipment.destinationMapId,receivedAt:now,lotAllocations:ledger.factoryLotAllocations[shipment.id]?.lots||[],quality:result.quality};
+   ensureFactoryLineage(ledger,{now});deliverFactoryLots(ledger,shipment,{now});ledger.factoryStockReceipts[shipment.id]={id:'stock:'+shipment.id,shipmentId:shipment.id,deliveryId:result.deliveryId,itemId:shipment.itemId,quantity:shipment.quantity,destinationMapId:shipment.destinationMapId,receivedAt:now,lotAllocations:ledger.factoryLotAllocations[shipment.id]?.lots||[],quality:result.quality,...(shipment.orderId?{orderId:shipment.orderId,deedId:shipment.deedId,productionId:shipment.productionId}:{})};
    if(shipment.challenge)shipment.challengeResult=distributionChallengeResult(shipment,result,now);
+   refreshFactoryOrders(ledger,data,now);
    return shipment;
   });
  }

@@ -935,10 +935,17 @@ const server = createServer(async (req, res) => {
     }
 
     if(['/api/wallet/rewards/progress','/api/wallet/rewards/claim'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const input=await bodyJson(req);if(url.pathname.endsWith('/progress')&&input.scope==='field')return authorizationError(res,403,'SERVER_EVENT_REQUIRED','Gameplay quest progress is recorded by the room server.','rewards');return sendJson(res,200,assetResponse(await userDatabase.memberReward(context.walletId,url.pathname.endsWith('/progress')?'progress':'claim',input)));}
+    if(['/api/world-supply/workspace','/api/world-supply/workspace/recipe','/api/world-supply/workspace/trace'].includes(url.pathname)&&req.method==='GET'){
+      const context=await memberContext(req,res);if(!context)return;
+      const options={walletId:context.walletId};
+      if(url.pathname.endsWith('/recipe'))return sendJson(res,200,assetResponse(await worldSupply.recipe(url.searchParams.get('itemId'),Number(url.searchParams.get('quantity')||1),options)));
+      if(url.pathname.endsWith('/trace'))return sendJson(res,200,assetResponse(await worldSupply.trace({...options,productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
+      return sendJson(res,200,assetResponse(await worldSupply.state({...options,mapId:url.searchParams.get('mapId')||undefined})));
+    }
     if(url.pathname==='/api/world-supply/recipe'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.recipe(url.searchParams.get('itemId'),Number(url.searchParams.get('quantity')||1))));
     if(url.pathname==='/api/world-supply/trace'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.trace({productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
     if(url.pathname==='/api/world-supply'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.state({mapId:url.searchParams.get('mapId')||undefined})));
-    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|dispatch|cancel|pause|resume)$/);
+    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|order|register-design|dispatch|cancel|pause|resume)$/);
     if(supplyAction&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
       return sendJson(res,200,assetResponse(await worldSupply.action(context.walletId,supplyAction[1],await bodyJson(req))));

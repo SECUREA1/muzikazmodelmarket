@@ -25,7 +25,7 @@ export async function loadAtlasPlotScene(environment,snapshot,renderer,{current=
    if(!object&&definition?.generated)object=createGeneratedAsset(definition);
    if(!object&&asset.renderKind==='paint-stroke')object=createSolidPaint(THREE,asset);
    const url=definition?.modelUrl||asset.modelUrl;
-   if(!object&&url){try{object=(await loader.loadOne(url,0,1)).scene;prepareAuthoredBuilderModel(object,{...definition,targetHeight:asset.targetHeight||definition?.targetHeight});}catch{missing.push(item.id);}}
+   if(!object&&url){try{object=(await loader.loadOne(url,0,1)).scene;object=prepareAuthoredBuilderModel(object,{...definition,targetHeight:asset.targetHeight||definition?.targetHeight,configuration:asset.configuration||definition?.configuration});}catch{missing.push(item.id);}}
    if(object){object.traverse(mesh=>{if(!mesh.isMesh)return;for(const material of [].concat(mesh.material||[])){if(item.paint!==undefined)material.color?.setHex(item.paint);else if(item.materialSettings?.useAccent)material.color?.lerp(new THREE.Color(item.materialSettings.accent),.38);}});place(object,item);}else if(item.modelId)missing.push(item.id);
   },{current});
   if(!prepared)throw Object.assign(new Error('Scene loading cancelled'),{name:'AbortError'});

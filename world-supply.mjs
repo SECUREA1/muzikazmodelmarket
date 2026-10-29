@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {GAME_ECONOMY,CARE_SUPPLIES} from './game-economy.mjs';
+import {ownedCustomFactoryItem} from './world-factory-catalog.mjs';
 
 export const INITIAL_WORLD_STOCK=1000;
 const fail=(message,statusCode=422)=>{throw Object.assign(new Error(message),{statusCode});};
@@ -48,16 +49,23 @@ export function canonicalSupplyId(item){
  return null;
 }
 
-function register(ledger,item){
+function register(ledger,item,{initialStock=item?.privateFactoryBlueprint?0:INITIAL_WORLD_STOCK}={}){
  if(!physical(item))return;
  const aliases=aliasesFor(item),known=aliases.map(alias=>own(ledger.aliases,alias)?ledger.aliases[alias]:null).find(Boolean);
  const canonical=canonicalSupplyId(item),id=item.factoryVariant?canonical:staticItems.has(canonical)?canonical:known||canonical;
  if(!safeKey(id))fail('A supply item requires a valid catalog identifier.');
  const definition=staticItems.get(id)||{...ledger.catalog[id],...item};
  ledger.catalog[id]={...definition,supplyId:id,sku:definition.sku||id};
+ // Publishing a formerly private design reveals the existing physical SKU;
+ // it does not grant the initial reserve for a second time.
+ if(!item.privateFactoryBlueprint&&ledger.catalog[id].privateFactoryBlueprint){
+  delete ledger.catalog[id].privateFactoryBlueprint;
+  delete ledger.catalog[id].factoryBlueprintOwnerId;
+  delete ledger.catalog[id].factoryBlueprintItemId;
+ }
  // Stock presence, rather than truthiness, is the durable initialization marker.
  // A depleted zero remains zero across restarts and catalog reconciliation.
- if(!own(ledger.worldStock,id))ledger.worldStock[id]=INITIAL_WORLD_STOCK;
+ if(!own(ledger.worldStock,id))ledger.worldStock[id]=initialStock;
  for(const alias of [id,...aliases])if(!own(ledger.aliases,alias)||item.factoryVariant&&!staticAliases.has(alias))ledger.aliases[alias]=id;
  return id;
 }
@@ -98,18 +106,64 @@ export function supplyItem(data,item){
  fail('This item is not registered in the world supply catalog.',404);
 }
 
-export function factoryLineupItems(data,items=[]){
+export function factoryLineupItems(data,items=[],{walletId}={}){
  const ledger=ensureWorldSupply(data),ids=new Set(staticItems.keys());
- for(const item of items)if(physical(item)){
+ for(const item of items)if(physical(item)&&(!item.privateFactoryBlueprint||supplyItemVisibleTo(data,item.supplyId,walletId))){
   try{ids.add(supplyItem(data,item).supplyId);}catch(error){if(error.statusCode!==404)throw error;}
+ }
+ if(walletId)for(const item of Object.values(ledger.catalog)){
+  const customItemId=customBlueprintItemId(item);
+  if(!customItemId)continue;
+  try{ownedCustomFactoryItem(data,walletId,customItemId);ids.add(item.supplyId);}catch{}
  }
  return [...ids].map(id=>ledger.catalog[id]).filter(Boolean);
 }
 
-export function factoryProductionItem(data,id,items=[]){
+export function factoryProductionItem(data,id,items=[],{walletId}={}){
  const item=supplyItem(data,id);
- if(!factoryLineupItems(data,items).some(entry=>entry.supplyId===item.supplyId))fail('This blueprint is no longer publicly listed for new production.',409);
+ if(!factoryLineupItems(data,items,{walletId}).some(entry=>entry.supplyId===item.supplyId))fail('This blueprint is no longer publicly listed for new production.',409);
  return item;
+}
+
+const customBlueprintItemId=item=>item?.factoryBlueprintItemId||(String(item?.supplyId||'').startsWith('blueprint:custom:')?item.supplyId.slice('blueprint:custom:'.length):null);
+function customBlueprintOwner(data,item){
+ const customItemId=customBlueprintItemId(item);if(!customItemId)return null;
+ return Object.entries(data.users||{}).find(([,user])=>user.items?.some(source=>source.id===customItemId&&source.type==='custom-item'&&source.source==='server-custom-library'))?.[0]||null;
+}
+
+export function registerPrivateFactoryBlueprint(data,walletId,customItemId){
+ const item=ownedCustomFactoryItem(data,walletId,customItemId),ledger=ensureWorldSupply(data),existing=ledger.catalog[item.supplyId];
+ // Existing public blueprints remain public and keep their authoritative
+ // published price and stock. Private development cannot unpublish a listing.
+ if(existing&&!existing.privateFactoryBlueprint)return existing;
+ register(ledger,item,{initialStock:0});
+ return ledger.catalog[item.supplyId];
+}
+
+export function supplyItemVisibleTo(data,itemId,walletId){
+ let item;
+ try{item=supplyItem(data,itemId);}catch{return false;}
+ return !item.privateFactoryBlueprint||!!walletId&&customBlueprintOwner(data,item)===String(walletId).trim().toLowerCase();
+}
+
+/** Private design ownership controls catalog and stock visibility. A payer
+ * retains their own immutable manufacturing and freight history after selling
+ * the design, so they can inspect or cancel already-funded work. */
+export function filterSupplyState(state,{walletId,data}={}){
+ const viewer=String(walletId||'').trim().toLowerCase(),paidByViewer=record=>!!viewer&&record.ownerId===viewer;
+ const definitions=new Map([...(state.catalog||[]),...(state.transferCatalog||[])].map(item=>[item.supplyId||item.id,item]));
+ const visible=id=>{if(data)return supplyItemVisibleTo(data,id,walletId);const item=definitions.get(id);return !!item&&(!item.privateFactoryBlueprint||!!walletId&&item.factoryBlueprintOwnerId===walletId);};
+ const stock=source=>Object.fromEntries(Object.entries(source||{}).filter(([id])=>visible(id)));
+ const output={...state};
+ for(const field of ['catalog','transferCatalog'])if(Array.isArray(state[field]))output[field]=state[field].filter(item=>visible(item.supplyId||item.id)).map(item=>item.privateFactoryBlueprint&&data?{...item,factoryBlueprintOwnerId:customBlueprintOwner(data,item)}:item);
+ for(const field of ['worldStock','factoryStock','availableFactoryStock'])if(state[field])output[field]=stock(state[field]);
+ if(Array.isArray(state.maps))output.maps=state.maps.map(map=>({...map,stock:stock(map.stock)}));
+ for(const field of ['production','orders','shipments'])if(Array.isArray(state[field]))output[field]=state[field].filter(record=>visible(record.itemId)||paidByViewer(record));
+ const productionIds=new Set((output.production||[]).map(record=>record.id).filter(Boolean)),shipmentIds=new Set((output.shipments||[]).map(record=>record.id).filter(Boolean));
+ if(Array.isArray(state.lots))output.lots=state.lots.filter(record=>visible(record.itemId)||productionIds.has(record.productionId));
+ for(const field of ['allocations','stockReceipts'])if(Array.isArray(state[field]))output[field]=state[field].filter(record=>visible(record.itemId)||shipmentIds.has(record.shipmentId));
+ if(Array.isArray(state.challenges))output.challenges=state.challenges.filter(record=>visible(record.itemId));
+ return output;
 }
 
 /** Must be called inside the same database transaction as the purchase or use. */

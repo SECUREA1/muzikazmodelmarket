@@ -8,6 +8,7 @@ import {createBuildingBlock,buildingMaterial} from './public/js/building-materia
 import {createBuilderModel} from './public/js/builder-models-3d.js';
 import {drawingCollisionModel,placementBounds,placementMeshes,placementMeshMatrices} from './public/js/placed-item-collision.js';
 import {environmentGeometry} from './server-glb-geometry.mjs';
+import {prepareAuthoredBuilderModel} from './public/js/authored-builder-models.js';
 export function placedCollisionWorld(actors={},objects={}){
  const root=new THREE.Group(),boxes=[],meshes=[];
  const add=(model,position,rotation,scale,anchor=false,id,actor=false)=>{
@@ -24,13 +25,13 @@ export function placedCollisionWorld(actors={},objects={}){
  for(const actor of Object.values(actors)){
   if(isConstructionMachine(actor)||actor.constructionManaged)continue;
   if((!actor.spawned&&!isWatercraft(actor)&&!isAircraft(actor))||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor))||actor.loot||isBasketball(actor))continue;
-  const asset=actor.asset||{},settings=asset.configuration||{};let model;
+  const asset=actor.asset||{},settings=asset.configuration||{};let model,configuredModel=false;
   if(asset.renderKind==='paint-stroke')model=createSolidPaint(THREE,asset);
   else if(isWatercraft(actor)||isAircraft(actor))model=createBuilderModel(actor.modelId||asset.buildAssetId);
   else if(asset.buildAssetId)model=createBuilderModel(asset.buildAssetId);
   else if(asset.renderKind==='image'||asset.format==='svg')model=drawingCollisionModel(THREE,settings);
-  else if(asset.modelUrl){try{model=environmentGeometry({modelUrl:asset.modelUrl});const size=new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()),target=Number(asset.targetHeight)||size.y;if(size.y>0)model.scale.multiplyScalar(target/size.y);}catch{model=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial());}}
-  if(model){model.scale.multiplyScalar(Number(settings.scale)||1);add(model,actor.position,actor.rotation,actor.scale,!(isWatercraft(actor)||isAircraft(actor)),actor.id,true);}
+  else if(asset.modelUrl){try{model=prepareAuthoredBuilderModel(environmentGeometry({modelUrl:asset.modelUrl}),asset);configuredModel=true;}catch{model=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial());}}
+  if(model){if(!configuredModel)model.scale.multiplyScalar(Number(settings.scale)||1);add(model,actor.position,actor.rotation,actor.scale,!(isWatercraft(actor)||isAircraft(actor)),actor.id,true);}
  }
  return {root,boxes,meshes};
 }

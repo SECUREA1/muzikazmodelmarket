@@ -1,6 +1,7 @@
 import {nativeBuilderItem} from './public/js/native-builder-items.js';
 import {catalogItemPrice} from './public/js/game-item-pricing.js';
 import {factoryUnitPriceMzk} from './world-factory-pricing.mjs';
+import {cleanCustomItem} from './custom-item-rules.mjs';
 // Convert trusted, public marketplace records into manufacturing blueprints.
 // Listing/ownership IDs are references only; production never copies licenses,
 // certificates, deeds or the seller's unique inventory instance.
@@ -47,4 +48,18 @@ export function marketplaceFactoryCatalog({builderListings=[],playerListings=[]}
   if(item)items.push(item);
  }
  return items;
+}
+
+/** A saved design is a blueprint, not a newly granted copy or market listing.
+ * Re-read its current authoritative holder on every manufacture request. */
+export function ownedCustomFactoryItem(data,walletId,customItemId){
+ const owner=String(walletId||'').trim().toLowerCase();
+ const source=data.users?.[owner]?.items?.find(item=>item.id===customItemId&&item.type==='custom-item'&&item.source==='server-custom-library');
+ if(!source)throw Object.assign(new Error('Only the current holder of a saved custom design can develop it in the factory.'),{statusCode:403});
+ // Reuse the save validator. No caller-supplied artwork, model URL, price,
+ // certificate, license or configuration enters a registered blueprint.
+ const clean=cleanCustomItem({...source,requestId:source.saveRequestId||source.id},data.users[owner].items);
+ const item=normalizeFactoryCatalogItem({...clean,id:source.id,type:'custom-item',creatorId:source.creatorId,assetType:'props'},{variantId:'custom:'+source.id,sourceKind:'Private custom development'});
+ if(!item)throw Object.assign(new Error('This saved design cannot be developed in the factory.'),{statusCode:422});
+ return {...item,privateFactoryBlueprint:true,factoryBlueprintItemId:source.id,factoryBlueprintOwnerId:owner};
 }

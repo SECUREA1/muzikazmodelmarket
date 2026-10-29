@@ -26,7 +26,23 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 `world-supply.mjs` maintains the canonical ledger in the existing durable user database. `world-factory-catalog.mjs` normalizes trusted marketplace records and `world-factory-pricing.mjs` validates their production prices. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
 
-`GET /api/world-supply` exposes the counts, jobs, destinations, and eligible shipping maps. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,dispatch,cancel}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
+`GET /api/world-supply` exposes public counts, jobs, destinations, and eligible shipping maps. `GET /api/world-supply/workspace` adds the signed-in holder’s deeds and private blueprints; its `/recipe` and `/trace` routes provide authorized details. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,order,register-design,dispatch,cancel,pause,resume}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
+
+## Ordering from a deed
+
+Choose **Order factory supplies** on an owned deed in Member maps, the member Backpack, or the in-game Marketplace. The link opens the World Item Factory and selects that deed. Choose an item and quantity, select a shipping map and route, then **Get price**. **Build & ship to deed** pays the reviewed MZK price once and creates a durable order linked to its four-stage production batch. Ordinary warehouse production remains available separately.
+
+The server verifies both the active deed and its current inventory holder, resolves the receiving plot itself, and rejects a different supplied destination. Completed packing automatically reserves that batch’s exact production lot into as many route-capacity-safe manifests as required. Earlier shared warehouse stock is left available. **View shipment tasks** filters the board to the order’s voyages. Every manifest still requires loading, securing, the playable sea passage, docking, and full unloading. The receiving plot gets only each verified delivered quantity; production and polling cannot credit it early. Order, deed, batch, lot, voyage and receiving receipt IDs remain connected across restarts.
+
+An unfinished order can be paused, resumed, or cancelled once for its original manufacturing payment. Cancelling packed, unassigned freight returns only its unsent units to factory stock without refunding completed manufacture. Partially delivered orders retain their received units and receipts when the remaining freight is cancelled. Active voyages must be cancelled through shipping first. Selling or revoking the deed holds its outstanding orders; the original buyer can cancel remaining freight and release the output. Held lots are excluded from `availableFactoryStock` and cannot be taken by unrelated dispatches. `factoryStock` remains the complete warehouse accounting count.
+
+## Live custom development
+
+Open **Develop a custom item** in the factory board. Draw with mouse, pen or touch, use starter shapes, or select a GLB already owned in the server Backpack. The local 3D preview supports orbit and zoom; drawings preserve transparent artwork and their collision mask. Name the part, adjust its finish, behavior and production configuration, then **Save blueprint & select for production**. GLB customization uses the owned source model and its validated scale and orientation.
+
+Saving creates one prototype in the custom library and registers the stable `blueprint:custom:<item-id>` for its current holder. It does not list the design publicly, grant bulk units, or debit a manufacturing payment. New private designs start at zero world and factory stock. Request a quote and order them through the same four-stage production and shipping flow. Public supply responses omit their definitions, artwork, production, freight and stock; the authorized workspace includes them. Selling a saved design transfers development access to its current holder. A later public listing reveals the same SKU without seeding another reserve.
+
+Save and registration retries retain their request IDs, so a lost response cannot create another prototype or charge. The server revalidates the saved PNG or owned GLB and uses its trusted production price and recipe. Deeds, ownership licenses, earned rewards and official certificates are not manufactured by custom development.
 
 ## Catalog coverage and verification
 

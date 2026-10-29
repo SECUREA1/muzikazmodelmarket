@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {supplySelectableCatalog,filterSupplyItems,supplyShipmentTask,supplyPortTransferText,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess} from '../public/js/world-supply-ui.js';
+import {supplySelectableCatalog,filterSupplyItems,supplyShipmentTask,supplyPortTransferText,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess,supplyOrderPresentation} from '../public/js/world-supply-ui.js';
 import {shippingSupplyManifest} from '../public/js/shipping-ui.js';
 
 test('supply catalog search covers names, native identities and GLB paths without losing word matching',()=>{
@@ -41,6 +41,15 @@ test('dispatch availability uses exact selected warehouse stock without drawing 
  assert.equal(supplySourceStock(data,'city','chair'),7);
  assert.equal(supplySourceStock(data,'untouched-map','chair'),0);
  assert.equal(supplySourceStock(data,'missing-map','chair'),0);
+ assert.equal(supplySourceStock({...data,availableFactoryStock:{chair:3}},'factory','chair'),3,'deed-held lots cannot be offered as dispatchable shared goods');
+ assert.equal(supplySourceStock({...data,availableFactoryStock:{chair:0}},'factory','chair'),0,'a reserved zero cannot fall back to the warehouse accounting count');
+});
+
+test('deed order presentation preserves partial receipt counts through holds and cancellation',()=>{
+ const partial={phase:'attention',quantity:17,deliveredQuantity:4};
+ assert.deepEqual(supplyOrderPresentation(partial),{label:'Order needs attention',delivered:4,total:17});
+ assert.deepEqual(supplyOrderPresentation({...partial,phase:'cancelled'}),{label:'Order cancelled',delivered:4,total:17});
+ assert.equal(supplyOrderPresentation({...partial,phase:'awaiting-shipping'}).label,'Packed · waiting for a captain');
 });
 
 
