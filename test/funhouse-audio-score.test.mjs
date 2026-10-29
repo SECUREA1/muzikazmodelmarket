@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {FUNHOUSE_MUSIC,midiFrequency,funhouseMusicBar,funhouseEffectScore} from '../public/js/funhouse-audio-score.js';
 
-test('the original clown-car waltz loops cleanly in three with restrained calliope and bass parts',()=>{
+test('the original clown-car waltz loops cleanly in three with layered acoustic instrument parts',()=>{
  assert.equal(FUNHOUSE_MUSIC.beatsPerBar,3);assert.equal(FUNHOUSE_MUSIC.loopBeats,FUNHOUSE_MUSIC.bars*3);
  assert.ok(FUNHOUSE_MUSIC.tempo>=110&&FUNHOUSE_MUSIC.tempo<=150);
  const bars=Array.from({length:FUNHOUSE_MUSIC.bars},(_,i)=>funhouseMusicBar(i));
- assert.ok(bars.every(bar=>bar.length<=15&&bar.some(n=>n.midi<50)&&bar.some(n=>n.midi>80)));
+ assert.ok(bars.every(bar=>bar.length<=20&&bar.some(n=>n.midi<50)&&bar.some(n=>n.midi>80)));
+ assert.deepEqual([...new Set(bars.flat().map(n=>n.instrument))].sort(),['bass','bell','cello','flute','guitar','piano']);
  assert.equal(new Set(bars.map(bar=>JSON.stringify(bar))).size,8,'the loop has an arranged phrase rather than one repeated beep');
  for(const bar of bars)for(const n of bar){
   assert.ok(n.beat>=0&&n.beat+n.duration<=3);assert.ok(n.duration>0&&n.gain>0&&n.gain<=.025);
