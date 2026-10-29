@@ -10,6 +10,7 @@ import {disposeModelResources} from './game-graphics-resources.js';
 import {sampleAvatarMotion,configureAvatarAnimations,updateAvatarAnimations,clearAvatarAnimations} from './avatar-motion.js';
 import {createArticulatedPlayer,updateArticulatedCharacter} from './articulated-character-rig.js';
 import {equipmentArtworkUrl} from './tool-preview-art.js';
+import {equipmentRecordArtwork} from './equipment-art-profile.js';
 import {readGameArray,readGameObject,isGameRecord} from './game-storage.js';
 import {nearestWorldFactoryStation} from './world-item-factory-config.js';
 import {mountPrisonGame} from './prison-game.js';
@@ -488,7 +489,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     nearby:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#39e8ff" stroke="#071007" stroke-width="2" d="m24 3 6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 18l14-2Z"/><circle cx="24" cy="24" r="6" fill="#fff"/></svg>',
     avatar:'<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="15" r="10" fill="#ffdf45" stroke="#071007" stroke-width="2"/><path fill="#9cff00" stroke="#071007" stroke-width="2" d="M6 46c1-13 7-19 18-19s17 6 18 19Z"/><path fill="#071007" d="M18 14h3v3h-3zm9 0h3v3h-3Z"/></svg>'
   });
-  const inventoryIcon = (label) => `<span class="rad-pack-icon" aria-hidden="true">${packIcons[String(label).toLowerCase().replace(' fuel','').replace('nearby pickup','nearby')] || packIcons.pickup}</span>`;
+  const inventoryIcon = (label) => {const tool=({'paint gun':'spray','spray fuel':'spray',weapons:'laser','utility tools':'scanner','building tools':'brick','flight tool':'jetpack',health:'medkit',ammo:'heavy-bolt'})[String(label).toLowerCase()],art=equipmentArtworkUrl(tool);if(art)return `<span class="rad-pack-icon" aria-hidden="true"><img src="${art}" alt="" width="48" height="48" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain"></span>`;return `<span class="rad-pack-icon" aria-hidden="true">${packIcons[String(label).toLowerCase().replace(' fuel','').replace('nearby pickup','nearby')] || packIcons.pickup}</span>`;};
   const scaleControl = document.createElement('div'); scaleControl.className = 'house-space-scale'; scaleControl.innerHTML = '<strong>Space size <output>1.0x</output></strong><button type="button" data-space-scale="down" aria-label="Shrink space by 0.1x">−</button><input type="range" min="0.1" max="100" step="0.1" value="1" aria-label="House space size scale"><button type="button" data-space-scale="up" aria-label="Grow space by 0.1x">+</button>';
   const viewControls = document.createElement('div'); viewControls.className = 'house-view-controls'; viewControls.innerHTML = '<strong>View controls <output>Zoom 40%</output></strong><button type="button" data-zoom="in" aria-label="Zoom in">Zoom +</button><button type="button" data-zoom="out" aria-label="Zoom out">Zoom −</button>';
   const controlDock = document.createElement('div'); controlDock.className = 'house-control-dock'; controlDock.setAttribute('aria-label', 'House view and game controls');
@@ -1706,7 +1707,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     return `<span class="backpack-asset-stack backpack-asset-stack--${type}" aria-hidden="true"><svg class="backpack-stack-backdrop" viewBox="0 0 80 80"><circle cx="40" cy="40" r="37"/><path d="M14 51 40 16l26 35-26 15Z"/><path d="M14 51v7l26 15 26-15v-7L40 66Z"/></svg><span class="backpack-stack-art">${artwork}</span><span class="backpack-stack-type">${backpackIcon(type)}</span>${isGlb?'<svg class="backpack-stack-format" viewBox="0 0 34 18"><rect x=".75" y=".75" width="32.5" height="16.5" rx="5"/><text x="17" y="12">GLB</text></svg>':''}</span>`;
   }
   function backpackAssetVisual(asset) {
-    const imageUrl = asset.thumbnailUrl || asset.thumbnail_url || asset.iconUrl || asset.icon_url || asset.imageUrl || asset.image_url || '';
+    const imageUrl = equipmentRecordArtwork(asset) || asset.thumbnailUrl || asset.thumbnail_url || asset.iconUrl || asset.icon_url || asset.imageUrl || asset.image_url || '';
     // Every generated card gets the same complete SVG stack: dimensional land
     // plate, asset art/monogram, type glyph, and a GLB format flag when linked.
     // This also covers API and repository discoveries that have no thumbnail.

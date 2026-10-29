@@ -1,3 +1,4 @@
+import {equipmentRecordArtwork} from './equipment-art-profile.js';
 import {mountPieMenu} from './pie-menu.js';
 
 const CATEGORIES=[['all','All'],['tools','Weapons & tools'],['bricks','Bricks'],['avatars','Avatars'],['pets','Pets'],['wearables','Wearables'],['vehicles','Vehicles'],['items','Items'],['supplies','Supplies'],['lands','Lands']];
@@ -8,6 +9,8 @@ const defaultAction=item=>({tools:'Equip tool',bricks:'Select building item',ava
 
 function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
 function addVisual(parent,item){
+ const artwork=equipmentRecordArtwork(item);
+ if(artwork){const image=element('img');image.src=artwork;image.alt='';image.loading='lazy';image.decoding='async';image.width=image.height=320;parent.append(image);return;}
  if(item.visual?.cloneNode){parent.append(item.visual.cloneNode(true));return;}
  if(item.image){const image=element('img');image.src=item.image;image.alt='';image.loading='lazy';image.addEventListener('error',()=>{image.remove();parent.append(element('span','pouch-item-glyph',GLYPHS[categoryFor(item)]));},{once:true});parent.append(image);return;}
  parent.append(element('span','pouch-item-glyph',GLYPHS[categoryFor(item)]));
