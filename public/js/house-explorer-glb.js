@@ -2236,7 +2236,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   vehicleController.toggle=()=>{
     if(!serverHostedRoom)return localVehicleToggle();
     if(serverVehicleId)return serverCommand('interact');
-    const vehicle=vehicleController.nearest(5),entityId=vehicle?.userData.builderObjectId;
+    const shared=nearbySharedActions().find(action=>action.kind==='vehicle'&&!action.vehicleActive),entityId=shared?.entityId;
     if(!entityId){setStatus('Move closer to an aircraft or vehicle to enter.');return false;}
     return serverCommand('interact',{entityId});
   };

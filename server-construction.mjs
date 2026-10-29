@@ -1,3 +1,4 @@
+import {constructionStructure} from './public/js/construction-workplans.js';
 import {createEarthworks,expandEarthworks,earthworksSurfaceAt,earthworksTake,earthworksDeposit,earthworksPush,earthCargo,earthCargoVolume,refreshEarthworksTotals} from './public/js/construction-earthworks.js';
 import {constructionMachineKind,isConstructionMachine,constructionClamp as clamp,initialConstructionState,craneHookPosition,constructionTarget,stepConstructionHydraulics,stepCraneAlignment,constructionTravelStatus,CONSTRUCTION_LOAD_OFFSET} from './public/js/construction-state.js';
 import {constructionJointPose} from './public/js/construction-kinematics.js';
@@ -12,14 +13,16 @@ const point=(source,fallback)=>Object.fromEntries(Object.entries(fallback).map((
 const event=(sim,now,message)=>{sim.events.push({id:'construction-'+now+'-'+sim.sequence,type:'construction',message,at:now});sim.construction.message=message;};
 export const CONSTRUCTION_CAPACITY=Object.freeze({crane:12,truck:40,excavator:2,bulldozer:0});
 function syncStructure(sim){
- const tower=sim.construction.tower;
- const add=(id,kind,floor,position,size)=>{if(sim.actors[id])return;const asset={id:'builder-material-cube',buildAssetId:'material:cube',name:kind==='facade'?'Tower glazing':'Completed tower '+kind,type:'building-material',format:'procedural-3d'},rotation={x:0,y:0,z:0},scale={x:size.x/1.2,y:size.y/1.2,z:size.z/1.2};sim.actors[id]={id,modelId:'material:cube',asset,position,rotation,scale,active:true,health:1000,spawned:true,constructionManaged:true,constructionStructure:{kind,floor,size},definition:{objectId:id,modelId:'material:cube',asset,transform:{position,rotation,scale},gameplay:{behavior:'decor',destructible:false,health:1000}}};};
+ for(const [structureId,tower]of [['tower',sim.construction.tower],['facility',sim.construction.facility]]){
+ if(!tower)continue;
+ const add=(id,kind,floor,position,size)=>{if(structureId!=='tower')id=id.replace('construction-','construction-'+structureId+'-');if(sim.actors[id])return;const asset={id:'builder-material-cube',buildAssetId:'material:cube',name:kind==='facade'?'Tower glazing':'Completed '+(structureId==='facility'?'facility':'tower')+' '+kind,type:'building-material',format:'procedural-3d'},rotation={x:0,y:0,z:0},scale={x:size.x/1.2,y:size.y/1.2,z:size.z/1.2};sim.actors[id]={id,modelId:'material:cube',asset,position,rotation,scale,active:true,health:1000,spawned:true,constructionManaged:true,constructionStructure:{kind,floor,size,structureId},definition:{objectId:id,modelId:'material:cube',asset,transform:{position,rotation,scale},gameplay:{behavior:'decor',destructible:false,health:1000}}};};
  for(let floor=1;floor<=tower.floors;floor++){
   const y=tower.baseY+floor*tower.floorHeight;add('construction-floor-'+floor,'floor',floor,{x:tower.x,y:y-.16,z:tower.z},{x:tower.width-.4,y:.16,z:tower.depth-.4});
   for(let corner=0;corner<4;corner++)add('construction-column-'+floor+'-'+corner,'column',floor,{x:tower.x+(corner%2?.5:-.5)*tower.width,y:y-tower.floorHeight,z:tower.z+(corner<2?-.5:.5)*tower.depth},{x:.36,y:tower.floorHeight,z:.36});
   const centerY=y-tower.floorHeight/2,height=tower.floorHeight-.7;
-  add('construction-facade-'+floor+'-north','facade',floor,{x:tower.x,y:centerY-height/2,z:tower.z-tower.depth/2+.08},{x:tower.width-.7,y:height,z:.08});
-  add('construction-facade-'+floor+'-east','facade',floor,{x:tower.x+tower.width/2-.08,y:centerY-height/2,z:tower.z},{x:.08,y:height,z:tower.depth-.7});
+  if(!tower.frameOnly)add('construction-facade-'+floor+'-north','facade',floor,{x:tower.x,y:centerY-height/2,z:tower.z-tower.depth/2+.08},{x:tower.width-.7,y:height,z:.08});
+  if(!tower.frameOnly)add('construction-facade-'+floor+'-east','facade',floor,{x:tower.x+tower.width/2-.08,y:centerY-height/2,z:tower.z},{x:.08,y:height,z:tower.depth-.7});
+ }
  }
 }
 const payloadPosition=actor=>({...craneHookPosition(actor),y:craneHookPosition(actor).y-CONSTRUCTION_LOAD_OFFSET});
@@ -33,7 +36,7 @@ function beamPlacementBlocked(sim,actor,beam,position,yaw,context={}){
 }
 function releaseReadiness(sim,actor,context={}){
  const state=actor.construction,beam=sim.actors[state.load];if(!beam?.constructionBeam)return {allowed:false,reason:'Attach a steel beam before releasing.'};
- const bottom=payloadPosition(actor),target=sim.construction.tower.target,yaw=state.loadYaw||0;
+ const bottom=payloadPosition(actor),target=constructionStructure(sim.construction,actor)?.target,yaw=state.loadYaw||0;
  const aligned=target&&near(bottom,target,.6)&&Math.abs(bottom.y-target.y)<=.3&&Math.abs(Math.atan2(Math.sin(yaw-target.yaw),Math.cos(yaw-target.yaw)))<=.12;
  if(aligned){const blocked=beamPlacementBlocked(sim,actor,beam,target,target.yaw,context);return blocked?{allowed:false,reason:'Steel placement obstructed: '+blocked.reason}:{allowed:true,reason:'Aligned with the structural connection. Secure the beam.',target};}
  const supply=sim.construction.supply;
@@ -95,7 +98,7 @@ function dischargeTruck(sim,actor,amount,now,context={}){
 }
 function bladePass(sim,actor,requested,now,distance=.8){
  const blade=constructionJointPose(actor).bladeEdge,yaw=actor.rotation?.y||0,surface=earthworksSurfaceAt(sim.construction.earthworks,blade);if(!surface)return 0;
- const to={x:blade.x-Math.sin(yaw)*distance,y:Math.max(blade.y+1.5,surface.y+.5),z:blade.z-Math.cos(yaw)*distance},cutY=Math.max(actor.position.y-.15,blade.y-.12),moved=earthworksPush(sim.construction.earthworks,blade,to,requested,{radius:1.9,cutY,looseOnly:surface.patch.kind!=='excavation'}),volume=earthCargoVolume(moved);recordEarthMove(sim,actor,volume,'push',now);return volume;
+ const to={x:blade.x-Math.sin(yaw)*distance,y:Number.isFinite(actor.construction.gradeTarget)?actor.construction.gradeTarget:Math.max(blade.y+1.5,surface.y+.5),z:blade.z-Math.cos(yaw)*distance},cutY=Number.isFinite(actor.construction.gradeTarget)?Math.max(actor.construction.gradeTarget,blade.y-.12):Math.max(actor.position.y-.15,blade.y-.12),moved=earthworksPush(sim.construction.earthworks,blade,to,requested,{radius:1.9,cutY,looseOnly:surface.patch.kind!=='excavation'}),volume=earthCargoVolume(moved);recordEarthMove(sim,actor,volume,'push',now);return volume;
 }
 function digPose(actor,earthworks){const initial={...actor,construction:{...actor.construction,boom:.4,stick:-1.5,bucket:1}},tip=constructionJointPose(initial).bucketTip,surface=earthworksSurfaceAt(earthworks,tip);initial.construction.boom=clamp(.4+Math.max(0,(surface?.y||0)-actor.position.y)*.28,.4,1.3);return initial;}
 function workReadiness(sim,actor){
@@ -107,7 +110,7 @@ function workReadiness(sim,actor){
   const digging=digPose(actor,site.earthworks),tip=constructionJointPose(digging).bucketTip,source=earthworksTake(site.earthworks,tip,CONSTRUCTION_CAPACITY.excavator,{radius:1.3,cutY:tip.y-.3,dryRun:true});if(earthCargoVolume(source)<=1e-6)return {allowed:false,reason:'No reachable soil or gravel beneath the bucket. Move to an unworked cell or lower the machine into the cut.'};return {allowed:true,reason:'Reachable finite soil or gravel ready for the bucket.',mode:'dig',digBoom:digging.construction.boom};
  }
  if(kind==='truck'){if(!state.load)return {allowed:false,reason:'Load this truck from the excavator first.'};const outlet=dumpOutlet(actor),surface=earthworksSurfaceAt(site.earthworks,outlet);if(!surface||!['stockpile','fill','excavation'].includes(surface.patch.kind))return {allowed:false,reason:'Position the rear discharge above a stockpile, road formation, fill or excavation patch before tipping.'};if(surface.y>outlet.y-.1)return {allowed:false,reason:'The material pile has reached the rear discharge. Move to a clear cell.'};const capacity=earthworksDeposit(site.earthworks,outlet,state.cargo,{...truckReceivingCells(actor,surface.patch.cellSize),dryRun:true});if(!earthCargoVolume(capacity))return {allowed:false,reason:'No clear receiving cells behind the chassis. Reposition within the fill or stockpile patch.'};return {allowed:true,reason:'Rear discharge over clear receiving cells behind the chassis.',mode:'dump'};}
- if(kind==='bulldozer'){const low={...actor,construction:{...state,blade:0}},blade=constructionJointPose(low).bladeEdge,surface=earthworksSurfaceAt(site.earthworks,blade),source=surface&&earthworksTake(site.earthworks,blade,1,{radius:1.9,cutY:actor.position.y-.15,looseOnly:surface.patch.kind!=='excavation',dryRun:true});if(!source||earthCargoVolume(source)<=1e-6)return {allowed:false,reason:'Position the lowered blade against soil or gravel that can be pushed into the work patch.'};const yaw=actor.rotation?.y||0,target={x:blade.x-Math.sin(yaw)*.8,y:Math.max(blade.y+1.5,surface.y+.5),z:blade.z-Math.cos(yaw)*.8},possible=earthworksPush(site.earthworks,blade,target,1,{radius:1.9,cutY:actor.position.y-.15,looseOnly:surface.patch.kind!=='excavation',dryRun:true});if(earthCargoVolume(possible)<=1e-6)return {allowed:false,reason:'The blade has no clear receiving cells ahead. Reposition within the work patch.'};return {allowed:true,reason:'Blade has reachable material and receiving space ahead.',mode:'grade'};}
+ if(kind==='bulldozer'){const low={...actor,construction:{...state,blade:Number.isFinite(state.gradeTarget)?clamp(state.gradeTarget+.11-actor.position.y,0,1.2):0}},blade=constructionJointPose(low).bladeEdge,surface=earthworksSurfaceAt(site.earthworks,blade),source=surface&&earthworksTake(site.earthworks,blade,1,{radius:1.9,cutY:Number.isFinite(state.gradeTarget)?Math.max(state.gradeTarget,blade.y-.12):actor.position.y-.15,looseOnly:surface.patch.kind!=='excavation',dryRun:true});if(!source||earthCargoVolume(source)<=1e-6)return {allowed:false,reason:'Position the lowered blade against soil or gravel that can be pushed into the work patch.'};const yaw=actor.rotation?.y||0,target={x:blade.x-Math.sin(yaw)*.8,y:Number.isFinite(actor.construction.gradeTarget)?actor.construction.gradeTarget:Math.max(blade.y+1.5,surface.y+.5),z:blade.z-Math.cos(yaw)*.8},possible=earthworksPush(site.earthworks,blade,target,1,{radius:1.9,cutY:Number.isFinite(state.gradeTarget)?Math.max(state.gradeTarget,blade.y-.12):actor.position.y-.15,looseOnly:surface.patch.kind!=='excavation',dryRun:true});if(earthCargoVolume(possible)<=1e-6)return {allowed:false,reason:'The blade has no clear receiving cells ahead. Reposition within the work patch.'};return {allowed:true,reason:'Blade has reachable material and receiving space ahead.',mode:'grade'};}
  return {allowed:false,reason:'Use the crane lifting controls.'};
 }
 export function constructionTelemetry(sim,actor,now,context={}){
@@ -145,6 +148,7 @@ export function ensureConstruction(sim,environment){
   sim.construction={version:1,tower,supply:point(config?.supply,{x:-8,y:.8,z:15}),excavation:{...point(config?.excavation,{x:25,z:17,radius:12}),depth:0,volume:0},stockpile:{...point(config?.stockpile,{x:30,z:39}),volume:0},graded:0,nextBeam:6,message:'Lower the crane hook to the steel store, attach a beam, then place it on the illuminated frame target.'};
   for(let index=0;index<6;index++)addBeam(sim,index);
  }
+ if(config?.facility&&!sim.construction.facility){const facility={...point(config.facility,{x:-41,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:3}),placed:0,floors:0,frameOnly:true};facility.width=clamp(facility.width,6,26);facility.depth=clamp(facility.depth,6,26);facility.floorHeight=clamp(facility.floorHeight,2,5);facility.maxFloors=Math.floor(clamp(facility.maxFloors,1,12));facility.target=constructionTarget(facility);sim.construction.facility=facility;}
  const migratingLegacy=hadSite&&!sim.construction.earthworks,legacy=migratingLegacy?{excavated:Math.max(0,Number(sim.construction.excavation.volume)||0),stockpile:Math.max(0,Number(sim.construction.stockpile.volume)||0)}:null;
  sim.construction.earthworks ||= createEarthworks({...config,excavation:{...sim.construction.excavation,...config?.excavation},stockpile:{...sim.construction.stockpile,...config?.stockpile}});
  for(const actor of machines){actor.construction||=initialConstructionState(actor,sim.construction.supply);normalizeCargo(sim,actor,{accountImport:!migratingLegacy});if(constructionMachineKind(actor)==='crane')actor.construction.hook=craneHookPosition(actor);}
@@ -155,12 +159,12 @@ export function ensureConstruction(sim,environment){
 function availableBeams(sim){return Object.values(sim.actors).filter(actor=>actor.constructionBeam&&['supply','loose'].includes(actor.constructionBeam.state));}
 function craneRelease(sim,actor,now,context={}){
  const state=actor.construction,beam=sim.actors[state.load];if(!beam)error('Attach a steel beam before releasing.');
- const readiness=releaseReadiness(sim,actor,context);if(!readiness.allowed)error(readiness.reason);const tower=sim.construction.tower,target=readiness.target;
+ const readiness=releaseReadiness(sim,actor,context);if(!readiness.allowed)error(readiness.reason);const tower=constructionStructure(sim.construction,actor),target=readiness.target;
  if(target){
-  beam.position={x:target.x,y:target.y,z:target.z};beam.rotation.y=target.yaw;beam.constructionBeam.state='placed';beam.constructionBeam.floor=target.level;
+  beam.position={x:target.x,y:target.y,z:target.z};beam.rotation.y=target.yaw;beam.constructionBeam.state='placed';beam.constructionBeam.floor=target.level;beam.constructionBeam.structureId=state.structureId||'tower';
   tower.placed++;tower.floors=Math.floor(tower.placed/4);tower.target=constructionTarget(tower);
   syncStructure(sim);
-  const complete=!tower.target;event(sim,now,complete?'Skyscraper complete! All '+tower.maxFloors+' steel floors are assembled.':'Beam secured. '+tower.placed+' / '+tower.maxFloors*4+' beams · '+tower.floors+' complete floors.');
+  const complete=!tower.target;event(sim,now,complete?(state.structureId==='facility'?'Facility frame complete! All ':'Skyscraper complete! All ')+tower.maxFloors+' steel floors are assembled.':'Beam secured. '+tower.placed+' / '+tower.maxFloors*4+' beams · '+tower.floors+' complete floors.');
  }else{
   beam.position={...readiness.position};beam.rotation.y=state.loadYaw||0;beam.constructionBeam.state='loose';event(sim,now,'Beam safely set down on its supporting surface. Reattach it to continue building.');
  }
@@ -177,6 +181,7 @@ function executeConstructionCommand(sim,actor,command,now,context={},player=null
  }
  if(operation==='precision'){state.precision=command.enabled!==false;return state.precision?'Precision hydraulics: 30% speed.':'Normal hydraulic speed.';}
  if(operation==='park'){state.axes={};state.assist=null;state.working=false;delete state.workCycle;actor.driving={...actor.driving,speed:0,throttle:0,parked:true};if(player)player.input={};return 'Machine parked. Hydraulics neutral.';}
+ if(kind==='bulldozer'&&operation==='grade-target'){if(state.workCycle)error('Park before changing the finished grade.');if(command.height!==null&&(!Number.isFinite(command.height)||command.height< -12||command.height>6))error('Choose a finished grade between -12 and 6 metres.',422);state.gradeTarget=command.height;return command.height===null?'Free blade grading.':'Finished grade set to '+command.height.toFixed(2)+' metres.';}
  if(kind==='excavator'&&operation==='empty'){if(state.workCycle)error('Park to cancel the active cycle before emptying the bucket.');const moved=dischargeBucket(sim,actor,state.load,now,context);if(!moved)error('Position the bucket over a parked truck bed or an earthworks patch with receiving space.');return 'Bucket discharged at its actual position.';}
  if(kind==='crane'){
   if(operation==='attach'){
@@ -185,8 +190,9 @@ function executeConstructionCommand(sim,actor,command,now,context={},player=null
    beam.constructionBeam.state='attached';beam.constructionBeam.craneId=actor.id;state.load=beam.id;state.loadYaw=beam.rotation?.y||0;beam.position=payloadPosition(actor);state.assist=null;state.axes={};event(sim,now,'Steel beam attached. Raise the hoist, slew to the tower and lower onto the highlighted target.');return sim.construction.message;
   }
   if(operation==='release')return craneRelease(sim,actor,now,context);
+  if(operation==='structure-target'){if(!['tower','facility'].includes(command.structureId)||!sim.construction[command.structureId])error('Choose an existing steel structure.',422);state.structureId=command.structureId;state.axes={};state.assist=null;return 'Crane destination: '+(command.structureId==='facility'?'facility steel frame':'skyscraper')+'.';}
   if(operation==='aim-target'||operation==='aim-supply'){
-   if(operation==='aim-target'&&!sim.construction.tower.target)error('The skyscraper frame is already complete.');
+  if(operation==='aim-target'&&!constructionStructure(sim.construction,actor)?.target)error('The skyscraper frame is already complete.');
    if(operation==='aim-supply'&&!availableBeams(sim).length)addBeam(sim,sim.construction.nextBeam++);
    const obstacles=constructionObstacles(sim,context),radius=52;let ceiling=0;for(const box of obstacles){if(box.objectId===actor.id||box.objectId===state.load)continue;const b=constructionColliderBounds(box),x=clamp(actor.position.x,b.min.x,b.max.x),z=clamp(actor.position.z,b.min.z,b.max.z);if(Math.hypot(x-actor.position.x,z-actor.position.z)<radius&&b.max.y<75)ceiling=Math.max(ceiling,b.max.y);}
    state.assistClearance=Math.min(74,ceiling-actor.position.y+CONSTRUCTION_LOAD_OFFSET+2);state.assist=operation==='aim-target'?'target':'supply';state.assistLowering=false;state.axes={};state.controlAt=now;return 'Crane alignment assistance engaged. Manual controls take over immediately.';
@@ -196,7 +202,7 @@ function executeConstructionCommand(sim,actor,command,now,context={},player=null
   const startPose=Object.fromEntries(['boom','stick','bucket','swing','blade','bed'].map(key=>[key,state[key]||0]));
   const truck=ready.truck,truckYaw=truck?.rotation?.y||0,dx=truck?truck.position.x+Math.sin(truckYaw)*1.4-actor.position.x:0,dz=truck?truck.position.z+Math.cos(truckYaw)*1.4-actor.position.z:0;
   const desired=truck?Math.atan2(-dx,-dz)-(actor.rotation?.y||0):state.swing||0,difference=Math.atan2(Math.sin(desired-(state.swing||0)),Math.cos(desired-(state.swing||0)));
-  state.workCycle={start:now,elapsed:0,duration:ready.mode==='load'?Math.max(5600,Math.abs(difference)/.8*2000+2600):ready.mode==='dump'?4200:ready.mode==='dig'?3600:2800,mode:ready.mode,digBoom:ready.digBoom,startPose,truckId:truck?.id,targetSwing:(state.swing||0)+difference,transferred:false};
+  state.workCycle={start:now,elapsed:0,duration:ready.mode==='load'?Math.max(5600,Math.abs(difference)/.8*2000+2600):ready.mode==='dump'?4200:ready.mode==='dig'?3600:2800,mode:ready.mode,digBoom:ready.digBoom,startPose,truckId:truck?.id,targetSwing:(state.swing||0)+difference,gradeBlade:Number.isFinite(state.gradeTarget)?clamp(state.gradeTarget+.11-actor.position.y,0,1.2):0,transferred:false};
   state.axes={};state.assist=null;if(player)player.input={};actor.driving={...actor.driving,speed:0,parked:true};
   return ready.mode==='dig'?'Dig cycle: lower, scoop, curl and lift.':ready.mode==='load'?'Load cycle: raise, swing, discharge over the parked truck and return.':ready.mode==='dump'?'Dump cycle: raise body, discharge at the spoil pad and lower.':'Grading cycle: lower the blade into the work area and finish the pass.';
  }
@@ -209,7 +215,7 @@ function cycleCandidate(actor,dt){
   // Keep the high, curled arm fixed through each swing. Lowering/retracting
   // while simultaneously returning used to clip the receiving truck's cab.
   cycle.mode==='load'?[[0,from],[.13,{boom:1.3,stick:-.2,bucket:-.9,swing:from.swing}],[.38,{boom:1.3,stick:-.2,bucket:-.9,swing:cycle.targetSwing}],[.48,{boom:.8,stick:-.3,bucket:-.9,swing:cycle.targetSwing}],[.58,{boom:.8,stick:-.3,bucket:1,swing:cycle.targetSwing}],[.7,{boom:1.3,stick:-.2,bucket:0,swing:cycle.targetSwing}],[.95,{boom:1.3,stick:-.2,bucket:0,swing:from.swing}],[1,{boom:1.05,stick:-.8,bucket:0,swing:from.swing}]]:
-  cycle.mode==='dump'?[[0,from],[.48,{bed:.95}],[.7,{bed:.95}],[1,{bed:0}]]:[[0,from],[.35,{blade:0}],[.75,{blade:0}],[1,{blade:1}]];
+  cycle.mode==='dump'?[[0,from],[.48,{bed:.95}],[.7,{bed:.95}],[1,{bed:0}]]:[[0,from],[.35,{blade:cycle.gradeBlade||0}],[.75,{blade:cycle.gradeBlade||0}],[1,{blade:1}]];
  let low=frames[0],high=frames.at(-1);for(let i=1;i<frames.length;i++)if(t<=frames[i][0]){low=frames[i-1];high=frames[i];break;}
  const amount=clamp((t-low[0])/Math.max(.001,high[0]-low[0]),0,1);
  for(const key of ['boom','stick','bucket','swing','blade','bed']){const a=low[1][key]??from[key],b=high[1][key]??a;state[key]=a+(b-a)*amount;}
@@ -251,7 +257,7 @@ export function stepConstruction(sim,now,dt,context={}){
   if(human&&now-owner.lastSeen>=1000){const pending=!!(actor.construction.workCycle||actor.construction.assist||actor.construction.working);actor.construction.axes={};actor.construction.working=false;if(actor.construction.workCycle)actor.construction.workCycle.paused=true;if(pending)actor.construction.blocked={part:'operator-link',reason:'Operator input delayed. Hydraulics paused until the link resumes.'};else if(actor.construction.blocked?.part==='operator-link')actor.construction.blocked=null;refreshTelemetry(sim,actor,now,context);continue;}
   normalizeCargo(sim,actor);const state=actor.construction;let candidate;
   if(state.workCycle)candidate=cycleCandidate(actor,dt);
-  else if(state.assist){const point=state.assist==='target'?sim.construction.tower.target:availableBeams(sim)[0];const source=point?.position||point;
+  else if(state.assist){const point=state.assist==='target'?constructionStructure(sim.construction,actor)?.target:availableBeams(sim)[0];const source=point?.position||point;
    if(source)candidate=stepCraneAlignment(actor,{...source,y:source.y+CONSTRUCTION_LOAD_OFFSET,yaw:point?.rotation?.y??point?.yaw??0},dt);else candidate={...state,assist:null};
   }else{
    const axes=now-state.controlAt<MANUAL_CONTROL_LEASE_MS?state.axes:{};

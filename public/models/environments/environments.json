@@ -34139,6 +34139,17 @@
     "worldId": "skyline-deck",
     "construction": {
       "enabled": true,
+      "facility": {
+        "name": "Site facility",
+        "x": -41,
+        "z": 5,
+        "width": 18,
+        "depth": 18,
+        "baseY": 0,
+        "floorHeight": 4,
+        "maxFloors": 3,
+        "frameOnly": true
+      },
       "tower": {
         "x": 5,
         "z": -10,
@@ -34656,6 +34667,181 @@
           "materialSettings": {
             "useAccent": true,
             "accent": "#b7b8b1"
+          }
+        },
+        {
+          "id": "construction-facility-raft",
+          "modelId": "material:baseplate",
+          "name": "facility raft",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -41,
+            "y": -0.24,
+            "z": 5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.166666666666667,
+            "y": 1.2,
+            "z": 4.166666666666667
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#a1aaa5"
+          }
+        },
+        {
+          "id": "construction-facility-starter--50--4",
+          "modelId": "material:cube",
+          "name": "facility starter  50  4",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -50,
+            "y": 0,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.3,
+            "y": 3.3333333333333335,
+            "z": 0.3
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#879eac"
+          }
+        },
+        {
+          "id": "construction-facility-starter--50-14",
+          "modelId": "material:cube",
+          "name": "facility starter  50 14",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -50,
+            "y": 0,
+            "z": 14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.3,
+            "y": 3.3333333333333335,
+            "z": 0.3
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#879eac"
+          }
+        },
+        {
+          "id": "construction-facility-starter--32--4",
+          "modelId": "material:cube",
+          "name": "facility starter  32  4",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.3,
+            "y": 3.3333333333333335,
+            "z": 0.3
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#879eac"
+          }
+        },
+        {
+          "id": "construction-facility-starter--32-14",
+          "modelId": "material:cube",
+          "name": "facility starter  32 14",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -32,
+            "y": 0,
+            "z": 14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.3,
+            "y": 3.3333333333333335,
+            "z": 0.3
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": false
+          },
+          "materialSettings": {
+            "useAccent": true,
+            "accent": "#879eac"
+          }
+        },
+        {
+          "id": "construction-facility-plan",
+          "modelId": "street-sign",
+          "name": "FACILITY STEEL · Three-floor frame",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -53,
+            "y": 0,
+            "z": 14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read FACILITY STEEL · Three-floor frame",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use the tower crane to build this separate three-floor facility frame. Select Facility steel frame in the crane functions or assign the steel crew to it. Each placed beam is checked and shared with all players."
           }
         },
         {
@@ -54648,6 +54834,17 @@
         "color": 8942683,
         "construction": {
           "enabled": true,
+          "facility": {
+            "name": "Site facility",
+            "x": -41,
+            "z": 5,
+            "width": 18,
+            "depth": 18,
+            "baseY": 0,
+            "floorHeight": 4,
+            "maxFloors": 3,
+            "frameOnly": true
+          },
           "tower": {
             "x": 5,
             "z": -10,
@@ -54922,6 +55119,15 @@
           }
         },
         "locations": [
+          {
+            "id": "facility",
+            "name": "Facility steel frame",
+            "x": -41,
+            "z": 5,
+            "width": 20,
+            "depth": 20,
+            "description": "A separate three-floor open steel facility built using the working crane and shared crew."
+          },
           {
             "id": "starter-cut",
             "name": "01 · Starter foundation cut",

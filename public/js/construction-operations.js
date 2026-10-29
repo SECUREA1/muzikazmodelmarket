@@ -6,15 +6,16 @@ export const CONSTRUCTION_OPERATIONS=Object.freeze([
  {id:'basement-cut',label:'Excavate the basement',type:'cut',target:6,guide:'Dig successive reachable lifts, load the truck and haul spoil to receiving bays. Target depth: 6 m.'},
  {id:'recycled-aggregate',label:'Stockpile reclaimed aggregate',type:'stockpile',target:30,guide:'Load reclaimed pavement as gravel, haul it here and raise the truck body above clear receiving ground. Target: 30 m³.'},
  {id:'earth-platform',label:'Fill and level the earth platform',type:'fill',target:.3,guide:'Haul soil or gravel, tip thin lifts and push with the lowered blade. Grade the whole platform to 30 cm.'},
+ {id:'facility',label:'Erect the facility steel frame',type:'steel',guide:'Select Facility steel frame in the crane functions, or assign the steel crew to Facility. Lift and secure twelve beams to build three open floors.'},
  {id:'tower',label:'Erect the skyscraper steel',type:'steel',guide:'Crane: align pickup → attach → hoist → align tower → place beam. Four secured beams raise one floor.'}
 ]);
 const clamp=value=>Math.max(0,Math.min(1,value));
 export function constructionOperations(site={}){
  return CONSTRUCTION_OPERATIONS.flatMap(definition=>{
   if(definition.type==='steel'){
-   if(!site.tower)return [];
-   const total=site.tower.maxFloors*4,placed=site.tower.placed||0;
-   return [{...definition,x:site.tower.x,z:site.tower.z,progress:total?clamp(placed/total):0,detail:`${placed} / ${total} steel members · ${site.tower.floors||0} floors`}];
+   const structure=site[definition.id];if(!structure)return [];
+   const total=structure.maxFloors*4,placed=structure.placed||0;
+   return [{...definition,x:structure.x,z:structure.z,progress:total?clamp(placed/total):0,detail:`${placed} / ${total} steel members · ${structure.floors||0} floors`}];
   }
   const patch=site.earthworks?.patches?.find(patch=>patch.id===definition.id);if(!patch)return [];
   const area=patch.cellSize**2,count=patch.heights.length;let amount=0,finished=0;

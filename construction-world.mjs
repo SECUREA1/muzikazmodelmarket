@@ -1,7 +1,7 @@
 // The permanent site uses the same editable parts as the Environment Builder.
 // Crane loads, erection progress and earthworks live in the shared room state.
 export function constructionWorld(){
- const construction={enabled:true,tower:{x:5,z:-10,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16},supply:{x:-8,y:.8,z:15},excavation:{x:25,z:17,radius:12,depth:0},stockpile:{x:30,z:39,width:28,depth:16},yard:{minX:-94,maxX:242,minZ:-70,maxZ:234},earthworks:{cellSize:2,patches:[
+ const construction={enabled:true,facility:{name:'Site facility',x:-41,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:3,frameOnly:true},tower:{x:5,z:-10,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16},supply:{x:-8,y:.8,z:15},excavation:{x:25,z:17,radius:12,depth:0},stockpile:{x:30,z:39,width:28,depth:16},yard:{minX:-94,maxX:242,minZ:-70,maxZ:234},earthworks:{cellSize:2,patches:[
   {id:'dirt-bay',kind:'excavation',x:76,z:12,width:40,depth:40,maxDepth:8,material:'soil'},
   {id:'gravel-bay',kind:'stockpile',x:122,z:12,width:36,depth:36,maxDepth:0,height:2.8,material:'gravel'},
   {id:'fill-zone',kind:'fill',x:80,z:92,width:48,depth:38,maxDepth:0,material:'soil'},
@@ -26,6 +26,10 @@ export function constructionWorld(){
  machine('dozer','site-bulldozer','D9 Crawler Bulldozer',45,58).rotation.y=Math.PI/2;
  machine('excavator','site-excavator','HX350 Hydraulic Excavator',25,17);
  slab('tower-raft',5,-.24,-10,22,22,'#b7b8b1',.24);
+ slab('facility-raft',-41,-.24,5,20,20,'#a1aaa5',.24);
+ for(const x of [-50,-32])for(const z of [-4,14])box('facility-starter-'+x+'-'+z,x,0,z,.36,4,.36,'#879eac');
+ sign('facility-plan','FACILITY STEEL · Three-floor frame',-53,14,'Use the tower crane to build this separate three-floor facility frame. Select Facility steel frame in the crane functions or assign the steel crew to it. Each placed beam is checked and shared with all players.');
+ locations.push({id:'facility',name:'Facility steel frame',x:-41,z:5,width:20,depth:20,description:'A separate three-floor open steel facility built using the working crane and shared crew.'});
  slab('crane-raft',-18,-.16,-4,7,7,'#aaa69a',.16);
  // Keep the starter structure low and open: each new crane-placed floor
  // becomes visible above it instead of disappearing inside a finished shell.
