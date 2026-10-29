@@ -351,3 +351,15 @@ test('generated sentence boundaries allow each next sentence its generation budg
  spoken[0].onboundary({name:'sentence',audioDuration:4,remainingSegments:0});assert.equal(delays.at(-1),9000);assert.equal(timers.size,1);
  spoken[0].onend();assert.equal(timers.size,0);voice.dispose();
 });
+
+test('requested conversations stay as clear as the welcome while moving and respect mute',()=>{
+ const {voice,spoken}=fixture();
+ voice.setScene({listener:{x:0,y:0,z:0},actors:{guide:{position:{x:200,y:0,z:0}}}});
+ voice.requestReply({worldId:'map',entityId:'guide'});
+ voice.ingest([{id:'focused',at:1000,conversation:true,interaction:true,recipients:['self'],speakerId:'guide',role:'guide',text:'Tell me what you need. I am listening.'}],{worldId:'map',actorId:'self',serverTime:1000});
+ assert.equal(spoken.length,1);assert.equal(spoken[0].volume,.85);
+ voice.setScene({listener:{x:500,y:0,z:0},actors:{guide:{position:{x:0,y:0,z:0}}}});
+ assert.equal(spoken[0].volume,.85);assert.equal(voice.state.speaking,true);
+ voice.setPreferences({dialogueMuted:true});assert.equal(voice.state.speaking,false);
+ voice.dispose();
+});
