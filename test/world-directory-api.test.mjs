@@ -21,6 +21,12 @@ test('public atlas and environment API list repository maps, uploads, user maps 
   const repository=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
   for(const map of repository.filter(map=>map.visibility!=='private'&&map.playable!==false))assert.ok(ids.has(map.id),'repository map '+map.id+' is indexed');
   for(const id of ['saved-layout','uploaded-room','plot-'+deed.id])assert.ok(ids.has(id),id+' is indexed');assert.ok(!ids.has('hidden-room'));
+  assert.ok(atlas.connectivity?.regions?.length,'atlas publishes live regional travel information');
+  assert.equal(atlas.connectivity.revision,atlas.revision,'travel graph follows the current atlas revision');
+  const connectedIds=new Set(atlas.connectivity.locations.map(place=>place.mapId));
+  for(const id of ids)assert.ok(connectedIds.has(id),id+' has a regional route entry');
+  assert.ok(!JSON.stringify(atlas.connectivity).includes('hidden-room'),'private maps stay outside the public graph');
+  for(const place of atlas.locations){assert.ok(place.regionId,'regional identity for '+place.mapId);assert.ok(Array.isArray(place.travelModes),'travel modes for '+place.mapId);}
   const arena=maps.find(map=>map.id==='basketball-arena'),arenaLocation=atlas.locations.find(place=>place.mapId==='basketball-arena');assert.ok(arena.permanent&&arena.publicDestination&&arena.sharedWorld);assert.equal(arena.canDelete,false);assert.equal(arena.canEdit,false);assert.equal(arena.roomId,'basketball-arena');assert.equal(arenaLocation.permanent,true);assert.equal(arenaLocation.thumbnailUrl,'/public/images/backpack/basketball-arena.svg');
   const range=maps.find(map=>map.id==='firing-range'),rangeLocation=atlas.locations.find(place=>place.mapId==='firing-range');assert.ok(range.permanent&&range.publicDestination&&range.sharedWorld&&range.multiplayer);assert.equal(range.canDelete,false);assert.equal(range.canEdit,false);assert.equal(range.roomId,'firing-range');assert.equal(rangeLocation.permanent,true);assert.equal(rangeLocation.thumbnailUrl,'/public/images/backpack/firing-range.svg');assert.match(rangeLocation.playUrl,/environment=firing-range/);assert.ok(atlas.connections.some(edge=>edge.from===rangeLocation.districtId&&edge.to===range.id));
   const plot=atlas.locations.find(place=>place.deedId===deed.id);assert.equal(plot.ownerName,'Alice');assert.equal(plot.kind,'deed');assert.equal(plot.baseEnvironmentId,'saved-layout');assert.ok(atlas.connections.some(edge=>edge.from===plot.districtId&&edge.to===plot.mapId));

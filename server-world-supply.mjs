@@ -20,6 +20,7 @@ import {addressMapId,mapDeliveryAddresses,publicDeliveryAddress,resolveDeliveryA
 import {STRAIT_FREIGHT_CONNECTIONS,STRAIT_AIR_ROUTES,straitPortFreight,straitAirRoute} from './public/js/strait-freight-network.js';
 import {ensureAirFreight,reserveAirTransfer,releaseAirTransfer,settleAirTransfer} from './world-air-freight.mjs';
 import {validateAirReservation} from './server-world-air-freight.mjs';
+import {attachOrderJourneys,projectOrderJourney} from './world-order-journey.mjs';
 
 export const WORLD_SUPPLY_RULES=Object.freeze({initialStock:1000,bulkMinimum:10,bulkDiscountPercent:20,maxQuantity:10000,minimumBuildMs:3000,maximumBuildMs:120000,itemsPerContainer:1000});
 const fail=(message,statusCode=409)=>{throw Object.assign(new Error(message),{statusCode});};
@@ -220,7 +221,8 @@ export class WorldSupplyService {
    const availableFactoryStock={...ledger.factoryStock};
    for(const lot of Object.values(ledger.factoryLots))if(lot.reservedOrderId)availableFactoryStock[lot.itemId]=Math.max(0,(availableFactoryStock[lot.itemId]||0)-lot.availableQuantity);
    const addressRecords=mapId?directory.addressesFor(data,mapId).map(publicDeliveryAddress):[],addresses=addressRecords.slice(0,200),addressPage={mapId:mapId||null,total:addressRecords.length,offset:0,hasMore:addressRecords.length>addresses.length,nextOffset:addressRecords.length>addresses.length?addresses.length:null};
-   return filterSupplyState({airTasks:Object.values(ledger.airTasks||{}).map(task=>publicAirTask(task,walletId)),airReceipts:Object.values(ledger.airReceipts||{}).map(publicAirReceipt),airRoutes:STRAIT_AIR_ROUTES,freightConnections:STRAIT_FREIGHT_CONNECTIONS,addresses,addressPage,ownerId:walletId||null,deeds:walletId?ownedSupplyDeeds(data,walletId).map(deed=>({...deed,deliveryRoute:ledger.deliveryRoutes[deed.id]||null,deliveryDropoff:ledger.deliveryRoutes[deed.id]?.dropoff||null})):[],orders:Object.values(ledger.orders),deliveryTasks:Object.values(ledger.deliveryTasks).map(task=>deliveryTaskView(task,now)),deliveryRoutes:Object.values(ledger.deliveryRoutes),portReceipts:Object.values(ledger.portReceipts),dropoffReceipts:Object.values(ledger.dropoffReceipts),portEscrow:Object.values(ledger.portEscrow),serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,availableFactoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))},{walletId,data});
+   const state=filterSupplyState({airTasks:Object.values(ledger.airTasks||{}).map(task=>publicAirTask(task,walletId)),airReceipts:Object.values(ledger.airReceipts||{}).map(publicAirReceipt),airRoutes:STRAIT_AIR_ROUTES,freightConnections:STRAIT_FREIGHT_CONNECTIONS,addresses,addressPage,ownerId:walletId||null,deeds:walletId?ownedSupplyDeeds(data,walletId).map(deed=>({...deed,deliveryRoute:ledger.deliveryRoutes[deed.id]||null,deliveryDropoff:ledger.deliveryRoutes[deed.id]?.dropoff||null})):[],orders:Object.values(ledger.orders),deliveryTasks:Object.values(ledger.deliveryTasks).map(task=>deliveryTaskView(task,now)),deliveryRoutes:Object.values(ledger.deliveryRoutes),portReceipts:Object.values(ledger.portReceipts),dropoffReceipts:Object.values(ledger.dropoffReceipts),portEscrow:Object.values(ledger.portEscrow),serverTime:now,rules:WORLD_SUPPLY_RULES,mapId:mapId||'world',catalog:catalog.map(item=>({...item,id:item.supplyId,factoryProducible:true,factoryUnitPriceMzk:factoryUnitPriceMzk(item),recipe:recipeSummary(item)})),transferCatalog,worldStock:ledger.worldStock,factoryStock:ledger.factoryStock,availableFactoryStock,maps:[{id:'world',name:'World stock · central stores',stock:ledger.worldStock},...directory.maps.map(map=>({...ledger.maps[map.id],regionId:map.regionId||null,regionName:map.regionName||map.districtName||null,travelModes:map.travelModes||[],stores:(map.builderScene?.objects||[]).filter(object=>/shop|store|market/i.test(object.name||object.modelId||'')).map(object=>({id:object.id,name:object.name||object.modelId}))}))],production:Object.values(ledger.production),lots:Object.values(ledger.factoryLots),allocations:Object.values(ledger.factoryLotAllocations),stockReceipts:Object.values(ledger.factoryStockReceipts),shipments:Object.values(ledger.shipments),challenges:distributionChallenges(ledger,directory),routes,shippingMaps:directory.maps.filter(isShippingEnvironment).map(map=>({id:map.id,name:map.name}))},{walletId,data});
+   return attachOrderJourneys(state,ledger,{maps:directory.maps,walletId});
   });
  }
  async recipe(itemId,count=1,{walletId}={}){
@@ -237,7 +239,9 @@ export class WorldSupplyService {
   if(shipmentId)shipIds.add(shipmentId);
   const shipments=state.shipments.filter(shipment=>shipIds.has(shipment.id)),stockReceipts=state.stockReceipts.filter(receipt=>shipIds.has(receipt.shipmentId));
   const related=records=>(records||[]).filter(record=>shipIds.has(record.shipmentId));
-  return {serverTime:state.serverTime,production,lots,allocations,shipments,stockReceipts,deliveryTasks:related(state.deliveryTasks),portReceipts:related(state.portReceipts),dropoffReceipts:related(state.dropoffReceipts),airTasks:related(state.airTasks),airReceipts:related(state.airReceipts),portEscrow:related(state.portEscrow),events:production.flatMap(job=>job.events||[]).sort((a,b)=>a.at-b.at)};
+  const orderIds=new Set(shipments.map(shipment=>shipment.orderId).filter(Boolean));for(const job of production)if(job.orderId)orderIds.add(job.orderId);
+  const journeys=[...state.orders.filter(order=>orderIds.has(order.id)&&order.journey).map(order=>order.journey),...shipments.filter(shipment=>!shipment.orderId&&shipment.journey).map(shipment=>shipment.journey)];
+  return {serverTime:state.serverTime,production,lots,allocations,shipments,stockReceipts,journeys,deliveryTasks:related(state.deliveryTasks),portReceipts:related(state.portReceipts),dropoffReceipts:related(state.dropoffReceipts),airTasks:related(state.airTasks),airReceipts:related(state.airReceipts),portEscrow:related(state.portEscrow),events:production.flatMap(job=>job.events||[]).sort((a,b)=>a.at-b.at)};
  }
  async projection({mapId}={}){
   const directory=await this.directory({mapId,includeCatalog:false}),now=this.now();
@@ -356,7 +360,8 @@ export class WorldSupplyService {
    adoptDeedDeliveries(ledger,data);refreshFactoryOrders(ledger,data,now,{addressValid:record=>directory?.addressValid(data,record)});
    user.updatedAt=new Date(now).toISOString();user.revision=Number(user.revision||0)+1;
    // Snapshot receipts: later state changes cannot change a replay response.
-   return saveReceipt(ledger,key,signature,JSON.parse(JSON.stringify(result)));
+   const response=ledger.orders[result?.id]||ledger.shipments[result?.id]?{...result,journey:projectOrderJourney(ledger,result,{maps:directory.maps})}:result;
+   return saveReceipt(ledger,key,signature,JSON.parse(JSON.stringify(response)));
   });
  }
  async shippingAction(identity,sim,player,environment,command,now=this.now()){
