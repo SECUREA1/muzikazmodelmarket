@@ -2,6 +2,7 @@ import {allowAirFreightTakeoff} from './server-world-air-freight.mjs';
 import {airportRunways,aircraftRunway,runwayClearance,runwayParking} from './public/js/airport-navigation.js';
 export {aircraftAssistedInput} from './public/js/aircraft-assist.js';
 import {isAircraft} from './public/js/aircraft-flight.js';
+import {isShippingEnvironment} from './public/js/shipping-config.js';
 import {canonicalQuest} from './server-quest-teams.mjs';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
@@ -33,7 +34,7 @@ export function startAircraftAssist(sim,player,environment,operation,now,collisi
   if(!airborne)startAircraftAssist(sim,player,environment,'takeoff',now,collision,objects);else clearAssist(aircraft);
   // Distant Strait airfields need enough time for passage, approach and taxi.
   // The deadline is derived from server-owned geometry and remains bounded.
-  const durationMs=Math.max(240000,Math.min(600000,Math.ceil(Math.hypot(destination.x-aircraft.position.x,destination.z-aircraft.position.z)/12*1000)+120000));
+  const durationMs=Math.max(isShippingEnvironment(environment)?480000:240000,Math.min(600000,Math.ceil(Math.hypot(destination.x-aircraft.position.x,destination.z-aircraft.position.z)/12*1000)+120000));
   Object.assign(flight,{navigationDestinationId:destination.id,navigationName:destination.name,navigationParkingPoint:parking,assistSince:now,assistTimeoutMs:durationMs});
   if(airborne)Object.assign(flight,{assist:'navigate',assistStage:'passage',runwayId:destination.id,clearance:'landing',assistParkingPoint:parking});
   lease.runwayHolder=holder;lease.expires=now+durationMs;player.input={};

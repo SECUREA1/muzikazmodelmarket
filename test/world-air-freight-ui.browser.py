@@ -47,6 +47,7 @@ try:
                       if(fields.operation==='release'){me.airFreight=null;airTask.phase='awaiting-pilot';}
                     }
                     if(action==='vehicle-navigate'){me.airFreight.phase='airborne';live.actors.plane.flight.airborne=true;}
+                    if(action==='aircraft-assist'&&fields.operation==='park'){live.actors.plane.flight={speed:0,airspeed:0,airborne:false};me.airFreight.phase='landed';}
                     return structuredClone(live);
                   };
                   window.ui=mountWorldSupplyUI({stage:document.querySelector('#stage'),inventory,command,onMap:details=>calls.push({map:details})});
@@ -92,7 +93,12 @@ try:
                 air.locator('[data-air-action="fly"]').click()
                 page.wait_for_function('calls.some(call=>call.action==="vehicle-navigate")')
                 assert page.evaluate('calls.find(call=>call.action==="vehicle-navigate").fields.destinationId') == page.evaluate('airRoute.destination.runwayId||airRoute.destination.id')
-                page.evaluate('''() => {live.players.pilot.airFreight.phase='landed';live.actors.plane.flight={speed:0,airspeed:0,airborne:false};ui.update(structuredClone(live),'pilot',{id:'hormuz-shipping',name:'Strait'});ui.open();}''')
+                page.evaluate('''() => {live.players.pilot.airFreight.phase='approach';live.actors.plane.position={...airRoute.destination.cargoApron};live.actors.plane.flight={speed:3,airspeed:3,airborne:false};ui.update(structuredClone(live),'pilot',{id:'hormuz-shipping',name:'Strait'});ui.open();}''')
+                expect(air.locator('[data-air-action="park"]')).to_be_enabled()
+                assert air.locator('[data-air-action="unload"]').count() == 0
+                air.locator('[data-air-action="park"]').click()
+                page.wait_for_function('calls.some(call=>call.action==="aircraft-assist")')
+                assert page.evaluate('calls.find(call=>call.action==="aircraft-assist").fields') == {'operation': 'park'}
                 expect(air.locator('[data-air-action="unload"]')).to_be_enabled()
                 air.locator('[data-air-action="unload"]').click()
                 expect(air.locator('[data-air-action="unload"]')).to_be_disabled()

@@ -7,6 +7,8 @@ import {startAircraftAssist,aircraftAssistedInput} from '../server-aircraft-acce
 import {stepAircraftFlight} from '../public/js/aircraft-flight.js';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {compactRoomSnapshot,hydrateRoomSnapshot} from '../public/js/room-snapshot.js';
+import {airportWorld} from '../airport-world.mjs';
+import {shippingWorld} from '../shipping-world.mjs';
 
 function fixture({destinationPortId='fujairah'}={}){
  const shipment={id:'counted-shipment',ownerId:'sender',itemId:'private:skiff',itemName:'Private configured skiff',quantity:5,destinationPortId,destinationMapId:'plot-recipient',onwardMode:'air',packing:{unitsPerContainer:1,unitsPerRoadCrate:1},seaReceipt:{id:'verified-sea'},phase:'port-received'},ledger={shipments:{[shipment.id]:shipment},factoryLotAllocations:{[shipment.id]:{lots:[{lotId:'lot-a',quantity:3},{lotId:'lot-b',quantity:2}]}},maps:{'plot-recipient':{stock:{}}},portEscrow:{[shipment.id]:{remainingQuantity:5}}};
@@ -92,4 +94,47 @@ test('joining another map after a server restart can release sealed air cargo wi
  const rooms=new AuthoritativeRooms({store:{},now:()=>f.now,supplyAirAction:async(...args)=>{release=args;}});
  await rooms.releaseCancelledSupply(f.identity,f.sim,f.player,undefined,f.now);
  assert.equal(release[3].id,'hormuz-shipping');assert.equal(release[3].airport.enabled,true);assert.equal(release[4].operation,'release');assert.equal(f.player.airFreight.releasedAt,f.now);assert.deepEqual(f.ledger.maps['plot-recipient'].stock,{});
+});
+
+test('the real room flight loop reaches Strait airfields beyond the legacy 992 metre boundary while ordinary maps retain it',()=>{
+ const cases=[{id:'hormuz-shipping',mapSize:2800,crosses:true},{id:'ordinary-bounded-airport',mapSize:2000,crosses:false}];
+ for(const entry of cases){
+  const f=fixture(),world={...f.environment,id:entry.id,proceduralLand:true,spawn:{x:0,y:0,z:0},builderScene:{version:3,layout:'grand-floor',mapSize:entry.mapSize,objects:[{id:f.craft.id,modelId:'diamond-da40',position:{x:1030,y:35,z:990},rotation:{x:0,y:Math.PI,z:0},functionalSettings:{behavior:'vehicle',destructible:true,health:400}}],gameplay:{multiplayer:true,radTox:false}}};
+  // The smaller world places the aircraft inside its existing X bound. Both
+  // runs approach the same old Z edge through the real server physics loop.
+  if(!entry.crosses)world.builderScene.objects[0].position.x=900;
+  Object.assign(f.craft,{position:{...world.builderScene.objects[0].position},rotation:{x:0,y:Math.PI,z:0},flight:{airborne:true,altitude:34.6,speed:18,airspeed:18,throttle:.65,throttleCommand:.65}});f.player.position={...f.craft.position};f.player.radToxReady=true;f.player.radToxEnabled=false;
+  const rooms=new AuthoritativeRooms({store:{},now:()=>f.now}),room={objects:{},revision:0,simulation:{...f.sim,time:f.now,sequence:0,events:[]}};
+  rooms.initialize(room,world);
+  for(let tick=0;tick<8;tick++){f.now+=100;room.simulation.players.pilot.lastSeen=f.now;rooms.step(room,world);}
+  const snapshot=rooms.view(room),craft=snapshot.actors[f.craft.id];
+  assert.equal(snapshot.players.pilot.vehicleId,craft.id);assert.equal(craft.flight.airborne,true);
+  if(entry.crosses)assert.ok(craft.position.z>996,'Strait flight physics must pass z992 toward the Fujairah runway at z1050 and approach at z1290');
+  else assert.ok(craft.position.z<=992,'ordinary 2000 metre maps retain their established flight edge');
+ }
+});
+
+test('Strait navigation reserves a bounded eight-minute flight window while ordinary airport navigation keeps its existing minimum',()=>{
+ const f=fixture();startAircraftAssist(f.sim,f.player,f.environment,'navigate',f.now,null,{},f.task.route.destination.runwayId);assert.ok(f.craft.flight.assistTimeoutMs>=480000);assert.ok(f.craft.flight.assistTimeoutMs<=600000);
+ const ordinary=fixture(),world=airportWorld();ordinary.craft.position={x:21,y:.4,z:0};ordinary.player.position={...ordinary.craft.position};startAircraftAssist(ordinary.sim,ordinary.player,world,'navigate',ordinary.now,null,{},'mountain-runway');assert.equal(ordinary.craft.flight.assistTimeoutMs,240000);
+});
+
+test('an expired ground assist removes engine power and brakes without changing the airborne recovery fallback',()=>{
+ const f=fixture();Object.assign(f.craft.flight,{assist:'land',assistStage:'park',assistSince:1,assistTimeoutMs:480000,airborne:false,altitude:0,throttleCommand:.65,speed:11.7,airspeed:11.7});
+ const stopped=aircraftAssistedInput(f.craft,{},f.environment,600002);assert.equal(stopped.throttle,0);assert.equal(stopped.brake,true);assert.equal(f.craft.flight.throttleCommand,0);assert.equal(f.craft.flight.assist,null);
+ Object.assign(f.craft,{position:{...f.craft.position,y:30},flight:{assist:'land',assistSince:1,assistTimeoutMs:480000,airborne:true,altitude:29.6,throttleCommand:.4,speed:15,airspeed:15}});
+ const airborne=aircraftAssistedInput(f.craft,{},f.environment,600002);assert.equal(airborne.throttle,.65);assert.equal(airborne.lift,0);assert.equal(f.craft.flight.assist,null);
+});
+
+test('real Strait collision and room physics stop a timed-out arrival at the cargo apron without manufacturing flight proof',async()=>{
+ const f=fixture({destinationPortId:'khasab'});await f.load();f.now+=700000;Object.assign(f.environment,shippingWorld());
+ const job=f.player.airFreight,apron=f.task.route.destination.cargoApron;Object.assign(job,{environmentRevision:String(f.environment.contentUpdatedAt),phase:'approach',departedAt:f.now-5000,approachAt:f.now-1000});
+ Object.assign(f.craft,{spawned:true,position:{x:apron.x,y:.4,z:apron.z},rotation:{x:0,y:Math.PI,z:0},flight:{assist:'land',assistStage:'park',assistSince:f.now-600001,assistTimeoutMs:480000,assistParkingPoint:{x:apron.x,z:apron.z},runwayId:f.task.route.destination.runwayId,airborne:false,altitude:0,speed:11.7,airspeed:11.7,throttle:.65,throttleCommand:.65,flaps:1,gear:true}});f.player.position={...f.craft.position};f.player.radToxReady=true;f.player.radToxEnabled=false;
+ const rooms=new AuthoritativeRooms({store:{},now:()=>f.now}),room={objects:{},revision:0,simulation:{...f.sim,time:f.now,sequence:0,events:[]}};rooms.initialize(room,f.environment);
+ for(let tick=0;tick<64;tick++){f.now+=250;room.simulation.players.pilot.lastSeen=f.now;rooms.step(room,f.environment);}
+ const snapshot=rooms.view(room),craft=snapshot.actors[f.craft.id];assert.equal(craft.flight.assist,null);assert.equal(craft.flight.throttleCommand,0);assert.equal(craft.flight.airborne,false);assert.ok(craft.flight.speed<.8);assert.ok(Math.abs(craft.position.z-apron.z)<75);assert.ok(Math.abs(craft.position.x-apron.x)<12);assert.equal(job.phase,'landed');assert.equal(f.deliveries,0);
+ // A stopped timeout is not a departure/approach receipt. Removing the prior
+ // server flight checkpoints still prevents an unload from this same pose.
+ const proof={phase:job.phase,departedAt:job.departedAt,approachAt:job.approachAt,landedAt:job.landedAt};job.phase='secured';delete job.departedAt;delete job.approachAt;delete job.landedAt;await assert.rejects(f.command('unload'),/Fly the departure/);assert.equal(f.deliveries,0);Object.assign(job,proof);
+ await f.command('unload');f.tick(AIR_FREIGHT_RULES.unloadMs);await f.command('unload');assert.equal(f.deliveries,1);assert.equal(f.task.phase,'air-delivered');assert.deepEqual(f.ledger.maps['plot-recipient'].stock,{});
 });

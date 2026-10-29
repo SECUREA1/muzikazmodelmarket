@@ -423,11 +423,11 @@ export function mountWorldSupplyUI({stage,inventory,command,showLabel=false,onOp
   busy=true;renderControls();
   try{
    if(typeof command!=='function')throw new Error('Join the live shipping map and board the assigned aircraft to operate air freight.');
-   const result=await command(operation==='fly'?'vehicle-navigate':'world-supply-air',operation==='fly'?{destinationId:task.route?.destination?.runwayId||task.route?.destination?.id}:{operation,airTaskId:task.id});
+   const result=await command(operation==='fly'?'vehicle-navigate':operation==='park'?'aircraft-assist':'world-supply-air',operation==='fly'?{destinationId:task.route?.destination?.runwayId||task.route?.destination?.id}:operation==='park'?{operation:'park'}:{operation,airTaskId:task.id});
    if(!result)throw new Error('Join the live shipping map before operating air freight.');if(disposed||context!==revision)return;
    if(result.players){const id=result.selfId||actorId;self=result.players[id]||self;aircraft=result.actors?.[self?.vehicleId]||aircraft;}
    if(operation==='fly'){screen.close();announce('Automatic flight follows the assigned receiving airfield. After landing, stop at its cargo apron and confirm unloading in World item factory.');}
-   else{await refresh({force:true});if(!disposed&&context===revision)status(operation==='reserve'?'Aircraft and counted air cargo reserved. Load and secure the manifest before takeoff.':operation==='secure'?'Air cargo secured. Fly to the marked receiving airfield.':operation==='release'?'Air reservation released. Undelivered goods remain reserved in the supply chain.':'Air freight updated from the server.');}
+   else{await refresh({force:true});if(!disposed&&context===revision)status(operation==='park'?'Aircraft stopped. Wait for the confirmed receiving-apron state, then unload the sealed freight.':operation==='reserve'?'Aircraft and counted air cargo reserved. Load and secure the manifest before takeoff.':operation==='secure'?'Air cargo secured. Fly to the marked receiving airfield.':operation==='release'?'Air reservation released. Undelivered goods remain reserved in the supply chain.':'Air freight updated from the server.');}
   }catch(error){if(!disposed&&context===revision)status(error.message);}
   finally{if(!disposed&&context===revision){busy=false;renderAirTasks();renderControls();}}
  };

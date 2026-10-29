@@ -22,7 +22,11 @@ test('air task controls require the correct live map, bound aircraft and current
  assert.equal(airFreightAccess(task,{...context,aircraft:null}).buttons.length,0);
  assert.equal(airFreightAccess(task,context).buttons[0].action,'reserve');
  assert.equal(airFreightAccess({...task,phase:'reserved'},context).buttons.length,0,'another reserved manifest cannot be rebound from the UI');
+ const mine=airFreightAccess({...task,phase:'reserved',isCaptain:true},context);
+ assert.match(mine.message,/Your air manifest remains reserved/);assert.doesNotMatch(mine.message,/Another pilot/);assert.equal(mine.buttons.length,0,'a captain flag alone cannot resume an absent flight session');
  assert.equal(airFreightAccess({...task,readyAt:2000},context).buttons.length,0,'shore transfer completes before pilot reservation');
+ const otherFlight=airFreightAccess(task,{...context,self:{...context.self,airFreight:{airTaskId:'other-task',phase:'secured'}}});
+ assert.equal(otherFlight.buttons.length,0);assert.match(otherFlight.message,/current air manifest/);
  assert.equal(airFreightAccess(task,{...context,self:{...context.self,shipping:{job:{phase:'sailing'}}}}).buttons.length,0,'an existing sea voyage cannot overlap air freight');
  assert.deepEqual(airFreightAccess(task,{...session('reserved'),aircraft:{...aircraft,id:'another-plane'}}).buttons.map(button=>button.action),['release']);
  assert.deepEqual(airFreightAccess(task,{...session('cancelled'),aircraft:null}).buttons.map(button=>button.action),['release'],'an interrupted pilot can release a reservation without being trapped in the old cockpit');
@@ -39,6 +43,20 @@ test('load and unload require server dwell while flight does not claim a receivi
  const done=airFreightAccess({...task,phase:'air-delivered'},session('delivered'));
  assert.equal(done.buttons.length,0);assert.match(done.message,/stock still waits for the final delivery drop-off/);
  assert.equal(airFreightPresentation(task,session('loading').self.airFreight).finished,false);
+});
+test('receiving apron stop is offered only after the server approach and actual grounded arrival',()=>{
+ const arrival={...session('approach'),aircraft:{...aircraft,position:{...route.destination.cargoApron},flight:{speed:3,airspeed:3,airborne:false}}};
+ assert.equal(airFreightAccess(task,arrival).buttons[0].action,'park');
+ assert.equal(airFreightAccess(task,arrival).buttons.some(button=>button.action==='unload'),false,'parking cannot claim a landed or delivered proof');
+ for(const context of [
+  {...arrival,mapId:'another-map'},
+  {...arrival,aircraft:{...arrival.aircraft,id:'another-aircraft'}},
+  {...arrival,aircraft:{...arrival.aircraft,flight:{...arrival.aircraft.flight,airborne:true}}},
+  {...arrival,aircraft:{...arrival.aircraft,position:{...arrival.aircraft.position,x:route.destination.cargoApron.x+13}}},
+  {...arrival,aircraft:{...arrival.aircraft,position:{...arrival.aircraft.position,z:route.destination.cargoApron.z+76}}},
+  {...arrival,aircraft:{...arrival.aircraft,position:{...arrival.aircraft.position,y:(route.destination.cargoApron.y||0)+2}}},
+  {...arrival,self:{...arrival.self,airFreight:{...arrival.self.airFreight,phase:'secured'}}}
+ ])assert.equal(airFreightAccess(task,context).buttons.some(button=>button.action==='park'),false);
 });
 test('air manifest cards retain exact quantities and escaped public fields without rendering private identities',()=>{
  const html=airFreightTaskMarkup({...task,itemName:'<unsafe> crate',captainId:'wallet-secret',reservationId:'private-reservation'},context);

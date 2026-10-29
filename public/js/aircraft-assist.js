@@ -23,7 +23,11 @@ export function aircraftAssistedInput(aircraft,input={},environment,now=0){
  const flight=aircraft?.flight;if(!flight?.assist)return input;
  if(Math.abs(Number(input.side)||0)>.18||Math.abs(Number(input.lift)||0)>.18||input.jump===true||input.sprint===true||Math.abs(Number(input.forward)||0)>.2||(Number(input.brake)||0)>0||(input.throttle!==undefined&&input.throttle!==null&&Number.isFinite(Number(input.throttle)))){clearAssist(aircraft);return input;}
  const timeoutMs=Math.max(240000,Math.min(600000,Number(flight.assistTimeoutMs)||240000));
- if(flight.assist!=='cruise'&&now&&flight.assistSince&&now-flight.assistSince>timeoutMs){clearAssist(aircraft);return {...input,throttle:.65,lift:0};}
+ if(flight.assist!=='cruise'&&now&&flight.assistSince&&now-flight.assistSince>timeoutMs){
+  const grounded=!airborneOf(aircraft);clearAssist(aircraft);
+  if(grounded){flight.throttleCommand=0;return {...input,throttle:0,brake:true,lift:0};}
+  return {...input,throttle:.65,lift:0};
+ }
  const altitude=Math.max(0,Number(flight.altitude)||0),speed=speedOf(aircraft),runway=runwayOf(environment,aircraft);
  const common={...input,forward:0,side:0,lift:0,jump:false,sprint:false,rudder:0,brake:false,gear:true,flaps:.25};
  if(['climb','recover','cruise'].includes(flight.assist)){

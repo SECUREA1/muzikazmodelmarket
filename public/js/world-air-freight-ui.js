@@ -19,7 +19,8 @@ export function airFreightAccess(task={}, {mapId='',ownerId='',selfId='',self=nu
  if(task.mapId&&task.mapId!==mapId)return {...view,buttons:[{action:'travel',label:'Travel to the air freight map'}],message:'Visit the assigned shipping map, then board at the departure cargo apron.'};
  if(task.phase==='blocked'||task.blockedReason)return {...view,buttons,message:task.blockedReason||view.label};
  if(task.readyAt>now||task.phase==='port-transfer')return {...view,buttons,message:'Cargo remains reserved while the dock truck reaches the departure apron.'};
- if((task.captainId&&task.captainId!==ownerId||task.phase==='reserved')&&!session)return {...view,buttons,message:task.reservedByMe?'Return to your assigned aircraft to continue this air manifest.':'Another pilot has reserved this air manifest.'};
+ if(self?.airFreight&&self.airFreight.airTaskId!==task.id&&!ended.has(self.airFreight.phase))return {...view,buttons,message:'Finish or release your current air manifest before reserving another flight.'};
+ if((task.captainId&&task.captainId!==ownerId||task.phase==='reserved')&&!session)return {...view,buttons,message:task.isCaptain||task.reservedByMe?'Your air manifest remains reserved. Rejoin its assigned aircraft if the session is available, or wait for the reservation to expire.':'Another pilot has reserved this air manifest.'};
  const seated=!!self?.vehicleId&&aircraft?.id===self.vehicleId&&isAircraft(aircraft)&&aircraft.active!==false&&(aircraft.holderId===undefined||aircraft.holderId===selfId);
  if(!seated)return {...view,buttons:session?[{action:'release',label:'Release interrupted air manifest'}]:buttons,message:session?'This flight is interrupted. Release its reservation to keep the sealed cargo available at port.':'Board a parked cargo-capable aircraft at the departure apron, then reserve this manifest.'};
  if(session&&session.aircraftId!==aircraft.id)return {...view,buttons:[{action:'release',label:'Release interrupted air manifest'}],message:'Return to the aircraft assigned to this manifest before operating its cargo, or release the reservation.'};
@@ -31,6 +32,9 @@ export function airFreightAccess(task={}, {mapId='',ownerId='',selfId='',self=nu
  }
  if(['reserved','loading'].includes(view.phase))buttons.push({action:'load',label:view.phase==='loading'?'Confirm freight loading':'Load sealed freight',disabled:!stopped||view.waitingMs>0});
  if(view.phase==='loaded')buttons.push({action:'secure',label:'Secure freight for flight',disabled:!stopped});
+ const apron=task.route?.destination?.cargoApron,position=aircraft.position;
+ const atReceivingApron=!!apron&&!!position&&['x','y','z'].every(axis=>Number.isFinite(position[axis]))&&Math.abs(position.x-apron.x)<=12&&Math.abs(position.z-apron.z)<=75&&Math.abs(position.y-(apron.y||0))<=1.5;
+ if(view.phase==='approach'&&!flying&&atReceivingApron)buttons.push({action:'park',label:'Stop at receiving apron'});
  if(['secured','airborne','approach'].includes(view.phase))buttons.push({action:'fly',label:flying?'Follow air freight route':'Fly to receiving airfield'});
  if(['landed','unloading'].includes(view.phase))buttons.push({action:'unload',label:view.phase==='unloading'?'Confirm apron unloading':'Unload at receiving apron',disabled:!stopped||view.waitingMs>0});
  buttons.push({action:'release',label:'Release air manifest'});
