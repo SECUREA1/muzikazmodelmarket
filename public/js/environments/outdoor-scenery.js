@@ -16,6 +16,7 @@ const skyFragmentShader=`
  uniform vec3 zenith;
  uniform float cloudCover;
  uniform float rain;
+ uniform float snow;
  uniform float daylight;
  uniform float twilight;
  uniform float night;
@@ -58,6 +59,9 @@ const skyFragmentShader=`
   color+=vec3(.68,.81,1.)*(moonDisc*craters*2.5+moonHalo)*moonVisibility*clearSky;
   float streak=step(.985,fract((d.x+d.z)*350.+time*1.8));
   color=mix(color,mix(vec3(.10,.16,.24),vec3(.73,.84,.9),daylight),rain*streak*.16);
+  vec2 snowUV=d.xz/max(.12,d.y+.4)*65.+vec2(time*.4,time*1.6);
+  float flakes=(1.-smoothstep(.04,.14,length(fract(snowUV)-.5)))*step(.7,hash(floor(snowUV)));
+  color=mix(color,vec3(.85,.91,1.),snow*flakes*.8);
   gl_FragColor=vec4(color,1.);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -65,10 +69,22 @@ const skyFragmentShader=`
 
 export function createOutdoorScenery({scene}){
  const root=new THREE.Group();root.name='OUTDOOR_SKY_AND_HORIZON';root.userData={collisionDisabled:true,collider:false};scene.add(root);
- let profile=null,sky=null,surround=null,dayHorizon=null,dayZenith=null,dayGround=null;
+ let localWeather=null,appliedWeather=null,profile=null,sky=null,surround=null,dayHorizon=null,dayZenith=null,dayGround=null;
  const nightHorizon=new THREE.Color(0x14233d),nightZenith=new THREE.Color(0x030817),duskHorizon=new THREE.Color(0xdb8462),duskZenith=new THREE.Color(0x413c6d);
  const cameraPosition=new THREE.Vector3();
  const clear=()=>{for(const object of [...root.children]){object.traverse(node=>{node.geometry?.dispose();[].concat(node.material||[]).forEach(material=>material?.dispose());});root.remove(object);}sky=null;surround=null;};
+ function applyWeather(){
+  if(!sky)return;
+  const weather=localWeather||profile.weather;
+  if(appliedWeather===weather)return;
+  appliedWeather=weather;
+  const cloudy=['overcast','rain','storm','snow'].includes(weather);
+  dayHorizon.set(cloudy?0xa7bdc6:profile.desert?0xe6c9a1:0xb5d8e9);
+  dayZenith.set(weather==='storm'?0x3e5064:cloudy?0x607d93:0x327dbe);
+  sky.material.uniforms.cloudCover.value=weather==='storm'?.98:cloudy?.78:.30;
+  sky.material.uniforms.rain.value=['rain','storm'].includes(weather)?1:0;
+  sky.material.uniforms.snow.value=weather==='snow'?1:0;
+ }
  function applyDayNight(state){
   if(!sky)return;
   const u=sky.material.uniforms;
@@ -83,13 +99,13 @@ export function createOutdoorScenery({scene}){
   // The unlit distant ground must darken with the lit world too.
   surround.material.color.copy(dayGround).multiplyScalar(.13+.87*daylight+twilight*.13);
  }
- return {get profile(){return profile;},setEnvironment(environment,dayNight=null){
-  clear();profile=outdoorProfile(environment);root.visible=!!profile;
+ return {setLocalWeather(weather){localWeather=weather;applyWeather();},get profile(){return profile;},setEnvironment(environment,dayNight=null){
+  clear();appliedWeather=null;profile=outdoorProfile(environment);root.visible=!!profile;
   if(!profile){scene.background=new THREE.Color(0x050807);if(scene.fog)scene.fog.color.set(0x050807);return;}
   const cloudy=['overcast','rain','storm'].includes(profile.weather);
   dayHorizon=new THREE.Color(cloudy?0xa7bdc6:profile.desert?0xe6c9a1:0xb5d8e9);dayZenith=new THREE.Color(cloudy?0x607d93:0x327dbe);
   scene.background=dayHorizon.clone();if(scene.fog)scene.fog.color.copy(dayHorizon);
-  sky=new THREE.Mesh(new THREE.SphereGeometry(profile.ski?2600:620,40,24),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{time:{value:0},horizon:{value:dayHorizon.clone()},zenith:{value:dayZenith.clone()},cloudCover:{value:cloudy?.78:.30},rain:{value:['rain','storm'].includes(profile.weather)?1:0},daylight:{value:1},twilight:{value:0},night:{value:0},sunDirection:{value:new THREE.Vector3(-.4,.55,-.5).normalize()},moonDirection:{value:new THREE.Vector3(.4,-.55,.5).normalize()},sunVisibility:{value:1},moonVisibility:{value:0}},vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:skyFragmentShader}));
+  sky=new THREE.Mesh(new THREE.SphereGeometry(profile.ski?2600:620,40,24),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{time:{value:0},horizon:{value:dayHorizon.clone()},zenith:{value:dayZenith.clone()},cloudCover:{value:cloudy?.78:.30},snow:{value:0},rain:{value:['rain','storm'].includes(profile.weather)?1:0},daylight:{value:1},twilight:{value:0},night:{value:0},sunDirection:{value:new THREE.Vector3(-.4,.55,-.5).normalize()},moonDirection:{value:new THREE.Vector3(.4,-.55,.5).normalize()},sunVisibility:{value:1},moonVisibility:{value:0}},vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:skyFragmentShader}));
   sky.name='WEATHER_SKY_SPHERE';sky.renderOrder=-100;sky.frustumCulled=false;root.add(sky);
   const surroundExtent=profile.ski?2400:590;const groundShape=new THREE.Shape();groundShape.moveTo(-surroundExtent,-surroundExtent);groundShape.lineTo(surroundExtent,-surroundExtent);groundShape.lineTo(surroundExtent,surroundExtent);groundShape.lineTo(-surroundExtent,surroundExtent);groundShape.closePath();const edge=profile.extent+1,hole=new THREE.Path();hole.moveTo(-edge,-edge);hole.lineTo(-edge,edge);hole.lineTo(edge,edge);hole.lineTo(edge,-edge);hole.closePath();groundShape.holes.push(hole);
   dayGround=new THREE.Color(profile.ski?0xd8e8f3:profile.coast?0x127b9a:profile.desert?0xbca16c:0x60795d);
@@ -97,7 +113,7 @@ export function createOutdoorScenery({scene}){
   // A full distant ring closes the view without extending the playable collider.
   const radius=profile.ski?1000:Math.min(450,profile.extent+90),count=64;const geometry=profile.forest?new THREE.SphereGeometry(1,32,20):profile.commons?new THREE.SphereGeometry(1,14,8):new THREE.ConeGeometry(1,1,6),material=new THREE.MeshStandardMaterial({color:profile.ski?0xc6dce9:profile.desert?0xa58c69:profile.coast?0x6a9295:0x587967,roughness:1,fog:false});if(profile.forest){const positions=geometry.getAttribute('position');for(let i=0;i<positions.count;i++){const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),scale=1+.07*Math.sin(x*7+z*5)+.04*Math.sin(z*13-y*9);positions.setXYZ(i,x*scale,y*scale,z*scale);}geometry.computeVertexNormals();}const hills=new THREE.InstancedMesh(geometry,material,count);hills.name='DISTANT_LANDSCAPE_RING';const matrix=new THREE.Matrix4(),quaternion=new THREE.Quaternion();
   for(let i=0;i<count;i++){const angle=i/count*Math.PI*2,scale=22+(Math.sin(i*7.13)+1)*22,height=profile.forest?16+(Math.sin(i*2.8)+1)*12:profile.commons?20+(Math.sin(i*2.8)+1)*8:profile.coast?16+(Math.sin(i*2.8)+1)*10:30+(Math.sin(i*3.8)+1)*35;matrix.compose(new THREE.Vector3(Math.sin(angle)*radius,profile.commons?-height*.35:-8+height/2,Math.cos(angle)*radius),quaternion,new THREE.Vector3(scale,height,scale));hills.setMatrixAt(i,matrix);}root.add(hills);
-  applyDayNight(dayNight);
+  applyWeather();applyDayNight(dayNight);
  },update(elapsed,camera,dayNight=null){
   if(!profile||!sky)return;sky.position.copy(camera.getWorldPosition(cameraPosition));sky.material.uniforms.time.value=elapsed;applyDayNight(dayNight);
   if(scene.fog){scene.fog.near=Math.max(scene.fog.near,profile.extent*.7);scene.fog.far=Math.max(scene.fog.far,profile.extent*3);}
