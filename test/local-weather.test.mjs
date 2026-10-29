@@ -5,7 +5,7 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 import {createOutdoorScenery} from '../public/js/environments/outdoor-scenery.js';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 test('forecast weather codes cover rain, snow, storms and clouds',()=>{
- for(const [code,type] of [[0,'clear'],[1,'clear'],[3,'overcast'],[45,'overcast'],[67,'rain'],[86,'snow'],[99,'storm']])assert.equal(weatherType(code),type);
+ for(const [code,type] of [[0,'clear'],[1,'clear'],[3,'overcast'],[45,'fog'],[67,'sleet'],[86,'snow'],[99,'storm']])assert.equal(weatherType(code),type);
  assert.throws(()=>weatherType(null));assert.throws(()=>weatherType(900));
 });
 test('location is opt in, forecasts refresh locally and stopping clears weather',async()=>{

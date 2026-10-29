@@ -541,7 +541,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const webXrAvailable = Boolean(navigator.xr?.isSessionSupported);
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');const baselineWorldQuality={...quality};
-  const worldScenery=createOutdoorScenery({scene});
+  const worldScenery=createOutdoorScenery({scene,onThunder:()=>playWeatherThunder()});
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
   const aircraftCamera=createAircraftCamera({camera,playerRig});const harborCamera=createHarborCamera({camera,playerRig});
   const overviewCamera = new THREE.PerspectiveCamera(58, 16 / 9, .05, 700); overviewCamera.name='MUZIKAZ_TOP_DOWN_CAMERA'; scene.add(overviewCamera);
@@ -589,13 +589,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const weatherButton=document.createElement('button');weatherButton.type='button';
   weatherButton.textContent='Sync local weather';weatherButton.setAttribute('aria-pressed','false');
   const weatherStatus=document.createElement('p');weatherStatus.setAttribute('role','status');
-  weatherStatus.textContent='Map weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
+  weatherStatus.textContent='Changing weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
   explorerOptions.append(weatherButton,weatherStatus);
   const localWeather=createLocalWeather({onChange:state=>{
     worldScenery.setLocalWeather(state.weather);
-    weatherStatus.textContent=state.status==='synced'?`Local weather: ${state.weather} · Updated ${new Date(state.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Open-Meteo`:state.status==='loading'?'Finding local weather…':state.status==='unavailable'?'Local weather unavailable. Using map weather; check location permission and connection.':'Map weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
+    weatherStatus.textContent=state.status==='synced'?`Local weather: ${state.weather} · Updated ${new Date(state.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Open-Meteo`:state.status==='loading'?'Finding local weather…':state.status==='unavailable'?'Local weather unavailable. Using changing weather; check location permission and connection.':'Changing weather · Enable location to sync outdoor skies. Location is shared with Open-Meteo.';
   }});
-  weatherButton.addEventListener('click',()=>{if(localWeather.enabled)localWeather.stop();else localWeather.start();weatherButton.setAttribute('aria-pressed',String(localWeather.enabled));weatherButton.textContent=localWeather.enabled?'Use map weather':'Sync local weather';});
+  weatherButton.addEventListener('click',()=>{if(localWeather.enabled)localWeather.stop();else localWeather.start();weatherButton.setAttribute('aria-pressed',String(localWeather.enabled));weatherButton.textContent=localWeather.enabled?'Use changing weather':'Sync local weather';});
   let previousDayNightPhase='';
   const dayNightLighting=createDayNightLighting({scene,hemi,fill,sun,onChange:(state,date)=>{
     const label=state.phase[0].toUpperCase()+state.phase.slice(1);
@@ -1842,6 +1842,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     context.fillStyle='rgba(255,255,255,.96)';context.strokeStyle='#9cff00';context.lineWidth=12;context.beginPath();context.roundRect(18,18,476,130,34);context.fill();context.stroke();context.fillStyle='#081006';context.font='900 62px system-ui';context.textAlign='center';context.fillText(message,256,106);
     const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true,depthTest:false}));sprite.name='Bee_Duck_Thanks';sprite.scale.set(2.7,1,1);sprite.position.y=2.2;sprite.renderOrder=60;return sprite;
   }
+  function playWeatherThunder(){
+    const audio=toxicBubbleSystem.audioContext;
+    if(!audio||audio.state!=='running'||effectsVolume()<=0)return;
+    const buffer=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),samples=buffer.getChannelData(0);
+    for(let i=0;i<samples.length;i++)samples[i]=(Math.random()*2-1)*(1-i/samples.length);
+    const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+    source.buffer=buffer;filter.type='lowpass';filter.frequency.value=180;gain.gain.value=.18;
+    source.connect(filter).connect(gain).connect(toxicBubbleSystem.soundGain);
+    source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();};source.start();
+  }
   function playBeeDuckEatingSound() {
     if(effectsVolume()<=0)return;toxicBubbleSystem.initAudio();const audio=toxicBubbleSystem.audioContext;if(!audio)return;
     const start=()=>{const now=audio.currentTime,master=audio.createGain();master.gain.value=.7;master.connect(toxicBubbleSystem.soundGain);
@@ -3063,7 +3073,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // The open map owns the graphics budget; room input and simulation above
     // continue without drawing the full world into a second WebGL context.
     if(!districtMap.dialog.open||renderer.xr.isPresenting){
-    const nightState=dayNightLighting.update(playerRig.position);worldScenery.update(reducedMotion?0:clock.elapsedTime,displayCamera(),nightState);
+    const nightState=dayNightLighting.update(playerRig.position);worldScenery.update((reducedMotion||playerPreferences.reducedMotion)?0:clock.elapsedTime,displayCamera(),nightState);
     if(!renderer.xr.isPresenting)yachtGames.presentCamera(displayCamera(),playerRig);
     updateNightPlay(nightState);
     if(!islandBuzz.render(scene,displayCamera(),islandUI.visual(),{time:time/1000,reducedMotion:reducedMotion||playerPreferences.reducedMotion||islandUI.reduced()}))renderer.render(scene, displayCamera());
@@ -3243,7 +3253,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     updateLevelLoader(97,'Preparing graphics and movement controls…');
     // Finish the first draw before starting heartbeat deadlines. Large shader
     // and texture uploads can otherwise make a healthy connection time out.
-    const nightState=dayNightLighting.update(playerRig.position);worldScenery.update(reducedMotion?0:clock.elapsedTime,displayCamera(),nightState);updateNightPlay(nightState);
+    const nightState=dayNightLighting.update(playerRig.position);worldScenery.update((reducedMotion||playerPreferences.reducedMotion)?0:clock.elapsedTime,displayCamera(),nightState);updateNightPlay(nightState);
     await compileVisibleGameScene(renderer,scene,displayCamera());
     await new Promise((resolve,reject)=>requestAnimationFrame(()=>{try{renderer.render(scene,displayCamera());setTimeout(resolve,0);}catch(error){reject(error);}}));
   }

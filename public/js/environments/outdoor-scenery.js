@@ -1,3 +1,4 @@
+import {WEATHER_MODES,simulatedWeather} from '../weather-cycle.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function outdoorProfile(environment){
  const layout=environment?.builderScene?.sourceLayout||environment?.builderScene?.layout||environment?.layout||'';
@@ -17,6 +18,11 @@ const skyFragmentShader=`
  uniform float cloudCover;
  uniform float rain;
  uniform float snow;
+ uniform float haze;
+ uniform float wind;
+ uniform float storm;
+ uniform float lightning;
+ uniform float hurricane;
  uniform float daylight;
  uniform float twilight;
  uniform float night;
@@ -31,7 +37,7 @@ const skyFragmentShader=`
   float height=max(0.,d.y);
   vec3 color=mix(horizon,zenith,smoothstep(0.,.8,height));
   vec2 uv=d.xz/max(.12,d.y+.2)*2.;
-  float clouds=smoothstep(1.-cloudCover,1.4-cloudCover,noise(uv+vec2(time*.008,time*.003)));
+  float clouds=smoothstep(1.-cloudCover,1.4-cloudCover,noise(uv+vec2(time*(.008+wind*.05),time*.003)+hurricane*vec2(sin(length(uv)*3.+time*.05),cos(length(uv)*3.+time*.05))));
   clouds*=smoothstep(.02,.2,height);
   vec3 cloudColor=mix(vec3(.035,.052,.09),vec3(.96,.97,.98),daylight);
   cloudColor=mix(cloudColor,vec3(.57,.29,.24),twilight*.55);
@@ -57,33 +63,38 @@ const skyFragmentShader=`
   float craters=.76+.13*noise(moonUV*8.)+.06*noise(moonUV*19.);
   float moonHalo=pow(moonDot,80.)*.13+pow(moonDot,500.)*.25;
   color+=vec3(.68,.81,1.)*(moonDisc*craters*2.5+moonHalo)*moonVisibility*clearSky;
-  float streak=step(.985,fract((d.x+d.z)*350.+time*1.8));
+  float streak=step(.985,fract((d.x+d.z+wind*d.y*.5)*350.+time*(1.8+wind*2.)));
   color=mix(color,mix(vec3(.10,.16,.24),vec3(.73,.84,.9),daylight),rain*streak*.16);
-  vec2 snowUV=d.xz/max(.12,d.y+.4)*65.+vec2(time*.4,time*1.6);
+  vec2 snowUV=d.xz/max(.12,d.y+.4)*65.+vec2(time*(.4+wind*3.),time*1.6);
   float flakes=(1.-smoothstep(.04,.14,length(fract(snowUV)-.5)))*step(.7,hash(floor(snowUV)));
   color=mix(color,vec3(.85,.91,1.),snow*flakes*.8);
+  color=mix(color,horizon,haze*(1.-smoothstep(0.,.5,height))*.8);
+  float bolt=1.-smoothstep(.002,.006,abs(d.x-.35-.015*sin(d.y*65.)));
+  bolt*=smoothstep(.05,.15,d.y)*(1.-smoothstep(.5,.6,d.y));
+  color+=vec3(.65,.73,.9)*lightning*storm*(bolt*.7+clouds*.04);
   gl_FragColor=vec4(color,1.);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
  }`;
 
-export function createOutdoorScenery({scene}){
+export function createOutdoorScenery({scene,now=Date.now,onThunder=()=>{}}){
  const root=new THREE.Group();root.name='OUTDOOR_SKY_AND_HORIZON';root.userData={collisionDisabled:true,collider:false};scene.add(root);
  let localWeather=null,appliedWeather=null,profile=null,sky=null,surround=null,dayHorizon=null,dayZenith=null,dayGround=null;
+ let weatherStarted=now(),lastWeatherTime=now(),lastThunder=-1;
+ const weatherHorizon=new THREE.Color(),weatherZenith=new THREE.Color();
  const nightHorizon=new THREE.Color(0x14233d),nightZenith=new THREE.Color(0x030817),duskHorizon=new THREE.Color(0xdb8462),duskZenith=new THREE.Color(0x413c6d);
  const cameraPosition=new THREE.Vector3();
  const clear=()=>{for(const object of [...root.children]){object.traverse(node=>{node.geometry?.dispose();[].concat(node.material||[]).forEach(material=>material?.dispose());});root.remove(object);}sky=null;surround=null;};
- function applyWeather(){
+ function applyWeather(blend=1){
   if(!sky)return;
-  const weather=localWeather||profile.weather;
-  if(appliedWeather===weather)return;
+  const weather=localWeather||simulatedWeather(profile.weather,now()-weatherStarted);
   appliedWeather=weather;
-  const cloudy=['overcast','rain','storm','snow'].includes(weather);
-  dayHorizon.set(cloudy?0xa7bdc6:profile.desert?0xe6c9a1:0xb5d8e9);
-  dayZenith.set(weather==='storm'?0x3e5064:cloudy?0x607d93:0x327dbe);
-  sky.material.uniforms.cloudCover.value=weather==='storm'?.98:cloudy?.78:.30;
-  sky.material.uniforms.rain.value=['rain','storm'].includes(weather)?1:0;
-  sky.material.uniforms.snow.value=weather==='snow'?1:0;
+  const mode=WEATHER_MODES[weather]||WEATHER_MODES.clear;
+  weatherHorizon.set(mode.cloud>.6?0xa7bdc6:profile.desert?0xe6c9a1:0xb5d8e9);
+  weatherZenith.set(mode.storm?0x3e5064:mode.cloud>.6?0x607d93:0x327dbe);
+  dayHorizon.lerp(weatherHorizon,blend);dayZenith.lerp(weatherZenith,blend);
+  const u=sky.material.uniforms;
+  for(const [key,value]of Object.entries({cloudCover:mode.cloud,rain:mode.rain,snow:mode.snow,haze:mode.haze,wind:mode.wind,storm:mode.storm,hurricane:weather==='hurricane'?1:0}))u[key].value+=(value-u[key].value)*blend;
  }
  function applyDayNight(state){
   if(!sky)return;
@@ -99,13 +110,13 @@ export function createOutdoorScenery({scene}){
   // The unlit distant ground must darken with the lit world too.
   surround.material.color.copy(dayGround).multiplyScalar(.13+.87*daylight+twilight*.13);
  }
- return {setLocalWeather(weather){localWeather=weather;applyWeather();},get profile(){return profile;},setEnvironment(environment,dayNight=null){
-  clear();appliedWeather=null;profile=outdoorProfile(environment);root.visible=!!profile;
+ return {setLocalWeather(weather){localWeather=weather;applyWeather();},get weather(){return appliedWeather;},get profile(){return profile;},setEnvironment(environment,dayNight=null){
+  clear();appliedWeather=null;weatherStarted=lastWeatherTime=now();lastThunder=-1;profile=outdoorProfile(environment);root.visible=!!profile;
   if(!profile){scene.background=new THREE.Color(0x050807);if(scene.fog)scene.fog.color.set(0x050807);return;}
   const cloudy=['overcast','rain','storm'].includes(profile.weather);
   dayHorizon=new THREE.Color(cloudy?0xa7bdc6:profile.desert?0xe6c9a1:0xb5d8e9);dayZenith=new THREE.Color(cloudy?0x607d93:0x327dbe);
   scene.background=dayHorizon.clone();if(scene.fog)scene.fog.color.copy(dayHorizon);
-  sky=new THREE.Mesh(new THREE.SphereGeometry(profile.ski?2600:620,40,24),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{time:{value:0},horizon:{value:dayHorizon.clone()},zenith:{value:dayZenith.clone()},cloudCover:{value:cloudy?.78:.30},snow:{value:0},rain:{value:['rain','storm'].includes(profile.weather)?1:0},daylight:{value:1},twilight:{value:0},night:{value:0},sunDirection:{value:new THREE.Vector3(-.4,.55,-.5).normalize()},moonDirection:{value:new THREE.Vector3(.4,-.55,.5).normalize()},sunVisibility:{value:1},moonVisibility:{value:0}},vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:skyFragmentShader}));
+  sky=new THREE.Mesh(new THREE.SphereGeometry(profile.ski?2600:620,40,24),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{time:{value:0},horizon:{value:dayHorizon.clone()},zenith:{value:dayZenith.clone()},cloudCover:{value:cloudy?.78:.30},haze:{value:0},wind:{value:0},storm:{value:0},lightning:{value:0},hurricane:{value:0},snow:{value:0},rain:{value:['rain','storm'].includes(profile.weather)?1:0},daylight:{value:1},twilight:{value:0},night:{value:0},sunDirection:{value:new THREE.Vector3(-.4,.55,-.5).normalize()},moonDirection:{value:new THREE.Vector3(.4,-.55,.5).normalize()},sunVisibility:{value:1},moonVisibility:{value:0}},vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:skyFragmentShader}));
   sky.name='WEATHER_SKY_SPHERE';sky.renderOrder=-100;sky.frustumCulled=false;root.add(sky);
   const surroundExtent=profile.ski?2400:590;const groundShape=new THREE.Shape();groundShape.moveTo(-surroundExtent,-surroundExtent);groundShape.lineTo(surroundExtent,-surroundExtent);groundShape.lineTo(surroundExtent,surroundExtent);groundShape.lineTo(-surroundExtent,surroundExtent);groundShape.closePath();const edge=profile.extent+1,hole=new THREE.Path();hole.moveTo(-edge,-edge);hole.lineTo(-edge,edge);hole.lineTo(edge,edge);hole.lineTo(edge,-edge);hole.closePath();groundShape.holes.push(hole);
   dayGround=new THREE.Color(profile.ski?0xd8e8f3:profile.coast?0x127b9a:profile.desert?0xbca16c:0x60795d);
@@ -115,7 +126,14 @@ export function createOutdoorScenery({scene}){
   for(let i=0;i<count;i++){const angle=i/count*Math.PI*2,scale=22+(Math.sin(i*7.13)+1)*22,height=profile.forest?16+(Math.sin(i*2.8)+1)*12:profile.commons?20+(Math.sin(i*2.8)+1)*8:profile.coast?16+(Math.sin(i*2.8)+1)*10:30+(Math.sin(i*3.8)+1)*35;matrix.compose(new THREE.Vector3(Math.sin(angle)*radius,profile.commons?-height*.35:-8+height/2,Math.cos(angle)*radius),quaternion,new THREE.Vector3(scale,height,scale));hills.setMatrixAt(i,matrix);}root.add(hills);
   applyWeather();applyDayNight(dayNight);
  },update(elapsed,camera,dayNight=null){
-  if(!profile||!sky)return;sky.position.copy(camera.getWorldPosition(cameraPosition));sky.material.uniforms.time.value=elapsed;applyDayNight(dayNight);
+  if(!profile||!sky)return;
+  const timestamp=now(),delta=Math.min(2,Math.max(0,(timestamp-lastWeatherTime)/1000));lastWeatherTime=timestamp;
+  applyWeather(1-Math.exp(-delta/5));
+  const u=sky.material.uniforms,bucket=Math.floor(elapsed/27),phase=elapsed%27;
+  // A single distant bolt, no rapid flashes; elapsed=0 disables it for reduced motion.
+  u.lightning.value=elapsed>0&&phase>2&&phase<2.4?Math.sin((phase-2)/.4*Math.PI):0;
+  if(elapsed>0&&u.storm.value>.5&&phase>3&&phase<5&&bucket!==lastThunder){lastThunder=bucket;onThunder();}
+  sky.position.copy(camera.getWorldPosition(cameraPosition));sky.material.uniforms.time.value=elapsed;applyDayNight(dayNight);
   if(scene.fog){scene.fog.near=Math.max(scene.fog.near,profile.extent*.7);scene.fog.far=Math.max(scene.fog.far,profile.extent*3);}
  },dispose(){clear();root.removeFromParent();}};
 }

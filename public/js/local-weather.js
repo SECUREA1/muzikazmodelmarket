@@ -2,10 +2,12 @@
 export function weatherType(code) {
  if (!Number.isInteger(code)) throw Error('Invalid weather code');
  if (code === 0 || code === 1) return 'clear';
- if ([2,3,45,48].includes(code)) return 'overcast';
+ if ([2,3].includes(code)) return 'overcast';
+ if ([45,48].includes(code)) return 'fog';
+ if ([56,57,66,67].includes(code)) return 'sleet';
  if ([71,73,75,77,85,86].includes(code)) return 'snow';
  if ([95,96,99].includes(code)) return 'storm';
- if ([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return 'rain';
+ if ([51,53,55,61,63,65,80,81,82].includes(code)) return 'rain';
  throw Error('Unknown weather code');
 }
 
