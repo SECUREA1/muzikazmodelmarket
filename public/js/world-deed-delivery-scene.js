@@ -59,7 +59,7 @@ function makePad(dropoff,createCanvas){
  const root=new THREE.Group();root.name='DEED_DELIVERY_PAD_'+dropoff.id;root.position.set(position.x,position.y+.025,position.z);
  const color=dropoff.status==='blocked'?0xe29e65:0x8de1c7,plate=new THREE.Mesh(new THREE.BoxGeometry(2.6,.035,2.3),new THREE.MeshBasicMaterial({color:0x183d48,transparent:true,opacity:.8,depthWrite:false}));root.add(plate);
  const ring=new THREE.Mesh(new THREE.RingGeometry(.8,.9,32),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:true,opacity:.95,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.035;root.add(ring);
- const label=markerLabel(['door','doorstep'].includes(dropoff.kind)?'DOORSTEP DELIVERY':'DEED DELIVERY ENTRANCE',createCanvas);if(label)root.add(label);
+ const label=markerLabel(['door','doorstep'].includes(dropoff.kind)?'DOORSTEP DELIVERY':'DELIVERY ENTRANCE',createCanvas);if(label)root.add(label);
  const parcel=crate();parcel.name='CONFIRMED_DOORSTEP_PARCEL';parcel.visible=Number.isFinite(dropoff.deliveredAt)||Number.isFinite(dropoff.receivedAt);root.add(parcel);
  root.userData.deedDeliveryDropoff=true;root.userData.deedId=dropoff.deedId;return root;
 }
@@ -137,11 +137,13 @@ export function createWorldDeedDeliveryScene({scene,inventory,pollMs=4000,create
  function reset(){
   generation++;clearInterval(timer);timer=null;request?.controller.abort();request=null;environment=null;lastError='';clear();
  }
- function update(next){
+ function update(next,{deliveryActivity=false}={}){
   if(disposed)return;
-  // Most shared worlds have no deed freight at all. Do not subscribe them to
-  // the supply ledger or build route plans merely because gameplay is live.
-  if(!deliveryEnvironment(next)){if(environment||timer||request||root.visible)reset();return;}
+  // Idle ordinary worlds never touch the supply ledger. Their existing room
+  // snapshots can enable projections only while the server has freight or
+  // confirmed receiving markers for that exact world.
+  const activeMap=typeof next?.id==='string'&&!!next.id&&deliveryActivity===true;
+  if(!deliveryEnvironment(next)&&!activeMap){if(environment||timer||request||root.visible)reset();return;}
   const changed=environment?.id!==next.id,revised=!changed&&String(environment.contentUpdatedAt||environment.updatedAt||'')!==String(next.contentUpdatedAt||next.updatedAt||'');
   if(changed)reset();environment=next;
   if(autoPoll&&!timer)timer=setInterval(()=>{if(!document?.hidden)void refresh();},interval);

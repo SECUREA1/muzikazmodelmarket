@@ -4,11 +4,22 @@ import {GAME_ECONOMY} from '../game-economy.mjs';
 import {NATIVE_BUILDER_ITEMS} from '../public/js/native-builder-items.js';
 import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from '../public/js/market-item-preview.js';
 import {auditProductPreviewCoverage} from '../scripts/audit-product-preview-coverage.mjs';
+import {publicProductVisual} from '../public-product-visual.mjs';
+import * as THREE from '../public/vendor/three/three.module.min.js';
 
 test('every catalog offer and native definition has an explicit, resolvable product presentation',async()=>{
  const report=await auditProductPreviewCoverage();assert.deepEqual(report.failures,[]);assert.equal(report.counts.offers,GAME_ECONOMY.length);assert.equal(report.counts.uniqueSkus,report.counts.offers);assert.equal(report.counts.nativeDefinitions,Object.keys(NATIVE_BUILDER_ITEMS).length);
  assert.equal(report.counts.offers,621);assert.equal(report.counts.nativeDefinitions,495);assert.equal(report.counts.nativeOffers,556);assert.equal(report.counts.uniqueNativeDesigns,551);assert.equal(report.counts.sources.layout,32);assert.equal(report.counts.sources.tool,24);assert.equal(report.counts.sources.material,130);assert.equal(report.counts.generatedRegistryAssets,44);
  assert.equal(report.counts.sources.image,5);assert.equal(report.counts.sources.card,5);assert.equal(report.counts.imageFiles,5);
+ assert.equal(report.counts.publicMapOffers,47);assert.ok(report.mapOffers.every(offer=>offer.source==='world'&&offer.id==='native-map:'+offer.worldId));
+});
+
+test('native-map references retain exact world identity while automatic thumbnails stay light product cards',async()=>{
+ const descriptor=previewDescriptor({id:'native-map:world-item-factory',worldId:'world-item-factory',source:'native-map',name:'World item factory',category:'Maps and worlds'});
+ assert.equal(previewModelSource(descriptor),'world');assert.equal(descriptor.worldPreviewId,'world-item-factory');assert.deepEqual(previewDescriptor(descriptor),descriptor);
+ const previous=globalThis.window;let requests=0;globalThis.window={fetch:()=>{requests++;throw Error('Automatic map previews must not fetch a whole world.');}};let loaded;
+ try{loaded=await loadPreviewModel(descriptor);assert.equal(loaded.root.userData.previewPresentation,'product-card');assert.equal(requests,0);loaded.dispose();loaded=null;}
+ finally{loaded?.dispose();if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });
 
 test('generated recipes and editable vector drawings preserve their actual gameplay geometry route',async()=>{
@@ -41,4 +52,17 @@ test('local upload URLs and drawing configuration survive normalization without 
  const records=[{name:'Local model',modelUrl:'blob:https://frontend.test/local-model'},{name:'Painted drawing',renderKind:'image',imageUrl:'/uploads/assets/drawing.svg',configuration:{extruded:true,depth:35,depthMode:'relief',scale:1.4}},{asset:{id:'owned-model',name:'Owned drawing',strokes:[{tool:'circle',points:[{x:90,y:90},{x:140,y:140}]}],drawingSettings:{depth:.2},form:'lightweight'}}];
  for(const record of records){const before=JSON.stringify(record),descriptor=previewDescriptor(record);assert.deepEqual(previewDescriptor(descriptor),descriptor);assert.equal(JSON.stringify(record),before);}
  assert.equal(previewDescriptor(records[0]).model,'blob:https://frontend.test/local-model');assert.equal(previewModelSource(previewDescriptor(records[1])),'image');assert.deepEqual(previewDescriptor(records[1]).configuration,records[1].configuration);assert.equal(previewModelSource(previewDescriptor(records[2])),'drawing');
+});
+
+test('public configured GLBs render the same saved appearance as their owned preview without publishing private configuration',async()=>{
+ const previous=globalThis.window,bytes=triangleGlb(),configuration={scale:1.8,orientation:90,material:'glass',color:'#22aacc',colorBlend:100,privateEditorNote:'do not publish',quest:{reward:999}};
+ globalThis.window={location:{href:'https://frontend.test/model-market.html',origin:'https://frontend.test'},MUZIKAZ_API:{url:path=>new URL(path,'https://api.test/').href,fetch:async()=>new Response(bytes,{headers:{'Content-Type':'model/gltf-binary'}})}};
+ const owned={id:'configured-owned-model',name:'Configured model',modelUrl:'/uploads/assets/configured.glb',configuration},published={id:'player:creator:configured-owned-model',name:owned.name,modelUrl:owned.modelUrl,...publicProductVisual(owned)},loaded=[];
+ try{
+  assert.equal(published.configuration,undefined);assert.equal(JSON.stringify(published).includes('do not publish'),false);assert.equal(JSON.stringify(published).includes('reward'),false);
+  for(const item of [owned,published])loaded.push(await loadPreviewModel(previewDescriptor(item)));
+  const summarize=({root})=>{root.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(root),mesh=root.getObjectByProperty('isMesh',true);return {min:bounds.min.toArray(),max:bounds.max.toArray(),color:mesh.material.color.toArray(),opacity:mesh.material.opacity,transparent:mesh.material.transparent,roughness:mesh.material.roughness};};
+  const own=summarize(loaded[0]),publicView=summarize(loaded[1]);assert.deepEqual(publicView,own);
+  assert.ok(Math.abs(publicView.max[1]-1.8)<1e-6);assert.ok(Math.abs(publicView.max[2]-publicView.min[2]-1.8)<1e-6);assert.equal(publicView.opacity,.45);assert.equal(publicView.transparent,true);
+ }finally{for(const item of loaded)disposePreviewModel(item.root);if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });

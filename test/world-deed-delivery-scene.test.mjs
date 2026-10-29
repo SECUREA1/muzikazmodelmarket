@@ -86,3 +86,25 @@ test('normal worlds never subscribe, while entering and leaving a deed starts an
  defer=false;f.manager.update({id:'authored-delivery-room',builderScene:{layoutMeta:{delivery:{enabled:true}}}});await f.manager.refresh();assert.equal(calls.length,3,'explicit authored delivery metadata also enables a projection');
  f.manager.dispose();
 });
+
+test('a server activity hint activates only its ordinary map and withdrawing it aborts polling and late parcels',async t=>{
+ const calls=[];let defer=false,resolvePending;
+ const inventory={api:async(url,options)=>{
+  const mapId=new URL(url,'https://game.test').searchParams.get('mapId');calls.push({mapId,signal:options.signal});
+  if(defer)return await new Promise(resolve=>resolvePending=resolve);
+  return projection({mapId,vehicles:[],routes:[],dropoffs:[{id:'public-store-door',mapId,kind:'doorstep',position:{x:15,y:0,z:8},deliveredAt:10000}]});
+ }};
+ const f=setup({inventory,autoPoll:true,pollMs:1000});t.after(()=>f.manager.dispose());
+ f.manager.update({id:'public-commons',deliveryActivity:true});await f.manager.refresh();assert.equal(calls.length,0,'map data alone cannot opt an ordinary world into supply polling');
+ f.manager.update({id:'public-commons'},{deliveryActivity:'true'});await f.manager.refresh();assert.equal(calls.length,0,'the server hint must be a boolean');
+ f.manager.update({id:'public-commons'},{deliveryActivity:true});await f.manager.refresh();
+ assert.equal(calls.length,1);assert.equal(calls[0].mapId,'public-commons');assert.equal(f.manager.snapshot().mapId,'public-commons');assert.equal(f.manager.snapshot().visible,true);
+ assert.equal(f.scene.getObjectByName('CONFIRMED_DOORSTEP_PARCEL').visible,true,'confirmed receiving markers remain available while the server advertises them');
+ f.manager.update({id:'public-commons'},{deliveryActivity:true});assert.equal(calls.length,1,'repeated room snapshots do not trigger per-frame requests');
+ defer=true;const pending=f.manager.refresh();assert.equal(calls.length,2);
+ f.manager.update({id:'public-commons'},{deliveryActivity:false});assert.equal(calls[1].signal.aborted,true);assert.equal(f.manager.snapshot().visible,false);assert.equal(f.manager.snapshot().mapId,null);
+ resolvePending(projection({mapId:'public-commons'}));await pending;assert.equal(f.manager.snapshot().vehicles.length,0);assert.equal(f.scene.getObjectByName('CONFIRMED_DOORSTEP_PARCEL'),undefined,'late projections cannot recreate a cleared marker');
+ await new Promise(resolve=>setTimeout(resolve,1100));assert.equal(calls.length,2,'withdrawing activity clears the ordinary-map interval');
+ defer=false;f.manager.update({id:'other-idle-world'});await f.manager.refresh();assert.equal(calls.length,2,'another ordinary map stays idle');
+ f.manager.update({id:'authored-room',delivery:{enabled:true}},{deliveryActivity:false});await f.manager.refresh();assert.equal(calls.length,3,'metadata-enabled freight retains its existing subscription');
+});

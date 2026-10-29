@@ -14,7 +14,7 @@ export function deedDeliveryTaskPresentation(task={}){
 const metric=value=>Math.round(Math.max(0,Number(value)||0)).toLocaleString()+' m';
 const eta=value=>{const seconds=Math.ceil(Math.max(0,Number(value)||0)/1000);return seconds<60?seconds+'s':Math.ceil(seconds/60)+' min';};
 export function deedDeliveryRouteMarkup(route,{navigate=false}={}){
- if(!route)return '<p class="supply-muted">The server calculates a delivery approach for each active deed from the latest map layout.</p>';
+ if(!route)return '<p class="supply-muted">The server calculates each receiving address approach from the latest map layout.</p>';
  const ready=route.status==='ready',dropoff=route.dropoff||{},kind=dropoff.kind==='doorstep'||dropoff.kind==='door'?'Doorstep drop-off':'Marked plot entrance',points=[...(route.truckWaypoints||[]),...(route.courierWaypoints||[])].filter(point=>Number.isFinite(point?.x)&&Number.isFinite(point?.z));
  let diagram='';
  if(points.length){
@@ -29,5 +29,5 @@ export function deedDeliveryTasksMarkup(tasks=[]){
  const rows=records(tasks);
  if(!rows.length)return '';
  const priority=task=>['driving','courier','unloading','dropoff','loading','blocked'].includes(task.phase)?0:finished.has(task.phase)?2:1,visible=rows.slice().sort((a,b)=>priority(a)-priority(b)).slice(0,6),delivered=rows.filter(task=>task.phase==='delivered').length;
- return '<div class="supply-road-tasks"><strong>Port → trucks → deed drop-off</strong><small>'+count(delivered)+' / '+count(rows.length)+' truck loads dropped off'+(rows.length>visible.length?' · showing '+visible.length+' current loads':'')+'</small>'+visible.map(task=>{const view=deedDeliveryTaskPresentation(task);return '<article class="supply-road-task" data-delivery-task="'+esc(task.id)+'"><span>'+count(task.quantity)+' units · '+count(task.crateCount)+' freight crates</span><span>'+esc(view.label)+'</span><progress max="1" value="'+view.progress+'" aria-label="Current delivery stage progress"></progress>'+(task.blockedReason?'<small>'+esc(task.blockedReason)+'</small>':'')+(task.deliveredAt?'<small>Drop-off confirmed · '+esc(new Date(task.deliveredAt).toLocaleString())+'</small>':'')+'</article>';}).join('')+'</div>';
+ return '<div class="supply-road-tasks"><strong>Port → trucks → receiving drop-off</strong><small>'+count(delivered)+' / '+count(rows.length)+' truck loads dropped off'+(rows.length>visible.length?' · showing '+visible.length+' current loads':'')+'</small>'+visible.map(task=>{const view=deedDeliveryTaskPresentation(task);return '<article class="supply-road-task" data-delivery-task="'+esc(task.id)+'"><span>'+count(task.quantity)+' units · '+count(task.crateCount)+' freight crates</span><span>'+esc(view.label)+'</span><progress max="1" value="'+view.progress+'" aria-label="Current delivery stage progress"></progress>'+(task.blockedReason?'<small>'+esc(task.blockedReason)+'</small>':'')+(task.deliveredAt?'<small>Drop-off confirmed · '+esc(new Date(task.deliveredAt).toLocaleString())+'</small>':'')+'</article>';}).join('')+'</div>';
 }

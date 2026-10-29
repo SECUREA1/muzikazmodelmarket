@@ -47,6 +47,7 @@ records = [
     {'id': 'layout', 'name': 'Hedge maze', 'builderLayoutId': 'hedge-maze'},
     {'id': 'upload', 'name': 'Authenticated upload', 'modelUrl': '/uploads/assets/test-product/content'},
     {'id': 'image', 'name': 'Artwork extrusion', 'renderKind': 'image', 'modelUrl': '/public/images/native-designs/path-tile.svg', 'configuration': {'extruded': True, 'depth': 28}},
+    {'id': 'native-map:native-preview-world', 'worldId': 'native-preview-world', 'source': 'native-map', 'name': 'Authored public world'},
     {'id': 'card', 'name': 'Care product', 'description': 'Product information without a geometric model'},
 ]
 try:
@@ -65,6 +66,10 @@ try:
                 route.fulfill(body=gltf, content_type='model/gltf+json')
 
             page.route('**/uploads/assets/test-product/content', upload)
+            world = {'id': 'native-preview-world', 'name': 'Authored public world', 'visibility': 'public', 'source': 'repository', 'proceduralLand': True, 'playable': True,
+                     'builderScene': {'version': 3, 'layout': 'market-square', 'mapSize': 40, 'objects': [{'id': 'authored-portal', 'modelId': 'portal-door', 'position': {'x': 4, 'y': 0, 'z': 6}, 'rotation': {'x': 0, 'y': .4, 'z': 0}, 'scale': {'x': 1, 'y': 1, 'z': 1}}]}}
+            page.route('**/api/environments/native-preview-world', lambda route: route.fulfill(json={'success': True, 'data': world}))
+            page.route('**/api/environments/private-preview-world', lambda route: route.fulfill(json={'success': True, 'data': {**world, 'id': 'private-preview-world', 'visibility': 'private'}}))
             page.goto(f'http://127.0.0.1:{server.server_port}/__product_preview')
             page.evaluate('''() => {
               window.cameraCalls=0;window.stoppedTracks=0;window.draws=0;window.authRequests=[];
@@ -106,6 +111,23 @@ try:
             assert page.get_by_role('status').filter(has_text='not world-tracked').is_visible()
             page.evaluate('MuzikazAR.close()')
             assert page.evaluate('stoppedTracks') == 2
+            details = page.evaluate('''async()=>{
+              const {previewDescriptor,loadPreviewModel}=await import('/public/js/market-item-preview.js');
+              const T=await import('/public/vendor/three/three.module.min.js');
+              const canvas=document.createElement('canvas'),renderer=new T.WebGLRenderer({canvas,antialias:false});
+              let loaded;
+              try{
+                loaded=await loadPreviewModel(previewDescriptor({id:'native-map:native-preview-world',worldId:'native-preview-world',source:'native-map',name:'Authored public world'}),{renderer});
+                let authored=false;loaded.root.traverse(node=>{if(node.userData.atlasItemId==='authored-portal')authored=true;});
+                const answer={worldId:loaded.root.userData.previewWorldId,authored,presentation:loaded.root.userData.previewPresentation};
+                loaded.dispose();loaded=null;
+                let privateRejected=false;
+                try{loaded=await loadPreviewModel(previewDescriptor({id:'native-map:private-preview-world',source:'native-map',worldId:'private-preview-world',name:'Unavailable world'}),{renderer});}catch{privateRejected=true;}
+                answer.privateRejected=privateRejected;
+                return answer;
+              }finally{loaded?.dispose();renderer.dispose();renderer.forceContextLoss();}
+            }''')
+            assert details == {'worldId': 'native-preview-world', 'authored': True, 'presentation': 'actual-model', 'privateRejected': True}, details
             assert not errors and not shader_errors, {'pageErrors': errors, 'shaderErrors': shader_errors}
             print({'viewport': [width, height], 'visual_sources': len(records), 'private_upload_uses_auth': True,
                    'camera_only_after_click': True, 'capture_released': True, 'pageErrors': errors, 'shaderErrors': shader_errors}, flush=True)

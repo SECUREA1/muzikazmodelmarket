@@ -107,3 +107,23 @@ test('decor reuse can be disabled while retaining protocol 2 compatibility',asyn
   assert.deepEqual(state,wire(full(2)));
  },{snapshotDecorActors:false});
 });
+
+test('full and compact room replies retain fresh delivery activity instead of reusing the prior hint',async()=>{
+ for(const snapshotProtocol of [1,2]){
+  let sequence=0,deliveryActivity=false;const packets=[],renders=[];
+  await withClient(async(path,options)=>{
+   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+   const command=JSON.parse(options.body),state={...full(++sequence),deliveryActivity};
+   const packet=wire(compactRoomSnapshot(state,command,{id:'delivery-hint-'+snapshotProtocol}));
+   packets.push(packet);return response(packet);
+  },async client=>{
+   assert.equal(renders.at(-1).deliveryActivity,false,'a full idle join remains idle');
+   for(const active of [true,true,false,false,true]){
+    deliveryActivity=active;const state=await client.send('input',{input:{}});
+    assert.equal(packets.at(-1).deliveryActivity,active,'the wire hint is never omitted by compaction');
+    assert.equal(state.deliveryActivity,active);assert.equal(renders.at(-1).deliveryActivity,active);
+   }
+   assert.ok(snapshotProtocol===1?packets.at(-1).actorsPartial:packets.at(-1).snapshotUnchanged?.length);
+  },{snapshotProtocol,render:state=>renders.push(state)});
+ }
+});

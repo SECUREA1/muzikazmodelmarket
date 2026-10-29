@@ -27,14 +27,14 @@ test('store key handling retains resident and Builder actions and respects overl
 
 test('physical product selection retains exact sellers and Builder listings before native SKUs',()=>{
  const begin=source.indexOf('  function openStoreProduct('),finish=source.indexOf('  function updateStoreDisplays(',begin),calls=[];
- const context=vm.createContext({lockMenuInput(){},gameMarketplace:{open:(section,options)=>calls.push({section,...options})}});
+ const context=vm.createContext({lockMenuInput(){},activeEnvironment:{id:'receiving-map'},gameMarketplace:{open:(section,options)=>calls.push({section,...options})}});
  vm.runInContext(source.slice(begin,finish),context);
- context.openStoreProduct({id:'player:alice:chair',source:'player',sellerId:'alice',itemId:'chair',sku:'asset:chair'});
+ context.openStoreProduct({id:'player:alice:chair',source:'player',sellerId:'alice',itemId:'chair',sku:'asset:chair'},{storeObjectId:'second-store'});
  context.openStoreProduct({id:'player:bob:chair',source:'player',sellerId:'bob',itemId:'chair',sku:'asset:chair'});
  context.openStoreProduct({id:'builder:listing-1',source:'builder',sku:'asset:chair'});
  context.openStoreProduct({source:'upgrade',sku:'asset:chair'});
  assert.deepEqual(JSON.parse(JSON.stringify(calls)),[
-  {section:'browse',productId:'player:alice:chair'},{section:'browse',productId:'player:bob:chair'},
-  {section:'builder',productId:'builder:listing-1'},{section:'upgrades',sku:'asset:chair'}
+  {section:'browse',mapId:'receiving-map',storeObjectId:'second-store',productId:'player:alice:chair'},{section:'browse',mapId:'receiving-map',productId:'player:bob:chair'},
+  {section:'builder',mapId:'receiving-map',productId:'builder:listing-1'},{section:'upgrades',mapId:'receiving-map',sku:'asset:chair'}
  ]);
 });

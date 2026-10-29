@@ -1,8 +1,27 @@
+import {deliveryObjectId} from './world-supply-address-ui.js';
 import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from './market-item-preview.js';
 
 const retailBuildings=new Set(['general-store','corner-bakery','community-supermarket','fashion-boutique','neighborhood-pharmacy','artisan-workshop']);
 const retailLayouts=new Set(['vendor-street','market-square','mega-mall']);
-export const STORE_DISPLAY_LIMITS=Object.freeze({displays:6,concurrentLoads:2,cachedSources:8,meshes:160,triangles:80000});
+export const STORE_DISPLAY_LIMITS=Object.freeze({displays:6,concurrentLoads:2,cachedSources:8,meshes:160,triangles:80000,activeMeshes:96,activeDraws:96,activeTriangles:80000});
+const minimumCardCost=Object.freeze({meshes:4,draws:4,triangles:28});
+export function storeDisplayComplexity(root){
+ const cost={meshes:0,draws:0,triangles:0};
+ // Three's transparent DoubleSide (2) materials submit both faces unless the
+ // authored material explicitly opts into a single pass.
+ const passes=material=>material?.transparent===true&&material.side===2&&material.forceSinglePass===false?2:1;
+ root?.traverse(node=>{
+  if(!node.isMesh)return;
+  const geometry=node.geometry,multiple=Array.isArray(node.material),groups=multiple?geometry?.groups||[]:[],vertices=geometry?.index?.count||geometry?.attributes?.position?.count||0;
+  const draws=groups.length?groups.reduce((sum,group)=>sum+passes(node.material[group.materialIndex]),0):multiple?node.material.reduce((sum,material)=>sum+passes(material),0):passes(node.material);
+  const submitted=groups.length?Math.max(vertices,groups.reduce((sum,group)=>sum+group.count*passes(node.material[group.materialIndex]),0)):vertices*(multiple?Math.max(1,...node.material.map(passes)):passes(node.material));
+  cost.meshes++;cost.draws+=Math.max(1,draws);
+  // Authored groups may overlap. Count those repeated submissions as well as
+  // instances instead of treating every geometry as one inexpensive draw.
+  cost.triangles+=submitted/3*(node.isInstancedMesh?node.count:1);
+ });
+ return cost;
+}
 export function storeProductIdentity(record={}){
  if(/^(?:player|builder):/.test(record.id||''))return record.id;
  if(record.sellerId&&record.itemId)return 'player:'+record.sellerId+':'+record.itemId;
@@ -26,7 +45,7 @@ export function storeDisplayProducts(records=[]){
  const groups=new Map(),seen=new Set();
  for(const record of records){
   const item=previewDescriptor(record),source=previewModelSource(item);
-  if(!source)continue;const key=descriptorKey(item);if(seen.has(key))continue;seen.add(key);
+  if(!source||source==='world')continue;const key=descriptorKey(item);if(seen.has(key))continue;seen.add(key);
   if(!groups.has(source))groups.set(source,[]);groups.get(source).push({record,item,key,identity:storeProductIdentity(record)});
  }
  const result=[],order=['native','glb','generated','drawing','material','tool','image','card','layout'];
@@ -97,7 +116,8 @@ function releaseDisplayClone(root){
 export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()=>new THREE.Vector3(),loadProducts,loadModel=loadPreviewModel,disposeModel=disposePreviewModel,maxDisplays=6,loadDistance=28,unloadDistance=40,onSelect=()=>{}}={}){
  if(!THREE)throw Error('Store displays need Three.js.');
  maxDisplays=Math.max(0,Math.min(STORE_DISPLAY_LIMITS.displays,Math.floor(maxDisplays)||0));
- const fixtures=new Map(),templates=new Map(),jobs=[],hidden=new Map();
+ const fixtures=new Map(),templates=new Map(),jobs=[],hidden=new Map(),used={meshes:0,draws:0,triangles:0};
+ let reservedDisplays=0;
  const standGeometry=new THREE.BoxGeometry(1,1,1),standMaterial=new THREE.MeshStandardMaterial({color:0x243e44,roughness:.46,metalness:.48});
  const point=new THREE.Vector3(),pickPoint=new THREE.Vector3(),pickRay=new THREE.Ray(),pickInverse=new THREE.Matrix4();let products=[],catalogPromise=null,catalogError='',disposed=false,elapsed=Infinity,inFlight=0,cursor=0,loadingCatalog=false;
  const fetchProducts=loadProducts||(async()=>{
@@ -109,7 +129,7 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
   if(typeof document==='undefined')return null;
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const context=canvas.getContext('2d');if(!context)return null;
   const label=storeProductLabel(product.record);context.fillStyle='#10282e';context.fillRect(0,0,512,128);context.strokeStyle='#88cbbf';context.lineWidth=4;context.strokeRect(3,3,506,122);
-  context.fillStyle='#f0faf6';context.font='600 31px system-ui';context.fillText(label.name,17,48,478);context.fillStyle='#b7efc4';context.font='700 29px system-ui';context.fillText(label.price,17,98,478);
+  context.fillStyle='#f0faf6';context.font='600 31px system-ui';context.fillText(label.name,17,48,478);context.fillStyle='#b7efc4';context.font='700 29px system-ui';context.fillText((product.cardPreview?'Product card · ':'')+label.price,17,98,478);
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(.66,size[0]*.92),.14),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false}));
   mesh.name='STORE_PRODUCT_PRICE_CARD';mesh.rotation.y=Math.PI;mesh.position.fromArray(position||[0,.085,-size[2]/2-.012]);mesh.userData={storeProductDisplay:true,collisionDisabled:true,collider:false};return mesh;
@@ -126,16 +146,37 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
   const free=[...templates.values()].filter(entry=>entry.root&&!entry.users).sort((a,b)=>a.used-b.used);
   while(templates.size>STORE_DISPLAY_LIMITS.cachedSources&&free.length){const entry=free.shift();templates.delete(entry.key);disposeModel(entry.root);}
  }
+ async function cardSource(item,reason){
+  const {createProductCard}=await import('./product-card-model.js');
+  const root=await createProductCard(THREE,{...item,category:'Display card · inspect full item'});
+  root.userData.previewPresentation='product-card';root.userData.storeDisplayFallback=reason;return root;
+ }
+ const overhead=state=>({meshes:(state.slot.stand?1:0)+(typeof document!=='undefined'?1:0),draws:(state.slot.stand?1:0)+(typeof document!=='undefined'?1:0),triangles:(state.slot.stand?12:0)+(typeof document!=='undefined'?2:0)});
+ const addCost=(a,b)=>Object.fromEntries(['meshes','draws','triangles'].map(key=>[key,a[key]+b[key]]));
+ function fits(cost){
+  const remaining=Math.max(0,maxDisplays-reservedDisplays-1);
+  return Object.entries({meshes:STORE_DISPLAY_LIMITS.activeMeshes,draws:STORE_DISPLAY_LIMITS.activeDraws,triangles:STORE_DISPLAY_LIMITS.activeTriangles}).every(([key,limit])=>Number.isFinite(cost[key])&&used[key]+cost[key]+remaining*minimumCardCost[key]<=limit);
+ }
+ function reserve(state,cost){state.budget=cost;reservedDisplays++;for(const key of Object.keys(used))used[key]+=cost[key];}
+ function unreserve(state){if(!state.budget)return;for(const key of Object.keys(used))used[key]=Math.max(0,used[key]-state.budget[key]);state.budget=null;reservedDisplays=Math.max(0,reservedDisplays-1);}
+ async function loadEntry(entry){
+  let root,cost,reason='';
+  try{
+   const loaded=await loadModel(entry.item,{signal:entry.controller.signal});root=loaded?.root||loaded;
+   if(!root?.isObject3D)throw Error('No product model');
+   cost=storeDisplayComplexity(root);
+   if(!cost.meshes||!Object.values(cost).every(Number.isFinite)||cost.meshes>STORE_DISPLAY_LIMITS.meshes||cost.draws>STORE_DISPLAY_LIMITS.meshes||cost.triangles>STORE_DISPLAY_LIMITS.triangles)reason='Model exceeds the shelf rendering budget';
+   if(!reason){const bounds=new THREE.Box3().setFromObject(root,true),size=bounds.getSize(new THREE.Vector3());if(bounds.isEmpty()||![...bounds.min,...bounds.max].every(Number.isFinite)||Math.max(...size.toArray())<=0)reason='Product has no renderable bounds';}
+  }catch(error){if(disposed||entry.controller.signal.aborted)throw error;reason='Model unavailable · inspect product to retry';}
+  if(disposed||entry.controller.signal.aborted){if(root?.isObject3D)disposeModel(root);throw Error('Store closed');}
+  if(reason){if(root?.isObject3D)disposeModel(root);entry.fallbackReason=reason;root=await cardSource(entry.item,reason);cost=storeDisplayComplexity(root);}
+  if(disposed||entry.controller.signal.aborted){disposeModel(root);throw Error('Store closed');}
+  entry.root=root;entry.complexity=cost;entry.presentation=root.userData.previewPresentation|| (previewModelSource(entry.item)==='card'?'product-card':'actual-model');entry.resolve(root);
+ }
  function pump(){
   while(!disposed&&inFlight<STORE_DISPLAY_LIMITS.concurrentLoads&&jobs.length){
    const entry=jobs.shift();inFlight++;
-   Promise.resolve().then(()=>loadModel(entry.item,{signal:entry.controller.signal})).then(loaded=>{
-    const root=loaded?.root||loaded;if(!root?.isObject3D)throw Error('No product model');
-    if(disposed){disposeModel(root);throw Error('Store closed');}
-    let meshes=0,triangles=0;root.traverse(node=>{if(node.isMesh){meshes++;triangles+=((node.geometry?.index?.count||node.geometry?.attributes?.position?.count||0)/3)*(node.isInstancedMesh?node.count:1);}});
-    if(meshes>STORE_DISPLAY_LIMITS.meshes||triangles>STORE_DISPLAY_LIMITS.triangles){disposeModel(root);throw Error('Product exceeds the physical display budget');}
-    entry.root=root;entry.resolve(root);
-   }).catch(error=>{if(templates.get(entry.key)===entry)templates.delete(entry.key);entry.reject(error);}).finally(()=>{inFlight--;pump();trimCache();});
+   Promise.resolve().then(()=>loadEntry(entry)).catch(error=>{if(templates.get(entry.key)===entry)templates.delete(entry.key);entry.reject(error);}).finally(()=>{inFlight--;pump();trimCache();});
   }
  }
  function template(product){
@@ -148,7 +189,7 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
  }
  function release(state){
   state.generation++;state.group?.removeFromParent();state.group=null;state.model=null;
-  releaseDisplayClone(state.ownedCopy);state.ownedCopy=null;
+  if(state.cardOwned)disposeModel(state.ownedCopy);else releaseDisplayClone(state.ownedCopy);state.ownedCopy=null;state.cardOwned=false;unreserve(state);
   if(state.label){state.label.geometry.dispose();state.label.material.map.dispose();state.label.material.dispose();state.label=null;}
   for(const node of state.hidden||[])showOriginal(node,false);state.hidden=[];
   if(state.template){
@@ -162,10 +203,23 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
   const product=products[cursor++%products.length],entry=template(product),generation=++state.generation;state.template=entry;state.product=product;
   try{
    const source=await entry.promise;if(disposed||state.generation!==generation||!fixtures.has(state.key))return;
-   const copy=await displayClone(source);if(disposed||state.generation!==generation||!fixtures.has(state.key)){releaseDisplayClone(copy);return;}state.ownedCopy=copy;
+   let cardOwned=false,fallbackReason=entry.fallbackReason||'',cost=addCost(entry.complexity,overhead(state)),copy;
+   // Reserve before asynchronous cloning. Concurrent completions cannot both
+   // admit a model against the same remaining aggregate rendering budget.
+   if(fits(cost)){reserve(state,cost);copy=await displayClone(source);}
+   else{
+    cardOwned=true;fallbackReason='Nearby displays reached their rendering budget';
+    // The headroom retained by fits() guarantees one cheap labeled card for
+    // every other slot, even when the first completed model is expensive.
+    cost=addCost({meshes:2,draws:2,triangles:14},overhead(state));
+    if(!fits(cost))throw Error('Display card rendering budget unavailable');
+    reserve(state,cost);copy=await cardSource(product.item,fallbackReason);
+   }
+   if(disposed||state.generation!==generation||!fixtures.has(state.key)){if(cardOwned)disposeModel(copy);else releaseDisplayClone(copy);return;}state.ownedCopy=copy;state.cardOwned=cardOwned;
+   state.presentation=cardOwned?'product-card':entry.presentation;
    // Public GLTF previews and product cards present their +Z front to the
    // customer. Physical shop fronts face -Z; turn only the cosmetic copy.
-   if(['glb','card'].includes(previewModelSource(product.item)))copy.rotation.y+=Math.PI;
+   if(state.presentation==='product-card'||previewModelSource(product.item)==='glb')copy.rotation.y+=Math.PI;
    const bounds=new THREE.Box3().setFromObject(copy,true),size=bounds.getSize(new THREE.Vector3());
    if(bounds.isEmpty()||![...bounds.min,...bounds.max].every(Number.isFinite)||Math.max(...size.toArray())<=0)throw Error('Invalid product bounds');
    const scale=Math.min(...state.slot.size.map((value,axis)=>value/Math.max(.00001,size.getComponent(axis))));
@@ -173,11 +227,12 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
    const group=new THREE.Group();group.name='STORE_PRODUCT_DISPLAY';group.userData={storeProductDisplay:true,storeProductIdentity:product.identity,collisionDisabled:true,collider:false};
    group.position.fromArray(state.slot.position);group.rotation.y=state.slot.rotation;group.add(model);
    if(state.slot.stand){const shelf=new THREE.Mesh(standGeometry,standMaterial);shelf.name='STORE_DISPLAY_SHELF';shelf.scale.set(state.slot.size[0]*1.03,.018,state.slot.size[2]*1.03);shelf.position.y=-.012;shelf.userData={storeProductDisplay:true,collisionDisabled:true,collider:false};group.add(shelf);}
-   state.label=priceCard(product,state.slot.size,state.slot.labelAt);if(state.label)group.add(state.label);
+   state.label=priceCard({...product,cardPreview:state.presentation==='product-card'},state.slot.size,state.slot.labelAt);if(state.label)group.add(state.label);
    const [width,height,depth]=state.slot.size;
    const cardFront=(state.slot.labelAt?.[2]??(-depth/2-.012))-.005;
    state.hitBox=new THREE.Box3(new THREE.Vector3(-width*.52,-.15,Math.min(-depth*.52-.005,cardFront)),new THREE.Vector3(width*.52,height,depth*.52));
-   state.slot.parent.add(group);state.group=group;state.model=model;state.hidden=state.slot.hide;for(const node of state.hidden)showOriginal(node,true);state.status='ready';state.error='';
+   group.userData.previewPresentation=state.presentation;group.userData.storeDisplayFallback=fallbackReason;
+   state.slot.parent.add(group);state.group=group;state.model=model;state.hidden=state.slot.hide;for(const node of state.hidden)showOriginal(node,true);state.status='ready';state.error=fallbackReason;
   }catch(error){if(state.generation===generation){release(state);state.status='failed';state.retryAt=Date.now()+1000;state.error=error.message;}}
  }
  function scan(roots){
@@ -208,12 +263,12 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
     if(!state.group||!state.hitBox)continue;state.group.updateWorldMatrix(true,false);pickInverse.copy(state.group.matrixWorld).invert();pickRay.copy(raycaster.ray).applyMatrix4(pickInverse);
     if(!pickRay.intersectBox(state.hitBox,pickPoint))continue;pickPoint.applyMatrix4(state.group.matrixWorld);const distance=pickPoint.distanceTo(raycaster.ray.origin);
     if(distance>Math.min(maxDistance,raycaster.far??Infinity)||distance<(raycaster.near||0)||nearest&&distance>=nearest.distance)continue;
-    nearest={product:state.product.record,point:pickPoint.clone(),distance};
+    nearest={product:state.product.record,storeObjectId:deliveryObjectId(state.slot.parent),point:pickPoint.clone(),distance};
    }
    return nearest;
   },
-  select(node){const product=productFor(node);if(product){onSelect(product);return true;}return false;},
-  snapshot(){return {loadingCatalog,catalogError,products:products.length,active:[...fixtures.values()].filter(state=>state.status==='ready').length,pending:inFlight,queued:jobs.length,cachedSources:templates.size,fixtures:[...fixtures.values()].map(state=>({key:state.key,status:state.status,productId:state.product?.identity||'',error:state.error||''}))};},
+  select(node){const product=productFor(node);if(product){onSelect(product,{storeObjectId:deliveryObjectId(node)});return true;}return false;},
+  snapshot(){return {loadingCatalog,catalogError,products:products.length,active:[...fixtures.values()].filter(state=>state.status==='ready').length,pending:inFlight,queued:jobs.length,cachedSources:templates.size,budget:{...used,reservedDisplays,maxMeshes:STORE_DISPLAY_LIMITS.activeMeshes,maxDraws:STORE_DISPLAY_LIMITS.activeDraws,maxTriangles:STORE_DISPLAY_LIMITS.activeTriangles},fixtures:[...fixtures.values()].map(state=>({key:state.key,status:state.status,productId:state.product?.identity||'',presentation:state.presentation||'',error:state.error||''}))};},
   dispose(){if(disposed)return;disposed=true;for(const state of fixtures.values())release(state);fixtures.clear();for(const entry of jobs.splice(0)){entry.reject(Error('Store closed'));templates.delete(entry.key);}for(const entry of templates.values()){entry.controller.abort();if(entry.root)disposeModel(entry.root);}templates.clear();standGeometry.dispose();standMaterial.dispose();}
  };
 }

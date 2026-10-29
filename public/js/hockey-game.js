@@ -85,7 +85,7 @@ async function command(action,fields={}){
  const request=()=>api.api(`/api/rooms/${encodeURIComponent(mapId)}/hockey`,{method:'POST',timeout,headers:{'X-CSRF-Token':session.csrfToken},body});
  try{return await request();}catch(error){if(error.code!=='CSRF_INVALID')throw error;session=await api.roomSession();return request();}
 }
-function accept(snapshot,timing={}){if(snapshot.sequence<=sequence)return;sequence=snapshot.sequence;connectionError='';state=snapshot.state;selfId=snapshot.selfId;hockeyInputEpoch=snapshot.inputEpoch||hockeyInputEpoch;spectating=snapshot.role==='spectator';if(spectating){localSkating.reset();localSkater=null;}else{localSkating.accept(state,selfId,{...timing,serverTime:snapshot.serverTime});localSkater=localSkating.sample(performance.now(),0,{});}}
+function accept(snapshot,timing={}){if(snapshot.sequence<=sequence)return;sequence=snapshot.sequence;deedDeliveryScene.update(environment,{deliveryActivity:snapshot.deliveryActivity===true});connectionError='';state=snapshot.state;selfId=snapshot.selfId;hockeyInputEpoch=snapshot.inputEpoch||hockeyInputEpoch;spectating=snapshot.role==='spectator';if(spectating){localSkating.reset();localSkater=null;}else{localSkating.accept(state,selfId,{...timing,serverTime:snapshot.serverTime});localSkater=localSkating.sample(performance.now(),0,{});}}
 async function inputFailure(error){
  const replaced=error.code==='ROOM_SWITCHED',rejoin=error.status===409&&!replaced;
  const terminal=replaced||error.status===403||error.status===401&&error.code!=='CSRF_INVALID';

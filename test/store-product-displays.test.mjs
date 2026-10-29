@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../public/vendor/three/three.module.min.js';
-import {createStoreProductDisplays,storeDisplayProducts,storeDisplaySlots,storeProductIdentity,storeProductLabel,STORE_DISPLAY_LIMITS} from '../public/js/store-product-displays.js';
+import {createStoreProductDisplays,storeDisplayProducts,storeDisplaySlots,storeProductIdentity,storeProductLabel,storeDisplayComplexity,STORE_DISPLAY_LIMITS} from '../public/js/store-product-displays.js';
 import {createBuilderModel} from '../public/js/builder-models-3d.js';
 
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -109,4 +109,66 @@ test('one-sided uploaded fronts face the customer without changing the authored 
  manager.update(.5);await flush();manager.update(.5);await flush();host.updateMatrixWorld(true);
  const displayed=host.getObjectByName('STORE_PRODUCT_DISPLAY').getObjectByName('UPLOAD_FRONT'),normal=new T.Vector3(0,0,1).applyNormalMatrix(new T.Matrix3().getNormalMatrix(displayed.matrixWorld));
  assert.ok(normal.z<-.99,'the one-sided GLTF front is visible from the -Z shop aisle');assert.equal(root.rotation.y,0);assert.equal(front.material.side,T.FrontSide);manager.dispose();
+});
+
+const manyMeshes=count=>{const root=new T.Group(),geometry=new T.BoxGeometry(1,1,1),material=new T.MeshStandardMaterial();for(let i=0;i<count;i++){const mesh=new T.Mesh(geometry,material);mesh.position.x=i*.02;root.add(mesh);}return root;};
+const aggregateRecords=count=>Array.from({length:count},(_,index)=>({id:'budget-offer-'+index,name:'Product '+index,buildAssetId:'budget-native-'+index,priceMzk:25}));
+const settle=async(manager,count=5)=>{manager.update(.5);for(let i=0;i<count;i++){await flush();manager.update(.5);}};
+function assertAggregate(snapshot){
+ assert.ok(snapshot.budget.meshes<=STORE_DISPLAY_LIMITS.activeMeshes);assert.ok(snapshot.budget.draws<=STORE_DISPLAY_LIMITS.activeDraws);assert.ok(snapshot.budget.triangles<=STORE_DISPLAY_LIMITS.activeTriangles);
+}
+
+test('the whole nearby store reserves a tight mesh budget and keeps over-budget offers as selectable product cards',async()=>{
+ const hosts=Array.from({length:6},(_,index)=>plinth(index*2)),position=new T.Vector3(),offers=aggregateRecords(6),selected=[];let loads=0;
+ const manager=createStoreProductDisplays({THREE:T,getRoots:()=>hosts,getPosition:()=>position,loadProducts:async()=>offers,loadModel:async()=>{loads++;return {root:manyMeshes(60)};},disposeModel:()=>{},onSelect:record=>selected.push(record)});
+ await settle(manager);let snapshot=manager.snapshot();assert.equal(snapshot.active,6);assert.equal(loads,6);assertAggregate(snapshot);
+ assert.equal(snapshot.fixtures.filter(row=>row.presentation==='actual-model').length,1);assert.equal(snapshot.fixtures.filter(row=>row.presentation==='product-card').length,5,'aggregate denial leaves a named card rather than a blank shelf or load retry');
+ const cards=hosts.map(host=>host.getObjectByName('STORE_PRODUCT_DISPLAY')).filter(root=>root.userData.previewPresentation==='product-card');assert.equal(cards.length,5);
+ for(const card of cards){assert.match(card.userData.storeDisplayFallback,/rendering budget/);assert.ok(manager.productFor(card));assert.equal(manager.select(card),true);assert.ok(Math.abs(card.children[0].children[0].rotation.y-Math.PI)<1e-6,'native-item fallback cards face the shop aisle');}assert.equal(selected.length,5);assert.ok(selected.every(record=>offers.includes(record)));
+ position.set(100,0,0);manager.update(.5);snapshot=manager.snapshot();assert.equal(snapshot.active,0);assert.deepEqual([snapshot.budget.meshes,snapshot.budget.draws,snapshot.budget.triangles,snapshot.budget.reservedDisplays],[0,0,0,0]);
+ position.set(0,0,0);await settle(manager);assert.equal(loads,6,'walking back reuses bounded cached model sources');assert.equal(manager.snapshot().active,6);assertAggregate(manager.snapshot());manager.dispose();assert.equal(manager.snapshot().budget.reservedDisplays,0);
+});
+
+test('aggregate triangle and material-group draw costs cannot multiply across simultaneous products',async()=>{
+ const hosts=Array.from({length:6},(_,index)=>plinth(index*2)),offers=aggregateRecords(6);
+ const manager=createStoreProductDisplays({THREE:T,getRoots:()=>hosts,getPosition:()=>new T.Vector3(),loadProducts:async()=>offers,loadModel:async()=>{const root=new T.Group(),mesh=new T.InstancedMesh(new T.BoxGeometry(1,1,1),new T.MeshStandardMaterial(),5000);root.add(mesh);return {root};},disposeModel:()=>{}});
+ await settle(manager);const snapshot=manager.snapshot();assert.equal(snapshot.active,6);assertAggregate(snapshot);assert.equal(snapshot.fixtures.filter(row=>row.presentation==='actual-model').length,1);assert.ok(snapshot.budget.triangles>=60000);manager.dispose();
+ const grouped=new T.Mesh(new T.BoxGeometry(1,1,1),Array.from({length:6},()=>new T.MeshStandardMaterial()));assert.equal(storeDisplayComplexity(grouped).draws,6,'a multi-material object consumes one draw for each group, not just one mesh');
+ const host=plinth(),geometry=new T.BoxGeometry(1,1,1);geometry.clearGroups();for(let index=0;index<120;index++)geometry.addGroup(0,3,index);
+ assert.equal(storeDisplayComplexity(new T.Mesh(geometry,Array.from({length:120},()=>new T.MeshStandardMaterial()))).triangles,120,'overlapping material groups repeat triangle submissions');
+ const drawManager=createStoreProductDisplays({THREE:T,getRoots:()=>[host],getPosition:()=>new T.Vector3(),loadProducts:async()=>[offers[0]],loadModel:async()=>({root:new T.Mesh(geometry,Array.from({length:120},()=>new T.MeshStandardMaterial()))}),disposeModel:()=>{}});
+ await settle(drawManager);assert.equal(drawManager.snapshot().active,1);assert.equal(drawManager.snapshot().fixtures[0].presentation,'product-card');assertAggregate(drawManager.snapshot());drawManager.dispose();
+});
+
+test('failed or individually excessive 3D products use cached labeled cards without repeated shelf retries',async()=>{
+ const hosts=[plinth(),plinth(2)],offers=aggregateRecords(2),disposed=[];let loads=0;
+ const manager=createStoreProductDisplays({THREE:T,getRoots:()=>hosts,getPosition:()=>new T.Vector3(),loadProducts:async()=>offers,loadModel:async item=>{loads++;if(item.id===offers[1].id)throw Error('Unavailable asset');return {root:manyMeshes(STORE_DISPLAY_LIMITS.meshes+1)};},disposeModel:root=>disposed.push(root)});
+ await settle(manager);let snapshot=manager.snapshot();assert.equal(snapshot.active,2);assert.ok(snapshot.fixtures.every(row=>row.presentation==='product-card'));assert.equal(snapshot.cachedSources,2);assert.equal(loads,2);assert.equal(disposed.length,1,'the over-budget source is released before a cheap card replaces it');assertAggregate(snapshot);
+ for(let index=0;index<20;index++)manager.update(1);await flush();assert.equal(loads,2);assert.equal(manager.productFor(hosts[0].getObjectByName('STORE_PRODUCT_DISPLAY')),offers[0]);manager.dispose();assert.equal(disposed.length,3,'each cached card source is released once');
+});
+
+test('world exit releases reserved aggregate capacity before late asynchronous model completions',async()=>{
+ const hosts=[plinth(),plinth(2)],pending=[],disposed=[];
+ const manager=createStoreProductDisplays({THREE:T,getRoots:()=>hosts,getPosition:()=>new T.Vector3(),loadProducts:async()=>aggregateRecords(2),loadModel:(_item,{signal})=>new Promise(resolve=>pending.push({resolve,signal})),disposeModel:root=>disposed.push(root)});
+ manager.update(.5);await flush();manager.update(.5);await flush();pending[0].resolve({root:manyMeshes(60)});
+ for(let index=0;index<20&&!manager.snapshot().budget.reservedDisplays;index++)await Promise.resolve();assert.ok(manager.snapshot().budget.reservedDisplays>0);
+ manager.dispose();pending[1].resolve({root:manyMeshes(60)});await flush();await flush();const snapshot=manager.snapshot();assert.equal(snapshot.active,0);assert.deepEqual([snapshot.budget.meshes,snapshot.budget.draws,snapshot.budget.triangles,snapshot.budget.reservedDisplays],[0,0,0,0]);assert.equal(disposed.length,2);assert.ok(hosts.every(host=>!host.getObjectByName('STORE_PRODUCT_DISPLAY')));
+});
+
+test('public world templates never enter automatic nearby merchandise population',()=>{
+ const products=storeDisplayProducts([{id:'native-map:public-commons',worldId:'public-commons',source:'native-map',name:'Whole public world'},records[0]]);assert.equal(products.length,1);assert.equal(products[0].record,records[0]);
+});
+
+test('empty uploaded geometry becomes a labeled product card instead of an invisible repeating retry',async()=>{
+ const host=plinth();let loads=0,disposed=0;
+ const manager=createStoreProductDisplays({THREE:T,getRoots:()=>[host],getPosition:()=>new T.Vector3(),loadProducts:async()=>[records[1]],loadModel:async()=>{loads++;return {root:new T.Mesh(new T.BufferGeometry(),new T.MeshStandardMaterial())};},disposeModel:()=>disposed++});
+ await settle(manager);assert.equal(manager.snapshot().active,1);assert.equal(manager.snapshot().fixtures[0].presentation,'product-card');assert.match(manager.snapshot().fixtures[0].error,/bounds/);assert.equal(manager.productFor(host.getObjectByName('STORE_PRODUCT_DISPLAY')),records[1]);await settle(manager);assert.equal(loads,1);manager.dispose();assert.equal(disposed,2);
+});
+
+test('transparent double-sided materials reserve both renderer passes including mixed material groups',async()=>{
+ const geometry=new T.BoxGeometry(1,1,1),material=new T.MeshStandardMaterial({transparent:true,side:T.DoubleSide}),mesh=new T.Mesh(geometry,material);
+ assert.deepEqual(storeDisplayComplexity(mesh),{meshes:1,draws:2,triangles:24});material.forceSinglePass=true;assert.deepEqual(storeDisplayComplexity(mesh),{meshes:1,draws:1,triangles:12});
+ const materials=Array.from({length:6},(_,index)=>new T.MeshStandardMaterial({transparent:index%2===0,side:T.DoubleSide}));assert.deepEqual(storeDisplayComplexity(new T.Mesh(geometry,materials)),{meshes:1,draws:9,triangles:18});
+ const hosts=Array.from({length:6},(_,index)=>plinth(index*2)),manager=createStoreProductDisplays({THREE:T,getRoots:()=>hosts,getPosition:()=>new T.Vector3(),loadProducts:async()=>aggregateRecords(6),loadModel:async()=>{const root=manyMeshes(36);root.traverse(node=>{if(node.isMesh){node.material.transparent=true;node.material.side=T.DoubleSide;}});return {root};},disposeModel:()=>{}});
+ await settle(manager);const snapshot=manager.snapshot();assert.equal(snapshot.active,6);assert.equal(snapshot.fixtures.filter(row=>row.presentation==='actual-model').length,1);assert.equal(snapshot.fixtures.filter(row=>row.presentation==='product-card').length,5);assert.ok(snapshot.budget.draws>=72);assertAggregate(snapshot);manager.dispose();
 });

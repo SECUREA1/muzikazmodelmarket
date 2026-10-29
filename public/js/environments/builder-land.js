@@ -87,6 +87,13 @@ function createProceduralBuilderLand(environment) {
     else if(layout==='office-tower'){add([7,5,7],0,0,0x566a73);[-13,13].forEach(x=>add([5,3,10],x,4,0x40525a));add([18,.15,2],0,-10,0x83a0a7)}
     else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt,{style:built.rangeStyle||environment.rangeStyle});
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
+    if(['vendor-street','market-square','mega-mall'].includes(layout)){
+      let storeIndex=0;
+      for(const node of root.children){
+        if(node.name!==`BUILDER_TEMPLATE_${layout}`||!(node.geometry?.parameters?.height>=1.8))continue;
+        node.userData.deliveryAddressLocalId=layout==='vendor-street'?'layout-shop-'+Math.round((node.position.z+12)/6)+'-'+(node.position.x<0?'west':'east'):'layout-shop-'+storeIndex++;
+      }
+    }
     finishLayoutArchitecture(root);
     root.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);applySportsSurfaces(root,layout);
     if(!root.userData.firingRange&&!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));

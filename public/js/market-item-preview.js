@@ -17,6 +17,8 @@ export function previewDescriptor(record={}){
  const modelUrl=item.modelUrl||item.glb_url||item.modelPath||(typeof item.model==='string'?item.model:'');
  const imageModel=/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')||/^image\//i.test(item.mimeType||'')||/^(?:image|image-prop|image-3d)$/.test(item.renderKind||'')||!modelUrl&&/^(?:svg|png|jpe?g|webp|gif)$/i.test(item.format||'');
  const artwork=item.artwork||(imageModel?modelUrl||item.imageUrl||item.image_url||item.image||item.thumbnailUrl||item.thumbnail_url:item.imageUrl||item.image_url);
+ const publicWorld=record.source==='native-map'||record.nativeFunction==='map-template'&&!!record.worldId||String(record.id||'').startsWith('native-map:');
+ const worldId=publicWorld?record.worldPreviewId||record.worldId||String(record.id||'').replace(/^native-map:/,''):null;
  const descriptor={
   id:record.id||item.id,sku:record.sku||item.sku,name,
   image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(imageModel?modelUrl:'')),
@@ -24,6 +26,7 @@ export function previewDescriptor(record={}){
   buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,
   deviceId:item.deviceId||config.device||item.functionalSettings?.device||item.device,
   materialId:item.materialId,toolId:item.toolId,targetHeight:item.targetHeight,builderLayoutId:item.builderLayoutId,
+  ...(worldId&&/^[a-z\d][a-z\d_.:-]{0,199}$/i.test(worldId)?{worldPreviewId:worldId,source:'native-map'}:{}),
   generated:item.generated===true,generator:item.generator||item.registry?.generator,
   color:/^#[\da-f]{6}$/i.test(item.registry?.materials?.color||item.color)?item.registry?.materials?.color||item.color:'#9cff69',
   category:item.builder_category||item.category||item.itemType||item.type||item.kind||record.source||'Item',icon:item.icon||'',
@@ -49,7 +52,7 @@ let queue=Promise.resolve(),modules;
 const snapshots=new Map(),figureSnapshots=new WeakMap(),previewEpochs=new WeakMap();
 const activeFigure=(figure,epoch)=>figure.isConnected&&figure.dataset.previewReleased!=='true'&&(epoch===undefined||previewEpochs.get(figure)===epoch);
 function snapshotFor(item,figure){
- const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.toolId,item.targetHeight,item.builderLayoutId,item.generator,item.strokes,item.artwork,item.drawingSettings,item.configuration,item.form,item.color,previewModelSource(item)==='card'?[item.id,item.name,item.category,item.entries,item.previewNote]:null]);let entry=snapshots.get(key);
+ const key=JSON.stringify([item.model,item.buildAssetId,item.materialId,item.toolId,item.targetHeight,item.builderLayoutId,item.worldPreviewId,item.generator,item.strokes,item.artwork,item.drawingSettings,item.configuration,item.form,item.color,['card','world'].includes(previewModelSource(item))?[item.id,item.name,item.category,item.entries,item.previewNote]:null]);let entry=snapshots.get(key);
  if(!entry){
   let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});
   entry={promise,figures:new Set(),status:'pending',cancel(){if(entry.status!=='pending')return;entry.status='canceled';if(snapshots.get(key)===entry)snapshots.delete(key);reject(Error('Preview canceled'));}};
@@ -72,8 +75,8 @@ function snapshotFor(item,figure){
 }
 // Match the placement renderer: native definitions remain authoritative even
 // when they also carry a reference GLB URL.
-export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.builderLayoutId?'layout':item.strokes?.length?'drawing':item.generator?'generated':item.model?'glb':item.toolId?'tool':item.artwork?'image':item.name||item.image?'card':null;}
-export function disposePreviewModel(root){disposeModelResources(root);}
+export function previewModelSource(item){return item.materialId?'material':item.buildAssetId?'native':item.worldPreviewId?'world':item.builderLayoutId?'layout':item.strokes?.length?'drawing':item.generator?'generated':item.model?'glb':item.toolId?'tool':item.artwork?'image':item.name||item.image?'card':null;}
+export function disposePreviewModel(root){const release=root?.userData?.productPreviewRelease;if(release){delete root.userData.productPreviewRelease;release();}else disposeModelResources(root);}
 export async function loadPreviewModel(record,{renderer,signal,timeout=12000}={}){
  const item=previewDescriptor(record);
  modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('./game-model-loader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
@@ -89,6 +92,15 @@ export async function loadPreviewModel(record,{renderer,signal,timeout=12000}={}
   else if(source==='tool')root=createHeldToolModel(THREE,item.toolId);
   else if(source==='generated')root=createGeneratedAsset(item);
   else if(source==='drawing')root=createSavedCustomModel(item);
+  else if(source==='world'&&renderer){
+   const [{SharedGameInventory},{loadAtlasPlotScene}]=await Promise.all([import('./shared-game-inventory.js'),import('./atlas-plot-scene.js')]);
+   const world=await new SharedGameInventory().api('/api/environments/'+encodeURIComponent(item.worldPreviewId),{signal:controller.signal,timeout});
+   if(!world||world.visibility==='private'||world.playable===false||!(world.visibility==='public'||world.source==='repository'||world.permanent===true))throw Error('This public map preview is unavailable.');
+   const plot=await loadAtlasPlotScene(world,{actors:{},objects:{}},renderer,{current:()=>!controller.signal.aborted});root=plot.root;
+   root.userData.productPreviewRelease=()=>plot.dispose();
+   if(plot.missing.length)throw Error('The authored map has '+plot.missing.length+' unavailable product models. Enter its map to inspect the current destination.');
+   root.userData.previewWorldId=item.worldPreviewId;
+  }
   else if(source==='layout'){
    const {createBuilderLand}=await import('./environments/builder-land.js');
    root=createBuilderLand({id:'product-preview-'+item.builderLayoutId,source:'repository',proceduralLand:true,builderScene:{layout:item.builderLayoutId,mapSize:60,objects:[]}});
@@ -101,17 +113,19 @@ export async function loadPreviewModel(record,{renderer,signal,timeout=12000}={}
    const loader=createGameModelLoader(renderer);let gltf;
    try{gltf=await loadGameModel(loader,item.model,{signal:controller.signal});}
    finally{loader.dracoLoader?.dispose();loader.ktx2Loader?.dispose();}
-   root=prepareAuthoredBuilderModel(gltf.scene,item);animations=gltf.animations||[];
+   // Public listings carry only the sanitized appearance subset. Use that
+   // same subset in stores, shared links and AR without exposing full config.
+   root=prepareAuthoredBuilderModel(gltf.scene,{...item,configuration:item.configuration||item.drawingSettings});animations=gltf.animations||[];
   }
-  else if(source==='card'){
+  else if(source==='card'||source==='world'){
    const {createProductCard}=await import('./product-card-model.js');
    root=await createProductCard(THREE,item,{signal:controller.signal});
   }
   if(!root)throw Error('No visual model');
   if(controller.signal.aborted)throw new DOMException('Preview canceled or timed out','AbortError');
-  root.userData.previewPresentation=source==='card'?'product-card':'actual-model';
+  root.userData.previewPresentation=source==='card'||source==='world'&&!renderer?'product-card':'actual-model';
   if(item.previewNote)root.userData.previewNote=item.previewNote;
-  return {THREE,root,animations};
+  return {THREE,root,animations,dispose:()=>disposePreviewModel(root)};
  }catch(error){disposePreviewModel(root);throw error;}
  finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
 }
@@ -142,7 +156,7 @@ function loadPreview(figure){
  if(figure.dataset.previewMounted)return;figure.dataset.previewMounted='true';delete figure.dataset.previewReleased;const epoch=(previewEpochs.get(figure)||0)+1;previewEpochs.set(figure,epoch);const active=()=>activeFigure(figure,epoch),item=JSON.parse(figure.dataset.itemPreview);addDevicePreview(figure,item);if(item.entries?.length&&!item.image)return;
  const fallback=()=>{if(!active())return;const failed=()=>{if(active())figure.querySelector('figcaption').textContent='3D preview unavailable · illustration shown';};if(item.image)displayImage(figure,item.image,item.name+' · artwork (3D preview unavailable)',failed,epoch);else failed();};
  const model=()=>{if(!active())return;const source=previewModelSource(item);if(!source||source==='card'){figure.querySelector('figcaption').textContent='Illustration · '+item.category;return;}
-  snapshotFor(item,figure).then(url=>{if(active())displayImage(figure,url,item.name+' · 3D preview',fallback,epoch);}).catch(fallback);
+  snapshotFor(item,figure).then(url=>{if(active())displayImage(figure,url,item.name+(previewModelSource(item)==='world'?' · map overview (open 3D for the authored world)':' · 3D preview'),fallback,epoch);}).catch(fallback);
  };
  if(figure.dataset.previewPreferModel==='true'&&previewModelSource(item))model();else if(item.image)displayImage(figure,item.image,item.name+' · item artwork',model,epoch);else model();
 }

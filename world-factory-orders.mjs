@@ -24,7 +24,7 @@ export function orderDestination(data,walletId,input,directory,routes){
  if(!directory.maps.some(map=>map.id===input.shippingMapId&&isShippingEnvironment(map)))fail('Choose an available shipping map.',404);
  return {deed,destinationMapId,route};
 }
-export function refreshFactoryOrders(ledger,data,now){
+export function refreshFactoryOrders(ledger,data,now,{addressValid}={}){
  ledger.orders ||= {};
  for(const order of Object.values(ledger.orders)){
   if(terminal.has(order.phase))continue;
@@ -35,9 +35,9 @@ export function refreshFactoryOrders(ledger,data,now){
   if(job?.phase==='cancelled'){order.phase='cancelled';order.cancelledAt ||= job.cancelledAt||now;continue;}
   // Once a deed changes hands, hold the paid output. A later owner must never
   // inherit an earlier owner's unfulfilled order merely by buying the plot.
-  if(!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId)){
-   order.phase='attention';order.attentionReason='Deed ownership changed. Cancel the remaining order to release unsent output; delivered stock stays at its destination.';
-  }else if(order.phase!=='attention'){
+  if(order.addressId?addressValid&&!addressValid(order):!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId)){
+   order.phase='attention';order.attentionReason=order.addressId?'The receiving address was removed or its owner changed. Cancel remaining freight; delivered stock stays received.':'Deed ownership changed. Cancel the remaining order to release unsent output; delivered stock stays at its destination.';
+  }else if(order.phase!=='attention'||order.addressId){
    const tasks=shipments.flatMap(shipment=>(shipment.deliveryTaskIds||[]).map(id=>ledger.deliveryTasks?.[id]).filter(Boolean)),blocked=tasks.find(task=>task.phase==='blocked');
    order.deliveryBlockedReason=blocked?.blockedReason||null;
    order.phase=job?.phase==='paused'?'paused':job?.phase==='building'?'building':tasks.some(task=>['courier','dropoff'].includes(task.phase))?'doorstep-delivery':shipments.some(shipment=>shipment.phase==='land-transit')?'land-transit':shipments.some(shipment=>shipment.phase==='port-received')?'port-received':shipments.some(shipment=>shipment.phase==='reserved')?'in-transit':'awaiting-shipping';
@@ -46,7 +46,7 @@ export function refreshFactoryOrders(ledger,data,now){
  }
 }
 export function stageFactoryOrders(ledger,data,directory,routes,now,createShipment){
- refreshFactoryOrders(ledger,data,now);
+ refreshFactoryOrders(ledger,data,now,{addressValid:record=>directory.addressValid?.(data,record)});
  for(const order of Object.values(ledger.orders)){
   const job=ledger.production[order.productionId],lot=ledger.factoryLots[job?.outputLotId];
   if(lot&&!terminal.has(order.phase))lot.reservedOrderId=order.id;
@@ -59,17 +59,17 @@ export function stageFactoryOrders(ledger,data,directory,routes,now,createShipme
   if(!Number.isSafeInteger(capacity)||capacity<1)fail('This order has an invalid saved packing plan.');
   let remaining=order.quantity;
   while(remaining){
-   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),...(order.deliverySchemaVersion?{deliverySchemaVersion:order.deliverySchemaVersion,recipientId:order.ownerId}:{}),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
+   const quantity=Math.min(remaining,capacity),shipment=createShipment({id:randomUUID(),...(order.deliverySchemaVersion?{deliverySchemaVersion:order.deliverySchemaVersion,recipientId:order.recipientId||order.ownerId}:{}),...(order.addressId?{addressId:order.addressId,address:order.address}:{}),ownerId:order.ownerId,itemId:order.itemId,itemName:order.itemName,quantity,sourceMapId:'factory',destinationMapId:order.destinationMapId,shippingMapId:order.shippingMapId,contractId:order.contractId,orderId:order.id,deedId:order.deedId,productionId:job.id,packing:{recipeId:job.recipe.id,unitsPerContainer,containersRequired:Math.ceil(quantity/unitsPerContainer),containerSlots:route.units||4,maxShipmentQuantity:capacity,sealed:true}},route,now);
    ledger.shipments[shipment.id]=shipment;
    allocateFactoryLots(ledger,shipment,{now,lotId:lot.id,orderId:order.id});order.shipmentIds.push(shipment.id);remaining-=quantity;
   }
   order.stagedAt=now;
  }
 }
-export function assertOrderFreightAvailable(ledger,data,shipment){
+export function assertOrderFreightAvailable(ledger,data,shipment,directory){
  if(!shipment.orderId)return;
  const order=ledger.orders?.[shipment.orderId];
- if(!order||terminal.has(order.phase)||order.phase==='attention'||!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId))fail('This deed order is on hold. The original owner must resolve it before shipping.');
+ if(!order||terminal.has(order.phase)||order.phase==='attention'||(order.addressId?!directory?.addressValid(data,order):!ownedSupplyDeeds(data,order.ownerId).some(deed=>deed.id===order.deedId)))fail('This deed order is on hold. The original owner must resolve it before shipping.');
 }
 export function cancelFactoryOrder(ledger,data,orderId,walletId,requestId,now,onReturned){
  const order=Object.hasOwn(ledger.orders||{},orderId)&&ledger.orders[orderId];

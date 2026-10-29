@@ -379,6 +379,7 @@ function applyMatch(value){if(value.ended&&!ended&&gameElapsed>0&&gameStarted&&!
 function acceptRoom(value){
  if(!value||value.state?.game!==game||value.requestRevision!==undefined&&value.requestRevision!==roomRequestRevision||value.sequence<=roomLastSequence)return;
  const wasStarted=gameStarted;roomLastSequence=value.sequence;
+ deedDeliveryScene?.update(mapRecord||parkEnvironment,{deliveryActivity:value.deliveryActivity===true});
  if(value.inputEpoch&&value.inputEpoch!==roomInputEpoch){roomInputEpoch=value.inputEpoch;roomInputSequence=0;liveMotion.reset();}
  roomSnapshot=value;liveMotion.reconcile(value,value.timing);
  if(value.config){gameConfig=value.config;syncGameInstructions();}

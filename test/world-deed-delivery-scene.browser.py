@@ -37,8 +37,8 @@ try:
                   const building=new THREE.Mesh(new THREE.BoxGeometry(8,5,6),new THREE.MeshStandardMaterial({color:'#7c8f91'}));building.position.set(10,2.5,-8);scene.add(building);
                   const door=new THREE.Mesh(new THREE.BoxGeometry(1.7,2.6,.1),new THREE.MeshStandardMaterial({color:'#203c48'}));door.position.set(10,1.3,-4.9);scene.add(door);
                   window.projection={serverTime:10000,mapId:'plot-a',dropoffs:[{id:'door-a',deedId:'deed-a',kind:'door',mapId:'plot-a',position:{x:10,y:0,z:-3.8}}],routes:[{id:'route-a',mapId:'plot-a',revision:'v1',status:'ready',truckWaypoints:[{x:-15,y:0,z:5},{x:10,y:0,z:5},{x:10,y:0,z:0}],courierWaypoints:[{x:10,y:0,z:0},{x:10,y:0,z:-3.8}]}],vehicles:[{id:'truck-a',mapId:'plot-a',phase:'driving',position:{x:-15,y:0,z:5},stageStartedAt:10000,stageDurationMs:20000,stageProgress:0,waypoints:[{x:-15,y:0,z:5},{x:10,y:0,z:5},{x:10,y:0,z:0}]}],couriers:[{id:'courier-a',mapId:'plot-a',phase:'courier',position:{x:10,y:0,z:0},stageStartedAt:10000,stageDurationMs:8000,stageProgress:0,waypoints:[{x:10,y:0,z:0},{x:10,y:0,z:-3.8}]}]};
-                  window.calls=[];window.deliveryClock=0;
-                  window.deliveryScene=createWorldDeedDeliveryScene({scene,inventory:{api:async url=>{calls.push(url);return structuredClone(projection);}},autoPoll:false,clock:()=>deliveryClock});
+                  window.calls=[];window.deliverySignals=[];window.deliveryClock=0;window.deliveryDefer=false;
+                  window.deliveryScene=createWorldDeedDeliveryScene({scene,inventory:{api:async(url,options)=>{calls.push(url);deliverySignals.push(options.signal);if(deliveryDefer)return await new Promise(resolve=>window.resolveDelivery=resolve);return structuredClone(projection);}},autoPoll:false,clock:()=>deliveryClock});
                   window.renderDelivery=()=>{deliveryScene.tick();renderer.render(scene,camera);};window.deliveryWorld=scene;window.deliveryRenderer=renderer;
                   deliveryScene.update({id:'public-commons'});await deliveryScene.refresh();if(calls.length)throw Error('An ordinary map subscribed to deed delivery polling.');
                   deliveryScene.update({id:'plot-a',memberPlot:true});await deliveryScene.refresh();
@@ -70,10 +70,30 @@ try:
                 artifacts = Path('/workspace/scratch')
                 artifacts.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(artifacts / ('deed-delivery-scene-mobile.png' if mobile else 'deed-delivery-scene-desktop.png')))
+                page.evaluate('''async()=>{
+                  deliveryScene.update({id:'public-commons'});await deliveryScene.refresh();
+                  if(calls.length!==1)throw Error('An inactive ordinary world subscribed to freight.');
+                  projection.mapId='public-commons';for(const row of [...projection.dropoffs,...projection.routes])row.mapId='public-commons';
+                  projection.vehicles=[{id:'public-store-truck',mapId:'public-commons',phase:'driving',position:{x:-15,y:0,z:5},stageStartedAt:14000,stageDurationMs:20000,waypoints:[{x:-15,y:0,z:5},{x:10,y:0,z:0}]}];
+                  deliveryScene.update({id:'public-commons'},{deliveryActivity:true});await deliveryScene.refresh();
+                  deliveryScene.update({id:'public-commons'},{deliveryActivity:true});
+                }''')
+                page.wait_for_function('deliveryScene.snapshot().vehicles[0]?.loaded', timeout=30000)
+                assert page.evaluate('calls.length') == 2, 'Repeated live snapshots cannot create per-frame supply requests.'
+                assert page.evaluate('deliveryScene.snapshot().mapId') == 'public-commons'
+                assert page.evaluate('deliveryWorld.getObjectByName("PROJECTED_DELIVERY_TRUCK").userData.modelId') == 'frontier-pickup'
+                assert page.evaluate('deliveryWorld.getObjectByName("CONFIRMED_DOORSTEP_PARCEL").visible'), 'An ordinary address can render an authoritative parcel while freight is active.'
+                page.evaluate('''()=>{deliveryDefer=true;window.pendingDelivery=deliveryScene.refresh();deliveryScene.update({id:'public-commons'},{deliveryActivity:false});}''')
+                assert page.evaluate('deliverySignals.at(-1).aborted')
+                page.evaluate('''async()=>{resolveDelivery(structuredClone(projection));await pendingDelivery;deliveryScene.update({id:'another-idle-map'});await deliveryScene.refresh();renderDelivery();}''')
+                assert page.evaluate('calls.length') == 3
+                assert page.evaluate('deliveryScene.snapshot().visible') is False
+                assert page.evaluate('deliveryScene.snapshot().mapId') is None
+                assert page.evaluate('deliveryScene.snapshot().vehicles.length') == 0
                 page.evaluate('deliveryScene.dispose();deliveryRenderer.dispose();deliveryRenderer.forceContextLoss()')
                 assert page.evaluate('deliveryWorld.getObjectByName("WORLD_DEED_DELIVERIES")===undefined')
                 assert not errors, errors
-                print(('Mobile' if mobile else 'Desktop') + ' deed delivery scene passed: native truck, courier, route, bounded interpolation, confirmed parcel and cleanup.', flush=True)
+                print(('Mobile' if mobile else 'Desktop') + ' delivery scene passed: native truck/courier, confirmed parcel, bounded motion, ordinary-map activity gating and late-response cleanup.', flush=True)
                 page.close()
         finally:
             browser.close()

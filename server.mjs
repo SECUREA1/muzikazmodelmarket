@@ -982,6 +982,7 @@ const server = createServer(async (req, res) => {
     }
 
     if(['/api/wallet/rewards/progress','/api/wallet/rewards/claim'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const input=await bodyJson(req);if(url.pathname.endsWith('/progress')&&input.scope==='field')return authorizationError(res,403,'SERVER_EVENT_REQUIRED','Gameplay quest progress is recorded by the room server.','rewards');return sendJson(res,200,assetResponse(await userDatabase.memberReward(context.walletId,url.pathname.endsWith('/progress')?'progress':'claim',input)));}
+    if(url.pathname==='/api/world-supply/addresses'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.addresses({mapId:url.searchParams.get('mapId')||undefined,addressId:url.searchParams.get('addressId')||undefined,offset:url.searchParams.get('offset')||0,limit:url.searchParams.get('limit')||200})));
     if(url.pathname==='/api/world-supply/deliveries'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.projection({mapId:url.searchParams.get('mapId')})));
     if(['/api/world-supply/workspace','/api/world-supply/workspace/recipe','/api/world-supply/workspace/trace'].includes(url.pathname)&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;
@@ -993,7 +994,7 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/world-supply/recipe'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.recipe(url.searchParams.get('itemId'),Number(url.searchParams.get('quantity')||1))));
     if(url.pathname==='/api/world-supply/trace'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.trace({productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
     if(url.pathname==='/api/world-supply'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.state({mapId:url.searchParams.get('mapId')||undefined})));
-    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|order|register-design|dispatch|cancel|pause|resume)$/);
+    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|order|order-address|register-design|dispatch|cancel|pause|resume)$/);
     if(supplyAction&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
       return sendJson(res,200,assetResponse(await worldSupply.action(context.walletId,supplyAction[1],await bodyJson(req))));
@@ -1118,7 +1119,7 @@ const server = createServer(async (req, res) => {
       const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
       const snapshot=arcadeRooms.command(id,environment,identity,command);
       if(command.action==='join')for(const [roomId,room] of hockeyRooms.rooms){const actor='account:'+identity.accountId;if(room.seen.has(actor))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
-      return sendJson(res,200,assetResponse(snapshot));
+      return sendJson(res,200,assetResponse({...snapshot,deliveryActivity:worldSupply.hasDeliveryActivity(environment.id)}));
     }
     const hockeyRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/hockey$/);
     if(hockeyRoom&&req.method==='POST'){
@@ -1128,7 +1129,7 @@ const server = createServer(async (req, res) => {
       const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
       const snapshot=hockeyRooms.command(id,environment,identity,command);
       if(command.action==='join'){arcadeRooms.leave('account:'+identity.accountId);for(const [roomId,room]of hockeyRooms.rooms)if(roomId!==id&&room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
-      return sendJson(res,200,assetResponse(snapshot));
+      return sendJson(res,200,assetResponse({...snapshot,deliveryActivity:worldSupply.hasDeliveryActivity(environment.id)}));
 
     }
     const soloResidents=url.pathname.match(/^\/api\/rooms\/([^/]+)\/residents$/);
@@ -1144,7 +1145,7 @@ const server = createServer(async (req, res) => {
       const id=environment.roomId||environment.id;
       if(req.method==='GET'){
         const viewerId=await roomViewerId(req);
-        return sendJson(res,200,assetResponse(residentAudienceSnapshot(await authoritativeRooms.snapshot(id,environment),viewerId)));
+        return sendJson(res,200,assetResponse({...residentAudienceSnapshot(await authoritativeRooms.snapshot(id,environment),viewerId),deliveryActivity:worldSupply.hasDeliveryActivity(environment.id)}));
       }
       const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');
       if(!identity)return;
@@ -1152,7 +1153,7 @@ const server = createServer(async (req, res) => {
       // component, while the room still avoids cloning the full snapshot.
       const snapshot=await authoritativeRooms.command(id,environment,identity,command,{projectResult:value=>compactRoomSnapshot(residentAudienceSnapshot(value,'account:'+identity.accountId),command,environment)});
       broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});
-      return sendJson(res,200,assetResponse(snapshot));
+      return sendJson(res,200,assetResponse({...snapshot,deliveryActivity:worldSupply.hasDeliveryActivity(environment.id)}));
     }
     const buildSettings=url.pathname.match(/^\/api\/rooms\/([^/]+)\/building$/);
     if(buildSettings&&req.method==='POST'){
@@ -1375,6 +1376,7 @@ server.on('upgrade', (req, socket) => {
 });
 await loadoutCodeStore.migrate();
 await loadMasterRuntime();
+await worldSupply.deliveryActivityReady;
 const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayments()),30000);storeDeliveryTimer.unref();
 const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
 backgroundJob(()=>snapshotServer());

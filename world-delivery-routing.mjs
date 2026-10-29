@@ -21,7 +21,7 @@ export function deliveryMapRevision({deed={},environment={},room={},portId}={}){
 function metadata(environment){const scene=environment.builderScene||environment.placementScene||{};return {...scene.layoutMeta?.delivery,...scene.delivery,...environment.delivery};}
 function sceneObjects(environment,room){
  const scene=environment.builderScene||environment.placementScene||{},rows=new Map((scene.objects||[]).map(item=>[item.id,item]));
- for(const item of Object.values(room.simulation?.actors||{}))if(!item.trafficAI&&(item.spawned||rows.has(item.id)))rows.set(item.id,item);
+ for(const item of Object.values(room.simulation?.actors||{}))if(!item.trafficAI&&(item.spawned||rows.has(item.id)))rows.set(item.id,item.spawned?item:{...rows.get(item.id),...(item.active===false?{active:false}:{})});
  for(const item of Object.values(room.objects||{}))rows.set(item.id,item);
  return [...rows.values()].filter(item=>!item.deleted&&item.active!==false);
 }

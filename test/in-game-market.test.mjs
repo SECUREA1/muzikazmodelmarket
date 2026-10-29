@@ -53,7 +53,7 @@ test('in-game care panel loads the member inventory and records current arena he
  globalThis.fetch=async()=>({ok:true,json:async()=>({items:[{id:'ion-health-vial',name:'Health vial',description:'Restore health',price:25}]})});
  try{
   const {createGameMarketplace}=await import('../public/js/in-game-market.js');
-  const market=createGameMarketplace({telemetry:()=>({health:40,maxHealth:100})});market.open('care');
+  const market=createGameMarketplace({deliveryAddressUI:{prepare(){},open(){},close(){}},telemetry:()=>({health:40,maxHealth:100})});market.open('care');
   await new Promise(resolve=>setTimeout(resolve,10));
   handlers.get('click')({target:{closest(selector){return selector==='[data-market-tab]'?{dataset:{marketTab:'care'}}:null;}}});
   await new Promise(resolve=>setTimeout(resolve,10));
@@ -100,7 +100,7 @@ test('in-game upgrade and care checkout keep the supplied inventory map or curre
    globalThis.document={createElement:()=>dialog,body:{append(){}},documentElement:{classList:{add(){},remove(){}}},querySelector:()=>null};
    globalThis.fetch=async()=>({ok:true,json:async()=>({items:[{id:'health-vial',name:'Health vial',description:'Restore health',price:25}]})});
    const inventory=provided?new SharedGameInventory({getMapId:()=>currentMap}):null;
-   const market=createGameMarketplace({inventory,telemetry:()=>({health:80,world:provided?'unused-telemetry-map':currentMap})});
+   const market=createGameMarketplace({inventory,deliveryAddressUI:{prepare(){},open(){},close(){}},telemetry:()=>({health:80,world:provided?'unused-telemetry-map':currentMap})});
    market.open('upgrades');await new Promise(resolve=>setTimeout(resolve,10));
    assert.ok(calls.some(call=>call.path==='/api/economy?mapId=stock-map-a'));
    handlers.get('click')({target:{closest(selector){return selector==='[data-market-upgrade]'?{dataset:{marketUpgrade:'0'}}:null;}}});

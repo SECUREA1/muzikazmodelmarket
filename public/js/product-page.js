@@ -1,4 +1,5 @@
 import {productReference,productShareUrl,shareProduct,resolveSharedProduct} from './product-share.js';
+import {factoryOrderItemId,mountStoreAddressUI} from './store-address-ui.js';
 
 const SOURCE_LABELS={upgrade:'Game item',builder:'Builder listing',player:'Member listing',model:'3D model','native-map':'World template',land:'Land',bundle:'Bundle',care:'Care supply'};
 const words=value=>String(value||'').replace(/[-_]/g,' ');
@@ -67,8 +68,10 @@ export async function initializeProductPage({document:doc=globalThis.document,lo
    if(result.url){const fallback=page.querySelector('[data-product-copy-link]'),input=fallback.querySelector('input');fallback.hidden=false;input.value=result.url;input.focus();input.select();status.textContent='Select and copy this product link.';}
    else status.textContent='A public link is not available for this item.';
   });
+  const supplyItemId=factoryOrderItemId(record);let deliveryAddressUI=null;
+  if(supplyItemId){const receiving=doc.createElement('section');receiving.dataset.productSupply='';page.querySelector('[data-product-market]').before(receiving);deliveryAddressUI=mountStoreAddressUI(receiving,{request,itemId:supplyItemId,mode:'product'});globalThis.addEventListener?.('pagehide',()=>deliveryAddressUI.close(),{once:true});}
   content.hidden=false;page.setAttribute('aria-busy','false');status.textContent='Product details ready.';
-  return {record,reference:productReference(record),dispose:()=>controller.abort()};
+  return {record,reference:productReference(record),deliveryAddressUI,dispose:()=>{controller.abort();deliveryAddressUI?.dispose();}};
  }catch(error){if(error?.name!=='AbortError')unavailable(error?.message||'The public market could not be loaded. Please try again later.');return null;}
 }
 

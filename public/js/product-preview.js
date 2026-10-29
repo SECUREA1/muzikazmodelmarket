@@ -28,7 +28,7 @@ export async function createProductPreviewRuntime({canvas,stage,window,onXRState
  reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
  const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.minDistance=.15;controls.maxDistance=8;
  let loaded=null,mixer=null,disposed=false,paused=false,session=null,hitSource=null,lastTime=0,lastDraw=0,savedCamera=null;
- const disposeLoaded=value=>disposeModelResources(value?.root);
+ const disposeLoaded=value=>typeof value?.dispose==='function'?value.dispose():disposeModelResources(value?.root);
  const resize=()=>{if(disposed||renderer.xr.isPresenting)return;const rect=stage.getBoundingClientRect();const w=Math.max(1,rect.width||640),h=Math.max(1,rect.height||440);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};
  const resizeObserver=window.ResizeObserver?new window.ResizeObserver(resize):null;resizeObserver?.observe(stage);window.addEventListener('resize',resize);resize();
  function draw(time,frame){
