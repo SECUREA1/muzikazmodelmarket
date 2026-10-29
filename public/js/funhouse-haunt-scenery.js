@@ -55,7 +55,9 @@ export function createFunhouseHauntScenery(){
   const x=index===0?22:ward.position.x+(index%2?.9:-.9),z=index===0?-18:ward.position.z-1.35;
   const node=phantom('FUNHOUSE_HAUNT_SHADOW_'+ward.id,x,z);node.visible=false;shadows.push(node);
  }
- const reveal=phantom('FUNHOUSE_HAUNT_FINAL_RINGMASTER',-20,-21.5,2.2);reveal.visible=false;
+ // A normal standing view from the portrait ward includes the entire mask.
+ // The finale stays in front of the next maze wall instead of filling the eye.
+ const reveal=phantom('FUNHOUSE_HAUNT_FINAL_RINGMASTER',-20,-22.3,1.5);reveal.position.y=0;reveal.visible=false;
  // Back-wall eyes and fine corner webs use a single draw call apiece. Their
  // steady glows leave every maze gap and seated view unobstructed.
  const eyes=new T.InstancedMesh(new T.SphereGeometry(.075,8,6),new T.MeshBasicMaterial({color:'#da9d7f'}),8);eyes.name='FUNHOUSE_HAUNT_WATCHING_EYES';eyes.userData.collisionDisabled=true;
@@ -81,7 +83,7 @@ export function createFunhouseHauntScenery(){
   }
   const completedAt=haunt?.finishedAt??haunt?.lastSealedAt;
   reveal.visible=Boolean(haunt?.status==='complete'&&Number.isFinite(completedAt)&&now>=completedAt&&now-completedAt<4500);
-  reveal.position.y=.2+(reveal.visible&&!reducedMotion?Math.sin(Math.min(Math.PI,(now-completedAt)/4500*Math.PI))*.3:0);reveal.rotation.z=0;
+  reveal.position.y=reveal.visible&&!reducedMotion?Math.sin(Math.min(Math.PI,(now-completedAt)/4500*Math.PI))*.03:0;reveal.rotation.z=0;
   // Reduced motion remains a stable pose, including the final revealed mask.
   eyes.visible=true;sign.visible=true;
  }

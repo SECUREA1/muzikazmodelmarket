@@ -47,11 +47,32 @@ test('the final ringmaster reveal expires by server time and never replays an ol
  const root=scene(t),api=root.userData,now=100000;
  const haunt={id:'finished',status:'complete',sealed:FUNHOUSE_HAUNT_WARDS.map(value=>value.id),wardIndex:4,finishedAt:now,lastSealedAt:now};
  api.setFunhouseState({funhouse:{haunt}},now);api.updateFunhouseEffects(10,true,now+100);
- assert.equal(api.funhouseHauntScenery.reveal.visible,true);assert.equal(api.funhouseHauntScenery.reveal.position.y,.2);
+ assert.equal(api.funhouseHauntScenery.reveal.visible,true);assert.equal(api.funhouseHauntScenery.reveal.position.y,0);
  assert.ok(api.funhouseHauntScenery.shadows.every(value=>!value.visible));assert.equal(api.funhouseHauntMarkers.filter(value=>value.seal.visible).length,4);
  api.setFunhouseState({funhouse:{haunt}},now+5000);api.updateFunhouseEffects(15,true,now+5000);
  assert.equal(api.funhouseHauntScenery.reveal.visible,false,'repeated completed snapshots do not restart the scare');
  api.setFunhouseState({funhouse:{haunt:{...haunt,status:'cancelled'}}},now+6000);api.updateFunhouseEffects(16,true,now+6000);assert.equal(api.funhouseHauntScenery.reveal.visible,false);
+});
+
+test('the complete finale mask fits a normal first-person view and stays in front of physical maze walls',t=>{
+ const root=scene(t),api=root.userData,now=100000;
+ api.setFunhouseState({funhouse:{haunt:{status:'complete',sealed:FUNHOUSE_HAUNT_WARDS.map(value=>value.id),finishedAt:now}}},now);
+ const camera=new T.PerspectiveCamera(50,1,.05,100);camera.position.set(-19.056,1.67,-17.974);camera.lookAt(camera.position.clone().add(new T.Vector3(0,0,-1)));camera.updateMatrixWorld();
+ const reveal=api.funhouseHauntScenery.reveal,face=reveal.getObjectByName('FUNHOUSE_HAUNT_GRINNING_MASK');
+ const {width,height}=face.geometry.parameters;
+ for(const reducedMotion of [false,true])for(const elapsed of [0,2250,4400]){
+  api.updateFunhouseEffects(10+elapsed/1000,reducedMotion,now+elapsed);root.updateWorldMatrix(true,true);
+  assert.equal(reveal.visible,true);
+  for(const x of [-width/2,width/2])for(const y of [-height/2,height/2]){
+   const point=face.localToWorld(new T.Vector3(x,y,0)),screen=point.clone().project(camera);
+   assert.ok(Math.abs(screen.x)<1&&Math.abs(screen.y)<1&&screen.z>-1&&screen.z<1,'the entire final mask fits a conservative 50-degree view without turning the camera');
+  }
+  const walls=FUNHOUSE_WALLS.map(wall=>root.getObjectByName('FUNHOUSE_WALL_'+wall.id));
+  for(const point of [face.getWorldPosition(new T.Vector3()),reveal.localToWorld(new T.Vector3(0,.5,0)),face.localToWorld(new T.Vector3(0,height/2,0))]){
+   const offset=point.clone().sub(camera.position),cast=new T.Raycaster(camera.position,offset.clone().normalize(),0,offset.length());
+   assert.equal(cast.intersectObjects(walls,false).length,0,'the next maze wall remains behind the visible finale');
+  }
+ }
 });
 
 test('spectres, webs and lanterns keep all physical routes, seated views and the original mesh ceiling',t=>{
