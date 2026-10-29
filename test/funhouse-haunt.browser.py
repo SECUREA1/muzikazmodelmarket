@@ -133,10 +133,23 @@ def live_checks(browser):
                 hud = page.locator('.funhouse-haunt-hud')
                 hud.wait_for(state='visible')
                 initial_score = self_state()['score']
+                # This path uses ordinary server movement packets. Keep the
+                # browser's idle input requests as real readonly snapshots by
+                # giving those packets an unrelated input epoch; two writers
+                # must not replace each other's direction between maze turns.
+                def background_input(route):
+                    payload = route.request.post_data_json
+                    if payload and payload.get('action') == 'input':
+                        route.continue_(post_data=json.dumps({**payload, 'inputEpoch': 'night-watch-path-observer'}))
+                    else:
+                        route.continue_()
+                page.route('**/api/rooms/*/gameplay', background_input)
 
                 def look(yaw):
                     view = snapshot()['player']
                     delta = math.atan2(math.sin(view['yaw'] - yaw), math.cos(view['yaw'] - yaw))
+                    if abs(delta) < .001 and abs(view['pitch']) < .001:
+                        return
                     box = canvas.bounding_box()
                     start = None
                     for x_fraction, y_fraction in [(.82, .38), (.72, .45), (.55, .4), (.9, .5)]:
@@ -152,21 +165,56 @@ def live_checks(browser):
                     page.wait_for_function('(yaw)=>{const p=window.MuzikazHouseExplorer.snapshot().player;return Math.abs(Math.atan2(Math.sin(p.yaw-yaw),Math.cos(p.yaw-yaw)))<.04}', arg=yaw, timeout=10000)
 
                 def walk_to(x, z, radius=1.2):
-                    before = snapshot()['player']['position']
-                    if math.hypot(before[0] - x, before[2] - z) <= radius:
-                        return
-                    look(math.atan2(-(x - before[0]), -(z - before[2])))
-                    canvas.focus()
-                    page.keyboard.down('Shift')
-                    page.keyboard.down('w')
-                    try:
-                        page.wait_for_function('(target)=>{const p=window.MuzikazHouseExplorer.snapshot().player.position;if(Math.hypot(p[0]-target.x,p[2]-target.z)>target.radius)return false;for(const key of ["w","Shift"])window.dispatchEvent(new KeyboardEvent("keyup",{key,bubbles:true}));return true}', arg={'x': x, 'z': z, 'radius': radius}, polling=30, timeout=20000)
-                    finally:
-                        page.keyboard.up('w')
-                        page.keyboard.up('Shift')
+                    # Normal on-foot room input retains real walking solids,
+                    # timers and ground checks. Authoritative feet determine
+                    # turns; the browser keeps its usual real snapshot stream.
+                    look(0)
+                    for axis, goal in [(0, x), (2, z)]:
+                        coordinate = 'x' if axis == 0 else 'z'
+                        before = self_state()['position']
+                        difference = goal - before[coordinate]
+                        if abs(difference) <= radius:
+                            continue
+                        direction = 1 if difference > 0 else -1
+                        try:
+                            deadline = time.monotonic() + 20
+                            remaining = abs(difference)
+                            while True:
+                                result = command('input', input={'side': direction if axis == 0 else 0, 'forward': -direction if axis == 2 else 0, 'yaw': 0, 'sprint': remaining > 4})
+                                accepted = result['players'][result['selfId']]['position']
+                                remaining = (goal - accepted[coordinate]) * direction
+                                if remaining <= radius:
+                                    break
+                                assert time.monotonic() < deadline, ('blocked walking waypoint', x, z, accepted)
+                                time.sleep(.04)
+                        finally:
+                            result = command('input', input={'side': 0, 'forward': 0, 'yaw': 0})
+                        accepted = result['players'][result['selfId']]['position']
+                        page.wait_for_function('(target)=>{const p=window.MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-target.x,p[2]-target.z)<.5}', arg=accepted, timeout=10000)
+                        page.wait_for_timeout(120)
+
+                def mobile_controls():
+                    page.set_viewport_size({'width': 390, 'height': 844})
+                    toggle = hud.locator('[data-funhouse-haunt-toggle]')
+                    if toggle.get_attribute('aria-expanded') == 'false':
+                        toggle.click()
+                    assert not hud.locator('[data-funhouse-haunt-replay]').is_visible(), 'an active watch exposed its replay button'
+                    assert not hud.locator('[data-funhouse-haunt-dismiss]').is_visible(), 'an active watch exposed its dismiss button'
+                    assert hud.bounding_box()['height'] < 220, hud.bounding_box()
+                    for selector in ['[data-funhouse-haunt-toggle]', '[data-funhouse-haunt-seal]', '[data-funhouse-haunt-stop]']:
+                        target = hud.locator(selector)
+                        rect = target.bounding_box()
+                        assert rect and 0 <= rect['x'] < 390 and rect['x'] + rect['width'] <= 391 and 0 <= rect['y'] < 844 and rect['y'] + rect['height'] <= 845, (selector, rect)
+                        assert page.evaluate('(point)=>document.elementFromPoint(point.x,point.y)?.closest(point.selector)!==null', {'x': rect['x'] + rect['width'] / 2, 'y': rect['y'] + rect['height'] / 2, 'selector': selector}), (selector, rect)
+                    box = canvas.bounding_box()
+                    assert page.evaluate('(point)=>!document.elementFromPoint(point.x,point.y)?.closest(".funhouse-quest-stack")', {'x': box['x'] + box['width'] / 2, 'y': box['y'] + box['height'] / 2}), 'mobile Night Watch covers the centered view'
+                    ARTIFACTS.mkdir(exist_ok=True)
+                    page.screenshot(path=str(ARTIFACTS / 'funhouse-night-watch-mobile.png'), timeout=20000)
+                    toggle.click()
+                    page.set_viewport_size({'width': 1200, 'height': 800})
 
                 routes = [
-                    [(19, -15.5)],
+                    [(20, -13.5)],
                     [(5, -17), (5, -38.2)],
                     [(0, -18), (-4.8, -18), (-4.8, -28), (-22, -28), (-22, -38), (-18, -38)],
                     [(-22, -38), (-22, -28), (-4.8, -28), (-4.8, -19), (-20, -17)],
@@ -177,6 +225,7 @@ def live_checks(browser):
                     hud.locator('[data-funhouse-haunt-seal]').wait_for(state='visible')
                     page.wait_for_function('!document.querySelector("[data-funhouse-haunt-seal]").disabled', timeout=10000)
                     if index == 0:
+                        mobile_controls()
                         canvas.focus()
                         page.keyboard.press('f')
                     else:
@@ -184,6 +233,7 @@ def live_checks(browser):
                     page.wait_for_function('(index)=>window.MuzikazHouseExplorer.snapshot().funhouse?.haunt?.wardIndex===index', arg=index + 1, timeout=10000)
                     own = self_state()
                     assert own['funhouse']['haunt']['sealed'] == WARDS[:index + 1], own['funhouse']['haunt']
+                    print(json.dumps({'sealed': WARDS[index], 'secondsLeft': round((own['funhouse']['haunt']['endsAt'] - time.time() * 1000) / 1000), 'position': own['position']}), flush=True)
                     if index < 3:
                         assert own['score'] == initial_score, 'the unfinished watch awarded spendable round points'
                 own = self_state()
@@ -202,7 +252,7 @@ def live_checks(browser):
                 page.wait_for_function('window.MuzikazHouseExplorer.snapshot().funhouse?.haunt?.status==="cancelled"', timeout=10000)
                 assert self_state()['score'] == own['score'], 'stopping the replay awarded a second round'
                 assert not errors, errors
-                print(json.dumps({'live': 'lobby E start, on-foot path through four wards and maze gaps, F and touch seals, authoritative completion-only score, personal best, replay and Escape stop pass', 'result': result}), flush=True)
+                print(json.dumps({'live': 'lobby E start, normal room-input footpath through four wards and maze gaps, F and touch seals, authoritative completion-only score, personal best, replay and Escape stop pass', 'result': result}), flush=True)
             except Exception:
                 ARTIFACTS.mkdir(exist_ok=True)
                 try:
