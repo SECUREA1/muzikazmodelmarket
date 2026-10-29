@@ -1,0 +1,84 @@
+{
+  "version": "crafted-mountains-v1",
+  "counts": {
+    "catalog": 4,
+    "rendered": 4,
+    "baselineCompared": 4,
+    "worlds": 4,
+    "walkableTiles": 101,
+    "ridges": 45
+  },
+  "failures": [],
+  "items": [
+    {
+      "id": "alpine-mountain",
+      "version": "crafted-mountains-v1",
+      "meshes": 2,
+      "triangles": 1832,
+      "lights": 0,
+      "uvMissing": 0,
+      "degenerateTriangles": 0,
+      "invalidAttributes": false,
+      "opposingNormals": 0
+    },
+    {
+      "id": "terrain-cliff",
+      "version": "crafted-mountains-v1",
+      "meshes": 25,
+      "triangles": 2470,
+      "lights": 0,
+      "uvMissing": 0,
+      "degenerateTriangles": 0,
+      "invalidAttributes": false,
+      "opposingNormals": 0
+    },
+    {
+      "id": "terrain-crater",
+      "version": "crafted-mountains-v1",
+      "meshes": 23,
+      "triangles": 2256,
+      "lights": 0,
+      "uvMissing": 0,
+      "degenerateTriangles": 0,
+      "invalidAttributes": false,
+      "opposingNormals": 0
+    },
+    {
+      "id": "terrain-snowbank",
+      "version": "crafted-mountains-v1",
+      "meshes": 17,
+      "triangles": 3458,
+      "lights": 0,
+      "uvMissing": 0,
+      "degenerateTriangles": 0,
+      "invalidAttributes": false,
+      "opposingNormals": 0
+    }
+  ],
+  "worlds": [
+    {
+      "id": "mountain-pass",
+      "ridges": 4,
+      "walkableTiles": 1,
+      "lights": 0
+    },
+    {
+      "id": "ski-resort",
+      "ridges": 17,
+      "walkableTiles": 100,
+      "lights": 1
+    },
+    {
+      "id": "factory-proving-grounds",
+      "ridges": 5,
+      "walkableTiles": 0,
+      "lights": 0
+    },
+    {
+      "id": "mountain-compound",
+      "ridges": 19,
+      "walkableTiles": 0,
+      "lights": 0
+    }
+  ]
+}

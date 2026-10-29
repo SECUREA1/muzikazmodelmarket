@@ -30,3 +30,20 @@ test('personality exposes coherent individuality while jobs adapt to local activ
  assert.ok(garden.backstory.includes(garden.identity.ambition));
  assert.equal(airport.uniform,'aviation');assert.notEqual(garden.role,airport.role);
 });
+
+test('map residents receive stable local details and retain explicit appearance choices',()=>{
+ const garden=Array.from({length:20},(_,i)=>residentPersonality({id:'garden',name:'Forest park'},{id:'arrival'},'local-'+i));
+ assert.ok(garden.every(p=>['moss','flowers'].includes(p.appearance.detail)));
+ assert.ok(new Set(garden.map(p=>JSON.stringify(p.appearance))).size>15);
+ const harbor=residentPersonality({id:'harbor',name:'Harbor'},{id:'arrival'},'local-0');
+ assert.ok(['satchel','scarf'].includes(harbor.appearance.detail));
+ assert.deepEqual(harbor,residentPersonality({id:'harbor',name:'Harbor'},{id:'arrival'},'local-0'));
+});
+
+test('local casts integrate built characters without replacing every resident',()=>{
+ const collect=(name)=>Array.from({length:300},(_,i)=>residentPersonality({id:name,name},{id:'arrival'},'local-'+i).appearance.characterModel);
+ const park=new Set(collect('Forest park')),arcade=new Set(collect('Neon junction')),custom=new Set(collect('Custom creator room'));
+ for(const id of ['none','forest-ranger','moss-golem'])assert.ok(park.has(id),id);
+ for(const id of ['none','clockwork-knight','friendly-ghost','spectral-ghost'])assert.ok(arcade.has(id),id);
+ assert.ok(custom.has('desert-merchant'));
+});

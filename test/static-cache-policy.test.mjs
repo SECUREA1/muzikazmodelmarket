@@ -44,7 +44,7 @@ async function loadWorker(fetchImplementation,cachedResponse){
 }
 
 test('installed clients revalidate stale launch modules and still cache current responses for offline use',async()=>{
-  const worker=await loadWorker(async()=>new Response('current module',{headers:{'Cache-Control':'no-cache'}}));
+  const worker=await loadWorker(async()=>new Response('current module',{headers:{'Cache-Control':'no-cache','Content-Type':'text/javascript'}}));
   const response=await worker.request('/public/js/house-explorer-glb.js?v=range-launch');
   assert.equal(await response.text(),'current module');
   assert.equal(worker.calls[0].options.cache,'no-cache');
@@ -56,9 +56,19 @@ test('installed clients revalidate stale launch modules and still cache current 
 });
 
 test('a revalidation network failure preserves the existing offline fallback',async()=>{
-  const worker=await loadWorker(async()=>{throw new Error('Offline');},new Response('offline module'));
+  const worker=await loadWorker(async()=>{throw new Error('Offline');},new Response('offline module',{headers:{'Content-Type':'text/javascript'}}));
   const response=await worker.request('/public/js/firing-range.js');
   assert.equal(await response.text(),'offline module');
   assert.equal(worker.calls[0].options.cache,'no-cache');
   assert.equal(worker.stored.length,0);
+});
+
+
+test('HTML error pages cannot poison offline JavaScript or JSON module requests',async()=>{
+  for(const path of ['/public/js/house-explorer-glb.js','/public/models/environments/environments.json']){
+    const worker=await loadWorker(async()=>new Response('<!doctype html><h1>Updating</h1>',{headers:{'Content-Type':'text/html'}}));
+    const online=await worker.request(path);assert.equal(online.status,200);assert.equal(worker.stored.length,0,'a nonmatching deployment response is never cached');
+    const offline=await loadWorker(async()=>{throw Error('Offline');},new Response('<html>Wrong resource</html>',{headers:{'Content-Type':'text/html'}}));
+    const fallback=await offline.request(path);assert.equal(fallback.type,'error','old bad cache content cannot masquerade as a module or JSON');
+  }
 });

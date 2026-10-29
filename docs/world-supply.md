@@ -1,18 +1,42 @@
 # World item factory and stock supply
 
-Open **World item factory** in the game controls. Search the native, repository GLB/GLTF, published model, or care catalog and inspect each item's world, factory, and destination warehouse count.
+Open **World item factory** in the game controls. Search native assets, repository GLB/GLTF files, published models, care supplies, and eligible active Builder or player marketplace blueprints. Inspect each item's world, factory, and destination warehouse count. The board shows its server-confirmed factory unit price and production source.
 
 Each canonical item starts with **1,000 units across the world**, once. Aliases for the same native item or model share one count. Catalog refreshes, server restarts, and visiting a new map never reset depleted stock. Existing owned items and authored map scenery are preserved.
 
+## Regional order travel quests
+
+Order and dispatch views include a receipt-backed `journey`, also available in
+the lineage trace. It identifies the current destination, deed/address when
+present, required map stops, transport modes, completed quantity and next stop.
+Factory, quarry and existing-stock dispatches keep their own source stage.
+Sea unloading unlocks receiving road transport or the selected air leg; air
+unloading unlocks only that flight's counted final-delivery slice. Held routes
+and partial quantities stay visible until the full order is delivered.
+
+The board's next-stop control uses existing local map and map-travel controls.
+The world-route link opens the atlas with remaining public map stops, where
+players can add more deed visits. Links carry map identifiers rather than
+private order, address or owner credentials. The public atlas graph refreshes
+from the current directory; delivery routes still use the current receiving
+address and retain their existing stale-address and ownership checks.
+
+Journey projection does not write stock, pay a bonus, or create completion
+proof. Authoritative production and transport state advance preparation stages;
+verified receiving receipts confirm the delivered quantities and completion.
+Saved orders remain visible after
+map travel or server restart, and legacy orders are projected without changing
+their historical stock accounting.
+
 ## Build and ship
 
-1. Choose an item and whole-unit quantity. Request a server quote. Production costs the catalog unit price, with **20% off batches of 10 or more**. Free catalog items have a base manufacturing cost of 1 MZK per unit before the bulk discount. Every catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.
+1. Choose an item and whole-unit quantity. Request a server quote. Production uses the authoritative catalog MZK price, with **20% off batches of 10 or more**. MZK amounts must be valid whole numbers; USD catalog prices convert at the shared rate of **100 MZK per USD**. Missing, negative or invalid prices cannot silently become cheap production orders. Free catalog items have a minimum base manufacturing cost of **1 MZK per unit before the bulk discount**. A current server quote overrides the earlier lineup price. Every eligible catalog item receives a manufacturing recipe. Batches take about 8–120 seconds based on item complexity and quantity, and produce up to 10,000 units.
 2. Start production. The server charges MZK once and runs four timed stages: input preparation, fabrication/assembly, quality checks, and packing. The board shows each stage and its progress. All four must complete before the packed batch enters shared factory stock; no stage replenishes stores immediately. An unfinished batch can be cancelled for its original cost; finished goods cannot be refunded.
 3. Select a destination map warehouse or **World stock · central stores**, a shipping map, and a shipping contract. Dispatch reserves actual factory units. To redistribute existing goods, choose a world or map warehouse as the source instead; transfers debit its stock and never manufacture extra units. Packing capacity depends on the item recipe: materials, tools and care supplies fit up to 1,000 per container; furniture 50; general props and character assets 100; electronics 250; ground vehicles 4; aircraft, boats, structures and world modules 1. The board shows the selected route capacity and a shipment-size control. Larger batches need a larger manifest or several shipments. Dock induction cannot transport world stock.
-4. On the assigned shipping map, board an eligible vessel at the contract's origin port. Open World item factory and accept the shipment task. Its item manifest appears in the shipping loading panel.
-5. Load and balance every container, secure the cargo, sail the marked route, dock, and unload completely. Only the verified final unload credits the selected inventory. Ordinary freight rewards still apply. The shipping chart links back to factory tasks, with directions to the correct shipping world, origin port and eligible vessel.
+4. Dispatch records the exact origin and destination ports from the server's selected route. A warehouse-to-origin-port staging task identifies the source inventory, shipping map, item, reserved quantity, staging time and **simulated warehouse transfer** mode. On the assigned shipping map, board an eligible vessel at that origin port. Open World item factory and accept the shipment task. Its item manifest appears in the shipping loading panel.
+5. Load and balance every container, secure the cargo, sail the marked route, dock, and unload completely. Ordinary map/world warehouse transfers credit inventory after verified sea unloading. Deed shipments continue into reserved port stock, road packing, truck delivery and the doorstep handover described below. Ordinary freight rewards still apply. The shipping chart links back to factory tasks, with directions to the correct shipping world, origin port and eligible vessel.
 
-The sea leg is playable in Hormuz and copied shipping maps. Warehouse transfers to and from the shipping ports are **simulated in-game freight**, recorded on the shipment's transfer task. This does not arrange real-world production, trade, or shipping. Maps with stores share their map warehouse; maps without stores still receive inventory.
+The sea leg is playable in Hormuz and copied shipping maps. Warehouse transfers to and from the shipping ports are **simulated in-game freight**, recorded on the shipment's transfer tasks. The origin staging task moves from staged to loading and then delivered, or returned after cancellation. Releasing an abandoned voyage stages the same reserved goods again. Dock staging does not create another stock balance or credit the destination. This does not arrange real-world production, trade, or shipping. Maps with stores share their map warehouse; maps without stores still receive inventory.
 
 ## Consumption and restocking
 
@@ -24,17 +48,75 @@ Cancellation or map travel releases a bound shipment for another attempt. Discon
 
 ## Implementation
 
-`world-supply.mjs` maintains the canonical ledger in the existing durable user database. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
+`world-supply.mjs` maintains the canonical ledger in the existing durable user database. `world-factory-catalog.mjs` normalizes trusted marketplace records and `world-factory-pricing.mjs` validates their production prices. `server-world-supply.mjs` commits production, payments, reservations, and transfers under its transaction queue. No public endpoint can complete a shipment: the authoritative shipping command supplies the verified delivery event. Editable account memory and client-reported quantities cannot restock the ledger.
 
-`GET /api/world-supply` exposes the counts, jobs, destinations, and eligible shipping maps. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,dispatch,cancel}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
+`GET /api/world-supply` exposes public counts, jobs, destinations, and eligible shipping maps. `GET /api/world-supply/workspace` adds the signed-in holder’s deeds and private blueprints; its `/recipe` and `/trace` routes provide authorized details. Authenticated, CSRF-protected `POST /api/world-supply/{quote,produce,order,register-design,dispatch,cancel,pause,resume}` handles factory actions. Purchasing endpoints accept map context and validate it against the world directory.
+
+## Ordering from a deed
+
+Choose **Order factory supplies** on an owned deed in Member maps, the member Backpack, or the in-game Marketplace. The link opens the World Item Factory and selects that deed. Choose an item and quantity, select a shipping map and route, then **Get price**. **Build & ship to deed** pays the reviewed MZK price once and creates a durable order linked to its four-stage production batch. Ordinary warehouse production remains available separately.
+
+The server verifies both the active deed and its current inventory holder, resolves the receiving plot itself, and rejects a different supplied destination. Completed packing automatically reserves that batch’s exact production lot into as many route-capacity-safe manifests as required. Earlier shared warehouse stock is left available. **View shipment tasks** filters the board to the order’s voyages. Every manifest still requires loading, securing, the playable sea passage, docking, and full unloading. Deed shipments then continue to the receiving door; sea unloading alone does not stock the plot. Order, deed, batch, lot, voyage, road load and receiving receipt IDs remain connected across restarts.
+
+An unfinished order can be paused, resumed, or cancelled once for its original manufacturing payment. Cancelling packed, unassigned freight returns only its unsent units to factory stock without refunding completed manufacture. Partially delivered orders retain their received units and receipts when the remaining freight is cancelled. Active voyages must be cancelled through shipping first. Selling or revoking the deed holds its outstanding orders; the original buyer can cancel remaining freight and release the output. Held lots are excluded from `availableFactoryStock` and cannot be taken by unrelated dispatches. `factoryStock` remains the complete warehouse accounting count.
+
+## Port, truck and doorstep delivery
+
+Every hosted deed has a stable delivery address. The planner looks for an authored delivery pad or actual doorway first, then a marked plot entrance for undeveloped land. A regional land field and its hosted plot use separate room coordinates; their transfer is explicitly recorded as an inter-map freight link. The route diagram distinguishes that link from local driving and the final walking approach. An indoor or upper-floor destination can use a serviced freight gateway and courier access when a truck cannot physically enter.
+
+Verified sea unloading creates a port receipt and reserved receiving-port escrow. It does not grant new stock or release the original factory lot. Each sea container is broken into up to twenty road-crate equivalents; a Frontier pickup holds four crates. Per-crate item counts come from the saved item packing plan, and the last crate can be partially filled. Road tasks retain their exact quantities and slices of the original production lot. Unpacking, loading and unloading never create another copy of the cargo.
+
+The automatic delivery service loads each truck, follows the calculated local route, unloads at a safe vehicle stop, and carries the goods to the marked drop-off. Distance, estimated service time, current phase, delivery pad and vehicle positions come from server records. The game displays the route, truck, courier and delivery marker in the destination map. The service also advances when nobody occupies the map; opening the game or the supply board reconciles saved server time and current geometry. A final doorstep receipt credits that road load exactly once. The order remains incomplete until every expected load is received.
+
+Routing uses the current authored environment, published streets, saved building pieces, placed stationary assets and construction earthworks. It checks actual ground and clearance for the pickup footprint and courier, chooses distance-weighted connected roads, and can calculate a clear service approach when no road is authored. Map edits invalidate the route fingerprint. A moving delivery replans from its current recorded position. Blocked entrances, disconnected access, missing floor or changed ownership hold cargo without awarding stock or counting blocked time as travel. Clearing the approach lets it resume automatically. The board’s **Recalculate** action refreshes the same authoritative plan; it cannot claim delivery.
+
+Cancelling after sea arrival holds undelivered goods at the receiving port. It does not teleport them back to factory stock or refund completed manufacture. Already received units and receipts remain intact. Pending deed orders and any direct warehouse transfer to a deed automatically gain the doorstep leg, including voyages already reserved when this upgrade is installed. The recipient is recorded separately from the sender, so supplying another member’s plot uses the correct receiving deed. Historical completed shipments retain their previous receipts and are never credited again.
+
+`GET /api/world-supply/deliveries?mapId=...` supplies the small public map projection. Private blueprint names, item identities, quantities and order IDs are excluded from that projection; authorized workspace and trace responses retain their owner’s full task and receipt details. `world-delivery-routing.mjs` calculates validated paths and `world-delivery-runtime.mjs` manages packing, progress, holds, escrow and exactly-once receiving. Production route calculations run in a bounded background worker, outside the wallet transaction and gameplay event loop. Ordinary maps make no delivery-scene polling requests; deed maps use the small projection. Run `node scripts/audit-deed-delivery-paths.mjs --report /tmp/deed-paths.json` to dry-run the real collision geometry for every public map template and all regional lots without changing player state.
+
+## Live custom development
+
+Open **Develop a custom item** in the factory board. Draw with mouse, pen or touch, use starter shapes, or select a GLB already owned in the server Backpack. The local 3D preview supports orbit and zoom; drawings preserve transparent artwork and their collision mask. Name the part, adjust its finish, behavior and production configuration, then **Save blueprint & select for production**. GLB customization uses the owned source model and its validated scale and orientation.
+
+Saving creates one prototype in the custom library and registers the stable `blueprint:custom:<item-id>` for its current holder. It does not list the design publicly, grant bulk units, or debit a manufacturing payment. New private designs start at zero world and factory stock. Request a quote and order them through the same four-stage production and shipping flow. Public supply responses omit their definitions, artwork, production, freight and stock; the authorized workspace includes them. Selling a saved design transfers development access to its current holder. A later public listing reveals the same SKU without seeding another reserve.
+
+Save and registration retries retain their request IDs, so a lost response cannot create another prototype or charge. The server revalidates the saved PNG or owned GLB and uses its trusted production price and recipe. Deeds, ownership licenses, earned rewards and official certificates are not manufactured by custom development.
+
+## Store and building receiving addresses
+
+Stores, native buildings, published building placements and map/deed entrances have stable public map addresses. The address identifies its map, building, current receiving entrance and owner’s public display name. Deed property uses the current deed holder; other player placements resolve the authoritative account even after a wallet connection. Unassigned public facilities are labeled **MUZIKAZ · Public facility**. Public records exclude wallet identities, credentials, Backpack records and saved private configurations.
+
+Use **Store & building address** in the factory board to choose a map, search its addresses and review the receiving owner. From a store, its market controls and building-address action open the same destination. Public product pages can link an eligible factory product to this flow. Links carry public product/address identifiers only and never place an order, purchase goods or spend MZK automatically.
+
+Any signed-in sender can fund supplies for an available public receiving address using their own MZK. **Build & ship to address** uses the normal reviewed quote, four production stages and exact production lots. Existing warehouse stock can also be dispatched to that address. Both paths require a verified sea passage, receiving-port unpacking, road-crate transport and the selected building’s final drop-off. Supplying a store grants no ownership of the store, land, product license or another player’s wallet. Only the paying sender can cancel their own order.
+
+The map warehouse remains the stock authority shared by stores in that map. Delivery receipts identify the exact receiving address and quantities; they do not create another copy in a separate store balance. Moving a building preserves its address ID and recalculates its entrance route. Removing or hiding it, or changing its receiving owner, holds undelivered cargo until the sender resolves the shipment. Completed receipts retain their historical recipient and location.
+
+Ordinary shared maps subscribe to delivery projections only while the server reports incoming freight. The existing room snapshot carries a cached boolean activity hint; it does not perform database or route work in the gameplay frame. Idle maps keep their previous loading behavior. Deed maps and authored delivery facilities retain their existing delivery views.
+
+Orders and addressed dispatches accept `onwardMode: "road" | "air"` with road as the default. Sea passage remains required in both modes. Air onward service is available only for a connected Strait arrival port and a reviewed deed or receiving address; unsupported choices reject before charging or reserving stock. The request's onward mode is part of its idempotency signature. Existing saved shipments retain their original delivery timing unless they have the new shore-transfer metadata.
+
+New addressed shipments use counted quay-to-shore truck handling. Air orders additionally create `airTasks` and immutable `airReceipts`, split into at most four road crates per flight. The `world-supply-air` gameplay command reserves, loads, secures, unloads or releases the pilot's real aircraft manifest. Positions and flight progress come from authoritative aircraft physics; request bodies cannot report a successful flight. Each verified air receipt releases only its own quantity into final road delivery. Stock, lot receipts, ownership checks and the exact receiving address remain shared with ordinary deed deliveries. Public task views exclude reservation credentials and captain wallet identities.
+
+`GET /api/world-supply/addresses?mapId=...` returns the public directory for one map in pages of at most 200 addresses; an exact `addressId` can also be resolved. Authenticated `POST /api/world-supply/order-address` accepts the address identifier and normal item, quantity, quote and shipping choices. The server resolves the current destination and recipient rather than trusting client-supplied coordinates or owner details. `dispatch` accepts the same optional address identifier for existing stock. Both accept `expectedAddressRevision`; a stale location or recipient returns 409 before payment or stock deduction. The factory refreshes the exact address before quoting or dispatching and requires another review if it changed. Run `node scripts/audit-delivery-addresses.mjs --report /tmp/addresses.json` to check authored public map and regional deed coverage without changing player state.
 
 ## Catalog coverage and verification
 
-Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 47 worlds and 5,435 placed instances: all 618 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
+Run `node scripts/audit-world-items.mjs` to compare authored world placements, base GLBs, renderer IDs, native definitions, market SKUs and finite supply identities. The current review covers 47 worlds and 5,437 placed instances: all 618 economy SKUs and 46 authored GLB/GLTF files already exist in the market. Thirteen previously unlinked whole-model placements across twelve worlds now point to their existing purchasable entries. World names and placement aliases are searchable in the market and factory; duplicate SKUs are not created.
 
 `public/js/world-factory-recipes.js` provides deterministic processing and packing plans for every native, GLB and care item. Recipe names, stage times, stock counts and container capacities sent by clients cannot override the server's plan. Production receipts, stage completion, sealed dispatch, voyage binding, full unloading and stock debit are tested together. Old in-progress timed orders remain compatible and finish once.
 
 Earned-only quest collectibles keep their existing ownership rules. The four Ironwood Prison keepsakes remain earned and account-bound; factory production cannot mint replacement quest licenses. They remain visible in the market with their earning instructions.
+
+## Public marketplace blueprints
+
+Active Builder listings can supply an authored GLB/GLTF file or a supported native asset with its saved game configuration. Active player listings can supply reusable native/model items, configured custom GLBs, and saved custom artwork with its validated PNG image and extrusion settings. Native IDs, model references, behavior, configuration, supported physics/animation metadata and artwork remain part of the saved item blueprint. Invalid deliverables and private or inactive records do not enter new production.
+
+Configured creations have their own stable blueprint supply identities. A customized model that shares a GLB file with a base catalog item retains its own stock and production plan. Selling or relisting that creation does not create another stock identity, and ordinary aliases for an unchanged native or GLB asset still share their canonical count. Each production batch saves an immutable blueprint snapshot, so later listing changes cannot rewrite its completed operations or freight lots.
+
+Unlisting a creation removes it from the current lineup and blocks new recipe quotes or production for that blueprint. Existing paid batches, stock, shipments and historical traces remain available; restocking does not reseed an old zero. Relisting restores access to the same saved supply identity.
+
+Factory output represents counted physical game stock. It does not transfer the seller's unique inventory instance, mint Builder ownership records, issue official Atlas certificates, grant account-bound earned rewards, or create land deeds and access licenses. Bundles remain purchase groupings whose eligible constituent items are manufactured individually. Player resale keeps its existing ownership-transfer rules and does not manufacture or award extra units.
 
 ## World Item Factory map
 

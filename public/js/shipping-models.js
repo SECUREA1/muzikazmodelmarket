@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {SHIPPING_VESSELS} from './shipping-vessel-specs.js';
 const mat=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.58,metalness:.18,...extra});
@@ -66,7 +67,7 @@ export function createShippingVessel(id){
  const wake=new THREE.Group(),foam=[];wake.name='BOAT_WAKE_FOAM';for(let i=0;i<8;i++){const ripple=mesh(wake,'FREIGHTER_WAKE_RIPPLE',new THREE.RingGeometry(.6,.7,16,1,0,Math.PI),new THREE.MeshBasicMaterial({color:0xc9e8e9,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}),[0,-.165,len/2],true);ripple.rotation.x=Math.PI/2;foam.push(ripple);}root.add(wake);
  fittings.traverse(node=>{node.userData.collider=false;node.userData.collisionDisabled=true;});
  root.userData={builderObject:true,modelId:id,watercraft:true,boatModel:true,shippingVessel:true,dimensions:[spec.beam,spec.height,spec.length],helmPose:{position:[...spec.seat],lookForward:[0,0,-1],near:.025,fov:78},vehicle:{mode:'boat',seat:[...spec.seat],speed:spec.speed,turnSpeed:spec.turnRate},boatRig:{wheel,throttle,radar,flag,propeller,rudder,wake,foam,needles:[],cargoSlots,cargoIndicator},wakeDesign:{stern:len*.5,length:len*.38,width:half*.65}};
- return root;
+ return finishVehicleDesign(THREE,root,id);
 }
 export function createShippingPortCrane(){
  const root=new THREE.Group();root.name='SHIP_TO_SHORE_GANTRY_CRANE';

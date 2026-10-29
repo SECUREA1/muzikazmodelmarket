@@ -8,9 +8,16 @@ export const ROAD_VEHICLES={
  'site-bulldozer':{name:'D9 Crawler Bulldozer',tracked:true,speed:3.5,reverse:2.5,acceleration:1.8,turn:.8,width:4.2,length:6.3,height:3.2,color:'#e2a72f',seat:[0,1.79,.8],eyeHeight:2.62,siteOnly:true},
  'site-excavator':{name:'HX350 Hydraulic Excavator',tracked:true,speed:3,reverse:2,acceleration:1.5,turn:.85,width:3.2,length:5.4,height:3.5,color:'#e89c28',seat:[-.78,2.44,.05],eyeHeight:3.27,siteOnly:true}
 };
+// Forestry machinery shares road physics without joining the public street fleet.
+export const FORESTRY_ROAD_VEHICLES=Object.freeze({
+ 'forestry-harvester':{name:'Tracked Tree Harvester',forestry:true,tracked:true,speed:4.5,reverse:2.5,acceleration:1.8,turn:.7,width:3.2,length:7.8,height:4.6,color:'#dcae3f',seat:[0,1.7,-.65],eyeHeight:2.45},
+ 'forestry-forwarder':{name:'Grapple Forwarder',forestry:true,speed:7,reverse:3,acceleration:2,turn:.7,width:3,length:8.4,height:4,color:'#dcae3f',seat:[0,1.7,-.65],eyeHeight:2.45,cargoCapacity:12},
+ 'forestry-log-truck':{name:'Timber Haul Truck',forestry:true,speed:13,reverse:3.5,acceleration:2.6,turn:.5,width:2.9,length:10.4,height:3.6,color:'#345a4c',seat:[0,1.7,-2.55],eyeHeight:2.45,cargoCapacity:24},
+ 'forestry-stump-grinder':{name:'Stump Grinder',forestry:true,tracked:true,speed:4,reverse:2,acceleration:1.8,turn:.9,width:2.3,length:4.5,height:2.8,color:'#dcae3f',seat:[0,1.35,0],eyeHeight:2.1},
+});
 export const roadVehicleId=actor=>actor?.asset?.buildAssetId||actor?.modelId;
-export const isRoadVehicle=actor=>!!ROAD_VEHICLES[roadVehicleId(actor)];
-export const roadVehicleType=actor=>ROAD_VEHICLES[roadVehicleId(actor)];
+export const isRoadVehicle=actor=>!!roadVehicleType(actor);
+export const roadVehicleType=actor=>ROAD_VEHICLES[roadVehicleId(actor)]||FORESTRY_ROAD_VEHICLES[roadVehicleId(actor)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
 export function stepRoadVehicle(actor,input,dt,{groundAt=point=>point,blocked=()=>false,speedLimit=Infinity}={}){
  const config=roadVehicleType(actor),prior=actor.driving||{},throttle=clamp(input.forward,-1,1),steer=clamp(input.side,-1,1);dt=clamp(dt,0,.1);

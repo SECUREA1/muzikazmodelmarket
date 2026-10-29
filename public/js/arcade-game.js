@@ -1,3 +1,6 @@
+import {createOutdoorScenery} from './environments/outdoor-scenery.js';
+import {createDayNightLighting} from './environments/day-night-lighting.js';
+import {finishNativeWorldDesign} from './environments/native-world-design-finish.js';
 import {mountNativeWorldGuide} from './native-world-guide.js';
 import {arcadeChallenges,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
@@ -16,6 +19,7 @@ import {LocalArcadeMotion,createArcadeInputStream} from './arcade-local-motion.j
 import {resolveArcadeBasketballAction} from './arcade-basketball-actions.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
 import {mountWorldSupplyUI} from './world-supply-ui.js';
+import {createWorldDeedDeliveryScene} from './world-deed-delivery-scene.js';
 import {ensurePlayAccess} from './play-access.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey,gameCameraPresentation,normalizeGameCameraMode} from './game-camera.js';
@@ -28,7 +32,7 @@ import {arcadeSettings,arcadeAttractions,createArcadeSession,enterArcadeAttracti
 const nativeGuide=mountNativeWorldGuide({parent:document.querySelector('.controls')||document.querySelector('.intro')});
 const host=document.documentElement.dataset.arcadeHost||'site';
 let nativeArcadeRounds=0,nativeRideLaps=0,nativeArcadeEpoch=0;
-let startupError='',mapName='Neon Junction — Arcade Park',loaded={},builderScene=null;
+let startupError='',mapName='Neon Junction — Arcade Park',loaded={},builderScene=null,mapRecord=null,deedDeliveryScene=null;
 const launchParams=new URLSearchParams(location.search),environmentId=launchParams.get('environment')||'neon-junction',requestedPart=launchParams.get('part');
 const legacyDestination=legacyArcadeDestination(environmentId);if(legacyDestination){const target=new URL(legacyDestination,host==='muzikaz'?location.href:(document.documentElement.dataset.apiBase||'https://muzikazmodelmarket.onrender.com/'));if(launchParams.has('mode'))target.searchParams.set('mode',launchParams.get('mode'));location.replace(target.href);}
 async function loadMap(){
@@ -43,6 +47,7 @@ async function loadMap(){
   const part=requestedPart&&map.builderScene?.objects?.find(object=>String(object.id)===requestedPart&&/^arcade-part-(hockey|shooting|basketball|air-hockey|billiards|train|coaster)$/.test(object.modelId));
   if(requestedPart&&!part)throw Error('This placed arcade attraction is unavailable. Open its map again.');
   if(!isArcadeMap(map)&&!part)throw Error('This arcade map is unavailable. Choose another game map.');
+  mapRecord=map;deedDeliveryScene?.update(map);
   loaded=map.builderScene?.gameplay?.arcade||map.arcade||{};
   builderScene=map.builderScene||null;
   mapName=map.name||mapName;
@@ -59,9 +64,9 @@ const config=arcadeSettings(loaded),session=createArcadeSession(config);let buil
 const $=s=>document.querySelector(s),attractions=arcadeAttractions(config),items=attractions.map(a=>[a.name,a.subtitle,a.icon,a.color,a.x,a.z]);
 let total=0,seen=new Set(),sound=false,audio;try{total=localArcadePoints(localStorage.njscore)}catch{}function update(){ $('#tickets').innerHTML=String(total).padStart(4,'0')+' <small>PTS</small>';const available=availableAttractionIds();$('#visited').textContent=[...seen].filter(i=>available.has(attractions[i]?.id)).length+' / '+available.size+' attractions explored';try{localStorage.njscore=total}catch{}}update();if(host==='muzikaz'){$('#back-maps').hidden=false;$('#builder-link').hidden=false;$('#builder-link').href='environment-builder.html?layout=arcade-park&environment='+encodeURIComponent(environmentId);}else $('#park-settings-button').hidden=false;
 function beep(f=500){if(!sound)return;audio??=new AudioContext();const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.frequency.value=f;g.gain.setValueAtTime(.04,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.13);o.start();o.stop(audio.currentTime+.14)}$('#sound').onclick=()=>{sound=!sound;$('#sound').textContent=sound?'♫ Sound on':'♫ Sound off';$('#sound').setAttribute('aria-pressed',sound);beep()};
-const scene=new T.Scene();scene.background=new T.Color('#101a1c');scene.fog=new T.Fog('#101a1c',65,145);const camera=new T.PerspectiveCamera(43,innerWidth/innerHeight,.1,250);const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','Arcade park. WASD or arrows move; E interacts with a nearby attraction.');$('#world').appendChild(renderer.domElement);scene.add(new T.HemisphereLight(0xc3f4e4,0x242343,2.4));const sun=new T.DirectionalLight(0xffdfc1,3);sun.position.set(-15,40,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40});scene.add(sun);
+const scene=new T.Scene();scene.background=new T.Color('#101a1c');scene.fog=new T.Fog('#101a1c',65,145);const camera=new T.PerspectiveCamera(43,innerWidth/innerHeight,.1,700);const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','Arcade park. WASD or arrows move; E interacts with a nearby attraction.');$('#world').appendChild(renderer.domElement);const hemi=new T.HemisphereLight(0xc3f4e4,0x242343,2.4);scene.add(hemi);const fill=new T.DirectionalLight(0xb8d5ff,.3);fill.position.set(15,12,-10);scene.add(fill);const sun=new T.DirectionalLight(0xffdfc1,3);sun.position.set(-15,40,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40});scene.add(sun);
 items.forEach((it,i)=>{const b=document.createElement('button');b.dataset.attraction=attractions[i].id;b.style.setProperty('--c',it[3]);b.innerHTML=`<span class="num">0${i+1} ↗</span><span class="icon" aria-hidden="true">${it[2]}</span><b>${it[0]}</b><span class="attraction-description">${['Beat the goalie','Track every target','Team play & shooting','Fast table rivalry','Find your next pocket','A scenic park loop','Ride above the park'][i]}</span><small>${attractions[i].enabled?(i>4?'BOARD RIDE':'OPEN LOBBY')+' →':'UNAVAILABLE'}</small>`;b.disabled=!attractions[i].enabled;b.onclick=()=>selectFromMenu(i);$('#attractions').appendChild(b);});
-const park=createArcadePark(config);for(const vehicle of [...park.trains,park.cart])vehicle.traverse(node=>{node.castShadow=false;});scene.add(park.root);const {trainCurve,coaster,trains,cart}=park;
+const park=createArcadePark(config);finishNativeWorldDesign(T,park.root,{id:'arcade-park',builderScene:{layout:'arcade-park'}});for(const vehicle of [...park.trains,park.cart])vehicle.traverse(node=>{node.castShadow=false;});scene.add(park.root);const {trainCurve,coaster,trains,cart}=park;
 const clickMeshes=[...park.clickMeshes];
 if(host==='muzikaz'&&builderScene?.objects?.length){try{const {loadArcadeBuilderObjects}=await import('./arcade-builder-runtime.js');builderObjects=await loadArcadeBuilderObjects(builderScene,config);scene.add(builderObjects.root);for(const part of builderObjects.rideParts)animateArcadePark(part,0);clickMeshes.push(...builderObjects.clickMeshes);renderer.shadowMap.needsUpdate=true;if(builderObjects.diagnostics?.length){console.info('[Neon Junction]',builderObjects.diagnostics);savedObjectsMessage=builderObjects.diagnostics.length+' custom props could not load; other attractions remain available.';}}catch(error){console.warn('[Neon Junction] Some saved park objects could not load.',error);savedObjectsMessage='Saved park objects could not load. The built-in attractions remain available.';}}
 
@@ -75,6 +80,10 @@ await applySportsSurfaces(park.root,{theme:'arcade',renderer});
 if(builderObjects)await applySportsSurfaces(builderObjects.root,{theme:'arcade',renderer});
 const presentation=createArcadeGamePresentation({scene,park,config});
 const walker=createArcadeWalker();
+const dayNightLighting=createDayNightLighting({scene,hemi,fill,sun,onChange:()=>{renderer.shadowMap.needsUpdate=true;}});
+const worldScenery=createOutdoorScenery({scene}),parkEnvironment={id:environmentId,builderScene:{layout:'arcade-park',mapSize:80}};
+dayNightLighting.setEnvironment(parkEnvironment);worldScenery.setEnvironment(parkEnvironment,dayNightLighting.state);
+const lightAnchor=new T.Vector3(),previousLightAnchor=new T.Vector3(Infinity,Infinity,Infinity);
 let cameraMode=readGameCameraMode('first-person'),explorationMode=cameraMode!=='first-person'?'overview':'walk',nearby=null,activeInteraction=null;
 let yaw=.62,pitch=.78,distance=61,drag=false,lastX,lastY,moved=0,ride=null,rideRuntime=null,rideConfig=null,ridePhase=null,trainT=0,coasterT=0,parkTime=0;
 const center=new T.Vector3(0,0,0),desired=new T.Vector3(),frameClock=createArcadeClock(performance.now());
@@ -221,6 +230,7 @@ addEventListener('resize',resizeArcadeViewport);new ResizeObserver(resizeArcadeV
 let slowDraws=0,quality='high';
 function animate(now){
  roomBuilding?.update();
+ deedDeliveryScene?.tick();
 
  const dt=advanceArcadeClock(frameClock,now,{paused:(document.hidden&&!renderer.xr.isPresenting)||$('#park-settings').open});
  if((document.hidden&&!renderer.xr.isPresenting)||$('#park-settings').open)return;
@@ -265,6 +275,12 @@ function animate(now){
 
  if(renderer.xr.isPresenting){const yaw=new T.Euler().setFromQuaternion(camera.quaternion,'YXZ').y;vrRig.position.copy(camera.position);vrRig.position.y-=1.6;vrRig.rotation.set(0,yaw,0);camera.position.set(0,0,0);camera.rotation.set(0,0,0);}
  updateArcadeChallenges();
+ // Follow the visitor or ride camera, refreshing the cached shadow only when
+ // the anchor moves or the actual computer clock changes the celestial light.
+ if(game===null&&ride===null)lightAnchor.set(walker.x,walker.ground,walker.z);else camera.getWorldPosition(lightAnchor);
+ const dayNight=dayNightLighting.update(lightAnchor);
+ if(lightAnchor.distanceToSquared(previousLightAnchor)>.04){renderer.shadowMap.needsUpdate=true;previousLightAnchor.copy(lightAnchor);}
+ worldScenery.update(parkTime,camera,dayNight);
  const renderStart=performance.now();renderer.render(scene,camera);
  // Reduce fill cost once on a slow GPU, while simulation and timers retain real time.
  if(performance.now()-renderStart>70||dt>.12)slowDraws++;else slowDraws=Math.max(0,slowDraws-1);
@@ -352,14 +368,18 @@ function openGameLobby(i){resetLivePresentation();lobby.open=false;lobby.querySe
 async function roomCommand(action,fields={}){
  const requestedGame=fields.game??game,revision=roomRequestRevision,sentAt=performance.now(),sequenced=action==='input'||action==='action';
  const ordering=sequenced?{inputSequence:++roomInputSequence,...(roomInputEpoch?{inputEpoch:roomInputEpoch}:{})}:{};
+ const body=JSON.stringify({action,game:requestedGame,...fields,...ordering}),timeout=['join','spectate'].includes(action)?25000:8000;
  roomSession ||= await roomApi.roomSession();
- const value=await roomApi.api('/api/rooms/'+encodeURIComponent(environmentId)+'/arcade',{method:'POST',headers:{'X-CSRF-Token':roomSession.csrfToken},body:JSON.stringify({action,game:requestedGame,...fields,...ordering})});
+ const request=()=>roomApi.api('/api/rooms/'+encodeURIComponent(environmentId)+'/arcade',{method:'POST',timeout,headers:{'X-CSRF-Token':roomSession.csrfToken},body});
+ let value;
+ try{value=await request();}catch(error){if(error.code!=='CSRF_INVALID')throw error;roomSession=await roomApi.roomSession();value=await request();}
  return {...value,requestRevision:revision,timing:{sentAt,receivedAt:performance.now()}};
 }
 function applyMatch(value){if(value.ended&&!ended&&gameElapsed>0&&gameStarted&&!localSpectator&&(!liveGame||roomSnapshot?.role==='player'))nativeArcadeRounds++;basketballState=value.basketball?{...value.basketball,selfSlot:liveGame?roomSnapshot?.slots.findIndex(s=>s.actor===roomSnapshot.selfId):localSpectator?-1:localSlot}:null;if(!liveGame&&!localSpectator&&gameStarted){const earned=Math.max(0,value.score-score);if(earned){total=localArcadePoints(total+earned);session.points+=earned;update();}}({score,remaining,gameElapsed,ended,attempts,shot,puck,balls,targets,opponent}=value);if(liveGame)pointer={...value.pointer};$('#feedback').textContent=value.feedback;$('#gamescore').textContent=basketballState?'HOME '+basketballState.teamScore[0]+' — '+basketballState.teamScore[1]+' VISITORS':'SCORE '+score;$('#timer').textContent=gameStarted?(basketballState?(basketballState.period>4?'OT'+(basketballState.period-4):'Q'+basketballState.period)+' · ':'')+Math.ceil(remaining)+'s'+(basketballState?' · Shot '+Math.ceil(basketballState.shotClock):''):'Waiting to start';$('#game').classList.toggle('round-ended',ended);syncTriggerControls();}
 function acceptRoom(value){
  if(!value||value.state?.game!==game||value.requestRevision!==undefined&&value.requestRevision!==roomRequestRevision||value.sequence<=roomLastSequence)return;
  const wasStarted=gameStarted;roomLastSequence=value.sequence;
+ deedDeliveryScene?.update(mapRecord||parkEnvironment,{deliveryActivity:value.deliveryActivity===true});
  if(value.inputEpoch&&value.inputEpoch!==roomInputEpoch){roomInputEpoch=value.inputEpoch;roomInputSequence=0;liveMotion.reset();}
  roomSnapshot=value;liveMotion.reconcile(value,value.timing);
  if(value.config){gameConfig=value.config;syncGameInstructions();}
@@ -417,7 +437,7 @@ for(const button of document.querySelectorAll('[data-game-key]')){button.onpoint
 
 if(!startupError)nativeGuide.enter({id:environmentId,name:mapName,game:'arcade'});
 refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
-window.NeonJunction=Object.freeze({snapshot:()=>({challenge:nativeChallenges.snapshot(),mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
+window.NeonJunction=Object.freeze({snapshot:()=>({deedDelivery:deedDeliveryScene?.snapshot()||null,dayNight:{...dayNightLighting.state},challenge:nativeChallenges.snapshot(),mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
 setExploration(cameraMode!=='first-person'?'overview':'walk');
 // Always arrive in exploration, including links to an individual attraction.
 // Games and rides require the explicit Enter/E or attraction-menu action.
@@ -452,7 +472,11 @@ mountArcadeDisplayControls({lobby});
 const arcadePeopleToolbar=document.querySelector('.arcade-display-toolbar');arcadePeopleToolbar.style.flexWrap='wrap';
 mountResidentWorldLink(arcadePeopleToolbar,environmentId,{compact:true,baseUrl:residentLinkBase});
 const worldSupplyUI=mountWorldSupplyUI({stage:arcadePeopleToolbar,inventory:roomApi,onOpen:releaseArcadeGameInput,onClose:releaseArcadeGameInput,announce:message=>status(message)});
-worldSupplyUI.update(null,null,{id:environmentId,name:mapName});
+worldSupplyUI.update(null,null,mapRecord||{id:environmentId,name:mapName});
+deedDeliveryScene=createWorldDeedDeliveryScene({scene,inventory:roomApi});
+if(!startupError)deedDeliveryScene.update(mapRecord||parkEnvironment);
+addEventListener('pagehide',event=>{if(event.persisted)deedDeliveryScene.reset();else deedDeliveryScene.dispose();});
+addEventListener('pageshow',event=>{if(event.persisted&&!startupError)deedDeliveryScene.update(mapRecord||parkEnvironment);});
 mountResidentWorldLink(document.querySelector('.arcade-display-popup[aria-label="Explore the arcade"]'),environmentId,{baseUrl:residentLinkBase});
 
 function releaseArcadeGameInput(){pressed.clear();walkKeys.clear();touchKeys.clear();controllerWalkKeys.clear();controllerMove={x:0,y:0};drag=false;arcadeController.reset();requestGameInput();}

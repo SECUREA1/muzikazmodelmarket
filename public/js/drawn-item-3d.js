@@ -1,3 +1,4 @@
+import {applyCustomMaterialAppearance} from './custom-item-appearance.js';
 // A bounded raster extrusion preserves painted colors and transparent cutouts.
 export function artworkCells(data,width,height,settings={}){
  const cells=[],base=Math.max(.01,Math.min(.5,(Number(settings.depth)||28)/200));
@@ -11,7 +12,8 @@ export function extrudeArtwork(THREE,source,settings={}){
  const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;
  const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(source,0,0,64,64);
  const cells=artworkCells(context.getImageData(0,0,64,64).data,64,64,settings),root=new THREE.Group();
- const geometry=new THREE.BoxGeometry(1,1,1),material=new THREE.MeshStandardMaterial({roughness:.55,metalness:settings.material==='metal'?.7:.08});
+ const geometry=new THREE.BoxGeometry(1,1,1),material=new THREE.MeshStandardMaterial({roughness:.55,metalness:.08});
+ applyCustomMaterialAppearance(THREE,material,settings,{preserveColors:true});
  const mesh=new THREE.InstancedMesh(geometry,material,cells.length),matrix=new THREE.Matrix4(),color=new THREE.Color();
  cells.forEach((cell,index)=>{matrix.makeScale(1.5/64,1.5/64,cell.depth);matrix.setPosition(cell.x,cell.y,cell.depth/2);mesh.setMatrixAt(index,matrix);color.setRGB(...cell.color.map(value=>value/255),THREE.SRGBColorSpace);mesh.setColorAt(index,color);});
  root.add(mesh);root.rotation.set((Number(settings.tilt)||0)*Math.PI/180,(Number(settings.yaw)||0)*Math.PI/180,(Number(settings.orientation)||0)*Math.PI/180);if(settings.mirrored)root.scale.x=-1;return root;

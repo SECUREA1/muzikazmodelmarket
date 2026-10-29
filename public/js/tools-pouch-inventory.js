@@ -1,3 +1,4 @@
+import {equipmentRecordArtwork} from './equipment-art-profile.js';
 import {mountPieMenu} from './pie-menu.js';
 
 const CATEGORIES=[['all','All'],['tools','Weapons & tools'],['bricks','Bricks'],['avatars','Avatars'],['pets','Pets'],['wearables','Wearables'],['vehicles','Vehicles'],['items','Items'],['supplies','Supplies'],['lands','Lands']];
@@ -8,6 +9,8 @@ const defaultAction=item=>({tools:'Equip tool',bricks:'Select building item',ava
 
 function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
 function addVisual(parent,item){
+ const artwork=equipmentRecordArtwork(item);
+ if(artwork){const image=element('img');image.src=artwork;image.alt='';image.loading='lazy';image.decoding='async';image.width=image.height=320;parent.append(image);return;}
  if(item.visual?.cloneNode){parent.append(item.visual.cloneNode(true));return;}
  if(item.image){const image=element('img');image.src=item.image;image.alt='';image.loading='lazy';image.addEventListener('error',()=>{image.remove();parent.append(element('span','pouch-item-glyph',GLYPHS[categoryFor(item)]));},{once:true});parent.append(image);return;}
  parent.append(element('span','pouch-item-glyph',GLYPHS[categoryFor(item)]));
@@ -39,9 +42,9 @@ export function mountToolsPouchInventory({panel,getSnapshot,onUse,onBrowse}){
  const help=element('p','pouch-inventory-help','Select an item around the wheel to preview it, then use the action beside it. Arrow keys move between items.');
  layout.append(wheelContainer,detail);inventory.append(toolbar,filters,result,layout,empty,help,message);root.append(activeSection,tabs,inventory);
  if(quick)quick.before(root);else panel.append(root);
- let snapshot={items:[],active:[]},category='all',selectedId='',pie=null,signature='',busy=false,disposed=false,searchTimer;
+ let snapshot={items:[],active:[]},category='all',selectedId='',pie=null,signature='',busy=false,disposed=false,searchTimer,itemsDirty=true,activeSignature='';
 
- function setView(view){panel.dataset.pouchView=view;inventory.hidden=view!=='inventory';if(quick)quick.hidden=view!=='tools';for(const button of [toolsTab,inventoryTab]){const selected=button.dataset.pouchTab===view;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;}if(view==='inventory')refresh();}
+ function setView(view){panel.dataset.pouchView=view;inventory.hidden=view!=='inventory';if(quick)quick.hidden=view!=='tools';for(const button of [toolsTab,inventoryTab]){const selected=button.dataset.pouchTab===view;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;}if(view==='inventory'){refresh();if(itemsDirty)renderItems();}}
  toolsTab.addEventListener('click',()=>setView('tools'));inventoryTab.addEventListener('click',()=>setView('inventory'));
  tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const button=event.key==='Home'?toolsTab:event.key==='End'?inventoryTab:document.activeElement===toolsTab?inventoryTab:toolsTab;setView(button.dataset.pouchTab);button.focus();});
  search.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{selectedId='';renderItems();},80);});
@@ -71,6 +74,7 @@ export function mountToolsPouchInventory({panel,getSnapshot,onUse,onBrowse}){
   detail.replaceChildren(art,type,name,status,description,use);
  }
  function renderItems(){
+  itemsDirty=false;
   const focused=document.activeElement?.dataset?.pouchItem,previousSelection=selectedId;pie?.dispose();pie=null;wheelContainer.replaceChildren();
   for(const [id,{button,label}] of filterButtons){const count=(snapshot.items||[]).filter(item=>id==='all'||categoryFor(item)===id).length;button.textContent=`${label} · ${count}`;button.setAttribute('aria-pressed',String(category===id));}
   const items=filteredItems();result.textContent=`${items.length} ${items.length===1?'item':'items'}${category==='all'?' in your inventory':` in ${CATEGORIES.find(([id])=>id===category)?.[1]||category}`}${search.value.trim()?' matching your search':''}`;
@@ -84,13 +88,16 @@ export function mountToolsPouchInventory({panel,getSnapshot,onUse,onBrowse}){
   select(selected);
   if(focused){const button=[...wheelContainer.querySelectorAll('[data-pouch-item]')].find(node=>node.dataset.pouchItem===focused);if(button&&button.dataset.pieHidden!=='true')button.focus({preventScroll:true});}
  }
- function refresh(){
+ function refresh(nextSnapshot){
   if(disposed)return;
-  const next=getSnapshot()||{};snapshot={...next,items:Array.isArray(next.items)?next.items:[],active:Array.isArray(next.active)?next.active:[]};renderActive();
+  const next=nextSnapshot||getSnapshot()||{};snapshot={...next,items:Array.isArray(next.items)?next.items:[],active:Array.isArray(next.active)?next.active:[]};
+  const nextActiveSignature=JSON.stringify([snapshot.worldName,snapshot.active.map(item=>[item.id,item.name,item.status,item.image])]);
+  if(activeSignature!==nextActiveSignature){activeSignature=nextActiveSignature;renderActive();}
   const nextSignature=JSON.stringify(snapshot.items.map(item=>[item.id,item.name,item.type,item.category,item.description,item.active,item.status,item.actionLabel,item.disabled,item.image]));
   inventoryTab.textContent=`My inventory · ${snapshot.items.length}`;
-  if(signature!==nextSignature){signature=nextSignature;renderItems();}
+  if(signature!==nextSignature){signature=nextSignature;itemsDirty=true;}
+  if(itemsDirty&&!inventory.hidden)renderItems();
  }
  setView('tools');refresh();
- return {refresh,showInventory(nextCategory='all'){category=filterButtons.has(nextCategory)?nextCategory:'all';setView('inventory');renderItems();},showTools(){setView('tools');},dispose(){disposed=true;clearTimeout(searchTimer);pie?.dispose();root.remove();delete panel.dataset.pouchView;if(quick)quick.hidden=false;}};
+ return {refresh,showInventory(nextCategory='all'){category=filterButtons.has(nextCategory)?nextCategory:'all';itemsDirty=true;setView('inventory');},showTools(){setView('tools');},dispose(){disposed=true;clearTimeout(searchTimer);pie?.dispose();root.remove();delete panel.dataset.pouchView;if(quick)quick.hidden=false;}};
 }

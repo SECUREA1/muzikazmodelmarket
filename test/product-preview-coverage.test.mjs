@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {GAME_ECONOMY} from '../game-economy.mjs';
+import {NATIVE_BUILDER_ITEMS} from '../public/js/native-builder-items.js';
+import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from '../public/js/market-item-preview.js';
+import {auditProductPreviewCoverage} from '../scripts/audit-product-preview-coverage.mjs';
+import {publicProductVisual} from '../public-product-visual.mjs';
+import * as THREE from '../public/vendor/three/three.module.min.js';
+
+test('every catalog offer and native definition has an explicit, resolvable product presentation',async()=>{
+ const report=await auditProductPreviewCoverage();assert.deepEqual(report.failures,[]);assert.equal(report.counts.offers,GAME_ECONOMY.length);assert.equal(report.counts.uniqueSkus,report.counts.offers);assert.equal(report.counts.nativeDefinitions,Object.keys(NATIVE_BUILDER_ITEMS).length);
+ assert.ok(report.counts.nativeOffers>=563);assert.ok(report.counts.uniqueNativeDesigns>=558);assert.equal(report.counts.sources.layout,32);assert.equal(report.counts.sources.tool,24);assert.equal(report.counts.sources.material,130);assert.equal(report.counts.generatedRegistryAssets,44);
+ assert.equal(report.counts.sources.image,5);assert.equal(report.counts.sources.card,5);assert.equal(report.counts.imageFiles,5);
+ assert.ok(report.counts.publicMapOffers>=48);assert.ok(report.mapOffers.every(offer=>offer.source==='world'&&offer.id==='native-map:'+offer.worldId));
+});
+
+test('native-map references retain exact world identity while automatic thumbnails stay light product cards',async()=>{
+ const descriptor=previewDescriptor({id:'native-map:world-item-factory',worldId:'world-item-factory',source:'native-map',name:'World item factory',category:'Maps and worlds'});
+ assert.equal(previewModelSource(descriptor),'world');assert.equal(descriptor.worldPreviewId,'world-item-factory');assert.deepEqual(previewDescriptor(descriptor),descriptor);
+ const previous=globalThis.window;let requests=0;globalThis.window={fetch:()=>{requests++;throw Error('Automatic map previews must not fetch a whole world.');}};let loaded;
+ try{loaded=await loadPreviewModel(descriptor);assert.equal(loaded.root.userData.previewPresentation,'product-card');assert.equal(requests,0);loaded.dispose();loaded=null;}
+ finally{loaded?.dispose();if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
+});
+
+test('generated recipes and editable vector drawings preserve their actual gameplay geometry route',async()=>{
+ const records=[
+  {assetId:'generated-fish',name:'Generated fish',generated:true,generator:'fish',color:'#66aabb'},
+  {id:'drawing-1',name:'Vector drawing',custom:true,strokes:[{tool:'rectangle',points:[{x:120,y:90},{x:280,y:210}],width:18}],form:'solid',drawingSettings:{depth:.3,bevel:.02},color:'#aa8855'}
+ ];
+ for(const [index,record]of records.entries()){
+  const descriptor=previewDescriptor(record);assert.equal(previewModelSource(descriptor),index?'drawing':'generated');assert.deepEqual(previewDescriptor(descriptor),descriptor);
+  let root;try{({root}=await loadPreviewModel(descriptor));assert.ok(root?.isObject3D);assert.ok(root.children.length);if(!index){assert.equal(root.userData.generated,true);assert.equal(root.userData.generator,'fish');}}
+  finally{disposePreviewModel(root);}
+ }
+});
+
+function triangleGlb(){
+ const vertices=new Float32Array([0,0,0,1,0,0,0,1,0]),json=JSON.stringify({asset:{version:'2.0'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0}}]}],buffers:[{byteLength:vertices.byteLength}],bufferViews:[{buffer:0,byteLength:vertices.byteLength}],accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3',min:[0,0,0],max:[1,1,0]}]}),jsonBytes=Buffer.from(json),padded=Math.ceil(jsonBytes.length/4)*4,bytes=Buffer.alloc(12+8+padded+8+vertices.byteLength,0x20);
+ bytes.write('glTF',0);bytes.writeUInt32LE(2,4);bytes.writeUInt32LE(bytes.length,8);bytes.writeUInt32LE(padded,12);bytes.writeUInt32LE(0x4e4f534a,16);jsonBytes.copy(bytes,20);bytes.writeUInt32LE(vertices.byteLength,20+padded);bytes.writeUInt32LE(0x004e4942,24+padded);Buffer.from(vertices.buffer).copy(bytes,28+padded);return bytes;
+}
+
+test('uploaded GLB previews resolve the selected authenticated service without exposing account headers to external hosts',async()=>{
+ const previous=globalThis.window,requests=[],bytes=triangleGlb(),site='https://frontend.test/model-market.html';let discoveryResolved=false;
+ globalThis.window={location:{href:site,origin:'https://frontend.test'},MUZIKAZ_API:{ready:Promise.resolve().then(()=>{discoveryResolved=true;}),url:path=>new URL(path,'https://api.test/').href,fetch:async(url,options)=>{assert.equal(discoveryResolved,true);requests.push({url,options,api:true});return new Response(bytes,{headers:{'Content-Type':'model/gltf-binary'}});}},fetch:async(url,options)=>{requests.push({url,options,api:false});return new Response(bytes,{headers:{'Content-Type':'model/gltf-binary'}});}};
+ try{
+  for(const url of ['/uploads/assets/owned-model.glb','https://cdn.test/public.glb']){const descriptor=previewDescriptor({name:'Authored model',modelUrl:url,targetHeight:2});let root;try{({root}=await loadPreviewModel(descriptor));assert.ok(root?.getObjectByProperty('isMesh',true));}finally{disposePreviewModel(root);}}
+  assert.equal(requests[0].url,'https://api.test/uploads/assets/owned-model.glb');assert.equal(requests[0].api,true);assert.equal(requests[0].options.credentials,'include');assert.equal(requests[1].url,'https://cdn.test/public.glb');assert.equal(requests[1].api,false);assert.equal(requests[1].options.credentials,'same-origin');assert.equal(requests[1].options.headers,undefined);
+ }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
+});
+
+test('local upload URLs and drawing configuration survive normalization without changing the purchase record',()=>{
+ const records=[{name:'Local model',modelUrl:'blob:https://frontend.test/local-model'},{name:'Painted drawing',renderKind:'image',imageUrl:'/uploads/assets/drawing.svg',configuration:{extruded:true,depth:35,depthMode:'relief',scale:1.4}},{asset:{id:'owned-model',name:'Owned drawing',strokes:[{tool:'circle',points:[{x:90,y:90},{x:140,y:140}]}],drawingSettings:{depth:.2},form:'lightweight'}}];
+ for(const record of records){const before=JSON.stringify(record),descriptor=previewDescriptor(record);assert.deepEqual(previewDescriptor(descriptor),descriptor);assert.equal(JSON.stringify(record),before);}
+ assert.equal(previewDescriptor(records[0]).model,'blob:https://frontend.test/local-model');assert.equal(previewModelSource(previewDescriptor(records[1])),'image');assert.deepEqual(previewDescriptor(records[1]).configuration,records[1].configuration);assert.equal(previewModelSource(previewDescriptor(records[2])),'drawing');
+});
+
+test('public configured GLBs render the same saved appearance as their owned preview without publishing private configuration',async()=>{
+ const previous=globalThis.window,bytes=triangleGlb(),configuration={scale:1.8,orientation:90,material:'glass',color:'#22aacc',colorBlend:100,privateEditorNote:'do not publish',quest:{reward:999}};
+ globalThis.window={location:{href:'https://frontend.test/model-market.html',origin:'https://frontend.test'},MUZIKAZ_API:{url:path=>new URL(path,'https://api.test/').href,fetch:async()=>new Response(bytes,{headers:{'Content-Type':'model/gltf-binary'}})}};
+ const owned={id:'configured-owned-model',name:'Configured model',modelUrl:'/uploads/assets/configured.glb',configuration},published={id:'player:creator:configured-owned-model',name:owned.name,modelUrl:owned.modelUrl,...publicProductVisual(owned)},loaded=[];
+ try{
+  assert.equal(published.configuration,undefined);assert.equal(JSON.stringify(published).includes('do not publish'),false);assert.equal(JSON.stringify(published).includes('reward'),false);
+  for(const item of [owned,published])loaded.push(await loadPreviewModel(previewDescriptor(item)));
+  const summarize=({root})=>{root.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(root),mesh=root.getObjectByProperty('isMesh',true);return {min:bounds.min.toArray(),max:bounds.max.toArray(),color:mesh.material.color.toArray(),opacity:mesh.material.opacity,transparent:mesh.material.transparent,roughness:mesh.material.roughness};};
+  const own=summarize(loaded[0]),publicView=summarize(loaded[1]);assert.deepEqual(publicView,own);
+  assert.ok(Math.abs(publicView.max[1]-1.8)<1e-6);assert.ok(Math.abs(publicView.max[2]-publicView.min[2]-1.8)<1e-6);assert.equal(publicView.opacity,.45);assert.equal(publicView.transparent,true);
+ }finally{for(const item of loaded)disposePreviewModel(item.root);if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
+});

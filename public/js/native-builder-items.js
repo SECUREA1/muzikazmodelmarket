@@ -1,3 +1,6 @@
+import {FOREST_SNAKE_ITEMS,forestSnakeNativeItem} from './forest-snake-items.js';
+import {QUARRY_MODEL_INFO} from './quarry-config.js';
+import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';
 import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
 import {HOCKEY_ITEMS} from './hockey-models.js';
 import {ARCADE_PARTS} from './arcade-rules.js';
@@ -5,13 +8,20 @@ import {BUILDER_MODEL_INFO} from './builder-models-3d.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {BUILDING_MATERIALS,buildingDimensions} from './building-materials.js';
-import {ROAD_VEHICLES} from './road-vehicles.js';
+import {roadVehicleType} from './road-vehicles.js';
 import {LAYOUT_SCENES} from './builder-layout-scenes.js';
 import {nativeItemGameplay} from './editable-map-import.js';
 import {FISHING_GEAR} from './fishing-config.js';
 import {FUNHOUSE_ITEMS,funhouseNativeItem} from './clown-funhouse-items.js';
 import {PORTAL_ITEMS} from './portal-models.js';
 import {COMMON_PROP_ITEMS} from './common-prop-models.js';
+import {EQUIPMENT_PROP_ITEMS} from './equipment-prop-models.js';
+import {CRAFTED_LANDSCAPE_ITEMS} from './crafted-landscape-models.js';
+import {CRAFTED_CHARACTER_ITEMS} from './crafted-character-models.js';
+import {CRAFTED_BUILDING_ITEMS} from './crafted-building-models.js';
+import {CRAFTED_FURNITURE_ITEMS} from './crafted-furniture-models.js';
+import {CONSTRUCTION_SITE_ITEMS} from './construction-site-models.js';
+import {NATIVE_DESIGN_VERSION,nativeDesignThumbnail} from './native-design-profile.js';
 
 // Shared authored metadata for the editor, authoritative economy and owned-item
 // placement. Rendering factories stay in their existing native runtime modules.
@@ -19,6 +29,10 @@ export const BUILTIN_BUILDER_ITEMS=[
   ['canopy-tree','Canopy Tree','landscape',100],['pine-tree','Pine Tree','landscape',90],['flower-bed','Flower Bed','landscape',75],['hedge-corner','Hedge Corner','landscape',105],['garden-rocks','Garden Rocks','landscape',80],['pond','Reflecting Pond','landscape',125],['path-tile','Path Tile','landscape',90],['hill','Soft Hill','landscape',135],['lamp-post','Lamp Post','landscape',62],['planter','Tall Planter','landscape',60],['pillow-ring','Pillow Ring Seat','interior',82],['sofa','Cloud Sofa','interior',100],['armchair','Accent Chair','interior',72],['coffee-table','Coffee Table','interior',70],['bookshelf','Bookshelf','interior',92],['floor-lamp','Floor Lamp','interior',58],['room-divider','Room Divider','interior',105],['kitchen-island','Kitchen Island','interior',110],['spiral-stairs','Spiral Stairs','interior',118],['archway','Archway','interior',100],['art-wall','Art Wall','interior',92],['studio-desk','Producer Studio Desk','interior',110],['recording-booth','Recording Booth','interior',125],['modular-wall','Modular Building Wall','interior',120],['glass-door','Glass Entry Door','interior',105],['loft-bed','Loft Bed','interior',120],['wardrobe','Walk-in Wardrobe','interior',105],['bathroom-vanity','Bathroom Vanity','interior',100],['dining-set','Dining Set','interior',120],['fireplace','Modern Fireplace','interior',110],['elevator','Working Elevator','interior',130]
 ].map(([id,name,type,size])=>({id,name,type,size,image:`public/images/builder-pack/${id}.svg`,behavior:['pillow-ring','sofa','armchair'].includes(id)?'seat':'decor',procedural:true,assetKind:'premade'}));
 export const GAMEPLAY_BUILDER_ITEMS=[
+ ...Object.entries(QUARRY_MODEL_INFO).map(([id,[name,description,dimensions]])=>({id,buildAssetId:id,name,description,dimensions,type:'interior',category:'props',size:95,image:'public/images/native-designs/'+id+'.svg',behavior:'decor',procedural:true,assetKind:'premade',function_data:{behavior:'decor',destructible:false,prompt:name}})),
+ ...Object.keys(FOREST_HARVEST_ITEMS).map(id=>forestHarvestNativeItem(id)),
+ ...Object.keys(FOREST_SNAKE_ITEMS).map(id=>forestSnakeNativeItem(id)),
+ ...CONSTRUCTION_SITE_ITEMS,
  ...FISHING_GEAR.map(item=>({...item,image:'public/images/fishing/'+item.id+'.svg',type:'interactive',category:'tools',buildAssetId:item.id,behavior:'interact',action:'fishing',procedural:true,size:70,function_data:{behavior:'interact',action:'fishing',fishingGear:item.id,damage:0,prompt:'Equip '+item.name}})),
  {id:'basketball',name:'Basketball',type:'interactive',category:'interactive',size:58,image:'public/images/backpack/basketball.svg',buildAssetId:'basketball',behavior:'pickup',color:'#ec822f',scale:'24 cm regulation ball',procedural:true,basic:true,priceMzk:0,function_data:{prompt:'Basketball · E catch · T pass · R shoot',damage:0}},
  {id:'basketball-hoop',name:'Basketball Hoop & Net',type:'interior',category:'props',size:82,image:'public/images/backpack/basketball-hoop.svg',buildAssetId:'basketball-hoop',behavior:'decor',color:'#20c8f1',scale:'3.05 m regulation rim',procedural:true,basic:true,priceMzk:0},
@@ -69,11 +83,12 @@ export const EXPANDED_BUILDER_ITEMS=[
 // The resident factory also exists outside the editor's original starter lists.
 // Make its reusable character model available without copying live residents.
 export const RUNTIME_BUILDER_ITEMS=[...Object.keys(PRISON_ITEMS).map(id=>prisonNativeItem(id)),...Object.keys(FUNHOUSE_ITEMS).map(id=>({id,...funhouseNativeItem(id)})),{id:'world-resident',name:'World Resident',description:'A reusable resident character with configurable dialogue for your map.',type:'avatar',category:'characters',behavior:'talk',animation:'idle',targetHeight:1.8,dimensions:[.7,1.9,.5],procedural:true,assetKind:'premade',function_data:{prompt:'Talk to resident'}}];
-const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS,...PORTAL_ITEMS,...COMMON_PROP_ITEMS].map(item=>[item.id,item]));
+const authored=new Map([...BUILTIN_BUILDER_ITEMS,...GAMEPLAY_BUILDER_ITEMS,...EXPANDED_BUILDER_ITEMS,...RUNTIME_BUILDER_ITEMS,...PORTAL_ITEMS,...COMMON_PROP_ITEMS,...EQUIPMENT_PROP_ITEMS,...CRAFTED_LANDSCAPE_ITEMS,...CRAFTED_CHARACTER_ITEMS,...CRAFTED_BUILDING_ITEMS,...CRAFTED_FURNITURE_ITEMS].map(item=>[item.id,item]));
+const craftedIds=new Set([...PORTAL_ITEMS,...COMMON_PROP_ITEMS,...EQUIPMENT_PROP_ITEMS,...CRAFTED_LANDSCAPE_ITEMS,...CRAFTED_CHARACTER_ITEMS,...CRAFTED_BUILDING_ITEMS,...CRAFTED_FURNITURE_ITEMS].map(item=>item.id));
 const definitions=[];
 for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])){
  const [name,description,dimensions]=BUILDER_MODEL_INFO[id]||[],device=INTERACTIVE_DEVICES[id],building=ENTERABLE_BUILDINGS[id],source=authored.get(id)||{};
- const native=nativeItemGameplay(id),road=ROAD_VEHICLES[id];
+ const native=nativeItemGameplay(id),road=roadVehicleType({modelId:id});
  const base={id,buildAssetId:id,name:name||source.name,description:description||source.description||'',dimensions,type:'props',category:building?'buildings':device?'interactive':'props',size:72,procedural:true,assetKind:'premade',behavior:device?'interact':'decor',image:building?.thumbnailUrl||(device?'/public/images/interactive-devices/'+id+'.svg':undefined),function_data:device?{device:id,prompt:'Use '+(name||source.name)}:undefined,...source,...native};
  if(!source.category&&!native.category)base.category=({avatar:'characters',enemy:'creatures',vehicle:'vehicles',interactive:'interactive',landscape:'landscape',interior:'interior',wearable:'wearables'})[base.type]||base.category;
  if(LAYOUT_SCENES[id])base.category='scene-layouts';
@@ -85,11 +100,14 @@ for(const id of new Set([...Object.keys(BUILDER_MODEL_INFO),...authored.keys()])
  if(['hostile','patrol'].includes(behavior))base.aiSettings={type:behavior,detectionRange:9};
  if(behavior==='quest')base.questSettings={id:'quest-'+id,title:base.name,reward:0,...base.function_data.quest};
  if(['talk','quest'].includes(behavior))base.dialogueSettings={text:base.name+' is ready to talk.',...base.dialogueSettings};
+ base.thumbnailUrl=nativeDesignThumbnail(id);
+ if(!craftedIds.has(id))base.image=base.thumbnailUrl;
+ base.visualDesign={version:NATIVE_DESIGN_VERSION,thumbnailUrl:base.thumbnailUrl};
  definitions.push(base);
 }
 for(const item of BUILDING_MATERIALS){
  const id='material:'+item.id;
- definitions.push({id,buildAssetId:id,name:item.name||item.id,description:item.description||'',keywords:item.keywords||[],type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',function_data:{behavior:'decor',action:'none'}});
+ definitions.push({id,buildAssetId:id,name:item.name||item.id,description:item.description||'',keywords:item.keywords||[],type:'props',category:'terrain',dimensions:buildingDimensions(item.id),materialId:item.id,procedural:true,assetKind:'premade',behavior:'decor',image:nativeDesignThumbnail(id),thumbnailUrl:nativeDesignThumbnail(id),visualDesign:{version:NATIVE_DESIGN_VERSION,thumbnailUrl:nativeDesignThumbnail(id)},function_data:{behavior:'decor',action:'none'}});
 }
 export const NATIVE_BUILDER_ITEMS=Object.freeze(Object.fromEntries(definitions.map(item=>[item.id,Object.freeze(item)])));
 export function nativeBuilderItem(id){return NATIVE_BUILDER_ITEMS[id]||null;}

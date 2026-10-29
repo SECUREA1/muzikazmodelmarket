@@ -10,5 +10,7 @@ test('spoken gameplay entrypoints do not start an unrelated background synthesiz
  for(const page of ['index.html','model-explorer.html','model-market.html']){
   const html=await readFile(new URL('../'+page,import.meta.url),'utf8');
   assert.match(html,/public\/js\/rad-tox-launcher\.js/,page+' retains the normal game audio entrypoint');
+  assert.match(html,/<script type="module" src="public\/js\/rad-tox-launcher\.js/,page+' loads the small audio activation dependency before accepting Begin');
+  assert.doesNotMatch(html,/public\/css\/game-audio-activation\.css/,page+' no longer loads styling for a separate audio activation control');
  }
 });

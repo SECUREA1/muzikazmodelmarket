@@ -5,6 +5,27 @@ start a conversation, type a question, or use a suggested reply. Their profile
 shows their background, strengths, current activity and familiar contacts. The
 nearby conversation feed follows exchanges between residents.
 
+Residents can also walk over to welcome a nearby visitor, stopping with personal
+space on the same public floor. One resident approaches a visitor at a time;
+conversations and assigned work take priority. The greeting can be heard after
+audio is enabled, and a small invitation card appears without opening People or
+blocking movement. Choose **Talk**, **Join**, **Something else**, or **Not now**.
+Declining an activity gives the visitor a two-minute break from new suggestions.
+
+Ask **What can we do together?** or type a similar question to receive a current
+map suggestion. Joining marks a public activity approach on the local map. Walk
+there, then choose **Confirm arrival** in the invitation card. **End visit**
+clears the marker. Visits expire after ten minutes; travel or removal of the
+destination cancels them. These visits award no currency or quest credit and do
+not enter a native match automatically. At the destination, use its own controls
+to play, watch or work. Daily favors remain a separate activity.
+
+**Share a recent experience** describes completed resident work, practice,
+landmark rounds or teamwork. Nearby residents also exchange those experiences
+with each other and remember what they learned. Private player questions are
+kept out of those public exchanges. Recipient-only dialogue, invitations and
+speech captions are filtered from other visitors' HTTP snapshots.
+
 Residents adapt to the location: musicians rehearse, dock crews review departure
 plans, ground crews practise flight briefings, sports hosts work beside the
 playing area, and makers discuss projects in saved Builder maps. The casino
@@ -51,3 +72,54 @@ The shared implementation is in `server-resident-life.mjs`,
 `public/js/resident-personalities.js`, `server-resident-dialogue.mjs`,
 `server-resident-progress.mjs` and `server-world-residents.mjs`. Runtime dressing
 uses `server-resident-furnishings.mjs` and `public/js/resident-furnishings.js`.
+
+Resident designs also include map-specific details: park locals wear moss or
+flowers, harbor crews carry satchels or scarves, and other maps draw from local
+accessory combinations. Outfit patterns, detail colors and mossling fern,
+blossom or mushroom growth vary by resident and remain stable across reloads.
+Saved appearance fields override generated defaults. Botanical head details
+hide under construction and security headwear. These visual details share the
+existing animation rig and do not enlarge resident collision footprints.
+
+Some locals now use the existing built character designs. Parks can include
+forest rangers and moss golems; arcade residents can include clockwork knights
+and friendly or spectral spirits; community, music and creator maps can include
+travelling merchants and friendly spirits. Selection is stable per resident and
+map, with ordinary residents retained in each cast. These are visual designs on
+the same resident actors: local conversation, objectives, favors, relationships
+and saved learning still use the resident system. Their design appears in the
+People profile. Hostile creature behavior is not added to public residents.
+
+Built designs have resident-sized silhouettes, local color variations and
+movement, speaking and greeting animation. Shared work props remain available.
+Safety and sports uniforms and the specialized funhouse cast take precedence.
+Older saves receive missing detail fields without replacing saved appearance
+choices. Set `appearance.characterModel` to `none` to keep the standard rig, or
+to a supported friendly built design to choose it explicitly in resident data.
+
+**Play a riddle**, **Would you rather?**, and **Make a silly story together**
+start short conversational mini-games from the resident conversation panel.
+Type a guess or a story sentence, or use the offered follow-up buttons. Riddles
+provide a hint before revealing the answer after a second missed guess. Stories
+finish after two contributions. **End our mini-game** ends a round, and inactive
+rounds expire after five minutes. Each player/contact has one current round;
+starting another replaces it. These casual rounds do not award currency or favor
+progress. Navigation questions and daily objective commands remain available.
+
+**High five!** and **Show me your dance** trigger short resident celebrations.
+Mosslings, foxfolk and automatons describe their own signature moves; local joke
+and would-you-rather topics draw on the map. Ordinary and built resident designs
+animate the celebrations through their existing visual models. Conversations
+and game replies retain the existing nearby-player access and private speech
+routing. Casino staff and fitness trainers keep their specialized conversations.
+
+The humor library contains 35 riddles, with local selections for map activities
+and character forms, and joke sets for 20 map themes. Rangers, merchants,
+clockwork knights, moss golems and both spirit designs have their own jokes.
+Casino staff combine their duty-specific jokes with the expanded library, and
+gym residents use fitness jokes. Riddle and joke counters advance independently
+of ordinary conversation so asking directions does not skip the next item.
+Each local pool cycles without repeating until exhausted, and rotation counters
+follow the existing server-owned contact memory. Natural guesses such as
+“It's a compass!” are accepted, including answers that otherwise resemble a
+navigation or skill question.

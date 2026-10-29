@@ -16,7 +16,7 @@ const field=(map)=>[map.id,map.name].join(' ');
 export function distributionChallenges(ledger,{maps=[]}={}){
  const shippingMap=maps.find(map=>map.id===SHIPPING_ID);
  if(!shippingMap)return [];
- const items=Object.values(ledger.catalog),shipments=Object.values(ledger.shipments);
+ const items=Object.values(ledger.catalog).filter(item=>!item.privateFactoryBlueprint),shipments=Object.values(ledger.shipments);
  const result=[];
  function add(specification,item,destinationMapId,destinationName){
   const id=item.supplyId,destinationStock=destinationMapId==='world'?stock(ledger.worldStock[id]):stock(ledger.maps[destinationMapId]?.stock[id]),targetStock=specification.targetStock||specification.quantity;

@@ -1,3 +1,4 @@
+import {residentJokePool} from './server-resident-humor.mjs';
 import {casinoResidentIntelligence,observeCasinoInteraction} from './server-casino-residents.mjs';
 import {casinoTaskCommand,casinoTaskOffer,noteCasinoTaskConversation} from './server-casino-tasks.mjs';
 import {CASINO_STATIONS} from './public/js/casino-config.js';
@@ -114,7 +115,7 @@ export function casinoDialogue(sim,player,npc,choice,text,now){
   reply=game?ruleBook[game]:'Walk to a table or machine and press E / Use. Poker, blackjack, roulette, dice, slots, baccarat and three-card poker use your MZK wallet. The cashier and ATM show your MZK wallet balance and receipts. Ask me about one game and I can explain its rules.';
   const recent=player.casinoGameHistory?.filter(round=>round.game===game).at(-1);
   if(recent)reply+=' Your last completed '+gameLabel(game)+' round was '+recent.outcome+'. We can talk through the rules, but the next random result is independent.';
- }else if(intent==='joke'){const pool=jokes[info.duty]||jokes.guest;reply=pool[visit%pool.length];}
+ }else if(intent==='joke'){const pool=[...(jokes[info.duty]||jokes.guest),...residentJokePool({...info,context:{...info.context,kind:'casino'}})];reply=pool[(memory.jokeRound||0)%pool.length];memory.jokeRound=((memory.jokeRound||0)+1)%1000000;}
  else if(intent==='thanks')reply=(memory.affinity>5?'It is a pleasure to see a familiar face, ':'You are welcome, ')+player.username+'. '+(player.casinoTask?.status==='active'?'Your next stop is '+player.casinoTask.checkpoints[player.casinoTask.index].name+'.':'Enjoy the floor at your own pace.');
  else if(intent==='bye')reply='See you around, '+player.username+'. '+(memory.preferences.game?'I will remember your interest in '+gameLabel(memory.preferences.game)+'.':'Have a comfortable evening.');
  else if(intent==='help'){

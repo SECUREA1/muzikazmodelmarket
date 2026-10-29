@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createHarborBoat} from './harbor-models.js';
 export {isCombatBoat,patrolGunPose} from './patrol-combat.js';
@@ -13,6 +14,6 @@ export function createPatrolBoat(){
  const flash=new THREE.Mesh(new THREE.ConeGeometry(.22,.6,8),new THREE.MeshBasicMaterial({color:0xffd56f}));flash.rotation.x=-Math.PI/2;flash.position.z=-2.1;flash.visible=false;barrel.add(flash);
  for(const x of [-.7,.7]){const light=new THREE.Mesh(new THREE.SphereGeometry(.085,10,8),new THREE.MeshStandardMaterial({color:x<0?0x4daaff:0xff754d,emissive:x<0?0x4daaff:0xff754d,emissiveIntensity:1.8}));light.position.set(x,2.53,1.6);root.add(light);}
  root.userData={...hull.userData,modelId:'harbor-patrol',dimensions:[3,2.9,7.8],helmPose:{position:[.42,1.43,1.15],fov:74},vehicle:{mode:'boat',seat:[.42,1.43,1.15],speed:12,turnSpeed:.7},patrolGun:true,boatRig:{...hull.userData.boatRig,gunTurret:turret,gunBarrel:barrel,gunFlash:flash,radar}};
- for(const node of [turret,radar])node.traverse(mesh=>{mesh.userData.collisionDisabled=true;mesh.userData.collider=false;});return root;
+ for(const node of [turret,radar])node.traverse(mesh=>{mesh.userData.collisionDisabled=true;mesh.userData.collider=false;});return finishVehicleDesign(THREE,root,'harbor-patrol');
 }
 export function updatePatrolBoat(root,elapsed){const rig=root.userData.boatRig,state=root.userData.boatState||{};if(!rig?.gunTurret)return;rig.gunTurret.rotation.y=state.gunYaw||0;rig.gunBarrel.rotation.x=state.gunPitch||0;rig.radar.rotation.y=elapsed*.7;if(root.userData.lastPatrolShot!==state.gunShotAt){root.userData.lastPatrolShot=state.gunShotAt;root.userData.patrolFlashUntil=performance.now()+90;}rig.gunFlash.visible=!!state.gunShotAt&&performance.now()<(root.userData.patrolFlashUntil||0);}

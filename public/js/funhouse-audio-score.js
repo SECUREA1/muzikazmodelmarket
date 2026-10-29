@@ -17,10 +17,14 @@ const harmony=[
 /** Eight bars of a minor circus waltz. Each call returns fresh note records. */
 export function funhouseMusicBar(index=0){
  const bar=Number.isFinite(index)?Math.floor(index):0,[bass,chord,melody]=harmony[((bar%8)+8)%8];
- const notes=[{beat:0,duration:.7,midi:bass,type:'triangle',gain:.018}];
- for(const beat of [1,2])for(const midi of chord)notes.push({beat,duration:.28,midi,type:'sine',gain:.007});
- for(const [step,midi]of melody.entries())notes.push({beat:step*.5,duration:step===5?.44:.34,midi,type:'triangle',gain:.017,detune:step%2?5:-5});
- for(const step of [0,3])notes.push({beat:step*.5,duration:.22,midi:melody[step]+12,type:'sine',gain:.004,detune:7});
+ const notes=[
+  {beat:0,duration:1.15,midi:bass,instrument:'bass',gain:.019},
+  {beat:0,duration:2.85,midi:bass+12,instrument:'cello',gain:.010}
+ ];
+ for(const beat of [1,2])for(const midi of chord)notes.push({beat,duration:.75,midi,instrument:'piano',gain:.006});
+ for(const [step,midi]of melody.entries())notes.push({beat:step*.5,duration:step===5?.44:.38,midi,instrument:'flute',gain:.012,detune:step%2?3:-3});
+ for(const [step,midi]of chord.entries())notes.push({beat:.5+step*.75,duration:.8,midi:midi-12,instrument:'guitar',gain:.009});
+ for(const step of [0,3])notes.push({beat:step*.5,duration:.65,midi:melody[step]+12,instrument:'bell',gain:.003});
  return notes;
 }
 
@@ -31,7 +35,7 @@ const laugh=()=>Array.from({length:6},(_,i)=>note(i*.14,.1,270-i*17,.032,'triang
 const splash=hit=>[note(0,.11,1350,.025,'sine',340),note(.055,.12,740,.025,'triangle',210),note(.13,.12,440,.02,'sine',145),...(hit?[note(.2,.15,1046,.025,'sine'),note(.22,.18,1397,.018,'sine')]:[note(.2,.15,190,.022,'triangle',85)])];
 const pop=()=>[note(0,.12,80,.03,'triangle',330),note(.045,.19,1180,.035,'sine',430),note(.2,.14,660,.022,'triangle',280)];
 const bell=()=>[note(0,.75,midiFrequency(74),.035,'sine'),note(.04,.55,midiFrequency(86),.016,'sine'),note(.19,.7,midiFrequency(81),.02,'triangle')];
-const success=()=>[0,1,2].map((i)=>note(i*.1,.14,midiFrequency([74,77,81][i]),.028,'sine'));
+const success=()=>[0,1,2].map((i)=>note(i*.1,.14,midiFrequency([74,77,81][i]),.028,'sine')).map(n=>({...n,instrument:'piano'}));
 const failure=()=>[note(0,.21,330,.03,'triangle',165),note(.15,.23,150,.022,'sine',90)];
 const whirl=()=>Array.from({length:7},(_,i)=>note(i*.065,.1,180+i*38,.021,'triangle',115+i*22));
 const wind=()=>Array.from({length:3},(_,i)=>note(i*.11,.065,420+i*65,.026,'square',300+i*35));
@@ -59,7 +63,7 @@ export function funhouseEffectScore(kind,{hit=true}={}){
   case 'ballpit':case 'toss':case 'ball-toss':return toss(hit);
   case 'ball-hit':return toss(true);
   case 'ball-miss':return toss(false);
-  case 'ring':case 'maze-finish':case 'bell':return bell();
+  case 'ring':case 'maze-finish':case 'bell':return bell().map(n=>({...n,instrument:'bell'}));
   case 'adventure':case 'creak':return eerie();
   case 'haunt-start':return [...heartbeat(),...eerie().map(n=>({...n,at:n.at+.4}))];
   case 'haunt':case 'haunt-seal':return seal();

@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 
 // Root origin and footprint deliberately match the public airport's aircraft stands.
@@ -85,7 +86,7 @@ export function createAircraftModel(){
  const exhaust=cosmetic(new THREE.Group());exhaust.name='EXHAUST_STACKS';for(const side of [-1,1])for(let i=0;i<4;i++)exhaust.add(part(new THREE.CylinderGeometry(.045,.055,.20,8),steel,[side*.62,.74,-2.65+i*.16],[0,0,side*.65]));add(exhaust);
  if(typeof document!=='undefined'){const art=new THREE.TextureLoader().load('/public/images/aircraft/blackwing-livery.svg');art.colorSpace=THREE.SRGBColorSpace;for(const side of [-1,1]){const decal=cosmetic(new THREE.Mesh(new THREE.PlaneGeometry(1.65,.62),new THREE.MeshBasicMaterial({map:art,transparent:true,depthWrite:false,side:THREE.DoubleSide})));decal.name='MIDNIGHT_HAWK_NOSE_ART';decal.position.set(side*.64,1.02,-2.05);decal.rotation.y=side*Math.PI/2;root.add(decal);}}
  root.userData={builderObject:true,modelId:'corsair-aircraft',aircraftModel:true,dimensions:[10.5,2.7,8.2],vehicle:{mode:'fly',seat:[0,.89,.63],cockpit:[...AIRCRAFT_COCKPIT_POSE.position],speed:24,turnSpeed:1.15},aircraftRig:{propeller,blur,ailerons,flaps,gear,elevator,rudder,stick,needles},cockpitPose:AIRCRAFT_COCKPIT_POSE};
- root.traverse(node=>{if(node.parent?.userData.collisionDisabled){node.userData.collisionDisabled=true;node.userData.collider=false;}if(node.isMesh){node.castShadow=!node.userData.collisionDisabled;node.receiveShadow=true;}});root.updateMatrixWorld(true);updateAircraftModel(root,{},0);return root;
+ root.traverse(node=>{if(node.parent?.userData.collisionDisabled){node.userData.collisionDisabled=true;node.userData.collider=false;}if(node.isMesh){node.castShadow=!node.userData.collisionDisabled;node.receiveShadow=true;}});root.updateMatrixWorld(true);updateAircraftModel(root,{},0);return finishVehicleDesign(THREE,root,'corsair-aircraft');
 }
 export function updateAircraftModel(root,flight={},elapsed=0){
  const rig=root?.userData?.aircraftRig;if(!rig)return;const safe=value=>Number.isFinite(Number(value))?Number(value):0,throttle=THREE.MathUtils.clamp(safe(flight.throttle),0,1),rpm=safe(flight.rpm)||700+throttle*2300,airborne=flight.airborne===true,bank=THREE.MathUtils.clamp(safe(flight.bank),-.8,.8),pitch=THREE.MathUtils.clamp(safe(flight.pitch),-.6,.6),flaps=THREE.MathUtils.clamp(safe(flight.flaps),0,1),gearDeployed=flight.gear!==false;

@@ -2,6 +2,8 @@
 
 The shared yard is 336 × 304 m, with 13 real earthwork areas. The Construction map and its editable Builder copy carry the same terrain, signs and haul roads. Open **Crew / jobs** for the site operations plan, locations, machine instructions and live progress. The compact Work / Drive controls stay unchanged.
 
+The yard now places the current detailed Titan 78 crane, Terra 40 truck, D9 bulldozer and HX350 excavator alongside reusable site-support models. The modular office has framed glazing, corrugated panels, lift-plan furniture and roof services; the maintenance shelter uses six steel posts and braced trusses; four narrow-base floodlights have generator cabinets and sixteen emissive optics each. Three corrugated cargo containers replace the loose container boxes. All models use the shared native surface finish and remain available in Builder copies. The service aisle stays open beneath its dedicated roof and column colliders, and the support models retain their existing footprints outside excavation cells and haul routes.
+
 | Work area | Site X / Z | Job |
 | --- | --- | --- |
 | Pavement reclamation | 198 / 12 | Rip the flat 24 cm pavement using the bucket or blade. Reclaimed pavement becomes gravel cargo. |
@@ -19,3 +21,13 @@ Use **Work** for hydraulic levers and assisted cycles. Use **Drive** for wheels/
 Progress measures authoritative terrain, material and secured steel. A heap does not complete a road: each cell needs aggregate coverage and the correct level. Excavation cannot go below its authored bottom, off-patch dumping retains cargo, and material transfer conserves volume. Asphalt is a dark surface layer in the existing gravel ledger, so it can be recycled without inventing material. Saved rooms append missing work areas once, preserving worked cells, payloads and existing counters.
 
 Validation: construction regression tests; a real-collision excavator → truck → road material-chain test; finite pavement, visible soil exposure, graded-road objectives and saved-site expansion tests; mobile machine/dashboard and site-plan browser checks.
+
+## Shared machine selection and work plans
+
+Keyboard **F**, nearby **Operate**, and **Crew / jobs → Machines · select at the cab** use the shared machine and cab positions. The list shows distance, human occupancy and the named AI operator. Walk to the cab to enter; occupied human machines are unavailable. Nearby players can take over AI machines, which releases the worker safely. Exit the current machine before choosing another.
+
+Each worker assignment now includes a **Work area**. Digging can target the pavement or another finite excavation/stockpile; truck haul/tip jobs can target a receiving patch; grading can target a named patch. Machines travel with the normal ground and collision rules. Blocked routes brake and report the obstruction. Excavator loading follows its actual position; a selected haul destination carries into the next tip job. Asking a worker to demonstrate keeps their selected work area.
+
+The bulldozer's **More → Finished grade** supports free blade work, ground level, a **20 cm road base**, and a **30 cm earth platform**. The grading cycle sets the real blade to that cutting plane, leaves material below the target and fills reachable low cells only up to the target. Missing material or receiving space does not award work. Manual blade and travel controls remain available.
+
+A separate **three-floor facility frame** at **X -41 / Z 5** sits inside the crane's reach. Choose **More → Crane steel destination → Facility steel frame**, or assign the steel worker to Facility. Twelve validated beam placements erect its three floors, solid decks and columns. The frame stays open and has independent progress from the 16-floor skyscraper. The work camera, lift receiver, guided buttons and site plan follow the selected frame. Existing tower and terrain progress survive the update.

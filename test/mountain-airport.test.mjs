@@ -17,7 +17,7 @@ test('native Alpine mountains have grounded pointed ridges, a broad snowy summit
  assert.equal(bounds.min.y,0);assert.deepEqual(size.toArray(),[6,5,5.5]);
  let triangles=0,meshes=0;
  mountain.traverse(node=>{if(!node.isMesh)return;meshes++;triangles+=(node.geometry.index?.count||node.geometry.attributes.position.count)/3;assert.ok([...node.geometry.attributes.position.array].every(Number.isFinite));});
- assert.equal(meshes,2);assert.ok(triangles<=120,'rock and snow use a small fixed mesh budget');
+ assert.equal(meshes,2);assert.ok(triangles>120&&triangles<=3500,'detailed rock and snow remain within two draw calls and a bounded geometry budget');
  const snow=mountain.getObjectByName('ALPINE_SNOW_CAP'),snowBounds=new THREE.Box3().setFromObject(snow),snowSize=snowBounds.getSize(new THREE.Vector3());
  assert.ok(snow.userData.alpineSnow);assert.ok(snowBounds.min.y>=2.9&&snowBounds.min.y<3.1,'snow starts near the upper third');
  assert.equal(snowBounds.max.y,5);assert.ok(snowSize.x>2.7&&snowSize.z>2.4&&snowSize.y>1.8,'snow covers a broad part of the upper mountain');

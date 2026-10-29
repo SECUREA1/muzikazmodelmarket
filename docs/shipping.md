@@ -40,6 +40,18 @@ AI crews yield to player vessels, use their own commercial loading berths, and c
 
 The **World item factory** adds finite, item-by-item native and GLB supply to these routes. Build discounted batches, dispatch a counted manifest, then complete the normal sea passage to restock any map warehouse or the central world inventory. Exact item quantities accompany the shipping job; stock credits only after full unloading. See [World supply](world-supply.md) for production, depletion, map stores, and simulated onward transfers.
 
+### Shore roads and air onward delivery
+
+All six Strait ports have an authored shore freight bay and a local dock access road. These roads stay on their own coast or island; trucks do not cross the shipping lanes. New addressed deliveries move from the receiving quay to the shore bay before transferring to the receiving map's calculated truck and doorstep route. Inter-map freight links remain explicit because map rooms have separate coordinates.
+
+For a deed, store or building order, choose **Air onward delivery** to add a piloted cargo flight after the verified sea voyage. Jebel Ali, Ras Tanura, Bandar Abbas, Khasab and Fujairah have cargo aprons, road connections, paved runways and public aircraft. Qeshm retains sea-and-road service: its island cannot fit the current runways. Air cargo normally flies to Fujairah; cargo arriving by sea at Fujairah flies to Jebel Ali.
+
+The port truck first brings the sealed goods to the departure apron. Board an aircraft there, reserve the exact air task, load while stopped and secure its manifest. Use the existing flight controls or **Fly to receiving airfield** for assisted takeoff, passage, landing and parking. After touchdown inside the marked receiving apron, **Stop at receiving apron** brakes the aircraft before unloading. It does not complete a flight or award stock. The server verifies the departure, receiving approach and stopped unloading. A flight carries at most four road crates, so large orders create multiple exact manifests. Relocation, aircraft replacement, leaving the cockpit or an expired connection invalidates the flight; its counted cargo stays reserved at port.
+
+Sea and air receipts do not stock an addressed destination. After each confirmed air unload, that flight's goods move through the receiving shore bay and the same final truck-and-doorstep pipeline. Repeated unloads cannot add stock twice, and holding the remaining order preserves goods already delivered.
+
+The International Airport has a counted-freight receiving terminal, an apron service road and a reciprocal Strait gateway. The gateway connects the two map rooms; piloted air manifests fly between the approved airfields inside the Strait map. Public flight paths, shore trucks and apron markers reuse the existing game views without creating duplicate aircraft.
+
 MZK rewards are capped at 400 per account per UTC day. Delivery and exchange receipts are idempotent, and progression and stock live outside editable account memory. Port handling, route progress, vessel unlocks and rewards are calculated on the server. Leaving the vessel, defeat, relocation, travel or an expired connection cancels an active contract.
 
 Delivered provisions exchange for a Medkit unlock or ten prepaid wood pieces. Machine parts exchange for five prepaid metal pieces or one 20 MZK factory production credit. Tool stock exchanges for a Scanner or professional fishing rod. These are the existing Tools, fishing, factory and Builder systems, with their usual ownership and usage rules. Stock appears in Marketplace and the Tools pouch as **Exchange at shipping port**. Raw stock is exchanged at docks; unlocked items follow the normal marketplace rules.

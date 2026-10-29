@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { DurableSessionStore } from '../session-store.mjs';
+import {LEGACY_SESSION_HASH} from '../opaque-session-secrets.mjs';
 
 const account = { accountId: 'account-1', primaryEthereumWallet: '0x1111111111111111111111111111111111111111' };
 
@@ -54,12 +55,13 @@ test('concurrent panel proof reads preserve gameplay proof across sessions and r
 
 test('legacy random CSRF proofs migrate once and remain valid for existing in-flight requests',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'mzk-csrf-legacy-'));t.after(()=>rm(directory,{recursive:true,force:true}));
- const file=join(directory,'accounts.json'),store=new DurableSessionStore(file,{ttlSeconds:60}),created=await store.createSession(account);
+ const file=join(directory,'accounts.json'),store=new DurableSessionStore(file,{ttlSeconds:60,issuanceAlgorithm:LEGACY_SESSION_HASH}),created=await store.createSession(account);
  const legacyProofs=Array.from({length:3},()=>{
   const token=randomBytes(24).toString('base64url'),salt=randomBytes(16).toString('base64url');
   return {token,salt,hash:pbkdf2Sync(token,Buffer.from(salt,'base64url'),210000,32,'sha256').toString('base64url')};
  }),data=JSON.parse(await readFile(file,'utf8'));
  const record=data.sessions.find(session=>session.id===created.session.id);
+ delete record.tokenHashAlgorithm;delete record.csrfTokenHashAlgorithm;
  record.csrfTokenHash=legacyProofs[0].hash;record.csrfTokenSalt=legacyProofs[0].salt;record.previousCsrfSecrets=legacyProofs.slice(1).map(({hash,salt})=>({hash,salt}));
  await writeFile(file,JSON.stringify(data));
  let writes=0;const write=store.write.bind(store);store.write=async value=>{writes++;return write(value);};

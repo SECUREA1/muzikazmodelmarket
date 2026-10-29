@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSpeechService,normalizeSpeechRequest,validSpeechWav} from '../server-speech.mjs';
+import {createVoiceRuntime} from '../server-voice-runtime.mjs';
 
 // PCM fixture checks the WAV transport contract; it is not a voice-quality test.
 function wav(){
@@ -77,4 +78,15 @@ test('public voice metadata reports model readiness without generating audio',as
  const service=createSpeechService({generate:async()=>{calls++;return wav();},getStatus:()=>({available:false,modelReady:false,status:'not installed'})});
  const state=await service.voices();assert.equal(calls,0);assert.equal(state.available,false);assert.equal(state.modelReady,false);assert.equal(state.status,'unavailable');
  assert.deepEqual(state.voices.map(item=>[item.id,item.gender,item.generated,item.natural]),[['muzikaz:neural-female','female',true,true],['muzikaz:neural-male','male',true,true]]);
+});
+
+test('a speech deadline cancels its preparation wait while the shared runtime finishes for the next player',async()=>{
+ let install,modelReady=false,installations=0;
+ const runtime=createVoiceRuntime({root:'/fixture',env:{MUZIKAZ_VOICE_AUTO_INSTALL:'1'},logger:null,probe:()=>({dependenciesReady:true,modelReady}),prepareDirectory:async()=>{},run:async()=>{installations++;await new Promise(resolve=>{install=resolve;});modelReady=true;}});
+ const startup=runtime.start(),service=createSpeechService({timeoutMs:25,getStatus:runtime.status,generate:async({signal})=>{await runtime.ensure({signal});return wav();}});
+ await turn();const loading=await service.voices();assert.equal(loading.status,'loading');assert.match(loading.message,/Preparing/);assert.equal(installations,1);
+ await assert.rejects(service.generate(request('First player')),error=>error.code==='SPEECH_TIMEOUT');await turn();
+ assert.equal(runtime.status().status,'loading');assert.equal(service.state.active,0,'timed-out HTTP work releases the speech queue without abandoning the shared install');
+ install();await startup;
+ assert.equal((await service.voices()).status,'ready');assert.equal(validSpeechWav(await service.generate(request('Next player'))),true);assert.equal(installations,1);
 });

@@ -15,6 +15,11 @@ Xenova and contributors. `kokoro-onnx`: thewh1teagle and contributors (MIT).
 These are pre-trained synthetic speaker styles; they do not clone a game user's
 voice. The game displays them as Female and Male.
 
+The generated introductions in `public/audio/voices/world/` and the male/female
+preview WAVs use those same licensed speaker styles. Their manifests record the
+exact spoken text, format and checksums. These recordings are served with the
+static site so they do not require runtime model installation or an API request.
+
 The ONNX model is downloaded separately into `.speech-models/`; it is not served
 to browsers. CPU inference uses ONNX Runtime (MIT). Phoneme conversion uses the
 `phonemizer` package with its bundled eSpeak-NG data/engine. Its upstream license

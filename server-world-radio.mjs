@@ -12,7 +12,8 @@ export function worldRadioCalls(rooms,environments,now=Date.now()){
   const destination={worldId:world.id,worldName:world.name||world.id};
   const dispatch=sim.liveDispatch;
   if(dispatch?.id&&dispatch.questId&&Number.isFinite(dispatch.expires)&&dispatch.expires>now){
-   calls.push({id:world.id+':'+dispatch.id,type:'ai',...destination,questId:dispatch.questId,title:dispatch.title,mode:dispatch.mode,speaker:dispatch.speaker||'Dispatch',at:dispatch.at??Math.max(0,dispatch.expires-90000),expires:dispatch.expires,position:position(dispatch.point),text:(dispatch.title||'New job')+'. Volunteers requested at '+destination.worldName+'.'});
+   const offer=sim.questOffers?.find(offer=>offer.id===dispatch.questId),description=dispatch.description||offer?.description||'';
+   calls.push({id:world.id+':'+dispatch.id,type:'ai',...destination,questId:dispatch.questId,title:dispatch.title,description,mode:dispatch.mode,speaker:dispatch.speaker||'Dispatch',at:dispatch.at??Math.max(0,dispatch.expires-90000),expires:dispatch.expires,position:position(dispatch.point),text:(dispatch.title||'New job')+'. '+(description?description+' ':'')+'Volunteers requested at '+destination.worldName+'.'});
   }
   for(const [leaderId,leader]of Object.entries(sim.players||{})){
    const quest=leader.vehicleMission,expires=quest?.helpExpires??quest?.deadline;

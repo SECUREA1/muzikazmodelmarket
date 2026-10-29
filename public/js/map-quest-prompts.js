@@ -1,4 +1,6 @@
 import {isPrisonEnvironment} from './prison-config.js';
+import {isCasinoEnvironment} from './casino-config.js';
+import {isFunhouseEnvironment} from './clown-funhouse-config.js';
 import {questCatalog,questPoint} from './quest-catalog.js';
 import {isAircraft} from './aircraft-flight.js';
 import {armedAircraft} from './aircraft-types.js';
@@ -129,7 +131,7 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
   else if(mission&&['completed','failed','expired','cancelled'].includes(mission.status)&&missionKey&&missionKey===lastMissionKey&&!seenResults.has(missionKey+':'+mission.status)){
    seenResults.add(missionKey+':'+mission.status);result=mission;mode='result';setFeedback('');open({automatic:true});
   }
-  if(!arrivalShown&&self){arrivalShown=true;if(mission?.status!=='active'&&offers.length)open({automatic:true,view:'offers'});}
+  if(!arrivalShown&&self){arrivalShown=true;if(!isCasinoEnvironment(environment)&&!isFunhouseEnvironment(environment)&&mission?.status!=='active'&&offers.length)open({automatic:true,view:'offers'});}
   render();
  }
  return {update,open:()=>open({view:self?.vehicleMission?.status==='active'?'active':'offers'}),close:hide,dispose(){disposed=true;requestVersion++;launcher.remove();root.remove();style.remove();}};

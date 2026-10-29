@@ -47,6 +47,14 @@ test('help calls follow moving targets without leaking actor records',()=>{
  assert.deepEqual(worldRadioCalls({a:sim},maps,now)[0].position,p.position);
 });
 
+test('AI information calls carry real offer instructions across maps',()=>{
+ const sim=room({questOffers:[{id:'supply',description:'Load a balanced manifest, secure it, then sail to the receiving berth.'}]});
+ const [call]=worldRadioCalls({harbor:sim},[world('harbor')],now);
+ assert.equal(call.description,sim.simulation.questOffers[0].description);assert.match(call.text,/Load a balanced manifest/);
+ sim.simulation.liveDispatch.description='Meet the local crew at the marked berth.';
+ assert.equal(worldRadioCalls({harbor:sim},[world('harbor')],now)[0].description,'Meet the local crew at the marked berth.');
+});
+
 test('the world feed is bounded and keeps recent player requests ahead of AI jobs',()=>{
  const maps=Array.from({length:30},(_,i)=>world('w'+i)),rooms=Object.fromEntries(maps.map((map,i)=>[map.id,room({players:{p:leader({vehicleMission:{...leader().vehicleMission,helpRequestedAt:now-i}})}})]));
  const calls=worldRadioCalls(rooms,maps,now);assert.equal(calls.length,24);assert.ok(calls.every(call=>call.type==='player'));assert.equal(calls[0].worldId,'w0');assert.equal(calls.at(-1).worldId,'w23');

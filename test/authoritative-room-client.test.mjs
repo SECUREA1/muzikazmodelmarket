@@ -119,7 +119,7 @@ test('an established room recovers when concurrent widgets invalidate both CSRF 
 test('a timed out join cannot become ready when its late response arrives',async()=>{
  let release;
  await withRoom(async path=>path==='/api/game/room-session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
-  await assert.rejects(client.whenReady(25),/did not accept/);
+  await assert.rejects(client.whenReady(25),{code:'ROOM_CONNECTION_TIMEOUT'});
   release(response(confirmed()));await pause(10);assert.equal(client.ready,false);
  });
 });
@@ -128,6 +128,39 @@ test('stopping during session lookup prevents a late gameplay join',async()=>{
  await withRoom(async path=>path==='/api/game/room-session'?new Promise(resolve=>{release=resolve;}):(joins++,response(confirmed())),async client=>{
   client.stop();release(response({csrfToken:'proof'}));await pause(10);assert.equal(joins,0);assert.equal(client.ready,false);
  });
+});
+
+test('map room handoff starts a fresh snapshot and input epoch while old requests stay retired',async()=>{
+ const previousWindow=globalThis.window,previousDocument=globalThis.document;
+ const requests=[],rendered=[];let releaseOldInput,oldInputRequest;
+ const snapshot=(room,sequence)=>({...confirmed(sequence),inputEpoch:room+'-epoch',sceneVersion:room+'-scene',actors:{[room+'-resident']:{id:room+'-resident',position:{x:1,y:0,z:1}}}});
+ globalThis.document={hidden:false};
+ globalThis.window={fetch:async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),room=path.includes('/old-map/')?'old-map':'new-map';
+  requests.push({room,command,signal:options.signal});
+  if(room==='old-map'&&command.action==='input'){
+   oldInputRequest=requests.at(-1);
+   return new Promise(resolve=>{releaseOldInput=()=>resolve(response(snapshot(room,999)));});
+  }
+  return response(command.action==='join'?snapshot(room,room==='old-map'?100:1):{...snapshot(room,2),actorsPartial:true,actors:{}});
+ }};
+ const connect=roomId=>connectAuthoritativeRoom({roomId,input:()=>({}),inputInterval:1000,render:state=>rendered.push({roomId,state})});
+ const old=connect('old-map');let current;
+ try{
+  await old.whenReady();const stale=old.send('input',{input:{forward:1}});
+  assert.ok(releaseOldInput);old.stop();assert.equal(oldInputRequest.signal.aborted,true);
+  current=connect('new-map');await current.whenReady();await current.send('input',{input:{forward:1}});
+  assert.equal(current.ready,true);assert.equal(old.ready,false);
+  const before=rendered.length;releaseOldInput();assert.equal(await stale,undefined);
+  assert.equal(rendered.length,before,'a retired room response cannot repaint or reactivate the previous map');
+  assert.deepEqual(rendered.filter(item=>item.roomId==='new-map').map(item=>item.state.sequence),[1,2],'new room sequence starts independently of the old room');
+  assert.deepEqual(Object.keys(rendered.at(-1).state.actors),['new-map-resident'],'compact snapshots hydrate only the new room baseline');
+  const freshInput=requests.find(item=>item.room==='new-map'&&item.command.action==='input').command;
+  assert.equal(freshInput.inputEpoch,'new-map-epoch');assert.equal(freshInput.inputSequence,1);
+  assert.equal(freshInput.sceneVersion,'new-map-scene');
+  await assert.rejects(old.send('interact'),/Room closed/);
+ }finally{old.stop();current?.stop();releaseOldInput?.();globalThis.window=previousWindow;globalThis.document=previousDocument;}
 });
 
 

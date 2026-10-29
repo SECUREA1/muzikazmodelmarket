@@ -14,11 +14,19 @@ export function boatMovementBlocked(environment,boat,actors,collision,objects={}
   const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;
   const direction=[dx/span,0,dz/span];
   const [beam,length]=isShippingVessel(boat)||['harbor-yacht','harbor-patrol','harbor-fishing-boat',...RESORT_BOATS].includes(boat.modelId||boat.asset?.buildAssetId)?watercraftSize(boat):[.85,2];
-  return [-beam,0,beam].some(side=>{
+  // Refresh membership for every blocked callback, but share its exclusion
+  // map and collision preparation across the three pure synchronous rays.
+  const others=collision?Object.fromEntries(Object.entries(actors).filter(([id])=>id!==boat.id)):null;
+  const checkRays=blocksShot=>[-beam,0,beam].some(side=>{
    const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*length,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*length};
-   if(collision?.blocksShot(environment,origin,direction,span+.12,Object.fromEntries(Object.entries(actors).filter(([id])=>id!==boat.id))))return true;
+   if(blocksShot(origin,direction,span+.12))return true;
+   // Keep placed pieces on their existing exact raycast path. Passing objects
+   // into the shot view would add AABB contacts and change that behavior.
    return placed.length>0&&new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),new THREE.Vector3(...direction),.001,span+.12).intersectObjects(placed,false).length>0;
   });
+  if(typeof collision?.withShotCollisionView==='function')return collision.withShotCollisionView(environment,others,{},checkRays);
+  // Small test/custom colliders need only implement the existing blocksShot API.
+  return checkRays((origin,aim,distance)=>collision?.blocksShot(environment,origin,aim,distance,others));
  };
 }
 const fail=message=>{throw Object.assign(Error(message),{statusCode:409});};

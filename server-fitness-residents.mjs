@@ -1,3 +1,4 @@
+import {residentPlayJoke} from './server-resident-play.mjs';
 import {FITNESS_ID,FITNESS_RESIDENTS,FITNESS_STATIONS,isFitnessEnvironment} from './public/js/fitness-config.js';
 
 export const FITNESS_DIALOGUE_CHOICES=[
@@ -18,7 +19,7 @@ function lifeState(sim,environment,now){
  const life=sim.residentLife ||= {version:1,worldId:environment.id||FITNESS_ID,worldName:environment.name||'MUZIKAZ Fitness Centre',sequence:0,conversations:[],events:[],stats:{conversations:0,practices:0,work:0}};
  life.conversations||=[];life.events||=[];life.stats||={};for(const field of ['conversations','practices','work'])life.stats[field]||=0;life.sequence||=0;return life;
 }
-function say(npc,text,now,duration=4500){const info=npc.resident;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.pauseUntil=now+duration;info.gesture=info.duty==='trainer'||info.duty==='referee'?'explain':'talk';}
+function say(npc,text,now,duration=4500){const info=npc.resident;delete info.speechRecipients;info.speech=short(text);info.speechUntil=now+duration;info.speaking=true;info.pauseUntil=now+duration;info.gesture=info.duty==='trainer'||info.duty==='referee'?'explain':'talk';}
 function baseSkills(source,index){const activity=source.activity||'stretching',main=skillFor(activity);return {...(source.duty==='trainer'?Object.fromEntries((source.specialties||[]).map(skill=>[skill,88+index%3*3])):{[main]:45+hash(source.id)%37,social:38+hash(source.id+'social')%30}),...source.skills};}
 function ensureResident(sim,source,index,now){
  let npc=sim.actors[source.id];
@@ -182,7 +183,7 @@ export function fitnessResidentDialogue(sim,player,npc,choice,text,now){
  else if(intent==='resident-staff')reply='Maya Chen coaches boxing, agility and jump rope beside reception. Leon Brooks coaches strength and conditioning in the central aisle. The ring referee and boxing rivals are at the training ring; basketball players, table-tennis partners and sprinters practise in the east sports wing.';
  else if(intent==='resident-memory')reply=memory.visits?'Welcome back, '+player.username+'. We have spoken '+memory.visits+' time'+(memory.visits===1?'':'s')+'. '+(memory.preferences.activity?'You asked about '+memory.preferences.activity.replaceAll('-',' ')+'. ':'')+'Last time we discussed '+String(memory.topic||'your training').replace('fitness-','').replace('resident-','').replaceAll('-',' ')+'.':'This is our first conversation here. Tell me which activity you want to practise and I will remember it.';
  else if(intent==='question')reply=FITNESS_STATIONS.map(station=>station.name.split(' · ')[0]+' ('+Math.round(distance(npc.position,station.position))+' m)').join('; ')+'. Open the local map for each marked station, then walk to it and use E / Use.';
- else if(intent==='joke')reply=['My jump rope asked for a promotion. It said it was tired of being skipped.','The referee brought a ruler to the ring. They wanted to measure a close round.','I told my basketball to take a break. It bounced right back.'][hash(info.id||npc.id)%3];
+ else if(intent==='joke'){reply=residentPlayJoke({...info,context:{...info.context,kind:'fitness'}},memory.jokeRound||0);memory.jokeRound=((memory.jokeRound||0)+1)%1000000;}
  else if(intent==='thanks')reply='You are welcome, '+player.username+'. Keep your next set controlled and enjoy the gym.';
  else if(intent==='bye')reply='See you around, '+player.username+'. I will be here when you want another training tip.';
  else reply=(memory.visits?'Good to see you again, '+player.username+'. ':'Welcome, '+player.username+'! ')+(info.greeting||'I am '+info.name+'. I am '+info.task+'. Ask about my training or the sports contests.');

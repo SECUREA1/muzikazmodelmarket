@@ -52,6 +52,8 @@ try:
             assert page.locator('.pouch-active-item').count()==3
             assert 'Green Commons' in page.locator('.pouch-active').inner_text()
             assert page.locator('#existing-tool').is_visible()
+            assert page.locator('[data-pouch-item]').count()==0, 'Quick tools must defer building the hidden inventory wheel'
+            assert page.evaluate("""()=>{const row=document.querySelector('.pouch-active-item');pouch.refresh();return row===document.querySelector('.pouch-active-item');}"""), 'Unchanged refreshes must preserve active rows'
             page.locator('[data-pouch-tab=inventory]').click()
             assert not page.locator('#existing-tool').is_visible()
             assert page.locator('[data-pouch-tab=inventory]').get_attribute('aria-selected')=='true'

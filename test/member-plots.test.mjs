@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {UserJsonDatabase} from '../user-json-database.mjs';
 import {memberPlotEnvironment} from '../member-plots.mjs';
+import {LAND_LOTS} from '../public/js/land-lots.js';
 
 test('deed-backed plots persist, retain a stable room, and follow the current deed holder',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'member-plots-'));
@@ -33,6 +34,26 @@ test('older deeds gain a stable public space without exposing a private template
  const base={id:'muzikaz-main',name:'Main',modelUrl:'/main.glb',visibility:'public'};
  assert.equal(memberPlotEnvironment(deed,[base]).id,'plot-deed-old');
  assert.equal(memberPlotEnvironment({...deed,hostedSpace:{environmentId:'secret'}},[base,{id:'secret',visibility:'private',modelUrl:'/secret.glb'}]).modelUrl,'/main.glb');
+});
+
+test('every regional deed has a distinct local delivery entrance and an explicit regional transfer address',()=>{
+ const base={id:'field',name:'Field',visibility:'public',builderScene:{layout:'grand-floor',mapSize:512,objects:[]},spawn:{x:0,y:0,z:0}};
+ const ids=new Set();
+ for(const lot of LAND_LOTS){
+  const deed={id:'deed-'+lot.id,name:lot.name,lot,status:'active',ownerId:'holder'},map=memberPlotEnvironment(deed,[base]),delivery=map.delivery;
+  assert.equal(delivery.deedId,deed.id);assert.equal(delivery.mapId,map.id);assert.equal(delivery.entrance.mapId,map.id);
+  assert.ok(Math.abs(delivery.entrance.position.x)<lot.size/2&&Math.abs(delivery.entrance.position.z)<lot.size/2,'the drop zone stays inside its own centred plot');
+  assert.deepEqual(delivery.regionalEntry.position,lot.entry);assert.equal(delivery.regionalEntry.mapId,lot.mapId);
+  assert.notEqual(delivery.entrance.position.z,lot.entry.z,'regional coordinates never become a plot-local doorstep');ids.add(delivery.dropoffId);
+ }
+ assert.equal(ids.size,LAND_LOTS.length);
+});
+
+test('authored doorstep and freight bay survive hosting with local room addresses',()=>{
+ const deed={id:'deed-door',name:'House',ownerId:'holder'},base={id:'house',visibility:'public',delivery:{dropoff:{kind:'doorstep',name:'Front door',mapId:'house',position:{x:4,y:0,z:8}},hub:{position:{x:-12,y:0,z:20}}}};
+ const first=memberPlotEnvironment(deed,[base]),next=memberPlotEnvironment({...deed,hostedSpace:{environmentId:'other'}},[base,{id:'other',visibility:'public',spawn:{x:2,y:0,z:6}}]);
+ assert.equal(first.delivery.dropoff.mapId,first.id);assert.equal(first.delivery.dropoff.name,'Front door');assert.deepEqual(first.delivery.hub.position,base.delivery.hub.position);
+ assert.equal(next.delivery.dropoff,undefined);assert.deepEqual(next.delivery.entrance.position,{x:2,y:0,z:6});assert.equal(next.delivery.dropoffId,first.delivery.dropoffId,'changing environments retains the deed delivery identity');
 });
 
 test('binding a wallet keeps the same hosted plot under the member account',async()=>{

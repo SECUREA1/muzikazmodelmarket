@@ -23,11 +23,15 @@ const command=async(action,fields={})=>{
  if(action==='construction-controls'&&fields.operation==='precision'){
   const actor=state.actors[state.players.me.vehicleId];actor.construction.precision=fields.enabled;actor.construction.telemetry.precision=fields.enabled;dashboard.update(state,'me');
  }
+ if(action==='construction-controls'&&['structure-target','grade-target'].includes(fields.operation)){
+  const actor=state.actors[state.players.me.vehicleId];if(fields.operation==='structure-target')actor.construction.structureId=fields.structureId;else actor.construction.gradeTarget=fields.height;dashboard.update(state,'me');
+ }
+ if(action==='interact'&&fields.entityId){state.players.me.vehicleId=fields.entityId;state.actors[fields.entityId].holderId='me';delete state.actors[fields.entityId].construction.crewOperator;dashboard.update(state,'me');}
  if(action==='construction-crew'){
   const crew=state.construction.crew,worker=crew.workers.find(worker=>worker.id===fields.workerId);
   if(fields.operation==='start'||fields.operation==='pause'){if(!fields.workerId)crew.enabled=fields.operation==='start';for(const person of crew.workers)if(!fields.workerId||person===worker)person.state=fields.operation==='start'?'working':'paused';}
   if(fields.operation==='customize'&&worker){worker.name=fields.name;worker.appearance={...fields.appearance};}
-  if(fields.operation==='assign'&&worker){worker.jobId=fields.jobId;worker.machineId=fields.machineId||null;}
+  if(fields.operation==='assign'&&worker){worker.jobId=fields.jobId;worker.machineId=fields.machineId||null;const job=crew.jobs.find(job=>job.id===fields.jobId);if(job)job.workArea=fields.workArea||null;}
   dashboard.update(state,'me');
  }
  return {result:{message:'Confirmed'}};

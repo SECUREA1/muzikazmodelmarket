@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {aiConversationIntent,constructionJobForRequest} from '../server-ai-interactions.mjs';
+import {aiConversationIntent,constructionJobForRequest,aiWorkReading} from '../server-ai-interactions.mjs';
 
 const actions=[{id:'work-demonstrate',label:'Show a machine job'},{id:'work-stop',label:'Stop my demonstration'},
  {id:'world:door:garden-door',kind:'door',targetName:'Garden door',label:'Open or close Garden door'},
@@ -29,4 +29,18 @@ test('natural object requests select actual offered props and leave ordinary con
  assert.equal(aiConversationIntent('question','What can you do?',actions),'ai-capabilities');
  assert.equal(aiConversationIntent('question','Thank you for helping.',actions),null);
  assert.equal(aiConversationIntent('help','run the crane',actions),null);
+});
+
+test('AI work information identifies each requested job and distinguishes ambient or another visitor work',()=>{
+ const sim={actors:{worker:{id:'worker',name:'Maya',aiTask:{id:'object-request',ownerId:'p',stage:'walking',message:'Checking beacon.'}}},factoryCrewWork:{job:{id:'factory-request',requestedBy:'p',workerId:'worker',status:'processing',stepIndex:0,steps:[{name:'Fabrication'}]}},construction:{crew:{workers:[{id:'worker',name:'Maya',state:'digging',demonstration:{startedAt:100,requestedBy:'p',status:'active'}}],jobs:[]}}};
+ for(const kind of ['factory','construction','world']){
+  const context={kind,workerId:'worker'},requested=aiWorkReading(sim,context,'p');
+  assert.ok(requested.id,kind+' provides a stable job identity');assert.equal(requested.requested,true,kind);
+  assert.equal(aiWorkReading(sim,context,'someone-else').requested,false,kind+' is not this visitor’s requested work');
+ }
+ sim.factoryCrewWork.job.requestedBy=null;assert.equal(aiWorkReading(sim,{kind:'factory',workerId:'worker'},'p').requested,false);
+ const previous=aiWorkReading(sim,{kind:'construction',workerId:'worker'},'p').id;
+ sim.construction.crew.workers[0].demonstration.startedAt=200;
+ assert.notEqual(aiWorkReading(sim,{kind:'construction',workerId:'worker'},'p').id,previous);
+ sim.actors.worker.aiTask.autonomous=true;assert.equal(aiWorkReading(sim,{kind:'world',workerId:'worker'},'p').requested,false);
 });

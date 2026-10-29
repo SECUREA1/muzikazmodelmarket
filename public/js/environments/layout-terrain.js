@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
+import {groundLandscapeProfile,createLandscapeGroundMaterial} from '../ground-landscape-design.js';
 export function layoutHeight(layout, x, z) {
       if(layout==='world-item-factory')return 0;
       if(layout==='basketball-stadium'||layout==='basketball-arena'||layout==='firing-range')return 0;
@@ -51,6 +52,8 @@ export function createLayoutTerrain(layout, size, color=0x315b32) {
 }
 
 export function createLayoutMaterial(layout,size) {
+ const landscape=groundLandscapeProfile(layout);
+ if(landscape)return createLandscapeGroundMaterial(THREE,{kind:landscape});
  // Repeatable local surface detail needs no image requests or browser canvas.
  const resolution=64,data=new Uint8Array(resolution*resolution*4);
  const stone=/urban|dungeon|mine|blacksite|cargo|range|railroad|market|mall|office|grand-floor/.test(layout);

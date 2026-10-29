@@ -1,6 +1,8 @@
+import {allowAirFreightTakeoff} from './server-world-air-freight.mjs';
 import {airportRunways,aircraftRunway,runwayClearance,runwayParking} from './public/js/airport-navigation.js';
 export {aircraftAssistedInput} from './public/js/aircraft-assist.js';
 import {isAircraft} from './public/js/aircraft-flight.js';
+import {isShippingEnvironment} from './public/js/shipping-config.js';
 import {canonicalQuest} from './server-quest-teams.mjs';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
@@ -8,7 +10,7 @@ const fail=(message,statusCode=409)=>{throw Object.assign(Error(message),{status
 const runwayOf=(environment,aircraft)=>aircraftRunway(environment,aircraft);
 const speedOf=aircraft=>Math.max(0,Number(aircraft.flight?.airspeed??aircraft.flight?.speed)||0);
 const groundOf=aircraft=>Math.max(0,Number(aircraft.position?.y)||0)-Math.max(0,Number(aircraft.flight?.altitude)||0);
-function clearAssist(aircraft){aircraft.flight ||= {};aircraft.flight.assist=null;for(const key of ['assistStage','assistSince','assistParkingPoint','assistTargetAltitude','navigationDestinationId','navigationName','navigationParkingPoint','navigationLeg'])delete aircraft.flight[key];}
+function clearAssist(aircraft){aircraft.flight ||= {};aircraft.flight.assist=null;for(const key of ['assistStage','assistSince','assistTimeoutMs','assistParkingPoint','assistTargetAltitude','navigationDestinationId','navigationName','navigationParkingPoint','navigationLeg'])delete aircraft.flight[key];}
 const airborneOf=aircraft=>aircraft.flight?.airborne===true||aircraft.position.y>groundOf(aircraft)+.1;
 function safeAltitude(aircraft,environment,wanted=24){
  const ceiling=Number(environment?.airport?.ceiling??environment?.ceiling)||80,maximum=Math.max(.2,ceiling-groundOf(aircraft)-2);
@@ -30,9 +32,12 @@ export function startAircraftAssist(sim,player,environment,operation,now,collisi
   if(runwayBusy(sim,aircraft,destination))fail('The destination runway is occupied. Wait for it to clear.');
   const parking=[0,-30,30,-60,60].map(offset=>({...runwayParking(destination),z:destination.z+offset})).find(point=>!Object.values(sim.actors||{}).some(other=>other.id!==aircraft.id&&isAircraft(other)&&other.active!==false&&Math.hypot(other.position.x-point.x,other.position.z-point.z)<12));if(!parking)fail('The destination parking apron is full.');
   if(!airborne)startAircraftAssist(sim,player,environment,'takeoff',now,collision,objects);else clearAssist(aircraft);
-  Object.assign(flight,{navigationDestinationId:destination.id,navigationName:destination.name,navigationParkingPoint:parking,assistSince:now});
+  // Distant Strait airfields need enough time for passage, approach and taxi.
+  // The deadline is derived from server-owned geometry and remains bounded.
+  const durationMs=Math.max(isShippingEnvironment(environment)?480000:240000,Math.min(600000,Math.ceil(Math.hypot(destination.x-aircraft.position.x,destination.z-aircraft.position.z)/12*1000)+120000));
+  Object.assign(flight,{navigationDestinationId:destination.id,navigationName:destination.name,navigationParkingPoint:parking,assistSince:now,assistTimeoutMs:durationMs});
   if(airborne)Object.assign(flight,{assist:'navigate',assistStage:'passage',runwayId:destination.id,clearance:'landing',assistParkingPoint:parking});
-  lease.runwayHolder=holder;lease.expires=now+240000;player.input={};
+  lease.runwayHolder=holder;lease.expires=now+durationMs;player.input={};
   return 'Tower: automatic flight to '+destination.name+'. Takeoff, passage, landing and parking are included. Move the stick for manual control.';
  }
  if(operation==='continue')return flight.assist?'Flight assistance continues. Keep the controls centered, or move the flight stick for manual control.':'Manual flight controls are active. Choose Auto for assistance.';
@@ -64,6 +69,7 @@ export function startAircraftAssist(sim,player,environment,operation,now,collisi
   if(collision?.hasBodyClearance&&!collision.hasBodyClearance(environment,{...point,y:point.y+.3},.5))fail('The runway staging point is blocked.');
   clearAssist(aircraft);aircraft.position=point;aircraft.rotation={x:0,y:0,z:0};Object.assign(flight,{speed:0,airspeed:0,throttle:0,throttleCommand:1,pitch:0,bank:0,altitude:0,airborne:false,clearance:'takeoff',assist:'takeoff',assistStage:'roll',assistSince:now});
   player.position={...point};player.yaw=0;player.floor=point.y;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
+  allowAirFreightTakeoff(player,aircraft,now);
   // Staging the assigned craft for takeoff is part of its flight mission.
   // Map relocation still changes the revision without updating this proof.
   const mission=canonicalQuest(sim,player),member=mission?.team?.[player.actorId];

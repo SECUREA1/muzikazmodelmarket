@@ -1,6 +1,8 @@
 import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {FISHING_GEAR} from './fishing-config.js';
+import {equipmentArtworkUrl} from './equipment-art-profile.js';
+export {equipmentArtworkUrl} from './equipment-art-profile.js';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // These are tool illustrations, not substitutes for a placeable model. Distinct
@@ -43,5 +45,6 @@ export const TOOL_PREVIEW_IDS=Object.freeze(Object.keys(shapes));
 export function toolPreviewArt(toolId,{name,color}={}){
  if(!Object.hasOwn(shapes,toolId))return '';
  const profile=RANGED_WEAPONS[toolId]||UTILITY_TOOLS[toolId]||FISHING_GEAR.find(item=>item.id===toolId),choice=color||profile?.color,fill=/^#[\da-f]{6}$/i.test(choice||'')?choice:'#'+Number(profile?.color??colors[toolId]??0x9cff69).toString(16).padStart(6,'0');
- return `<svg viewBox="0 0 64 64" data-tool-illustration="${escape(toolId)}" role="img" aria-label="${escape(name||profile?.label||profile?.name||toolId)} tool illustration" style="color:${fill};fill:currentColor" stroke-linejoin="round" stroke-linecap="round">${shapes[toolId]}</svg>`;
+ const artwork=equipmentArtworkUrl(toolId);
+ return `<svg viewBox="0 0 ${artwork?'320 320':'64 64'}" data-tool-illustration="${escape(toolId)}" role="img" aria-label="${escape(name||profile?.label||profile?.name||toolId)} tool illustration" style="color:${fill};fill:currentColor" stroke-linejoin="round" stroke-linecap="round">${artwork?`<image width="320" height="320" href="${artwork}"/>`:shapes[toolId]}</svg>`;
 }

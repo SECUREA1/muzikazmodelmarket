@@ -1,5 +1,6 @@
 // The carnival's reusable assemblies share identities across the renderer,
 // editable map, authenticated market, Backpack and room placement runtimes.
+import {equipmentArtworkUrl} from './equipment-art-profile.js';
 const item=(name,description,dimensions,{type='props',priceMzk=100,kind=null,approach=null,...settings}={})=>Object.freeze({
  name,description:description+' From Midnight Laughs Funhouse.',dimensions:Object.freeze(dimensions),
  type,category:'funhouse',collection:'Clown funhouse',priceMzk,kind,
@@ -36,7 +37,7 @@ const authoredItems={
  'funhouse-driver-avatar':item('Impossible Car Driver Clown','Playable creepy tiny-car driver clown with pallid makeup, sharply arched brows, a sinister toothy grin, a dark circus outfit, huge shoes and an animated propeller hat.',[.95,1.8,.906],{type:'avatar',priceMzk:300,characterRole:'Clown driver',dialogue:'HONK HONK! Nobody knows how we all fit into that car. Give its horn a squeeze and watch.'}),
  'funhouse-scare-clown-avatar':item('Fright Box Scary Clown','Playable creepy fright-box clown with pallid makeup, angular dark eyes, a sinister toothy grin, a dark purple carnival suit, enormous shoes and a spinning hat.',[.95,1.8,.906],{type:'avatar',priceMzk:300,characterRole:'Scare clown',dialogue:'Boo! Wind up the fright box, find the maze bell and remember to keep laughing.'})
 };
-export const FUNHOUSE_ITEMS=Object.freeze(Object.fromEntries(Object.entries(authoredItems).map(([id,value])=>[id,Object.freeze({...value,thumbnailUrl:'/public/images/funhouse/items/'+id+'.svg'})])));
+export const FUNHOUSE_ITEMS=Object.freeze(Object.fromEntries(Object.entries(authoredItems).map(([id,value])=>[id,Object.freeze({...value,thumbnailUrl:equipmentArtworkUrl(id)||'/public/images/funhouse/items/'+id+'.svg'})])));
 export const FUNHOUSE_MODEL_INFO=Object.freeze(Object.fromEntries(Object.entries(FUNHOUSE_ITEMS).map(([id,value])=>[id,[value.name,value.description,value.dimensions]])));
 export function funhouseItemSettings(id){
  const value=FUNHOUSE_ITEMS[id];if(!value)return null;

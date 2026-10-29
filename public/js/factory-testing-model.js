@@ -2,6 +2,7 @@ import * as T from '../vendor/three/three.module.min.js';
 import {PROVING_DASHBOARD_STATIONS,PROVING_COUNTDOWN_MS,PROVING_FLIGHT_MS,testingStations,testingTargets} from './factory-test-config.js';
 import {createFactoryModel} from './missile-factory-model.js';
 import {createConstructionBaseGeometry} from './construction-terrain.js';
+import {finishMountainTerrainDesign} from './mountain-terrain-design.js';
 export {createMountainCompoundLand} from './mountain-compound-model.js';
 
 /** A common physical scene is used by the client, previews and server collision. */
@@ -118,5 +119,5 @@ export function createFactoryProvingGroundsLand(environment={}){
   flightRoot.position.set(x,height,z);flightRoot.rotation.set(airborne?Math.atan2(dy,Math.hypot(dx,dz)):0,Math.atan2(-dx,-dz),0);exhaust.visible=airborne;exhaust.scale.y=reducedMotion?1:.9+Math.sin(t*31)*.15;
   if(now>=flightEnd){flightRoot.visible=active.profileId==='cargo';flightRoot.position.set(end.x,.25,end.z);flightRoot.rotation.x=0;const effect=active.profileId==='cargo'?touchdown:pulse,age=(now-flightEnd)/1000;effect.visible=age<2;effect.position.set(end.x,.15,end.z);effect.scale.setScalar(1+age*4);effect.material.opacity=Math.max(0,.8-age*.4);}
  };
- root.userData.setFactoryTestingState=root.userData.setTestingState;root.userData.updateFactoryTestingEffects=root.userData.updateTestingEffects;root.userData.updateTestingEffects(0);return root;
+ root.userData.setFactoryTestingState=root.userData.setTestingState;root.userData.updateFactoryTestingEffects=root.userData.updateTestingEffects;root.userData.updateTestingEffects(0);return finishMountainTerrainDesign(T,root,{ridgeNames:['PROVING_MOUNTAIN_RIDGE']});
 }

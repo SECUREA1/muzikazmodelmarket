@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateNeuralVoice,neuralVoiceStatus,shutdownNeuralVoiceEngine} from '../server-neural-voice-engine.mjs';
+import {ensureVoiceRuntime} from '../server-voice-runtime.mjs';
 
 test('local voice validation rejects invalid work before starting inference',async()=>{
  for(const input of [{text:''},{text:'x'.repeat(1201)},{text:'Hello.',voice:'unknown'},{text:'Hello.',speed:2}]){
@@ -13,6 +14,7 @@ test('local voice validation rejects invalid work before starting inference',asy
 });
 
 test('real local neural voices produce distinct playable WAV audio and recover after cancellation',{skip:process.env.MUZIKAZ_TEST_NEURAL_VOICES!=='1',timeout:120000},async t=>{
+ await ensureVoiceRuntime();
  assert.equal(neuralVoiceStatus().available,true,'Install the local model before enabling this integration check.');
  t.after(shutdownNeuralVoiceEngine);
  const controller=new AbortController(),cancelled=generateNeuralVoice({text:'Please cancel this request before it is spoken.',signal:controller.signal});

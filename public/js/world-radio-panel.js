@@ -28,7 +28,7 @@ export function mountWorldRadioPanel(root,{command,onNavigate,voice=questConvers
  function localCalls(){
   if(!environment?.id)return [];
   const worldId=environment.id,worldName=environment.name||worldId,calls=[],dispatch=snapshot.liveDispatch;
-  if(dispatch)calls.push({...dispatch,id:dispatch.id,type:'ai',worldId,worldName,speaker:dispatch.speaker||'Dispatch'});
+  if(dispatch)calls.push({...dispatch,description:dispatch.description||snapshot.questOffers?.find(offer=>offer.id===dispatch.questId)?.description||'',id:dispatch.id,type:'ai',worldId,worldName,speaker:dispatch.speaker||'Dispatch'});
   for(const team of snapshot.questTeams||[])calls.push({...team,id:team.id,type:'player',teamId:team.id,worldId,worldName,speaker:team.leader,leaderId:team.leaderId||team.speakerId});
   return calls;
  }
@@ -61,7 +61,7 @@ export function mountWorldRadioPanel(root,{command,onNavigate,voice=questConvers
    }
    row.call=call;
    row.article.dataset.type=call.type;
-   const heading=call.title,details=(call.type==='player'?'Player · '+(call.speaker||call.leader||'Crew')+' · '+call.members+'/4':'AI dispatch')+' · '+(call.worldName||call.worldId)+' · '+(labels[call.mode]||call.mode||'Local job');
+   const heading=call.title,details=(call.type==='player'?'Player · '+(call.speaker||call.leader||'Crew')+' · '+call.members+'/4':'AI dispatch')+' · '+(call.worldName||call.worldId)+' · '+(labels[call.mode]||call.mode||'Local job')+(call.description?' — '+call.description:'');
    const blocked=reason(call),label=call.worldId!==environment?.id?'Travel to call':call.type==='player'?'Join & help':'Accept job';
    if(row.heading.textContent!==heading)row.heading.textContent=heading;
    if(row.details.textContent!==details)row.details.textContent=details;
@@ -105,7 +105,7 @@ export function mountWorldRadioPanel(root,{command,onNavigate,voice=questConvers
     let spoken=0;
     for(const call of remote){
      if(baseline&&!seen.has(announcementKey(call))&&call.worldId!==environment.id&&Number.isFinite(call.at)&&now()-call.at>=0&&now()-call.at<15000&&spoken<2){
-      voice.announce((call.speaker||'Dispatch')+'. '+(call.type==='player'?'Requesting help. ':'New job. ')+call.title+'. '+(call.worldName||call.worldId)+'. Open World radio to respond.',{key:'world-radio:'+announcementKey(call),worldId:environment.id,category:'announcements',voice:call.speaker||'Dispatch',role:'dispatcher'});spoken++;
+      voice.announce((call.speaker||'Dispatch')+'. '+(call.type==='player'?'Requesting help. ':'New job. ')+call.title+'. '+(call.worldName||call.worldId)+'. '+(call.description?call.description+' ':'')+'Open World radio to respond.',{key:'world-radio:'+announcementKey(call),worldId:environment.id,category:'announcements',voice:call.speaker||'Dispatch',role:'dispatcher'});spoken++;
      }
      remember(call);
     }

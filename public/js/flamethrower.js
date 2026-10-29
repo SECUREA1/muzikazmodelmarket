@@ -1,3 +1,5 @@
+import {finishHeldToolDesign} from './held-tool-design-finish.js';
+
 export const FLAME_CONFIG = Object.freeze({
   tank: 100, fuelPerBurst: 1, interval: .08, range: 12,
   muzzleOffset: .55,
@@ -63,7 +65,7 @@ export class Flamethrower {
     root.add(nozzle, tank, handle);
     root.position.set(.43, -.36, -.8);
     root.traverse(o => { if (o.isMesh) { o.material.depthTest = false; o.renderOrder = 20; } });
-    return root;
+    return finishHeldToolDesign(T,root,'flamethrower');
   }
 
   refill(amount = FLAME_CONFIG.tank) { this.fuel = Math.min(FLAME_CONFIG.tank, this.fuel + Math.max(0, amount)); }

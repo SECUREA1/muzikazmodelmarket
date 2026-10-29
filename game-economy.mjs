@@ -11,6 +11,7 @@ import {SHIPPING_STOCK_ITEMS,shippingStockQuantity} from './public/js/shipping-m
 import {FACTORY_TESTING_ITEMS,factoryTestingItemSettings} from './public/js/factory-testing-items.js';
 import {FACTORY_ITEMS,factoryItemSettings} from './public/js/missile-factory-items.js';
 import {NATIVE_BUILDER_ITEMS,nativeBuilderItem} from './public/js/native-builder-items.js';
+import {NATIVE_DESIGN_VERSION,nativeDesignThumbnail} from './public/js/native-design-profile.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const backpack=(await json('./public/models/backpack-assets.json')).assets;
 const document=await json('./public/models/glb-models.json');
@@ -49,7 +50,9 @@ export const GAME_ECONOMY=raw.map(record=>{
  const logistics=FACTORY_LOGISTICS_ITEMS[record.buildAssetId],testing=FACTORY_TESTING_ITEMS[record.buildAssetId],factory=logistics||testing||FACTORY_ITEMS[record.buildAssetId],item=factory?{...record,...factory,kind:record.kind,category:logistics?'Factory freight & trade':testing?'Factory testing & containment':'Factory & engineering',builderCategory:testing?'factory-testing':'factory',function_data:logistics?factoryLogisticsItemSettings(record.buildAssetId):testing?factoryTestingItemSettings(record.buildAssetId):factoryItemSettings(record.buildAssetId)}:record;
  const priceMzk=catalogItemPrice(item),native=nativeBuilderItem(item.buildAssetId || (item.materialId?'material:'+item.materialId:null));
  const metadata=native?{...native,...item,buildAssetId:native.buildAssetId,behavior:native.behavior,assetType:['avatar','enemy','vehicle','wearable'].includes(native.type)?native.type:item.assetType,builderCategory:item.builderCategory||native.category,description:native.description||item.description,format:'procedural-3d',function_data:factory?item.function_data:{...native.function_data,...item.function_data,behavior:native.behavior},...Object.fromEntries(['vehicleSettings','movementSettings','aiSettings','questSettings','dialogueSettings','environmentSettings','animationState'].filter(key=>native[key]||item[key]).map(key=>[key,{...native[key],...item[key]}]))}:item;
- return {...metadata,native:Boolean(native||item.kind==='tool'||item.builderLayoutId),nativeFunction:native?.behavior||(item.kind==='tool'?item.toolId:item.builderLayoutId?'map-template':null),priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};
+ const designId=native?.id||(item.kind==='tool'?'tool:'+item.toolId:item.builderLayoutId?'layout:'+item.builderLayoutId:null);
+ const design=designId?{visualDesign:{version:NATIVE_DESIGN_VERSION,thumbnailUrl:nativeDesignThumbnail(designId)},thumbnailUrl:nativeDesignThumbnail(designId)}:{};
+ return {...metadata,...design,native:Boolean(native||item.kind==='tool'||item.builderLayoutId),nativeFunction:native?.behavior||(item.kind==='tool'?item.toolId:item.builderLayoutId?'map-template':null),priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};
 });
 export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);}
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};

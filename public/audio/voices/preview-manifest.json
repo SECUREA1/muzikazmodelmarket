@@ -1,0 +1,26 @@
+{
+  "generator": "Kokoro-82M v1.0 local neural voice engine",
+  "format": "PCM16, mono 24 kHz, native pitch and no reverberation",
+  "clips": [
+    {
+      "voice": "female",
+      "text": "Hello. This is your selected voice. You are ready to explore the world.",
+      "url": "/public/audio/voices/female-preview.wav",
+      "speed": 1,
+      "bytes": 232844,
+      "durationMs": 4850,
+      "sha256": "ecfdb6b3f55d46829e52fa9c440b0c03a7eeba9845aa35e7adc7e64c84cade23",
+      "signature": "b93b1be5053de12091a147f60150117b98945e2bcd1dbe5b66966d892140f054"
+    },
+    {
+      "voice": "male",
+      "text": "Hello. This is your selected voice. You are ready to explore the world.",
+      "url": "/public/audio/voices/male-preview.wav",
+      "speed": 1,
+      "bytes": 279644,
+      "durationMs": 5825,
+      "sha256": "05440ad323af4f5ee3f0afbbe8bd0804b2daffe05113d2e4639ce6fecf5b13ca",
+      "signature": "fef1b99b32002ae7bd0b2c28cc4fab4c2de05813bec79dfdf4e380cafdd7863f"
+    }
+  ]
+}

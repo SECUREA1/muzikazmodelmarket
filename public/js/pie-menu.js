@@ -33,9 +33,9 @@ export function mountPieMenu({container,selector=':scope > button',label='Quick 
   art=document.createElement('div');art.className='game-pie-preview-art';art.setAttribute('aria-hidden','true');
   const kicker=document.createElement('small');kicker.className='game-pie-preview-kicker';kicker.textContent='SELECTION PREVIEW';title=document.createElement('h4');description=document.createElement('p');meta=document.createElement('p');meta.className='game-pie-preview-meta';action=document.createElement('button');action.type='button';action.className='game-pie-preview-action';action.onclick=()=>{if(current&&!current.disabled&&!current.hidden)current.click();};detail.append(art,kicker,title,description,meta,action);root.append(detail);
  }
- function showPreview(button){
+ function showPreview(button,force=false){
   if(!buttons.includes(button)||button.hidden)return;
-  const changed=current!==button;current=button;
+  const changed=current!==button;if(!changed&&!force)return;current=button;
   for(const [choice,path]of paths)path.classList.toggle('is-previewed',choice===current);
   if(changed)onPreview?.(button);
   if(!preview)return;
@@ -59,7 +59,7 @@ export function mountPieMenu({container,selector=':scope > button',label='Quick 
   }
   counter.textContent=`${page+1} / ${pages}`;navigation.hidden=pages===1;previous.disabled=page===0;next.disabled=page===pages-1;
   const target=choices.includes(preferred)?preferred:choices.includes(current)?current:choices.find(button=>button.getAttribute('aria-pressed')==='true')||choices[0];
-  if(target)showPreview(target);else if(detail){title.textContent='No actions available';description.textContent='Your available actions will appear here.';art.replaceChildren();meta.hidden=true;action.disabled=true;}
+  if(target)showPreview(target,true);else if(detail){title.textContent='No actions available';description.textContent='Your available actions will appear here.';art.replaceChildren();meta.hidden=true;action.disabled=true;}
  }
  previous.onclick=()=>{if(page>0){page--;render();}};next.onclick=()=>{if((page+1)*pageSize<visibleButtons().length){page++;render();}};
  const keydown=event=>{const available=visibleButtons(),index=available.indexOf(document.activeElement);if(index<0)return;let step=0;if(['ArrowRight','ArrowDown'].includes(event.key))step=1;if(['ArrowLeft','ArrowUp'].includes(event.key))step=-1;if(!step&&event.key!=='Home'&&event.key!=='End')return;event.preventDefault();let target=event.key==='Home'?0:event.key==='End'?available.length-1:index;

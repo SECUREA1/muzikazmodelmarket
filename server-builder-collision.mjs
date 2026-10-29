@@ -15,6 +15,7 @@ import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from 
 import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes,placementMeshMatrices} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,updatePlacedCollisionPoses,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
+import {prepareAuthoredBuilderModel} from './public/js/authored-builder-models.js';
 import {accelerateStaticRaycast} from './server-mesh-raycast.mjs';
 import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/js/building-materials.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
@@ -40,26 +41,49 @@ function disposePlacedWorldEntry(entry){
  if(entry.construction){resources.add(entry.construction.geometry);resources.add(entry.construction.material);}
  for(const resource of resources)resource.dispose();entry.root.clear();
 }
+function disposeStaticWorld(world){
+ const resources=new Set();
+ world.root.traverse(mesh=>{if(mesh.geometry)resources.add(mesh.geometry);for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material])if(material)resources.add(material);});
+ for(const resource of resources)resource.dispose();
+ world.root.clear();
+}
 function indexCollisionMeshes(meshes){
  const cells=new Map(),large=[];
  for(const mesh of meshes){const box=collisionMeshBounds(mesh),x1=Math.floor(box.min.x/8),x2=Math.floor(box.max.x/8),z1=Math.floor(box.min.z/8),z2=Math.floor(box.max.z/8);if((x2-x1+1)*(z2-z1+1)>1024){large.push(mesh);continue;}for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++){const key=x+':'+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(mesh);}}
- return {cells,large};
+ return {cells,large,order:new Map(meshes.map((mesh,index)=>[mesh,index]))};
 }
 function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(index.large);for(let x=Math.floor(minX/8);x<=Math.floor(maxX/8);x++)for(let z=Math.floor(minZ/8);z<=Math.floor(maxZ/8);z++)for(const mesh of index.cells.get(x+':'+z)||[])found.add(mesh);return nearCollisionMeshes([...found],minX,maxX,minZ,maxZ);}
 
 
+// These predicates are shared by ordinary shot queries and the short-lived
+// three-ray boat view. Keep range, open/held actor and GLB semantics identical.
+function shotBlockedByView(world,placed,actors,origin,direction,distance){
+ const start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
+ if(placed.boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
+ if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
+ return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+}
 function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)&&!isConstructionMachine(actor)&&!actor.constructionManaged));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
+const wallTriangleCache=new WeakMap();
+function triangleAttributeState(attribute){return attribute?[attribute,attribute.array,attribute.version,attribute.count,attribute.itemSize,attribute.normalized,attribute.offset,attribute.data,attribute.data?.array,attribute.data?.version,attribute.data?.stride]:null;}
+function sameTriangleAttribute(state,attribute){return attribute?Boolean(state&&state[0]===attribute&&state[1]===attribute.array&&state[2]===attribute.version&&state[3]===attribute.count&&state[4]===attribute.itemSize&&state[5]===attribute.normalized&&state[6]===attribute.offset&&state[7]===attribute.data&&state[8]===attribute.data?.array&&state[9]===attribute.data?.version&&state[10]===attribute.data?.stride):state===null;}
 function wallTriangles(mesh){
- const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
- if(!positions)return triangles;
- const count=index?index.count:positions.count;
- for(const matrix of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
-  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(matrix));
+ const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index;
+ if(!positions)return [];
+ const matrix=mesh.matrixWorld.elements,objectId=builderObjectId(mesh),cached=wallTriangleCache.get(mesh);
+ // Spatially bounded queries often revisit the same nearby hull. Retain its
+ // transformed triangles until any input read by this extraction changes.
+ // Buffer/instance updates use Three.js's normal needsUpdate/version contract.
+ if(cached&&cached.geometry===geometry&&cached.instanced===mesh.isInstancedMesh&&cached.count===mesh.count&&cached.objectId===objectId&&sameTriangleAttribute(cached.positions,positions)&&sameTriangleAttribute(cached.index,index)&&sameTriangleAttribute(cached.instances,mesh.instanceMatrix)&&matrix.every((value,i)=>value===cached.matrix[i]))return cached.triangles;
+ const triangles=[],count=index?index.count:positions.count;
+ for(const transform of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
+  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(transform));
   const [a,b,c]=vertices,normal=new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize();
   if(Math.abs(normal.y)>=.55)continue;
-  triangles.push({a,b,c,mesh,objectId:builderObjectId(mesh),minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
+  triangles.push({a,b,c,mesh,objectId,minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});
  }
+ wallTriangleCache.set(mesh,{geometry,positions:triangleAttributeState(positions),index:triangleAttributeState(index),instances:triangleAttributeState(mesh.instanceMatrix),instanced:mesh.isInstancedMesh,count:mesh.count,objectId,matrix:[...matrix],triangles});
  return triangles;
 }
 function boxSegments(box){const {min,max}=box;return [[min.x,min.z,max.x,min.z],[max.x,min.z,max.x,max.z],[max.x,max.z,min.x,max.z],[min.x,max.z,min.x,min.z]].map(([ax,az,bx,bz])=>({a:{x:ax,z:az},b:{x:bx,z:bz}}));}
@@ -77,15 +101,84 @@ function queryIndex(index,minX,maxX,minZ,maxZ){
  for(let x=Math.floor(minX/WALL_GRID_SIZE);x<=Math.floor(maxX/WALL_GRID_SIZE);x++)for(let z=Math.floor(minZ/WALL_GRID_SIZE);z<=Math.floor(maxZ/WALL_GRID_SIZE);z++)for(const triangle of index.cells.get(x+':'+z)||[])nearby.add(triangle);
  return nearby;
 }
+const wallGroupCache=new WeakMap(),combinedWallCache=new WeakMap(),wallTriangleIndexCache=new WeakMap();
+function cachedGroupWalls(group){
+ // Mesh face arrays change only when physical geometry or its world pose
+ // changes. Reuse full diagnostic arrays while those exact faces stay valid.
+ const sets=group.meshes.map(wallTriangles),cached=wallGroupCache.get(group);
+ if(cached&&cached.sets.length===sets.length&&sets.every((set,i)=>set===cached.sets[i])){group.wallTriangles=cached.triangles;return cached;}
+ const triangles=sets.flat(),entry={sets,triangles};
+ group.wallTriangles=triangles;
+ wallGroupCache.set(group,entry);return entry;
+}
+function combinedGroupWalls(entry,groups){
+ const sets=groups.map(group=>cachedGroupWalls(group).triangles),cached=combinedWallCache.get(entry);
+ if(cached&&sets.every((set,i)=>set===cached.sets[i]))return cached.triangles;
+ const triangles=sets.flat();combinedWallCache.set(entry,{sets,triangles});return triangles;
+}
+function nearbyMeshWalls(meshes,minX,maxX,minZ,maxZ){
+ const triangles=[];
+ for(const mesh of meshes){
+  const faces=wallTriangles(mesh);let indexed=wallTriangleIndexCache.get(faces);
+  // Materialize and index only the meshes selected by current physical bounds.
+  // A changed pose, membership or buffer produces a new exact face array, so
+  // its old index cannot survive geometry invalidation. The weak key does not
+  // retain evicted room resources merely to keep a route-planning index alive.
+  if(!indexed){indexed={index:indexWalls(faces),order:new Map(faces.map((face,index)=>[face,index]))};wallTriangleIndexCache.set(faces,indexed);}
+  const nearby=[...queryIndex(indexed.index,minX,maxX,minZ,maxZ)].filter(triangle=>triangle.maxX>=minX&&triangle.minX<=maxX&&triangle.maxZ>=minZ&&triangle.minZ<=maxZ);
+  // Preserve the original full-scan face order for equal-time sweep contacts.
+  nearby.sort((a,b)=>indexed.order.get(a)-indexed.order.get(b));triangles.push(...nearby);
+ }
+ return triangles;
+}
 function nearbyWalls(world,minX,maxX,minZ,maxZ){
  if(!world)return [];
+ if(world.nearbyTriangles)return world.nearbyTriangles(minX,maxX,minZ,maxZ);
  if(!world.wallIndex)return world.triangles||world.floors.flatMap(wallTriangles);
  return queryIndex(world.wallIndex,minX,maxX,minZ,maxZ);
+}
+function staticWallQuery(floors,floorIndex){
+ const order=new Map(floors.map((mesh,index)=>[mesh,index])),wide=[];
+ for(const mesh of floors){const {min,max}=collisionMeshBounds(mesh);if((Math.floor(max.x/WALL_GRID_SIZE)-Math.floor(min.x/WALL_GRID_SIZE)+1)*(Math.floor(max.z/WALL_GRID_SIZE)-Math.floor(min.z/WALL_GRID_SIZE)+1)>256)wide.push(mesh);}
+ return (minX,maxX,minZ,maxZ)=>{
+  const x1=Math.floor(minX/WALL_GRID_SIZE),x2=Math.floor(maxX/WALL_GRID_SIZE),z1=Math.floor(minZ/WALL_GRID_SIZE),z2=Math.floor(maxZ/WALL_GRID_SIZE);
+  // Match the original wall grid's candidates and order, but materialize
+  // exact faces only for nearby meshes and possible large-grid faces.
+  const meshes=[...new Set([...wide,...queryCollisionMeshes(floorIndex,x1*WALL_GRID_SIZE,(x2+1)*WALL_GRID_SIZE,z1*WALL_GRID_SIZE,(z2+1)*WALL_GRID_SIZE)])].sort((a,b)=>order.get(a)-order.get(b)),found=[];
+  for(const mesh of meshes)for(const triangle of wallTriangles(mesh)){
+   const ax=Math.floor(triangle.minX/WALL_GRID_SIZE),bx=Math.floor(triangle.maxX/WALL_GRID_SIZE),az=Math.floor(triangle.minZ/WALL_GRID_SIZE),bz=Math.floor(triangle.maxZ/WALL_GRID_SIZE),large=(bx-ax+1)*(bz-az+1)>256;
+   if(!large&&(bx<x1||ax>x2||bz<z1||az>z2))continue;
+   found.push({triangle,x:large?-Infinity:Math.max(x1,ax),z:large?-Infinity:Math.max(z1,az)});
+  }
+  found.sort((a,b)=>a.x-b.x||a.z-b.z);
+  return found.map(value=>value.triangle);
+ };
 }
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
- constructor({maxPlacedWorlds=20}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));}
+ constructor({maxPlacedWorlds=20,maxPlacedVariants=8}={}){this.cache=new Map();this.objectCache=new Map();this.placedWorlds=new Map();this.maxPlacedWorlds=Math.min(20,Math.max(1,Math.floor(maxPlacedWorlds)||20));this.maxPlacedVariants=Math.min(8,Math.max(1,Math.floor(maxPlacedVariants)||8));this.activeWorldIds=new Set();}
+ // A live room owns its collision resources. Evicting one live room to build
+ // the next makes fleets larger than the idle cache rebuild every world on
+ // every tick. Idle inspection queries still use the bounded LRU below.
+ activateWorld(id){this.activeWorldIds.add(id);}
+ setActiveWorlds(ids){
+  const next=new Set(ids),previous=this.activeWorldIds;this.activeWorldIds=next;
+  for(const id of previous)if(!next.has(id))this.releaseWorld(id);
+  this.pruneWorlds();
+ }
+ releaseWorld(id){
+  this.activeWorldIds.delete(id);
+  for(const [key,world]of this.cache)if(world.environmentId===id){disposeStaticWorld(world);this.cache.delete(key);}
+  const placed=this.placedWorlds.get(id);if(placed){disposePlacedWorldEntry(placed);this.placedWorlds.delete(id);if(this.placedCombinedRoot===placed.root)this.placedCache=this.trafficCollision=this.constructionCollision=this.placedCombinedRoot=null;}
+ }
+ pruneWorlds(){
+  const idle=[...this.cache].filter(([,world])=>!this.activeWorldIds.has(world.environmentId));
+  for(const [key,world]of idle.slice(0,Math.max(0,idle.length-20))){disposeStaticWorld(world);this.cache.delete(key);}
+  const idlePlaced=[...this.placedWorlds].filter(([id])=>!this.activeWorldIds.has(id));
+  for(const [id,entry]of idlePlaced.slice(0,Math.max(0,idlePlaced.length-this.maxPlacedWorlds))){disposePlacedWorldEntry(entry);this.placedWorlds.delete(id);}
+ }
+ clearWorlds(){for(const world of this.cache.values())disposeStaticWorld(world);this.cache.clear();this.clearPlacedWorlds();for(const world of this.objectCache.values())disposeStaticWorld(world);this.objectCache.clear();this.activeWorldIds.clear();}
  withActorCandidates(actors,callback){
   const previous=this.actorCandidateScope,scope={actors,stable:Object.create(null),traffic:Object.create(null),construction:Object.create(null)};
   // Resident movement issues many floor/clearance queries against the same
@@ -117,35 +210,39 @@ export class ServerBuilderCollision {
   return {floors:[...new Set(floors)],triangles:[...new Set(triangles)]};
  }
  world(environment){
-  const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
+  const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key)){const world=this.cache.get(key);this.cache.delete(key);this.cache.set(key,world);return world;}
+  // A revised room must not retain obsolete geometry merely because its ID
+  // is active. Keep one static revision per room and dispose the old one.
+  for(const [oldKey,old]of this.cache)if(old.environmentId===environment.id){disposeStaticWorld(old);this.cache.delete(oldKey);}
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
-  for(const item of environment.builderScene?.objects||[]){if(item.casinoStation||isBasketball(item)||isWatercraft(item)||isAircraft(item)||isConstructionMachine(item)||item.constructionManaged)continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
+  for(const item of environment.builderScene?.objects||[]){if(item.casinoStation||isBasketball(item)||isWatercraft(item)||isAircraft(item)||isConstructionMachine(item)||item.constructionManaged)continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){const content=prepareAuthoredBuilderModel(environmentGeometry({modelUrl:definition.modelUrl}),definition);object=new THREE.Group();object.add(content);}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(mesh.isMesh)mesh.geometry=layoutCollisionGeometry(mesh.geometry);if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   if(!glb)for(const mesh of floors)if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')&&!mesh.isInstancedMesh&&!Array.isArray(mesh.material))accelerateStaticRaycast(mesh,{respectMaterialSide:true});
-  const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
-  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),floorIndex:indexCollisionMeshes(floors),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
+  const floorIndex=indexCollisionMeshes(floors),world={environmentId:environment.id,root,walls,floors,get triangles(){return floors.flatMap(wallTriangles);},nearbyTriangles:staticWallQuery(floors,floorIndex),floorIndex,glb,bounds};this.cache.set(key,world);this.pruneWorlds();return world;
 
  }
  placedWorld(actors={},objects={},environment=null){
   const scope=environment?.id||'__unscoped__',version=JSON.stringify([environment?.contentUpdatedAt||environment?.updatedAt||'',environment?.builderScene?.baseTransform||{}]);let entry=this.placedWorlds.get(scope);
   if(entry&&entry.version!==version){disposePlacedWorldEntry(entry);entry=null;}
-  if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
-  // Each simulation room keeps its own native craft and moving hulls. The
-  // actors-only query and the query including saved pieces also alternate
-  // during one tick, so retain one current geometry set for each variant.
+  const newEntry=!entry;if(!entry)entry={version,variants:new Map(),root:new THREE.Group()};
+  // Collision probes alternate between saved pieces and actor-only views, and
+  // each vehicle excludes its own body while checking a proposed movement.
+  // Retain a bounded set of those physical memberships per room rather than
+  // disposing and rebuilding every native vehicle on each footprint sample.
   this.placedWorlds.delete(scope);this.placedWorlds.set(scope,entry);
-  if(this.placedWorlds.size>this.maxPlacedWorlds){const [oldScope,old]=this.placedWorlds.entries().next().value;disposePlacedWorldEntry(old);this.placedWorlds.delete(oldScope);}
+  if(newEntry)this.pruneWorlds();
   const candidates=this.actorCandidateScope?.actors===actors?this.actorCandidateScope:null;
   const stableActors=candidates?.stable||Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
   const objectState=Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),actorState=Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[[actor.id,actor.modelId,actor.asset?.id,actor.asset?.buildAssetId,actor.asset?.modelUrl,actor.asset?.renderKind,actor.asset?.configuration,actor.asset?.targetHeight,actor.placementRevision,actor.active,actor.holderId],actor.position,actor.rotation,actor.scale]);
   const key=JSON.stringify([objectState,actorState]),geometryKey=JSON.stringify([objectState,actorState.map(actor=>actor[0])]);
-  const variant=Object.keys(objects).length>0?'with-objects':'actors';let cached=entry.variants.get(variant);
-  if(cached?.key!==key){
-   if(cached?.geometryKey===geometryKey){updatePlacedCollisionPoses(cached.world,stableActors);cached.key=key;}
-   else{cached?.world.root.removeFromParent();disposePlacedCollision(cached?.world);cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};entry.variants.set(variant,cached);}
-  }
+  const variant=(Object.keys(objects).length>0?'with-objects:':'actors:')+geometryKey;let cached=entry.variants.get(variant);
+  if(!cached)cached={key,geometryKey,world:placedCollisionWorld(stableActors,objects)};
+  else if(cached.key!==key){updatePlacedCollisionPoses(cached.world,stableActors);cached.key=key;}
+  entry.variants.delete(variant);entry.variants.set(variant,cached);
+  if(entry.variants.size>this.maxPlacedVariants){const [oldKey,old]=entry.variants.entries().next().value;old.world.root.removeFromParent();disposePlacedCollision(old.world);entry.variants.delete(oldKey);}
   const world=cached.world;
   entry.construction=syncConstructionCollision(entry.construction,candidates?.construction||actors);entry.traffic=syncTrafficCollision(entry.traffic,candidates?.traffic||actors);
   for(const child of [...entry.root.children])if(child!==world.root&&child!==entry.traffic.root&&child!==entry.construction.root)entry.root.remove(child);
@@ -155,16 +252,24 @@ export class ServerBuilderCollision {
   const traffic=entry.traffic,construction=entry.construction;
   // Existing diagnostics inspect the most recently queried collision world.
   this.placedCache=cached;this.trafficCollision=traffic;this.constructionCollision=construction;this.placedCombinedRoot=entry.root;
+  const nearbyMeshes=(minX,maxX,minZ,maxZ)=>[
+   ...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),
+   ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
+   ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
+  ];
   return {
    root:entry.root,
    boxes:[...world.boxes,...traffic.boxes,...construction.boxes],
    meshes:[...world.meshes,...traffic.meshes,...construction.meshes],
-   nearbyMeshes(minX,maxX,minZ,maxZ){return [
-    ...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),
-    ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
-    ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
-   ];},
-   get triangles(){return [...(world.wallTriangles ||= world.meshes.flatMap(wallTriangles)),...traffic.meshes.flatMap(wallTriangles),...construction.meshes.flatMap(wallTriangles)];}
+   nearbyMeshes,
+   nearbyTriangles(minX,maxX,minZ,maxZ){
+    const meshes=nearbyMeshes(minX,maxX,minZ,maxZ),order=world.meshIndex.order;
+    // Retain stable/traffic/construction order even when the spatial cells are
+    // visited in a different order. Moving groups keep their existing order.
+    meshes.sort((a,b)=>(order.get(a)??Infinity)-(order.get(b)??Infinity));
+    return nearbyMeshWalls(meshes,minX,maxX,minZ,maxZ);
+   },
+   get triangles(){return combinedGroupWalls(entry,[world,traffic,construction]);}
   };
  }
  stackAsset(environment,asset,position,rotation,scale,actors={},objects={}){
@@ -196,12 +301,24 @@ export class ServerBuilderCollision {
   const id=hit&&builderObjectId(hit.object),actor=actors[id];
   return actor?.destructible&&actor.active!==false?{entity:actor,along:hit.distance}:null;
  }
+ withShotCollisionView(environment,actors={},objects={},callback){
+  // Borrow one current view only during this synchronous callback. Never keep
+  // it for a boat-assist closure: actors can join, leave or move between calls.
+  // The caller must not mutate actors or geometry inside the borrowed callback.
+  const hasGeometry=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
+  const nativeShot=this.blocksShot===ServerBuilderCollision.prototype.blocksShot;
+  const world=nativeShot&&hasGeometry?this.world(environment):null,placed=nativeShot&&hasGeometry?this.placedWorld(actors,objects,environment):null;
+  let active=true;
+  try{return callback((origin,direction,distance)=>{
+   if(!active)throw new Error('Shot collision views are synchronous and cannot escape their callback.');
+   // Preserve instance/subclass overrides rather than bypassing custom logic.
+   if(!nativeShot)return this.blocksShot(environment,origin,direction,distance,actors,objects);
+   return hasGeometry?shotBlockedByView(world,placed,actors,origin,direction,distance):false;
+  });}finally{active=false;}
+ }
  blocksShot(environment,origin,direction,distance,actors={},objects={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
-  const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
-  if(this.placedWorld(actors,objects,environment).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
-  if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
-  return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+  return shotBlockedByView(this.world(environment),this.placedWorld(actors,objects,environment),actors,origin,direction,distance);
  }
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects,earthworks}={}){
   const world=this.world(environment),bounds=world.bounds,earth=constructionGroundWorld(earthworks);
@@ -231,13 +348,13 @@ export class ServerBuilderCollision {
   return floor;
  }
  hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
-  const world=this.world(environment);
+  const world=this.world(environment),dynamic=placed?this.placedWorld(placed.actors,placed.objects,environment):null;
   // Surface distance alone misses a capsule entirely enclosed by a saved solid.
   // World AABBs are only a broad phase: a rotated yacht wall's enclosing box
   // can cover its empty central aisle. Test the body axis in each mesh's
   // authored frame, leaving capsule-to-surface distance to the triangles below.
   if(placed){
-   const dynamic=this.placedWorld(placed.actors,placed.objects,environment),candidates=new Set(dynamic.boxes.filter(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03).map(box=>box.objectId));
+   const candidates=new Set(dynamic.boxes.filter(box=>point.x>box.min.x-radius&&point.x<box.max.x+radius&&point.z>box.min.z-radius&&point.z<box.max.z+radius&&point.y<box.max.y-.03&&point.y+PLAYER_HEIGHT>box.min.y+.03).map(box=>box.objectId));
    for(const mesh of dynamic.meshes){
     if(!candidates.has(builderObjectId(mesh)))continue;
     if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
@@ -250,7 +367,7 @@ export class ServerBuilderCollision {
   if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed?.earthworks)triangles.push(...(constructionGroundWorld(placed.earthworks)?.triangles||[]).filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
-  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects,environment).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
+  if(dynamic)triangles.push(...dynamic.nearbyTriangles(point.x-radius,point.x+radius,point.z-radius,point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
@@ -391,7 +508,7 @@ export class ServerBuilderCollision {
    }
    return embedded.get(group);
   };
-  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.triangles.filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
+  const nearby=[...nearbyWalls(world,minX,maxX,minZ,maxZ),...placed.triangles,...deployedWorld.nearbyTriangles(minX,maxX,minZ,maxZ),...(earth?.triangles||[]).filter(t=>t.maxX>=minX&&t.minX<=maxX&&t.maxZ>=minZ&&t.minZ<=maxZ)];
   const sweep=step=>{
    // Gravity is applied before this sweep. While the previous pose has floor
    // support, that provisional downward endpoint must not expose buried floor

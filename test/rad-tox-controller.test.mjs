@@ -64,10 +64,11 @@ test('small sports walking adjustments use a proportional dead zone rather than 
 });
 
 
-test('explorer movement-only sticks have a separate jump control and no action hints',()=>{
+test('explorer movement-only sticks keep only movement and look controls',()=>{
  const markup=radToxStickMarkup({left:'Move',movementOnly:true});
  assert.equal((markup.match(/class="thumbstick-base"/g)||[]).length,2);
- assert.match(markup,/data-mobile-move="jump" aria-label="Jump"/);
+ assert.doesNotMatch(markup,/thumbstick-jump|data-mobile-move="jump"/);
+ assert.equal((markup.match(/<button /g)||[]).length,2);
  assert.doesNotMatch(markup,/press to shoot|tap to jump|tap for view/);
  assert.match(radToxStickMarkup(),/press to shoot/,'native sports controller retains its existing explicit mode');
 });

@@ -1,3 +1,4 @@
+import {finishVehicleDesign} from './vehicle-design-system.js';
 import {CAMP_ITEMS} from './summer-camp.js';
 
 export function createCampModel(THREE,id){
@@ -20,10 +21,21 @@ export function createCampModel(THREE,id){
   root.userData.building=true;root.userData.entrances=[{x:0,y:.16,z:-3}];
  }else if(id==='camp-tent'){
   floor(3.8,4.4,.12);
-  // Segmented canvas leaves an actual standing passage inside the A-frame.
-  for(const sign of [-1,1])for(let level=0;level<9;level++){
-   const y=.12+(level+.5)*.34,x=sign*1.9*(1-(y-.12)/3.1);
-   box([.16,.34,4.5],[x,y,0],level%2?canvas:cream);
+  // Continuous sloping canvas forms the A-frame. The former axis-aligned
+  // stacked bars left daylight between each course and read as scaffolding.
+  // Both ends remain open and the centre retains a standing-height passage.
+  const tentCanvas=mat(0xe9b954,{roughness:.92,side:THREE.DoubleSide});tentCanvas.name='CAMP_WOVEN_CANVAS';
+  const halfWidth=1.86,eave=.15,ridge=3.17,rise=ridge-eave,slope=Math.atan2(rise,halfWidth),length=Math.hypot(halfWidth,rise);
+  for(const sign of [-1,1]){
+   const shell=box([length,.045,4.5],[sign*halfWidth/2,(eave+ridge)/2,0],tentCanvas,'CAMP_TENT_CANVAS');shell.rotation.z=-sign*slope;shell.userData.buildingRoof=true;
+   // Bound hems follow the fabric edge and panel joins rather than bridging
+   // the doorway or introducing a new collider across either entrance.
+   for(const z of [-2.24,2.24]){
+    const hem=tube([sign*halfWidth,eave,z],[0,ridge,z],.018,cream);hem.name='CAMP_TENT_CANVAS_HEM';hem.userData.collisionDisabled=true;
+   }
+   for(const z of [-1.12,0,1.12]){
+    const seam=tube([sign*(halfWidth-.017),eave+.025,z],[sign*.017,ridge-.015,z],.009,cream);seam.name='CAMP_TENT_CANVAS_PANEL_JOIN';seam.userData.collisionDisabled=true;
+   }
   }
   for(const z of [-2.2,2.2])tube([0,2.85,z],[0,3.2,z],.055,metal);
   tube([0,3.2,-2.3],[0,3.2,2.3],.065,wood);
@@ -72,5 +84,5 @@ export function createCampModel(THREE,id){
   const shore=part(new THREE.TorusGeometry(1,.035,6,48),mat(0xd8c59a),[0,.03,0],'CAMP_WATER_SHORE');shore.rotation.x=Math.PI/2;shore.scale.set(9,6,1);shore.userData.collisionDisabled=true;
  }
  root.name=item.name;Object.assign(root.userData,{builderObject:true,modelId:id,label:item.name,description:item.description,dimensions:item.dimensions,pack:'summer-camp',behavior:item.behavior,interactive:item.behavior!=='decor'});
- return root;
+ return finishVehicleDesign(THREE,root,id);
 }

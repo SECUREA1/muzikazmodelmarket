@@ -209,26 +209,22 @@ with tempfile.TemporaryDirectory(prefix='login-control-isolation-') as directory
                             assert abs(state(page)['player']['yaw'] - yaw) > .05, (world, 'Look control did not turn')
                             assert not any(row.get('action') == 'input' and row.get('input', {}).get('jump') for row in commands[start:]), commands[start:]
 
-                            # Jump has its own explicit button; mouse/touch and
-                            # accessible keyboard activation must retain the action.
-                            jump_button = page.get_by_role('button', name='Jump', exact=True)
-                            for keyboard in [False, True]:
-                                page.wait_for_function('MuzikazHouseExplorer.snapshot().player.serverGrounded', timeout=20000)
-                                page.evaluate('''() => {
-                                    window.controlJumpHeights=[];window.controlJumpWatching=true;
-                                    const frame=()=>{if(!controlJumpWatching)return;controlJumpHeights.push(MuzikazHouseExplorer.snapshot().player.position[1]);requestAnimationFrame(frame);};requestAnimationFrame(frame);
-                                }''')
-                                start = len(commands)
-                                if keyboard:
-                                    jump_button.focus()
-                                    page.keyboard.press('Enter')
-                                else:
-                                    jump_button.tap()
-                                page.wait_for_timeout(1350)
-                                heights = page.evaluate('()=>{controlJumpWatching=false;return controlJumpHeights;}')
-                                assert heights and max(heights)-min(heights) > .15, (world, 'Explicit Jump did not produce an arc', keyboard, heights)
-                                assert any(row.get('action') == 'input' and row.get('input', {}).get('jump') for row in commands[start:]), (world, 'Explicit Jump did not reach server')
-                                assert page.locator('dialog[open]').count() == 0
+                            # The extra touch Jump button is removed; Space
+                            # still jumps without activating a focused HUD action.
+                            assert page.get_by_role('button', name='Jump', exact=True).count() == 0
+                            page.wait_for_function('MuzikazHouseExplorer.snapshot().player.serverGrounded', timeout=20000)
+                            page.evaluate('''() => {
+                                window.controlJumpHeights=[];window.controlJumpWatching=true;
+                                const frame=()=>{if(!controlJumpWatching)return;controlJumpHeights.push(MuzikazHouseExplorer.snapshot().player.position[1]);requestAnimationFrame(frame);};requestAnimationFrame(frame);
+                            }''')
+                            start = len(commands)
+                            page.locator('#house-explorer-canvas').focus()
+                            page.keyboard.press('Space')
+                            page.wait_for_timeout(1350)
+                            heights = page.evaluate('()=>{controlJumpWatching=false;return controlJumpHeights;}')
+                            assert heights and max(heights)-min(heights) > .15, (world, 'Space did not produce an arc', heights)
+                            assert any(row.get('action') == 'input' and row.get('input', {}).get('jump') for row in commands[start:]), (world, 'Space did not reach server')
+                            assert page.locator('dialog[open]').count() == 0
 
                             # After using and closing an explicit menu, fresh W
                             # must still move instead of activating its focused button.
@@ -261,7 +257,7 @@ with tempfile.TemporaryDirectory(prefix='login-control-isolation-') as directory
                                 assert page.locator('dialog[open]').count() == 0
                                 assert displacement(before, state(page)['player']['position']) > .1, (world, 'Movement stayed blocked after closing menu')
                             assert not errors, errors
-                            reports.append({'world': world, 'passed': True, 'realMemberLogin': True, 'mouseForward': True, 'touchMovement': True, 'centerNeutral': True, 'lookWithoutJump': True, 'explicitJumpTouchAndEnter': True, 'prisonEngagement': world == 'ironwood-prison'})
+                            reports.append({'world': world, 'passed': True, 'realMemberLogin': True, 'mouseForward': True, 'touchMovement': True, 'centerNeutral': True, 'lookWithoutJump': True, 'keyboardJumpWithoutExtraButton': True, 'prisonEngagement': world == 'ironwood-prison'})
                             print(json.dumps(reports[-1]), flush=True)
                         except Exception:
                             page.screenshot(path=str(ARTIFACTS / ('login-control-isolation-' + world + '.png')))

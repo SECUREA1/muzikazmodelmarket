@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {filterSupplyItems,supplyShipmentTask,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess} from '../public/js/world-supply-ui.js';
+import {supplySelectableCatalog,filterSupplyItems,supplyShipmentTask,supplyPortTransferText,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess,supplyOrderPresentation} from '../public/js/world-supply-ui.js';
 import {shippingSupplyManifest} from '../public/js/shipping-ui.js';
 
 test('supply catalog search covers names, native identities and GLB paths without losing word matching',()=>{
@@ -41,6 +41,15 @@ test('dispatch availability uses exact selected warehouse stock without drawing 
  assert.equal(supplySourceStock(data,'city','chair'),7);
  assert.equal(supplySourceStock(data,'untouched-map','chair'),0);
  assert.equal(supplySourceStock(data,'missing-map','chair'),0);
+ assert.equal(supplySourceStock({...data,availableFactoryStock:{chair:3}},'factory','chair'),3,'deed-held lots cannot be offered as dispatchable shared goods');
+ assert.equal(supplySourceStock({...data,availableFactoryStock:{chair:0}},'factory','chair'),0,'a reserved zero cannot fall back to the warehouse accounting count');
+});
+
+test('deed order presentation preserves partial receipt counts through holds and cancellation',()=>{
+ const partial={phase:'attention',quantity:17,deliveredQuantity:4};
+ assert.deepEqual(supplyOrderPresentation(partial),{label:'Order needs attention',delivered:4,total:17});
+ assert.deepEqual(supplyOrderPresentation({...partial,phase:'cancelled'}),{label:'Order cancelled',delivered:4,total:17});
+ assert.equal(supplyOrderPresentation({...partial,phase:'awaiting-shipping'}).label,'Packed · waiting for a captain');
 });
 
 
@@ -73,4 +82,29 @@ test('shipment controls require the actual shipping map, boarding, origin eligib
  assert.equal(supplyShipmentAccess(shipment,'hormuz-shipping',{vehicleId:'feeder',shipping:{job:{phase:'loading'},availableContracts:['gulf-gateway']}},route).action,'none');
  assert.equal(supplyShipmentAccess({...shipment,phase:'reserved'},'hormuz-shipping',null,route).action,'none');
  assert.equal(supplyShipmentAccess({...shipment,phase:'reserved',jobId:'voyage'},'hormuz-shipping',{shipping:{job:{id:'voyage'}}},route).action,'continue');
+});
+
+test('factory tasks identify the server staging port and distinguish warehouse transfer from the playable sea leg',()=>{
+ const shipment={originPortId:'fujairah',destinationPortId:'muscat',shippingMapId:'hormuz-shipping',portTransferTask:{phase:'staged',toPortId:'fujairah',quantity:37}},route={from:'jebel-ali',to:'bandar-abbas'};
+ assert.match(supplyPortTransferText(shipment,route),/Staged at Fujairah.*37 units.*warehouse → port transfer simulated; sea passage playable/);
+ assert.match(supplyPortTransferText({...shipment,portTransferTask:{...shipment.portTransferTask,phase:'loading'}},route),/Loading at Fujairah/);
+ assert.match(supplyPortTransferText({...shipment,portTransferTask:{...shipment.portTransferTask,phase:'returned'}},route),/Returned to the source warehouse/);
+ assert.match(supplyPortTransferText({...shipment,portTransferTask:{...shipment.portTransferTask,phase:'delivered'}},route),/Sea delivery completed/);
+ assert.match(supplyShipmentAccess(shipment,'city',null,route).message,/Fujairah/);
+ assert.match(supplyShipmentAccess(shipment,'hormuz-shipping',{},route).message,/Fujairah/);
+ assert.equal(supplyPortTransferText({phase:'queued'},route),'','legacy shipments do not gain invented staging records');
+ const custom={id:'creation:painting',name:'Painted beacon',factoryVariant:true,renderKind:'image',productionSource:'Creator marketplace'};
+ assert.deepEqual(filterSupplyItems([custom],'custom artwork'),[custom]);
+ assert.deepEqual(filterSupplyItems([custom],'creator marketplace'),[custom]);
+});
+
+test('retired paid blueprints remain selectable for stock transfers while an active definition takes precedence',()=>{
+ const active={id:'native:chair',name:'Current chair',factoryProducible:true},retired={id:'blueprint:retired',name:'Retired custom seat',recipe:{unitsPerContainer:50}},data={catalog:[active],transferCatalog:[retired,{id:active.id,name:'Old chair',factoryProducible:false}]};
+ const combined=supplySelectableCatalog(data);
+ assert.equal(combined.length,2);assert.equal(combined[0],active);
+ assert.equal(combined[1].id,retired.id);assert.equal(combined[1].factoryProducible,false);
+ assert.equal(retired.factoryProducible,undefined,'transfer display does not mutate the saved server record');
+ assert.equal(supplyRouteCapacity(combined[1],{units:4}),200,'retired stock retains the item packaging capacity');
+ assert.equal(filterSupplyItems(combined,'unlisted stock transfer')[0].id,retired.id);
+ assert.deepEqual(supplySelectableCatalog({catalog:[active]}),[active],'older server fixtures retain their existing lineup');
 });

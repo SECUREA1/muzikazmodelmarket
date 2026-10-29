@@ -57,12 +57,16 @@ with tempfile.TemporaryDirectory(prefix='transport-startup-') as directory:
        print(world,'keyboard jump passed',flush=True)
        page.wait_for_function('(floor)=>{const p=MuzikazHouseExplorer.snapshot().player;return p.grounded&&p.serverGrounded&&p.position[1]<=floor+.08}',arg=floor,timeout=15000)
        page.evaluate('''() => { window.touchJumpHeights=[];window.recordTouchJump=true;const sample=()=>{if(!recordTouchJump)return;touchJumpHeights.push(MuzikazHouseExplorer.snapshot().player.position[1]);requestAnimationFrame(sample);};requestAnimationFrame(sample); }''')
+       assert page.locator('[data-mobile-move="jump"]').count()==0,'Movement-only sticks must not restore the removed extra Jump button.'
+       touch_inputs=len(inputs)
        page.locator('[data-thumbstick="right"] .thumbstick-base').tap()
-       page.wait_for_function('(floor)=>touchJumpHeights.some(y=>y>floor+.1)',arg=floor,timeout=15000)
+       page.wait_for_timeout(500)
+       assert not any(value.get('input',{}).get('jump') for value in inputs[touch_inputs:]),'Look control must not jump.'
+       assert not page.evaluate('(floor)=>touchJumpHeights.some(y=>y>floor+.1)',floor),'Look tap unexpectedly jumped.'
        page.evaluate('recordTouchJump=false')
        page.locator('.district-map-toggle').click();page.locator('.district-map-dialog').wait_for(state='visible',timeout=15000)
        page.get_by_role('button',name='Vehicles',exact=True).click();assert page.locator('[data-craft-choices] article').count()>0
-       page.locator('.district-map-dialog>header button').click()
+       page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).click()
        assert not errors,errors
        print(world,'fresh multiplayer walking, jumping and vehicle directory passed',flush=True)
       except Exception:

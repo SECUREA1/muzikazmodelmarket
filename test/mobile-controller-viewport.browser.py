@@ -33,7 +33,7 @@ try:
             page.add_style_tag(url='/styles.css')
             page.add_style_tag(url='/public/assets/game-control-dock.css')
             page.evaluate(r'''async ([fitSource,scheduleSource,styleSource]) => {
-                document.body.innerHTML='<header class="fixture-header">World navigation</header><main><section class="house-explorer-shell" style="min-height:456px"><div class="house-stage"><canvas></canvas></div><div class="house-control-dock"><div class="house-bottom-controls">Game controls</div><div class="mobile-move-pad mobile-move-pad-glb"><div class="thumbstick-control" data-thumbstick="left"><button class="thumbstick-base" aria-label="Move"><span class="thumbstick-knob"></span></button></div><div class="thumbstick-control" data-thumbstick="right"><button class="thumbstick-base" aria-label="Look and jump"><span class="thumbstick-knob"></span></button></div></div></div></section></main><footer style="height:900px">More world information</footer>';
+                document.body.innerHTML='<header class="fixture-header">World navigation</header><main><section class="house-explorer-shell" style="min-height:456px"><div class="house-stage"><canvas></canvas></div><div class="house-control-dock"><div class="house-bottom-controls">Game controls</div><div class="mobile-move-pad mobile-move-pad-glb"><div class="thumbstick-control" data-thumbstick="left"><button class="thumbstick-base" aria-label="Move"><span class="thumbstick-knob"></span></button></div><div class="thumbstick-control" data-thumbstick="right"><button class="thumbstick-base" aria-label="Look / turn"><span class="thumbstick-knob"></span></button></div></div></div></section></main><footer style="height:900px">More world information</footer>';
                 const style=document.createElement('style');style.textContent='html,body{margin:0;width:100%;scroll-behavior:auto}.fixture-header{position:relative;height:246px;padding:0;box-sizing:border-box}main{padding:0;margin:0}.house-explorer-shell{display:flex;flex-direction:column;width:100%;margin:0;gap:0}.house-stage{position:relative;flex:1 1 0;min-height:0!important;width:100%;overflow:hidden}.house-stage>canvas{width:100%;height:100%;display:block}.house-control-dock{flex:0 0 auto;width:100%}.house-bottom-controls{height:58px;box-sizing:border-box}.mobile-move-pad{display:grid;grid-template-columns:1fr 1fr;justify-items:center}.thumbstick-base{width:80px;height:80px}.district-map-toggle{position:absolute;top:8px;left:8px}';document.head.append(style);
                 const stage=document.querySelector('.house-stage'),gameplayStarted=true;
                 window.layoutResizeCount=0;
@@ -59,7 +59,7 @@ try:
             new_height = page.locator('.house-explorer-shell').bounding_box()['height']
             assert new_height < old_height - 100, (width, height, old_height, new_height)
             assert new_height <= height - 246 - 12 + 1, (width, height, new_height)
-            for label in ['Move', 'Look and jump']:
+            for label in ['Move', 'Look / turn']:
                 control = page.get_by_role('button', name=label, exact=True)
                 box = control.bounding_box()
                 assert box and box['y'] >= 0 and box['y'] + box['height'] <= height, (width, height, label, box)

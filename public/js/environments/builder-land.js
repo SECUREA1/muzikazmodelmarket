@@ -1,4 +1,6 @@
 import {createWorldItemFactoryLand} from '../world-item-factory-scene.js';
+import {createForestHarvestLand} from '../forest-harvest-scene.js';
+import {isForestHarvestEnvironment} from '../forest-harvest-config.js';
 import {createPrisonLand} from '../prison-world.js';
 import {createFactoryProvingGroundsLand,createMountainCompoundLand} from '../factory-testing-model.js';
 import {createMissileFactoryLand} from '../missile-factory-model.js';
@@ -22,6 +24,8 @@ import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
 import {createBasketballStadium} from '../basketball-stadium.js';
 import {constructionCutoutPatches,createConstructionBaseGeometry} from '../construction-terrain.js';
+import {finishNativeWorldDesign} from './native-world-design-finish.js';
+import {finishMountainTerrainDesign} from '../mountain-terrain-design.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
@@ -30,6 +34,10 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;root.userData.proceduralLand=true;return root;
 }
 export function createBuilderLand(environment) {
+    return finishNativeWorldDesign(THREE,createProceduralBuilderLand(environment),environment);
+}
+function createProceduralBuilderLand(environment) {
+    if(isForestHarvestEnvironment(environment))return createForestHarvestLand(environment);
     if(environment.id==='world-item-factory'||environment.builderScene?.layout==='world-item-factory')return createWorldItemFactoryLand(environment);
     if(isTropicalIslandEnvironment(environment))return createTropicalIslandLand(environment);
     if(environment.id==='ironwood-prison'||environment.game==='prison'||(environment.builderScene?.layout||environment.layout)==='prison')return createPrisonLand(environment);
@@ -82,10 +90,17 @@ export function createBuilderLand(environment) {
     else if(layout==='office-tower'){add([7,5,7],0,0,0x566a73);[-13,13].forEach(x=>add([5,3,10],x,4,0x40525a));add([18,.15,2],0,-10,0x83a0a7)}
     else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt,{style:built.rangeStyle||environment.rangeStyle});
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
+    if(['vendor-street','market-square','mega-mall'].includes(layout)){
+      let storeIndex=0;
+      for(const node of root.children){
+        if(node.name!==`BUILDER_TEMPLATE_${layout}`||!(node.geometry?.parameters?.height>=1.8))continue;
+        node.userData.deliveryAddressLocalId=layout==='vendor-street'?'layout-shop-'+Math.round((node.position.z+12)/6)+'-'+(node.position.x<0?'west':'east'):'layout-shop-'+storeIndex++;
+      }
+    }
     finishLayoutArchitecture(root);
     root.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);applySportsSurfaces(root,layout);
     if(!root.userData.firingRange&&!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     applyBuilderBaseTransform(root,built.baseTransform);
 
-    return root;
+    return layout==='mountain-pass'?finishMountainTerrainDesign(THREE,root,{ridgeNames:['BUILDER_TEMPLATE_mountain-pass']}):root;
   }

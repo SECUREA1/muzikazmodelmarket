@@ -6,11 +6,22 @@ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const finite=(value,fallback)=>Number.isFinite(Number(value))?Number(value):fallback;
 const point=value=>value&&['x','y','z'].every(axis=>Number.isFinite(value[axis]))?{x:value.x,y:value.y,z:value.z}:null;
 const maxSources=80,lookAhead=.24;
+// Harmonic spectra and envelopes give each original synthesized instrument a
+// distinct body. Cache waves per context; no samples or downloads are required.
+export const FUNHOUSE_INSTRUMENTS=Object.freeze({
+ bass:{harmonics:[1,.38,.16,.07],attack:.012,sustain:.3},
+ cello:{harmonics:[1,.62,.4,.25,.16,.10,.07],attack:.14,sustain:.78},
+ guitar:{harmonics:[1,.5,.26,.15,.09,.04],attack:.006,sustain:.22},
+ piano:{harmonics:[1,.48,.2,.12,.06,.03],attack:.008,sustain:.32},
+ flute:{harmonics:[1,.1,.035],attack:.035,sustain:.65},
+ bell:{harmonics:[1,.04,.35,.03,.18,.06,.08],attack:.004,sustain:.16}
+});
 
 /** Original carnival audio uses the game's existing AudioContext. No samples,
  * network requests, timers or new contexts are needed for music and effects. */
 export function createFunhouseAudioEngine({getContext=()=>null,getPreferences=()=>({}),getSettings=()=>({}),getPosition=()=>null,getCameraDirection=()=>({x:0,y:0,z:-1}),getSpatialAudio=null,destination=null}={}){
  let context=null,buses=null,master=null,limiter=null,musicOutput=null,unlocked=false,disposed=false,musicIntent=null,nextBarAt=null,barIndex=0,lastEffect=null;
+ const waves=new Map();
  const records=new Set(),outputs=new Set(),seen=new Map(),lastKinds=new Map();
  const counts={effects:0,voices:0,musicBars:0,sources:0,peakSources:0};
  const preferences=()=>getPreferences()||{};
@@ -65,7 +76,7 @@ export function createFunhouseAudioEngine({getContext=()=>null,getPreferences=()
   for(const output of [...outputs])removeOutput(output);
   if(buses)for(const bus of Object.values(buses))try{bus.disconnect();}catch{}
   try{master?.disconnect();limiter?.disconnect();}catch{}
-  buses=master=limiter=null;context=null;nextBarAt=null;barIndex=0;
+  waves.clear();buses=master=limiter=null;context=null;nextBarAt=null;barIndex=0;
  }
  function acquire(){
   if(disposed)return null;let next;try{next=getContext();}catch{return null;}
@@ -91,12 +102,21 @@ export function createFunhouseAudioEngine({getContext=()=>null,getPreferences=()
  function note(spec,at,category,output){
   if(records.size>=maxSources)return false;
   const oscillator=context.createOscillator(),envelope=context.createGain(),duration=clamp(finite(spec.duration,.2),.025,4),gain=clamp(finite(spec.gain,.04),.0001,.2);
+  const instrument=FUNHOUSE_INSTRUMENTS[spec.instrument];
   oscillator.type=['sine','triangle','square','sawtooth'].includes(spec.type)?spec.type:'sine';
+  if(instrument&&context.createPeriodicWave&&oscillator.setPeriodicWave){
+   if(!waves.has(spec.instrument)){
+    const real=new Float32Array(instrument.harmonics.length+1),imag=new Float32Array(real.length);
+    imag.set(instrument.harmonics,1);waves.set(spec.instrument,context.createPeriodicWave(real,imag));
+   }
+   oscillator.setPeriodicWave(waves.get(spec.instrument));
+  }
   parameter(oscillator.frequency,clamp(finite(spec.frequency,440),35,5000),at);
   if(Number.isFinite(spec.endFrequency))oscillator.frequency.exponentialRampToValueAtTime?.(clamp(spec.endFrequency,35,5000),at+duration);
   parameter(oscillator.detune,clamp(finite(spec.detune,0),-50,50),at);
-  const attack=Math.min(.018,duration*.2),releaseAt=at+duration;
+  const attack=Math.min(instrument?.attack??.018,duration*.2),releaseAt=at+duration;
   parameter(envelope.gain,.0001,at);envelope.gain.linearRampToValueAtTime?.(gain,at+attack);
+  if(instrument)envelope.gain.exponentialRampToValueAtTime?.(gain*instrument.sustain,at+Math.max(attack,duration*.6));
   envelope.gain.exponentialRampToValueAtTime?.(.0001,releaseAt);
   oscillator.connect(envelope);envelope.connect(output.route.input);
   const record={category,output,source:oscillator,envelope,expires:releaseAt+.04,closed:false};records.add(record);

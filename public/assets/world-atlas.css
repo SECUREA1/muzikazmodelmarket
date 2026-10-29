@@ -115,3 +115,29 @@
 @media(max-width:420px){.world-atlas-home .atlas-primary-tools{width:auto;margin-left:auto}.world-atlas-home .atlas-fit-world{min-height:40px;padding:8px 12px;font-size:11px}}
 
 .world-atlas-home .atlas-map-caption[hidden],.world-atlas-home .atlas-world-legend[hidden]{display:none!important}
+
+.world-atlas-live-panel .atlas-journey,.world-atlas-live-panel .atlas-local-connections{box-sizing:border-box;min-width:0;margin-top:14px;padding:14px;border:1px solid #3c6153;border-radius:12px;background:#0c2425;overflow-wrap:anywhere}
+.world-atlas-live-panel .atlas-journey h3,.world-atlas-live-panel .atlas-local-connections h3{margin:0 0 8px;font:700 15px/1.4 system-ui}
+.world-atlas-live-panel .atlas-journey p,.world-atlas-live-panel .atlas-local-connections p{font:12px/1.6 system-ui;color:#b7d9d0;margin:6px 0 12px;text-transform:none}
+.world-atlas-live-panel .atlas-journey-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap}
+.world-atlas-live-panel .atlas-journey-controls label{flex:1 1 220px;min-width:0}
+.world-atlas-live-panel .atlas-journey-controls button{flex:1 1 150px}
+.world-atlas-live-panel .atlas-journey-stops{display:grid;gap:7px;padding-left:24px;margin:10px 0}
+.world-atlas-live-panel .atlas-journey-stops li{padding-left:3px}
+.world-atlas-live-panel .atlas-journey-stops button:first-child{text-align:left;width:calc(100% - 88px);min-width:0;overflow-wrap:anywhere}
+.world-atlas-live-panel .atlas-journey-stops button+button{width:80px;margin-left:8px;padding-inline:6px;white-space:nowrap;font:600 11px/1.4 system-ui;letter-spacing:0;text-transform:none}
+.world-atlas-live-panel .atlas-journey-legs{display:grid;gap:12px;max-height:360px;overflow-y:auto;overscroll-behavior:contain}
+.world-atlas-live-panel .atlas-journey-legs strong{font-size:12px}
+.world-atlas-live-panel .atlas-journey-legs ol{margin:7px 0;padding-left:20px;font:12px/1.6 system-ui}
+.world-atlas-live-panel .atlas-journey-legs a{display:inline-block;min-height:32px}
+.world-atlas-live-panel [data-atlas-journey-link]{display:block;padding-block:12px;font:12px/1.5 system-ui}
+.world-atlas-live-panel [data-atlas-journey-link][hidden]{display:none}
+.world-atlas-live-panel .atlas-journey>small{display:block;font:11px/1.6 system-ui}
+.world-atlas-live-panel .atlas-local-connections ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:7px;max-height:280px;overflow-y:auto;margin:10px 0 0;padding:0;list-style:none}
+.world-atlas-live-panel .atlas-local-connections li{display:grid;gap:4px;padding:8px;border:1px solid #35554e;border-radius:7px;font-size:12px}
+.world-atlas-live-panel .atlas-local-connections small{font:11px/1.5 system-ui}
+.world-atlas-home .atlas-journey,.world-atlas-home .atlas-local-connections{border-color:var(--atlas-line);background:#0c1e2a}
+.world-atlas-home .atlas-journey h3,.world-atlas-home .atlas-local-connections h3{color:#edf8f3}
+.world-atlas-home .atlas-journey p,.world-atlas-home .atlas-local-connections p{color:#9fb5be}
+.world-atlas-home .atlas-journey label{font-size:11px;color:var(--atlas-muted)}
+@media(max-width:420px){.world-atlas-live-panel .atlas-journey,.world-atlas-live-panel .atlas-local-connections{padding:10px}.world-atlas-live-panel .atlas-journey-controls button{flex-basis:100%}.world-atlas-live-panel .atlas-journey-stops{padding-left:20px}.world-atlas-live-panel .atlas-journey-stops button:first-child{width:calc(100% - 76px)}.world-atlas-live-panel .atlas-journey-stops button+button{width:68px}}

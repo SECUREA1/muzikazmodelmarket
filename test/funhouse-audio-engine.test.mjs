@@ -9,7 +9,7 @@ function audioContext(){
  function node(kind){const result={kind,connections:[],disconnects:0,connect(destination){this.connections.push(destination);return destination;},disconnect(){this.disconnects++;}};all.push(result);return result;}
  function source(kind){const result=Object.assign(node(kind),{start(at){this.startedAt=at;},stop(at=audio.currentTime){this.stopAt=at;},finish(){if(this.finished)return;this.finished=true;this.onended?.();}});sources.push(result);return result;}
  for(const prefix of ['position','forward','up'])for(const axis of ['X','Y','Z'])audio.listener[prefix+axis]=parameter();
- Object.assign(audio,{destination:node('destination'),createGain:()=>Object.assign(node('gain'),{gain:parameter()}),createOscillator:()=>Object.assign(source('oscillator'),{frequency:parameter(),detune:parameter()}),createBufferSource:()=>source('buffer'),createPanner:()=>Object.assign(node('panner'),{positionX:parameter(),positionY:parameter(),positionZ:parameter()}),createDynamicsCompressor:()=>Object.assign(node('compressor'),{threshold:parameter(),knee:parameter(),ratio:parameter(),attack:parameter(),release:parameter()}),resume:async()=>{audio.resumes++;audio.state='running';},close:()=>audio.closes++});
+ Object.assign(audio,{destination:node('destination'),createPeriodicWave:(real,imag)=>({real,imag}),createGain:()=>Object.assign(node('gain'),{gain:parameter()}),createOscillator:()=>Object.assign(source('oscillator'),{frequency:parameter(),detune:parameter(),setPeriodicWave(wave){this.wave=wave;}}),createBufferSource:()=>source('buffer'),createPanner:()=>Object.assign(node('panner'),{positionX:parameter(),positionY:parameter(),positionZ:parameter()}),createDynamicsCompressor:()=>Object.assign(node('compressor'),{threshold:parameter(),knee:parameter(),ratio:parameter(),attack:parameter(),release:parameter()}),resume:async()=>{audio.resumes++;audio.state='running';},close:()=>audio.closes++});
  audio.advance=seconds=>{audio.currentTime+=seconds;for(const item of sources)if(!item.finished&&item.stopAt!==undefined&&item.stopAt<=audio.currentTime)item.finish();};
  return audio;
 }
@@ -32,10 +32,10 @@ test('funhouse sounds require a gesture and reuse the game context without repla
 test('the original car tune schedules bounded future bars and skips missed playback instead of bursting on slow frames',async()=>{
  const f=fixture();f.engine.setMusic(true,{position:{x:0,y:1,z:0},rideId:'car-seat'});assert.equal(f.context.sources.length,0);
  await f.engine.unlock();assert.equal(f.engine.snapshot().musicActive,true);assert.equal(f.engine.snapshot().musicTitle,FUNHOUSE_MUSIC.title);
- assert.equal(f.engine.snapshot().counts.musicBars,1);assert.equal(f.context.sources.length,15);
+ assert.equal(f.engine.snapshot().counts.musicBars,1);assert.equal(f.context.sources.length,19);
  f.context.advance(1.3);f.engine.update();assert.equal(f.engine.snapshot().counts.musicBars,2);
  f.context.advance(20);const before=f.context.sources.length;f.engine.update();
- assert.equal(f.context.sources.length-before,15,'resuming a slow frame schedules only one current bar');
+ assert.equal(f.context.sources.length-before,19,'resuming a slow frame schedules only one current bar');
  assert.ok(f.context.sources.slice(before).every(node=>node.startedAt>=f.context.currentTime));
  f.engine.setMusic(false);f.context.advance(.1);f.engine.update();assert.equal(f.engine.snapshot().musicRequested,false);assert.equal(f.engine.snapshot().activeSources,0);assert.equal(f.engine.snapshot().outputs,0);
  f.engine.dispose();
@@ -90,4 +90,19 @@ test('scope reset, suspension, context replacement and disposal cancel all scope
  f.engine.effect('wind');f.context.state='suspended';f.engine.update();assert.equal(f.engine.snapshot().activeSources,0);assert.equal(f.engine.effect('honk'),false);
  const replacement=audioContext();replacement.state='running';f.state.context=replacement;f.engine.update();assert.equal(f.engine.effect('honk'),true);assert.equal(replacement.sources.length,4);
  f.engine.dispose();assert.equal(f.engine.snapshot().activeSources,0);assert.equal(f.engine.snapshot().outputs,0);assert.equal(replacement.closes,0);assert.equal(f.engine.effect('honk'),false);assert.equal(await f.engine.unlock(),false);
+});
+
+
+test('instrument waves are distinct, cached and use a slow cello attack',async()=>{
+ const f=fixture();await f.engine.unlock();f.engine.setMusic(true);
+ const sources=f.context.sources;
+ assert.equal(new Set(sources.map(n=>n.wave)).size,6);
+ assert.ok(sources.every(n=>n.wave?.imag[1]===1));
+ const celloGain=sources[1].connections[0];
+ const attack=celloGain.gain.events.find(e=>e[0]==='linear');
+ assert.ok(attack[2]-sources[1].startedAt>=.13);
+ const bassWave=sources[0].wave;
+ f.context.advance(1.3);f.engine.update();
+ assert.equal(f.context.sources[19].wave,bassWave);
+ f.engine.dispose();assert.equal(f.engine.snapshot().activeSources,0);
 });

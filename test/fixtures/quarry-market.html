@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/public/assets/game-menus.css"><style>body{background:#071410;color:#efffd7;font-family:system-ui}.game-market-popup{max-width:calc(100vw - 16px);width:960px;height:90vh;box-sizing:border-box}button,a{min-height:44px}</style></head><body><script type="module">
+import {createGameMarketplace} from '/public/js/in-game-market.js';
+import {quarryMarketCatalog} from '/public/js/quarry-market.js';
+window.requests=[];window.testStock=7;
+window.MUZIKAZ_API={fetch:async(path,options={})=>{requests.push({path,method:options.method||'GET'});if(path!=='/api/market/catalog')throw Error('Unexpected endpoint '+path);return {ok:true,json:async()=>({success:true,data:[...quarryMarketCatalog({maps:{'surface-mine-quarry':{stock:{'quarry:sand':testStock}}}},[{id:'surface-mine-quarry',name:'Surface Mine · Quarry & Materials',quarry:{enabled:true}}]),{id:'upgrade:unrelated',sku:'unrelated',name:'Unrelated game item',source:'upgrade',category:'Tools',priceMzk:10}]})};}};
+if(new URLSearchParams(location.search).has('public')){const root=document.createElement('section');root.dataset.sharedMarketCatalog='';document.body.append(root);await import('/public/js/shared-market-catalog.js');}else{window.market=createGameMarketplace({inventory:{session:async()=>({owner_id:'guest-market',csrfToken:'test'})},deliveryAddressUI:{prepare(){},open(){},close(){}}});market.open('quarry');}document.body.dataset.ready='true';
+</script></body></html>

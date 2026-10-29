@@ -19,7 +19,9 @@ test('cargo hull service preserves canonical strength and respawns repair old 20
   assert.equal(view.actors[id].maxHealth,health);assert.equal(view.actors[id].health,health);
   view=await f.send('map-access',{entityId:id});view=await f.send('shipping',{operation:'service'});assert.equal(view.actors[id].health,health,'repair must never reduce a healthy cargo hull');assert.equal(view.actors[id].maxHealth,health);
   await f.store.update(f.environment.id,room=>{const boat=room.simulation.actors[id];boat.health=90;boat.maxHealth=200;room.simulation.players[self].fuel=12;},{persist:false});view=await f.send('shipping',{operation:'service'});assert.equal(view.actors[id].health,health,'legacy maxHealth200 repaired to canonical hull');assert.equal(view.actors[id].maxHealth,health);assert.equal(view.players[self].fuel,100);
-  await f.store.update(f.environment.id,room=>{const boat=room.simulation.actors[id];Object.assign(boat,{health:0,maxHealth:200,active:false,holderId:null,destroyedAt:f.now-16000});room.simulation.players[self].vehicleId=null;},{persist:false});view=await f.runtime.snapshot(f.environment.id,f.environment);assert.equal(view.actors[id].active,true);assert.equal(view.actors[id].health,health,'public cargo replacement restores its full hull strength');assert.equal(view.actors[id].maxHealth,health);
+  await f.store.update(f.environment.id,room=>{const boat=room.simulation.actors[id];Object.assign(boat,{health:0,maxHealth:200,active:false,holderId:null,destroyedAt:f.now-16000});room.simulation.players[self].vehicleId=null;},{persist:false});
+  // Observe the injected legacy replacement on the next physics frame.
+  f.advance(34);view=await f.runtime.snapshot(f.environment.id,f.environment);assert.equal(view.actors[id].active,true);assert.equal(view.actors[id].health,health,'public cargo replacement restores its full hull strength');assert.equal(view.actors[id].maxHealth,health);
  }
 });
 

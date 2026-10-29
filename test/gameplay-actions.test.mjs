@@ -35,3 +35,25 @@ test('nearby portal and arcade retain separate exact targets even when the porta
  const use=choices.find(action=>!action.portal);assert.equal(use.entityId,'arcade');assert.equal(use.title,'OPEN ARCADE');
  arcade.active=false;assert.equal(sharedNearbyActions(player,{portal,arcade}).filter(action=>!action.portal).length,0);
 });
+
+test('runtime residents route E and touch directly to conversation while working, without an authored manifest',()=>{
+ const worker={...actor('working-guide',7),resident:{name:'Maya',moving:true,machineWork:{status:'active'}},definition:{gameplay:{behavior:'talk',interactionDistance:4}}};
+ const actors={worker},before=structuredClone(worker);
+ for(const key of [null,'e']){
+  const target=sharedNearbyAction(player,actors,{},key);
+  assert.equal(target.kind,'resident');assert.equal(target.resident,true);assert.equal(target.entityId,worker.id);assert.equal(target.key,'e');assert.match(target.label,/Maya/);
+ }
+ assert.equal(sharedNearbyActions(player,actors,{},'f').length,0);
+ assert.deepEqual(worker,before,'offering conversation must not suspend or replace the current work');
+ worker.position.y=3;assert.equal(sharedNearbyAction(player,actors).kind,'none');
+ worker.position.y=0;worker.health=0;assert.equal(sharedNearbyAction(player,actors).kind,'none');
+ worker.health=100;worker.position.x=11;assert.equal(sharedNearbyAction(player,actors).kind,'none');
+});
+
+test('nearby crew on a separate floor cannot expose an unusable Talk button',()=>{
+ const crew={workers:[{id:'crew',name:'Crew',position:{x:0,y:2,z:0}}]};
+ assert.equal(sharedNearbyActions(player,{}, {},null,crew).length,0);
+ crew.workers[0].position.y=0;assert.equal(sharedNearbyActions(player,{}, {},null,crew)[0].kind,'resident');
+ crew.workers[0].position.x=8;assert.equal(sharedNearbyActions(player,{}, {},'e',crew)[0].entityId,'crew');
+ crew.workers[0].position.x=10.1;assert.equal(sharedNearbyActions(player,{}, {},null,crew).length,0);
+});

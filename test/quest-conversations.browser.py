@@ -17,15 +17,16 @@ try:
   assert page.get_by_text('Maya · Rescue coordinator',exact=True).is_visible()
   assert page.evaluate('spoken.length')==0
   page.get_by_label('Quest conversation voice',exact=True).click()
+  assert page.evaluate("spoken.length===1&&spoken[0].text.startsWith('Welcome.')")
   page.get_by_role('button',name='Replay reply',exact=True).click()
-  assert page.evaluate('spoken.length')==1
+  assert page.evaluate('spoken.length')==2
   page.get_by_label('Choose quest conversation reply',exact=True).select_option('help')
   page.get_by_role('button',name='Talk to Maya',exact=True).click()
   assert page.evaluate("lastCommand.operation==='converse'&&lastCommand.choice==='help'")
   page.evaluate('spoken[0].onend()')
-  assert page.evaluate("spoken[1].text==='How can I help?'")
-  page.evaluate('spoken[1].onend()')
-  assert page.evaluate("spoken[2].text.includes('stop your boat')")
+  assert page.evaluate("spoken.length===3&&spoken[2].text.includes('stop your boat')")
+  assert page.evaluate("!spoken.some(line=>line.text==='How can I help?')")
+  page.evaluate('spoken[2].onend()')
   assert page.get_by_label('Quest conversation transcript').locator('li').count()==3
   page.get_by_label('Quest conversation voice',exact=True).click()
   assert page.get_by_label('Quest conversation voice',exact=True).get_attribute('aria-pressed')=='false'
@@ -33,5 +34,5 @@ try:
   page.screenshot(path='/workspace/quest-conversation-preview.png')
   assert not errors,errors
   browser.close()
- print('NPC portrait, selectable replies, player/NPC speech order, replay, mute, captions and mobile conversation layout pass.')
+ print('NPC portrait, selectable replies, direct NPC speech, replay, mute, two-sided captions and mobile conversation layout pass.')
 finally:server.shutdown()

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08111b">
+  <meta name="description" content="Explore a public MUZIKAZ product, share its link, and open its 3D or AR preview.">
+  <meta property="og:title" content="Product · MUZIKAZ WORLD">
+  <meta property="og:description" content="Explore a product from the public MUZIKAZ catalog.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="https://muzikaz.com/brand_name_tagline_panel_2x.png">
+  <meta property="og:image:width" content="816">
+  <meta property="og:image:height" content="574">
+  <meta property="og:image:alt" content="MUZIKAZ WORLD — Create. Collect. Play.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image:alt" content="MUZIKAZ WORLD — Create. Collect. Play.">
+  <title>Product · MUZIKAZ WORLD</title>
+  <link rel="canonical" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="public/assets/app-icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="public/assets/app-icons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="public/css/product-page.css">
+  <script defer src="pwa.js"></script>
+</head>
+<body class="product-document">
+  <a class="product-skip" href="#product-main">Skip to product</a>
+  <header class="site-header"><a href="index.html">MUZIKAZ WORLD</a><nav aria-label="Markets"><a href="model-market.html">Game Market</a><a href="builder-market.html">Builder Market</a></nav></header>
+  <main id="product-main" class="product-page" data-product-page aria-busy="true">
+    <a class="product-back" href="model-market.html">← Back to the market</a>
+    <p class="product-eyebrow">MUZIKAZ / COLLECTION</p>
+    <h1 data-product-title>Loading product…</h1>
+    <p class="product-status" data-product-status role="status" aria-live="polite">Loading the public catalog…</p>
+    <section class="product-content" data-product-content hidden aria-label="Product details">
+      <figure class="product-artwork">
+        <img data-product-image alt="" hidden decoding="async">
+        <div class="product-placeholder" data-product-placeholder><svg viewBox="0 0 120 120" aria-hidden="true"><path d="m60 17 37 21v44L60 103 23 82V38zM23 38l37 22 37-22M60 60v43"/></svg><p>Product artwork is unavailable.</p></div>
+      </figure>
+      <div class="product-copy">
+        <p class="product-kind" data-product-source></p>
+        <p class="product-description" data-product-description></p>
+        <p class="product-price" data-product-price></p>
+        <div class="product-actions" aria-label="Product actions">
+          <button type="button" class="product-primary" data-product-preview="3d">View in 3D</button>
+          <button type="button" data-product-preview="ar">View in AR</button>
+          <button type="button" data-product-share>Share product</button>
+        </div>
+        <p class="product-preview-note">Open a preview when you’re ready. AR availability depends on your device and the item.</p>
+        <div class="product-copy-link" data-product-copy-link hidden><label for="product-share-url">Product link</label><input id="product-share-url" type="url" readonly aria-label="Select and copy the product link"></div>
+        <dl class="product-facts" data-product-facts></dl>
+        <section class="product-bundle" data-product-bundle hidden><h2>Included items</h2><ul></ul></section>
+        <a class="product-market-link" data-product-market href="model-market.html">Open in market →</a>
+      </div>
+    </section>
+    <noscript><p>Enable JavaScript to load this product from the public catalog, or <a href="model-market.html">browse the market</a>.</p></noscript>
+  </main>
+  <footer class="product-footer"><a href="index.html">MUZIKAZ WORLD</a><span>Create. Collect. Play.</span><a href="members.html">Account &amp; Backpack</a></footer>
+  <script src="public/js/api-connection.js"></script>
+  <script src="global-header.js"></script>
+  <script type="module" src="public/js/product-page.js"></script>
+</body>
+</html>

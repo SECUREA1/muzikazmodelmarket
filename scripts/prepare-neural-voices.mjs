@@ -41,16 +41,23 @@ export function prepareCPUModel(bytes){
  return bytes;
 }
 
-export async function prepareNeuralVoices(){
+export async function prepareNeuralVoices({optional=false}={}){
  try{const saved=JSON.parse(await readFile(manifest,'utf8'));if(saved.sourceSHA256===sourceSHA&&sha(await readFile(output))===saved.sha256){console.log('Neural male/female voice model is ready.');return output;}}catch{}
  await mkdir(dirname(output),{recursive:true});const download=output+'.download',temporary=output+'.tmp';
  try{
   console.log('Preparing local neural voices (one-time 109 MB model download)…');
-  await promisify(execFile)('curl',['--fail','--location','--retry','3','--connect-timeout','20','--max-time','300','--silent','--show-error','--output',download,sourceURL],{maxBuffer:1024*1024});
+  // Optional speech preparation must not consume a deployment's whole build
+  // deadline when the remote model host is unavailable. Explicit build:voices
+  // keeps the longer retry policy for installing or diagnosing voice support.
+  await promisify(execFile)('curl',['--fail','--location','--retry',optional?'0':'3','--connect-timeout',optional?'10':'20','--max-time',optional?'60':'300','--silent','--show-error','--output',download,sourceURL],{maxBuffer:1024*1024,...(optional?{timeout:70000}:{})});
   const bytes=await readFile(download);if(sha(bytes)!==sourceSHA)throw Error('Neural model checksum mismatch');
   const model=prepareCPUModel(bytes);await writeFile(temporary,model);await rename(temporary,output);
   await writeFile(manifest,JSON.stringify({sourceURL,sourceSHA256:sourceSHA,sha256:sha(model),conversion:'ConvInteger U8/U8, equivalent zero-point shift',license:'Apache-2.0'},null,2)+'\n');
   console.log('Neural male/female voices prepared for CPU playback.');return output;
  }finally{await rm(download,{force:true});await rm(temporary,{force:true});}
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await prepareNeuralVoices();
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const optional=process.argv.includes('--optional');
+ try{await prepareNeuralVoices({optional});}
+ catch(error){if(!optional)throw error;console.warn('[Neural voices] Optional voice preparation failed; continuing the site build. Generated speech may be unavailable. Run npm run build:voices to retry.\n'+error.message);}
+}

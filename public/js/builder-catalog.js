@@ -18,6 +18,6 @@ export function normalizeCatalogModel(raw,index){
  questSettings:raw.configuration?.questSettings||raw.questSettings||functionData.quest,
  dialogueSettings:raw.configuration?.dialogueSettings||raw.dialogueSettings||functionData.dialogue,
  environmentSettings:raw.configuration?.environmentSettings||raw.environmentSettings||functionData.environment,
- interaction_data:raw.interaction_data,economySku:raw.economySku||raw.sku,native:raw.native,nativeMaps:raw.nativeMaps,...catalogSupplyMetadata(raw),
+ interaction_data:raw.interaction_data,economySku:raw.economySku||raw.sku,native:raw.native,nativeMaps:raw.nativeMaps,...(raw.visualDesign?{visualDesign:{...raw.visualDesign}}:{}),...catalogSupplyMetadata(raw),
  scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:raw.targetHeight||(type==='avatar'?1.8:null),assetKind:generated?'generated-procedural':buildAssetId?'premade':'catalog-glb',registry:raw,source:raw.source||'repository'};
 }

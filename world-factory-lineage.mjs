@@ -25,13 +25,13 @@ export function recordFactoryOutput(ledger,job,{now=Date.now()}={}){
  const lot={id,itemId:job.itemId,quantity:job.quantity,availableQuantity:job.quantity,origin:'production',legacyCompletion:job.schemaVersion<3,productionId:job.id,itemPlanId:job.itemPlanId||job.recipe?.itemPlanId||null,fingerprint:job.fingerprint||job.recipe?.fingerprint||null,blueprint:clone(job.blueprint||job.recipe?.blueprint||{}),qualityReceipt:clone(job.qualityReceipt||null),packingReceipt:clone(job.packingReceipt||null),stageConfirmations:(job.stages||[]).map(stage=>({stageId:stage.id,completedAt:stage.completedAt||stage.readyAt,operationIds:(stage.operations||[]).map(operation=>operation.id)})),createdAt:job.completedAt||now};
  ledger.factoryLots[id]=lot;ledger.factoryStock[job.itemId]=(ledger.factoryStock[job.itemId]||0)+job.quantity;job.outputRecorded=true;job.outputLotId=id;return lot;
 }
-export function allocateFactoryLots(ledger,shipment,{now=Date.now()}={}){
+export function allocateFactoryLots(ledger,shipment,{now=Date.now(),lotId,orderId}={}){
  ensureFactoryLineage(ledger,{now});const prior=ledger.factoryLotAllocations[shipment.id];if(prior)return prior;
  const factory=!shipment.sourceMapId||shipment.sourceMapId==='factory',allocation={shipmentId:shipment.id,itemId:shipment.itemId,quantity:shipment.quantity,phase:'allocated',sourceMapId:shipment.sourceMapId||'factory',origin:factory?'factory-output':'warehouse-transfer',lots:[],createdAt:now};
  if(factory){
   if((ledger.factoryStock[shipment.itemId]||0)<shipment.quantity)fail('Factory stock is insufficient for this shipment.');
   let remaining=shipment.quantity;
-  for(const lot of Object.values(ledger.factoryLots).filter(lot=>lot.itemId===shipment.itemId&&lot.availableQuantity>0).sort((a,b)=>a.createdAt-b.createdAt||a.id.localeCompare(b.id))){const quantity=Math.min(remaining,lot.availableQuantity);lot.availableQuantity-=quantity;remaining-=quantity;allocation.lots.push({lotId:lot.id,quantity});if(!remaining)break;}
+  for(const lot of Object.values(ledger.factoryLots).filter(lot=>lot.itemId===shipment.itemId&&lot.availableQuantity>0&&(!lotId||lot.id===lotId)&&(!lot.reservedOrderId||lot.reservedOrderId===orderId)).sort((a,b)=>a.createdAt-b.createdAt||a.id.localeCompare(b.id))){const quantity=Math.min(remaining,lot.availableQuantity);lot.availableQuantity-=quantity;remaining-=quantity;allocation.lots.push({lotId:lot.id,quantity});if(!remaining)break;}
   if(remaining)fail('The factory shipment could not reserve its production lots.');
   ledger.factoryStock[shipment.itemId]-=shipment.quantity;
  }

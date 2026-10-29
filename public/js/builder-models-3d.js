@@ -1,3 +1,9 @@
+import {FOREST_SNAKE_MODEL_INFO} from './forest-snake-items.js';
+import {createForestSnakeModel,updateForestSnakeModel} from './forest-snake-model.js';
+import {QUARRY_MODEL_INFO} from './quarry-config.js';
+import {createQuarryModel,updateQuarryModel} from './quarry-models.js';
+import {FOREST_HARVEST_MODEL_INFO} from './forest-harvest-items.js';
+import {createForestHarvestModel,updateForestHarvestModel} from './forest-harvest-models.js';
 import {PRISON_MODEL_INFO} from './prison-items.js';
 import {createPrisonItemModel} from './prison-item-models.js';
 import {FACTORY_LOGISTICS_MODEL_INFO,createFactoryLogisticsModel,updateFactoryLogisticsModel} from './factory-logistics-props.js';
@@ -9,6 +15,7 @@ import {FITNESS_MODEL_INFO,FITNESS_ITEMS,createFitnessEquipment} from './fitness
 import {createWorldResident,updateWorldResident} from './world-resident-model.js';
 import {createRoadVehicle,updateRoadVehicle} from './road-vehicle-models.js';
 import {CONSTRUCTION_MODEL_IDS,createConstructionModel,updateConstructionModel} from './construction-models.js';
+import {CONSTRUCTION_SITE_MODEL_INFO,createConstructionSiteModel} from './construction-site-models.js';
 import {ROAD_VEHICLES} from './road-vehicles.js';
 import {createPatrolBoat,updatePatrolBoat} from './patrol-boat.js';
 import {createLandSaleModel} from './land-sale-models.js';
@@ -37,6 +44,13 @@ import {createArcadePart,animateArcadePark} from './arcade-park.js';
 import {createHockeyItem} from './hockey-models.js';
 import {PORTAL_MODEL_INFO,createPortalModel,updatePortalModel} from './portal-models.js';
 import {COMMON_PROP_MODEL_INFO,createCommonPropModel,updateCommonPropModel} from './common-prop-models.js';
+import {EQUIPMENT_PROP_MODEL_INFO,createEquipmentPropModel,updateEquipmentPropModel} from './equipment-prop-models.js';
+import {CRAFTED_LANDSCAPE_MODEL_INFO,createCraftedLandscapeModel,updateCraftedLandscapeModel} from './crafted-landscape-models.js';
+import {CRAFTED_CHARACTER_MODEL_INFO,createCraftedCharacterModel,updateCraftedCharacterModel} from './crafted-character-models.js';
+import {CRAFTED_BUILDING_MODEL_INFO,createCraftedBuildingModel,updateCraftedBuildingModel} from './crafted-building-models.js';
+import {CRAFTED_FURNITURE_MODEL_INFO,createCraftedFurnitureModel,updateCraftedFurnitureModel} from './crafted-furniture-models.js';
+import {finishNativeDesign} from './native-design-system.js';
+import {articulateLimb,finalizeArticulatedCharacter,updateArticulatedCharacter} from './articulated-character-rig.js';
 
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createBasketballHoop} from './basketball-stadium.js';
@@ -45,6 +59,10 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...QUARRY_MODEL_INFO,
+  ...FOREST_HARVEST_MODEL_INFO,
+  ...FOREST_SNAKE_MODEL_INFO,
+  ...CONSTRUCTION_SITE_MODEL_INFO,
   ...PORTAL_MODEL_INFO,
   ...COMMON_PROP_MODEL_INFO,
   ...FACTORY_LOGISTICS_MODEL_INFO,
@@ -119,7 +137,12 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'spiral-stairs': ['Spiral Stairs', 'A climbable-scale spiral staircase winding around a central column.', [2.1, 2.8, 2.1]],
   archway: ['Archway', 'A masonry passage with two pillars and a curved overhead arch.', [2.4, 2.8, .5]],
   'art-wall': ['Art Wall', 'A gallery wall with a framed colourful abstract artwork.', [2.2, 2.15, .18]],
-  'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]]
+  'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]],
+  ...EQUIPMENT_PROP_MODEL_INFO,
+  ...CRAFTED_LANDSCAPE_MODEL_INFO,
+  ...CRAFTED_CHARACTER_MODEL_INFO,
+  ...CRAFTED_BUILDING_MODEL_INFO,
+  ...CRAFTED_FURNITURE_MODEL_INFO
 });
 
 // Items that carry gameplay roles in the Environment Builder also need a
@@ -142,7 +165,13 @@ const cylinder = (r1,r2,h,mat,position,segments=16) => mesh(new THREE.CylinderGe
 function vehicle(id){
  const root=new THREE.Group(),black=material(0x090b0d,.28,.82),rubber=material(0x080808,.94,.02),steel=material(0x596169,.25,.88),engine=material(0x34393d,.38,.72),tube=(a,b,r=.055)=>{const d=new THREE.Vector3().subVectors(b,a),part=cylinder(r,r,d.length(),black,a.clone().add(b).multiplyScalar(.5),10);part.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());root.add(part);return part;};
  if(id==='dune-quad'){
-  [[-1.05,.42,-.62],[-1.05,.42,.62],[1.05,.42,-.62],[1.05,.42,.62]].forEach(([x,y,z])=>{const tyre=mesh(new THREE.TorusGeometry(.34,.14,12,24),rubber,[x,y,z],[Math.PI/2,0,0]);tyre.userData.vehicleWheel=true;root.add(tyre,cylinder(.08,.08,.42,steel,[x,y,z],10));});
+  // Upright XY wheel planes roll around the existing local Z animation axis.
+  // Their .42 m outer radius preserves X/Z extrema and the original .21 m
+  // placement datum formerly set by the vertical cosmetic axle cylinders.
+  for(const x of [-1.11,1.11]){
+   for(const z of [-.96,.96]){const tyre=mesh(new THREE.TorusGeometry(.28,.14,12,24),rubber,[x,.63,z]);tyre.name='DUNE_QUAD_UPRIGHT_TYRE';tyre.userData.vehicleWheel=true;root.add(tyre);tube(new THREE.Vector3(Math.sign(x)*.92,.42,Math.sign(z)*.48),new THREE.Vector3(x,.63,z),.045);}
+   const axle=cylinder(.055,.055,1.92,steel,[x,.63,0],12);axle.name='DUNE_QUAD_TRANSVERSE_AXLE';axle.rotation.x=Math.PI/2;root.add(axle);
+  }
   const p=[new THREE.Vector3(-.92,.42,-.48),new THREE.Vector3(-.92,.42,.48),new THREE.Vector3(.92,.42,-.48),new THREE.Vector3(.92,.42,.48),new THREE.Vector3(-.62,1.08,-.42),new THREE.Vector3(-.62,1.08,.42),new THREE.Vector3(.65,.88,-.42),new THREE.Vector3(.65,.88,.42)];[[0,2],[1,3],[0,1],[2,3],[0,4],[1,5],[4,5],[4,6],[5,7],[6,7],[2,6],[3,7]].forEach(([a,b])=>tube(p[a],p[b],.06));root.add(box([.58,.48,.62],engine,[.48,.58,0]),cylinder(.18,.18,.58,engine,[.75,.72,0],12),box([.55,.1,.48],material(0x202326,.8),[-.25,.69,0]));
   root.userData.vehicle={mode:'drive',seat:[-.2,.82,0],speed:9,turnSpeed:1.75};
  }else{
@@ -185,6 +214,50 @@ function expandedModel(id){
 }
 
 
+
+// Keep the native stand-ins' rest envelope and equipment, but bend the existing
+// limb surfaces at real joints. No added render meshes, materials or textures.
+function nativeHumanoid(root,{suit,pale,dark,metal,glow}){
+ const pelvis=new THREE.Group();pelvis.name='QUEST_CHARACTER_HIPS';pelvis.position.y=.79;pelvis.userData.articulatedHips=true;root.add(pelvis);
+ const bodyPart=(geometry,mat,position)=>{const part=mesh(geometry,mat,[position[0],position[1]-.79,position[2]]);pelvis.add(part);return part;};
+ bodyPart(new THREE.CapsuleGeometry(.29,.48,4,14),suit,[0,1.03,0]).name='QUEST_CHARACTER_TORSO';
+ const head=new THREE.Group();head.name='QUEST_CHARACTER_HEAD';head.position.set(0,1.65-.79,0);pelvis.add(head);
+ head.add(mesh(new THREE.SphereGeometry(.25,16,10),pale),mesh(new THREE.BoxGeometry(.41,.12,.08),dark,[0,.03,-.22]));
+ for(const x of [-.105,.105]){const eye=mesh(new THREE.SphereGeometry(.035,8,6),glow,[x,.04,-.27]);eye.scale.z=Math.sin(Math.PI*.4);head.add(eye);}
+ bodyPart(new THREE.BoxGeometry(.37,.29,.075),metal,[0,1.17,-.25]);bodyPart(new THREE.BoxGeometry(.17,.035,.015),glow,[0,1.18,-.294]);
+ for(const side of [-1,1]){
+  const label=side<0?'LEFT':'RIGHT';
+  const arm=new THREE.Group();arm.name='QUEST_'+label+'_ARM';arm.position.set(side*.38,1.25-.79,0);pelvis.add(arm);
+  const shoulder=mesh(new THREE.SphereGeometry(.15,12,6),metal,[-side*.02,0,0]);shoulder.name='QUEST_SHOULDER';arm.add(shoulder);
+  const sleeve=mesh(new THREE.CapsuleGeometry(.09,.36,4,10),suit,[0,-.29,0]);sleeve.name='QUEST_SLEEVE';arm.add(sleeve);
+  const hand=mesh(new THREE.SphereGeometry(.105,8,6),dark,[0,-.57,0]);hand.name='QUEST_HAND';arm.add(hand);
+  articulateLimb(THREE,arm,{mesh:sleeve,bend:[0,-.29,0],end:[0,-.57,0],attachments:[hand],kind:'arm',side,prefix:'QUEST_'+label});
+  const leg=new THREE.Group();leg.name='QUEST_'+label+'_LEG';leg.position.set(side*.155,.7-.79,0);pelvis.add(leg);
+  const trouser=mesh(new THREE.CapsuleGeometry(.105,.39,4,10),suit,[0,-.3,0]);trouser.name='QUEST_TROUSER';leg.add(trouser);
+  const boot=mesh(new THREE.BoxGeometry(.24,.17,.38),dark,[0,.095-.7,-.07]);boot.name='QUEST_BOOT';leg.add(boot);
+  articulateLimb(THREE,leg,{mesh:trouser,bend:[0,-.3,0],end:[0,-.53,0],attachments:[boot],kind:'leg',side,prefix:'QUEST_'+label});
+ }
+ root.userData.nativePeopleModel=true;finalizeArticulatedCharacter(root);
+}
+const nativePeopleParts=new WeakMap(),builderCharacterMotions=new WeakMap();
+function characterMotionFor(root,inherited){
+ const own=root.userData?.avatarMotion;if(!own)return inherited;
+ let state=builderCharacterMotions.get(root);if(!state){state={};builderCharacterMotions.set(root,state);}
+ state.moving=own.moving??inherited.moving;state.speed=own.speed??inherited.speed;state.gesture=own.gesture??inherited.gesture;
+ state.reducedMotion=own.reducedMotion===true||inherited.reducedMotion===true;
+ return state;
+}
+function updateNativePeople(root,elapsed,motion={}){
+ if(!root.userData?.nativePeopleModel)return false;
+ const animation=root.userData.animationState||{},rate=Number.isFinite(animation.speed)?Math.max(0,animation.speed):1,time=(Number.isFinite(elapsed)?elapsed:0)*rate;
+ const reducedMotion=motion.reducedMotion===true||animation.enabled===false;
+ let parts=nativePeopleParts.get(root);if(!parts){parts={head:root.getObjectByName('QUEST_CHARACTER_HEAD'),motion:{}};nativePeopleParts.set(root,parts);}
+ const state=parts.motion;state.moving=motion.moving;state.speed=motion.speed;state.gesture=motion.gesture;state.reducedMotion=reducedMotion;state.upperBody=motion.upperBody;
+ updateArticulatedCharacter(root,time,state);
+ if(parts.head)parts.head.rotation.x=reducedMotion?0:root.userData.questSpeaking?Math.sin(time*9)*.065:Math.sin(time*.8)*.015;
+ return true;
+}
+
 function gameplayItem(id){
  const [name,behavior,colorValue]=GAMEPLAY_ITEMS[id],root=new THREE.Group(),color=new THREE.Color(colorValue),glow=material(color,.38,.08,{emissive:color.clone().multiplyScalar(.28),emissiveIntensity:.65});
  const actor=['hero-spawn','scout-avatar','wolf-guardian','rad-tox','void-wolf','ember-dragon','rogue-bot','friendly-ghost'].includes(id);
@@ -206,9 +279,7 @@ function gameplayItem(id){
    add(new THREE.TorusGeometry(.52,.025,6,24),glow,[0,.2,0],[Math.PI/2,0,0]);
   }else{
    const suit=material(id==='rad-tox'?0x46632e:id==='scout-avatar'?0x374b55:0x263e55,.68,.15);
-   add(new THREE.CapsuleGeometry(.29,.48,6,14),suit,[0,1.03,0]);const head=new THREE.Group();head.name='QUEST_CHARACTER_HEAD';head.position.set(0,1.65,0);root.add(head);head.add(mesh(new THREE.SphereGeometry(.25,18,12),pale,[0,0,0]),mesh(new THREE.BoxGeometry(.41,.12,.08),dark,[0,.03,-.22]));for(const x of [-.105,.105])head.add(mesh(new THREE.SphereGeometry(.035,10,8),glow,[x,.04,-.27]));
-   add(new THREE.BoxGeometry(.37,.29,.075),metal,[0,1.17,-.25]);add(new THREE.BoxGeometry(.17,.035,.015),glow,[0,1.18,-.294]);
-   for(const side of [-1,1]){add(new THREE.SphereGeometry(.15,12,8),metal,[side*.36,1.25,0]);add(new THREE.CapsuleGeometry(.09,.36,4,10),suit,[side*.38,.96,0]);add(new THREE.SphereGeometry(.105,10,8),dark,[side*.38,.68,0]);add(new THREE.CapsuleGeometry(.105,.39,4,10),suit,[side*.155,.4,0]);add(new THREE.BoxGeometry(.24,.17,.38),dark,[side*.155,.095,-.07]);}
+   nativeHumanoid(root,{suit,pale,dark,metal,glow});
    if(id==='hero-spawn')add(new THREE.TorusGeometry(.53,.035,8,28),glow,[0,.04,0],[Math.PI/2,0,0]);
   }
  }else if(id==='quest-scroll'){
@@ -230,7 +301,7 @@ function gameplayItem(id){
   for(const angle of [-.65,.65])add(new THREE.CylinderGeometry(.09,.12,.75,12),wood,[0,.18,0],[Math.PI/2,0,angle]);
   for(let i=0;i<3;i++){const flame=add(new THREE.ConeGeometry(.15,.7-i*.12,12),material(i===0?0xffc16b:0xff7048,.8,0,{emissive:0xff682a,emissiveIntensity:.85,transparent:true,opacity:.86}),[(i-1)*.16,.55-i*.06,0]);flame.userData.itemFlame=i;flame.userData.collisionDisabled=true;}
  }else for(let i=0;i<9;i++){const bubble=add(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;}
- root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
+ root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
 }
 
 function plant(id) {
@@ -318,6 +389,19 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+ return finishNativeDesign(THREE,buildNativeModel(id,options),id);
+}
+
+function buildNativeModel(id,options={}) {
+  if(QUARRY_MODEL_INFO[id])return createQuarryModel(id);
+  if(FOREST_SNAKE_MODEL_INFO[id])return createForestSnakeModel(id);
+  if(FOREST_HARVEST_MODEL_INFO[id])return createForestHarvestModel(id);
+  if(CONSTRUCTION_SITE_MODEL_INFO[id])return createConstructionSiteModel(id);
+  if(EQUIPMENT_PROP_MODEL_INFO[id])return createEquipmentPropModel(id);
+  if(CRAFTED_LANDSCAPE_MODEL_INFO[id])return createCraftedLandscapeModel(id);
+  if(CRAFTED_CHARACTER_MODEL_INFO[id])return createCraftedCharacterModel(id);
+  if(CRAFTED_BUILDING_MODEL_INFO[id])return createCraftedBuildingModel(id);
+  if(CRAFTED_FURNITURE_MODEL_INFO[id])return createCraftedFurnitureModel(id);
   if(PORTAL_MODEL_INFO[id])return createPortalModel(id);
   if(COMMON_PROP_MODEL_INFO[id])return createCommonPropModel(id);
   if(PRISON_MODEL_INFO[id])return createPrisonItemModel(id);
@@ -389,13 +473,27 @@ export function createGeneratedAsset(model) {
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return finishGameItem(THREE,root);
 }
 
-export function updateBuilderModels(group, elapsed) {
+function updateCraftedModel(root,elapsed,motion){
+ if(root.userData?.equipmentPropModel){updateEquipmentPropModel(root,elapsed);return true;}
+ if(root.userData?.craftedLandscapeModel){updateCraftedLandscapeModel(root,elapsed);return true;}
+ if(root.userData?.craftedCharacterModel){updateCraftedCharacterModel(root,elapsed,motion);return true;}
+ if(root.userData?.craftedBuildingModel){updateCraftedBuildingModel(root,elapsed);return true;}
+ if(root.userData?.craftedFurnitureModel){updateCraftedFurnitureModel(root,elapsed);return true;}
+ return false;
+}
+
+export function updateBuilderModels(group, elapsed, motion={}) {
+  if(group.userData?.forestSnakeModel){updateForestSnakeModel(group,elapsed,{talking:group.userData.forestSnakeTalking===true,reducedMotion:group.userData.forestSnakeReducedMotion===true});return;}
+  motion=characterMotionFor(group,motion);
+  if(updateNativePeople(group,elapsed,motion))return;
+  if(group.userData?.residentModel){updateWorldResident(group,elapsed,motion);return;}
+  if(updateCraftedModel(group,elapsed,motion))return;
   if(group.userData?.portalModel){updatePortalModel(group,elapsed);return;}
   if(group.userData?.commonPropModel){updateCommonPropModel(group,elapsed);return;}
   // Avatar projections supply their native model directly; placed scenery
   // supplies a collection. Both retain the same authored carnival animation.
-  if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed);return;}
-  group.children.forEach(root=>{if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed,motion.reducedMotion,motion);return;}
+  group.children.forEach(root=>{const snake=root.userData.forestSnakeModel?root:root.children.find(child=>child.userData.forestSnakeModel);if(snake){updateForestSnakeModel(snake,elapsed,{talking:snake.userData.forestSnakeTalking===true,reducedMotion:snake.userData.forestSnakeReducedMotion===true});return;}if(root.userData.forestHarvestModel){updateForestHarvestModel(root,elapsed);return;}const rootMotion=characterMotionFor(root,motion);if(updateNativePeople(root,elapsed,rootMotion))return;if(updateQuarryModel(root,elapsed))return;if(updateCraftedModel(root,elapsed,rootMotion))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed,rootMotion.reducedMotion,rootMotion);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed,rootMotion);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

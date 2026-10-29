@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {Readable} from 'node:stream';
 
-test('audio settings persist independently for the signed-in member',async()=>{
+test('audio and action-bar settings persist independently for the signed-in member',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'player-audio-settings-')),oldEnv={...process.env};
  Object.assign(process.env,{MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(dir,'avatar-uploads'),MUZIKAZ_ASSET_UPLOAD_DIR:join(dir,'asset-uploads'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(dir,'environment-uploads')});
  try{
@@ -20,7 +20,7 @@ test('audio settings persist independently for the signed-in member',async()=>{
   }
   const login=await call('/api/access/free-play',{}, {username:'AudioSettingsPlayer',password:'audio-settings-test'});assert.equal(login.status,200);
   const cookie={cookie:login.headers['set-cookie'].split(';')[0]},session=await call('/api/market/session',cookie),headers={...cookie,'x-csrf-token':session.body.data.csrfToken};
-  const audio={masterMuted:false,introductionMuted:true,announcementsMuted:true,dialogueMuted:false,effectsMuted:true,mediaMuted:true,spatialAudio:false,effectsVolume:63,speechVoiceGender:'female',speechVoiceURI:'Microsoft Aria Online (Natural) - English (United States)'};
+  const audio={hideActionBars:true,masterMuted:false,introductionMuted:true,announcementsMuted:true,dialogueMuted:false,effectsMuted:true,mediaMuted:true,spatialAudio:false,effectsVolume:63,speechVoiceGender:'female',speechVoiceURI:'Microsoft Aria Online (Natural) - English (United States)'};
   assert.equal((await call('/api/player/settings',headers,{settings:audio},'PUT')).status,200);
   const restored=(await call('/api/player/settings',cookie)).body.data.settings;
   for(const [key,value]of Object.entries(audio))assert.equal(restored[key],value,key);
@@ -29,6 +29,6 @@ test('audio settings persist independently for the signed-in member',async()=>{
   const second=await call('/api/access/free-play',{}, {username:'OtherAudioPlayer',password:'other-audio-settings-test'});assert.equal(second.status,200);
   const defaults=(await call('/api/player/settings',{authorization:'Bearer '+second.body.data.sessionToken})).body.data.settings;
   for(const key of ['masterMuted','introductionMuted','announcementsMuted','dialogueMuted','effectsMuted','mediaMuted'])assert.equal(defaults[key],false);
-  assert.equal(defaults.spatialAudio,true);assert.equal(defaults.effectsVolume,100);assert.equal(defaults.speechVoiceGender,'auto');assert.equal(defaults.speechVoiceURI,'');
+  assert.equal(defaults.hideActionBars,false);assert.equal(defaults.spatialAudio,true);assert.equal(defaults.effectsVolume,100);assert.equal(defaults.speechVoiceGender,'auto');assert.equal(defaults.speechVoiceURI,'');
  }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
 });

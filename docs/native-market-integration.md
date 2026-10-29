@@ -2,8 +2,8 @@
 
 The native library is shared by the editor, server economy, public Game Market,
 and Builder Market. `public/js/native-builder-items.js` defines the reusable
-items and their runtime settings. The current library has 487 definitions;
-the economy has 613 SKUs, including 548 native item, material, tool, and layout
+items and their runtime settings. The current library has 492 definitions;
+the economy has 618 SKUs, including 553 native item, material, tool, and layout
 offers. This includes the 28 clown funhouse items, nine factory assets and all verified repository model
 offers. Existing SKUs and prices are retained. The eight hockey equipment and
 match-role items now have their own `native:hockey-*` SKUs. The reusable World
@@ -81,6 +81,39 @@ claim ownership through these fields.
 
 ## Upgraded portals and everyday props
 
+The complete native catalog now uses `crafted-native-v3`. All 492 canonical
+definitions receive the shared surface finish through `createBuilderModel`,
+including every early-return factory and all 130 construction materials.
+Previously authored geometry is retained, with semantic detailing for transport,
+architecture, devices/sports and the remaining world props. Media graphics,
+colliders, paint colours, animation palettes, placement and gameplay settings are
+preserved. Materials use small deterministic surface maps for timber, masonry,
+stone, metal, rubber, fabric, ceramic, glass and other supported surfaces.
+
+`public/js/native-design-system.js` dispatches the design families;
+`native-surface-finish.js` supplies the common material treatment. Catalog records
+declare `visualDesign.version` and a dedicated thumbnail in
+`public/images/native-designs/`. Run `python3 scripts/render-native-designs.py`
+to render every canonical model and regenerate its accessible SVG thumbnail,
+category contact sheets and a render report. `scripts/audit-native-designs.mjs`
+checks the entire library, including actual rendering changes, and can compare
+prices, aliases and functionality with a recorded `--baseline` snapshot.
+`public/models/native-design-coverage.json` records the current per-item audit.
+
+The same design system also covers all 24 held tools and 32 native map templates.
+Together with five historical purchase aliases, these 548 unique designs cover
+all 553 native economy offers. `held-tool-design-finish.js` supplies physical
+models for every tool, including ranged weapons and utility gear that previously
+had no held projection. Existing weapon statistics, aim rays, camera attachments
+and use costs remain unchanged. Markets can show the actual tool model as well
+as its rendered thumbnail.
+
+`environments/native-world-design-finish.js` applies the surface treatment to
+native procedural world constructors, editor previews, and the dedicated arcade
+and hockey renderers. Imported GLBs, private maps and member-created map assets
+retain their authored surface pipeline. Construction pieces keep their original
+collision and walkable geometry; cosmetic hardware does not create obstacles.
+
 Existing `portal-door` and `teleport-pad` copies now use authored metal frames,
 emissive channels and animated energy fields. `portal-arch` adds a stone-and-rune
 gateway; `portal-ring` adds a circular solar gateway. New gateways expose the
@@ -102,6 +135,22 @@ copies own their animated materials so changing one copy does not affect another
 The editor, in-game library and market share dedicated SVG thumbnails under
 `public/images/native-upgrades/`. Regression coverage lives in
 `test/native-asset-designs.test.mjs` and `test/native-asset-designs.browser.py`.
+
+The same crafted finish now covers the remaining original expanded-library
+recipes: four weapons, a cart, anvil, signpost and working windmill; eight terrain
+and plant models; four buildings; and nine characters and creatures. Another
+23 garden, furniture and healing/camp props share the same finish. These 52
+upgrades retain their original purchase identities, prices and native behaviors.
+Only local parts animate, leaving saved placement transforms intact.
+
+The five `*-models.js` collection modules (`equipment-prop`,
+`crafted-landscape`, `crafted-character`, `crafted-building` and
+`crafted-furniture`) supply shared model metadata, factories and animations.
+Catalog thumbnails show the actual authored 3D models, packaged in accessible
+SVGs. Run `python3 test/native-crafted-collection.browser.py --write-thumbnails`
+to regenerate them and export category preview sheets. The browser check reports
+shader errors; `test/native-crafted-collection.test.mjs` checks geometry budgets,
+grounding, animation isolation and compatibility with existing catalog offers.
 
 ## Extending the library
 
@@ -132,7 +181,7 @@ The 2026-10-27 audit found:
 | Coverage | Count |
 | --- | ---: |
 | Public worlds: 38 bundled/current authored worlds plus Commons and eight districts | 47 |
-| Placed native and whole GLB model instances | 5,435 |
+| Placed native and whole GLB model instances | 5,437 |
 | Distinct market items used by those worlds | 210 |
 | Renderer metadata model IDs | 281 |
 | Shared native definitions, including materials and gameplay items | 492 |
@@ -163,3 +212,67 @@ Backpack/economy identity each. They retain their milestone receipts, zero use
 cost, and non-tradable status. They are excluded from purchasable bundles and
 factory production/stock recipes, so manufacturing cannot duplicate an earned
 radio, chess set, escape trophy, or workshop keepsake crate.
+
+## Crafted vehicle collection
+
+The `crafted-vehicles-v1` pass extends the shared native finish with substantial
+vehicle-specific geometry. Its explicit registry covers all 23 mobile or towed
+vehicles: five road vehicles, three aircraft, ten boats and ships, four site
+machines, and the cargo trailer. Ten related native designs are included too:
+the clown car, wooden handcart, canoe rack, five train/coaster pieces, and two
+factory flight craft. Catalog category alone is insufficient: the two resort
+boats and trailer keep their established decor metadata and gameplay settings.
+
+Road models have formed bodywork, curved fenders, tyre tread, wheel/brake details
+and tailored trim. Aircraft have conformal airframe panels and articulated
+control-surface inserts; boats have fitted decking, safety equipment and deck
+markings. Industrial vehicles have hazard panels, hydraulic collars, cab seals
+and track treatments. Missing UVs on custom hulls, fuselages, wings and sails are
+generated without changing their original vertex positions or indices.
+
+`vehicle-design-profile.js` is renderer-free and supplies the same 33 identities
+to catalog thumbnails and runtime finishing. Their artwork uses versioned
+`*-vehicle-v1.svg` paths, so existing browsers request the completed designs.
+The factories used directly by public worlds and the shared native builder both
+call the idempotent vehicle finish. Cosmetic additions remain under their
+authored wheel, gear, boom, helm and ride-car parents, with collision disabled.
+Prices, saved identities, seats, control settings and placement bounds remain
+compatible with the existing collection.
+
+Run `node scripts/audit-vehicle-designs.mjs` for complete physical renderer
+coverage and `node --test test/vehicle-*-design.test.mjs` for the focused
+regressions. An optional `--baseline <snapshot.json>` also compares bounds,
+collision geometry, rig references and economy contracts against a captured
+pre-upgrade collection. The recorded result is
+`public/models/vehicle-design-coverage.json`. The native exporter records both
+native and vehicle design versions and creates a complete vehicle contact sheet
+alongside the other category sheets.
+
+## Mountain and terrain cleanup
+
+`crafted-mountains-v1` covers the Alpine mountain, weathered cliff, crater and
+snowbank. The Alpine ridge is a single closed landform split into two matching
+rock/snow surfaces, with branching buttresses, gullies, flared foothills and an
+irregular integrated snowline. It keeps the existing six-metre footprint,
+five-metre summit and two draw calls, with a bounded 3,500-triangle budget.
+
+The cliff has outward-facing joined sediment layers and fitted mineral seams.
+Collapsed crater and ice-tip faces are removed, the snow crest is supported by
+its drift, and the terrain surfaces have finite texture coordinates. Named
+stone, powder snow and translucent ice receive their own surface finish instead
+of falling through to timber or generic stone heuristics.
+
+The same cleanup replaces 26 decorative mountain-pass, ski-summit and proving
+ground ridges while preserving their mesh identities, transforms, envelopes and
+collision flags. Nineteen compound rock faces keep their excavation geometry.
+All 100 walkable ski tiles retain their original position, normal and index
+buffers and gain continuous world-aligned UVs. Shared height functions, valley
+trails, ski routes, lift pads and the six airport peak placements stay intact.
+
+Run `node scripts/audit-mountain-designs.mjs` for the four native designs and
+four affected worlds. Its optional `--baseline <snapshot.json>` also checks
+original collision envelopes, walkable geometry, economy records and world
+placements. The recorded report is `public/models/mountain-design-coverage.json`.
+Mountain model and template thumbnails use `*-mountain-v1.svg`; legacy terrain
+icons are refreshed from the same actual factory renders. The native exporter
+also creates a dedicated mountain contact sheet.

@@ -1,10 +1,14 @@
 import {normalizeCatalogModel} from './builder-catalog.js';
+import {readJsonResponse} from './json-response.js';
 export const INVENTORY_EVENT='muzikaz:inventory-changed';
 export function signalInventoryChange(){window.dispatchEvent(new Event(INVENTORY_EVENT));try{localStorage.setItem('muzikaz.inventory.signal',JSON.stringify({at:Date.now(),id:crypto.randomUUID()}));}catch{}}
 export function watchInventoryChange(refresh){let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(refresh,150);};window.addEventListener(INVENTORY_EVENT,schedule);window.addEventListener('storage',event=>{if(event.key==='muzikaz.inventory.signal')schedule();});window.addEventListener('focus',schedule);window.addEventListener('mzk:wallet-connection-changed',schedule);}
 export class SharedGameInventory {
  constructor({getMapId=()=>undefined}={}){this.pending=new Map();this.getMapId=getMapId;}
  async api(path,options={}){
+  // Discovery has its own bounded cold-start budget. Do not spend the
+  // gameplay request deadline waiting for a server that has not woken yet.
+  if(window.MUZIKAZ_API?.whenReady)await window.MUZIKAZ_API.whenReady(options.signal);
   const controller=new AbortController(),timeout=Math.max(1000,Math.min(30000,Number(options.timeout)||8000)),external=options.signal;
   const cancel=()=>controller.abort();if(external?.aborted)cancel();else external?.addEventListener('abort',cancel,{once:true});
   const startedAt=performance.now();let grace=false,timer;
@@ -12,7 +16,7 @@ export class SharedGameInventory {
   // Let queued fetch completions run after a long rendering task before
   // treating an overdue main-thread timer as a lost server connection.
   timer=setTimeout(deadline,timeout);
-  try{const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{credentials:'include',cache:'no-store',retries:0,...options,signal:controller.signal,timeout,deadlineManaged:true,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});const payload=await response.json();if(!response.ok||payload.success===false)throw Object.assign(new Error(payload.message||'Sign in through Members to use your shared Backpack.'),{status:response.status,code:payload.code});return payload.data;}finally{clearTimeout(timer);external?.removeEventListener('abort',cancel);}
+  try{const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{credentials:'include',cache:'no-store',retries:0,...options,signal:controller.signal,timeout,deadlineManaged:true,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});const payload=await readJsonResponse(response);if(!response.ok||payload.success===false)throw Object.assign(new Error(payload.message||payload.error||(response.status===401?'Your game session has expired. Continue as guest or sign in again.':response.status>=500?'The game server is temporarily unavailable. Please try again.':'This game action could not be completed. Please try again.')),{status:response.status,code:payload.code});return payload.data;}finally{clearTimeout(timer);external?.removeEventListener('abort',cancel);}
  }
 
  async recordTelemetry(health,world){const bootstrap=await this.session();return this.api('/api/rpg/telemetry',{method:'POST',headers:{'X-CSRF-Token':bootstrap.csrfToken},body:JSON.stringify({health,world})});}
