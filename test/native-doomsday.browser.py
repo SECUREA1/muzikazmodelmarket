@@ -53,6 +53,24 @@ try:
     page.locator('#camera-toggle').click()
    page.wait_for_function(f'{getter}.doomsday?.automatic && ({getter}.doomsday.phase!=="idle" || {getter}.doomsday.nextEventAt>0)')
    initial=page.evaluate(f'{getter}.doomsday')
+   page.evaluate("""()=>{const overrides={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0};window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={...window.MUZIKAZ_AUDIO_SESSION_OVERRIDES,...overrides};const preferences={...window.MUZIKAZ_AUDIO_PREFERENCES,...overrides};window.MUZIKAZ_AUDIO_PREFERENCES=preferences;window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));}""")
+   if page.locator('.doomsday-guide').is_hidden():page.get_by_role('button',name='Show emergency guide',exact=True).click()
+   page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='master-muted'")
+   page.get_by_role('button',name='Enable sounds',exact=True).tap()
+   page.wait_for_function("['ready','playing'].includes(document.querySelector('#doomsday-panel').dataset.audioState)")
+   assert page.evaluate('!MUZIKAZ_AUDIO_PREFERENCES.masterMuted && !MUZIKAZ_AUDIO_PREFERENCES.effectsMuted')
+   assert page.get_by_role('switch',name='Sirens and explosions',exact=True).is_checked()
+   for width,height in [(390,844),(740,360)]:
+    page.set_viewport_size({'width':width,'height':height});page.wait_for_timeout(150)
+    overlap=page.evaluate("""()=>{const p=document.querySelector('.doomsday-panel').getBoundingClientRect();return [...document.querySelectorAll('.thumbstick-base')].map(n=>n.getBoundingClientRect()).filter(r=>r.width&&r.top<innerHeight&&r.bottom>0&&r.left<p.right&&r.right>p.left&&r.top<p.bottom&&r.bottom>p.top).map(r=>r.toJSON());}""")
+    page.screenshot(path=f'/workspace/mobile-emergency-{kind}-sound-panel-{width}.png')
+    assert not overlap,(kind,width,'emergency guide covers a movement stick',overlap)
+   page.set_viewport_size({'width':390,'height':844})
+   page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
+   print(kind,'explicit mobile sound recovery passed',flush=True)
+   if os.environ.get('NATIVE_LAYOUT_ONLY')=='1':
+    page.close();continue
+   initial=page.evaluate(f'{getter}.doomsday')
    if initial['phase']=='idle':
     assert initial['nextEventAt']-initial['scheduledAt']==15000
     assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
@@ -63,7 +81,7 @@ try:
    assert state['cycle']==1 and state['nextEventAt'] is None
 
    assert page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count()==0
-   page.get_by_role('button',name='Hide emergency guide',exact=True).click()
+   if page.locator('.doomsday-guide').is_visible():page.get_by_role('button',name='Hide emergency guide',exact=True).click()
    guide=page.locator('.doomsday-guide');assert guide.is_hidden()
    before=page.evaluate(f'{getter}.player' if kind=='hockey' else f'{getter}.walking')
    page.keyboard.down('w');page.wait_for_timeout(250);page.keyboard.up('w')
@@ -100,12 +118,13 @@ try:
    complete=page.evaluate(f'{getter}.doomsday');repeat_at=complete['nextEventAt']
    assert repeat_at-complete['clearAt']==180000
    page.wait_for_timeout(8500)
-   assert page.locator('.doomsday-guide,.doomsday-guide-chip,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.get_by_role('button',name='Show emergency guide',exact=True).is_visible()
    assert page.evaluate(f'{getter}.doomsday.cycle')==1
    assert page.evaluate(f'{getter}.doomsday.nextEventAt')==repeat_at
 
    assert not errors,(kind,errors)
    page.screenshot(path=f'/tmp/automatic-native-doomsday-{kind}.png');page.close()
   browser.close()
- print('Hockey and arcade keep full quest-led events, optional popup challenge following, and a quiet repeat interval after completion.')
+ print('Native mobile sound controls and movement clearance passed.' if os.environ.get('NATIVE_LAYOUT_ONLY')=='1' else 'Hockey and arcade keep full quest-led events, optional popup challenge following, and a quiet repeat interval after completion.')
 finally:server.shutdown()

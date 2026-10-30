@@ -43,7 +43,7 @@ try:
    assert page.evaluate('audioOscillators.length')==2
    assert page.evaluate('activeSiren().targets.at(-1)')==.16
    page.evaluate("radioSpeaking=true;draw('warning',250,.25)")
-   assert page.evaluate('activeSiren().targets.at(-1)')==.016
+   assert page.evaluate('activeSiren().targets.at(-1)')==.05
    page.evaluate('radioSpeaking=false')
    warning=page.evaluate('effects.root.userData.skyColor')
    angle=page.evaluate("effects.root.getObjectByName('ROTATING_SIREN_LAMP').rotation.y")

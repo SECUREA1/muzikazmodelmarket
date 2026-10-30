@@ -1,4 +1,5 @@
 import {mountDoomsdayUI} from './doomsday-ui.js';
+import {enableDoomsdayAudioPreferences} from './doomsday-audio-preferences.js';
 import {createDoomsdayScene} from './doomsday-scene.js';
 import {mountForestSnakeSpeech} from './forest-snake-speech.js';
 import {applyForestryRenderQuality} from './forest-harvest-render-quality.js';
@@ -922,7 +923,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const districtMap=mountDistrictMap({stage,command:serverCommand,onFishing:details=>fishingUI.open(details),getRoots:()=>[envLoader.world,builderDecor,constructionScene.root]});
   const gameplayVoice=questConversationVoice();
   const gameplayAnnouncements=createGameplayAnnouncements({voice:gameplayVoice});
-  const doomsdayUI=mountDoomsdayUI({stage,getEnvironment:()=>multiplayerWorldLoading?null:activeEnvironment,getPosition:()=>playerRig.position,getState:()=>serverViewSnapshot?.doomsday?.mapId===activeEnvironment?.id?serverViewSnapshot.doomsday:null,isShared:()=>serverHostedRoom,announce:setStatus,voice:gameplayVoice,getPreferences:()=>playerPreferences,effects:createDoomsdayScene({scene,performanceMode})});
+  const doomsdayUI=mountDoomsdayUI({stage,getEnvironment:()=>multiplayerWorldLoading?null:activeEnvironment,getPosition:()=>playerRig.position,getState:()=>serverViewSnapshot?.doomsday?.mapId===activeEnvironment?.id?serverViewSnapshot.doomsday:null,isShared:()=>serverHostedRoom,announce:setStatus,voice:gameplayVoice,getPreferences:()=>playerPreferences,onEnableAudio:()=>enableDoomsdayAudioPreferences({getPreferences:()=>playerPreferences,voice:gameplayVoice}),effects:createDoomsdayScene({scene,performanceMode})});
   const forestSnakeSpeech=mountForestSnakeSpeech({stage,voice:gameplayVoice});
   const residentConversationAudio=createResidentConversationAudio({voice:gameplayVoice});
   let soloResidentClient=null,soloResidentSnapshot=null,soloResidentMovementRevision=0;

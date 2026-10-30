@@ -197,7 +197,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   addEventListener(type,callback){speech?.addEventListener?.(type,callback);},
   removeEventListener(type,callback){speech?.removeEventListener?.(type,callback);},
   dispose(){disposed=true;stop();speech?.removeEventListener?.('voiceschanged',onVoicesChanged);cast.clear();},
-  get state(){const output=speech?.state;return {unlocked,audioReady:unlocked&&output?.unlocked!==false,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,supported:supported(),speaking:!!current,outputBusy:!!output?.speaking||!!output?.loading,pending:queue.length,loading:!!output?.loading,error:output?.error||null,status:output?.status||''};}
+  get state(){const output=speech?.state;return {unlocked,audioReady:unlocked&&output?.unlocked!==false,muted:muted||!!preferences.masterMuted||!!preferences.dialogueMuted,announcementsMuted:muted||!!preferences.masterMuted||!!preferences.announcementsMuted,supported:supported(),speaking:!!current,audible:!!(output?.speaking??(current&&currentStarted))&&output?.unlocked!==false,outputBusy:!!output?.speaking||!!output?.loading,pending:queue.length,loading:!!output?.loading,error:output?.error||null,status:output?.status||''};}
  };
  return api;
 }

@@ -42,7 +42,7 @@ async def main():
                             manual_operations.append(fields.get('operation'))
                     page.on('request', record_input)
                     await page.route('https://**/*', lambda route: route.abort())
-                    await page.add_init_script('''localStorage.setItem('muzikaz.emergency.guide.hidden','true');localStorage.removeItem('muzikaz.emergency.challenge.follow');window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
+                    await page.add_init_script('''localStorage.setItem('muzikaz.emergency.guide.hidden','true');localStorage.removeItem('muzikaz.emergency.challenge.follow');window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0,dialogueMuted:true,mediaMuted:true};window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
 
                     async def load(world):
                         await page.goto(base + '/model-explorer.html?environment=' + world + '&autoplay=1&mode=multiplayer', wait_until='domcontentloaded', timeout=90000)
@@ -55,7 +55,12 @@ async def main():
                         print(world + ': actual automatic emergency ready', flush=True)
                         close = page.get_by_role('button', name='Close local quests', exact=True)
                         if await close.is_visible():
-                            await close.click()
+                            try:
+                                await close.click(timeout=5000)
+                            except Exception:
+                                await page.screenshot(path='/workspace/mobile-emergency-airport-controls-overlap.png')
+                                print('Quest and radio bounds:', await page.evaluate("JSON.stringify([...document.querySelectorAll('.map-quest-card,.map-quest-card header button,.doomsday-guide-chip,.house-stage')].map(n=>({selector:n.className||n.getAttribute('aria-label'),bounds:n.getBoundingClientRect().toJSON()})))"), flush=True)
+                                raise
                         assert await page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count() == 0, 'A manual Doomsday control remains.'
                         return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
@@ -82,6 +87,27 @@ async def main():
                     state = await load(airport)
                     initial = state['doomsday']
                     assert initial['phase'] in ['idle','warning'], initial
+                    # The sound controls can recover muted/zero-volume account
+                    # settings during arrival, without starting a world event.
+                    await page.evaluate("""()=>{const overrides={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0,dialogueMuted:true,mediaMuted:true};window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={...window.MUZIKAZ_AUDIO_SESSION_OVERRIDES,...overrides};const preferences={...window.MUZIKAZ_AUDIO_PREFERENCES,...overrides};window.MUZIKAZ_AUDIO_PREFERENCES=preferences;window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));}""")
+                    await page.get_by_role('button', name='Show emergency guide', exact=True).click()
+                    await page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='master-muted'")
+                    await page.get_by_role('button', name='Enable sounds', exact=True).tap()
+                    await page.wait_for_function("['ready','playing'].includes(document.querySelector('#doomsday-panel').dataset.audioState)")
+                    recovered = await page.evaluate('MUZIKAZ_AUDIO_PREFERENCES')
+                    assert not recovered['masterMuted'] and not recovered['effectsMuted'] and not recovered['announcementsMuted']
+                    assert recovered['effectsVolume'] == 100 and recovered['dialogueMuted'] and recovered['mediaMuted']
+                    assert await page.get_by_role('switch', name='Sirens and explosions', exact=True).is_checked()
+                    await page.screenshot(path='/workspace/mobile-emergency-airport-sound-panel.png')
+                    await page.get_by_role('button', name='Hide emergency guide', exact=True).tap()
+                    assert await page.locator('.doomsday-guide').is_hidden()
+                    assert await page.get_by_role('button', name='Show emergency guide', exact=True).is_visible()
+                    print('airport: visible sound controls recover muted effects and zero volume while preserving other settings', flush=True)
+                    state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
+                    after_audio = state['doomsday']
+                    if initial['phase'] == 'idle' and after_audio['phase'] == 'idle':
+                        assert after_audio['nextEventAt'] == initial['nextEventAt'], 'Enabling sounds changed the event schedule.'
+                    initial = after_audio
                     if initial['phase'] == 'idle':
                         assert 15000 <= initial['nextEventAt'] - initial['scheduledAt'] <= 90000
                         assert not initial['active']
@@ -178,7 +204,8 @@ async def main():
                     assert 180000 <= recurring_deadline - state['doomsday']['clearAt'] <= 1200000, 'The quiet break must start after the complete quest-led event.'
                     assert state['controlsReady'] and not state['player']['inputBlocked']
                     await page.wait_for_timeout(8500)
-                    assert await page.locator('.doomsday-guide,.doomsday-guide-chip,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)'), 'event UI remained after the all-clear interval'
+                    assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)'), 'event UI remained after the all-clear interval'
+                    assert await page.get_by_role('button', name='Show emergency guide', exact=True).is_visible(), 'Sound controls must remain available during the quiet break.'
                     assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.cycle')) == 1, 'the event restarted before the recurring deadline'
                     assert not manual_operations, manual_operations
                     print('airport: full quest-led event, clearing animation and 3–20 minute quiet break after completion passed', flush=True)

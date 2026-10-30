@@ -1,4 +1,4 @@
-"""Sporadic ambient event, optional challenge follow switch and quest-led duration."""
+"""Mobile audio controls, personal shelter guidance and complete automatic events."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
@@ -9,31 +9,36 @@ class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args): pass
 server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
 Thread(target=server.serve_forever,daemon=True).start()
-fixture='''<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#18292f}main{position:relative;height:100vh}canvas{width:100%;height:100%}#walk{position:absolute;bottom:12px;left:12px;min-height:44px}</style><main><canvas></canvas><button id="walk">Move forward</button></main>'''
+fixture='''<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#18292f}main{position:relative;height:100vh}canvas{width:100%;height:100%}#walk,#look{position:absolute;bottom:12px;width:142px;height:142px}#walk{left:12px}#look{right:12px}#game-actions{position:absolute;right:10px;top:92px;width:120px;display:grid;gap:8px}#game-actions button{min-height:44px}</style><main><canvas></canvas><button id="walk">Move forward</button><button id="look">Look around</button><div id="game-actions"><button>Use</button><button>Travel</button></div></main>'''
 try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--enable-unsafe-swiftshader'])
-  for width,height in [(390,844),(1280,900)]:
+  for width,height in [(320,568),(390,844),(740,360),(1280,900)]:
    page=browser.new_page(viewport={'width':width,'height':height},has_touch=True)
    errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
    page.route('**/__doomsday',lambda route:route.fulfill(body=fixture,content_type='text/html'))
    page.goto(f'http://127.0.0.1:{server.server_port}/__doomsday')
    page.evaluate('''async()=>{
     localStorage.removeItem('muzikaz.emergency.guide.hidden');localStorage.removeItem('muzikaz.emergency.challenge.follow');
+    // A first mobile resume can stay pending until another trusted gesture.
+    // Keep the actual Web Audio graph, but withhold that permission in this fixture.
+    window.allowAudioResume=false;
+    const NativeAudioContext=window.AudioContext;
+    window.AudioContext=function(){const context=new NativeAudioContext(),nativeResume=context.resume.bind(context);let prototype=Object.getPrototypeOf(context),descriptor;while(prototype&&!descriptor){descriptor=Object.getOwnPropertyDescriptor(prototype,'state');prototype=Object.getPrototypeOf(prototype);}let resumed=false;Object.defineProperty(context,'state',{get:()=>resumed?descriptor.get.call(context):'suspended'});context.resume=()=>{if(!allowAudioResume)return new Promise(()=>{});resumed=true;return nativeResume();};return context;};
     const THREE=await import('/public/vendor/three/three.module.min.js');
     const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
     const {doomsdayView,stepDoomsday}=await import('/public/js/doomsday-rules.js');
     const {gameplayOverlayOpen}=await import('/public/js/game-menu-controls.js');
-    window.clock=100000;window.enteredAt=clock;window.env={id:'radio-airport',name:'Airport response',spawn:{x:0,y:0,z:0}};window.position={x:20,y:0,z:20};window.sim={};window.spoken=[];window.notices=[];window.moves=0;window.shared=true;window.otherPlayers=[];window.randomDraws=0;window.eventIds=new Set();
+    window.clock=100000;window.enteredAt=clock;window.env={id:'radio-airport',name:'Airport response',spawn:{x:0,y:0,z:0}};window.position={x:20,y:0,z:20};window.sim={};window.spoken=[];window.notices=[];window.preferences={effectsMuted:true};window.enableRequests=0;window.moves=0;window.shared=true;window.otherPlayers=[];window.randomDraws=0;window.eventIds=new Set();
     window.random=()=>{randomDraws++;return .25;};
     window.scene=new THREE.Scene();scene.background=new THREE.Color('#14252d');
     window.camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,700);camera.position.set(0,7,24);camera.lookAt(0,10,-160);
     window.renderer=new THREE.WebGLRenderer({canvas:document.querySelector('canvas')});renderer.setSize(innerWidth,innerHeight);
     const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshBasicMaterial({color:'#304139'}));ground.rotation.x=-Math.PI/2;ground.position.y=-.01;scene.add(ground);
     window.effects=createDoomsdayScene({scene,performanceMode:true});
-    window.voice={state:{speaking:false,outputBusy:false,pending:0},announce(text,options){if(window.deferRadio){(window.waitingRadios||=[]).push(options);return true;}window.radio?.onCancelled?.();window.radio=options;spoken.push({text,voice:options.voice,gender:options.voiceGender,effect:options.effect,priority:options.priority});voice.state.speaking=true;options.onStarted?.();return true;}};
+    window.voice={state:{speaking:false,outputBusy:false,pending:0},unlock(){this.state.unlocked=true;return true;},announce(text,options){if(window.deferRadio){(window.waitingRadios||=[]).push(options);return true;}window.radio?.onCancelled?.();window.radio=options;spoken.push({text,voice:options.voice,gender:options.voiceGender,effect:options.effect,priority:options.priority});voice.state.speaking=true;options.onStarted?.();return true;}};
     window.finishRadio=()=>{voice.state.speaking=false;radio?.onFinished?.();};
-    window.ui=mountDoomsdayUI({stage:document.querySelector('main'),getEnvironment:()=>env,getPosition:()=>position,getState:()=>doomsdayView(sim,env),isShared:()=>shared,effects,voice,announce:text=>notices.push(text),getPreferences:()=>({effectsMuted:true}),now:()=>clock,random});
+    window.ui=mountDoomsdayUI({stage:document.querySelector('main'),getEnvironment:()=>env,getPosition:()=>position,getState:()=>doomsdayView(sim,env),isShared:()=>shared,effects,voice,announce:text=>notices.push(text),getPreferences:()=>preferences,onEnableAudio:()=>{enableRequests++;preferences={...preferences,masterMuted:false,effectsMuted:false,announcementsMuted:false,effectsVolume:100};},now:()=>clock,random});
     window.blocked=gameplayOverlayOpen;document.querySelector('#walk').onclick=()=>moves++;document.addEventListener('keydown',event=>{if(event.key==='w'&&!blocked())moves++;});
     window.reach=id=>{position={...ui.getState().objectives.find(o=>o.id===id).position};};
     window.arrivalCount=()=>spoken.filter(call=>call.text.includes('Shelter reached.')).length;
@@ -51,6 +56,58 @@ try:
    assert 15000<=first_at-page.evaluate('enteredAt')<=90000
    assert guide.is_hidden() and page.locator('.doomsday-banner').is_hidden()
    assert page.evaluate('!effects.root.visible && spoken.length===0 && eventIds.size===0')
+   # Audio controls are discoverable during the quiet arrival, without starting
+   # a scenario or automatically covering the map with a popup.
+   chip=page.get_by_role('button',name='Show emergency guide',exact=True)
+   assert chip.is_visible()
+   chip.tap();assert guide.is_visible()
+   page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='effects-muted'")
+   assert 'muted' in guide.locator('[data-audio-status]').inner_text().lower()
+   assert guide.locator('[data-follow-state]').inner_text()=='Off'
+   effect_switch=guide.get_by_role('switch',name='Sirens and explosions',exact=True)
+   assert not effect_switch.is_checked()
+   assert guide.get_by_role('button',name='Enable sounds',exact=True).is_enabled()
+   guide.get_by_role('button',name='Enable sounds',exact=True).tap()
+   page.wait_for_function("document.querySelector('#doomsday-panel [data-audio-status]').textContent==='Enabling sound…'")
+   assert guide.get_by_role('button',name='Enable sounds',exact=True).is_enabled(),'A pending mobile resume trapped the only retry button.'
+   assert page.evaluate('enableRequests')==1
+   page.evaluate('allowAudioResume=true')
+   guide.get_by_role('button',name='Enable sounds',exact=True).tap()
+   page.wait_for_function("['ready','playing'].includes(document.querySelector('#doomsday-panel').dataset.audioState)")
+   assert page.evaluate('enableRequests')==2 and effect_switch.is_checked()
+   assert guide.locator('[data-sound-state]').inner_text()=='On'
+   assert page.evaluate("ui.getState().phase==='idle' && ui.getState().nextEventAt>clock && randomDraws===1"),'Sound preview started or rescheduled the world event.'
+   test_sounds=guide.get_by_role('button',name='Test sounds',exact=True)
+   page.wait_for_function("document.querySelector('#doomsday-panel [data-test]').textContent==='Test sounds' && !document.querySelector('#doomsday-panel [data-test]').disabled",timeout=10000)
+   test_sounds.tap()
+   page.wait_for_function("document.querySelector('#doomsday-panel [data-test]').textContent==='Playing test…'")
+   assert page.evaluate("ui.getState().phase==='idle' && eventIds.size===0 && spoken.length===0")
+   effect_switch.uncheck()
+   page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='muted'")
+   assert guide.locator('[data-sound-state]').inner_text()=='Off'
+   assert 'radio calls on' in guide.locator('.doomsday-audio-help').inner_text()
+   assert 'media volume' in guide.locator('.doomsday-device-hint').inner_text()
+   quiet_follow=guide.get_by_role('switch',name='Follow emergency challenge',exact=True)
+   quiet_follow.check();assert guide.locator('[data-follow-state]').inner_text()=='On'
+   quiet_follow.uncheck();assert guide.locator('[data-follow-state]').inner_text()=='Off'
+   assert page.evaluate('blocked()') is False
+   # Every control retains a full touch target, stays inside the scroll drawer,
+   # and leaves both full-size movement sticks plus the right action buttons uncovered.
+   panel_box=guide.bounding_box()
+   assert panel_box['x']>=0 and panel_box['y']>=0 and panel_box['x']+panel_box['width']<=width+1 and panel_box['y']+panel_box['height']<=height+1,panel_box
+   def overlap(a,b): return min(a['x']+a['width'],b['x']+b['width'])>max(a['x'],b['x']) and min(a['y']+a['height'],b['y']+b['height'])>max(a['y'],b['y'])
+   for control in ['#walk','#look','#game-actions']:
+    assert not overlap(panel_box,page.locator(control).bounding_box()),(width,height,control,panel_box)
+   for selector in ['[data-hide]','[data-enable]','[data-test]','[data-siren]','[data-follow-challenge]','[data-replay]']:
+    target=guide.locator(selector);target.scroll_into_view_if_needed();box=target.bounding_box()
+    assert box['width']>=44 and box['height']>=44,(selector,box)
+    assert box['x']>=panel_box['x'] and box['x']+box['width']<=panel_box['x']+panel_box['width']+1,(selector,box,panel_box)
+   guide.evaluate('node=>node.scrollTop=0')
+   page.screenshot(path=f'/workspace/mobile-emergency-panel-{width}x{height}.png')
+   page.get_by_role('button',name='Hide emergency guide',exact=True).tap();assert guide.is_hidden() and chip.is_visible()
+   page.screenshot(path=f'/workspace/mobile-emergency-collapsed-{width}x{height}.png')
+   chip.tap();assert guide.is_visible()
+   page.evaluate('preferences.effectsMuted=true')
    page.wait_for_timeout(150)
    assert page.evaluate('randomDraws')==1,'idle frames resampled the event deadline'
    page.evaluate('(at)=>clock=at-1',first_at);page.wait_for_timeout(60)
@@ -297,7 +354,57 @@ try:
    assert guide.is_hidden() and page.evaluate('ui.followingChallenge()')
    page.evaluate('env=null;ui.reset()');assert guide.is_hidden()
    assert not errors,errors
-   print(f'{width}px: personal shelter arrival in every active stage, automatic next steps, optional challenge toggle, full quest-led event, ongoing notices and movement passed',flush=True)
+   print(f'{width}x{height}: clear mobile sound controls, full touch targets, unblocked movement areas, personal shelter arrival in every active stage, automatic next steps, optional challenge toggle, full quest-led event, ongoing notices and movement passed',flush=True)
+   page.close()
+  # Real explorer styles constrain buttons differently from the isolated canvas.
+  # Its embedded scene is only 316px tall and puts movement controls below it.
+  for width,height in [(390,844),(320,568)]:
+   page=browser.new_page(viewport={'width':width,'height':height},has_touch=True);errors=[]
+   page.on('pageerror',lambda error:errors.append(str(error)))
+   embedded='''<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/public/assets/game-display-flow.css"><link rel="stylesheet" href="/public/assets/game-menus.css"><style>body{margin:0!important;min-height:100vh!important}.house-explorer-shell{display:block!important;position:static!important;margin:0!important;width:100%!important;height:auto!important}#embedded-stage{position:absolute!important;left:11px;top:180px;width:calc(100% - 22px)!important;height:316px!important;max-height:316px!important;min-height:0!important;margin:0!important;padding:0!important;flex:none!important;overflow:hidden!important;border:0!important}#embedded-quests{position:absolute;left:2px;top:60px;width:min(330px,calc(100% - 4px));height:130px;background:#183221;border:1px solid #a9d493;z-index:20}#close-quests{position:absolute;top:12px;right:6px;width:44px!important;height:44px;min-height:44px;padding:4px}#embedded-move{position:absolute;left:12px;top:520px;width:142px!important;min-height:44px}</style><body class="model-explorer-page"><div class="house-explorer-shell"><main id="embedded-stage" class="house-stage"><canvas></canvas><section id="embedded-quests">Local quests<button id="close-quests" aria-label="Close local quests">×</button></section></main></div><button id="embedded-move">Move</button></body>'''
+   page.route('**/__embedded',lambda route:route.fulfill(body=embedded,content_type='text/html'))
+   page.route('https://**/*',lambda route:route.abort())
+   page.goto(f'http://127.0.0.1:{server.server_port}/__embedded')
+   page.evaluate('''async()=>{
+    localStorage.removeItem('muzikaz.emergency.guide.hidden');localStorage.removeItem('muzikaz.emergency.challenge.follow');
+    const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js');
+    window.preferences={effectsMuted:true};window.audioNodes=0;window.allowAudioResume=false;window.pendingAudio=[];
+    const NativeAudioContext=window.AudioContext;
+    window.AudioContext=function(){const context=new NativeAudioContext(),resume=context.resume.bind(context),oscillator=context.createOscillator.bind(context);let prototype=Object.getPrototypeOf(context),descriptor;while(prototype&&!descriptor){descriptor=Object.getOwnPropertyDescriptor(prototype,'state');prototype=Object.getPrototypeOf(prototype);}let resumed=false;Object.defineProperty(context,'state',{get:()=>resumed?descriptor.get.call(context):'suspended'});context.resume=()=>{if(!allowAudioResume)return new Promise(resolve=>pendingAudio.push(resolve));resumed=true;return resume();};context.createOscillator=()=>{audioNodes++;return oscillator();};window.holdAudio=()=>{allowAudioResume=false;resumed=false;};window.releaseAudio=async()=>{allowAudioResume=true;resumed=true;await resume();for(const resolve of pendingAudio.splice(0))resolve();};return context;};
+    window.embeddedEnv={id:'embedded-airport',name:'Airport shelter',spawn:{x:0,y:0,z:0}};
+    window.ui=mountDoomsdayUI({stage:document.querySelector('#embedded-stage'),getEnvironment:()=>embeddedEnv,getPosition:()=>({x:20,y:0,z:20}),isShared:()=>false,getPreferences:()=>preferences,onEnableAudio:()=>preferences={effectsMuted:false,effectsVolume:100},now:()=>100000,random:()=>0});
+    document.querySelector('#close-quests').onclick=()=>document.querySelector('#embedded-quests').hidden=true;
+    ui.tick(0);
+   }''')
+   page.wait_for_function("getComputedStyle(document.querySelector('.doomsday-guide-chip')).maxWidth.includes('144px')")
+   chip=page.get_by_role('button',name='Show emergency guide',exact=True)
+   chip_box=chip.bounding_box();close_box=page.locator('#close-quests').bounding_box()
+   assert chip_box['width']<width-144 and not overlap(chip_box,close_box),(chip_box,close_box)
+   page.get_by_role('button',name='Close local quests',exact=True).tap()
+   assert page.locator('#embedded-quests').is_hidden(),'The emergency chip covered the existing quest close button.'
+   chip.tap();guide=page.locator('.doomsday-guide')
+   assert guide.is_visible()
+   panel_box=guide.bounding_box();stage_box=page.locator('#embedded-stage').bounding_box()
+   assert panel_box['height']>=200 and panel_box['y']+panel_box['height']<=stage_box['y']+stage_box['height']+1,(panel_box,stage_box)
+   assert not overlap(panel_box,page.locator('#embedded-move').bounding_box())
+   # An old map's hung enable request cannot play a preview or leave a busy
+   # latch after changing worlds or explicitly resetting the guide.
+   for action in ['world-change','reset']:
+    page.get_by_role('button',name='Enable sounds',exact=True).tap()
+    page.wait_for_function("document.querySelector('[data-audio-status]').textContent==='Enabling sound…'")
+    if action=='world-change':page.evaluate("embeddedEnv={...embeddedEnv,id:'embedded-airport-next'};ui.tick(0);ui.open()")
+    else:page.evaluate('ui.reset();ui.tick(0);ui.open()')
+    assert 'Enabling' not in guide.locator('[data-audio-status]').inner_text()
+    page.evaluate('releaseAudio()');page.evaluate('ui.tick(0)');page.wait_for_timeout(50)
+    assert page.evaluate('audioNodes')==0,'A stale audio enable played a preview in a new map.'
+    if action=='world-change':page.evaluate('holdAudio();ui.tick(0)')
+   page.screenshot(path=f'/workspace/mobile-emergency-embedded-{width}x{height}.png')
+   page.get_by_role('button',name='Test sounds',exact=True).tap();page.evaluate('ui.tick(0)')
+   page.wait_for_function('audioNodes>0')
+   assert page.evaluate("ui.getState().phase==='idle'")
+   page.evaluate('ui.dispose()')
+   assert not errors,errors
+   print(f'{width}x{height}: real explorer styles, 316px embedded drawer, quest-close access and stale audio enable cancellation passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

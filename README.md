@@ -286,6 +286,15 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
+The **Radio & sound** button remains available during quiet intervals. **Enable
+sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
+the session; **Test sounds** plays a brief siren and explosion preview without
+starting an event. The panel reports muted, paused and ready states, and provides
+separate **Sirens & blasts** and **Follow challenge** switches with explicit On/Off
+labels. Larger touch targets and a scrolling panel leave mobile game controls
+reachable in portrait and landscape. Explosions include midrange detail for phone
+speakers; sirens duck only while speech is actually playing, not while it loads.
+
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.
 Map previews resolve the saved destination model, and double-tapping or

@@ -1,5 +1,113 @@
-.doomsday-guide-chip{position:absolute;right:12px;top:64px;z-index:80;min-height:40px;padding:8px 12px;border:1px solid #a8cb91;border-radius:24px;color:#e8ffd5;background:#142b28ee;font:700 12px system-ui;cursor:pointer;pointer-events:auto}.doomsday-guide-chip[hidden],.doomsday-panel[hidden],.doomsday-banner[hidden]{display:none!important}.doomsday-guide-chip span{color:#b6f37f;margin-right:5px}.doomsday-panel{position:absolute;z-index:80;right:12px;top:64px;width:min(330px,calc(100% - 24px));max-height:calc(100% - 250px);overflow:auto;overscroll-behavior:contain;box-sizing:border-box;border:1px solid #85aa7c;border-radius:16px;background:#102320f5;color:#eaffde;padding:14px;box-shadow:0 12px 40px #0007;font:13px/1.4 system-ui;pointer-events:auto}.doomsday-panel header{display:flex;justify-content:space-between;align-items:center;gap:12px}.doomsday-panel h3,.doomsday-panel h4{margin:3px 0 8px}.doomsday-panel small{color:#b5c9aa;font-size:10px;letter-spacing:.03em}.doomsday-panel button{min-height:40px;border-radius:8px;border:1px solid #698a6a;color:#edffe5;background:#244037;padding:8px 10px;cursor:pointer;font-size:12px}.doomsday-panel header button{min-width:40px;font-size:23px}.doomsday-panel button:focus-visible,.doomsday-guide-chip:focus-visible{outline:3px solid #eaff7d;outline-offset:3px}.doomsday-dispatch{display:grid;grid-template-columns:78px 1fr;gap:12px;align-items:start;margin:10px 0 16px}.doomsday-portrait svg{width:78px;height:88px;display:block;border-radius:12px;border:1px solid #577967}.doomsday-transmission>span{color:#a9d29e;font-size:9px;letter-spacing:.09em;font-weight:800}.doomsday-transmission p{font-size:12px;color:#e5f1db;margin:5px 0}.doomsday-wave{display:flex;height:15px;align-items:center;gap:3px;margin:3px 0}.doomsday-wave i{width:3px;height:3px;background:#8fba83;border-radius:3px}.doomsday-panel[data-speaking=true] .doomsday-wave i{animation:radio-bars .35s ease-in-out infinite alternate;background:#c4ff86}.doomsday-wave i:nth-child(2n){animation-delay:-.13s!important}.doomsday-wave i:nth-child(3n){animation-delay:-.24s!important}.doomsday-panel[data-speaking=true] .radio-mouth{transform-box:fill-box;transform-origin:center;animation:radio-mouth .2s ease-in-out infinite alternate}.doomsday-panel[data-speaking=true] .radio-led{animation:radio-led .55s ease-in-out infinite alternate}.doomsday-guide-chip[data-speaking=true]{border-color:#d3ff8f}.doomsday-phase{border-left:3px solid #c2ce76;padding-left:10px}.doomsday-phase>p{font-size:12px}.doomsday-phase progress{width:100%;height:6px;accent-color:#caff72}.doomsday-phase>span{display:block;font-size:10px;color:#aaca9a}.doomsday-objectives{padding-left:20px;margin-bottom:10px}.doomsday-objectives li{margin:13px 0;color:#96ad9b;font-size:12px}.doomsday-objectives li>*{display:block;margin:3px 0}.doomsday-objectives li span{font-size:11px}.doomsday-objectives .is-current{color:#e6ffd0}.doomsday-objectives .is-complete{color:#7acba1}.doomsday-audio{display:flex;gap:8px;flex-wrap:wrap}.doomsday-guide-hint{font-size:10px;color:#a3bea4;margin-bottom:0}.doomsday-banner{position:absolute;left:12px;top:64px;z-index:12;display:flex;align-items:center;gap:8px;max-width:min(300px,calc(100% - 155px));box-sizing:border-box;padding:8px 10px;border:1px solid #b9cf7180;border-radius:10px;background:#172815df;color:#e8ffc5;pointer-events:none;font:12px/1.3 system-ui}.doomsday-banner>span{font-size:24px}.doomsday-banner strong,.doomsday-banner small,.doomsday-banner time{display:block}.doomsday-banner small{font-size:10px;margin-top:3px}.doomsday-banner time{font-size:10px;color:#ffd77a;margin-top:3px}.doomsday-banner[data-phase=detonation]{border-color:#ffb271;background:#4b271be8;color:#ffe7b3}.doomsday-banner[data-phase=fallout]{border-color:#b3ff58;background:#1d3019e8}@keyframes radio-bars{to{height:14px}}@keyframes radio-mouth{to{transform:scaleY(2.1)}}@keyframes radio-led{to{opacity:.35}}@media(max-width:600px){.doomsday-panel{top:116px;width:min(310px,calc(100% - 24px));max-height:calc(100% - 300px)}.doomsday-banner{max-width:calc(100% - 151px);font-size:11px;padding:6px 8px}.doomsday-banner>span{font-size:20px}}@media(prefers-reduced-motion:reduce){.doomsday-panel *{animation:none!important}}.doomsday-panel[data-reduced-motion=true] *{animation:none!important}
+/* The guide is a nonmodal companion. Its mobile footprint leaves the right
+   action buttons and lower movement sticks available while the list scrolls. */:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip,:is(.house-stage,.native-doomsday,main) .doomsday-panel,:is(.house-stage,.native-doomsday,main) .doomsday-banner{box-sizing:border-box;font-family:system-ui,sans-serif;text-transform:none;letter-spacing:normal}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:64px;z-index:80;display:flex;align-items:center;gap:8px;min-height:48px;width:auto;min-width:0;max-width:156px;margin:0;padding:8px 12px;border:2px solid #b6dc88;border-radius:12px;color:#f4ffe8;background:#10251ff5;font-size:12px;font-weight:800;line-height:1.15;cursor:pointer;pointer-events:auto;touch-action:manipulation;text-align:left;box-shadow:0 4px 18px #0007}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip>span:first-child{color:#d4ff8d;font-size:20px}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip small{display:block;margin-top:4px;color:#ffdf9b;font-size:10px;font-weight:650}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip[data-audio-state=ready] small,:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip[data-audio-state=playing] small{color:#c7f9b0}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip[hidden],:is(.house-stage,.native-doomsday,main) .doomsday-panel[hidden],:is(.house-stage,.native-doomsday,main) .doomsday-banner[hidden],:is(.house-stage,.native-doomsday,main) .doomsday-panel [hidden]{display:none!important}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel{position:absolute;z-index:80;right:max(12px,env(safe-area-inset-right,0px));top:64px;width:min(360px,calc(100% - 24px));max-height:calc(100% - 230px);min-width:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;border:2px solid #9bc881;border-radius:14px;background:#10251ffb;color:#f1ffe6;box-shadow:0 10px 36px #0009;font-size:13px;line-height:1.4;pointer-events:auto;touch-action:pan-y;overflow-wrap:anywhere}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #719365;background:#142e25}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel h3,:is(.house-stage,.native-doomsday,main) .doomsday-panel h4{margin:2px 0 5px;line-height:1.2;color:#f2ffe4}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel h3{font-size:16px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel h4{font-size:15px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel small{color:#d0e3c6;font-size:11px;line-height:1.35}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header small{color:#ddffb1;font-size:11px;font-weight:750}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel-content{padding:12px;min-width:0}
+:is(.house-stage,.native-doomsday,main) .doomsday-scroll-hint{display:none;position:sticky;bottom:0;padding:7px 8px;margin:0;border-top:1px solid #719365;background:#173428;color:#e7ffc8;font-size:11px;line-height:1.3;text-align:center;pointer-events:none}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel button{box-sizing:border-box;min-width:0;min-height:44px;max-width:100%;padding:10px;border:1px solid #a8cc91;border-radius:9px;background:#244b36;color:#f5ffe8;font-family:inherit;font-size:13px;font-weight:750;line-height:1.2;cursor:pointer;touch-action:manipulation;white-space:normal;text-transform:none;letter-spacing:normal}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header button{min-width:54px;background:#30503d}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel button:disabled{cursor:default;opacity:.58}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel button:not(:disabled):active,:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip:active{background:#3b623d;border-color:#ebffc7}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel button:focus-visible,:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip:focus-visible,:is(.house-stage,.native-doomsday,main) .doomsday-panel input:focus-visible{outline:3px solid #efffa7;outline-offset:3px}
+:is(.house-stage,.native-doomsday,main) .doomsday-sound-controls{padding-bottom:12px;border-bottom:1px solid #5d805e;margin-bottom:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;box-sizing:border-box;padding:8px;border:1px solid #729869;border-radius:10px;background:#193a2a;color:#f5ffe8;cursor:pointer;font-size:13px;font-weight:800;line-height:1.3}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row>span{min-width:0;flex:1}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row strong{display:block;width:max-content;margin-top:5px;padding:2px 8px;border-radius:10px;background:#354b3a;color:#f2f8eb;font-size:11px;line-height:1.3}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row small{display:block;margin-top:6px;color:#d0e3c6;font-size:11px;font-weight:450}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input{appearance:none;-webkit-appearance:none;position:relative;display:block;flex:0 0 52px;width:52px;height:44px;min-height:44px;max-width:none;box-sizing:border-box;padding:0;margin:0;border:0;border-radius:7px;background:transparent;cursor:pointer;touch-action:manipulation}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input::before{content:'';position:absolute;left:1px;top:7px;width:48px;height:28px;border:1px solid #9aa998;border-radius:20px;background:#35483a}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input::after{content:'';position:absolute;left:6px;top:12px;width:20px;height:20px;border-radius:50%;background:#edf7e8;box-shadow:0 1px 4px #0008;transition:transform .12s ease}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input:checked::before{border-color:#d8ff9f;background:#a6db57}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input:checked::after{background:#153018;transform:translateX(20px)}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row:has(input:checked) strong{background:#c5f38b;color:#153018}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row:has(input:focus-visible){outline:3px solid #efffa7;outline-offset:3px}
+:is(.house-stage,.native-doomsday,main) .doomsday-challenge-toggle{margin-bottom:14px}
+:is(.house-stage,.native-doomsday,main) .doomsday-audio{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+:is(.house-stage,.native-doomsday,main) .doomsday-audio button[data-enable]{background:#d1ed82;border-color:#edffb4;color:#17321b}
+:is(.house-stage,.native-doomsday,main) .doomsday-audio button:only-child,:is(.house-stage,.native-doomsday,main) .doomsday-audio button:first-child[hidden]+button{grid-column:1/-1}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel [data-audio-status]{min-height:2.6em;margin:9px 0;color:#ffe3ac;font-size:12px;font-weight:700;line-height:1.35}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-audio-state=ready] [data-audio-status],:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-audio-state=playing] [data-audio-status]{color:#d6ffba}
+:is(.house-stage,.native-doomsday,main) .doomsday-device-hint{display:block;margin-top:6px;color:#eefcda!important;font-size:11px!important;line-height:1.4}
+:is(.house-stage,.native-doomsday,main) .doomsday-audio-help,:is(.house-stage,.native-doomsday,main) .doomsday-guide-hint{margin:8px 0 0;color:#c3d7b8;font-size:11px;line-height:1.4}
+:is(.house-stage,.native-doomsday,main) .doomsday-dispatch{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:start;margin:10px 0 12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-portrait svg{display:block;width:64px;height:72px;border:1px solid #82a97d;border-radius:10px}
+:is(.house-stage,.native-doomsday,main) .doomsday-transmission>span{color:#c3e5ac;font-size:10px;font-weight:800}
+:is(.house-stage,.native-doomsday,main) .doomsday-transmission p{margin:5px 0;color:#f0f9e9;font-size:12px;line-height:1.45}
+:is(.house-stage,.native-doomsday,main) .doomsday-replay{width:100%;margin-bottom:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-wave{display:flex;align-items:center;gap:3px;height:15px;margin:4px 0}
+:is(.house-stage,.native-doomsday,main) .doomsday-wave i{width:3px;height:3px;border-radius:3px;background:#aad28e}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-speaking=true] .doomsday-wave i{animation:radio-bars .35s ease-in-out infinite alternate;background:#d8ffad}
+:is(.house-stage,.native-doomsday,main) .doomsday-wave i:nth-child(2n){animation-delay:-.13s!important}
+:is(.house-stage,.native-doomsday,main) .doomsday-wave i:nth-child(3n){animation-delay:-.24s!important}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-speaking=true] .radio-mouth{transform-box:fill-box;transform-origin:center;animation:radio-mouth .2s ease-in-out infinite alternate}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-speaking=true] .radio-led{animation:radio-led .55s ease-in-out infinite alternate}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip[data-speaking=true]{border-color:#e6ffb3}
+:is(.house-stage,.native-doomsday,main) .doomsday-phase{border-left:3px solid #d5df88;padding-left:9px}
+:is(.house-stage,.native-doomsday,main) .doomsday-phase>p{font-size:12px;line-height:1.45}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel [data-challenge] progress{width:100%;height:8px;margin-top:8px;accent-color:#d7ff99}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel [data-challenge]>span{display:block;font-size:11px;color:#d2ebbe}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives{padding-left:19px;margin-bottom:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives li{margin:13px 0;color:#b7cdb7;font-size:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives li>*{display:block;margin:4px 0}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives li span{font-size:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives .is-current{color:#efffd6}
+:is(.house-stage,.native-doomsday,main) .doomsday-objectives .is-complete{color:#a5e8be}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner{position:absolute;left:12px;top:64px;z-index:12;display:flex;align-items:center;gap:8px;max-width:min(300px,calc(100% - 180px));padding:8px 10px;border:1px solid #d5e788;border-radius:10px;background:#1a2d18f0;color:#f2ffd9;pointer-events:none;font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner>span{font-size:24px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner strong,:is(.house-stage,.native-doomsday,main) .doomsday-banner small,:is(.house-stage,.native-doomsday,main) .doomsday-banner time{display:block}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner small{font-size:11px;margin-top:4px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner time{font-size:11px;color:#ffe8ac;margin-top:4px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner[data-phase=detonation]{border-color:#ffcc96;background:#472d20f5;color:#fff0c9}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner[data-phase=fallout]{border-color:#d0ff84;background:#203b1bf5}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner[data-phase=clearing]{border-color:#b6ece0;background:#17362ef5;color:#e5fff5}
+@keyframes radio-bars{to{height:14px}}@keyframes radio-mouth{to{transform:scaleY(2.1)}}@keyframes radio-led{to{opacity:.35}}
+@media(max-width:760px),(pointer:coarse){:is(.house-stage,.native-doomsday,main) .doomsday-scroll-hint{display:block}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip{left:max(8px,env(safe-area-inset-left,0px));right:auto;top:max(64px,calc(env(safe-area-inset-top,0px) + 56px));max-width:calc(100% - 144px);min-height:48px;padding:8px 10px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel{left:max(8px,env(safe-area-inset-left,0px));right:auto;top:max(64px,calc(env(safe-area-inset-top,0px) + 56px));width:min(360px,calc(100% - 144px));max-height:calc(100% - 250px - env(safe-area-inset-bottom,0px));scrollbar-gutter:auto}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header{padding:8px;gap:5px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel-content{padding:9px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel h3{font-size:14px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header small{font-size:10px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel button{font-size:12px;padding:9px 6px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header button{min-width:46px}
+:is(.house-stage,.native-doomsday,main) .doomsday-dispatch{grid-template-columns:44px minmax(0,1fr);gap:8px}
+:is(.house-stage,.native-doomsday,main) .doomsday-portrait svg{width:44px;height:50px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner{left:max(8px,env(safe-area-inset-left,0px));top:122px;max-width:calc(100% - 144px);padding:7px 8px;font-size:11px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner>span{font-size:19px}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner small,:is(.house-stage,.native-doomsday,main) .doomsday-banner time{font-size:10px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel:not([hidden])+.doomsday-banner{visibility:hidden}}
+@media(max-width:360px){:is(.house-stage,.native-doomsday,main) .doomsday-audio{grid-template-columns:1fr}
+:is(.house-stage,.native-doomsday,main) .doomsday-dispatch{display:block}
+:is(.house-stage,.native-doomsday,main) .doomsday-portrait{display:none}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header{grid-template-columns:minmax(0,1fr) 46px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel h3{font-size:13px}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row{padding:7px;gap:5px}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row input{flex-basis:50px;width:50px}
+:is(.house-stage,.native-doomsday,main) .doomsday-switch-row{font-size:12px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel [data-audio-status]{font-size:11px}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel header small{font-size:9px}}
+@media(max-height:480px){:is(.house-stage,.native-doomsday,main) .doomsday-panel{top:max(60px,env(safe-area-inset-top,0px));max-height:calc(100% - 170px - env(safe-area-inset-bottom,0px));width:min(360px,calc(100% - 144px))}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner{top:118px;max-height:calc(100% - 230px);overflow:hidden}}
+@media(max-height:480px) and (orientation:landscape){:is(.house-stage,.native-doomsday,main) .doomsday-panel{left:max(168px,calc(env(safe-area-inset-left,0px) + 160px));right:auto;top:60px;width:min(360px,calc(100% - 336px));max-height:calc(100% - 72px - env(safe-area-inset-bottom,0px))}
+:is(.house-stage,.native-doomsday,main) .doomsday-guide-chip{left:max(168px,calc(env(safe-area-inset-left,0px) + 160px));right:auto}
+:is(.house-stage,.native-doomsday,main) .doomsday-banner{left:max(168px,calc(env(safe-area-inset-left,0px) + 160px));max-width:min(360px,calc(100% - 336px));max-height:calc(100% - 140px)}}
+@media(prefers-reduced-motion:reduce){:is(.house-stage,.native-doomsday,main) .doomsday-panel *{animation:none!important;transition:none!important}}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel[data-reduced-motion=true] *{animation:none!important;transition:none!important}
 
-.doomsday-banner[data-phase=clearing]{border-color:#7cbfbc;background:#17312ce8;color:#d9fff0}
-
-.doomsday-challenge-toggle{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid #608365;border-radius:10px;margin:0 0 14px;cursor:pointer;color:#e5f8d9;font-weight:700}.doomsday-challenge-toggle input{width:34px;height:24px;flex:0 0 34px;margin:2px 0;accent-color:#caff72;cursor:pointer}.doomsday-challenge-toggle small{display:block;line-height:1.35;font-weight:400;margin-top:4px;color:#acc2ad}.doomsday-panel [data-challenge][hidden]{display:none!important}.doomsday-panel [data-challenge] progress{width:100%;height:6px;accent-color:#caff72}.doomsday-panel [data-challenge]>span{display:block;font-size:10px;color:#aaca9a}.doomsday-challenge-toggle:has(input:focus-visible){outline:3px solid #eaff7d;outline-offset:3px}
+/* The embedded explorer puts its movement sticks below the canvas. Its short
+   scene needs the full drawer height; fullscreen still reserves the sticks. */
+@media(max-width:760px),(pointer:coarse){
+ .house-stage .doomsday-panel{max-height:calc(100% - 76px - env(safe-area-inset-bottom,0px))!important;min-height:0!important}
+ .house-stage:fullscreen .doomsday-panel{max-height:calc(100% - 250px - env(safe-area-inset-bottom,0px))!important}
+ .house-stage:-webkit-full-screen .doomsday-panel{max-height:calc(100% - 250px - env(safe-area-inset-bottom,0px))!important}
+}
