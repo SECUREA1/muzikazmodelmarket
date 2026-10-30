@@ -295,7 +295,7 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-The header **More view controls** dropdown contains **Radio & sound**, also listed in Settings navigation. Its controls expand inside the dropdown and stay closed until requested, including during new events. Native games use a compact header dropdown. **Enable
+The header **More view controls** dropdown contains the emergency controls directly, also reachable from Settings navigation. There is no separate Radio & sound toggle. Closing the header menu hides the controls, including during new events. Native games use a compact **Game flow & sound** header dropdown. A response overview explains the current phase; **View full response flow** shows shelter, impacts, optional aircraft, supplies, relay and all-clear steps using actual progress. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without
 starting an event. The panel reports muted, paused and ready states, and provides

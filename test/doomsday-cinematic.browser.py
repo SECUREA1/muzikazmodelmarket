@@ -114,7 +114,7 @@ try:
    }''')
    page.wait_for_function("document.querySelector('.doomsday-menu')?.closest('.game-view-overflow')")
    assert page.locator('.game-view-overflow').is_hidden()
-   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
    page.mouse.click(width//2,height-20)
    page.wait_for_function("audioContext?.state==='running'")
    page.evaluate("headerDraw('warning',100)")
@@ -127,7 +127,7 @@ try:
    assert page.evaluate("menuEffects.root.visible && menuEffects.root.getObjectByName('DOOMSDAY_FALLING_ASH').visible")
    assert page.evaluate('activeSiren().targets.at(-1)')==.16
    assert page.locator('.game-view-overflow').is_hidden()
-   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
    page.evaluate("headerDraw('clearing',8000);headerDraw('all-clear');headerUI.dispose();flow.dispose();menuStage.remove();renderer.render(scene,camera)")
    assert page.evaluate('audioGains.every(record=>record.disconnected>0) && audioOscillators.every(record=>record.disconnected>0)')
    assert not errors,errors

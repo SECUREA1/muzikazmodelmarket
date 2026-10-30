@@ -66,14 +66,14 @@ try:
     page.screenshot(path=f'/workspace/mobile-emergency-{kind}-sound-panel-{width}.png')
     assert not overlap,(kind,width,'emergency guide covers a movement stick',overlap)
    page.set_viewport_size({'width':390,'height':844})
-   page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
+   page.get_by_role('button',name='Close emergency menu',exact=True).tap()
    print(kind,'explicit mobile sound recovery passed',flush=True)
    if os.environ.get('NATIVE_LAYOUT_ONLY')=='1':
     page.close();continue
    initial=page.evaluate(f'{getter}.doomsday')
    if initial['phase']=='idle':
     assert initial['nextEventAt']-initial['scheduledAt']==42000
-    assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+    assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
     deadline=initial['nextEventAt'];page.wait_for_timeout(150)
     assert page.evaluate(f'{getter}.doomsday.nextEventAt')==deadline
    page.wait_for_function(f'{getter}.doomsday.phase==="warning"',timeout=60000)
@@ -81,7 +81,7 @@ try:
    assert state['cycle']==1 and state['nextEventAt'] is None
 
    assert page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count()==0
-   if page.locator('.doomsday-guide').is_visible():page.get_by_role('button',name='Hide emergency guide',exact=True).click()
+   if page.locator('.doomsday-guide').is_visible():page.get_by_role('button',name='Close emergency menu',exact=True).click()
    guide=page.locator('.doomsday-guide');assert guide.is_hidden()
    before=page.evaluate(f'{getter}.player' if kind=='hockey' else f'{getter}.walking')
    page.keyboard.down('w');page.wait_for_timeout(250);page.keyboard.up('w')
@@ -105,7 +105,7 @@ try:
    focused_after=page.evaluate(f'{getter}.player' if kind=='hockey' else f'{getter}.walking')
    assert abs(focused_after['x']-focused_before['x'])+abs(focused_after['z']-focused_before['z'])>.01,(kind,'focused Follow switch swallowed movement')
    assert follow.is_checked() and guide.is_visible()
-   page.get_by_role('button',name='Hide emergency guide',exact=True).click()
+   page.get_by_role('button',name='Close emergency menu',exact=True).click()
    assert follow.is_checked(),'Hiding the guide turned off challenge following'
    for objective_id,following in [('shelter','fallout'),('supplies','recovery'),('recovery','clearing')]:
     state=page.evaluate(f'{getter}.doomsday');objective=next(o for o in state['objectives'] if o['id']==objective_id)
@@ -118,7 +118,7 @@ try:
    complete=page.evaluate(f'{getter}.doomsday');repeat_at=complete['nextEventAt']
    assert repeat_at-complete['clearAt']==180000
    page.wait_for_timeout(8500)
-   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
    assert page.get_by_role('button',name='Show emergency guide',exact=True).is_visible()
    assert page.evaluate(f'{getter}.doomsday.cycle')==1
    assert page.evaluate(f'{getter}.doomsday.nextEventAt')==repeat_at

@@ -30,7 +30,6 @@ try:
    assert page.locator('.doomsday-guide').is_hidden()
    assert page.locator('.doomsday-banner').is_hidden()
    more=page.get_by_role('button',name='More view controls',exact=True);more.click()
-   page.get_by_role('button',name='Show emergency guide',exact=True).click()
    panel=page.get_by_role('region',name='Emergency aircraft onboarding',exact=True)
    assert panel.is_visible() and panel.evaluate("n=>!!n.closest('.game-view-overflow')")
    occupied=page.get_by_role('button',name='Daybreak Evacuation · Occupied',exact=True);assert occupied.is_disabled()

@@ -134,3 +134,18 @@
 :is(.house-stage,.native-doomsday,main) .doomsday-evacuation [data-evac-aircraft]{display:grid;gap:7px;margin:8px 0}
 :is(.house-stage,.native-doomsday,main) .doomsday-evacuation [data-board-aircraft]{min-height:44px;width:100%;min-width:0;white-space:normal;text-align:left;overflow-wrap:anywhere;touch-action:manipulation}
 :is(.house-stage,.native-doomsday,main) .doomsday-evacuation small{display:block;font-size:11px;color:#bdd1b4}
+
+/* The parent header dropdown owns visibility; there is no second radio toggle. */
+.house-stage>.doomsday-menu,.native-doomsday>.doomsday-menu{display:none!important}
+:is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-panel{margin-top:0!important}
+
+:is(.house-stage,.native-doomsday,main) .doomsday-game-flow{padding:10px 0;border-top:1px solid #739569;color:#e1f2d8;font:12px/1.45 system-ui}
+:is(.house-stage,.native-doomsday,main) .doomsday-game-flow h4{margin:0 0 5px;color:#f1ffd9;font-size:14px}
+:is(.house-stage,.native-doomsday,main) .doomsday-game-flow p{margin:0 0 8px}
+.doomsday-game-flow summary{cursor:pointer;min-height:44px;box-sizing:border-box;padding:12px 0;font-weight:700}
+.doomsday-game-flow ol{padding-left:22px;margin:4px 0}
+.doomsday-game-flow li{padding:7px;border-left:3px solid #547362;margin:5px 0}
+.doomsday-game-flow li[aria-current=step]{border-color:#d3ff89;background:#293e30}
+.doomsday-game-flow li[data-status=complete]{border-color:#88dca9}
+.doomsday-game-flow li span{display:block}
+.doomsday-game-flow li small{display:inline-block;margin-left:6px;color:#d5e9d5}

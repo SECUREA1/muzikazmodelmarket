@@ -71,15 +71,11 @@ async def main():
                         return payload.get('data', payload)
 
                     async def open_radio():
-                        chip=page.get_by_role('button',name='Show emergency guide',exact=True)
-                        if not await chip.is_visible():
-                            await page.get_by_role('button',name='More view controls',exact=True).click()
-                        if await page.locator('.doomsday-guide').is_hidden():
-                            await chip.click()
+                        more=page.get_by_role('button',name='More view controls',exact=True)
+                        if await more.get_attribute('aria-expanded')!='true':
+                            await more.click()
 
                     async def close_radio():
-                        if await page.locator('.doomsday-guide').is_visible():
-                            await page.get_by_role('button',name='Hide emergency guide',exact=True).click()
                         more=page.get_by_role('button',name='More view controls',exact=True)
                         if await more.get_attribute('aria-expanded')=='true':
                             await more.click()
@@ -125,7 +121,7 @@ async def main():
                     if initial['phase'] == 'idle':
                         assert 42000 <= initial['nextEventAt'] - initial['scheduledAt'] <= 162000
                         assert not initial['active']
-                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
                         deadline = initial['nextEventAt']
                         await page.wait_for_timeout(400)
                         assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.nextEventAt')) == deadline, 'idle snapshots resampled the deadline'
@@ -242,7 +238,7 @@ async def main():
                     assert 180000 <= recurring_deadline - state['doomsday']['clearAt'] <= 1200000, 'The quiet break must start after the complete quest-led event.'
                     assert state['controlsReady'] and not state['player']['inputBlocked']
                     await page.wait_for_timeout(8500)
-                    assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)'), 'event UI remained after the all-clear interval'
+                    assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)'), 'event UI remained after the all-clear interval'
                     assert await page.get_by_role('button', name='More view controls', exact=True).is_visible(), 'Sound controls must remain available inside the header during the quiet break.'
                     assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.cycle')) == 1, 'the event restarted before the recurring deadline'
                     assert not manual_operations, manual_operations
@@ -254,7 +250,7 @@ async def main():
                     assert local['phase'] in ['idle','warning'] and local['cycle'] <= 1
                     if local['phase'] == 'idle':
                         assert 42000 <= local['nextEventAt'] - local['scheduledAt'] <= 162000
-                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
                     assert state['controlsReady'] and not state['player']['inputBlocked']
                     assert not errors, errors
                     print('marina: independent quiet arrival schedule and normal controls passed', flush=True)

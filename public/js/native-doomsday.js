@@ -18,7 +18,7 @@ export function mountNativeDoomsday({scene,getEnvironment,getPosition,announce=(
  }).catch(()=>{}).finally(()=>clearTimeout(timeout));
  const voice=questConversationVoice();
  const ui=mountDoomsdayUI({stage,getEnvironment,getPosition,isShared:()=>false,announce,voice,getPreferences:()=>preferences,onEnableAudio:()=>enableDoomsdayAudioPreferences({getPreferences:()=>preferences,voice}),effects:createDoomsdayScene({scene,performanceMode:matchMedia('(max-width:600px)').matches})});
- const menu=document.createElement('details');menu.className='native-radio-menu';const summary=document.createElement('summary');summary.textContent='Radio & sound';menu.append(summary,stage.querySelector('.doomsday-menu'));stage.append(menu);menu.addEventListener('toggle',()=>menu.open?ui.open():ui.close());menu.addEventListener('click',event=>{if(event.target.closest('[data-hide]'))menu.open=false;});
+ const menu=document.createElement('details');menu.className='native-radio-menu';const summary=document.createElement('summary');summary.textContent='Game flow & sound';menu.append(summary,stage.querySelector('.doomsday-menu'));stage.append(menu);menu.addEventListener('click',event=>{if(event.target.closest('[data-hide]'))menu.open=false;});
  const panel=stage.querySelector('.doomsday-guide');panel.style.pointerEvents='auto';
  return {tick(time){ui.tick(time,{reducedMotion:preferences.reducedMotion||matchMedia('(prefers-reduced-motion:reduce)').matches});},getState:ui.getState,
   reset:ui.reset,dispose(){disposed=true;controller.abort();clearTimeout(timeout);globalThis.removeEventListener('muzikaz:audio-preferences',changed);ui.dispose();stage.remove();}};

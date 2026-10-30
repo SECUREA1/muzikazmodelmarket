@@ -23,23 +23,39 @@ try:
     window.flow=mountGameDisplayFlow(stage);
     window.ui=mountDoomsdayUI({stage,getEnvironment:()=>env,getState:()=>doomsdayView(sim,env),getPosition:()=>({x:20,y:0,z:20}),now:()=>clock});ui.tick(0);
    }''')
-   more=page.get_by_role('button',name='More view controls',exact=True)
-   more.wait_for(state='visible')
-   chip=page.get_by_role('button',name='Show emergency guide',exact=True)
-   assert chip.is_hidden()
-   page.evaluate('clock=sim.doomsday.nextEventAt')
-   page.evaluate('''async()=>{const {stepDoomsday}=await import('/public/js/doomsday-rules.js');stepDoomsday(sim,env,clock,{players:[{id:'p',health:100,position:{x:20,y:0,z:20}}]});ui.tick(1);}''')
-   assert page.locator('.doomsday-guide').is_hidden()
-   assert page.locator('.doomsday-banner').is_hidden()
-   more.click();chip.click()
-   panel=page.locator('.doomsday-guide');assert panel.is_visible()
+   more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
+   assert page.locator('.doomsday-guide-chip').count()==0
+   panel=page.locator('.doomsday-guide');assert panel.is_hidden()
+   more.click();assert panel.is_visible()
+   assert 'Explore while standing by' in page.locator('[data-flow-title]').text_content()
+   page.get_by_text('View full response flow',exact=True).click()
+   assert page.locator('[data-flow-step=standby]').get_attribute('aria-current')=='step'
    assert panel.evaluate("n=>!!n.closest('.game-view-overflow')")
    assert page.get_by_role('switch',name='Sirens and explosions',exact=True).is_visible()
-   more.click();assert panel.is_hidden() and chip.is_hidden()
+   more.click();assert panel.is_hidden()
+   page.evaluate('clock=sim.doomsday.nextEventAt')
+   page.evaluate('''async()=>{const {stepDoomsday}=await import('/public/js/doomsday-rules.js');stepDoomsday(sim,env,clock,{players:[{id:'p',health:100,position:{x:20,y:0,z:20}}]});ui.tick(1);}''')
+   assert panel.is_hidden() and page.locator('.doomsday-banner').is_hidden()
    more.click();assert panel.is_visible()
-   page.get_by_role('button',name='Hide emergency guide',exact=True).click()
-   assert panel.is_hidden() and chip.is_visible()
-   print(f'{width}px: header dropdown contains radio controls; events never open it; toggle and hide work',flush=True)
+   assert 'shelter' in page.locator('[data-flow-title]').text_content().lower()
+   assert page.locator('[data-flow-step=impacts]').get_attribute('aria-current')=='step'
+   page.get_by_role('button',name='Close emergency menu',exact=True).click()
+   assert panel.is_hidden() and more.get_attribute('aria-expanded')=='false'
+   assert more.evaluate('n=>document.activeElement===n')
+   page.evaluate('ui.open()');assert panel.is_visible()
+   page.evaluate("sim.doomsday.phase='fallout';sim.doomsday.revision++;ui.tick(3)")
+   assert page.locator('[data-flow-step=supplies]').get_attribute('aria-current')=='step'
+   assert page.locator('[data-flow-step=recovery]').get_attribute('data-status')=='pending'
+   page.evaluate("sim.doomsday.phase='recovery';sim.doomsday.objectives.find(o=>o.id==='supplies').completed=true;sim.doomsday.revision++;ui.tick(4)")
+   assert page.locator('[data-flow-step=supplies]').get_attribute('data-status')=='complete'
+   assert page.locator('[data-flow-step=recovery]').get_attribute('aria-current')=='step'
+   page.evaluate("window.escapedToGame=false;window.addEventListener('keydown',event=>{if(event.key==='Escape')escapedToGame=true;});")
+   page.locator('[data-flow-title]').click()
+   page.get_by_role('button',name='Close emergency menu',exact=True).focus()
+   page.keyboard.press('Escape');assert panel.is_hidden()
+   assert not page.evaluate('escapedToGame'),'closing emergency menu also triggered the game Escape action'
+   page.evaluate('ui.open();ui.reset();ui.tick(2)');assert panel.is_hidden()
+   print(f'{width}px: no radio toggle, direct menu controls, closed events, close/Escape/reset preserve visibility',flush=True)
    page.close()
   browser.close()
 finally:server.shutdown()
