@@ -1,6 +1,6 @@
 import {doomsdayForEnvironment} from './doomsday-config.js';
 
-export const DOOMSDAY_TIMING=Object.freeze({initialMinMs:15000,initialMaxMs:90000,repeatMinMs:180000,repeatMaxMs:1200000,warningMs:18000,detonationMs:7000,falloutSettleMs:5000,falloutMaxMs:40000,recoveryMaxMs:20000,clearingMs:8000});
+export const DOOMSDAY_TIMING=Object.freeze({initialMinMs:15000,initialMaxMs:90000,repeatMinMs:180000,repeatMaxMs:1200000,warningMs:18000,detonationMs:7000,falloutSettleMs:5000,clearingMs:8000});
 export const DOOMSDAY_PHASES=Object.freeze({
  idle:{label:'Radio standby',message:'Cole is monitoring the emergency channel. Keep exploring; warnings arrive sporadically.'},
  warning:{label:'Nuclear warning',message:'This is Cole on the emergency radio. Incoming strikes. Get to the continuity shelter now.'},
@@ -26,40 +26,56 @@ function configuredObjectives(environment,resolvePoint){
  });
 }
 export function ensureDoomsday(sim,environment){
- const mapId=environment?.id||'local';
- if(sim.doomsday?.version!==3||sim.doomsday.mapId!==mapId)sim.doomsday={version:3,automatic:true,id:null,mapId,phase:'idle',revision:0,cycle:0,startedAt:null,phaseStartedAt:null,updatedAt:null,serverTime:null,scheduledAt:null,nextEventAt:null,detonationAt:null,falloutAt:null,recoveryAt:null,clearingAt:null,clearAt:null,awaitingArrival:true,objectives:configuredObjectives(environment)};
+ const mapId=environment?.id||'local',saved=sim.doomsday;
+ if(saved?.version===3&&saved.mapId===mapId&&Array.isArray(saved.objectives)){
+  // Preserve an in-progress response when replacing the old short timer.
+  // A timer-only recovery/clearing has not completed the missing quest.
+  const supplies=saved.objectives.find(item=>item.id==='supplies'),relay=saved.objectives.find(item=>item.id==='recovery');
+  if(['recovery','clearing'].includes(saved.phase)&&!supplies?.completed){saved.phase='fallout';saved.phaseStartedAt=saved.falloutAt;}
+  else if(saved.phase==='clearing'&&!relay?.completed){saved.phase='recovery';saved.phaseStartedAt=supplies?.completedAt??saved.phaseStartedAt;}
+  if(running(saved)){
+   saved.nextEventAt=null;saved.recoveryAt=['recovery','clearing'].includes(saved.phase)?(supplies?.completedAt??saved.phaseStartedAt):null;
+   if(saved.phase!=='clearing')saved.clearingAt=saved.clearAt=null;
+  }else if(saved.phase==='all-clear'&&Number.isFinite(saved.nextEventAt)){
+   const delay=Math.max(DOOMSDAY_TIMING.repeatMinMs,Math.min(DOOMSDAY_TIMING.repeatMaxMs,saved.nextEventAt-saved.startedAt));
+   saved.scheduledAt=saved.clearAt??saved.phaseStartedAt;saved.nextEventAt=saved.scheduledAt+delay;
+  }
+  saved.version=4;saved.revision++;
+ }
+ if(sim.doomsday?.version!==4||sim.doomsday.mapId!==mapId)sim.doomsday={version:4,automatic:true,id:null,mapId,phase:'idle',revision:0,cycle:0,startedAt:null,phaseStartedAt:null,updatedAt:null,serverTime:null,scheduledAt:null,nextEventAt:null,detonationAt:null,falloutAt:null,recoveryAt:null,clearingAt:null,clearAt:null,awaitingArrival:true,objectives:configuredObjectives(environment)};
  return sim.doomsday;
 }
 function changePhase(state,phase,at){if(state.phase===phase)return;state.phase=phase;state.phaseStartedAt=at;state.updatedAt=at;state.revision++;}
 function complete(state,objective,player,now){objective.completed=true;objective.completedBy=player.actorId||player.id||'local';objective.completedAt=now;state.updatedAt=now;state.revision++;}
 function armArrival(state,now,random){state.scheduledAt=now;state.nextEventAt=now+randomDelay(random,DOOMSDAY_TIMING.initialMinMs,DOOMSDAY_TIMING.initialMaxMs);state.awaitingArrival=false;state.updatedAt=now;state.revision++;}
-function beginEvent(state,environment,now,resolvePoint,random){
- const cycle=state.cycle+1,revision=state.revision+1,detonationAt=now+DOOMSDAY_TIMING.warningMs,falloutAt=detonationAt+DOOMSDAY_TIMING.detonationMs,recoveryAt=falloutAt+DOOMSDAY_TIMING.falloutMaxMs,clearingAt=recoveryAt+DOOMSDAY_TIMING.recoveryMaxMs;
- Object.assign(state,{id:state.mapId+':'+now+':'+cycle,cycle,phase:'warning',revision,startedAt:now,phaseStartedAt:now,updatedAt:now,detonationAt,falloutAt,recoveryAt,clearingAt,clearAt:clearingAt+DOOMSDAY_TIMING.clearingMs,scheduledAt:now,nextEventAt:now+randomDelay(random,DOOMSDAY_TIMING.repeatMinMs,DOOMSDAY_TIMING.repeatMaxMs),objectives:configuredObjectives(environment,resolvePoint)});
+function beginEvent(state,environment,now,resolvePoint){
+ const cycle=state.cycle+1,revision=state.revision+1,detonationAt=now+DOOMSDAY_TIMING.warningMs,falloutAt=detonationAt+DOOMSDAY_TIMING.detonationMs;
+ Object.assign(state,{id:state.mapId+':'+now+':'+cycle,cycle,phase:'warning',revision,startedAt:now,phaseStartedAt:now,updatedAt:now,detonationAt,falloutAt,recoveryAt:null,clearingAt:null,clearAt:null,scheduledAt:null,nextEventAt:null,objectives:configuredObjectives(environment,resolvePoint)});
 }
-function advanceTimeline(state,now){
+function advanceTimeline(state,now,random){
  if(state.phase==='warning'&&now>=state.detonationAt)changePhase(state,'detonation',state.detonationAt);
  if(state.phase==='detonation'&&now>=state.falloutAt)changePhase(state,'fallout',state.falloutAt);
- if(state.phase==='fallout'&&now>=state.recoveryAt)changePhase(state,'recovery',state.recoveryAt);
- if(state.phase==='recovery'&&now>=state.clearingAt)changePhase(state,'clearing',state.clearingAt);
- if(state.phase==='clearing'&&now>=state.clearAt)changePhase(state,'all-clear',state.clearAt);
+ if(state.phase==='clearing'&&now>=state.clearAt){
+  changePhase(state,'all-clear',state.clearAt);
+  state.scheduledAt=state.clearAt;state.nextEventAt=state.clearAt+randomDelay(random,DOOMSDAY_TIMING.repeatMinMs,DOOMSDAY_TIMING.repeatMaxMs);
+ }
 }
-/** Schedule once per arrival/run, not per frame. Recurrences are measured from
- * warning start to warning start. Every event ends even when quests are ignored. */
+/** Warning and detonation follow the room clock; fallout and recovery retain
+ * their original quest-led length. The next quiet interval begins at all-clear. */
 export function stepDoomsday(sim,environment,now,{players=sim.players||[],resolvePoint,start=true,random=Math.random}={}){
  const state=ensureDoomsday(sim,environment),humans=Object.values(players).filter(player=>present(player,now)),active=humans.filter(player=>player.health>0);state.serverTime=now;
  if(start&&!humans.length&&!running(state)&&state.nextEventAt!==null){state.nextEventAt=state.scheduledAt=null;state.awaitingArrival=true;state.updatedAt=now;state.revision++;}
  if(start&&active.length&&!running(state)){
   if(state.nextEventAt===null)armArrival(state,now,random);
   // A long suspended client receives one fresh event, never a burst of old ones.
-  if(now>=state.nextEventAt)beginEvent(state,environment,now,resolvePoint,random);
+  if(now>=state.nextEventAt)beginEvent(state,environment,now,resolvePoint);
  }
- advanceTimeline(state,now);
+ advanceTimeline(state,now,random);
  for(const objective of state.objectives){
   if(objective.completed||!eligible(objective,state,now))continue;
   const responder=active.find(player=>nearby(player,objective));if(responder)complete(state,objective,responder,now);
  }
- if(state.phase==='fallout'&&state.objectives.find(objective=>objective.id==='supplies')?.completed){state.clearingAt=Math.min(state.clearingAt,now+DOOMSDAY_TIMING.recoveryMaxMs);state.clearAt=state.clearingAt+DOOMSDAY_TIMING.clearingMs;changePhase(state,'recovery',now);}
+ if(state.phase==='fallout'&&state.objectives.find(objective=>objective.id==='supplies')?.completed){state.recoveryAt=now;changePhase(state,'recovery',now);}
  if(state.phase==='recovery'&&state.objectives.find(objective=>objective.id==='recovery')?.completed){state.clearingAt=now;state.clearAt=now+DOOMSDAY_TIMING.clearingMs;changePhase(state,'clearing',now);}
  if(start&&!humans.length&&!running(state)&&state.nextEventAt!==null){state.nextEventAt=state.scheduledAt=null;state.awaitingArrival=true;state.updatedAt=now;state.revision++;}
  return doomsdayView(sim);
@@ -67,7 +83,7 @@ export function stepDoomsday(sim,environment,now,{players=sim.players||[],resolv
 export function doomsdayView(sim,environment){
  const state=environment?ensureDoomsday(sim,environment):sim.doomsday;if(!state)return null;
  const current=state.objectives.find(objective=>!objective.completed&&objective.phase===state.phase);
- const phaseEndsAt={warning:state.detonationAt,detonation:state.falloutAt,fallout:state.recoveryAt,recovery:state.clearingAt,clearing:state.clearAt}[state.phase]??null;
+ const phaseEndsAt={warning:state.detonationAt,detonation:state.falloutAt,clearing:state.clearAt}[state.phase]??null;
  return {...copy(state),active:!!running(state),phaseLabel:DOOMSDAY_PHASES[state.phase].label,message:DOOMSDAY_PHASES[state.phase].message,
   suppliesReadyAt:state.falloutAt===null?null:state.falloutAt+DOOMSDAY_TIMING.falloutSettleMs,phaseEndsAt,
   phaseElapsedMs:Math.max(0,(state.serverTime??0)-(state.phaseStartedAt??state.serverTime??0)),currentObjectiveId:current?.id||null,

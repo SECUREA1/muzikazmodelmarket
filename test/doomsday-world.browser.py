@@ -1,4 +1,4 @@
-"""Scheduled cinematic, hidden guide, vehicles and automatic cleanup in the actual game."""
+"""Recurring cinematic with original quest-led duration and optional challenge tracking."""
 from pathlib import Path
 import asyncio, math, os, socket, subprocess, tempfile, uuid
 from playwright.async_api import async_playwright
@@ -42,7 +42,7 @@ async def main():
                             manual_operations.append(fields.get('operation'))
                     page.on('request', record_input)
                     await page.route('https://**/*', lambda route: route.abort())
-                    await page.add_init_script('''localStorage.setItem('muzikaz.emergency.guide.hidden','true');window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
+                    await page.add_init_script('''localStorage.setItem('muzikaz.emergency.guide.hidden','true');localStorage.removeItem('muzikaz.emergency.challenge.follow');window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
 
                     async def load(world):
                         await page.goto(base + '/model-explorer.html?environment=' + world + '&autoplay=1&mode=multiplayer', wait_until='domcontentloaded', timeout=90000)
@@ -112,9 +112,8 @@ async def main():
                     assert state['doomsday']['cycle'] == 1 and state['doomsday']['active']
                     if initial['phase'] == 'idle':
                         assert deadline <= state['doomsday']['startedAt'] <= deadline + 3000
-                    assert 180000 <= state['doomsday']['nextEventAt'] - state['doomsday']['startedAt'] <= 1200000
+                    assert state['doomsday']['nextEventAt'] is None, 'An active original-length event must not have a cutoff or queued replacement.'
                     event_id, detonation_at, fallout_at = [state['doomsday'][key] for key in ['id','detonationAt','falloutAt']]
-                    recurring_deadline = state['doomsday']['nextEventAt']
                     assert fallout_at - detonation_at == 7000
                     assert not state['player']['inputBlocked'], 'Automatic guide blocked movement.'
                     assert await page.locator('.doomsday-guide').is_hidden()
@@ -132,6 +131,19 @@ async def main():
                     assert not next(o for o in state['doomsday']['objectives'] if o['id']=='shelter')['completed']
                     await page.screenshot(path='/workspace/automatic-doomsday-world-fallout.png')
                     print('airport: real timed detonations and fallout continue with guide hidden', flush=True)
+                    assert state['doomsday']['phaseEndsAt'] is None and state['doomsday']['recoveryAt'] is None, 'Fallout was shortened by a timeout.'
+                    await page.get_by_role('button', name='Show emergency guide', exact=True).click()
+                    follow = page.locator('input[data-follow-challenge]')
+                    assert not await follow.is_checked(), 'Challenge tracking must be optional and off by default.'
+                    assert await page.locator('[data-challenge]').is_hidden()
+                    before_follow = state['doomsday']['id']
+                    await follow.check()
+                    assert await page.locator('[data-challenge]').is_visible()
+                    await page.get_by_role('button', name='Hide emergency guide', exact=True).click()
+                    assert await follow.is_checked(), 'Hiding the radio guide stopped following the challenge.'
+                    current = await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday')
+                    assert current['id'] == before_follow and current['phase'] == 'fallout', 'The follow switch changed the automatic world event.'
+                    print('airport: passive event retains quest-led duration; popup follow toggle is optional and persists when hidden', flush=True)
 
                     for objective_id, following in [('shelter','fallout'),('supplies','recovery'),('recovery','clearing')]:
                         state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
@@ -140,15 +152,17 @@ async def main():
                         await phase(following)
                     clearing = await phase('clearing')
                     assert 7900 <= clearing['doomsday']['clearAt'] - clearing['doomsday']['phaseStartedAt'] <= 8100
+                    assert clearing['doomsday']['nextEventAt'] is None
                     state = await phase('all-clear')
                     assert state['doomsday']['completedCount'] == 3 and not state['doomsday']['active']
-                    assert state['doomsday']['nextEventAt'] == recurring_deadline
+                    recurring_deadline = state['doomsday']['nextEventAt']
+                    assert 180000 <= recurring_deadline - state['doomsday']['clearAt'] <= 1200000, 'The quiet break must start after the complete quest-led event.'
                     assert state['controlsReady'] and not state['player']['inputBlocked']
                     await page.wait_for_timeout(8500)
                     assert await page.locator('.doomsday-guide,.doomsday-guide-chip,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)'), 'event UI remained after the all-clear interval'
                     assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.cycle')) == 1, 'the event restarted before the recurring deadline'
                     assert not manual_operations, manual_operations
-                    print('airport: quests, clearing animation, quiet all-clear and stable 3–20 minute repeat deadline passed', flush=True)
+                    print('airport: full quest-led event, clearing animation and 3–20 minute quiet break after completion passed', flush=True)
 
                     state = await load('world-district-neon-docks')
                     local = state['doomsday']

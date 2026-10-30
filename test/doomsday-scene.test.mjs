@@ -63,3 +63,18 @@ test('clearing fades the sky, clouds, ash and beacons and repeated quiet interva
  for(let index=0;index<20;index++){effects.update({...state('warning'),id:'repeat-'+index},environment,position,index);effects.update({...clearing(8000),id:'repeat-'+index},environment,position,index+1);effects.update(state('all-clear'),environment,position,index+2);}
  assert.equal(count(),before,'beacons and all other persistent effects are pooled across repeats');effects.dispose();
 });
+
+
+test('unfollowing removes objective markers while beacons, sky and event animation continue',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ const active={...state('warning'),objectives:[{id:'shelter',name:'Shelter',phase:'warning',position:{x:2,y:0,z:3}}]};
+ effects.update(active,environment,position,1);
+ const sites=effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES'),beacon=effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0');
+ assert.equal(sites.children.length,1,'direct callers keep objectives by default');
+ const angle=beacon.getObjectByName('ROTATING_SIREN_LAMP').rotation.y;
+ effects.update({...active,phaseElapsedMs:1000},environment,position,2,{showObjectives:false});
+ assert.equal(sites.children.length,0);assert.equal(effects.root.visible,true);assert.equal(beacon.visible,true);
+ assert.notEqual(beacon.getObjectByName('ROTATING_SIREN_LAMP').rotation.y,angle);
+ effects.update({...active,phaseElapsedMs:2000},environment,position,3,{showObjectives:true});assert.equal(sites.children.length,1);
+ effects.dispose();
+});

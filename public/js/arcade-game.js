@@ -5,7 +5,7 @@ import {finishNativeWorldDesign} from './environments/native-world-design-finish
 import {mountNativeWorldGuide} from './native-world-guide.js';
 import {arcadeChallenges,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
-import {isGameTypingTarget} from './game-keyboard-input.js';
+import {isGameTypingTarget,shouldResumeCompanionMovement} from './game-keyboard-input.js';
 import {sportIcon} from './sports-action-bar.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {explorerBroadcastPose} from './explorer-camera.js';
@@ -175,7 +175,8 @@ function interactNearby(){if(ride===null&&game===null&&nearby)select(nearby.inde
 $('#interact').onclick=interactNearby;
 $('#exitride').onclick=()=>reset();
 addEventListener('keydown',e=>{
- if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||isGameTypingTarget(e.target)||document.querySelector('.arcade-display-popup[open],.rad-controller-menu[open],#park-settings[open],.world-supply-dialog[open]'))return;
+ if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||(isGameTypingTarget(e.target)&&!shouldResumeCompanionMovement(e))||document.querySelector('.arcade-display-popup[open],.rad-controller-menu[open],#park-settings[open],.world-supply-dialog[open]'))return;
+ if(shouldResumeCompanionMovement(e))canvas.focus({preventScroll:true});
  if(isGameCameraToggleKey(e)){e.preventDefault();setCameraMode(nextGameCameraMode(cameraMode));return;}
  if(e.key==='Escape'&&ride!==null){e.preventDefault();reset();return;}
  if(e.key==='Escape'&&game!==null){e.preventDefault();closeGame();return;}

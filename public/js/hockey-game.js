@@ -4,7 +4,7 @@ import {mountNativeWorldGuide} from './native-world-guide.js';
 import {LocalHockeyMotion,createHockeyInputPump} from './hockey-local-motion.js';
 import {HOCKEY_CHALLENGES,mountNativeGameChallenges} from './native-game-challenges.js';
 import {GAME_INPUT_RELEASE_EVENT} from './game-input-release.js';
-import {isGameTypingTarget} from './game-keyboard-input.js';
+import {isGameTypingTarget,shouldResumeCompanionMovement} from './game-keyboard-input.js';
 import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js';
 import {mountResidentWorldLink} from './resident-world-link.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
@@ -61,7 +61,8 @@ async function travelToIce(event){
 // Native dialog closure returns focus to its toolbar opener. Fresh movement
 // from that button must resume skating while Space/Enter still activate it.
 addEventListener('keydown',e=>{
- if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||isGameTypingTarget(e.target)||document.querySelector('dialog[open]'))return;
+ if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.isComposing||(isGameTypingTarget(e.target)&&!shouldResumeCompanionMovement(e))||document.querySelector('dialog[open]'))return;
+ if(shouldResumeCompanionMovement(e))canvas.focus({preventScroll:true});
  if(isGameCameraToggleKey(e)){e.preventDefault();toggleCamera();return;}
  const companion=!!e.target.closest?.('.native-game-challenges'),k=e.key.toLowerCase();
  const movement=['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k);

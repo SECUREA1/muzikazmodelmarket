@@ -19,31 +19,36 @@ async function fixture(t){
  return {runtime,world,user,id,send,at,get now(){return clock;},get samples(){return samples;}};
 }
 
-test('authoritative rooms schedule once, preserve vehicle/movement, and repeat independently after bounded clearing',async t=>{
+test('authoritative rooms preserve the original quest-led duration and sample the next quiet break only after all-clear',async t=>{
  const f=await fixture(t),{runtime,world,id}=f;
  let state=await runtime.snapshot(world.id,world);assert.equal(state.doomsday.phase,'idle');assert.equal(state.doomsday.nextEventAt,null);assert.equal(f.samples,0);
  state=await f.send('join');const due=state.doomsday.nextEventAt;assert.equal(state.doomsday.phase,'idle');assert.equal(due-f.now,T.initialMinMs);assert.equal(f.samples,1);
  state=await f.send('map-access',{entityId:'airport-flight-1'});assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(state.doomsday.nextEventAt,due);assert.equal(f.samples,1);
  for(const operation of ['start','advance','stop'])await assert.rejects(f.send('doomsday',{operation}),/automatically/);
- state=await f.at(due);assert.equal(state.doomsday.phase,'warning');assert.equal(f.samples,2);assert.equal(state.players[id].vehicleId,'airport-flight-1');
- const next=state.doomsday.nextEventAt,first=state.doomsday.startedAt,score=state.players[id].score;
+ state=await f.at(due);assert.equal(state.doomsday.phase,'warning');assert.equal(f.samples,1);assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(state.doomsday.nextEventAt,null);
+ const score=state.players[id].score;
  state=await f.at(state.doomsday.detonationAt);assert.equal(state.doomsday.phase,'detonation');state=await f.at(state.doomsday.falloutAt);assert.equal(state.doomsday.phase,'fallout');
- state=await f.at(state.doomsday.recoveryAt);assert.equal(state.doomsday.phase,'recovery');state=await f.at(state.doomsday.clearingAt);assert.equal(state.doomsday.phase,'clearing');
- state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.completedCount,0,'ignored quests never leave the whole map in fallout');
- assert.equal(state.players[id].score,score);assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(state.doomsday.nextEventAt,next);assert.equal(next-first,T.repeatMinMs);
+ state=await f.at(f.now+120000);assert.equal(state.doomsday.phase,'fallout','the previous93-second maximum no longer ends an unfinished challenge');assert.equal(state.doomsday.phaseEndsAt,null);assert.equal(state.doomsday.nextEventAt,null);assert.equal(state.doomsday.completedCount,0);
+ assert.equal(state.players[id].score,score);assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(f.samples,1);
  state=await f.send('map-access',{position:{x:-78,y:0,z:72}});const before={...state.players[id].position};await f.send('input',{input:{forward:1,yaw:0}});state=await f.send('input',{input:{forward:1,yaw:0}});
  assert.ok(Math.hypot(state.players[id].position.x-before.x,state.players[id].position.z-before.z)>.01);
- state=await f.at(next);assert.equal(state.doomsday.phase,'warning');assert.equal(state.doomsday.cycle,2);assert.equal(state.doomsday.completedCount,0);assert.equal(f.samples,3);
+ for(const objectiveId of ['supplies','recovery']){
+  const objective=state.doomsday.objectives.find(item=>item.id===objectiveId);state=await f.send('map-access',{position:objective.position});assert.equal(state.doomsday.objectives.find(item=>item.id===objectiveId).completed,true);
+ }
+ assert.equal(state.doomsday.phase,'clearing');assert.equal(state.doomsday.nextEventAt,null);assert.equal(f.samples,1);
+ state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');const next=state.doomsday.nextEventAt;assert.equal(next-state.doomsday.clearAt,T.repeatMinMs);assert.equal(f.samples,2);
+ state=await f.at(next-1);assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.nextEventAt,next);
+ state=await f.at(next);assert.equal(state.doomsday.phase,'warning');assert.equal(state.doomsday.cycle,2);assert.equal(state.doomsday.completedCount,0);assert.equal(state.doomsday.nextEventAt,null);assert.equal(f.samples,2);
 });
 
-test('proximity quests accelerate clearing without resampling; fresh empty destinations arm their own first window',async t=>{
- const f=await fixture(t);let state=await f.send('join');state=await f.at(state.doomsday.nextEventAt);const previousId=state.doomsday.id,next=state.doomsday.nextEventAt;
+test('proximity quests end the challenge; fresh empty destinations arm their own first window',async t=>{
+ const f=await fixture(t);let state=await f.send('join');state=await f.at(state.doomsday.nextEventAt);const previousId=state.doomsday.id;assert.equal(state.doomsday.nextEventAt,null);
  state=await f.at(state.doomsday.suppliesReadyAt);
  for(const objectiveId of ['shelter','supplies','recovery']){
   const objective=state.doomsday.objectives.find(item=>item.id===objectiveId);state=await f.send('map-access',{position:objective.position});
   assert.equal(state.doomsday.objectives.find(item=>item.id===objectiveId).completed,true);
  }
- assert.equal(state.doomsday.phase,'clearing');assert.equal(state.doomsday.nextEventAt,next);assert.equal(f.samples,2);state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');
+ assert.equal(state.doomsday.phase,'clearing');assert.equal(state.doomsday.nextEventAt,null);assert.equal(f.samples,1);state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.nextEventAt-state.doomsday.clearAt,T.repeatMinMs);assert.equal(f.samples,2);
  const gym=fitnessWorld();const joined=await f.runtime.command(gym.id,gym,f.user,{action:'join',requestId:'other-destination'});
  assert.equal(joined.doomsday.phase,'idle');assert.equal(joined.doomsday.nextEventAt-f.now,T.initialMinMs);assert.equal(joined.doomsday.startedAt,null);
  state=await f.runtime.snapshot(f.world.id,f.world);assert.equal(state.doomsday.phase,'all-clear','another room does not restart this one');

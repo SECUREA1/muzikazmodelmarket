@@ -60,7 +60,7 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   if(typeof document==='undefined')return new THREE.Group();
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');if(!ctx)return new THREE.Group();ctx.fillStyle='#09180fee';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#caff72';ctx.lineWidth=4;ctx.strokeRect(2,2,508,124);ctx.fillStyle='#eaffcd';ctx.font='bold 30px sans-serif';ctx.textAlign='center';ctx.fillText(text.slice(0,30),256,70);const texture=new THREE.CanvasTexture(canvas),m=new THREE.SpriteMaterial({map:texture,depthTest:false,transparent:true}),sprite=new THREE.Sprite(m);sprite.scale.set(9,2.25,1);return sprite;
  }
- function update(state,environment,position,time=0,{reducedMotion=false}={}){
+ function update(state,environment,position,time=0,{reducedMotion=false,showObjectives=true}={}){
   if(disposed)return;
   if(worldId!==environment?.id){worldId=environment?.id;eventId=null;signature=phaseKey='';clearSites();}
   const active=!!environment&&state&&!['idle','all-clear'].includes(state.phase);root.visible=active;if(!active){if(signature){signature='';clearSites();}root.userData.phase=state?.phase||'idle';root.userData.effectOpacity=0;return;}
@@ -90,8 +90,8 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   dust.visible=fallout||recovery||clearing;dustMaterial.opacity=(recovery||clearing?.28:.7)*visibility;
   if(!reducedMotion&&dust.visible){for(let index=0;index<count;index++){particles[index*3+1]=(initialY[index]-time*(1.1+(index%5)*.17))%60;if(particles[index*3+1]<0)particles[index*3+1]+=60;}dustGeometry.attributes.position.needsUpdate=true;dust.position.x=Math.sin(time*.08)*3;}else dust.position.x=0;
   haze.rotation.y=reducedMotion?0:time*.008;
-  const nextSignature=JSON.stringify([state.id,state.phase,state.objectives?.map(o=>[o.id,o.completed])]);
-  if(signature!==nextSignature){signature=nextSignature;clearSites();for(const objective of state.objectives||[]){if(objective.completed||objective.phase!==state.phase||clearing)continue;const marker=new THREE.Group();marker.name='doomsday-objective-'+objective.id;marker.position.copy(objective.position);marker.userData.doomsdayObjective=objective.id;
+  const nextSignature=JSON.stringify([state.id,state.phase,showObjectives,state.objectives?.map(o=>[o.id,o.completed])]);
+  if(signature!==nextSignature){signature=nextSignature;clearSites();for(const objective of state.objectives||[]){if(!showObjectives||objective.completed||objective.phase!==state.phase||clearing)continue;const marker=new THREE.Group();marker.name='doomsday-objective-'+objective.id;marker.position.copy(objective.position);marker.userData.doomsdayObjective=objective.id;
    const beam=mesh(new THREE.CylinderGeometry(.12,.6,14,6),outline,marker,false);beam.position.y=7;
    const pad=mesh(new THREE.TorusGeometry(2,.1,6,32),outline,marker,false);pad.rotation.x=-Math.PI/2;pad.position.y=.12;
    const name=label(objective.name);name.position.y=4;marker.add(name);sites.add(marker);

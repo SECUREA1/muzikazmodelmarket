@@ -1,4 +1,4 @@
-"""Sporadic emergency scheduling, hidden guide, automatic clearing and radio."""
+"""Sporadic ambient event, optional challenge follow switch and quest-led duration."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
@@ -19,7 +19,7 @@ try:
    page.route('**/__doomsday',lambda route:route.fulfill(body=fixture,content_type='text/html'))
    page.goto(f'http://127.0.0.1:{server.server_port}/__doomsday')
    page.evaluate('''async()=>{
-    localStorage.removeItem('muzikaz.emergency.guide.hidden');
+    localStorage.removeItem('muzikaz.emergency.guide.hidden');localStorage.removeItem('muzikaz.emergency.challenge.follow');
     const THREE=await import('/public/vendor/three/three.module.min.js');
     const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
     const {doomsdayView,stepDoomsday}=await import('/public/js/doomsday-rules.js');
@@ -51,9 +51,9 @@ try:
    assert page.evaluate("ui.getState().phase==='idle'")
    page.evaluate('(at)=>clock=at',first_at)
    page.wait_for_function("ui.getState().phase==='warning'")
-   first_state=page.evaluate('ui.getState()');first_id=first_state['id'];next_at=first_state['nextEventAt']
+   first_state=page.evaluate('ui.getState()');first_id=first_state['id']
    assert first_state['falloutAt']-page.evaluate('enteredAt')<=120000
-   assert 180000<=next_at-first_state['startedAt']<=1200000
+   assert first_state['nextEventAt'] is None,'An active quest-led event scheduled an overlapping repeat.'
    assert guide.is_visible() and page.evaluate('eventIds.size')==1
    assert page.locator('.doomsday-toggle,[data-operation],[data-objective]').count()==0
    assert page.evaluate('blocked()') is False
@@ -61,6 +61,26 @@ try:
    first=page.evaluate('spoken[0]')
    assert first['gender']=='male' and first['effect']=='walkie' and first['priority']=='emergency'
    assert 'Cole' in first['text']
+   follow=page.get_by_role('switch',name='Follow emergency challenge',exact=True)
+   assert not follow.is_checked() and not page.evaluate('ui.followingChallenge()')
+   assert guide.locator('[data-challenge]').is_hidden()
+   assert page.evaluate("effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES').children.length===0")
+   assert 'continuity shelter' not in first['text'].lower(),'Unfollowed event assigned a response quest.'
+   stable=page.evaluate('({id:ui.getState().id,nextEventAt:ui.getState().nextEventAt,phase:ui.getState().phase,draws:randomDraws})')
+   follow.check()
+   page.wait_for_function("ui.followingChallenge() && effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES').children.length>0")
+   assert guide.locator('[data-challenge]').is_visible()
+   assert page.evaluate("localStorage.getItem('muzikaz.emergency.challenge.follow')")=='true'
+   assert 'Following the emergency challenge' in page.evaluate('spoken.at(-1).text')
+   follow.uncheck()
+   page.wait_for_function("!ui.followingChallenge() && effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES').children.length===0")
+   assert guide.locator('[data-challenge]').is_hidden()
+   assert 'Emergency supply cache' not in page.locator('.doomsday-banner').inner_text()
+   assert 'Challenge tracking off' in page.evaluate('spoken.at(-1).text')
+   assert page.evaluate("effects.root.visible && effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0').visible"),'Unfollowing hid the ambient warning.'
+   assert page.evaluate('({id:ui.getState().id,nextEventAt:ui.getState().nextEventAt,phase:ui.getState().phase,draws:randomDraws})')==stable,'Following changed the shared event or its random schedule.'
+   follow.check()
+   page.wait_for_function('ui.followingChallenge()')
    angle=page.evaluate("effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0').getObjectByName('ROTATING_SIREN_LAMP').rotation.y")
    pulse=page.evaluate("effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0').getObjectByName('PULSING_WARNING_LENS').material.opacity")
    page.evaluate('clock+=500');page.wait_for_timeout(80)
@@ -68,11 +88,13 @@ try:
    assert page.evaluate("effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0').getObjectByName('PULSING_WARNING_LENS').material.opacity")!=pulse
    page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
    assert guide.is_hidden()
+   assert page.evaluate('ui.followingChallenge()'),'Hiding the guide unfollowed the challenge.'
    page.keyboard.press('w');assert page.evaluate('moves')==1
    page.evaluate('window.oldRadio=radio;clock=ui.getState().detonationAt')
    page.wait_for_function("ui.getState().phase==='detonation'")
    assert guide.is_hidden()
    page.get_by_role('button',name='Show emergency guide',exact=True).tap()
+   assert follow.is_checked(),'Reopening the guide lost the follow choice.'
    page.evaluate('oldRadio.onFinished?.()')
    assert guide.get_attribute('data-speaking')=='true','old warning callback stopped the new dispatch portrait'
    page.evaluate('finishRadio()');assert guide.get_attribute('data-speaking')=='false'
@@ -81,50 +103,57 @@ try:
    page.evaluate('clock+=7000')
    page.wait_for_function("ui.getState().phase==='fallout'")
    assert guide.is_hidden() and page.evaluate("effects.root.userData.phase==='fallout'")
+   # The original fallout and recovery phases hold until their quests finish.
+   page.evaluate('clock=enteredAt+120000');page.wait_for_timeout(80)
+   assert page.evaluate("eventIds.size===1 && ui.getState().cycle===1 && ui.getState().phase==='fallout'"),'More than one catastrophe occurred in the first two minutes.'
+   page.evaluate('clock+=600000');page.wait_for_timeout(100)
+   assert page.evaluate("ui.getState().phase==='fallout' && ui.getState().nextEventAt===null && eventIds.size===1"),'The full fallout challenge was cut short.'
+   page.get_by_role('button',name='Show emergency guide',exact=True).tap()
+   assert follow.is_checked() and guide.locator('[data-challenge]').is_visible()
+   assert page.locator('.doomsday-banner [data-countdown]').inner_text()=='','Fallout displayed a forced cleanup countdown.'
+   # Unfollowing changes presentation only; reaching supplies still registers.
+   follow.uncheck();page.wait_for_function('!ui.followingChallenge()')
+   assert guide.locator('[data-challenge]').is_hidden()
+   page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
    page.evaluate("reach('supplies')")
-   page.wait_for_timeout(100)
-   assert page.evaluate("ui.getState().phase==='fallout'")
-   page.evaluate('clock+=5000')
    page.wait_for_function("ui.getState().phase==='recovery'")
+   page.evaluate('clock+=600000');page.wait_for_timeout(80)
+   assert page.evaluate("ui.getState().phase==='recovery' && ui.getState().nextEventAt===null && eventIds.size===1"),'Recovery was cut short while the relay quest was unfinished.'
    page.evaluate("reach('recovery')")
    page.wait_for_function("ui.getState().phase==='clearing'")
-   assert page.evaluate('effects.root.visible'),'clearing should fade the event before hiding it'
+   assert page.evaluate('effects.root.visible'),'Clearing should fade the event before hiding it.'
    clearing=page.evaluate('ui.getState()')
+   assert clearing['nextEventAt'] is None
    page.evaluate('(at)=>clock=at-1',clearing['clearAt']);page.wait_for_timeout(60)
    assert page.evaluate("ui.getState().phase==='clearing'")
-   assert 0<page.evaluate('effects.root.userData.effectOpacity')<.01,'effects did not fade before all clear'
+   assert 0<page.evaluate('effects.root.userData.effectOpacity')<.01,'Effects did not fade before all clear.'
    page.evaluate('(at)=>clock=at',clearing['clearAt'])
    page.wait_for_function("ui.getState().phase==='all-clear' && !effects.root.visible")
    assert guide.is_hidden()
    assert guide.locator('progress').get_attribute('value')=='2'
    assert guide.locator('progress').get_attribute('max')=='2'
-   assert page.evaluate('ui.getState().nextEventAt')==next_at,'quest completion resampled the recurring deadline'
-   assert any('Fallout has begun' in call['text'] for call in page.evaluate('spoken'))
+   next_at=page.evaluate('ui.getState().nextEventAt')
+   assert 180000<=next_at-clearing['clearAt']<=1200000,'The quiet break must begin after the full event finishes.'
    page.keyboard.press('w');assert page.evaluate('moves')==2
-   page.evaluate('clock=enteredAt+120000');page.wait_for_timeout(80)
-   assert page.evaluate("eventIds.size===1 && ui.getState().cycle===1 && ui.getState().phase==='all-clear'"),'more than one catastrophe occurred within the first two minutes'
-   # The next event is start-to-start 3–20 minutes later; no early restart.
+   # No repeat can interrupt an active quest; after completion it waits for the quiet deadline.
    page.evaluate('(at)=>{clock=at-1;position={x:20,y:0,z:20};}',next_at)
    page.wait_for_timeout(100)
    assert page.evaluate(f"ui.getState().phase==='all-clear' && ui.getState().id==='{first_id}' && eventIds.size===1")
    page.evaluate('(at)=>clock=at',next_at)
    page.wait_for_function("ui.getState().phase==='warning' && eventIds.size===2")
    second=page.evaluate('ui.getState()');assert second['id']!=first_id and second['completedCount']==0
-   assert guide.is_hidden(),'a recurring event overrode the hidden guide preference'
-   # This run has no quest visits: the fallout must still clear itself.
-   page.evaluate('(at)=>clock=at',second['clearingAt'])
-   page.wait_for_function("ui.getState().phase==='clearing'")
-   page.evaluate('(at)=>clock=at',second['clearAt'])
-   page.wait_for_function("ui.getState().phase==='all-clear' && !effects.root.visible")
-   assert page.evaluate('ui.getState().completedCount')==0
+   assert guide.is_hidden(),'A recurring event overrode the hidden guide preference.'
+   assert not page.evaluate('ui.followingChallenge()'),'A new event forced challenge tracking back on.'
    # A solo arrival also waits for its stable first deadline rather than starting immediately.
    page.evaluate("env={id:'solo-island',name:'Island'};shared=false;position={x:10,y:0,z:10}")
    page.wait_for_function("ui.getState().mapId==='solo-island' && ui.getState().phase==='idle'")
    assert guide.is_hidden()
+   assert not page.evaluate('ui.followingChallenge()'),'Map change reset the persisted unfollow choice.'
    page.evaluate('clock=ui.getState().nextEventAt')
    page.wait_for_function("ui.getState().phase==='warning'")
    assert guide.is_hidden()
    page.get_by_role('button',name='Show emergency guide',exact=True).tap();assert guide.is_visible()
+   follow.check();page.wait_for_function('ui.followingChallenge()')
    # A normal queued shelter reply cannot suppress the pending warning animation.
    page.evaluate("deferRadio=true;waitingRadios=[];voice.state.speaking=false;voice.state.outputBusy=true;env={id:'queued-radio-map',name:'Radio checkpoint'};position={x:10,y:0,z:10}")
    page.wait_for_function("ui.getState().mapId==='queued-radio-map' && ui.getState().phase==='idle'")
@@ -141,7 +170,7 @@ try:
    assert 'Detonations' in guide.locator('[data-transcript]').inner_text()
    page.evaluate('env=null;ui.reset()');assert guide.is_hidden()
    assert not errors,errors
-   print(f'{width}px: stable first/repeat deadlines, hidden timed phases, male radio, proximity quests, automatic no-quest clearing and free movement passed',flush=True)
+   print(f'{width}px: optional challenge toggle, persisted choices, full quest-led event, quiet recurrence, ambient warning and movement passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

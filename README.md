@@ -254,20 +254,26 @@ See [prison controls and challenges](docs/prison-world.md). Six role-specific da
 ## Doomsday response
 
 A fictional emergency is scheduled automatically in a fresh map session. The first
-warning starts at a random time 15–90 seconds after arrival, so the blasts and fallout
-begin within the first two minutes. Joining an occupied room follows its existing schedule. Later warnings start 3–20 minutes apart at
-random. Each warning lasts 18 seconds before distant bombs detonate and fallout begins.
-The animated radio guide can be hidden or restored without pausing the experience.
-Cole’s male walkie-talkie dispatch cuts through the warning sirens to call out
-shelter, supply recovery, and communications quests. Reach the marked sites to
-complete quests automatically; the optional shelter does not delay the explosions.
+warning starts 15–90 seconds after arrival, so the blasts and fallout begin within
+two minutes. Joining an occupied room follows that room’s existing event. The
+warning lasts 18 seconds and the detonation animation lasts 7 seconds.
+
+Fallout and recovery keep their original quest-led duration: fallout remains until
+the supply objective is completed, and recovery remains until the relay is restored.
+There is no short automatic timeout. The effects then fade for eight seconds;
+the next event is scheduled after a random 3–20-minute quiet break.
+
+The radio popup has a **Follow challenge** switch, off by default. Turn it on to
+show quest progress, objective beams, and Cole’s radio directions, or leave it off
+to experience the event while exploring. This choice persists across visits and
+does not start, stop, or shorten an event. Hiding the guide is a separate control.
+Objectives register automatically when players reach their sites; the shelter is
+optional and never delays the explosions.
 
 Each explorer room shares one event; hockey and arcade use local exercises.
-Sirens respect audio volume and mute settings and duck beneath dispatch speech.
-Reduced motion softens the blast animation. Movement, travel, and vehicle controls
-remain available throughout. Rotating amber beacons pulse during the warning;
-fallout, clouds, and lights fade out automatically after each event, even if quests
-are unfinished. The guide then clears away until the next warning.
+Loud sirens and rotating amber beacons accompany the event. Sirens respect audio
+settings and duck beneath Cole’s male walkie-talkie voice. Reduced motion softens
+the animation. Movement, travel, and vehicle controls stay available throughout.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.

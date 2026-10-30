@@ -25136,7 +25136,7 @@
             "prompt": "Inspect the recovery relay"
           },
           "dialogueSettings": {
-            "text": "Community warning and recovery relay. Reach this beacon during recovery to restore communications and help conditions clear sooner. The warning also clears on its own."
+            "text": "Community warning and recovery relay. Reach this beacon during recovery to restore communications and complete the response. Fallout lasts until the supplies are collected, and recovery lasts until this relay is restored."
           }
         },
         {
@@ -25166,7 +25166,7 @@
             "prompt": "Read emergency warning guidance"
           },
           "dialogueSettings": {
-            "text": "Sporadic fictional emergencies occur automatically on every map. Loud warning sirens, revolving amber beacons and Cole on the walkie-talkie announce incoming explosions and fallout. Conditions clear after each alert. Follow the shelter, supply and recovery beacons. Hide the guide or mute sirens without stopping the experience."
+            "text": "Sporadic fictional emergencies occur automatically on every map. Loud warning sirens, revolving amber beacons and Cole on the walkie-talkie announce incoming explosions and fallout. Conditions clear when the supply and relay response is completed. Follow the shelter, supply and recovery beacons. Use Follow challenge in the radio popup for quest directions. Hide the guide or mute sirens without stopping the experience."
           }
         },
         {
