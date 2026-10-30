@@ -168,9 +168,15 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   if(!reducedMotion&&dust.visible){for(let index=0;index<count;index++){particles[index*3+1]=(initialY[index]-time*(1.1+(index%5)*.17))%60;if(particles[index*3+1]<0)particles[index*3+1]+=60;}dustGeometry.attributes.position.needsUpdate=true;dust.position.x=Math.sin(time*.08)*3;}else dust.position.x=0;
   haze.rotation.y=reducedMotion?0:time*.008;
   const nextSignature=JSON.stringify([state.id,state.phase,showObjectives,state.objectives?.map(o=>[o.id,o.completed])]);
-  if(signature!==nextSignature){signature=nextSignature;clearSites();for(const objective of state.objectives||[]){if(!showObjectives||objective.completed||objective.phase!==state.phase||clearing)continue;const marker=new THREE.Group();marker.name='doomsday-objective-'+objective.id;marker.position.copy(objective.position);marker.userData.doomsdayObjective=objective.id;
+  if(signature!==nextSignature){signature=nextSignature;clearSites();for(const objective of state.objectives||[]){if(!showObjectives||clearing||(objective.id!=='shelter'&&(objective.completed||objective.phase!==state.phase)))continue;const marker=new THREE.Group();marker.name='doomsday-objective-'+objective.id;marker.position.copy(objective.position);marker.userData.doomsdayObjective=objective.id;
    const beam=mesh(new THREE.CylinderGeometry(.12,.6,14,6),outline,marker,false);beam.position.y=7;
    const pad=mesh(new THREE.TorusGeometry(2,.1,6,32),outline,marker,false);pad.rotation.x=-Math.PI/2;pad.position.y=.12;
+   if(objective.id==='shelter'){
+    // Open waypoint frame: no walls or invisible collision in generated maps.
+    for(const side of [-1,1]){const post=mesh(new THREE.BoxGeometry(.12,2.8,.12),outline,marker,false);post.position.set(side*1.6,1.4,1.5);}
+    const lintel=mesh(new THREE.BoxGeometry(3.3,.15,.15),outline,marker,false);lintel.position.set(0,2.8,1.5);
+    for(let index=0;index<3;index++){const path=mesh(new THREE.BoxGeometry(1.2,.035,.22),outline,marker,false);path.position.set(0,.08,2+index*.7);}
+   }
    const name=label(objective.name);name.position.y=4;marker.add(name);sites.add(marker);
   }}
  }

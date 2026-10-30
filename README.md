@@ -270,6 +270,15 @@ does not start, stop, or shorten an event. Hiding the guide is a separate contro
 Objectives register automatically when players reach their sites; the shelter is
 optional and never delays the explosions.
 
+Shelter checkpoints reuse placed shelter models on procedural maps when no explicit
+site is configured. Rotated interiors recognize visitors without checking in through
+walls or from overhead. Authored map checkpoints retain priority. The optional
+challenge marks an open entrance frame and approach lights, and keeps shelters
+findable throughout fallout and recovery, including after a shared check-in.
+The radio guide reports each visitor's current distance or presence and the next
+response step. Shelter interiors include aisle lighting, first-aid stations, water
+and a radio desk, with the central walking route kept clear.
+
 The airport shelter recognizes its doorway and full interior throughout warning,
 detonation, fallout and recovery. Cole confirms each visitor’s own arrival and
 explains the next stage, including when the guide is hidden or challenge tracking

@@ -23,6 +23,12 @@ const live=(player,now)=>present(player,now)&&player.health>0;
 export function isDoomsdayObjectiveNearby(position,objective){
  if(!finitePoint(position)||!finitePoint(objective?.position)||Math.abs(position.y-objective.position.y)>3)return false;
  const area=objective.id==='shelter'&&objective.arrivalArea;
+ const zone=objective.id==='shelter'&&objective.arrivalZone;
+ if(!finiteArea(area)&&zone&&[zone.yaw,zone.halfWidth,zone.halfDepth].every(Number.isFinite)&&zone.halfWidth>0&&zone.halfDepth>0){
+  const dx=position.x-objective.position.x,dz=position.z-objective.position.z,c=Math.cos(zone.yaw),s=Math.sin(zone.yaw);
+  return Math.abs(dx*c-dz*s)<=zone.halfWidth&&Math.abs(dx*s+dz*c)<=zone.halfDepth;
+ }
+
  return finiteArea(area)?position.x>=area.minX&&position.x<=area.maxX&&position.z>=area.minZ&&position.z<=area.maxZ:Math.hypot(position.x-objective.position.x,position.z-objective.position.z)<=4.5;
 }
 const nearby=(player,objective)=>isDoomsdayObjectiveNearby(player.position,objective);

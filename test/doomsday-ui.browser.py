@@ -295,6 +295,8 @@ try:
    assert arrival['gender']=='male' and arrival['effect']=='walkie' and arrival['priority']=='emergency'
    assert 'supply response' in arrival['text'].lower() and 'Stay under cover' in arrival['text']
    first_arrival=page.evaluate('arrivalCount()')
+   assert 'At the shelter' in guide.locator('[data-shelter-guidance]').text_content()
+
    page.evaluate('finishRadio();position={x:20,y:0,z:20};clock+=100');page.wait_for_timeout(80)
    page.evaluate('position={x:4.8,y:0,z:3.8};clock+=100');page.wait_for_timeout(80)
    assert page.evaluate('arrivalCount()')==first_arrival,'Reentering the same event repeated shelter check-in.'

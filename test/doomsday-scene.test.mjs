@@ -89,6 +89,7 @@ test('unfollowing removes objective markers while beacons, sky and event animati
  effects.update(active,environment,position,1);
  const sites=effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES'),beacon=effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0');
  assert.equal(sites.children.length,1,'direct callers keep objectives by default');
+ assert.ok(sites.children[0].children.length>=8,'shelter checkpoint has an open entrance frame and approach lights');
  const angle=beacon.getObjectByName('ROTATING_SIREN_LAMP').rotation.y;
  effects.update({...active,phaseElapsedMs:1000},environment,position,2,{showObjectives:false});
  assert.equal(sites.children.length,0);assert.equal(effects.root.visible,true);assert.equal(beacon.visible,true);
@@ -149,4 +150,14 @@ test('response aircraft fade and reuse their pooled geometry across events, with
  for(let index=0;index<12;index++){effects.update({...state('warning'),id:'repeat-flight-'+index},environment,position,index);effects.update(state('all-clear'),environment,position,index+1);}
  assert.deepEqual(fleet.children,models);const after=new Set();fleet.traverse(node=>{if(node.geometry)after.add(node.geometry);});assert.deepEqual(after,geometries);
  assert.equal(releasedGeometry.size,0,'quiet intervals do not reallocate the fleet');effects.dispose();assert.equal(releasedGeometry.size,geometries.size);assert.equal(releasedMaterial.size,materials.size);
+});
+
+test('completed shelters remain discoverable during fallout without forcing challenge markers on',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ const active={...state('fallout'),objectives:[{id:'shelter',name:'Shelter',phase:'warning',completed:true,position:{x:2,y:0,z:3}}]};
+ effects.update(active,environment,position,1,{showObjectives:true});
+ assert.ok(effects.root.getObjectByName('doomsday-objective-shelter'));
+ effects.update(active,environment,position,2,{showObjectives:false});
+ assert.equal(effects.root.getObjectByName('doomsday-objective-shelter'),undefined);
+ effects.dispose();
 });

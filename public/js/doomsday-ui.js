@@ -1,8 +1,10 @@
+import {shelterGuidance} from './shelter-guidance.js';
 import {bindGameActionButton} from './game-action-button.js';
 import {stepDoomsday,doomsdayView,isDoomsdayObjectiveNearby} from './doomsday-rules.js';
 import {createDoomsdayAudio} from './doomsday-audio.js';
 import {doomsdayResponseStatus} from './doomsday-response-flight.js';
 
+const setShelterText=(node,help)=>{const text=help.label+'. '+help.message;if(node.textContent!==text)node.textContent=text;};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const guidePreference='muzikaz.emergency.guide.hidden';
 const challengePreference='muzikaz.emergency.challenge.follow';
@@ -116,7 +118,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   const nextSignature=JSON.stringify([state.id,state.revision,state.phase,followChallenge,shelterArrived,state.objectives.map(o=>o.completed)]);
   if(signature!==nextSignature){signature=nextSignature;
    const required=state.objectives.filter(o=>!o.optional),completed=required.filter(o=>o.completed).length,response=doomsdayResponseStatus(state);
-   panel.querySelector('[data-scenario]').innerHTML=`<div class="doomsday-phase" data-phase="${escape(state.phase)}"><small>${escape(getEnvironment()?.name||'Current map')}</small><h4>${escape(state.phaseLabel)}</h4><p>${escape(currentBriefing(true))}</p></div><p class="doomsday-response-activity" data-response-status ${response.active?'':'hidden'}><strong>${escape(response.label)}</strong><span>${escape(response.message)}</span></p><div data-challenge ${followChallenge?'':'hidden'}><progress max="${required.length||2}" value="${completed}" aria-label="Response objectives completed"></progress><span>${completed} / ${required.length||2} response quests · shelter optional</span><ol class="doomsday-objectives">${state.objectives.map(o=>`<li class="${o.completed?'is-complete':o===next?'is-current':''}"><strong>${o.completed?'✓ ':''}${escape(o.name)}${o.id==='shelter'?' · optional':''}</strong><span>${escape(o.description)}</span><small data-site="${escape(o.id)}">${Math.round(o.position.x)}, ${Math.round(o.position.z)}</small></li>`).join('')}</ol></div>`;
+   panel.querySelector('[data-scenario]').innerHTML=`<div class="doomsday-phase" data-phase="${escape(state.phase)}"><small>${escape(getEnvironment()?.name||'Current map')}</small><h4>${escape(state.phaseLabel)}</h4><p>${escape(currentBriefing(true))}</p></div><p class="doomsday-response-activity" data-response-status ${response.active?'':'hidden'}><strong>${escape(response.label)}</strong><span>${escape(response.message)}</span></p><p class="doomsday-response-activity" data-shelter-guidance hidden></p><div data-challenge ${followChallenge?'':'hidden'}><progress max="${required.length||2}" value="${completed}" aria-label="Response objectives completed"></progress><span>${completed} / ${required.length||2} response quests · shelter optional</span><ol class="doomsday-objectives">${state.objectives.map(o=>`<li class="${o.completed?'is-complete':o===next?'is-current':''}"><strong>${o.completed?'✓ ':''}${escape(o.name)}${o.id==='shelter'?' · optional':''}</strong><span>${escape(o.description)}</span><small data-site="${escape(o.id)}">${Math.round(o.position.x)}, ${Math.round(o.position.z)}</small></li>`).join('')}</ol></div>`;
   }
   showGuide();panel.querySelector('[data-panel-phase]').textContent=state.phase==='idle'?'Standing by · explore freely':state.phaseLabel;banner.hidden=!guideAvailable();banner.dataset.phase=state.phase;banner.querySelector('[data-phase]').textContent=state.phaseLabel;
   banner.querySelector('[data-task]').textContent=shelterArrived&&['warning','detonation'].includes(state.phase)?'Shelter reached · stay under cover':next?next.name:state.phase==='warning'?'Incoming alert · take cover':state.phase==='fallout'?'Fallout alert active · emergency response underway':state.phase==='recovery'?'Emergency response active · awaiting all clear':state.phase==='detonation'?'Take cover · fallout approaching':state.phase==='clearing'?'Final clearance · normal conditions returning':state.phase==='all-clear'?'The alert has passed':'';
@@ -143,6 +145,8 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   const arrivedNow=!shelterArrived&&state.active&&['warning','detonation','fallout','recovery'].includes(state.phase)&&isDoomsdayObjectiveNearby(getPosition(),shelter);
   if(arrivedNow)shelterArrived=true;
   render();
+  const shelterHelp=shelterGuidance(state,getPosition()),shelterPanel=panel.querySelector('[data-shelter-guidance]');
+  if(shelterPanel){shelterPanel.hidden=!shelterHelp.visible;if(shelterHelp.visible)setShelterText(shelterPanel,shelterHelp);}
   if(spoken!==phaseKey){
    spoken=phaseKey;nextNoticeAt=state.presentationTime+noticeIntervalMs;speaking(false);
    const line=arrivedNow?shelterBriefing(state.phase,followChallenge):currentBriefing();

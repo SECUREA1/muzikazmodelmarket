@@ -24,6 +24,18 @@ export function createDoomsdayModel(id){
   for(const side of [-1,1]){box(.35,2.75,8,side*4.825,1.55,0,concrete,'SHELTER_SIDE');box(3,2.75,.35,side*3.5,1.55,3.825,concrete,'SHELTER_FRONT_WING');box(1.1,.45,5,side*3.9,.45,0,dark,'RELIEF_BENCH');}
   box(10,2.75,.35,0,1.55,-3.825,concrete,'SHELTER_BACK');box(2.8,.22,.16,0,2.75,4.02,green,'ILLUMINATED_SHELTER_ENTRANCE');
   box(.7,.4,.1,0,2.35,4.02,green,'SHELTER_MARKER');
+  // Furnish the edges, keeping the central doorway and walking aisle clear.
+  for(const side of [-1,1]){
+   box(.09,.025,6.4,side*1.35,.195,0,green,'SHELTER_AISLE_LIGHT');
+   box(.8,.5,.45,side*4.1,.85,-2.8,white,'SHELTER_FIRST_AID');
+   box(.12,.32,.025,side*4.1,.85,-2.56,red,'SHELTER_FIRST_AID_CROSS');
+   box(.32,.12,.025,side*4.1,.85,-2.55,red,'SHELTER_FIRST_AID_CROSS');
+  }
+  box(1.4,.7,.5,-2.6,.53,-3.25,metal,'SHELTER_WATER_STATION');
+  box(1.3,.5,.35,2.6,1.25,-3.4,dark,'SHELTER_RADIO_STATION');
+  box(.85,.22,.04,2.6,1.3,-3.2,green,'SHELTER_RADIO_DISPLAY');
+  box(3,.05,.8,0,.2,2.8,green,'SHELTER_ENTRY_THRESHOLD');
+
  }else{
   for(const side of [-1,1]){box(1,.9,1.1,side*.55,.45,0,dark,'RELIEF_CRATE');box(1.05,.12,1.15,side*.55,.97,0,yellow,'SEALED_LID');box(.13,.5,.025,side*.55,.5,.565,white,'SUPPLY_CROSS');box(.5,.13,.025,side*.55,.5,.57,white,'SUPPLY_CROSS');}
  }
