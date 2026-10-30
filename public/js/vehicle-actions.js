@@ -23,6 +23,11 @@ export function resolveVehicleAction({vehicle,environment={},actors={}}={}){
   const flight=vehicle.flight||{},speed=Math.max(flight.speed||0,flight.airspeed||0),altitude=Number(flight.altitude)||0;
   if(flight.stall||flight.airborne&&speed<(flight.stallSpeed||7))return choice('recover','Recover airspeed','Add power and lower the nose to recover safe flying speed.');
   if(flight.assist){
+   if(flight.assist==='emergency-departure'){
+    const stage=flight.assistStage,departure=flight.emergencyDeparture;
+    const label=departure?.status==='waiting'||departure?.status==='blocked'?'Hold for clearance':stage==='preflight'?'Run preflight checks':stage==='taxi'?'Continue taxi':stage==='hold-short'?'Wait for runway clearance':stage==='lineup'?'Line up for departure':stage==='roll'?'Continue takeoff roll':'Continue emergency climb';
+    return choice('continue',label,departure?.reason||'Emergency departure is active. Move the stick or choose Manual to take control.');
+   }
    const label=flight.assist==='land'?(flight.assistStage==='park'?'Finish parking':'Continue landing'):flight.assist==='cruise'?'Hold level flight':flight.airborne?'Continue climbing':'Continue takeoff';
    return choice('continue',label,'Assistance is active. Move the stick or use a manual function to take control.');
   }

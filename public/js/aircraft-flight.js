@@ -56,11 +56,13 @@ export function stepAircraftFlight(aircraft,input={},dt,{ground=.4,ceiling=80,ha
 export function airportRadio(sim,player,actorId,operation,now,environment={}){
  const airport=sim.airport,aircraft=sim.actors[player.vehicleId];if(!airport)throw Object.assign(Error('This room has no airport tower.'),{statusCode:409});
  if(!['takeoff','landing','service','status','traffic','vectors'].includes(operation))throw Object.assign(Error('Choose a tower radio operation.'),{statusCode:422});
- const runway=aircraftRunway(environment,aircraft)||{x:40,z:0,width:16,length:202},lease=runwayClearance(airport,runway),ceiling=environment.airport?.ceiling||80,occupied=lease.runwayHolder&&lease.runwayHolder!==actorId&&lease.expires>now;
+ const runway=aircraftRunway(environment,aircraft)||{x:40,z:0,width:16,length:202},lease=runwayClearance(airport,runway),ceiling=environment.airport?.ceiling||80,runwayName=String(runway.name||'Runway 18 / 36').slice(0,80);
+ const runwayTraffic=Object.values(sim.actors||{}).some(other=>other.id!==aircraft?.id&&isAircraft(other)&&other.active!==false&&(other.health??100)>0&&other.position&&Math.abs(other.position.x-runway.x)<runway.width/2+6&&Math.abs(other.position.z-runway.z)<runway.length/2+5&&(other.flight?.airborne===false||Number(other.flight?.altitude??other.position.y)<8));
+ const occupied=!!(lease.runwayHolder&&lease.runwayHolder!==actorId&&lease.expires>now)||runwayTraffic;
  const heading=actor=>String(Math.round((((-Number(actor.rotation?.y||0)*180/Math.PI)%360)+360)%360)%360).padStart(3,'0');
  const traffic=Object.values(sim.actors).filter(other=>isAircraft(other)&&other.id!==aircraft?.id&&other.active!==false&&other.health>0&&other.holderId);
  const callsign=String(player.username||'pilot').slice(0,32);
- if(operation==='status')return 'MUZIKAZ Tower. Runway one eight, wind calm. Circuit ceiling '+ceiling+' metres. '+(occupied?'Runway occupied. Hold position. ': 'Runway available. ')+traffic.length+' other aircraft on frequency. Request clearance before takeoff.';
+ if(operation==='status')return 'MUZIKAZ Tower. '+runwayName+', wind calm. Circuit ceiling '+ceiling+' metres. '+(occupied?'Runway occupied. Hold position. ': 'Runway available. ')+traffic.length+' other aircraft on frequency. Request clearance before takeoff.';
  if(operation==='traffic'){
   if(!traffic.length)return 'Tower, '+callsign+'. No other occupied aircraft reported. Maintain a visual lookout.';
   traffic.sort((a,b)=>aircraft?Math.hypot(a.position.x-aircraft.position.x,a.position.z-aircraft.position.z)-Math.hypot(b.position.x-aircraft.position.x,b.position.z-aircraft.position.z):0);
@@ -71,13 +73,13 @@ export function airportRadio(sim,player,actorId,operation,now,environment={}){
  if(operation==='vectors'){
   if(occupied)return 'Tower. Runway occupied. Hold in the circuit below '+ceiling+' metres and maintain separation. Request landing clearance when clear.';
   const point={x:runway.x,z:runway.z+runway.length/2-36},dx=point.x-aircraft.position.x,dz=point.z-aircraft.position.z,bearing=(Math.atan2(dx,-dz)*180/Math.PI+360)%360,error=((bearing-Number(heading(aircraft))+540)%360)-180,turn=Math.abs(error)<5?'Maintain':error>0?'Turn right':'Turn left',altitude=Math.max(8,Math.min(20,ceiling-5));
-  return 'Tower, '+callsign+'. '+turn+' heading '+String(Math.round(bearing)%360).padStart(3,'0')+'. Approach fix '+Math.round(Math.hypot(dx,dz))+' metres. Aim for '+altitude+' metres above ground. Request landing clearance before entering runway one eight.';
+  return 'Tower, '+callsign+'. '+turn+' heading '+String(Math.round(bearing)%360).padStart(3,'0')+'. Approach fix '+Math.round(Math.hypot(dx,dz))+' metres. Aim for '+altitude+' metres above ground. Request landing clearance before entering '+runwayName+'.';
  }
  if(operation==='service'){
   if(aircraft.flight?.airborne||(aircraft.flight?.speed||0)>.5)throw Object.assign(Error('Park the aircraft before requesting ground service.'),{statusCode:409});
   aircraft.health=400;player.fuel=100;player.ammo=120;return 'Ground crew. Aircraft inspected, repaired and refueled. Ready for taxi.';
  }
- if(occupied)return 'Tower. Hold position. Another pilot has runway clearance. Request again when the runway is clear.';
+ if(occupied)return runwayTraffic?'Tower. Hold position. The runway is occupied. Wait until the other aircraft is clear.':'Tower. Hold position. Another pilot has runway clearance. Request again when the runway is clear.';
  lease.runwayHolder=actorId;lease.expires=now+120000;aircraft.flight||={};aircraft.flight.clearance=operation;
- return operation==='takeoff'?'Tower. Cleared for takeoff, runway one eight. Taxi onto the runway, accelerate, then climb.':'Tower. Cleared to land, runway one eight. Line up with the runway, descend gently, then brake and taxi clear.';
+ return operation==='takeoff'?'Tower. Cleared for takeoff, '+runwayName+'. Taxi onto the runway, accelerate, then climb.':'Tower. Cleared to land, '+runwayName+'. Line up with the runway, descend gently, then brake and taxi clear.';
 }

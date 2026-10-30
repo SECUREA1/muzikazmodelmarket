@@ -1,5 +1,6 @@
 import {cancelExpandedQuest} from './server-expanded-quests.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
+import {cancelEmergencyDeparture} from './public/js/emergency-aircraft-departure.js';
 import {isWatercraft} from './public/js/harbor-water.js';
 import {isConstructionMachine} from './public/js/construction-state.js';
 import {stopBoat} from './server-harbor-operations.mjs';
@@ -16,6 +17,7 @@ export function releaseForMapTravel(sim,player,manifest,now){
  for(const key of ['seatedId','vehicleId']){
   const actor=sim.actors[player[key]];
   if(actor?.holderId===player.actorId){
+   cancelEmergencyDeparture(actor,null,{airport:sim.airport,holderId:player.actorId},{reason:'Map travel ended this departure.',now});
    actor.holderId=null;
    if(isWatercraft(actor))stopBoat(actor);
    if(actor.driving)Object.assign(actor.driving,{speed:0,throttle:0,throttleCommand:0,parked:true,brake:1});

@@ -297,6 +297,21 @@ speakers; sirens duck only while speech is actually playing, not while it loads.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.
+In either emergency cockpit, **Emergency departure** runs preflight checks,
+slow taxi, hold-short clearance, runway lineup, takeoff and climb from the
+aircraft's actual position. The guide shows each stage and explains traffic
+holds. It waits for runway traffic and releases clearance after departure or
+cancellation. **Manual control** and the flight stick remain available throughout;
+switching vehicles or leaving the map ends the previous departure safely.
+
+During events on every map, a separate animated command flight departs and
+holds clear of the blasts. Relief aircraft fly repeated, separated circuits
+throughout fallout, return during recovery, and leave as conditions clear.
+The guide and Cole's radio identify these stages. Routine tower directions
+wait for emergency radio calls to finish; genuine stall warnings remain immediate.
+Response flights follow the shared event clock, preserve player vehicles and
+movement, and respect reduced motion.
+
 Map previews resolve the saved destination model, and double-tapping or
 double-clicking walkable ground shows loading feedback and an exact arrival marker.
 

@@ -39,8 +39,10 @@ test('shared airport supports boarding, exclusive ATC clearance, taxi/takeoff, l
  await store.update(world.id,room=>{const plane=room.simulation.actors['airport-flight-2'];plane.position={x:40,y:.5,z:65};plane.rotation.y=0;room.simulation.players['account:other'].position={...plane.position};});
  for(let i=0;i<25;i++){now+=100;await send(alice,'input',{input:{forward:1,lift:1}});state=await send(bob,'input',{input:{forward:1,lift:1}});}
  assert.ok(state.actors['airport-flight-1'].flight.airborne);assert.ok(state.actors['airport-flight-2'].flight.airborne,'two pilots fly concurrently');assert.equal(Object.keys(state.players).length,2);
+ state=await send(alice,'airport-radio',{operation:'landing'});assert.match(state.result.message,/Hold position/,'landing waits while the second departure is still low over the runway');
+ for(let i=0;i<20;i++){now+=100;await send(alice,'input',{input:{forward:1,lift:1}});state=await send(bob,'input',{input:{forward:1,lift:1}});}
  state=await send(alice,'airport-radio',{operation:'landing'});assert.match(state.result.message,/Cleared to land/);
- for(let i=0;i<80;i++){now+=100;state=await send(alice,'input',{input:{forward:-1,lift:-1}});}
+ for(let i=0;i<160&&state.actors['airport-flight-1'].flight.airborne;i++){now+=100;state=await send(alice,'input',{input:{forward:-1,lift:-1}});}
  assert.equal(state.actors['airport-flight-1'].flight.airborne,false);
  state=await send(alice,'airport-radio',{operation:'service'});assert.match(state.result.message,/refueled/);state=await send(alice,'interact');assert.equal(state.players['account:pilot'].vehicleId,null);
 });

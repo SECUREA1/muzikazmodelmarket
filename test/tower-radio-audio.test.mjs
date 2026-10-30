@@ -4,9 +4,29 @@ import {createTowerRadioAudio} from '../public/js/tower-radio-audio.js';
 import {createAircraftCannonTrigger} from '../public/js/aircraft-cannon-trigger.js';
 import {speechTimeout} from '../public/js/character-voice-profile.js';
 import {GENERATED_VOICES} from '../public/js/neural-character-speech.js';
+import {createQuestConversationVoice} from '../public/js/quest-conversation-voice.js';
 const fixtureVoice={name:'Natural English Test Voice',voiceURI:'test:english',lang:'en-US',localService:true};
 function clock(){let time=0,id=0;const timers=new Map();return {now:()=>time,setTimer:(run,delay)=>{timers.set(++id,{run,at:time+delay});return id;},clearTimer:key=>timers.delete(key),advance(delta){const target=time+delta;for(let count=0;count<1000;count++){const next=[...timers].filter(([,timer])=>timer.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;time=next[1].at;timers.delete(next[0]);next[1].run();}time=target;}};}
-function radioFixture({resume=()=>{},audioFactory=()=>null,voices=[fixtureVoice]}={}){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={getVoices:()=>voices,speak:utterance=>spoken.push(utterance),cancel(){},resume};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory});return {time,spoken,captions,states,tones,radio};}
+function radioFixture({resume=()=>{},audioFactory=()=>null,voices=[fixtureVoice]}={}){const time=clock(),spoken=[],captions=[],states=[],tones=[];const speech={getVoices:()=>voices,speak:utterance=>spoken.push(utterance),cancel(){},resume};class Utterance{constructor(text){this.text=text;}}const radio=createTowerRadioAudio({...time,speech,Utterance,onCaption:text=>captions.push(text),onState:state=>states.push(state),tone:()=>tones.push(time.now()),audioFactory});return {time,spoken,captions,states,tones,radio,speech,Utterance};}
+
+test('departure stage captions remain immediate while only the latest routine call follows emergency dispatch',()=>{
+ const f=radioFixture({voices:GENERATED_VOICES}),cole=createQuestConversationVoice({...f.time,speech:f.speech,Utterance:f.Utterance});
+ f.radio.unlock({introduce:false});cole.unlock();cole.announce('Nuclear warning. Take cover.',{worldId:'airport',priority:'emergency',voiceGender:'male'});
+ const warning=f.spoken[0];f.radio.call('Taxi to the holding point.',{key:'taxi'});f.radio.call('Hold short. Another pilot is departing.',{key:'hold-short'});
+ assert.match(f.captions.at(-1),/Hold short/);assert.equal(f.spoken.length,1,'routine flight stages cannot interrupt the emergency radio');
+ f.time.advance(500);assert.equal(f.spoken.length,1);warning.onend();f.time.advance(250);
+ assert.equal(f.spoken.length,2);assert.match(f.spoken.at(-1).text,/Hold short/);assert.equal(f.spoken.filter(line=>/Taxi to/.test(line.text)).length,0,'superseded taxi instructions are never read later');
+ f.radio.dispose();cole.dispose();
+});
+
+test('obsolete deferred departure calls expire and an immediate stall warning can still claim the radio',()=>{
+ const f=radioFixture({voices:GENERATED_VOICES}),cole=createQuestConversationVoice({...f.time,speech:f.speech,Utterance:f.Utterance});
+ f.radio.unlock({introduce:false});cole.unlock();cole.announce('Fallout warning. Stay under cover.',{worldId:'airport',priority:'emergency'});
+ f.radio.call('Taxi stage that is now obsolete.',{key:'old-taxi'});f.time.advance(13000);assert.equal(f.spoken.length,1);
+ f.radio.call('Stall warning. Lower the nose and add power.',{key:'stall',priority:'warning'});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);
+ f.spoken[0].onend();f.spoken[1].onend();f.time.advance(1000);assert.equal(f.spoken.length,2,'a stalled or cancelled handoff never revives an expired checklist');
+ f.radio.dispose();cole.dispose();
+});
 test('tower audio waits for a gesture, then prioritizes audible stall calls and replaces stale queued speech',()=>{
  const f=radioFixture();f.radio.call('Tower. Request your clearance.',{key:'ready'});assert.equal(f.spoken.length,0);assert.equal(f.captions.length,1);f.radio.unlock();assert.equal(f.spoken[0].text,'Tower. Request your clearance.');
  f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);f.time.advance(1000);f.radio.call('Stall warning. Lower the nose.',{key:'stall',priority:'warning',repeatAfter:12000});assert.equal(f.spoken.length,2);assert.equal(f.tones.length,1);

@@ -1,8 +1,59 @@
 import * as THREE from '../vendor/three/three.module.min.js';
+import {mergeGeometries} from '../vendor/three/addons/utils/BufferGeometryUtils.js';
+import {createCivilAircraft} from './civil-aircraft-models.js';
+import {createDoomsdayResponsePlan,sampleDoomsdayResponseFlight} from './doomsday-response-flight.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const skyVertex='varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}';
 const skyFragment='varying vec3 direction;uniform vec3 horizon;uniform vec3 zenith;uniform float opacity;void main(){float height=clamp(normalize(direction).y,0.,1.);gl_FragColor=vec4(mix(horizon,zenith,smoothstep(0.,.8,height)),opacity);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}';
+
+// The native airframes retain their recognizable body, livery and moving rig.
+// Cockpit lettering and tiny fittings are not useful at response-flight range.
+// Bake the remaining stationary surfaces by paint so two pooled aircraft add a
+// bounded number of draw calls rather than hundreds of individual details.
+function responseAircraft(modelId,materials,geometries){
+ const source=createCivilAircraft(modelId),root=new THREE.Group(),sourceGeometries=new Set(),sourceMaterials=new Set(),ownedTextures=new Set(),paint=new Map(),originalRig=source.userData.aircraftRig;
+ root.name='DOOMSDAY_RESPONSE_'+(modelId.includes('command')?'COMMAND':'EVACUATION');
+ source.updateMatrixWorld(true);
+ source.traverse(node=>{if(node.geometry)sourceGeometries.add(node.geometry);for(const material of Array.isArray(node.material)?node.material:[node.material])if(material){sourceMaterials.add(material);if(node.name==='AIRCRAFT_LABEL'&&material.map)ownedTextures.add(material.map);}});
+ const dynamic=new Set(),parts=[];
+ const take=(kind,node)=>{if(node){parts.push({kind,node});node.traverse(child=>dynamic.add(child));}};
+ take('propeller',originalRig.propeller);
+ for(const kind of ['ailerons','flaps','gear'])for(const node of originalRig[kind]||[])take(kind,node);
+ take('elevator',originalRig.elevator);take('rudder',originalRig.rudder);
+ source.traverse(node=>{if(/^(NAVIGATION_LIGHT|TAIL_BEACON)$/.test(node.name))take('lights',node);});
+ const interior=/AIRCRAFT_LABEL|INSTRUMENT|GAUGE|PFD_|GLASS_DISPLAY|LIVE_ATTITUDE|SPEED_ALTITUDE|COCKPIT_SWITCH|SEAT_|SEAT$|CONTROL_GRIP|LOWER_CABIN_DOOR_HANDLE/;
+ const visible=node=>{for(let current=node;current;current=current.parent)if(!current.visible)return false;return true;};
+ function paintFor(original){
+  const opacity=Number.isFinite(original.opacity)?original.opacity:1,key=[original.color?.getHex()??0xc7d0ce,original.emissive?.getHex()||0,opacity,original.side].join(':');
+  if(!paint.has(key)){const material=new THREE.MeshBasicMaterial({color:original.color?.getHex()??0xc7d0ce,transparent:true,opacity,side:original.side??THREE.FrontSide,depthWrite:opacity>.9,fog:false,toneMapped:false});material.userData.responseOpacity=opacity;paint.set(key,material);materials.push(material);}
+  return paint.get(key);
+ }
+ function bake(scope,exclude){
+  const group=new THREE.Group(),batches=new Map(),inverse=new THREE.Matrix4().copy(scope.matrixWorld).invert();
+  scope.matrixWorld.decompose(group.position,group.quaternion,group.scale);
+  scope.traverse(node=>{
+   if(!node.isMesh||node.isInstancedMesh||exclude?.has(node)||!visible(node)||interior.test(node.name)||!node.geometry?.attributes.position)return;
+   const original=Array.isArray(node.material)?node.material[0]:node.material;if(!original||original.opacity===0)return;
+   const material=paintFor(original),geometry=node.geometry.index?node.geometry.toNonIndexed():node.geometry.clone();
+   for(const key of Object.keys(geometry.attributes))if(key!=='position'&&key!=='normal')geometry.deleteAttribute(key);
+   if(!geometry.attributes.normal)geometry.computeVertexNormals();
+   geometry.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse,node.matrixWorld));
+   if(!batches.has(material))batches.set(material,[]);batches.get(material).push(geometry);
+  });
+  for(const [material,parts]of batches){const geometry=mergeGeometries(parts,false);for(const part of parts)part.dispose();if(!geometry)continue;geometry.computeBoundingSphere();geometries.push(geometry);const mesh=new THREE.Mesh(geometry,material);mesh.name='RESPONSE_AIRFRAME_SURFACE';mesh.userData={collisionDisabled:true,collider:false};group.add(mesh);}
+  return group;
+ }
+ const body=bake(source,dynamic);body.name='RESPONSE_AIRFRAME';root.add(body);
+ const rig={ailerons:[],flaps:[],gear:[],lights:[],fixedGear:originalRig.fixedGear===true};
+ for(const {kind,node}of parts){const part=bake(node);part.name=node.name||kind;part.userData.side=node.userData.side;part.userData.responseBaseRotation=part.rotation.clone();root.add(part);if(Array.isArray(rig[kind]))rig[kind].push(part);else rig[kind]=part;}
+ root.userData={modelId,dimensions:[...source.userData.dimensions],aircraftModel:true,doomsdayAircraft:true,responseAircraft:true,collisionDisabled:true,collider:false,aircraftRig:rig,responseMaterials:[...paint.values()]};
+ root.traverse(node=>{node.userData.collisionDisabled=true;node.userData.collider=false;node.castShadow=node.receiveShadow=false;});
+ // Native surface textures are shared by other world models. Only locally
+ // owned labels may be released; no shared paint texture is ever disposed.
+ for(const geometry of sourceGeometries)geometry.dispose();for(const material of sourceMaterials)material.dispose();for(const texture of ownedTextures)texture.dispose();source.clear();source.userData={};
+ return root;
+}
 
 // The event has its own sky layer. Weather and authored map materials remain
 // intact underneath it and are immediately visible again when the event ends.
@@ -54,6 +105,28 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
  const dustGeometry=new THREE.BufferGeometry();dustGeometry.setAttribute('position',new THREE.BufferAttribute(particles,3));geometries.push(dustGeometry);
  const dustMaterial=new THREE.PointsMaterial({color:0xc8cf9b,size:.17,transparent:true,opacity:.7,depthWrite:false,fog:false});materials.push(dustMaterial);
  const dust=new THREE.Points(dustGeometry,dustMaterial);dust.name='DOOMSDAY_FALLING_ASH';skyline.add(dust);
+ const response=new THREE.Group();response.name='DOOMSDAY_RESPONSE_AIRCRAFT';root.add(response);
+ let responsePlan=null,responseModels=null;
+ function updateResponse(state,environment,time,reducedMotion){
+  if(!responseModels)responseModels=['doomsday-command-aircraft','doomsday-evacuation-aircraft'].map(id=>{const model=responseAircraft(id,materials,geometries);response.add(model);return model;});
+  if(!responsePlan){responsePlan=createDoomsdayResponsePlan(environment,state);response.userData.anchor={...responsePlan.anchor};}
+  const sample=sampleDoomsdayResponseFlight(responsePlan,state,time,{reducedMotion});
+  response.visible=sample.active;response.userData.stage=state.phase;response.userData.opacity=sample.opacity;
+  sample.aircraft.forEach((pose,index)=>{
+   const model=responseModels[index],rig=model.userData.aircraftRig,elapsed=sample.elapsed||0;
+   model.visible=pose.visible;model.position.set(pose.position.x,pose.position.y,pose.position.z);model.rotation.set(pose.rotation.x,pose.rotation.y,pose.rotation.z,'YXZ');
+   model.userData.responseStage=pose.stage;model.userData.responseLap=pose.lap;model.userData.responseProgress=pose.progress;
+   for(const material of model.userData.responseMaterials)material.opacity=material.userData.responseOpacity*sample.opacity;
+   const motion=reducedMotion?0:1;
+   if(rig.propeller)rig.propeller.rotation.z=rig.propeller.userData.responseBaseRotation.z+motion*(elapsed*(pose.propellerSpeed||32)%(Math.PI*2));
+   for(const surface of rig.ailerons)surface.rotation.x=surface.userData.responseBaseRotation.x+motion*(surface.userData.side||1)*pose.rotation.z*.55;
+   for(const flap of rig.flaps)flap.rotation.x=flap.userData.responseBaseRotation.x+motion*(pose.stage==='departure'?.15:.02);
+   if(rig.elevator)rig.elevator.rotation.x=rig.elevator.userData.responseBaseRotation.x-motion*pose.rotation.x*.55;
+   if(rig.rudder)rig.rudder.rotation.y=rig.rudder.userData.responseBaseRotation.y-motion*pose.rotation.z*.25;
+   for(const leg of rig.gear)leg.visible=rig.fixedGear||pose.gear!==false;
+   for(const lamp of rig.lights)lamp.visible=reducedMotion||Math.sin(elapsed*Math.PI+index)>.05;
+  });
+ }
  let worldId=null,eventId=null,signature='',phaseKey='',phaseAt=0,disposed=false;
  function clearSites(){for(const child of [...sites.children]){child.traverse(object=>{if(!object.isSprite)object.geometry?.dispose();if(object.material?.map){object.material.map.dispose();object.material.dispose();}});sites.remove(child);}}
  function label(text){
@@ -62,9 +135,10 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
  }
  function update(state,environment,position,time=0,{reducedMotion=false,showObjectives=true}={}){
   if(disposed)return;
-  if(worldId!==environment?.id){worldId=environment?.id;eventId=null;signature=phaseKey='';clearSites();}
-  const active=!!environment&&state&&!['idle','all-clear'].includes(state.phase);root.visible=active;if(!active){if(signature){signature='';clearSites();}root.userData.phase=state?.phase||'idle';root.userData.effectOpacity=0;return;}
-  if(eventId!==state.id){eventId=state.id;const nearbySite=[...(state.objectives||[])].sort((a,b)=>Math.hypot(a.position.x-position.x,a.position.z-position.z)-Math.hypot(b.position.x-position.x,b.position.z-position.z))[0];arrivalBeacons.position.set(position.x,nearbySite?.position.y??position.y,position.z);}
+  if(worldId!==environment?.id){worldId=environment?.id;eventId=null;responsePlan=null;signature=phaseKey='';clearSites();}
+  const active=!!environment&&state&&!['idle','all-clear'].includes(state.phase);root.visible=active;if(!active){response.visible=false;if(signature){signature='';clearSites();}root.userData.phase=state?.phase||'idle';root.userData.effectOpacity=0;return;}
+  if(eventId!==state.id){eventId=state.id;responsePlan=null;const nearbySite=[...(state.objectives||[])].sort((a,b)=>Math.hypot(a.position.x-position.x,a.position.z-position.z)-Math.hypot(b.position.x-position.x,b.position.z-position.z))[0];arrivalBeacons.position.set(position.x,nearbySite?.position.y??position.y,position.z);}
+  updateResponse(state,environment,time,reducedMotion);
   const nextPhaseKey=state.id+':'+state.phase;if(nextPhaseKey!==phaseKey){phaseKey=nextPhaseKey;phaseAt=time;}
   const presentationTime=state.presentationTime??state.currentServerTime;
   const age=Number.isFinite(presentationTime)&&Number.isFinite(state.phaseStartedAt)?Math.max(0,(presentationTime-state.phaseStartedAt)/1000):Number.isFinite(state.phaseElapsedMs)?Math.max(0,state.phaseElapsedMs/1000):Math.max(0,time-phaseAt);
@@ -100,5 +174,5 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
    const name=label(objective.name);name.position.y=4;marker.add(name);sites.add(marker);
   }}
  }
- return {root,update,reset(){root.visible=false;worldId=eventId=null;signature=phaseKey='';clearSites();},dispose(){if(disposed)return;disposed=true;clearSites();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();scene.remove(root);}};
+ return {root,update,reset(){root.visible=response.visible=false;worldId=eventId=null;responsePlan=null;signature=phaseKey='';clearSites();},dispose(){if(disposed)return;disposed=true;clearSites();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();scene.remove(root);}};
 }

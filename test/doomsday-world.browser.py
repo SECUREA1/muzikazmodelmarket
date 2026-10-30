@@ -56,7 +56,7 @@ async def main():
                         close = page.get_by_role('button', name='Close local quests', exact=True)
                         if await close.is_visible():
                             try:
-                                await close.click(timeout=5000)
+                                await close.click(timeout=15000)
                             except Exception:
                                 await page.screenshot(path='/workspace/mobile-emergency-airport-controls-overlap.png')
                                 print('Quest and radio bounds:', await page.evaluate("JSON.stringify([...document.querySelectorAll('.map-quest-card,.map-quest-card header button,.doomsday-guide-chip,.house-stage')].map(n=>({selector:n.className||n.getAttribute('aria-label'),bounds:n.getBoundingClientRect().toJSON()})))"), flush=True)
@@ -128,10 +128,24 @@ async def main():
                         boarded = await command(airport, 'map-access', entityId=aircraft)
                         assert boarded['players'][boarded['selfId']]['vehicleId'] == aircraft
                         await page.wait_for_function('(id)=>MuzikazHouseExplorer.snapshot().vehicleId===id', arg=aircraft, timeout=30000)
+                        departure = page.get_by_role('region', name='Emergency departure guide')
+                        await departure.wait_for(state='visible')
+                        await page.get_by_role('button', name='Start emergency departure', exact=True).tap()
+                        await page.wait_for_function("/Preflight|Taxi|Hold short/.test(document.querySelector('[data-departure-stage]').textContent)")
+                        await page.wait_for_timeout(3000)
+                        active = await command(airport, 'airport-radio', operation='status')
+                        flight = active['actors'][aircraft]['flight']
+                        assert flight['assist'] == 'emergency-departure' and flight['emergencyDeparture']['ownerId'] == active['selfId'], flight
+                        assert active['players'][active['selfId']]['health'] == boarded['players'][boarded['selfId']]['health'], (boarded['players'][boarded['selfId']]['health'], active['players'][active['selfId']]['health'])
+                        assert active['actors'][aircraft]['health'] == boarded['actors'][aircraft]['health'], flight
+                        assert math.hypot(active['actors'][aircraft]['position']['x']-boarded['actors'][aircraft]['position']['x'], active['actors'][aircraft]['position']['z']-boarded['actors'][aircraft]['position']['z']) < 15, 'Departure relocated the aircraft.'
+                        await page.get_by_role('button', name='Take manual flight control', exact=True).tap()
+                        await page.wait_for_function("document.querySelector('[data-departure-stage]').textContent==='Manual control'")
+                        assert (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['controlsReady']
                         current = await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday')
                         if initial['phase'] == 'idle' and current['cycle'] == 0:
                             assert current['nextEventAt'] == deadline, 'Boarding resampled the arrival schedule.'
-                    print('airport: quiet/hidden-guide movement and both emergency aircraft passed', flush=True)
+                    print('airport: both real emergency cockpits run physical departure, clear pending inputs and return manual control without damage or relocation', flush=True)
                     state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
                     if state['doomsday']['phase'] == 'idle':
                         state = await phase('warning')
@@ -151,6 +165,7 @@ async def main():
                     await page.wait_for_function("automaticEmergencyPhases.includes('detonation')", timeout=45000)
                     assert await page.locator('.doomsday-guide').is_hidden()
                     state = await phase('fallout')
+                    assert 'Relief flights circling' in await page.locator('[data-response-status]').text_content()
                     assert await page.locator('.doomsday-guide').is_hidden()
                     history = await page.evaluate('automaticEmergencyPhases')
                     assert history.index('warning') < history.index('detonation') < history.index('fallout'), history

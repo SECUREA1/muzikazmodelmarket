@@ -1,16 +1,16 @@
 import {gameSpeech,GameSpeechUtterance} from './neural-character-speech.js';
-import {claimGameSpeech,releaseGameSpeech,cancelGameSpeech} from './game-speech-owner.js';
+import {claimGameSpeech,releaseGameSpeech,cancelGameSpeech,gameSpeechPriority} from './game-speech-owner.js';
 import {chooseCharacterVoice,characterSpeechStyle,prepareSpeechText,speechTimeout} from './character-voice-profile.js';
 // Captions always work. Audio is enabled by default but starts only from a gesture.
 // Keep one current call and one replacement, never a growing speech backlog.
 export function createTowerRadioAudio({speech=gameSpeech(),Utterance=GameSpeechUtterance,now=()=>performance.now(),setTimer=setTimeout,clearTimer=clearTimeout,onCaption=()=>{},onState=()=>{},tone=null,audioFactory=()=>{const Context=globalThis.AudioContext||globalThis.webkitAudioContext;return Context?new Context():null;}}={}){
- let unlocked=false,activated=false,muted=false,disposed=false,current=null,pending=null,blockedCall=null,latest=null,timer=null,context=null,speechFailed=false,token=0,introduced=false,preferences={},voiceURI=null;const seen=new Map(),tones=new Set(),speechOwner=Symbol('tower-radio'),character={id:'muzikaz-tower',name:'MUZIKAZ Tower',role:'dispatcher',personality:'Calm and precise'};
+ let unlocked=false,activated=false,muted=false,disposed=false,current=null,pending=null,blockedCall=null,latest=null,timer=null,deferredTimer=null,context=null,speechFailed=false,token=0,introduced=false,preferences={},voiceURI=null;const seen=new Map(),tones=new Set(),speechOwner=Symbol('tower-radio'),character={id:'muzikaz-tower',name:'MUZIKAZ Tower',role:'dispatcher',personality:'Calm and precise'};
  const speechAvailable=()=>!!(speech?.speak&&Utterance)&&!speechFailed;
  const settingsMuted=()=>!!(preferences.masterMuted||preferences.announcementsMuted);
  const isMuted=call=>muted||settingsMuted()||call?.category==='introduction'&&preferences.introductionMuted;
  const introduction=()=>({text:'MUZIKAZ Tower. Radio connected. Request clearance when ready.',key:'radio-check',priority:'normal',category:'introduction',at:now()});
  const notify=()=>onState({unlocked,muted:isMuted(),localMuted:muted,settingsMuted:settingsMuted(),speaking:!!current,speechAvailable:speechAvailable(),supported:!!(speech?.speak&&Utterance)||!!tone||!!(globalThis.AudioContext||globalThis.webkitAudioContext),status:settingsMuted()?'Tower muted in Settings':muted?'Tower muted':!unlocked?'Tower audio starts with your next control':'Tower audio on'});
- function cancel(){token++;clearTimer(timer);timer=null;pending=null;blockedCall=null;current=null;for(const node of tones){try{node.disconnect();}catch{}}tones.clear();cancelGameSpeech(speech,speechOwner);notify();}
+ function cancel(){token++;clearTimer(timer);clearTimer(deferredTimer);timer=deferredTimer=null;pending=null;blockedCall=null;current=null;for(const node of tones){try{node.disconnect();}catch{}}tones.clear();cancelGameSpeech(speech,speechOwner);notify();}
  function resumeAudio(){
   speechFailed=false;
   // Each control gesture can release a mobile/background suspension, even
@@ -21,6 +21,14 @@ export function createTowerRadioAudio({speech=gameSpeech(),Utterance=GameSpeechU
  function warningTone(){if(isMuted()||!unlocked||disposed)return;if(tone){try{tone();}catch{}return;}if(!context)return;try{const time=context.currentTime,gain=context.createGain();gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.11,time+.015);gain.gain.exponentialRampToValueAtTime(.0001,time+.42);gain.connect(context.destination);tones.add(gain);let remaining=2;for(const [offset,frequency]of [[0,880],[.17,660]]){const oscillator=context.createOscillator();oscillator.type='sine';oscillator.frequency.value=frequency;oscillator.connect(gain);oscillator.onended=()=>{oscillator.disconnect();if(!--remaining){gain.disconnect();tones.delete(gain);}};oscillator.start(time+offset);oscillator.stop(time+offset+.17);}}catch{}}
  function speak(call){
   if(!call||disposed||isMuted(call)||!unlocked)return;const age=now()-call.at;if(age>12000)return;
+  // Routine taxi instructions wait for urgent emergency dispatch. Keep only
+  // the current stage, so a clear radio channel never replays an old checklist.
+  if(call.priority!=='warning'&&gameSpeechPriority(speech)>1){
+   pending=call;
+   if(deferredTimer===null)deferredTimer=setTimer(()=>{deferredTimer=null;const next=pending;pending=null;speak(next);},250);
+   notify();return;
+  }
+  if(deferredTimer!==null){clearTimer(deferredTimer);deferredTimer=null;pending=null;}
   if(call.priority==='warning'&&!call.warningPlayed){call.warningPlayed=true;warningTone();}if(!speechAvailable()){notify();return;}
   current=call;const generation=++token;let attempt=0;
   const spokenText=prepareSpeechText(call.text),style=characterSpeechStyle(character,{text:call.text});
@@ -58,7 +66,7 @@ export function createTowerRadioAudio({speech=gameSpeech(),Utterance=GameSpeechU
     utterance.onboundary=event=>{if(active()&&voice?.generated&&Number.isFinite(event.audioDuration)){clearTimer(timer);timer=setTimer(watchdog,Math.max(8000,event.audioDuration*1000+(event.remainingSegments>0?65000:5000)));}};
     utterance.onend=()=>{if(active())finish();};utterance.onerror=fail;
     timer=setTimer(watchdog,65000);
-    claimGameSpeech(speech,speechOwner,cancel);speech.speak(utterance);notify();
+    claimGameSpeech(speech,speechOwner,cancel,{priority:call.priority==='warning'?3:0});speech.speak(utterance);notify();
    }catch{fail({error:'synthesis-failed'});}
   }
   attemptSpeech(selected);

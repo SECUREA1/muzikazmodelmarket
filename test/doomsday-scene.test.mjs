@@ -96,3 +96,57 @@ test('unfollowing removes objective markers while beacons, sky and event animati
  effects.update({...active,phaseElapsedMs:2000},environment,position,3,{showObjectives:true});assert.equal(sites.children.length,1);
  effects.dispose();
 });
+
+test('native command and evacuation airframes form a bounded noncolliding response fleet',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ effects.update(state('warning',3000),environment,position,3,{showObjectives:false});
+ const fleet=effects.root.getObjectByName('DOOMSDAY_RESPONSE_AIRCRAFT'),command=fleet.getObjectByName('DOOMSDAY_RESPONSE_COMMAND'),evacuation=fleet.getObjectByName('DOOMSDAY_RESPONSE_EVACUATION');
+ assert.equal(fleet.children.length,2);assert.equal(command.userData.modelId,'doomsday-command-aircraft');assert.equal(evacuation.userData.modelId,'doomsday-evacuation-aircraft');
+ assert.ok(command.userData.dimensions[1]>evacuation.userData.dimensions[1],'command aircraft retains its raised continuity dome');
+ assert.equal(command.visible,true);assert.equal(evacuation.visible,false,'relief aircraft wait until fallout begins');
+ for(const model of [command,evacuation]){
+  let meshes=0;model.traverse(node=>{assert.equal(node.userData.collisionDisabled,true);assert.equal(node.userData.collider,false);if(node.isMesh){meshes++;assert.equal(node.material.map,null);}});
+  assert.ok(meshes<50,'distant airframes are batched for mobile rendering');assert.ok(model.userData.aircraftRig.propeller);assert.equal(model.userData.aircraftRig.lights.length,3);
+ }
+ effects.update(state('fallout',1000),environment,position,26,{showObjectives:false});assert.equal(command.visible,true);assert.equal(evacuation.visible,true);
+ assert.ok(evacuation.position.y-command.position.y>=10,'relief joins above the command flight');
+ assert.equal(effects.root.getObjectByName('DOOMSDAY_RESPONSE_SITES').children.length,0,'ambient response flights do not turn on challenge markers');
+ effects.dispose();
+});
+
+test('response flight positions use one authored map anchor even when viewers move or join late',()=>{
+ const map={id:'response-airport',playableSize:2000,spawn:{x:-58,y:0,z:74},airport:{enabled:true,runways:[{id:'runway',x:40,z:0,width:16,length:202}]}},first=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true}),late=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ const shared={id:'room-event',phase:'fallout',startedAt:100000,phaseStartedAt:125000,falloutAt:125000,presentationTime:190000,objectives:[]};
+ first.update(shared,map,{x:0,y:0,z:0},90);late.update(shared,map,{x:550,y:70,z:-350},0);
+ const fleet=first.root.getObjectByName('DOOMSDAY_RESPONSE_AIRCRAFT'),other=late.root.getObjectByName('DOOMSDAY_RESPONSE_AIRCRAFT');
+ assert.deepEqual(fleet.userData.anchor,{x:40,y:0,z:0});
+ for(let index=0;index<2;index++){assert.deepEqual(fleet.children[index].position.toArray(),other.children[index].position.toArray());assert.deepEqual(fleet.children[index].rotation.toArray(),other.children[index].rotation.toArray());}
+ const before=fleet.children.map(child=>child.position.toArray());first.update(shared,map,{x:950,y:130,z:-850},92);
+ assert.deepEqual(fleet.children.map(child=>child.position.toArray()),before,'response aircraft do not follow the player camera');
+ first.update({...shared,presentationTime:shared.presentationTime+3600000},map,position,3600);
+ assert.ok(fleet.children.every(child=>child.userData.responseLap>40),'long quest-held phases continue bounded patrol laps');
+ first.dispose();late.dispose();
+});
+
+test('response propellers, control surfaces and navigation lamps animate, with stable reduced motion',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ effects.update(state('warning',1000),environment,position,1);const command=effects.root.getObjectByName('DOOMSDAY_RESPONSE_COMMAND'),rig=command.userData.aircraftRig,propeller=rig.propeller.rotation.z,aileron=rig.ailerons[0].rotation.x;
+ effects.update(state('warning',5000),environment,position,5);assert.notEqual(rig.propeller.rotation.z,propeller);assert.notEqual(rig.ailerons[0].rotation.x,aileron);assert.ok(rig.gear.every(leg=>leg.visible),'the actual fixed landing gear stays attached in flight');
+ effects.update(state('warning',6000),environment,position,6,{reducedMotion:true});const stable={position:command.position.toArray(),rotation:command.rotation.toArray(),propeller:rig.propeller.rotation.z,ailerons:rig.ailerons.map(surface=>surface.rotation.x),lights:rig.lights.map(lamp=>lamp.visible)};
+ effects.update(state('warning',16000),environment,position,16,{reducedMotion:true});
+ assert.deepEqual({position:command.position.toArray(),rotation:command.rotation.toArray(),propeller:rig.propeller.rotation.z,ailerons:rig.ailerons.map(surface=>surface.rotation.x),lights:rig.lights.map(lamp=>lamp.visible)},stable);
+ effects.dispose();
+});
+
+test('response aircraft fade and reuse their pooled geometry across events, with full disposal',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true}),clearing=age=>({id:'flight-event',phase:'clearing',phaseStartedAt:200000,phaseEndsAt:208000,startedAt:100000,presentationTime:200000+age,objectives:[]});
+ effects.update(clearing(0),environment,position,100);const fleet=effects.root.getObjectByName('DOOMSDAY_RESPONSE_AIRCRAFT'),models=[...fleet.children],meshes=[];fleet.traverse(node=>{if(node.isMesh)meshes.push(node);});
+ const geometries=new Set(meshes.map(mesh=>mesh.geometry)),materials=new Set(meshes.map(mesh=>mesh.material)),releasedGeometry=new Set(),releasedMaterial=new Set();
+ for(const geometry of geometries)geometry.addEventListener('dispose',()=>releasedGeometry.add(geometry));for(const material of materials)material.addEventListener('dispose',()=>releasedMaterial.add(material));
+ effects.update(clearing(4000),environment,position,104);assert.equal(fleet.userData.opacity,.5);assert.ok([...materials].every(material=>material.opacity===material.userData.responseOpacity*.5));
+ effects.update(clearing(8000),environment,position,108);assert.equal(fleet.visible,false);assert.ok([...materials].every(material=>material.opacity===0));
+ effects.update(state('all-clear'),environment,position,109);assert.equal(effects.root.visible,false);
+ for(let index=0;index<12;index++){effects.update({...state('warning'),id:'repeat-flight-'+index},environment,position,index);effects.update(state('all-clear'),environment,position,index+1);}
+ assert.deepEqual(fleet.children,models);const after=new Set();fleet.traverse(node=>{if(node.geometry)after.add(node.geometry);});assert.deepEqual(after,geometries);
+ assert.equal(releasedGeometry.size,0,'quiet intervals do not reallocate the fleet');effects.dispose();assert.equal(releasedGeometry.size,geometries.size);assert.equal(releasedMaterial.size,materials.size);
+});

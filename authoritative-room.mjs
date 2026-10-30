@@ -71,7 +71,7 @@ import {aircraftRunway,runwayClearance} from './public/js/airport-navigation.js'
 import {yachtGameCommand,stepYachtGames} from './server-yacht-games.mjs';
 import {resolveVehicleAction} from './public/js/vehicle-actions.js';
 import {startBoatAssist,boatAssistedInput,boatMovementBlocked} from './server-boat-assist.mjs';
-import {startAircraftAssist,aircraftAssistedInput,aircraftExitPosition} from './server-aircraft-access.mjs';
+import {startAircraftAssist,aircraftAssistedInput,aircraftExitPosition,cancelEmergencyDeparture} from './server-aircraft-access.mjs';
 import {stepBoatSimulation} from './public/js/boat-simulation.js';
 import {harborRadio,stopBoat,boatExitPosition} from './server-harbor-operations.mjs';
 import {aircraftRayDistance,aircraftGunPose,AIRCRAFT_HEALTH,AIRCRAFT_GUN_RANGE} from './public/js/aircraft-combat.js';
@@ -240,7 +240,15 @@ export class AuthoritativeRooms {
   const pending=player.pendingJump;if(!pending)return false;delete player.pendingJump;
   return this.scheduledInputs&&pending.epoch===player.inputEpoch&&Number.isSafeInteger(pending.sequence)&&now>=pending.at&&now-pending.at<=250&&player.grounded&&this.scheduledWalker(sim,environment,player);
  }
- advanceDoomsday(room,environment,now=this.now()){return stepDoomsday(room.simulation,environment,now,{random:this.doomsdayRandom,resolvePoint:point=>this.collision.safeSpawn(environment,point,{actors:room.simulation.actors,objects:room.objects,earthworks:room.simulation.construction?.earthworks})});}
+ advanceEmergencyDepartures(room,environment,now=this.now()){
+  const sim=room.simulation;
+  for(const aircraft of Object.values(sim.actors||{})){
+   const departure=aircraft.flight?.emergencyDeparture;if(aircraft.flight?.assist!=='emergency-departure'||!departure?.ownerId)continue;
+   const owner=sim.players?.[departure.ownerId],reason=!owner||owner.replacedByRoom?'Pilot left this map.':owner.health<=0?'Pilot is unavailable.':owner.vehicleId!==aircraft.id||aircraft.holderId!==departure.ownerId?'Pilot left the cockpit.':now-owner.lastSeen>15000?'Pilot connection expired.':null;
+   if(reason)cancelEmergencyDeparture(aircraft,environment,{actors:sim.actors,airport:sim.airport,holderId:departure.ownerId,collision:this.collision,objects:room.objects},{reason,status:'cancelled',now});
+  }
+ }
+ advanceDoomsday(room,environment,now=this.now()){this.advanceEmergencyDepartures(room,environment,now);return stepDoomsday(room.simulation,environment,now,{random:this.doomsdayRandom,resolvePoint:point=>this.collision.safeSpawn(environment,point,{actors:room.simulation.actors,objects:room.objects,earthworks:room.simulation.construction?.earthworks})});}
  initialize(room,environment){
   const {manifestKey,manifest}=this.prepareManifest(environment);
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
@@ -350,8 +358,9 @@ export class AuthoritativeRooms {
    const aircraft=sim.actors[player.vehicleId];
    if(isAircraft(aircraft)&&aircraft.active!==false){
     const groundPoint=this.collision.groundAt(environment,aircraft.position,{actors:sim.actors,objects:room.objects,earthworks:sim.construction?.earthworks}),ground=(groundPoint?.y||0)+.4;
+    const assistedInput=aircraftAssistedInput(aircraft,input,environment,now,{actors:sim.actors,airport:sim.airport,holderId:player.actorId,collision:this.collision,objects:room.objects,fuel:player.fuel??100});
     const runway=aircraftRunway(environment,aircraft),lease=runwayClearance(sim.airport,runway);const onRunway=!runway||(Math.abs(aircraft.position.x-runway.x)<runway.width/2-1&&Math.abs(aircraft.position.z-runway.z)<runway.length/2);const cleared=!sim.airport||(onRunway&&lease?.runwayHolder===player.actorId&&lease.expires>now);
-    const assistedInput=aircraftAssistedInput(aircraft,input,environment,now);const pose=stepAircraftFlight(aircraft,(player.fuel??100)>0?assistedInput:{...assistedInput,throttle:0},dt,{ground,ceiling:environment.airport?.ceiling||80,half:flightHalf,cleared,blocked:(from,to,yaw)=>{const delta=[to.x-from.x,to.y-from.y,to.z-from.z],span=Math.hypot(...delta);if(span<.001)return false;return [-4.8,0,4.8].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2.8,y:from.y+.9,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2.8},delta.map(n=>n/span),span+.1,sim.actors));}});
+    const pose=stepAircraftFlight(aircraft,(player.fuel??100)>0?assistedInput:{...assistedInput,throttle:0},dt,{ground,ceiling:environment.airport?.ceiling||80,half:flightHalf,cleared,blocked:(from,to,yaw)=>{const delta=[to.x-from.x,to.y-from.y,to.z-from.z],span=Math.hypot(...delta);if(span<.001)return false;return [-4.8,0,4.8].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2.8,y:from.y+.9,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2.8},delta.map(n=>n/span),span+.1,sim.actors));}});
     Object.assign(aircraft,pose);player.fuel=Math.max(0,(player.fuel??100)-dt*pose.flight.throttle*.035);aircraft.flight.fuel=player.fuel;if(pose.flight.impactDamage>0)aircraft.health=Math.max(0,aircraft.health-pose.flight.impactDamage);if(aircraft.health<=0){aircraft.active=false;aircraft.destroyedAt=now;aircraft.holderId=null;player.vehicleId=null;player.health=0;player.input={};combatStats(player).deaths++;player.position=this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:0});player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;continue;}player.position={...pose.position};player.yaw=pose.rotation.y;player.floor=pose.position.y;player.velocityY=0;player.grounded=!pose.flight.airborne;player.locationName=pose.flight.airborne?'Airport airspace':'Airport apron';
     if(lease?.runwayHolder===player.actorId&&((pose.flight.clearance==='takeoff'&&pose.flight.altitude>5&&pose.flight.navigationDestinationId!==runway?.id)||(pose.flight.clearance==='landing'&&!pose.flight.airborne&&!onRunway&&pose.flight.speed<.5))){lease.runwayHolder=null;lease.expires=0;}
     continue;
@@ -643,7 +652,7 @@ export class AuthoritativeRooms {
     result.vehicleAction={mode,action:next.action,label:next.label||next.action};
     result.message=isAircraft(vehicle)?startAircraftAssist(sim,player,environment,next.action,now,this.collision,room.objects):startBoatAssist(sim,player,environment,next.action,now,{destinationId:command.destinationId,collision:this.collision,objects:room.objects});
    }
-   else if(command.action==='aircraft-assist'){result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects,command.destinationId);}
+   else if(command.action==='aircraft-assist'){if(command.vehicleId!==undefined&&command.vehicleId!==player.vehicleId)fail('The selected aircraft changed. Use the controls for your current cockpit.',409);result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects,command.destinationId);}
    else if(command.action==='npc-social'){try{result.message=residentCommand(sim,player,environment,command,now,{collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});result.residentId=command.entityId||player.npcConversation?.entityId;}catch(error){fail(error.message,409);}}
    else if(command.action==='vehicle-mission'){try{result.message=vehicleMissionCommand(sim,player,environment,command.operation,now,{questId:command.questId,teamId:command.teamId,role:command.role,choice:command.choice,text:command.text,entityId:command.entityId,collision:this.collision,objects:room.objects,constructionContext:this.constructionContext(sim,environment,room.objects)});}catch(error){fail(error.message,409);}}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now,environment);}

@@ -51,7 +51,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   const selected=chooseCharacterVoice(available,character,selection)||generatedFallback();
   if(!selected){call.onError?.('That voice is unavailable. Choose a generated male or female voice in Audio settings.');play();return;}
   if(selected){cast.set(character.id,selected.voiceURI||selected.name);if(cast.size>128)cast.delete(cast.keys().next().value);}
-  claimGameSpeech(speech,speechOwner,stop);
+  claimGameSpeech(speech,speechOwner,stop,{priority:call.priority==='emergency'?2:0});
   current=call;currentStarted=false;let attempt=0;
   function finish(){if(token!==generation||disposed)return;call.onFinished?.();clearTimer(timer);timer=null;current=null;utterance=null;releaseGameSpeech(speech,speechOwner);play();}
   function speak(voice,retry=false){

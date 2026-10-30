@@ -104,6 +104,9 @@
 @media(prefers-reduced-motion:reduce){:is(.house-stage,.native-doomsday,main) .doomsday-panel *{animation:none!important;transition:none!important}}
 :is(.house-stage,.native-doomsday,main) .doomsday-panel[data-reduced-motion=true] *{animation:none!important;transition:none!important}
 
+:is(.house-stage,.native-doomsday,main) .doomsday-response-activity{padding:9px 0;border-top:1px solid #739569;color:#d7ecc4;font-size:12px;line-height:1.4}
+:is(.house-stage,.native-doomsday,main) .doomsday-response-activity strong,:is(.house-stage,.native-doomsday,main) .doomsday-response-activity span{display:block}
+
 /* The embedded explorer puts its movement sticks below the canvas. Its short
    scene needs the full drawer height; fullscreen still reserves the sticks. */
 @media(max-width:760px),(pointer:coarse){

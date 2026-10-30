@@ -1,30 +1,31 @@
 import {bindGameActionButton} from './game-action-button.js';
 import {stepDoomsday,doomsdayView,isDoomsdayObjectiveNearby} from './doomsday-rules.js';
 import {createDoomsdayAudio} from './doomsday-audio.js';
+import {doomsdayResponseStatus} from './doomsday-response-flight.js';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const guidePreference='muzikaz.emergency.guide.hidden';
 const challengePreference='muzikaz.emergency.challenge.follow';
 const noticeIntervalMs=45000;
 const briefings={
- warning:'This is Cole on emergency radio. Nuclear warning. Head for the marked continuity shelter. Detonations are expected shortly. Keep your radio on; I will guide you.',
- detonation:'Cole here. Detonations on the horizon! Stay under cover while the blast passes. Fallout is coming.',
- fallout:'Cole on emergency radio. Fallout has begun. Follow the green beam to the emergency supply cache. Recover the sealed relief supplies.',
- recovery:'Cole here. The fallout is easing. Reach the recovery relay if you can and restore community communications. Follow the marked beacon.',
- clearing:'Cole on emergency radio. The fallout is lifting and the warning lights are powering down. Conditions are clearing. Keep exploring.',
+ warning:'This is Cole on emergency radio. Nuclear warning. Command flight is departing. Reach the marked continuity shelter. Detonations are expected shortly. Keep your radio on.',
+ detonation:'Cole here. Detonations on the horizon! Stay under cover while the blast passes. Command flight is holding clear; fallout is coming.',
+ fallout:'Cole on emergency radio. Fallout has begun. Relief aircraft are circling overhead. Follow the green beam to the emergency supply cache. Recover the sealed relief supplies.',
+ recovery:'Supplies secured. Cole here. Relief aircraft are returning. Reach the marked recovery relay and restore community communications.',
+ clearing:'Cole on emergency radio. Response aircraft are clearing the area. Fallout and warning lights are fading. Normal conditions are returning.',
  'all-clear':'Cole to all responders. This alert has passed. All clear. Normal conditions are returning. Keep exploring; I will call again if another warning arrives.'
 };
 const ambientBriefings={
- warning:'This is Cole on emergency radio. Nuclear warning. Take cover; detonations are expected shortly. Keep your radio on.',
- detonation:'Cole here. Detonations on the horizon! Stay under cover while the blast passes. Fallout is coming.',
- fallout:'Cole on emergency radio. Fallout has begun. Fallout is drifting across the area. The emergency response is still underway.',
- recovery:'Cole here. Recovery is underway. The emergency alert remains active while community communications are restored. Stand by for the all-clear.',
+ warning:'This is Cole on emergency radio. Nuclear warning. Command flight is departing. Take cover; detonations are expected shortly. Keep your radio on.',
+ detonation:briefings.detonation,
+ fallout:'Cole on emergency radio. Fallout has begun. Relief aircraft are circling overhead. The emergency response is still underway.',
+ recovery:'Cole here. Recovery is underway. Relief aircraft are returning. The emergency alert remains active while community communications are restored. Stand by for the all-clear.',
  clearing:briefings.clearing,
  'all-clear':briefings['all-clear']
 };
 const statusNotices={
- fallout:'Cole on emergency radio. The fallout alert remains active. The emergency response is continuing. Stay clear of the blast zone and keep your radio on.',
- recovery:'Cole here. Emergency recovery is still underway. The alert remains active. Stand by for the all-clear.'
+ fallout:'Cole on emergency radio. The fallout alert remains active. Relief flights are continuing their circuits. Stay clear of the blast zone and keep your radio on.',
+ recovery:'Cole here. Emergency recovery is still underway. Response aircraft are returning. The alert remains active. Stand by for the all-clear.'
 };
 const challengeNotices={
  fallout:'Cole on emergency radio. The fallout warning remains active. Follow the green supply beacon and collect the sealed relief supplies.',
@@ -114,8 +115,8 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   if(!state)return;const next=followChallenge?(state.objectives.find(o=>o.id===state.currentObjectiveId)||state.objectives.find(o=>o.phase===state.phase&&!o.completed)):null;
   const nextSignature=JSON.stringify([state.id,state.revision,state.phase,followChallenge,shelterArrived,state.objectives.map(o=>o.completed)]);
   if(signature!==nextSignature){signature=nextSignature;
-   const required=state.objectives.filter(o=>!o.optional),completed=required.filter(o=>o.completed).length;
-   panel.querySelector('[data-scenario]').innerHTML=`<div class="doomsday-phase" data-phase="${escape(state.phase)}"><small>${escape(getEnvironment()?.name||'Current map')}</small><h4>${escape(state.phaseLabel)}</h4><p>${escape(currentBriefing(true))}</p></div><div data-challenge ${followChallenge?'':'hidden'}><progress max="${required.length||2}" value="${completed}" aria-label="Response objectives completed"></progress><span>${completed} / ${required.length||2} response quests · shelter optional</span><ol class="doomsday-objectives">${state.objectives.map(o=>`<li class="${o.completed?'is-complete':o===next?'is-current':''}"><strong>${o.completed?'✓ ':''}${escape(o.name)}${o.id==='shelter'?' · optional':''}</strong><span>${escape(o.description)}</span><small data-site="${escape(o.id)}">${Math.round(o.position.x)}, ${Math.round(o.position.z)}</small></li>`).join('')}</ol></div>`;
+   const required=state.objectives.filter(o=>!o.optional),completed=required.filter(o=>o.completed).length,response=doomsdayResponseStatus(state);
+   panel.querySelector('[data-scenario]').innerHTML=`<div class="doomsday-phase" data-phase="${escape(state.phase)}"><small>${escape(getEnvironment()?.name||'Current map')}</small><h4>${escape(state.phaseLabel)}</h4><p>${escape(currentBriefing(true))}</p></div><p class="doomsday-response-activity" data-response-status ${response.active?'':'hidden'}><strong>${escape(response.label)}</strong><span>${escape(response.message)}</span></p><div data-challenge ${followChallenge?'':'hidden'}><progress max="${required.length||2}" value="${completed}" aria-label="Response objectives completed"></progress><span>${completed} / ${required.length||2} response quests · shelter optional</span><ol class="doomsday-objectives">${state.objectives.map(o=>`<li class="${o.completed?'is-complete':o===next?'is-current':''}"><strong>${o.completed?'✓ ':''}${escape(o.name)}${o.id==='shelter'?' · optional':''}</strong><span>${escape(o.description)}</span><small data-site="${escape(o.id)}">${Math.round(o.position.x)}, ${Math.round(o.position.z)}</small></li>`).join('')}</ol></div>`;
   }
   showGuide();panel.querySelector('[data-panel-phase]').textContent=state.phase==='idle'?'Standing by · explore freely':state.phaseLabel;banner.hidden=!guideAvailable();banner.dataset.phase=state.phase;banner.querySelector('[data-phase]').textContent=state.phaseLabel;
   banner.querySelector('[data-task]').textContent=shelterArrived&&['warning','detonation'].includes(state.phase)?'Shelter reached · stay under cover':next?next.name:state.phase==='warning'?'Incoming alert · take cover':state.phase==='fallout'?'Fallout alert active · emergency response underway':state.phase==='recovery'?'Emergency response active · awaiting all clear':state.phase==='detonation'?'Take cover · fallout approaching':state.phase==='clearing'?'Final clearance · normal conditions returning':state.phase==='all-clear'?'The alert has passed':'';

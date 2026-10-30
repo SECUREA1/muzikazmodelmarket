@@ -8,3 +8,16 @@
 .aircraft-auto-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:5px;min-width:0;}.aircraft-auto-row .aircraft-auto-action{display:block;min-width:0;padding:8px 10px;text-align:left;overflow-wrap:anywhere;white-space:normal;background:#b7e8ed;color:#092a34;border-color:#d8f7fa;font:800 12px/1.25 system-ui;}.aircraft-auto-row .aircraft-controls-toggle{width:44px;min-width:44px;padding:9px;display:grid;place-items:center;}.aircraft-controls-toggle svg{width:24px;height:24px;transition:transform .15s ease;}.aircraft-controls-toggle[aria-expanded=true] svg{transform:rotate(180deg);}.aircraft-manual-controls{display:grid;gap:5px;min-width:0;}.aircraft-action-overrides{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;min-width:0;}.aircraft-action-overrides button{min-width:0;padding:6px 3px;font-size:10px;}.aircraft-action-overrides button[aria-label="Cancel flight assistance"]{border-color:#bcd1d8;}.aircraft-flight-summary{min-height:15px;}
 
 .airport-radio-audio-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0;}.airport-radio-audio-controls output{flex:1 1 100%;font-size:12px;color:#b8d6df;}
+
+/* A departure guide stays beside the primary action, with manual takeover
+   available without opening the detailed instruments. */
+.airport-flight-controls .aircraft-emergency-departure{display:grid;gap:7px;min-width:0;padding:9px;border:1px solid #a3caa1;border-radius:10px;background:#132e27;color:#efffec;box-sizing:border-box}
+.airport-flight-controls .aircraft-emergency-departure>header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font:750 12px/1.35 system-ui}
+.airport-flight-controls [data-departure-stage]{padding:3px 7px;border:1px solid #94ba8d;border-radius:20px;background:#294735;color:#e6ffd0;font-size:11px}
+.airport-flight-controls [data-departure-guidance]{margin:0;color:#d5e9d5;font:12px/1.45 system-ui;overflow-wrap:anywhere}
+.airport-flight-controls .aircraft-departure-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;min-width:0}
+.airport-flight-controls .aircraft-departure-actions button{box-sizing:border-box;min-width:0;min-height:44px;width:100%;padding:8px;white-space:normal;font:750 12px/1.25 system-ui;touch-action:manipulation}
+.airport-flight-controls [data-emergency-start]{background:#caeca4;color:#17311c;border-color:#e4ffc6}
+.airport-flight-controls [data-emergency-manual]{background:#213d45;color:#edfaff;border-color:#9dc3d1}
+.airport-flight-controls .aircraft-departure-actions button:focus-visible{outline:3px solid #efffa9;outline-offset:3px}
+.airport-flight-controls .aircraft-departure-actions button[aria-busy=true]{background:#eff9d6;color:#19351d}

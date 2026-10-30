@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {claimGameSpeech,releaseGameSpeech,cancelGameSpeech,isGameSpeechActive} from '../public/js/game-speech-owner.js';
+import {claimGameSpeech,releaseGameSpeech,cancelGameSpeech,isGameSpeechActive,gameSpeechPriority} from '../public/js/game-speech-owner.js';
 
 test('one controller keeps its speech ownership without cancelling its own next line',()=>{
  const events=[],speech={speak(){},cancel(){events.push('cancel');}},owner=Symbol('npc');
@@ -63,4 +63,12 @@ test('missing speech support keeps ownership cleanup safe',()=>{
   assert.doesNotThrow(()=>releaseGameSpeech(speech,Symbol('unsupported')));
   assert.equal(cancelGameSpeech(speech,Symbol('unsupported')),false);
  }
+});
+
+test('radio callers can inspect current urgency without interrupting the active owner',()=>{
+ const events=[],speech={speak(){},cancel(){events.push('cancel');}},owner=Symbol('emergency');
+ assert.equal(gameSpeechPriority(speech),0);assert.equal(gameSpeechPriority(null),0);
+ claimGameSpeech(speech,owner,()=>events.push('interrupted'),{priority:2});assert.equal(gameSpeechPriority(speech),2);
+ assert.deepEqual(events,[]);claimGameSpeech(speech,owner,()=>{}, {priority:0});assert.equal(gameSpeechPriority(speech),0);
+ releaseGameSpeech(speech,owner);assert.equal(gameSpeechPriority(speech),0);
 });

@@ -114,6 +114,7 @@ try:
    assert page.evaluate("ui.getState().phase==='idle'")
    page.evaluate('(at)=>clock=at',first_at)
    page.wait_for_function("ui.getState().phase==='warning'")
+   assert 'Command flight departing' in guide.locator('[data-response-status]').inner_text()
    first_state=page.evaluate('ui.getState()');first_id=first_state['id']
    assert first_state['falloutAt']-page.evaluate('enteredAt')<=120000
    assert first_state['nextEventAt'] is None,'An active quest-led event scheduled an overlapping repeat.'
@@ -165,6 +166,7 @@ try:
    page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
    page.evaluate('clock+=7000')
    page.wait_for_function("ui.getState().phase==='fallout'")
+   assert 'Relief flights circling' in guide.locator('[data-response-status]').text_content()
    assert guide.is_hidden() and page.evaluate("effects.root.userData.phase==='fallout'")
    # Radio and visible notices continue while this full-length event holds,
    # even with the guide hidden. There is one reminder per quiet interval.
@@ -200,6 +202,7 @@ try:
    page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
    page.evaluate("reach('supplies')")
    page.wait_for_function("ui.getState().phase==='recovery'")
+   assert 'Response flights returning' in guide.locator('[data-response-status]').text_content()
    page.evaluate('clock+=600000');page.wait_for_timeout(80)
    assert page.evaluate("ui.getState().phase==='recovery' && ui.getState().nextEventAt===null && eventIds.size===1"),'Recovery was cut short while the relay quest was unfinished.'
    page.evaluate('window.beforeAmbientReminder=spoken.length;finishRadio()')
@@ -221,6 +224,7 @@ try:
    assert page.evaluate('spoken.length===beforeMutedReminder+1'),'Returning to the map created a reminder backlog.'
    page.evaluate("reach('recovery')")
    page.wait_for_function("ui.getState().phase==='clearing'")
+   assert 'Response flights clearing' in guide.locator('[data-response-status]').text_content()
    assert page.evaluate('effects.root.visible'),'Clearing should fade the event before hiding it.'
    clearing=page.evaluate('ui.getState()')
    assert clearing['nextEventAt'] is None

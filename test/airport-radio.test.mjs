@@ -23,3 +23,17 @@ test('flight services require a cockpit and ground service requires parking',()=
  sim.actors.own.flight={airborne:false,speed:0};sim.actors.own.health=80;assert.match(airportRadio(sim,player,'pilot','service',0,environment),/repaired/);assert.equal(sim.actors.own.health,400);assert.equal(player.fuel,100);assert.equal(player.ammo,120);
  assert.throws(()=>airportRadio(sim,player,'pilot','invalid',0,environment),/Choose a tower/);
 });
+
+test('remote runway guidance names the actual airfield and holds for physical traffic without inventing a reservation',()=>{
+ const {sim,player,environment}=fixture();environment.airport.enabled=true;
+ environment.airport.runways=[{id:'alpine',name:'Alpine Ridge Mountain Airfield',x:620,z:-500,width:20,length:240}];
+ sim.actors.own.flight.runwayId='alpine';
+ assert.match(airportRadio(sim,player,'pilot','status',1000,environment),/Alpine Ridge Mountain Airfield/);
+ assert.match(airportRadio(sim,player,'pilot','vectors',1000,environment),/entering Alpine Ridge Mountain Airfield/);
+ sim.actors.other.position={x:620,y:.4,z:-450};sim.actors.other.flight={airborne:false,altitude:0};
+ const lease=sim.airport.runwayClearances.alpine;
+ assert.match(airportRadio(sim,player,'pilot','status',1000,environment),/Runway occupied/);
+ assert.match(airportRadio(sim,player,'pilot','takeoff',1000,environment),/runway is occupied/);assert.equal(lease.runwayHolder,null);
+ sim.actors.other.position.x=590;
+ assert.match(airportRadio(sim,player,'pilot','takeoff',1000,environment),/Cleared for takeoff, Alpine Ridge Mountain Airfield/);assert.equal(lease.runwayHolder,'pilot');
+});

@@ -1,4 +1,6 @@
 import {aircraftRunway} from './airport-navigation.js';
+import {emergencyDepartureInput,cancelEmergencyDeparture} from './emergency-aircraft-departure.js';
+export {cancelEmergencyDeparture} from './emergency-aircraft-departure.js';
 // Shared deterministic control assistance; never boards or teleports a player.
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
@@ -19,9 +21,10 @@ function airspaceTurn(aircraft,environment,speed){
  return {side:clamp(-error*1.8,-1,1),rudder:clamp(error*.2,-.3,.3),brake:distance<Math.max(12,speed*1.2)&&Math.abs(error)>.8?.65:false};
 }
 
-export function aircraftAssistedInput(aircraft,input={},environment,now=0){
+export function aircraftAssistedInput(aircraft,input={},environment,now=0,context={}){
  const flight=aircraft?.flight;if(!flight?.assist)return input;
- if(Math.abs(Number(input.side)||0)>.18||Math.abs(Number(input.lift)||0)>.18||input.jump===true||input.sprint===true||Math.abs(Number(input.forward)||0)>.2||(Number(input.brake)||0)>0||(input.throttle!==undefined&&input.throttle!==null&&Number.isFinite(Number(input.throttle)))){clearAssist(aircraft);return input;}
+ if(Math.abs(Number(input.side)||0)>.18||Math.abs(Number(input.lift)||0)>.18||input.jump===true||input.sprint===true||Math.abs(Number(input.forward)||0)>.2||(Number(input.brake)||0)>0||(input.throttle!==undefined&&input.throttle!==null&&Number.isFinite(Number(input.throttle)))){if(flight.assist==='emergency-departure')cancelEmergencyDeparture(aircraft,environment,context,{reason:'Pilot took manual control.',now});else clearAssist(aircraft);return input;}
+ if(flight.assist==='emergency-departure')return emergencyDepartureInput(aircraft,input,environment,now,context);
  const timeoutMs=Math.max(240000,Math.min(600000,Number(flight.assistTimeoutMs)||240000));
  if(flight.assist!=='cruise'&&now&&flight.assistSince&&now-flight.assistSince>timeoutMs){
   const grounded=!airborneOf(aircraft);clearAssist(aircraft);
