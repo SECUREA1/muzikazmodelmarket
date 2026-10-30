@@ -167,3 +167,5 @@
 :is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-banner{position:static;inset:auto;transform:none;box-sizing:border-box;width:100%;max-width:100%;margin:0 0 10px;pointer-events:auto}
 
 .native-radio-menu{max-height:max(120px,calc(100dvh - 180px));overflow:auto;overscroll-behavior:contain}
+
+:is(.house-stage,.native-doomsday,main) .doomsday-panel-navigation .doomsday-automatic-panel{grid-column:1/-1;margin:0;padding:8px 10px;background:#172f28;border:1px solid #718b73;border-radius:8px}

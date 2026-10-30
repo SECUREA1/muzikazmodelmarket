@@ -44,8 +44,9 @@ try:
    more.click();assert panel.is_hidden()
    page.evaluate('clock=sim.doomsday.nextEventAt')
    page.evaluate('''async()=>{const {stepDoomsday}=await import('/public/js/doomsday-rules.js');stepDoomsday(sim,env,clock,{players:[{id:'p',health:100,position:{x:20,y:0,z:20}}]});ui.tick(1);}''')
-   assert panel.is_hidden() and page.locator('.doomsday-banner').is_hidden()
-   more.click();assert panel.is_visible()
+   assert more.get_attribute('aria-expanded')=='true' and panel.is_visible()
+   assert page.locator('#emergency-nuclear-panel').is_visible()
+   assert page.locator('.doomsday-banner').is_visible()
    assert 'shelter' in page.locator('[data-flow-title]').text_content().lower()
    assert page.locator('[data-flow-step=impacts]').get_attribute('aria-current')=='step'
    page.get_by_role('button',name='Close emergency menu',exact=True).click()
@@ -64,7 +65,7 @@ try:
    page.keyboard.press('Escape');assert panel.is_hidden()
    assert not page.evaluate('escapedToGame'),'closing emergency menu also triggered the game Escape action'
    page.evaluate('ui.open();ui.reset();ui.tick(2)');assert panel.is_hidden()
-   print(f'{width}px: independent sound/flow panels, closed events, close/Escape/reset preserve visibility',flush=True)
+   print(f'{width}px: independent sound/flow panels, automatic warning popup, close/Escape/reset preserve visibility',flush=True)
    page.close()
   browser.close()
 finally:server.shutdown()

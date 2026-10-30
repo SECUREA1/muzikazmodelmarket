@@ -63,9 +63,9 @@ try:
    more.click();assert page.locator('.doomsday-guide').is_hidden()
    page.evaluate('(at)=>advance(at)',deadline)
    assert page.evaluate('sim.doomsday.phase')=='warning'
-   assert more.get_attribute('aria-expanded')=='false' and nuclear_panel.is_hidden(),'A nuclear event opened the menu automatically.'
-   more.click();nuclear.wait_for(state='visible');assert nuclear.is_enabled()
-   nuclear.click();assert nuclear_panel.is_visible() and nuclear.get_attribute('aria-expanded')=='true'
+   assert more.get_attribute('aria-expanded')=='true' and nuclear_panel.is_visible(),'The new warning did not restore its countdown panel automatically.'
+   nuclear.wait_for(state='visible');assert nuclear.is_enabled()
+   assert nuclear.get_attribute('aria-expanded')=='true'
    assert 'Nuclear warning' in nuclear_panel.text_content()
    assert nuclear_panel.locator('.doomsday-banner').is_visible()
    assert nuclear_panel.locator('[data-countdown]').text_content()=='Detonations in 18s'
@@ -102,7 +102,7 @@ try:
    assert sound_panel.is_visible(),'Nuclear cleanup closed unrelated sound controls.'
    assert page.evaluate("(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return ids.length===new Set(ids).size;})()"),'Restored panels created duplicate IDs.'
    assert not errors,errors
-   print(f'{width}x{height}: independent sound/nuclear/flow panels, sound recovery, boarding, phase updates and closed-menu event completion passed',flush=True)
+   print(f'{width}x{height}: independent sound/nuclear/flow panels, sound recovery, boarding, automatic warning popup, phase updates and closed-menu event completion passed',flush=True)
    page.close()
   # Native sports use a header <details>, so their navigation buttons must
   # consume Escape before arcade gameplay sees it as a ride/minigame exit.

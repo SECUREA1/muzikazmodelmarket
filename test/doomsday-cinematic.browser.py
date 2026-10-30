@@ -97,8 +97,8 @@ try:
     if(renderer.info.memory.geometries>base.geometries||renderer.info.memory.textures>base.textures)throw Error('Repeated scenario retained GPU resources');
     effects.dispose();audio.dispose();renderer.render(scene,camera);
    }''')
-   # Exercise the actual production UI with its header dropdown left closed.
-   # A hidden ancestor must affect controls only, never event playback.
+   # A new event restores its countdown panel. Closing that panel afterwards
+   # must affect controls only, never the full audiovisual event playback.
    page.evaluate('''async()=>{
     const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{mountGameDisplayFlow}=await import('/public/js/game-display-flow.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
     window.AudioContext=function(){return makeObservedContext();};
@@ -107,12 +107,16 @@ try:
     window.headerUI=mountDoomsdayUI({stage:menuStage,getEnvironment:()=>({id:'airport',name:'Airport'}),getPosition:()=>({x:0,y:0,z:0}),getState:()=>headerState,effects:menuEffects,now:()=>headerState?.serverTime||1000000});
     window.headerDraw=(phase,age=0)=>{
      const offsets={warning:0,detonation:18000,fallout:25000,recovery:600000,clearing:1200000,'all-clear':1208000},start=1000000+offsets[phase];
-     headerState={id:'header-closed-event',mapId:'airport',phase,phaseLabel:phase,message:phase,revision:1,active:phase!=='all-clear',startedAt:1000000,phaseStartedAt:start,serverTime:start+age,detonationAt:1018000,falloutAt:1025000,phaseEndsAt:phase==='clearing'?start+8000:null,objectives:[]};
+     headerState={id:'header-closed-event',mapId:'airport',phase,phaseLabel:phase,message:phase,revision:1,active:phase!=='all-clear',startedAt:1000000,phaseStartedAt:start,serverTime:start+age,detonationAt:1018000,falloutAt:1025000,phaseEndsAt:phase==='warning'?start+18000:phase==='detonation'?start+7000:phase==='clearing'?start+8000:null,objectives:[]};
      headerUI.tick((start+age)/1000);renderer.render(scene,camera);
     };
     window.beforeHeaderBooms=boomCount();headerDraw('warning');
    }''')
    page.wait_for_function("document.querySelector('.doomsday-menu')?.closest('.game-view-overflow')")
+   page.wait_for_function("!document.querySelector('.game-view-overflow').hidden && document.querySelector('[data-emergency-panel-toggle=nuclear]').getAttribute('aria-expanded')==='true'")
+   assert page.locator('#emergency-nuclear-panel').is_visible()
+   assert page.locator('#emergency-nuclear-panel [data-countdown]').text_content()=='Detonations in 18s'
+   page.evaluate('headerUI.close()')
    assert page.locator('.game-view-overflow').is_hidden()
    assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
    page.mouse.click(width//2,height-20)
@@ -131,7 +135,7 @@ try:
    page.evaluate("headerDraw('clearing',8000);headerDraw('all-clear');headerUI.dispose();flow.dispose();menuStage.remove();renderer.render(scene,camera)")
    assert page.evaluate('audioGains.every(record=>record.disconnected>0) && audioOscillators.every(record=>record.disconnected>0)')
    assert not errors,errors
-   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion 15 GPU cleanup cycles and full playback with the production header dropdown closed passed',flush=True)
+   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion 15 GPU cleanup cycles and automatic countdown popup plus full playback after closing the production header dropdown passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

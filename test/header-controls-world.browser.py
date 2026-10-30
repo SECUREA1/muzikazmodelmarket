@@ -29,6 +29,17 @@ async def main():
      print('airport: actual mobile engine ready',flush=True)
      more=page.get_by_role('button',name='More view controls',exact=True)
      await more.wait_for(state='visible')
+     if os.environ.get('EXPECT_AUTO_NUCLEAR')=='1':
+      await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.active",timeout=190000)
+      await page.wait_for_function("document.querySelector('.game-view-more')?.getAttribute('aria-expanded')==='true' && !document.querySelector('#emergency-nuclear-panel')?.hidden")
+      assert await page.locator('#emergency-nuclear-panel').is_visible()
+      assert 'in ' in await page.locator('#emergency-nuclear-panel [data-countdown]').text_content()
+      assert await page.locator('.doomsday-banner').evaluate("n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}"),'The actual popup countdown is clipped.'
+      await page.screenshot(path='/workspace/automatic-nuclear-world-popup.png')
+      await more.click()
+      await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.phase==='fallout'",timeout=40000)
+      assert await more.get_attribute('aria-expanded')=='false','An existing event reopened after dismissal.'
+      print('airport: automatic real nuclear countdown opens once and remains dismissed through fallout',flush=True)
      await page.wait_for_function("document.querySelector('.game-dock-actions')?.closest('.game-view-overflow')!==null")
      assert await page.locator('.game-display-flow-views > :not(.game-view-more):not(.game-view-overflow)').count()==0
      audit=await page.evaluate('''async()=>{const {GAME_HEADER_CONTROLS}=await import('/public/js/game-header-controls.js');const stage=document.querySelector('.house-stage');return GAME_HEADER_CONTROLS.filter(item=>['stage','dock'].includes(item.source)).flatMap(item=>[...stage.querySelectorAll(item.selector)].filter(node=>node.parentElement===stage||node.closest('.game-display-flow-views')).map(node=>({id:item.id,inside:!!node.closest('.game-view-overflow')})));}''')
