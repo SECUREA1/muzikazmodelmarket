@@ -149,3 +149,21 @@
 .doomsday-game-flow li[data-status=complete]{border-color:#88dca9}
 .doomsday-game-flow li span{display:block}
 .doomsday-game-flow li small{display:inline-block;margin-left:6px;color:#d5e9d5}
+
+/* Three independent panels share the complete header extension. */
+:is(.house-stage,.native-doomsday,main) .doomsday-menu{width:100%;box-sizing:border-box}
+:is(.house-stage,.native-doomsday,main) .doomsday-panel-navigation{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;margin:0 0 8px}
+:is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-section-toggle{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:52px;height:auto;margin:0!important;padding:10px!important;border:1px solid #8eaa97;border-radius:9px;background:#19362f;color:#f0ffe8;text-align:left;white-space:normal;font:700 13px/1.3 system-ui;touch-action:manipulation}
+.doomsday-section-toggle strong{font-size:13px}
+.doomsday-section-toggle small{font-size:11px;color:#d9e8cf}
+:is(.house-stage,.native-doomsday,main) .doomsday-section-toggle[aria-expanded=true]{border-color:#d5f5a1;background:#355036}
+:is(.house-stage,.native-doomsday,main) .doomsday-section-toggle:disabled{opacity:.6;cursor:default}
+:is(.house-stage,.native-doomsday,main) .doomsday-subpanel{min-width:0;margin:0 0 12px;padding:8px;border:1px solid #67856e;border-radius:10px;background:#112c24}
+:is(.house-stage,.native-doomsday,main) .doomsday-subpanel>header{position:static;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 0 8px;margin:0 0 8px}
+:is(.house-stage,.native-doomsday,main) .doomsday-subpanel>header button{width:auto!important;min-width:58px;min-height:44px;padding:8px!important;flex:0 0 auto}
+:is(.house-stage,.native-doomsday,main) .doomsday-subpanel[hidden]{display:none!important}
+@media(max-width:600px){:is(.house-stage,.native-doomsday,main) .doomsday-panel-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}:is(.house-stage,.native-doomsday,main) .doomsday-section-toggle[data-emergency-panel-toggle=flow]{grid-column:1/-1}}
+
+:is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-banner{position:static;inset:auto;transform:none;box-sizing:border-box;width:100%;max-width:100%;margin:0 0 10px;pointer-events:auto}
+
+.native-radio-menu{max-height:max(120px,calc(100dvh - 180px));overflow:auto;overscroll-behavior:contain}

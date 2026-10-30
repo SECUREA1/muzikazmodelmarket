@@ -304,7 +304,7 @@ availability checks stay attached; movement sticks and immediate vehicle/fire/us
 controls remain in their gameplay positions. The extension scrolls within the
 stage and leaves room for primary controls.
 
-The header **More view controls** dropdown contains the emergency controls directly, also reachable from Settings navigation. There is no separate Radio & sound toggle. Closing the header menu hides the controls, including during new events. Native games use a compact **Game flow & sound** header dropdown. A response overview explains the current phase; **View full response flow** shows shelter, impacts, optional aircraft, supplies, relay and all-clear steps using actual progress. **Enable
+The full-width header **More view controls** extension offers independent **Radio & sound**, **Nuclear event**, and **Emergency response flow** panel toggles. Each has its own Close button and keeps its open/closed choice when the header is closed. Radio and flow stay available during quiet intervals; the nuclear panel becomes available during an event, with its current phase shown on the toggle. The header receives a steady warning indicator without opening itself. Closing panels never mutes sound or stops the response. Native games use a compact **Game flow & sound** header dropdown. The flow panel shows shelter, impacts, optional aircraft, supplies, relay and all-clear steps using actual progress. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without
 starting an event. The panel reports muted, paused and ready states, and provides

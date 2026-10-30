@@ -37,6 +37,8 @@ const controls=[
  ['dock-actions','.game-dock-actions','World, player and game actions','navigation','dock'],
  // Nested controls keep their panel-owned visibility. They are catalogued so
  // coverage checks and menu navigation can find them without extracting them.
+ ['radio-sound-panel','[data-emergency-panel-toggle="sound"]','Radio & sound panel','sound','nested'],
+ ['nuclear-event-panel','[data-emergency-panel-toggle="nuclear"]','Nuclear event panel','emergency','nested'],
  ['emergency-response-link','.game-header-emergency-link','Open emergency response flow','emergency','nested'],
  ['active-quest','.map-quest-objective','Open active quest','activities','nested'],
  ['flight-instruments','button[aria-label="Flight instruments and controls"]','Flight instruments and controls','flight','nested'],

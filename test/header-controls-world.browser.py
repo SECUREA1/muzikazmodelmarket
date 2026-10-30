@@ -41,6 +41,9 @@ async def main():
      await open_menu()
      emergency=page.get_by_role('button',name='Emergency response flow',exact=True)
      await emergency.scroll_into_view_if_needed();await emergency.click()
+     assert await page.locator('#emergency-flow-panel').is_visible()
+     if await page.locator('.doomsday-game-flow details').get_attribute('open') is None:
+      await page.get_by_text('View full response flow',exact=True).click()
      await page.wait_for_function("document.querySelector('.doomsday-game-flow details').open")
      assert await page.locator('[data-flow-step=impacts]').is_visible()
      assert await page.locator('[data-flow-step=recovery]').is_visible()

@@ -26,9 +26,17 @@ try:
    more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
    assert page.locator('.doomsday-guide-chip').count()==0
    panel=page.locator('.doomsday-guide');assert panel.is_hidden()
-   more.click();assert panel.is_visible()
+   more.click();assert panel.is_hidden()
+   sound=page.get_by_role('button',name='Radio & sound',exact=True)
+   sound.click();assert panel.is_visible()
+   assert page.locator('#emergency-sound-panel').is_visible()
+   assert sound.get_attribute('aria-expanded')=='true'
+   assert page.get_by_role('switch',name='Sirens and explosions',exact=True).is_visible()
    assert 'Explore while standing by' in page.locator('[data-flow-title]').text_content()
    page.get_by_role('button',name='Emergency response flow',exact=True).click()
+   assert page.locator('#emergency-flow-panel').is_visible()
+   if page.locator('.doomsday-game-flow details').get_attribute('open') is None:
+    page.get_by_text('View full response flow',exact=True).click()
    assert page.locator('.doomsday-game-flow details').get_attribute('open') is not None
    assert page.locator('[data-flow-step=standby]').get_attribute('aria-current')=='step'
    assert panel.evaluate("n=>!!n.closest('.game-view-overflow')")
@@ -56,7 +64,7 @@ try:
    page.keyboard.press('Escape');assert panel.is_hidden()
    assert not page.evaluate('escapedToGame'),'closing emergency menu also triggered the game Escape action'
    page.evaluate('ui.open();ui.reset();ui.tick(2)');assert panel.is_hidden()
-   print(f'{width}px: no radio toggle, direct menu controls, closed events, close/Escape/reset preserve visibility',flush=True)
+   print(f'{width}px: independent sound/flow panels, closed events, close/Escape/reset preserve visibility',flush=True)
    page.close()
   browser.close()
 finally:server.shutdown()

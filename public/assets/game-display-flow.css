@@ -144,3 +144,6 @@ body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-vie
 .house-stage.player-hide-action-bars .game-view-overflow .game-dock-actions>:is(button,#house-view-options):not([hidden]){display:flex!important;position:static!important;inset:auto!important;width:auto!important}
 .house-stage .game-view-overflow #house-view-options{position:static!important;inset:auto!important;transform:none!important;width:auto!important}
 .house-stage .game-view-overflow .game-header-emergency-link{width:100%;text-align:left;margin:0 0 8px;min-height:44px;padding:10px;background:#c9eaa4;color:#18351d;border:1px solid #d9ffc3;border-radius:8px;font-weight:750}
+
+.house-stage .game-view-overflow{width:100%}
+.house-stage .game-view-more[data-emergency-active=true]{border-color:#ffe099;box-shadow:0 0 0 2px #d9a74566}
