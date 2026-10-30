@@ -25076,7 +25076,7 @@
             "prompt": "Check the continuity shelter"
           },
           "dialogueSettings": {
-            "text": "Civil defense shelter. The emergency begins automatically: listen for Cole on the radio, take cover before the distant explosions, then follow the supply and recovery markers. Quests register on arrival. You can hide the radio guide while travel, flight and movement remain available."
+            "text": "Civil defense shelter. Emergency warnings arrive sporadically, first shortly after arrival and later at random intervals. Listen for Cole on the radio, take cover before the distant explosions, then follow the supply and recovery markers. Quests register on arrival. You can hide the radio guide while travel, flight and movement remain available."
           }
         },
         {
@@ -25136,7 +25136,7 @@
             "prompt": "Inspect the recovery relay"
           },
           "dialogueSettings": {
-            "text": "Community warning and recovery relay. During the final stage, check in here to send the all-clear."
+            "text": "Community warning and recovery relay. Reach this beacon during recovery to restore communications and help conditions clear sooner. The warning also clears on its own."
           }
         },
         {
@@ -25166,7 +25166,7 @@
             "prompt": "Read emergency warning guidance"
           },
           "dialogueSettings": {
-            "text": "The fictional emergency begins automatically on every map. Loud warning sirens and Cole on the walkie-talkie announce incoming explosions and fallout. Follow the shelter, supply and recovery beacons. Hide the guide or mute sirens without stopping the experience."
+            "text": "Sporadic fictional emergencies occur automatically on every map. Loud warning sirens, revolving amber beacons and Cole on the walkie-talkie announce incoming explosions and fallout. Conditions clear after each alert. Follow the shelter, supply and recovery beacons. Hide the guide or mute sirens without stopping the experience."
           }
         },
         {

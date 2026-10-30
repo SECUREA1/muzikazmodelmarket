@@ -1,4 +1,4 @@
-"""Automatic emergency progression and hidden guides on native game maps."""
+"""Sporadic arrival, emergency progression and clearing on native game maps."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -35,6 +35,7 @@ try:
     elif path.endswith('/api/environments') and kind=='hockey':route.fulfill(json=[{'id':'hockey-arena','name':'Hockey','multiplayer':False,'game':'hockey','builderScene':{'layout':'hockey-arena','gameplay':{'hockey':{'enabled':True}}},'hockey':{'enabled':True}}])
     else:route.fulfill(status=404,json={'error':'Offline fixture'})
    page.route('**/api/**',api)
+   page.add_init_script('Math.random=()=>0;')
    page.goto(f'http://127.0.0.1:{server.server_port}/{kind}.html?mode=solo',wait_until='domcontentloaded')
    getter='MuzikazHockey.snapshot()' if kind=='hockey' else 'NeonJunction.snapshot()'
    if kind=='hockey':
@@ -44,7 +45,17 @@ try:
    else:
     page.wait_for_function('window.NeonJunction&&document.body.classList.contains("arcade-dashboard")',timeout=60000)
     page.locator('#camera-toggle').click()
-   page.wait_for_function(f'{getter}.doomsday?.automatic && {getter}.doomsday.phase==="warning"')
+   page.wait_for_function(f'{getter}.doomsday?.automatic && {getter}.doomsday.nextEventAt>0')
+   initial=page.evaluate(f'{getter}.doomsday')
+   if initial['phase']=='idle':
+    assert initial['nextEventAt']-initial['scheduledAt']==15000
+    assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+    deadline=initial['nextEventAt'];page.wait_for_timeout(150)
+    assert page.evaluate(f'{getter}.doomsday.nextEventAt')==deadline
+   page.wait_for_function(f'{getter}.doomsday.phase==="warning"',timeout=30000)
+   state=page.evaluate(f'{getter}.doomsday');repeat_at=state['nextEventAt']
+   assert state['cycle']==1 and repeat_at-state['startedAt']==180000
+
    assert page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count()==0
    page.get_by_role('button',name='Hide emergency guide',exact=True).click()
    guide=page.locator('.doomsday-guide');assert guide.is_hidden()
@@ -57,16 +68,21 @@ try:
    page.wait_for_function(f'{getter}.doomsday.phase==="fallout"',timeout=15000)
    assert guide.is_hidden()
    print(kind,'automatically reached fallout while guide hidden',flush=True)
-   for objective_id,following in [('shelter','fallout'),('supplies','recovery'),('recovery','all-clear')]:
+   for objective_id,following in [('shelter','fallout'),('supplies','recovery'),('recovery','clearing')]:
     state=page.evaluate(f'{getter}.doomsday');objective=next(o for o in state['objectives'] if o['id']==objective_id)
     page.locator('#rink' if kind=='hockey' else '#world canvas').focus()
     walk_to(page,kind,getter,objective['position'])
     page.wait_for_function(f'{getter}.doomsday.objectives.some(o=>o.id==="{objective_id}"&&o.completed)')
     if objective_id!='shelter':page.wait_for_function(f'{getter}.doomsday.phase==="{following}"')
     print(kind,objective_id,'automatically completed by arrival',flush=True)
-   page.get_by_role('button',name='Show emergency guide',exact=True).click();assert guide.is_visible()
+   page.wait_for_function(f'{getter}.doomsday.phase==="all-clear"',timeout=15000)
+   assert page.evaluate(f'{getter}.doomsday.nextEventAt')==repeat_at
+   page.wait_for_timeout(8500)
+   assert page.locator('.doomsday-guide,.doomsday-guide-chip,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   assert page.evaluate(f'{getter}.doomsday.cycle')==1
+
    assert not errors,(kind,errors)
    page.screenshot(path=f'/tmp/automatic-native-doomsday-{kind}.png');page.close()
   browser.close()
- print('Hockey and arcade automatically warn, detonate and enter fallout with hidden guides; native movement and proximity quests reach all-clear.')
+ print('Hockey and arcade retain quiet first deadlines, warn once, animate fallout with hidden guides, and clear while retaining the next repeat deadline.')
 finally:server.shutdown()

@@ -28,6 +28,12 @@ try:
     draw('warning');
    }''')
    warning=page.evaluate('effects.root.userData.skyColor')
+   angle=page.evaluate("effects.root.getObjectByName('ROTATING_SIREN_LAMP').rotation.y")
+   pulse=page.evaluate("effects.root.getObjectByName('PULSING_WARNING_LENS').material.opacity")
+   page.evaluate("draw('warning',500,.5)")
+   assert page.evaluate("effects.root.getObjectByName('ROTATING_SIREN_LAMP').rotation.y")!=angle
+   assert page.evaluate("effects.root.getObjectByName('PULSING_WARNING_LENS').material.opacity")!=pulse
+
    page.evaluate("draw('detonation',3000,3)")
    assert page.evaluate('effects.root.userData.skyColor')!=warning
    assert page.evaluate("effects.root.getObjectByName('GROWING_FIREBALL').visible")
@@ -35,16 +41,26 @@ try:
    page.evaluate("draw('fallout',1000,9)")
    assert page.evaluate("effects.root.getObjectByName('DOOMSDAY_FALLING_ASH').visible")
    page.screenshot(path=f'/workspace/doomsday-automatic-fallout-{width}.png')
-   page.evaluate("draw('detonation',3000,10,true)")
+   page.evaluate("draw('clearing',0,10)")
+   start=page.evaluate("effects.root.getObjectByName('DOOMSDAY_COLOURED_SKY').material.uniforms.opacity.value")
+   page.evaluate("draw('clearing',4000,14)")
+   assert page.evaluate('effects.root.userData.effectOpacity')==.5
+   assert page.evaluate("effects.root.getObjectByName('DOOMSDAY_COLOURED_SKY').material.uniforms.opacity.value")<start
+   page.evaluate("draw('clearing',8000,18)")
+   assert page.evaluate("effects.root.getObjectByName('PULSING_WARNING_LENS').material.opacity")==0
+   page.evaluate("draw('all-clear',0,19)")
+   assert page.evaluate('!effects.root.visible')
+   page.evaluate("draw('detonation',3000,20,true)")
+
    assert page.evaluate("!effects.root.getObjectByName('GROWING_FIREBALL').visible && !effects.root.getObjectByName('EXPANDING_SHOCKWAVE').visible")
    page.evaluate('''()=>{
     effects.reset();renderer.render(scene,camera);const base={...renderer.info.memory};
-    for(let n=0;n<15;n++){draw('warning',0,n);draw('detonation',3000,n+1);draw('fallout',0,n+2);effects.reset();renderer.render(scene,camera);}
+    for(let n=0;n<15;n++){draw('warning',0,n);draw('detonation',3000,n+1);draw('fallout',0,n+2);draw('clearing',8000,n+3);draw('all-clear',0,n+4);effects.reset();renderer.render(scene,camera);}
     if(renderer.info.memory.geometries>base.geometries||renderer.info.memory.textures>base.textures)throw Error('Repeated scenario retained GPU resources');
     effects.dispose();renderer.render(scene,camera);
    }''')
    assert not errors,errors
-   print(f'{width}px: rendered sky change, explosion, fallout ash, reduced motion and 15 replay cleanup cycles passed',flush=True)
+   print(f'{width}px: rendered rotating warning beacons, sky change, explosion, fallout ash, clearing, reduced motion and 15 replay cleanup cycles passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

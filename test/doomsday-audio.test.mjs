@@ -61,3 +61,14 @@ test('confirmed detonation adds one bounded low rumble and cleans it up when hid
  f.events.hidden=true;f.events.dispatchEvent(new Event('visibilitychange'));assert.ok(f.gains.every(gain=>gain.disconnected>0));
  f.audio.dispose();assert.equal(f.context.closed,1);
 });
+
+test('scheduled quiet and clearing phases silence sirens and any explosion cue between repeat events',()=>{
+ const f=fixture();f.gesture();
+ for(const phase of ['idle','all-clear'])f.audio.update({id:null,phase},0);
+ assert.equal(f.oscillators.length,0,'no warning audio leaks before the scheduled occurrence');
+ f.audio.update({id:'scheduled-1',phase:'detonation'},1);assert.equal(f.oscillators.length,4);
+ f.audio.update({id:'scheduled-1',phase:'clearing'},1.1);assert.ok(f.gains.every(gain=>gain.disconnected>0),'clearing releases the explosion cue as well as sirens');
+ f.audio.update({id:'scheduled-1',phase:'all-clear'},2);assert.equal(f.oscillators.length,4);
+ f.audio.update({id:'scheduled-2',phase:'warning'},181);assert.equal(f.oscillators.length,6,'a later scheduled event starts its own warning');
+ f.audio.update({id:'scheduled-2',phase:'detonation'},199);assert.equal(f.oscillators.length,10,'each event gets a single new explosion cue');f.audio.dispose();
+});

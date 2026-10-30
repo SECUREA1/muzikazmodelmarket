@@ -1,4 +1,4 @@
-"""Automatic cinematic, hidden guide, vehicles and quests in the actual game."""
+"""Scheduled cinematic, hidden guide, vehicles and automatic cleanup in the actual game."""
 from pathlib import Path
 import asyncio, math, os, socket, subprocess, tempfile, uuid
 from playwright.async_api import async_playwright
@@ -42,7 +42,7 @@ async def main():
                             manual_operations.append(fields.get('operation'))
                     page.on('request', record_input)
                     await page.route('https://**/*', lambda route: route.abort())
-                    await page.add_init_script('''window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
+                    await page.add_init_script('''localStorage.setItem('muzikaz.emergency.guide.hidden','true');window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
 
                     async def load(world):
                         await page.goto(base + '/model-explorer.html?environment=' + world + '&autoplay=1&mode=multiplayer', wait_until='domcontentloaded', timeout=90000)
@@ -66,7 +66,11 @@ async def main():
                         return payload.get('data', payload)
 
                     async def phase(expected):
-                        await page.wait_for_function('(phase)=>MuzikazHouseExplorer.snapshot().doomsday?.phase===phase', arg=expected, timeout=45000)
+                        try:
+                            await page.wait_for_function('(phase)=>MuzikazHouseExplorer.snapshot().doomsday?.phase===phase', arg=expected, timeout=110000)
+                        except Exception:
+                            print('Phase timeout:', expected, await page.evaluate('({history:automaticEmergencyPhases,state:MuzikazHouseExplorer.snapshot().doomsday})'), flush=True)
+                            raise
                         return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
                     async def visit(world, objective):
@@ -76,33 +80,50 @@ async def main():
 
                     airport = 'muzikaz-airport'
                     state = await load(airport)
-                    assert state['doomsday']['active'] and state['doomsday']['phase'] == 'warning'
-                    event_id, detonation_at, fallout_at = [state['doomsday'][key] for key in ['id','detonationAt','falloutAt']]
-                    assert fallout_at - detonation_at == 7000
-                    assert not state['player']['inputBlocked'], 'Automatic guide blocked movement.'
-                    await page.get_by_role('button', name='Hide emergency guide', exact=True).click()
-                    await page.locator('.doomsday-guide').wait_for(state='hidden')
-                    assert await page.get_by_role('button', name='Show emergency guide', exact=True).is_visible()
-                    print('airport: starts without buttons; guide can be hidden', flush=True)
-
+                    initial = state['doomsday']
+                    assert initial['phase'] in ['idle','warning'], initial
+                    if initial['phase'] == 'idle':
+                        assert 15000 <= initial['nextEventAt'] - initial['scheduledAt'] <= 90000
+                        assert not initial['active']
+                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+                        deadline = initial['nextEventAt']
+                        await page.wait_for_timeout(400)
+                        assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.nextEventAt')) == deadline, 'idle snapshots resampled the deadline'
+                        print('airport: quiet arrival retains a first warning deadline within two minutes', flush=True)
+                    # Stream both aircraft during the quiet arrival window so a
+                    # model decode cannot hide the brief detonation observation.
                     inputs.clear()
-                    before = (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['player']['position']
+                    before = state['player']['position']
                     await page.keyboard.down('s');await page.wait_for_timeout(1200);await page.keyboard.up('s')
                     after = (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['player']['position']
-                    assert any(abs(item.get('forward', 0)) > .5 for item in inputs), 'Hiding guide swallowed movement input.'
+                    assert any(abs(item.get('forward', 0)) > .5 for item in inputs), 'Hidden guide swallowed movement input.'
                     assert math.hypot(after[0] - before[0], after[2] - before[2]) > .2, (before, after)
-
                     for aircraft in ['airport-command-flight', 'airport-evacuation-flight']:
                         boarded = await command(airport, 'map-access', entityId=aircraft)
                         assert boarded['players'][boarded['selfId']]['vehicleId'] == aircraft
                         await page.wait_for_function('(id)=>MuzikazHouseExplorer.snapshot().vehicleId===id', arg=aircraft, timeout=30000)
                         current = await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday')
-                        assert current['id'] == event_id and current['detonationAt'] == detonation_at and current['falloutAt'] == fallout_at, 'Boarding changed the automatic timeline.'
-                    print('airport: hidden-guide movement and both emergency aircraft passed', flush=True)
+                        if initial['phase'] == 'idle' and current['cycle'] == 0:
+                            assert current['nextEventAt'] == deadline, 'Boarding resampled the arrival schedule.'
+                    print('airport: quiet/hidden-guide movement and both emergency aircraft passed', flush=True)
+                    state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
+                    if state['doomsday']['phase'] == 'idle':
+                        state = await phase('warning')
+                    assert state['doomsday']['cycle'] == 1 and state['doomsday']['active']
+                    if initial['phase'] == 'idle':
+                        assert deadline <= state['doomsday']['startedAt'] <= deadline + 3000
+                    assert 180000 <= state['doomsday']['nextEventAt'] - state['doomsday']['startedAt'] <= 1200000
+                    event_id, detonation_at, fallout_at = [state['doomsday'][key] for key in ['id','detonationAt','falloutAt']]
+                    recurring_deadline = state['doomsday']['nextEventAt']
+                    assert fallout_at - detonation_at == 7000
+                    assert not state['player']['inputBlocked'], 'Automatic guide blocked movement.'
+                    assert await page.locator('.doomsday-guide').is_hidden()
+                    assert await page.get_by_role('button', name='Show emergency guide', exact=True).is_visible()
+                    print('airport: first event starts without buttons while guide stays hidden', flush=True)
 
                     # The shelter is optional: explosions and fallout must happen
                     # on schedule even with the guide hidden and no check-in.
-                    await phase('detonation')
+                    await page.wait_for_function("automaticEmergencyPhases.includes('detonation')", timeout=45000)
                     assert await page.locator('.doomsday-guide').is_hidden()
                     state = await phase('fallout')
                     assert await page.locator('.doomsday-guide').is_hidden()
@@ -112,25 +133,33 @@ async def main():
                     await page.screenshot(path='/workspace/automatic-doomsday-world-fallout.png')
                     print('airport: real timed detonations and fallout continue with guide hidden', flush=True)
 
-                    for objective_id, following in [('shelter','fallout'),('supplies','recovery'),('recovery','all-clear')]:
+                    for objective_id, following in [('shelter','fallout'),('supplies','recovery'),('recovery','clearing')]:
                         state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
                         objective = next(item for item in state['doomsday']['objectives'] if item['id'] == objective_id)
                         await visit(airport, objective)
                         await phase(following)
+                    clearing = await phase('clearing')
+                    assert 7900 <= clearing['doomsday']['clearAt'] - clearing['doomsday']['phaseStartedAt'] <= 8100
                     state = await phase('all-clear')
                     assert state['doomsday']['completedCount'] == 3 and not state['doomsday']['active']
+                    assert state['doomsday']['nextEventAt'] == recurring_deadline
                     assert state['controlsReady'] and not state['player']['inputBlocked']
-                    await page.get_by_role('button', name='Show emergency guide', exact=True).click()
-                    await page.locator('.doomsday-guide').wait_for(state='visible')
+                    await page.wait_for_timeout(8500)
+                    assert await page.locator('.doomsday-guide,.doomsday-guide-chip,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)'), 'event UI remained after the all-clear interval'
+                    assert (await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday.cycle')) == 1, 'the event restarted before the recurring deadline'
                     assert not manual_operations, manual_operations
-                    print('airport: proximity quests and all-clear need no manual operations', flush=True)
+                    print('airport: quests, clearing animation, quiet all-clear and stable 3–20 minute repeat deadline passed', flush=True)
 
                     state = await load('world-district-neon-docks')
-                    assert state['doomsday']['mapId'] == 'world-district-neon-docks'
-                    assert state['doomsday']['id'] != event_id and state['doomsday']['phase'] == 'warning'
-                    assert state['doomsday']['active'] and state['controlsReady'] and not state['player']['inputBlocked']
+                    local = state['doomsday']
+                    assert local['mapId'] == 'world-district-neon-docks'
+                    assert local['phase'] in ['idle','warning'] and local['cycle'] <= 1
+                    if local['phase'] == 'idle':
+                        assert 15000 <= local['nextEventAt'] - local['scheduledAt'] <= 90000
+                        assert await page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+                    assert state['controlsReady'] and not state['player']['inputBlocked']
                     assert not errors, errors
-                    print('marina: independent automatic emergency and normal controls passed', flush=True)
+                    print('marina: independent quiet arrival schedule and normal controls passed', flush=True)
                     await browser.close()
             finally:
                 server.terminate();server.wait(timeout=15)

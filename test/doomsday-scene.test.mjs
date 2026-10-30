@@ -34,3 +34,32 @@ test('synchronized presentation time drives progress even when a viewer joins du
  effects.update({id:'shared',phase:'detonation',phaseStartedAt:100000,presentationTime:103000,phaseElapsedMs:2000,objectives:[]},environment,position,0);
  assert.equal(effects.root.userData.phaseAge,3,'interpolated clock takes precedence over an older snapshot age');assert.ok(effects.root.getObjectByName('DOOMSDAY_DISTANT_BLAST_1').userData.progress>.5);effects.dispose();
 });
+
+test('warning beacons visibly rotate and pulse, with steady reduced-motion lamps',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ const sites=[{id:'shelter',phase:'warning',name:'Shelter',position:{x:12,y:2,z:-10}}];
+ effects.update({...state('warning'),objectives:sites},environment,position,0);
+ const beacon=effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_0'),rotor=beacon.getObjectByName('ROTATING_SIREN_LAMP'),lens=beacon.getObjectByName('PULSING_WARNING_LENS'),angle=rotor.rotation.y,pulse=lens.material.opacity;
+ assert.equal(rotor.children.filter(child=>child.name==='REVOLVING_WARNING_BEAM').length,2);
+ const siteBeacon=effects.root.getObjectByName('DOOMSDAY_ROTATING_BEACON_2');assert.equal(siteBeacon.visible,true);assert.equal(siteBeacon.position.x,14.5);assert.equal(siteBeacon.position.y,2);
+ effects.update({...state('warning',500),objectives:sites},environment,position,.5);assert.notEqual(rotor.rotation.y,angle);assert.notEqual(lens.material.opacity,pulse);
+ const arrival=effects.root.getObjectByName('DOOMSDAY_ARRIVAL_WARNING_BEACONS');assert.equal(arrival.position.y,2);effects.update({...state('warning',800),objectives:sites},environment,{x:50,y:30,z:30},.8);assert.equal(arrival.position.x,0,'warning lamps stay grounded at the event arrival, not attached to a moving aircraft');assert.equal(arrival.position.y,2);
+ effects.update({...state('warning',1000),objectives:sites},environment,position,1,{reducedMotion:true});const stillAngle=rotor.rotation.y,stillPulse=lens.material.opacity;
+ effects.update({...state('warning',9000),objectives:sites},environment,position,9,{reducedMotion:true});assert.equal(rotor.rotation.y,stillAngle);assert.equal(lens.material.opacity,stillPulse);
+ effects.dispose();
+});
+
+test('clearing fades the sky, clouds, ash and beacons and repeated quiet intervals retain no event props',()=>{
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#3388aa');const effects=createDoomsdayScene({scene,performanceMode:true}),original=scene.background.getHex();
+ effects.update(state('idle'),environment,position,0);assert.equal(effects.root.visible,false);
+ const clearing=age=>({id:'scheduled-1',phase:'clearing',phaseElapsedMs:age,phaseStartedAt:100000,phaseEndsAt:108000,objectives:[]});
+ effects.update(clearing(0),environment,position,0);
+ const sky=effects.root.getObjectByName('DOOMSDAY_COLOURED_SKY'),ash=effects.root.getObjectByName('DOOMSDAY_FALLING_ASH'),cloud=effects.root.getObjectByName('RISING_FALLOUT_CLOUD'),lamp=effects.root.getObjectByName('PULSING_WARNING_LENS');
+ const skyStart=sky.material.uniforms.opacity.value,ashStart=ash.material.opacity,cloudStart=cloud.children[0].material.opacity;
+ effects.update(clearing(4000),environment,position,4);assert.equal(effects.root.userData.effectOpacity,.5);assert.ok(sky.material.uniforms.opacity.value<skyStart);assert.ok(ash.material.opacity<ashStart);assert.ok(cloud.children[0].material.opacity<cloudStart);assert.ok(lamp.material.opacity<.6);
+ effects.update(clearing(8000),environment,position,8);assert.equal(sky.material.uniforms.opacity.value,0);assert.equal(ash.material.opacity,0);assert.equal(lamp.material.opacity,0);
+ effects.update(state('all-clear'),environment,position,9);assert.equal(effects.root.visible,false);assert.equal(scene.background.getHex(),original);
+ const count=()=>{let total=0;effects.root.traverse(()=>total++);return total;},before=count();
+ for(let index=0;index<20;index++){effects.update({...state('warning'),id:'repeat-'+index},environment,position,index);effects.update({...clearing(8000),id:'repeat-'+index},environment,position,index+1);effects.update(state('all-clear'),environment,position,index+2);}
+ assert.equal(count(),before,'beacons and all other persistent effects are pooled across repeats');effects.dispose();
+});

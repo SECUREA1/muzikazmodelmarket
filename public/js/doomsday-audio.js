@@ -24,7 +24,8 @@ export function createDoomsdayAudio({getPreferences=()=>({}),isSpeaking=()=>fals
   const {volume,allowed}=settings();
   const audible=allowed&&volume>0&&['warning','detonation','fallout'].includes(phase);
   const cycle=Math.max(0,time-phaseAt)%14,quiet=phase==='fallout'?cycle>=8:cycle>=11;
-  if(!audible||quiet){stopSiren();return;}
+  if(!audible){stop();return;}
+  if(quiet){stopSiren();return;}
   if(!context){try{context=makeContext();}catch{return;}}
   if(context.state==='suspended'){context.resume().catch(()=>{});return;}
   if(!oscillators.length){gain=context.createGain();gain.connect(context.destination);for(let index=0;index<2;index++){const oscillator=context.createOscillator();oscillator.type='sine';oscillator.connect(gain);oscillator.start();oscillators.push(oscillator);}}
