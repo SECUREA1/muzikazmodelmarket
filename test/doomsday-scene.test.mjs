@@ -35,6 +35,24 @@ test('synchronized presentation time drives progress even when a viewer joins du
  assert.equal(effects.root.userData.phaseAge,3,'interpolated clock takes precedence over an older snapshot age');assert.ok(effects.root.getObjectByName('DOOMSDAY_DISTANT_BLAST_1').userData.progress>.5);effects.dispose();
 });
 
+test('all three impacts finish on their shared clock across the start of fallout',()=>{
+ const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
+ const draw=(phase,at)=>effects.update({id:'full-bombing',phase,detonationAt:100000,phaseStartedAt:phase==='detonation'?100000:107000,presentationTime:at,objectives:[]},environment,position,0);
+ draw('detonation',103100);
+ const last=effects.root.getObjectByName('DOOMSDAY_DISTANT_BLAST_3'),ball=last.getObjectByName('GROWING_FIREBALL'),wave=last.getObjectByName('EXPANDING_SHOCKWAVE');
+ assert.equal(ball.visible,false,'the third impact waits for its own 3.2-second cue');
+ draw('detonation',103300);assert.equal(ball.visible,true);assert.equal(wave.visible,true);
+ draw('detonation',106999);const scale=ball.scale.x,cloudProgress=last.userData.progress;
+ draw('fallout',107000);
+ assert.equal(ball.visible,true,'the final fireball is not removed at the phase boundary');assert.equal(wave.visible,true);
+ assert.ok(Math.abs(ball.scale.x-scale)<.02);assert.ok(Math.abs(last.userData.progress-cloudProgress)<.001,'the cloud continues growing without snapping to full size');
+ assert.equal(effects.root.getObjectByName('DOOMSDAY_FALLING_ASH').visible,true,'fallout begins while the final impact finishes');
+ draw('fallout',108300);assert.equal(ball.visible,false);assert.equal(wave.visible,false);assert.equal(last.userData.progress,1);
+ draw('fallout',3100000);assert.equal(ball.visible,false,'long quest phases never replay impacts');assert.equal(effects.root.visible,true);
+ assert.equal(last.getObjectByName('RISING_FALLOUT_CLOUD').visible,true);
+ effects.dispose();
+});
+
 test('warning beacons visibly rotate and pulse, with steady reduced-motion lamps',()=>{
  const effects=createDoomsdayScene({scene:new THREE.Scene(),performanceMode:true});
  const sites=[{id:'shelter',phase:'warning',name:'Shelter',position:{x:12,y:2,z:-10}}];

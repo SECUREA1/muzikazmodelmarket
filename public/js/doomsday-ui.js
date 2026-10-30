@@ -5,6 +5,7 @@ import {createDoomsdayAudio} from './doomsday-audio.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const guidePreference='muzikaz.emergency.guide.hidden';
 const challengePreference='muzikaz.emergency.challenge.follow';
+const noticeIntervalMs=45000;
 const briefings={
  warning:'This is Cole on emergency radio. Nuclear warning. Head for the marked continuity shelter. Detonations are expected shortly. Keep your radio on; I will guide you.',
  detonation:'Cole here. Detonations on the horizon! Stay under cover while the blast passes. Fallout is coming.',
@@ -17,9 +18,17 @@ const ambientBriefings={
  warning:'This is Cole on emergency radio. Nuclear warning. Take cover; detonations are expected shortly. Keep your radio on.',
  detonation:'Cole here. Detonations on the horizon! Stay under cover while the blast passes. Fallout is coming.',
  fallout:'Cole on emergency radio. Fallout has begun. Fallout is drifting across the area. The emergency response is still underway.',
- recovery:'Cole here. The fallout is easing. Keep exploring while conditions settle.',
+ recovery:'Cole here. Recovery is underway. The emergency alert remains active while community communications are restored. Stand by for the all-clear.',
  clearing:briefings.clearing,
  'all-clear':briefings['all-clear']
+};
+const statusNotices={
+ fallout:'Cole on emergency radio. The fallout alert remains active. The emergency response is continuing. Stay clear of the blast zone and keep your radio on.',
+ recovery:'Cole here. Emergency recovery is still underway. The alert remains active. Stand by for the all-clear.'
+};
+const challengeNotices={
+ fallout:'Cole on emergency radio. The fallout warning remains active. Follow the green supply beacon and collect the sealed relief supplies.',
+ recovery:'Cole here. Restore the marked recovery relay to complete the response. The emergency alert remains active until communications are restored.'
 };
 const portrait=`<svg viewBox="0 0 100 112" aria-hidden="true"><rect width="100" height="112" rx="13" fill="#142c29"/><path d="M10 112V93q4-21 40-21t40 21v19" fill="#a67432"/><path d="M39 70v13l11 9 12-9V70" fill="#b98059"/><ellipse cx="50" cy="46" rx="24" ry="30" fill="#d5a075"/><path d="M26 44V29q0-21 25-21 25 0 25 22v15L66 26 40 24Z" fill="#28312d"/><path d="M31 58q4 22 19 22t19-22l-9 9H40Z" fill="#4d4032"/><path d="M35 42h9m12 0h9" stroke="#4a3629" stroke-width="3" stroke-linecap="round"/><circle cx="40" cy="48" r="2" fill="#152525"/><circle cx="61" cy="48" r="2" fill="#152525"/><path d="m51 49-3 10h5" fill="none" stroke="#a66d4e" stroke-width="2"/><rect class="radio-mouth" x="44" y="65" width="14" height="3" rx="2" fill="#382b26"/><path d="M24 46v-9q0-31 27-31 27 0 27 31v9" fill="none" stroke="#5c7770" stroke-width="5"/><rect x="20" y="37" width="9" height="23" rx="4" fill="#1a2523"/><rect x="73" y="37" width="9" height="23" rx="4" fill="#1a2523"/><path d="M78 56v11H64" fill="none" stroke="#8aaca0" stroke-width="3"/><circle cx="63" cy="67" r="3" fill="#b5dcc1"/><path d="m17 111 9-37 9 4-4 34" fill="#c49365"/><rect x="14" y="66" width="21" height="36" rx="4" fill="#172c29" transform="rotate(-10 25 85)"/><path d="m20 67-5-19" stroke="#172c29" stroke-width="4" stroke-linecap="round"/><path d="m18 80 12-2m-11 8 12-2m-11 8 12-2" stroke="#668c7d" stroke-width="2"/><circle class="radio-led" cx="27" cy="73" r="2" fill="#d0ff73"/></svg>`;
 
@@ -35,15 +44,15 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  stage.append(chip,panel,banner);
  const followControl=panel.querySelector('[data-follow-challenge]');followControl.checked=followChallenge;panel.dataset.followChallenge=String(followChallenge);
  const audio=createDoomsdayAudio({getPreferences,isSpeaking:()=>!!(voice?.state?.speaking||voice?.state?.outputBusy)});
- let local={},worldId=null,state=null,disposed=false,generation=0,signature='',spoken='',runId=null,shelterSeen=null,rawState=null,receivedAt=0,transcript='',radioSequence=0,activeRadio=0,minimumRadio=0,speechActive=false;
+ let local={},worldId=null,state=null,disposed=false,generation=0,signature='',spoken='',runId=null,shelterSeen=null,rawState=null,receivedAt=0,transcript='',radioSequence=0,activeRadio=0,minimumRadio=0,speechActive=false,nextNoticeAt=0,noticeSequence=0;
  const guideAvailable=()=>!!state&&state.phase!=='idle'&&(state.phase!=='all-clear'||state.presentationTime-state.phaseStartedAt<8000);
  const showGuide=()=>{const available=guideAvailable();panel.hidden=!available||guideHidden;chip.hidden=!available||!guideHidden;chip.setAttribute('aria-expanded',String(!panel.hidden));};
  function hideGuide(value){guideHidden=value;try{localStorage.setItem(guidePreference,String(value));}catch{}showGuide();}
  function speaking(value){speechActive=value;panel.dataset.speaking=String(value);chip.dataset.speaking=String(value);panel.querySelector('[data-radio-status]').textContent=value?'COLE · TRANSMITTING':'RADIO CONNECTED';}
- function speak(text,key,{priority='emergency'}={}){
+ function speak(text,key,{priority='emergency',captionNow=false}={}){
   const at=generation,sequence=++radioSequence;
   const caption=()=>{transcript=text;panel.querySelector('[data-transcript]').textContent=text;};
-  if(priority==='emergency'){minimumRadio=sequence;caption();}else if(!transcript)caption();
+  if(priority==='emergency'){minimumRadio=sequence;caption();}else if(captionNow||!transcript)caption();
   const done=()=>{if(at===generation&&activeRadio===sequence){activeRadio=0;speaking(false);}};
   voice?.announce?.(text,{key:'automatic-response:'+key,worldId,category:'announcements',voice:'Emergency dispatch',role:'dispatcher',voiceGender:'male',effect:'walkie',priority,
    onStarted:()=>{if(at===generation&&sequence>=minimumRadio){activeRadio=sequence;caption();speaking(true);}},onFinished:done,onCancelled:done,onError:done});
@@ -54,7 +63,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  const followChanged=()=>{
   followChallenge=followControl.checked;panel.dataset.followChallenge=String(followChallenge);
   try{localStorage.setItem(challengePreference,String(followChallenge));}catch{}
-  signature='';render();
+  signature='';render();nextNoticeAt=(state?.presentationTime||now())+noticeIntervalMs;
   if(state?.active){const line=(followChallenge?briefings:ambientBriefings)[state.phase];if(line)speak((followChallenge?'Following the emergency challenge. ':'Challenge tracking off. ')+line,'follow:'+now(),{priority:followChallenge?'normal':'emergency'});}
  };
  followControl.addEventListener('change',followChanged);
@@ -67,12 +76,12 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
    panel.querySelector('[data-scenario]').innerHTML=`<div class="doomsday-phase" data-phase="${escape(state.phase)}"><small>${escape(getEnvironment()?.name||'Current map')}</small><h4>${escape(state.phaseLabel)}</h4><p>${escape(followChallenge?state.message:ambientBriefings[state.phase]||state.message)}</p></div><div data-challenge ${followChallenge?'':'hidden'}><progress max="${required.length||2}" value="${completed}" aria-label="Response objectives completed"></progress><span>${completed} / ${required.length||2} response quests · shelter optional</span><ol class="doomsday-objectives">${state.objectives.map(o=>`<li class="${o.completed?'is-complete':o===next?'is-current':''}"><strong>${o.completed?'✓ ':''}${escape(o.name)}${o.id==='shelter'?' · optional':''}</strong><span>${escape(o.description)}</span><small data-site="${escape(o.id)}">${Math.round(o.position.x)}, ${Math.round(o.position.z)}</small></li>`).join('')}</ol></div>`;
   }
   showGuide();banner.hidden=!guideAvailable();banner.dataset.phase=state.phase;banner.querySelector('[data-phase]').textContent=state.phaseLabel;
-  banner.querySelector('[data-task]').textContent=next?next.name:state.phase==='warning'?'Incoming alert · take cover':state.phase==='fallout'?'Fallout drifting · keep exploring':state.phase==='recovery'?'Conditions easing':state.phase==='detonation'?'Take cover · fallout approaching':state.phase==='clearing'?'Fallout fading · normal conditions returning':state.phase==='all-clear'?'The alert has passed':'';
+  banner.querySelector('[data-task]').textContent=next?next.name:state.phase==='warning'?'Incoming alert · take cover':state.phase==='fallout'?'Fallout alert active · emergency response underway':state.phase==='recovery'?'Emergency response active · awaiting all clear':state.phase==='detonation'?'Take cover · fallout approaching':state.phase==='clearing'?'Final clearance · normal conditions returning':state.phase==='all-clear'?'The alert has passed':'';
   if(next){const distance=Math.round(Math.hypot(next.position.x-getPosition().x,next.position.z-getPosition().z)),site=panel.querySelector(`[data-site="${next.id}"]`);if(site)site.textContent=`${distance} m · registers on arrival`;}
  }
  function tick(time=0,{reducedMotion=false}={}){
   if(disposed)return;panel.dataset.reducedMotion=String(reducedMotion);const environment=getEnvironment();
-  if(worldId!==environment?.id){worldId=environment?.id;local={};generation++;signature=spoken='';runId=null;shelterSeen=null;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;}
+  if(worldId!==environment?.id){worldId=environment?.id;local={};generation++;signature=spoken='';runId=null;shelterSeen=null;nextNoticeAt=0;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;}
   if(!environment){audio.stop();return;}
   if(isShared()){
    const incoming=getState();if(!incoming||incoming.mapId!==worldId){panel.hidden=chip.hidden=banner.hidden=true;audio.stop();effects?.reset();return;}
@@ -85,7 +94,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   render();
   const phaseKey=state.id+':'+state.phase;
   if(runId!==state.id){runId=state.id;shelterSeen=null;}
-  if(spoken!==phaseKey){spoken=phaseKey;speaking(false);const line=(followChallenge?briefings:ambientBriefings)[state.phase];if(line){speak(line,phaseKey);announce(state.phaseLabel+'. '+(followChallenge?state.message:line));}}
+  if(spoken!==phaseKey){spoken=phaseKey;nextNoticeAt=state.presentationTime+noticeIntervalMs;speaking(false);const line=(followChallenge?briefings:ambientBriefings)[state.phase];if(line){speak(line,phaseKey);announce(state.phaseLabel+'. '+(followChallenge?state.message:line));}}
   const shelter=state.objectives.find(o=>o.id==='shelter');
   if(followChallenge&&shelterSeen===false&&shelter?.completed&&state.phase==='warning')speak('Shelter reached. Stay ready and keep the radio on. I will call when the fallout begins.',state.id+':shelter',{priority:'normal'});
   shelterSeen=!!shelter?.completed;
@@ -94,7 +103,19 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   banner.querySelector('[data-countdown]').textContent=remaining&&countdownLabel?countdownLabel+remaining+'s':'';
   // Voice callbacks own the talking animation; hiding the guide never mutes it.
   if(speechActive&&voice?.state&&!voice.state.speaking&&!voice.state.outputBusy)speaking(false);
+  // Long quest-held phases keep reporting their actual status. Wait for an
+  // idle radio, send one update, then start a fresh interval: clock jumps and
+  // background tabs never produce a backlog of overdue announcements.
+  const notice=(followChallenge?challengeNotices:statusNotices)[state.phase],voiceState=voice?.state||{};
+  if(state.active&&notice&&state.presentationTime>=nextNoticeAt&&!document.hidden&&!speechActive&&!voiceState.speaking&&!voiceState.outputBusy&&!voiceState.loading&&!voiceState.pending){
+   nextNoticeAt=state.presentationTime+noticeIntervalMs;
+   const key=phaseKey+':status:'+ ++noticeSequence,preferences=getPreferences();
+   if(voice?.announce&&voiceState.supported!==false&&voiceState.unlocked!==false&&!voiceState.muted&&!preferences.masterMuted&&!preferences.announcementsMuted){
+    speak(notice,key,{priority:'normal',captionNow:true});
+   }else{transcript=notice;panel.querySelector('[data-transcript]').textContent=notice;}
+   announce(state.phaseLabel+'. '+notice);
+  }
   audio.update(state,time);effects?.update(state,environment,getPosition(),time,{reducedMotion,showObjectives:followChallenge});
  }
- return {tick,open:()=>hideGuide(false),getState:()=>state,followingChallenge:()=>followChallenge,reset(){worldId=null;state=rawState=null;generation++;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;},dispose(){if(disposed)return;disposed=true;generation++;radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();panel.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);chip.remove();panel.remove();banner.remove();}};
+ return {tick,open:()=>hideGuide(false),getState:()=>state,followingChallenge:()=>followChallenge,reset(){worldId=null;state=rawState=null;generation++;nextNoticeAt=0;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;},dispose(){if(disposed)return;disposed=true;generation++;radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();panel.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);chip.remove();panel.remove();banner.remove();}};
 }

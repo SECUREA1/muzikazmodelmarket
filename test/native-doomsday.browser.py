@@ -11,11 +11,17 @@ class Handler(SimpleHTTPRequestHandler):
 server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
 Thread(target=server.serve_forever,daemon=True).start()
 
-def walk_to(page, kind, getter, point):
+def walk_to(page, kind, getter, objective):
+ point=objective['position']
  for _ in range(100):
   snapshot=page.evaluate(getter);player=snapshot['player'] if kind=='hockey' else snapshot['walking']
+  if any(item['id']==objective['id'] and item['completed'] for item in snapshot['doomsday']['objectives']): return
   dx=point['x']-player['x'];dz=point['z']-player['z']
-  if math.hypot(dx,dz)<3: return
+  # Arrival registers within 4.5m; an authored prop can prevent a closer walk.
+  # Let the simulation confirm arrival (and supplies settle) inside that radius.
+  if math.hypot(dx,dz)<=4.5:
+   page.wait_for_timeout(160)
+   continue
   if kind=='hockey':
    heading=snapshot['heading'];right=-math.cos(heading)*dx+math.sin(heading)*dz;forward=math.sin(heading)*dx+math.cos(heading)*dz
   else:right=dx;forward=-dz
@@ -86,7 +92,7 @@ try:
    for objective_id,following in [('shelter','fallout'),('supplies','recovery'),('recovery','clearing')]:
     state=page.evaluate(f'{getter}.doomsday');objective=next(o for o in state['objectives'] if o['id']==objective_id)
     page.locator('#rink' if kind=='hockey' else '#world canvas').focus()
-    walk_to(page,kind,getter,objective['position'])
+    walk_to(page,kind,getter,objective)
     page.wait_for_function(f'{getter}.doomsday.objectives.some(o=>o.id==="{objective_id}"&&o.completed)')
     if objective_id!='shelter':page.wait_for_function(f'{getter}.doomsday.phase==="{following}"')
     print(kind,objective_id,'automatically completed by arrival',flush=True)

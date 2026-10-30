@@ -70,6 +70,9 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   const age=Number.isFinite(presentationTime)&&Number.isFinite(state.phaseStartedAt)?Math.max(0,(presentationTime-state.phaseStartedAt)/1000):Number.isFinite(state.phaseElapsedMs)?Math.max(0,state.phaseElapsedMs/1000):Math.max(0,time-phaseAt);
   skyline.position.set(position.x,position.y,position.z);
   const phase=state.phase,detonation=phase==='detonation',fallout=phase==='fallout',warning=phase==='warning',recovery=phase==='recovery',clearing=phase==='clearing';
+  // Staggered impacts share one clock, so the final fireball and shockwave
+  // finish naturally as fallout starts rather than being cut off at phase 7s.
+  const blastAge=detonation?age:fallout?Number.isFinite(state.detonationAt)&&Number.isFinite(presentationTime)?Math.max(0,(presentationTime-state.detonationAt)/1000):7+age:Infinity;
   const clearingDuration=Number.isFinite(state.phaseEndsAt)&&Number.isFinite(state.phaseStartedAt)?Math.max(.001,(state.phaseEndsAt-state.phaseStartedAt)/1000):8;
   const visibility=clearing?1-clamp(age/clearingDuration):1;root.userData.effectOpacity=visibility;
   const palette=warning?[0x78503b,0x171d29,.3]:detonation?[0xdc793d,0x4d2829,.78]:fallout?[0x879141,0x16221d,.75]:[0x496e60,0x172933,.4];
@@ -81,10 +84,10 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   const pulse=reducedMotion?.75:.25+.75*(.5+.5*Math.sin(age*Math.PI));beaconLens.opacity=(.2+pulse*.75)*visibility;beaconBeam.opacity=(.02+pulse*.155)*visibility;beaconBody.opacity=.9*visibility;
   for(const item of beacons){item.rotor.rotation.y=reducedMotion?item.index*Math.PI/3:age*1.6+item.index*Math.PI/3;item.rig.userData.pulse=pulse;item.rig.userData.reducedMotion=reducedMotion;if(item.index>=2){const objective=state.objectives?.[item.index-2];item.rig.visible=!!objective;if(objective)item.rig.position.set(objective.position.x+2.5,objective.position.y,objective.position.z+1);}}
   for(const blast of blasts){
-   const elapsed=detonation?Math.max(0,age-blast.index*1.6):fallout||recovery||clearing?10:0,progress=clamp(elapsed/5),emerged=elapsed>0;
+   const elapsed=blastAge-blast.index*1.6,progress=clamp(elapsed/5),emerged=elapsed>=0;
    blast.root.visible=detonation||fallout||recovery||clearing;blast.root.userData.progress=progress;
-   blast.ball.visible=detonation&&emerged&&elapsed<4.7&&!reducedMotion;blast.ball.scale.setScalar(2+22*Math.sin(clamp(elapsed/5)*Math.PI*.75));blast.ball.position.y=10+clamp(elapsed/5)*25;
-   blast.shockwave.visible=detonation&&emerged&&elapsed<5&&!reducedMotion;blast.shockwave.scale.setScalar(2+elapsed*20);
+   blast.ball.visible=(detonation||fallout)&&emerged&&elapsed<4.7&&!reducedMotion;blast.ball.scale.setScalar(2+22*Math.sin(clamp(elapsed/5)*Math.PI*.75));blast.ball.position.y=10+clamp(elapsed/5)*25;
+   blast.shockwave.visible=(detonation||fallout)&&emerged&&elapsed<5&&!reducedMotion;blast.shockwave.scale.setScalar(2+clamp(elapsed,0,5)*20);
    blast.cloud.visible=(emerged||reducedMotion)&&(detonation||fallout||recovery||clearing);blast.cloud.scale.setScalar(reducedMotion?.9:.15+progress*.85);blast.cloud.position.y=reducedMotion?0:progress*8;
   }
   dust.visible=fallout||recovery||clearing;dustMaterial.opacity=(recovery||clearing?.28:.7)*visibility;

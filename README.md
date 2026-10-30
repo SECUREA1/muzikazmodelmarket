@@ -271,9 +271,14 @@ Objectives register automatically when players reach their sites; the shelter is
 optional and never delays the explosions.
 
 Each explorer room shares one event; hockey and arcade use local exercises.
-Loud sirens and rotating amber beacons accompany the event. Sirens respect audio
-settings and duck beneath Cole’s male walkie-talkie voice. Reduced motion softens
-the animation. Movement, travel, and vehicle controls stay available throughout.
+Three staggered blasts have matching explosion sounds, and the last fireball and
+shockwave finish as fallout begins. Loud sirens and rotating amber beacons continue
+through the full fallout and recovery response, then fade during the final eight
+seconds before all-clear. Cole gives recurring status notices during long response
+phases, even with the guide hidden or challenge tracking off; quest directions
+remain optional. Sirens respect audio settings and duck beneath his male
+walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
+vehicle controls stay available throughout.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.
