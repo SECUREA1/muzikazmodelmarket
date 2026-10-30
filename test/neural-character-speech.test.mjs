@@ -198,3 +198,17 @@ test('live and recorded voices share speech leveling while mute retains control'
  line.volume=0;for(const update of f.intervals.values())update();assert.equal(f.gains[0].gain.value,0);
  f.engine.dispose();
 });
+
+test('only walkie transmissions use the clear radio graph and cancellation releases it',async()=>{
+ const f=fixture(),filters=[],oscillators=[];
+ f.context.createBiquadFilter=()=>{const filter={frequency:{value:0},Q:{value:0},targets:[],disconnected:0,connect(target){this.targets.push(target);},disconnect(){this.disconnected++;}};filters.push(filter);return filter;};
+ f.context.createOscillator=()=>{const oscillator={frequency:{value:0},connect(){},start(){},stop(){},disconnect(){}};oscillators.push(oscillator);return oscillator;};
+ // The cue gain uses a short envelope while the speech gain still tracks mute.
+ const createGain=f.context.createGain;f.context.createGain=()=>{const gain=createGain();gain.gain.linearRampToValueAtTime=()=>{};return gain;};
+ await f.engine.resume();const utterance=new GameSpeechUtterance('Emergency dispatch. Find shelter now.');utterance.voice=GENERATED_VOICES[1];utterance.effect='walkie';
+ f.engine.speak(utterance);await tick();assert.equal(JSON.parse(f.calls[0].options.body).voice,'male');assert.equal(filters.length,2);assert.equal(oscillators.length,1);
+ assert.equal(f.sources[0].connected[0].connected[0],filters[0]);assert.equal(filters[0].frequency.value,180);assert.equal(filters[1].frequency.value,4400);
+ assert.equal(f.sources[0].playbackRate.value,1);f.engine.cancel();assert.equal(filters[0].disconnected,1);assert.equal(filters[1].disconnected,1);
+ f.engine.speak(new GameSpeechUtterance('A normal dry reply.'));await tick();assert.equal(filters.length,2,'ordinary replies do not inherit the previous radio effect');
+ assert.equal(f.sources[1].connected[0].connected[0],f.context.destination);f.engine.dispose();
+});

@@ -41,7 +41,8 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
   while(queue.length){const candidate=queue.shift(),ttl=candidate.category==='introduction'?Infinity:candidate.category==='dialogue'?120000:30000;if(now()-candidate.queuedAt<ttl&&volume(candidate)>0){call=candidate;break;}}
   if(!call)return;
   const token=++generation,character=characterFor(call),style=characterSpeechStyle(character,{text:call.text}),spokenText=prepareSpeechText(call.text),available=voices();
-  const selection={language:style.lang,preferredVoiceURI:cast.get(character.id),selectedVoiceURI:preferences.speechVoiceURI,gender:preferences.speechVoiceGender||'auto'};
+  const authoredGender=['male','female'].includes(call.voiceGender)?call.voiceGender:null;
+  const selection={language:style.lang,preferredVoiceURI:cast.get(character.id),selectedVoiceURI:authoredGender?'':preferences.speechVoiceURI,gender:authoredGender||preferences.speechVoiceGender||'auto'};
   // A member's saved device voice may be missing on their phone, or have been
   // removed by the browser. Our named generated voices are available on every
   // device, so a stale device selection must not silently consume the guide.
@@ -60,7 +61,7 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
     utterance=new Utterance(spokenText);
     if(voice)utterance.voice=voice;
     if(voice?.generated){utterance.recordedIntroduction=call.category==='introduction';if(call.preview)utterance.audioURL='/public/audio/voices/'+voice.gender+'-preview.wav';}
-    utterance.lang=voice?.lang||style.lang;utterance.rate=style.rate;utterance.pitch=style.pitch;utterance.volume=volume(call);
+    utterance.lang=voice?.lang||style.lang;utterance.rate=style.rate;utterance.pitch=style.pitch;utterance.volume=volume(call);utterance.effect=call.effect==='walkie'?'walkie':null;
     const watchdog=()=>{if(token!==generation||attemptId!==attempt)return;call.onError?.('Voice playback took too long. Please try again.');cancelCurrent();play();};
     utterance.onstart=()=>{if(attemptId!==attempt||token!==generation)return;started=true;currentStarted=true;if(call.id===introduction?.id)introductionHeard=true;clearTimer(timer);timer=setTimer(watchdog,speechTimeout(spokenText,style.rate));call.onStarted?.(voice);};
     if(voice?.generated)utterance.onboundary=boundary=>{if(token!==generation||attemptId!==attempt||!Number.isFinite(boundary?.audioDuration))return;clearTimer(timer);timer=setTimer(watchdog,Math.max(8000,boundary.audioDuration*1000+(boundary.remainingSegments>0?65000:5000)));};
@@ -83,8 +84,8 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
      if(!retry&&!started&&!voice?.generated&&['network','voice-unavailable','language-unavailable','synthesis-unavailable','synthesis-failed'].includes(error?.error)){
       const generated=generatedFallback();
       if(generated){speak(generated,true);return;}
-      const local=chooseCharacterVoice(available.filter(candidate=>candidate.localService&&candidate!==voice),character,{language:style.lang,gender:preferences.speechVoiceGender||'auto'});
-      if(local&&!preferences.speechVoiceURI){speak(local,true);return;}
+      const local=chooseCharacterVoice(available.filter(candidate=>candidate.localService&&candidate!==voice),character,{language:style.lang,gender:selection.gender});
+      if(local&&(authoredGender||!preferences.speechVoiceURI)){speak(local,true);return;}
      }
      // Dynamic replies still need the voice service. A clear installed voice
      // can read the exact reply when that service is offline. Try it once only
@@ -105,12 +106,28 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
  speech?.addEventListener?.('voiceschanged',onVoicesChanged);
  function setScope(worldId){if(scope===worldId)return;stop();seen.clear();scope=worldId;latest=null;introduction=null;introductionHeard=false;replyRequest=null;}
  function remember(id){if(seen.has(id))return false;seen.add(id);if(seen.size>128)seen.delete(seen.values().next().value);return true;}
- function enqueue(call){latest={...call,queuedAt:now()};if(latest.category==='introduction'){introduction=latest;introductionHeard=false;}if(!blocked(latest)){queue.push(latest);if(queue.length>8){const expendable=queue.findIndex(call=>call.category!=='introduction');queue.splice(expendable<0?0:expendable,1)[0]?.onCancelled?.();}}play();}
+ function enqueue(call){
+  latest={...call,queuedAt:now()};if(latest.category==='introduction'){introduction=latest;introductionHeard=false;}
+  if(!blocked(latest)){
+   if(latest.priority==='emergency'){
+    // A newer response phase replaces obsolete radio instructions. An urgent
+    // dispatch must not wait behind a long welcome or ambient job dialogue.
+    cancelCurrent();
+    for(let index=queue.length-1;index>=0;index--){
+     const queued=queue[index],sameRadio=latest.effect==='walkie'&&queued.effect==='walkie'&&queued.voice===latest.voice;
+     if(queued.priority==='emergency'||sameRadio)queue.splice(index,1)[0].onCancelled?.();
+    }
+    queue.unshift(latest);
+   }else queue.push(latest);
+   if(queue.length>8){const expendable=queue.findIndex(call=>call.category!=='introduction'&&call.priority!=='emergency');queue.splice(expendable<0?queue.length-1:expendable,1)[0]?.onCancelled?.();}
+  }
+  play();
+ }
  const api={
-  announce(text,{key=text,worldId=scope,voice='World guide',role='guide',category='announcements',source,entityId,range,personality,mood,voiceProfile}={}){
+  announce(text,{key=text,worldId=scope,voice='World guide',role='guide',category='announcements',source,entityId,range,personality,mood,voiceProfile,voiceGender,effect,priority,onStarted,onFinished,onCancelled,onError}={}){
    if(disposed||!text)return false;setScope(worldId);
    const id='announcement:'+worldId+':'+key;if(!remember(id))return false;
-   enqueue({id,text:String(text),voice,speaker:voice,role,category,source,entityId,range,personality,mood,voiceProfile});return true;
+   enqueue({id,text:String(text),voice,speaker:voice,role,category,source,entityId,range,personality,mood,voiceProfile,voiceGender,effect,priority:priority==='emergency'?'emergency':null,onStarted,onFinished,onCancelled,onError});return true;
   },
   unlock(){
    if(disposed)return false;
@@ -133,14 +150,19 @@ export function createQuestConversationVoice({speech=gameSpeech(),Utterance=Game
    // remains intact, and repeated snapshots cannot restart the welcome.
    stop();replyRequest={worldId:scope,entityId};return api.unlock();
   },
-  resumeIntroduction(){if(disposed||!introduction||introductionHeard||blocked(introduction))return false;if(current?.id===introduction.id||queue.some(call=>call.id===introduction.id))return true;queue.unshift({...introduction,queuedAt:now()});play();return true;},
+  resumeIntroduction(){if(disposed||!introduction||introductionHeard||blocked(introduction)||current?.priority==='emergency'||queue.some(call=>call.priority==='emergency'))return false;if(current?.id===introduction.id||queue.some(call=>call.id===introduction.id))return true;queue.unshift({...introduction,queuedAt:now()});play();return true;},
   setMuted(value){muted=!!value;if(muted)stop();else play();},
   setPreferences(value={}){if((preferences.speechVoiceGender||'auto')!==(value.speechVoiceGender||'auto')||(preferences.speechVoiceURI||'')!==(value.speechVoiceURI||'')){
    // Account settings can arrive after the first world snapshot. Retain a
    // welcome whose audio has not started, then use the newly loaded voice.
    // A completed or already audible welcome is never restarted by settings.
-   const unheard=[...(current?.category==='introduction'&&!currentStarted?[current]:[]),...queue.filter(call=>call.category==='introduction')];
-   stop();queue.push(...unheard);cast.clear();
+   if(!(current?.priority==='emergency'&&['male','female'].includes(current.voiceGender))){
+    const unheard=[...(current?.category==='introduction'&&!currentStarted?[current]:[]),...queue.filter(call=>call.category==='introduction'||call.priority==='emergency')];
+    stop();queue.push(...unheard);
+   }
+   // The dispatcher's authored identity does not change when late account
+   // settings arrive. Mute switches below still stop it immediately.
+   cast.clear();
   }preferences={...value};for(let i=queue.length-1;i>=0;i--)if(blocked(queue[i])){queue[i].onCancelled?.();queue.splice(i,1);}if(!queue.length)clearVoiceWait();if(current&&blocked(current))cancelCurrent();play();},
   setScene({listener:position,actors:worldActors={}}={}){listener=position;actors=worldActors;if(current){const gain=volume(current);if(gain<=0){cancelCurrent();play();}else if(utterance)utterance.volume=gain;}},
   ingest(calls,{worldId,actorId,serverTime,instanceId}={}){

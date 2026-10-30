@@ -253,14 +253,17 @@ See [prison controls and challenges](docs/prison-world.md). Six role-specific da
 
 ## Doomsday response
 
-Open **Doomsday** in the game toolbar (or its **More** menu) to start a fictional
-nuclear emergency. Check in at the marked shelter, recover relief supplies, and
-restore the recovery relay to progress from warning through fallout to all clear.
-The shared scenario runs independently in each explorer map; hockey and arcade
-include local response exercises alongside their matches and attractions. The menu
-can end or replay an exercise. Glowing skylines, fallout dust, sirens, and spoken objectives follow
-the phase. Sirens respect effects volume, mute, and speech playback; scenery respects reduced motion.
-Movement, map travel, and vehicle controls remain available throughout.
+A fictional emergency starts automatically when a player enters a map. After an
+18-second warning, distant bombs detonate, the sky changes, and fallout begins.
+The animated radio guide can be hidden or restored without pausing the experience.
+Cole’s male walkie-talkie dispatch cuts through the warning sirens to call out
+shelter, supply recovery, and communications quests. Reach the marked sites to
+complete quests automatically; the optional shelter does not delay the explosions.
+
+Each explorer room shares one event; hockey and arcade use local exercises.
+Sirens respect audio volume and mute settings and duck beneath dispatch speech.
+Reduced motion softens the blast animation. Movement, travel, and vehicle controls
+remain available throughout, with normal skies returning at all clear.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.

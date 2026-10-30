@@ -1,8 +1,9 @@
+"""Automatic emergency progression and hidden guides on native game maps."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 from playwright.sync_api import sync_playwright
-import os
+import math, os
 
 os.chdir(Path(__file__).resolve().parents[1])
 class Handler(SimpleHTTPRequestHandler):
@@ -11,7 +12,6 @@ server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
 Thread(target=server.serve_forever,daemon=True).start()
 
 def walk_to(page, kind, getter, point):
- import math
  for _ in range(100):
   snapshot=page.evaluate(getter);player=snapshot['player'] if kind=='hockey' else snapshot['walking']
   dx=point['x']-player['x'];dz=point['z']-player['z']
@@ -44,32 +44,29 @@ try:
    else:
     page.wait_for_function('window.NeonJunction&&document.body.classList.contains("arcade-dashboard")',timeout=60000)
     page.locator('#camera-toggle').click()
-   page.wait_for_function(f'{getter}.doomsday?.phase==="idle"')
-   toggle=page.get_by_role('button',name='Doomsday response exercise',exact=True)
-   toggle.click();panel=page.locator('#doomsday-panel');assert panel.is_visible()
-   assert 'local' in panel.locator('.doomsday-context').inner_text()
-   panel.locator('[data-operation="start"]').click()
-   page.wait_for_function(f'{getter}.doomsday.phase==="warning"')
-   # Opening the response companion keeps the existing skate/walk input active.
+   page.wait_for_function(f'{getter}.doomsday?.automatic && {getter}.doomsday.phase==="warning"')
+   assert page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count()==0
+   page.get_by_role('button',name='Hide emergency guide',exact=True).click()
+   guide=page.locator('.doomsday-guide');assert guide.is_hidden()
    before=page.evaluate(f'{getter}.player' if kind=='hockey' else f'{getter}.walking')
    page.keyboard.down('w');page.wait_for_timeout(250);page.keyboard.up('w')
    after=page.evaluate(f'{getter}.player' if kind=='hockey' else f'{getter}.walking')
    assert abs(after['x']-before['x'])+abs(after['z']-before['z'])>.01,(kind,before,after)
-   for phase in ['warning','fallout','recovery']:
-    state=page.evaluate(f'{getter}.doomsday');objective=next(o for o in state['objectives'] if o['phase']==phase)
-    panel.locator('[data-close]').click()
+   page.wait_for_function(f'{getter}.doomsday.phase==="detonation"',timeout=30000)
+   assert guide.is_hidden()
+   page.wait_for_function(f'{getter}.doomsday.phase==="fallout"',timeout=15000)
+   assert guide.is_hidden()
+   print(kind,'automatically reached fallout while guide hidden',flush=True)
+   for objective_id,following in [('shelter','fallout'),('supplies','recovery'),('recovery','all-clear')]:
+    state=page.evaluate(f'{getter}.doomsday');objective=next(o for o in state['objectives'] if o['id']==objective_id)
     page.locator('#rink' if kind=='hockey' else '#world canvas').focus()
     walk_to(page,kind,getter,objective['position'])
-    toggle.click();panel.locator(f'[data-objective="{objective["id"]}"]').click()
-    print(kind,phase,panel.locator('[data-feedback]').inner_text(),flush=True)
-    page.wait_for_function(f'{getter}.doomsday.canAdvance')
-    panel.locator('[data-operation="advance"]').click()
-   page.wait_for_function(f'{getter}.doomsday.phase==="all-clear"')
-   assert not page.locator('.doomsday-banner').is_visible()
-   panel.locator('[data-operation="start"]').click();page.wait_for_function(f'{getter}.doomsday.phase==="warning"')
-   panel.locator('[data-operation="stop"]').click();page.wait_for_function(f'{getter}.doomsday.phase==="idle"')
+    page.wait_for_function(f'{getter}.doomsday.objectives.some(o=>o.id==="{objective_id}"&&o.completed)')
+    if objective_id!='shelter':page.wait_for_function(f'{getter}.doomsday.phase==="{following}"')
+    print(kind,objective_id,'automatically completed by arrival',flush=True)
+   page.get_by_role('button',name='Show emergency guide',exact=True).click();assert guide.is_visible()
    assert not errors,(kind,errors)
-   page.screenshot(path=f'/tmp/native-doomsday-{kind}.png');page.close()
+   page.screenshot(path=f'/tmp/automatic-native-doomsday-{kind}.png');page.close()
   browser.close()
- print('Hockey and arcade response exercises complete all phases with native walking and skating, preserve movement with menus open, replay and end cleanly.')
+ print('Hockey and arcade automatically warn, detonate and enter fallout with hidden guides; native movement and proximity quests reach all-clear.')
 finally:server.shutdown()

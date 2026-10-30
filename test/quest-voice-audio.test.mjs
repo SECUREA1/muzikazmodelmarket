@@ -363,3 +363,67 @@ test('requested conversations stay as clear as the welcome while moving and resp
  voice.setPreferences({dialogueMuted:true});assert.equal(voice.state.speaking,false);
  voice.dispose();
 });
+
+test('authored emergency radio uses a male voice without changing the saved dialogue voice',()=>{
+ const {voice,spoken}=fixture(),events=[];voice.setPreferences({speechVoiceGender:'female',speechVoiceURI:'muzikaz:neural-female'});voice.unlock();
+ announce(voice,'Emergency dispatch. Seek shelter now.','announcements',{voice:'Emergency dispatch',role:'dispatcher',voiceGender:'male',effect:'walkie',onStarted:selected=>events.push(selected.gender),onFinished:()=>events.push('finished')});
+ assert.equal(spoken[0].voice.voiceURI,'muzikaz:neural-male');assert.equal(spoken[0].effect,'walkie');assert.equal(spoken[0].pitch,1);
+ spoken[0].onstart();spoken[0].onend();assert.deepEqual(events,['male','finished']);
+ announce(voice,'A normal resident reply.','dialogue');assert.equal(spoken[1].voice.voiceURI,'muzikaz:neural-female');assert.equal(spoken[1].effect,null);voice.dispose();
+});
+
+test('emergency radio fallback preserves the male speaker and respects announcements mute',()=>{
+ const male={name:'Microsoft Guy Natural',voiceURI:'guy',lang:'en-US',localService:true},female={name:'Microsoft Jenny Natural',voiceURI:'jenny',lang:'en-US',localService:true};
+ const {voice,spoken}=fixture({voices:[...GENERATED_VOICES,male,female]});voice.unlock();
+ announce(voice,'Warning. Move to the shelter.','announcements',{voice:'Emergency dispatch',voiceGender:'male',effect:'walkie'});
+ spoken[0].onerror({error:'synthesis-unavailable'});assert.equal(spoken.length,2);assert.equal(spoken[1].voice,male);assert.equal(spoken[1].effect,'walkie');
+ voice.setPreferences({announcementsMuted:true});assert.equal(voice.state.speaking,false);voice.dispose();
+ const unavailable=fixture({voices:[GENERATED_VOICES[0]]}),errors=[];unavailable.voice.unlock();
+ announce(unavailable.voice,'A missing male radio voice.','announcements',{voiceGender:'male',onError:message=>errors.push(message)});
+ assert.equal(unavailable.spoken.length,0);assert.equal(errors.length,1);unavailable.voice.dispose();
+});
+
+test('new emergency phases preempt long welcomes and replace obsolete radio with portrait cancellation',()=>{
+ const {voice,spoken}=fixture(),events=[];voice.unlock();
+ announce(voice,'A long map introduction.','introduction',{onCancelled:()=>events.push('welcome-cancelled')});
+ announce(voice,'An ambient job remains queued.');
+ announce(voice,'Warning. Seek shelter.','announcements',{priority:'emergency',voiceGender:'male',effect:'walkie',onStarted:()=>events.push('warning-start'),onCancelled:()=>events.push('warning-cancel')});
+ assert.equal(spoken.at(-1).text,'Warning. Seek shelter.');assert.equal(voice.resumeIntroduction(),false,'a normal gesture cannot push the welcome in front of urgent radio');
+ spoken.at(-1).onstart();const stale=spoken.at(-1);
+ announce(voice,'Detonation. Take cover.','announcements',{priority:'emergency',voiceGender:'male',effect:'walkie',onCancelled:()=>events.push('detonation-cancel')});
+ announce(voice,'Fallout has begun. Collect sealed supplies.','announcements',{priority:'emergency',voiceGender:'male',effect:'walkie',onStarted:()=>events.push('fallout-start'),onFinished:()=>events.push('fallout-finished')});
+ assert.equal(spoken.at(-1).text,'Fallout has begun. Collect sealed supplies.');spoken.at(-1).onstart();
+ const count=spoken.length;stale.onend();assert.equal(spoken.length,count,'an obsolete transmission cannot finish or replace the current portrait');
+ assert.deepEqual(events,['welcome-cancelled','warning-start','warning-cancel','detonation-cancel','fallout-start']);
+ spoken.at(-1).onend();assert.equal(events.at(-1),'fallout-finished');assert.equal(spoken.at(-1).text,'An ambient job remains queued.');voice.dispose();
+});
+
+test('queued emergency snapshots retain only the newest phase and muted emergencies never interrupt dialogue',()=>{
+ const f=fixture(),cancelled=[];
+ announce(f.voice,'Old warning','announcements',{priority:'emergency',onCancelled:()=>cancelled.push('old')});
+ announce(f.voice,'Current fallout','announcements',{priority:'emergency'});
+ assert.deepEqual(cancelled,['old']);assert.equal(f.voice.state.pending,1);f.voice.unlock();assert.equal(f.spoken[0].text,'Current fallout');f.voice.dispose();
+ const muted=fixture();muted.voice.unlock();muted.voice.setPreferences({announcementsMuted:true});announce(muted.voice,'A resident answer','dialogue');
+ announce(muted.voice,'Muted emergency','announcements',{priority:'emergency'});assert.equal(muted.spoken.length,1);assert.equal(muted.cancels,0);muted.voice.dispose();
+});
+
+test('late saved voice settings cannot discard an active authored radio transmission',()=>{
+ const {voice,spoken}=fixture();voice.unlock();
+ announce(voice,'Emergency dispatch. Fallout is beginning.','announcements',{priority:'emergency',voiceGender:'male',effect:'walkie'});spoken[0].onstart();
+ voice.setPreferences({speechVoiceGender:'female',speechVoiceURI:'muzikaz:neural-female'});
+ assert.equal(spoken.length,1);assert.equal(voice.state.speaking,true);assert.equal(spoken[0].voice.gender,'male');
+ announce(voice,'A normal reply after dispatch.','dialogue');spoken[0].onend();assert.equal(spoken[1].voice.gender,'female');
+ voice.setPreferences({masterMuted:true});assert.equal(voice.state.speaking,false);voice.dispose();
+});
+
+test('a newer phase discards queued shelter radio but retains unrelated jobs and dialogue',()=>{
+ const {voice,spoken}=fixture(),cancelled=[];voice.unlock();
+ announce(voice,'Warning. Head to shelter.','announcements',{priority:'emergency',voice:'Emergency dispatch',effect:'walkie',voiceGender:'male'});
+ announce(voice,'Shelter reached. Wait for the fallout warning.','announcements',{voice:'Emergency dispatch',effect:'walkie',voiceGender:'male',onCancelled:()=>cancelled.push('shelter')});
+ announce(voice,'The harbour pilot has a new job.','announcements',{voice:'Harbour pilot'});
+ announce(voice,'A resident answer.','dialogue',{voice:'Resident'});
+ announce(voice,'Fallout has begun. Collect supplies.','announcements',{priority:'emergency',voice:'Emergency dispatch',effect:'walkie',voiceGender:'male'});
+ assert.deepEqual(cancelled,['shelter']);assert.equal(spoken.at(-1).text,'Fallout has begun. Collect supplies.');
+ spoken.at(-1).onend();assert.equal(spoken.at(-1).text,'The harbour pilot has a new job.');
+ spoken.at(-1).onend();assert.equal(spoken.at(-1).text,'A resident answer.');assert.ok(spoken.every(call=>!call.text.startsWith('Shelter reached.')));voice.dispose();
+});

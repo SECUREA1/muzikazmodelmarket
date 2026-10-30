@@ -1,5 +1,6 @@
 import {speechClarityGain} from './speech-clarity.js';
 import {speechVoiceOptions} from './character-voice-profile.js';
+import {createWalkieSpeechOutput} from './walkie-speech-output.js';
 import {splitBundledSpeech,bundledVoiceURL} from './bundled-character-voices.js';
 
 export const GENERATED_VOICES=Object.freeze([
@@ -9,7 +10,7 @@ export const GENERATED_VOICES=Object.freeze([
 
 // A plain utterance works even on devices with no installed synthesis engine.
 export class GameSpeechUtterance {
- constructor(text=''){this.text=String(text);this.voice=null;this.lang='en-US';this.rate=1;this.pitch=1;this.volume=1;this.audioURL=null;this.recordedIntroduction=false;this.onstart=null;this.onend=null;this.onerror=null;this.onboundary=null;}
+ constructor(text=''){this.text=String(text);this.voice=null;this.lang='en-US';this.rate=1;this.pitch=1;this.volume=1;this.effect=null;this.audioURL=null;this.recordedIntroduction=false;this.onstart=null;this.onend=null;this.onerror=null;this.onboundary=null;}
 }
 const clamp=(value,min,max,fallback=1)=>typeof value==='number'&&Number.isFinite(value)?Math.min(max,Math.max(min,value)):fallback;
 const key=voice=>voice?.voiceURI||[voice?.name,voice?.lang].join(':');
@@ -32,8 +33,8 @@ function speechChunks(text){
  if(remaining)chunks.push(remaining);return chunks;
 }
 
-// All generated speech goes straight to a gain and the speakers. Spatial world
-// sounds keep their own graph; voices never receive reverb, delay or pitch shifts.
+// Generated voices stay dry by default. Authored walkie transmissions can opt
+// into a broad radio band and a brief cue; native pitch remains unchanged.
 export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAudio:requestAudio=defaultAudioFetch,audioFactory=defaultAudioFactory,nativeSpeech=globalThis.speechSynthesis,NativeUtterance=globalThis.SpeechSynthesisUtterance,setTimer=setTimeout,clearTimer=clearTimeout,setInterval:repeat=setInterval,clearInterval:clearRepeat=clearInterval,requestTimeout=8000}={}){
  let context=null,observedContext=null,unlocking=null,resolveUnlock=null,unlockAttempt=0,unlocked=false,disposed=false,active=null,lastError=null,status='Voice audio starts with the game.';
  const listeners=new Map();
@@ -55,7 +56,7 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
  const isCurrent=job=>!disposed&&active===job;
  function event(job,type,detail={}){try{job.utterance['on'+type]?.({type,target:job.utterance,...detail});}catch{}}
  function clearSource(job){if(job.source){job.source.onended=null;try{job.source.stop();}catch{}try{job.source.disconnect();}catch{}}try{job.gain?.disconnect();}catch{}job.source=null;job.gain=null;}
- function clearJob(job){clearTimer(job.timeout);clearRepeat(job.volumeTimer);job.timeout=null;job.volumeTimer=null;clearSource(job);}
+ function clearJob(job){clearTimer(job.timeout);clearRepeat(job.volumeTimer);job.timeout=null;job.volumeTimer=null;clearSource(job);job.transmission?.dispose();job.transmission=null;}
  function finish(job){if(!isCurrent(job))return;active=null;clearJob(job);status='Generated male and female voices are ready.';notify();event(job,'end',{elapsedTime:job.duration||0});}
  function fail(job,code,message){if(!isCurrent(job))return;active=null;clearJob(job);job.abort.abort();lastError={code,message};status=message;notify();event(job,'error',{error:code,message});}
  function volume(job){const value=clamp(job.utterance.volume,0,1),level=value*(job.clarityGain||1);if(job.gain){if(job.gain.gain.setValueAtTime)job.gain.gain.setValueAtTime(level,context.currentTime);else job.gain.gain.value=level;}if(job.native){try{job.native.volume=value;}catch{}}}
@@ -103,7 +104,8 @@ export function createNeuralCharacterSpeech({fetch:request=defaultFetch,fetchAud
    try{
     job.source=context.createBufferSource();job.gain=context.createGain();job.source.buffer=buffer;job.source.playbackRate.value=1;
     job.clarityGain=speechClarityGain(buffer);
-    job.source.connect(job.gain);job.gain.connect(context.destination);volume(job);job.duration=(job.duration||0)+buffer.duration;
+    if(job.utterance.effect==='walkie'&&!job.transmission){job.transmission=createWalkieSpeechOutput(context,{volume:job.utterance.volume});job.transmission.cue();}
+    job.source.connect(job.gain);job.gain.connect(job.transmission?.input||context.destination);volume(job);job.duration=(job.duration||0)+buffer.duration;
     job.source.onended=()=>{if(!isCurrent(job))return;clearSource(job);if(next){status=`Preparing ${voice.gender} voice…`;notify();void playChunk(next,index+1);}else finish(job);};
     job.source.start();status=`Playing ${voice.name}.`;lastError=null;
     if(!job.started){job.started=true;job.volumeTimer=repeat(()=>{if(isCurrent(job))volume(job);},50);notify();event(job,'start');}else notify();

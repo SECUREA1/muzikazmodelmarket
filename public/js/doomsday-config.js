@@ -10,9 +10,9 @@ export const DOOMSDAY_MODEL_INFO = Object.freeze({
  'emergency-supply-cache':['Emergency Supply Cache','Sealed recovery crates with water, first-aid and communications markings.',[2.2,1.3,1.2]]
 });
 const objectiveSpecs = [
- ['shelter','Continuity shelter','Reach the marked shelter and check in with the emergency team.','warning',-6,0],
- ['supplies','Emergency supply cache','Recover emergency supplies at the marked relief point.','fallout',0,-6],
- ['recovery','Recovery relay','Restore the marked community recovery relay.','recovery',6,0]
+ ['shelter','Continuity shelter','Reach the marked shelter. Cole confirms your arrival automatically.','warning',-6,0],
+ ['supplies','Emergency supply cache','Reach the sealed relief crates to collect emergency supplies.','fallout',0,-6],
+ ['recovery','Recovery relay','Reach the marked recovery relay to restore emergency communications.','recovery',6,0]
 ];
 export function doomsdayForEnvironment(environment={}) {
  const config=environment.doomsday||{},spawn=(environment.builderScene?builderBaseSpawn(environment):null)||environment.spawn?.position||environment.spawn||{};

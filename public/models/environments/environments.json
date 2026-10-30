@@ -25076,7 +25076,7 @@
             "prompt": "Check the continuity shelter"
           },
           "dialogueSettings": {
-            "text": "Civil defense exercise shelter. Open Doomsday to start the warning, supply recovery and relay restoration stages. Travel, flight and movement remain available throughout the exercise."
+            "text": "Civil defense shelter. The emergency begins automatically: listen for Cole on the radio, take cover before the distant explosions, then follow the supply and recovery markers. Quests register on arrival. You can hide the radio guide while travel, flight and movement remain available."
           }
         },
         {
@@ -25106,7 +25106,7 @@
             "prompt": "Inspect emergency relief supplies"
           },
           "dialogueSettings": {
-            "text": "Water, first-aid kits and relay batteries are ready for the fallout recovery exercise. Follow the marked supply objective in Doomsday."
+            "text": "Water, first-aid kits and relay batteries are ready for the fallout recovery exercise. Follow Cole’s radio directions and the marked supply objective when the fallout begins."
           }
         },
         {
@@ -25166,7 +25166,7 @@
             "prompt": "Read emergency warning guidance"
           },
           "dialogueSettings": {
-            "text": "The fictional Doomsday scenario is available on every map. Start it from the Doomsday menu to hear warning sirens and follow the shelter, supply and recovery objectives. You can mute sirens or end the exercise at any time."
+            "text": "The fictional emergency begins automatically on every map. Loud warning sirens and Cole on the walkie-talkie announce incoming explosions and fallout. Follow the shelter, supply and recovery beacons. Hide the guide or mute sirens without stopping the experience."
           }
         },
         {
@@ -27651,7 +27651,7 @@
             "z": 33,
             "width": 14,
             "depth": 12,
-            "description": "Open-entry civil-defense shelter and the warning-stage check-in for Doomsday."
+            "description": "Open-entry civil-defense shelter and optional cover during the automatic warning."
           },
           {
             "id": "emergency-supplies",

@@ -1,4 +1,4 @@
-"""Exercise Doomsday through the actual airport and marina game, UI and server."""
+"""Automatic cinematic, hidden guide, vehicles and quests in the actual game."""
 from pathlib import Path
 import asyncio, math, os, socket, subprocess, tempfile, uuid
 from playwright.async_api import async_playwright
@@ -10,7 +10,7 @@ async def main():
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
-    with tempfile.TemporaryDirectory(prefix='doomsday-world-') as directory:
+    with tempfile.TemporaryDirectory(prefix='automatic-doomsday-world-') as directory:
         with open(Path(directory) / 'server.log', 'w') as log:
             server = subprocess.Popen(['node', 'server.mjs'], env={**os.environ, 'PORT': str(port), 'MUZIKAZ_DATA_DIR': directory}, stdout=log, stderr=log)
             try:
@@ -30,39 +30,34 @@ async def main():
                     csrf = (await (await context.request.get(base + '/api/game/room-session')).json())['data']['csrfToken']
                     page = await context.new_page()
                     page.set_default_timeout(30000)
-                    errors, inputs = [], []
+                    errors, inputs, manual_operations = [], [], []
                     page.on('pageerror', lambda error: (errors.append(str(error)), print('Page error:', error, flush=True)))
                     def record_input(request):
-                        if request.method == 'POST' and '/gameplay' in request.url and (request.post_data_json or {}).get('action') == 'input':
-                            inputs.append(request.post_data_json.get('input', {}))
+                        if request.method != 'POST' or '/gameplay' not in request.url:
+                            return
+                        fields = request.post_data_json or {}
+                        if fields.get('action') == 'input':
+                            inputs.append(fields.get('input', {}))
+                        elif fields.get('action') == 'doomsday':
+                            manual_operations.append(fields.get('operation'))
                     page.on('request', record_input)
                     await page.route('https://**/*', lambda route: route.abort())
+                    await page.add_init_script('''window.automaticEmergencyPhases=[];setInterval(()=>{try{const phase=window.MuzikazHouseExplorer?.snapshot().doomsday?.phase;if(phase&&automaticEmergencyPhases.at(-1)!==phase)automaticEmergencyPhases.push(phase);}catch{}},60);''')
 
                     async def load(world):
                         await page.goto(base + '/model-explorer.html?environment=' + world + '&autoplay=1&mode=multiplayer', wait_until='domcontentloaded', timeout=90000)
                         try:
-                            await page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady && MuzikazHouseExplorer.snapshot().serverReady', timeout=180000)
+                            await page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady && MuzikazHouseExplorer.snapshot().serverReady && MuzikazHouseExplorer.snapshot().doomsday?.automatic', timeout=180000)
                         except Exception:
-                            await page.screenshot(path='/workspace/doomsday-world-startup-failed.png')
+                            await page.screenshot(path='/workspace/automatic-doomsday-world-startup-failed.png')
                             print(world, 'startup errors', errors, flush=True)
                             raise
-                        print(world + ': actual game ready', flush=True)
+                        print(world + ': actual automatic emergency ready', flush=True)
                         close = page.get_by_role('button', name='Close local quests', exact=True)
                         if await close.is_visible():
                             await close.click()
-
-                    async def open_menu():
-                        invitation = page.locator('.resident-visitor-prompt [data-visitor-dismiss]')
-                        if not await page.locator('#doomsday-panel').is_visible() and await invitation.is_visible():
-                            await invitation.click()
-                        toggle = page.locator('.doomsday-toggle')
-                        if not await toggle.is_visible():
-                            more = page.get_by_role('button', name='More view controls', exact=True)
-                            if await more.is_visible() and await more.get_attribute('aria-expanded') != 'true':
-                                await more.click()
-                        if await toggle.get_attribute('aria-expanded') != 'true':
-                            await toggle.click()
-                        await page.locator('#doomsday-panel').wait_for(state='visible')
+                        assert await page.locator('.doomsday-toggle,#doomsday-panel [data-operation]').count() == 0, 'A manual Doomsday control remains.'
+                        return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
                     async def command(world, action, **fields):
                         response = await context.request.post(base + '/api/rooms/' + world + '/gameplay', headers={'X-CSRF-Token': csrf}, data={'action': action, 'requestId': str(uuid.uuid4()), **fields})
@@ -71,77 +66,74 @@ async def main():
                         return payload.get('data', payload)
 
                     async def phase(expected):
-                        await page.wait_for_function('(phase)=>MuzikazHouseExplorer.snapshot().doomsday?.phase===phase', arg=expected, timeout=30000)
+                        await page.wait_for_function('(phase)=>MuzikazHouseExplorer.snapshot().doomsday?.phase===phase', arg=expected, timeout=45000)
                         return await page.evaluate('MuzikazHouseExplorer.snapshot()')
 
+                    async def visit(world, objective):
+                        await command(world, 'map-access', position=objective['position'])
+                        await page.wait_for_function('(point)=>{const p=MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-point.x,p[2]-point.z)<.15}', arg=objective['position'], timeout=15000)
+                        await page.wait_for_function('(id)=>MuzikazHouseExplorer.snapshot().doomsday.objectives.some(o=>o.id===id&&o.completed)', arg=objective['id'], timeout=15000)
+
                     airport = 'muzikaz-airport'
-                    await load(airport)
-                    await open_menu()
-                    assert await page.locator('[data-aircraft]').count() == 2, 'Both actual emergency aircraft must be offered.'
-                    await page.locator('[data-operation="start"]').click()
-                    state = await phase('warning')
-                    assert state['doomsday']['active']
-                    assert not state['player']['inputBlocked'], 'Doomsday menu blocked movement.'
-                    assert await page.locator('.doomsday-banner').is_visible()
-                    assert await page.locator('[data-operation="advance"]').is_disabled(), 'Phase advanced before the checkpoint.'
-                    print('airport: actual warning state and banner visible', flush=True)
+                    state = await load(airport)
+                    assert state['doomsday']['active'] and state['doomsday']['phase'] == 'warning'
+                    event_id, detonation_at, fallout_at = [state['doomsday'][key] for key in ['id','detonationAt','falloutAt']]
+                    assert fallout_at - detonation_at == 7000
+                    assert not state['player']['inputBlocked'], 'Automatic guide blocked movement.'
+                    await page.get_by_role('button', name='Hide emergency guide', exact=True).click()
+                    await page.locator('.doomsday-guide').wait_for(state='hidden')
+                    assert await page.get_by_role('button', name='Show emergency guide', exact=True).is_visible()
+                    print('airport: starts without buttons; guide can be hidden', flush=True)
 
                     inputs.clear()
-                    before = state['player']['position']
-                    await page.keyboard.down('s')
-                    await page.wait_for_timeout(1200)
-                    await page.keyboard.up('s')
+                    before = (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['player']['position']
+                    await page.keyboard.down('s');await page.wait_for_timeout(1200);await page.keyboard.up('s')
                     after = (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['player']['position']
-                    assert any(abs(item.get('forward', 0)) > .5 for item in inputs), 'Open Doomsday menu swallowed movement input.'
+                    assert any(abs(item.get('forward', 0)) > .5 for item in inputs), 'Hiding guide swallowed movement input.'
                     assert math.hypot(after[0] - before[0], after[2] - before[2]) > .2, (before, after)
-                    print('airport: movement with the command menu open passed', flush=True)
 
                     for aircraft in ['airport-command-flight', 'airport-evacuation-flight']:
-                        await open_menu()
-                        await page.locator('[data-aircraft="' + aircraft + '"]').click()
+                        boarded = await command(airport, 'map-access', entityId=aircraft)
+                        assert boarded['players'][boarded['selfId']]['vehicleId'] == aircraft
                         await page.wait_for_function('(id)=>MuzikazHouseExplorer.snapshot().vehicleId===id', arg=aircraft, timeout=30000)
-                        assert (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['doomsday']['phase'] == 'warning', 'Boarding reset the shared scenario.'
-                        await page.locator('#doomsday-panel').wait_for(state='hidden')
-                    print('airport: warning menu, free movement, and both actual emergency aircraft passed', flush=True)
+                        current = await page.evaluate('MuzikazHouseExplorer.snapshot().doomsday')
+                        assert current['id'] == event_id and current['detonationAt'] == detonation_at and current['falloutAt'] == fallout_at, 'Boarding changed the automatic timeline.'
+                    print('airport: hidden-guide movement and both emergency aircraft passed', flush=True)
 
-                    for current, following in [('warning', 'fallout'), ('fallout', 'recovery'), ('recovery', 'all-clear')]:
-                        state = await phase(current)
-                        objective = next(item for item in state['doomsday']['objectives'] if item['phase'] == current and not item['completed'])
-                        # Use the normal validated public-map travel command to
-                        # reach the authored site, then complete it in the UI.
-                        moved = await command(airport, 'map-access', position=objective['position'])
-                        assert moved['doomsday']['phase'] == current
-                        await page.wait_for_function('(point)=>{const p=MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-point.x,p[2]-point.z)<.15}', arg=objective['position'], timeout=15000)
-                        await open_menu()
-                        await page.locator('[data-objective="' + objective['id'] + '"]').click()
-                        await page.wait_for_function('MuzikazHouseExplorer.snapshot().doomsday.canAdvance', timeout=15000)
-                        await page.locator('[data-operation="advance"]').click()
+                    # The shelter is optional: explosions and fallout must happen
+                    # on schedule even with the guide hidden and no check-in.
+                    await phase('detonation')
+                    assert await page.locator('.doomsday-guide').is_hidden()
+                    state = await phase('fallout')
+                    assert await page.locator('.doomsday-guide').is_hidden()
+                    history = await page.evaluate('automaticEmergencyPhases')
+                    assert history.index('warning') < history.index('detonation') < history.index('fallout'), history
+                    assert not next(o for o in state['doomsday']['objectives'] if o['id']=='shelter')['completed']
+                    await page.screenshot(path='/workspace/automatic-doomsday-world-fallout.png')
+                    print('airport: real timed detonations and fallout continue with guide hidden', flush=True)
+
+                    for objective_id, following in [('shelter','fallout'),('supplies','recovery'),('recovery','all-clear')]:
+                        state = await page.evaluate('MuzikazHouseExplorer.snapshot()')
+                        objective = next(item for item in state['doomsday']['objectives'] if item['id'] == objective_id)
+                        await visit(airport, objective)
                         await phase(following)
-                        if following == 'fallout':
-                            assert await page.locator('.doomsday-banner').get_attribute('data-phase') == 'fallout'
-                            await page.screenshot(path='/workspace/doomsday-world-fallout.png')
                     state = await phase('all-clear')
                     assert state['doomsday']['completedCount'] == 3 and not state['doomsday']['active']
-                    await page.locator('.doomsday-banner').wait_for(state='hidden')
                     assert state['controlsReady'] and not state['player']['inputBlocked']
-                    print('airport: shelter, fallout supplies, recovery relay and all-clear UI passed', flush=True)
+                    await page.get_by_role('button', name='Show emergency guide', exact=True).click()
+                    await page.locator('.doomsday-guide').wait_for(state='visible')
+                    assert not manual_operations, manual_operations
+                    print('airport: proximity quests and all-clear need no manual operations', flush=True)
 
-                    await load('world-district-neon-docks')
-                    assert (await phase('idle'))['doomsday']['mapId'] == 'world-district-neon-docks'
-                    assert not await page.locator('.doomsday-banner').is_visible(), 'Previous-map emergency leaked into marina.'
-                    await open_menu()
-                    await page.locator('[data-operation="start"]').click()
-                    state = await phase('warning')
+                    state = await load('world-district-neon-docks')
+                    assert state['doomsday']['mapId'] == 'world-district-neon-docks'
+                    assert state['doomsday']['id'] != event_id and state['doomsday']['phase'] == 'warning'
                     assert state['doomsday']['active'] and state['controlsReady'] and not state['player']['inputBlocked']
-                    await page.locator('[data-operation="stop"]').click()
-                    await phase('idle')
-                    await page.locator('.doomsday-banner').wait_for(state='hidden')
                     assert not errors, errors
-                    print('marina: fresh playable scenario, normal controls and clean stop passed', flush=True)
+                    print('marina: independent automatic emergency and normal controls passed', flush=True)
                     await browser.close()
             finally:
-                server.terminate()
-                server.wait(timeout=15)
+                server.terminate();server.wait(timeout=15)
 
 
 asyncio.run(main())
