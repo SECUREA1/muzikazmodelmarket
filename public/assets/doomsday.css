@@ -123,3 +123,14 @@
 .native-radio-menu summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 
 .native-radio-menu .doomsday-guide-chip{display:none!important}
+
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation{padding:10px 0;border-top:1px solid #739569;color:#d7ecc4;font:12px/1.45 system-ui}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation h4{margin:0 0 7px;font-size:13px;color:#f0ffe8}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation ol{margin:0 0 8px;padding-left:22px}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation li{padding:3px 0;overflow-wrap:anywhere}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation li.is-complete{color:#caff9b}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation li.is-complete::marker{color:#caff9b}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation [data-evac-status]{margin:6px 0;overflow-wrap:anywhere}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation [data-evac-aircraft]{display:grid;gap:7px;margin:8px 0}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation [data-board-aircraft]{min-height:44px;width:100%;min-width:0;white-space:normal;text-align:left;overflow-wrap:anywhere;touch-action:manipulation}
+:is(.house-stage,.native-doomsday,main) .doomsday-evacuation small{display:block;font-size:11px;color:#bdd1b4}

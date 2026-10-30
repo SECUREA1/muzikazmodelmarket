@@ -16,7 +16,7 @@ async function fixture(t){
  const send=(action,fields={})=>{clock+=100;return runtime.command(world.id,world,user,{action,requestId:'sporadic-'+ ++sequence,...fields});};
  // Keep the established connection alive while moving the injected clock.
  const at=async target=>{while(clock<target){clock=Math.min(target,clock+10000);await runtime.command(world.id,world,user,{action:'input',input:{},requestId:'heartbeat-'+ ++sequence});}return runtime.snapshot(world.id,world);};
- return {runtime,world,user,id,send,at,get now(){return clock;},get samples(){return samples;}};
+ return {runtime,store,world,user,id,send,at,get now(){return clock;},get samples(){return samples;}};
 }
 
 test('authoritative rooms preserve the original quest-led duration and sample the next quiet break only after all-clear',async t=>{
@@ -27,6 +27,7 @@ test('authoritative rooms preserve the original quest-led duration and sample th
  for(const operation of ['start','advance','stop'])await assert.rejects(f.send('doomsday',{operation}),/automatically/);
  state=await f.at(due);assert.equal(state.doomsday.phase,'warning');assert.equal(f.samples,1);assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(state.doomsday.nextEventAt,null);
  const score=state.players[id].score;
+ assert.equal(state.doomsday.detonationAt-(due-T.initialMinMs),60000,'the server preserves the full warning and starts the first impacts one minute after arrival');
  state=await f.at(state.doomsday.detonationAt);assert.equal(state.doomsday.phase,'detonation');state=await f.at(state.doomsday.falloutAt);assert.equal(state.doomsday.phase,'fallout');
  state=await f.at(f.now+120000);assert.equal(state.doomsday.phase,'fallout','the previous93-second maximum no longer ends an unfinished challenge');assert.equal(state.doomsday.phaseEndsAt,null);assert.equal(state.doomsday.nextEventAt,null);assert.equal(state.doomsday.completedCount,0);
  assert.equal(state.players[id].score,score);assert.equal(state.players[id].vehicleId,'airport-flight-1');assert.equal(f.samples,1);
@@ -73,4 +74,14 @@ test('the airport rear shelter interior confirms arrival during detonations and 
  state=await f.send('map-access',{position:state.doomsday.objectives.find(item=>item.id==='supplies').position});assert.equal(state.doomsday.phase,'recovery');assert.equal(state.doomsday.currentObjectiveId,'recovery');
  state=await f.send('map-access',{position:state.doomsday.objectives.find(item=>item.id==='recovery').position});assert.equal(state.doomsday.phase,'clearing');assert.equal(state.doomsday.clearAt-f.now,T.clearingMs);
  state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.nextEventAt-state.doomsday.clearAt,T.repeatMinMs);
+});
+
+test('a saved pending first event adopts the one-to-three-minute impact window once in the real room store',async t=>{
+ const f=await fixture(t);let state=await f.send('join');const arrival=state.doomsday.scheduledAt;
+ await f.store.update(f.world.id,room=>{const event=room.simulation.doomsday;delete event.initialTimingPolicy;event.nextEventAt=arrival+90000;});
+ state=await f.runtime.snapshot(f.world.id,f.world);const due=arrival+T.initialMaxMs,revision=state.doomsday.revision;
+ assert.equal(state.doomsday.nextEventAt,due);assert.equal(f.samples,1,'the max legacy sample is retained even though the injected RNG now returns zero');
+ state=await f.send('join');assert.equal(state.doomsday.nextEventAt,due);assert.equal(state.doomsday.revision,revision);
+ state=await f.at(due);assert.equal(state.doomsday.phase,'warning');assert.equal(state.doomsday.detonationAt-arrival,180000);
+ assert.equal(state.doomsday.falloutAt-state.doomsday.detonationAt,7000);assert.equal(f.samples,1);
 });

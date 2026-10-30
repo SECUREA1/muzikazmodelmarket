@@ -1,6 +1,9 @@
 import {doomsdayForEnvironment} from './doomsday-config.js';
 
-export const DOOMSDAY_TIMING=Object.freeze({initialMinMs:15000,initialMaxMs:90000,repeatMinMs:180000,repeatMaxMs:1200000,warningMs:18000,detonationMs:7000,falloutSettleMs:5000,clearingMs:8000});
+// The first detonation, including its complete warning lead-in, falls within
+// one to three minutes of arrival. Repeat breaks still begin at all-clear.
+export const DOOMSDAY_TIMING=Object.freeze({initialMinMs:42000,initialMaxMs:162000,initialDetonationMinMs:60000,initialDetonationMaxMs:180000,repeatMinMs:180000,repeatMaxMs:1200000,warningMs:18000,detonationMs:7000,falloutSettleMs:5000,clearingMs:8000});
+const initialTimingPolicy='detonation-60-180-v1';
 export const DOOMSDAY_PHASES=Object.freeze({
  idle:{label:'Radio standby',message:'Cole is monitoring the emergency channel. Keep exploring; warnings arrive sporadically.'},
  warning:{label:'Nuclear warning',message:'This is Cole on the emergency radio. Incoming strikes. Get to the continuity shelter now.'},
@@ -62,7 +65,16 @@ export function ensureDoomsday(sim,environment){
   }
   saved.version=4;saved.revision++;
  }
- if(sim.doomsday?.version!==4||sim.doomsday.mapId!==mapId)sim.doomsday={version:4,automatic:true,id:null,mapId,phase:'idle',revision:0,cycle:0,startedAt:null,phaseStartedAt:null,updatedAt:null,serverTime:null,scheduledAt:null,nextEventAt:null,detonationAt:null,falloutAt:null,recoveryAt:null,clearingAt:null,clearAt:null,awaitingArrival:true,objectives:configuredObjectives(environment)};
+ if(sim.doomsday?.version!==4||sim.doomsday.mapId!==mapId)sim.doomsday={version:4,automatic:true,initialTimingPolicy,id:null,mapId,phase:'idle',revision:0,cycle:0,startedAt:null,phaseStartedAt:null,updatedAt:null,serverTime:null,scheduledAt:null,nextEventAt:null,detonationAt:null,falloutAt:null,recoveryAt:null,clearingAt:null,clearAt:null,awaitingArrival:true,objectives:configuredObjectives(environment)};
+ const pending=sim.doomsday;
+ if(pending.initialTimingPolicy!==initialTimingPolicy&&pending.phase==='idle'&&!pending.cycle&&Number.isFinite(pending.scheduledAt)&&Number.isFinite(pending.nextEventAt)){
+  // Upgrade a pending first warning once, retaining the random sample that
+  // was already chosen under the old 15–90 second warning window. Views and
+  // reconnects must never keep extending a visitor's arrival deadline.
+  const sample=Math.max(0,Math.min(1,(pending.nextEventAt-pending.scheduledAt-15000)/75000));
+  pending.nextEventAt=pending.scheduledAt+Math.round(DOOMSDAY_TIMING.initialMinMs+sample*(DOOMSDAY_TIMING.initialMaxMs-DOOMSDAY_TIMING.initialMinMs));
+  pending.initialTimingPolicy=initialTimingPolicy;pending.revision++;
+ }
  // Existing live rooms adopt the new footprint without restarting their
  // warning, losing completed quests, or changing the next event's schedule.
  const shelter=sim.doomsday.objectives.find(objective=>objective.id==='shelter'),authored=environment?.doomsday?.objectives?.find(objective=>objective.id==='shelter')?.arrivalArea;
@@ -72,7 +84,7 @@ export function ensureDoomsday(sim,environment){
 }
 function changePhase(state,phase,at){if(state.phase===phase)return;state.phase=phase;state.phaseStartedAt=at;state.updatedAt=at;state.revision++;}
 function complete(state,objective,player,now){objective.completed=true;objective.completedBy=player.actorId||player.id||'local';objective.completedAt=now;state.updatedAt=now;state.revision++;}
-function armArrival(state,now,random){state.scheduledAt=now;state.nextEventAt=now+randomDelay(random,DOOMSDAY_TIMING.initialMinMs,DOOMSDAY_TIMING.initialMaxMs);state.awaitingArrival=false;state.updatedAt=now;state.revision++;}
+function armArrival(state,now,random){state.initialTimingPolicy=initialTimingPolicy;state.scheduledAt=now;state.nextEventAt=now+randomDelay(random,DOOMSDAY_TIMING.initialMinMs,DOOMSDAY_TIMING.initialMaxMs);state.awaitingArrival=false;state.updatedAt=now;state.revision++;}
 function beginEvent(state,environment,now,resolvePoint){
  const cycle=state.cycle+1,revision=state.revision+1,detonationAt=now+DOOMSDAY_TIMING.warningMs,falloutAt=detonationAt+DOOMSDAY_TIMING.detonationMs;
  Object.assign(state,{id:state.mapId+':'+now+':'+cycle,cycle,phase:'warning',revision,startedAt:now,phaseStartedAt:now,updatedAt:now,detonationAt,falloutAt,recoveryAt:null,clearingAt:null,clearAt:null,scheduledAt:null,nextEventAt:null,objectives:configuredObjectives(environment,resolvePoint)});

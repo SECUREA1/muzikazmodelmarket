@@ -11,7 +11,7 @@ function fixture({random=()=>0}={}){
  return f;
 }
 
-test('the first warning is sampled once within 15–90 seconds and fallout occurs within the first two minutes',()=>{
+test('the first detonation is sampled once within one to three minutes including its full warning',()=>{
  for(const sample of [0,.5,1]){
   let samples=0;const f=fixture({random:()=>{samples++;return sample;}}),armed=f.tick(),due=armed.nextEventAt;
   assert.equal(armed.phase,'idle');assert.equal(armed.active,false);assert.equal(armed.startedAt,null);
@@ -20,8 +20,40 @@ test('the first warning is sampled once within 15–90 seconds and fallout occur
   assert.equal(samples,1,'frame updates never resample the timer');
   assert.equal(f.tick(due-1).phase,'idle');const started=f.tick(due);
   assert.equal(started.phase,'warning');assert.equal(started.startedAt,due);assert.equal(started.cycle,1);assert.equal(samples,1,'no repeat is sampled before the challenge finishes');
-  assert.equal(started.nextEventAt,null);assert.ok(started.falloutAt-100<=120000);
+  assert.equal(started.nextEventAt,null);
+  assert.ok(started.detonationAt-100>=60000&&started.detonationAt-100<=180000);
+  assert.equal(started.detonationAt-started.startedAt,18000);assert.equal(started.falloutAt-started.detonationAt,7000);
   assert.equal(f.tick(started.detonationAt).phase,'detonation');assert.equal(f.tick(started.falloutAt).phase,'fallout');
+ }
+});
+
+test('legacy pending first warnings migrate their existing sample once without delaying occupied reconnects',()=>{
+ for(const sample of [0,.25,.5,1]){
+  let draws=0;const f=fixture({random:()=>{draws++;return sample;}}),armed=f.tick(),arrival=armed.scheduledAt;
+  delete f.sim.doomsday.initialTimingPolicy;
+  f.sim.doomsday.nextEventAt=arrival+15000+sample*75000;
+  const migrated=f.view(),due=arrival+Math.round(T.initialMinMs+sample*(T.initialMaxMs-T.initialMinMs));
+  assert.equal(migrated.nextEventAt,due);assert.equal(draws,1,'migration uses the saved random fraction');
+  assert.ok(due+T.warningMs-arrival>=60000&&due+T.warningMs-arrival<=180000);
+  const revision=migrated.revision;
+  f.sim.doomsday=JSON.parse(JSON.stringify(f.sim.doomsday));
+  assert.equal(f.view().nextEventAt,due);assert.equal(f.view().revision,revision);
+  assert.equal(f.tick(arrival+1000,{players:[f.player,{id:'visitor',health:100,position:{x:100,y:0,z:100}}]}).nextEventAt,due);
+  assert.equal(draws,1);assert.equal(f.tick(due-1).phase,'idle');
+  const started=f.tick(due);assert.equal(started.detonationAt,due+18000);
+ }
+});
+
+test('timing-policy upgrades leave active impacts, completed quests and existing repeat breaks untouched',()=>{
+ for(const phase of ['warning','detonation','fallout','recovery','clearing','all-clear']){
+  const f=fixture();let state=f.begin();
+  if(phase==='detonation')state=f.tick(state.detonationAt);
+  if(['fallout','recovery','clearing','all-clear'].includes(phase))state=f.tick(state.falloutAt);
+  if(['recovery','clearing','all-clear'].includes(phase)){f.player.position={...state.objectives[1].position};state=f.tick(state.suppliesReadyAt);}
+  if(['clearing','all-clear'].includes(phase)){f.player.position={...state.objectives[2].position};state=f.tick(f.now+1);}
+  if(phase==='all-clear')state=f.tick(state.clearAt);
+  delete f.sim.doomsday.initialTimingPolicy;const before=structuredClone(f.sim.doomsday);
+  assert.equal(f.view().phase,phase);assert.deepEqual(f.sim.doomsday,before,phase+' must not be rescheduled or restarted');
  }
 });
 

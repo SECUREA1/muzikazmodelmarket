@@ -254,8 +254,8 @@ See [prison controls and challenges](docs/prison-world.md). Six role-specific da
 ## Doomsday response
 
 A fictional emergency is scheduled automatically in a fresh map session. The first
-warning starts 15–90 seconds after arrival, so the blasts and fallout begin within
-two minutes. Joining an occupied room follows that room’s existing event. The
+detonation starts 60–180 seconds after arrival, preceded by the full 18-second
+warning. The first warning therefore starts after 42–162 seconds. Joining an occupied room follows that room’s existing event. The
 warning lasts 18 seconds and the detonation animation lasts 7 seconds.
 
 Fallout and recovery keep their original quest-led duration: fallout remains until
@@ -306,6 +306,13 @@ speakers; sirens duck only while speech is actually playing, not while it loads.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.
+The header radio dropdown offers optional aircraft onboarding: select an available
+Nightfall or Daybreak cockpit, start its emergency departure, and reach a safe
+flying altitude. Personal evacuation progress confirms boarding and the airborne
+flight automatically. It does not claim a landing or passenger delivery, replace
+the supply/relay quests, or shorten the shared emergency. Maps without public
+emergency aircraft continue to offer their shelter and ground response.
+
 In either emergency cockpit, **Emergency departure** runs preflight checks,
 slow taxi, hold-short clearance, runway lineup, takeoff and climb from the
 aircraft's actual position. The guide shows each stage and explains traffic

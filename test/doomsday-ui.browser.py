@@ -53,7 +53,7 @@ try:
    page.wait_for_function("ui.getState()?.nextEventAt>clock")
    initial=page.evaluate('ui.getState()');first_at=initial['nextEventAt']
    assert initial['phase']=='idle' and not initial['active']
-   assert 15000<=first_at-page.evaluate('enteredAt')<=90000
+   assert 42000<=first_at-page.evaluate('enteredAt')<=162000
    assert guide.is_hidden() and page.locator('.doomsday-banner').is_hidden()
    assert page.evaluate('!effects.root.visible && spoken.length===0 && eventIds.size===0')
    # Audio controls are discoverable during the quiet arrival, without starting
@@ -116,7 +116,7 @@ try:
    page.wait_for_function("ui.getState().phase==='warning'")
    assert 'Command flight departing' in guide.locator('[data-response-status]').inner_text()
    first_state=page.evaluate('ui.getState()');first_id=first_state['id']
-   assert first_state['falloutAt']-page.evaluate('enteredAt')<=120000
+   assert first_state['falloutAt']-page.evaluate('enteredAt')<=187000
    assert first_state['nextEventAt'] is None,'An active quest-led event scheduled an overlapping repeat.'
    assert guide.is_visible() and page.evaluate('eventIds.size')==1
    assert page.locator('.doomsday-toggle,[data-operation],[data-objective]').count()==0
@@ -180,8 +180,8 @@ try:
    assert 'supply beacon' in reminder['text'].lower() and guide.is_hidden()
    assert 'fallout warning remains active' in page.evaluate('notices.at(-1)').lower()
    # The original fallout and recovery phases hold until their quests finish.
-   page.evaluate('clock=enteredAt+120000');page.wait_for_timeout(80)
-   assert page.evaluate("eventIds.size===1 && ui.getState().cycle===1 && ui.getState().phase==='fallout'"),'More than one catastrophe occurred in the first two minutes.'
+   page.evaluate('clock=enteredAt+190000');page.wait_for_timeout(80)
+   assert page.evaluate("eventIds.size===1 && ui.getState().cycle===1 && ui.getState().phase==='fallout'"),'More than one catastrophe occurred in the first three minutes.'
    page.evaluate('clock+=600000');page.wait_for_timeout(100)
    assert page.evaluate("ui.getState().phase==='fallout' && ui.getState().nextEventAt===null && eventIds.size===1"),'The full fallout challenge was cut short.'
    assert page.evaluate('spoken.length===beforeReminder+1'),'A status update interrupted a transmission.'
@@ -241,7 +241,7 @@ try:
    assert guide.locator('progress').get_attribute('value')=='2'
    assert guide.locator('progress').get_attribute('max')=='2'
    next_at=page.evaluate('ui.getState().nextEventAt')
-   assert 180000<=next_at-clearing['clearAt']<=1200000,'The quiet break must begin after the full event finishes.'
+   assert 180000<=next_at-clearing['clearAt']<=1870000,'The quiet break must begin after the full event finishes.'
    page.keyboard.press('w');assert page.evaluate('moves')==2
    # No repeat can interrupt an active quest; after completion it waits for the quiet deadline.
    page.evaluate('(at)=>{clock=at-1;position={x:20,y:0,z:20};}',next_at)

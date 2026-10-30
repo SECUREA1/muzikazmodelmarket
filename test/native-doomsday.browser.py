@@ -54,7 +54,7 @@ try:
    page.wait_for_function(f'{getter}.doomsday?.automatic && ({getter}.doomsday.phase!=="idle" || {getter}.doomsday.nextEventAt>0)')
    initial=page.evaluate(f'{getter}.doomsday')
    page.evaluate("""()=>{const overrides={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0};window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={...window.MUZIKAZ_AUDIO_SESSION_OVERRIDES,...overrides};const preferences={...window.MUZIKAZ_AUDIO_PREFERENCES,...overrides};window.MUZIKAZ_AUDIO_PREFERENCES=preferences;window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));}""")
-   if page.locator('.doomsday-guide').is_hidden():page.get_by_role('button',name='Show emergency guide',exact=True).click()
+   if page.locator('.doomsday-guide').is_hidden():page.locator('.native-radio-menu summary').click()
    page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='master-muted'")
    page.get_by_role('button',name='Enable sounds',exact=True).tap()
    page.wait_for_function("['ready','playing'].includes(document.querySelector('#doomsday-panel').dataset.audioState)")
@@ -72,11 +72,11 @@ try:
     page.close();continue
    initial=page.evaluate(f'{getter}.doomsday')
    if initial['phase']=='idle':
-    assert initial['nextEventAt']-initial['scheduledAt']==15000
+    assert initial['nextEventAt']-initial['scheduledAt']==42000
     assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
     deadline=initial['nextEventAt'];page.wait_for_timeout(150)
     assert page.evaluate(f'{getter}.doomsday.nextEventAt')==deadline
-   page.wait_for_function(f'{getter}.doomsday.phase==="warning"',timeout=30000)
+   page.wait_for_function(f'{getter}.doomsday.phase==="warning"',timeout=60000)
    state=page.evaluate(f'{getter}.doomsday')
    assert state['cycle']==1 and state['nextEventAt'] is None
 
@@ -94,7 +94,7 @@ try:
    print(kind,'automatically reached fallout while guide hidden',flush=True)
    state=page.evaluate(f'{getter}.doomsday')
    assert state['phaseEndsAt'] is None and state['nextEventAt'] is None
-   page.get_by_role('button',name='Show emergency guide',exact=True).click()
+   page.locator('.native-radio-menu summary').click()
    follow=page.locator('input[data-follow-challenge]')
    assert not follow.is_checked()
    assert page.locator('[data-challenge]').is_hidden()

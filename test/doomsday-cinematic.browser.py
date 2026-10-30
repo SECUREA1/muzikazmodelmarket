@@ -25,12 +25,12 @@ try:
     window.renderer=new T.WebGLRenderer({canvas:document.querySelector('canvas'),preserveDrawingBuffer:true});renderer.setSize(innerWidth,innerHeight);
     window.effects=createDoomsdayScene({scene,performanceMode:true});
     window.audioOscillators=[];window.audioGains=[];window.radioSpeaking=false;
-    window.audio=createDoomsdayAudio({isSpeaking:()=>radioSpeaking,makeContext:()=>{
-     const context=window.audioContext=new AudioContext(),oscillator=context.createOscillator.bind(context),gain=context.createGain.bind(context);
+    window.NativeAudioContext=window.AudioContext;window.makeObservedContext=()=>{
+     const context=window.audioContext=new NativeAudioContext(),oscillator=context.createOscillator.bind(context),gain=context.createGain.bind(context);
      const observe=(node,list)=>{const record={node,targets:[],disconnected:0};list.push(record);const disconnect=node.disconnect.bind(node);node.disconnect=(...args)=>{record.disconnected++;return disconnect(...args);};return record;};
      context.createOscillator=()=>{const node=oscillator();observe(node,audioOscillators);return node;};
      context.createGain=()=>{const node=gain(),record=observe(node,audioGains),target=node.gain.setTargetAtTime.bind(node.gain);node.gain.setTargetAtTime=(value,...args)=>{record.targets.push(value);return target(value,...args);};return node;};return context;
-    }});
+    };window.audio=createDoomsdayAudio({isSpeaking:()=>radioSpeaking,makeContext:makeObservedContext});
     window.boomCount=()=>audioOscillators.filter(record=>record.node.type==='triangle').length;
     window.activeSiren=()=>audioGains.findLast(record=>!record.disconnected&&record.targets.some(target=>Math.abs(target-.16)<1e-8));
     window.draw=(phase,phaseElapsedMs=0,time=0,reducedMotion=false)=>{const state={id:'render-test',phase,phaseElapsedMs,objectives:[{id:'site',name:'Response site',phase,position:{x:0,y:0,z:-5}}]};effects.update(state,{id:'airport'},{x:0,y:0,z:0},time,{reducedMotion});audio.update(state,time);renderer.render(scene,camera);};
@@ -97,8 +97,41 @@ try:
     if(renderer.info.memory.geometries>base.geometries||renderer.info.memory.textures>base.textures)throw Error('Repeated scenario retained GPU resources');
     effects.dispose();audio.dispose();renderer.render(scene,camera);
    }''')
+   # Exercise the actual production UI with its header dropdown left closed.
+   # A hidden ancestor must affect controls only, never event playback.
+   page.evaluate('''async()=>{
+    const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{mountGameDisplayFlow}=await import('/public/js/game-display-flow.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
+    window.AudioContext=function(){return makeObservedContext();};
+    window.menuStage=document.createElement('main');menuStage.className='house-stage';menuStage.style.cssText='position:absolute;inset:0';document.body.append(menuStage);
+    window.flow=mountGameDisplayFlow(menuStage);window.menuEffects=createDoomsdayScene({scene,performanceMode:true});window.headerState=null;
+    window.headerUI=mountDoomsdayUI({stage:menuStage,getEnvironment:()=>({id:'airport',name:'Airport'}),getPosition:()=>({x:0,y:0,z:0}),getState:()=>headerState,effects:menuEffects,now:()=>headerState?.serverTime||1000000});
+    window.headerDraw=(phase,age=0)=>{
+     const offsets={warning:0,detonation:18000,fallout:25000,recovery:600000,clearing:1200000,'all-clear':1208000},start=1000000+offsets[phase];
+     headerState={id:'header-closed-event',mapId:'airport',phase,phaseLabel:phase,message:phase,revision:1,active:phase!=='all-clear',startedAt:1000000,phaseStartedAt:start,serverTime:start+age,detonationAt:1018000,falloutAt:1025000,phaseEndsAt:phase==='clearing'?start+8000:null,objectives:[]};
+     headerUI.tick((start+age)/1000);renderer.render(scene,camera);
+    };
+    window.beforeHeaderBooms=boomCount();headerDraw('warning');
+   }''')
+   page.wait_for_function("document.querySelector('.doomsday-menu')?.closest('.game-view-overflow')")
+   assert page.locator('.game-view-overflow').is_hidden()
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   page.mouse.click(width//2,height-20)
+   page.wait_for_function("audioContext?.state==='running'")
+   page.evaluate("headerDraw('warning',100)")
+   assert page.evaluate('activeSiren().targets.at(-1)')==.16
+   for age in [0,1600,3200]:
+    page.evaluate('(age)=>headerDraw("detonation",age)',age)
+   assert page.evaluate('boomCount()-beforeHeaderBooms')==3
+   assert page.evaluate("menuEffects.root.getObjectByName('DOOMSDAY_DISTANT_BLAST_3').getObjectByName('GROWING_FIREBALL').visible")
+   page.evaluate("headerDraw('fallout',0);headerDraw('recovery',588000)")
+   assert page.evaluate("menuEffects.root.visible && menuEffects.root.getObjectByName('DOOMSDAY_FALLING_ASH').visible")
+   assert page.evaluate('activeSiren().targets.at(-1)')==.16
+   assert page.locator('.game-view-overflow').is_hidden()
+   assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>n.hidden)')
+   page.evaluate("headerDraw('clearing',8000);headerDraw('all-clear');headerUI.dispose();flow.dispose();menuStage.remove();renderer.render(scene,camera)")
+   assert page.evaluate('audioGains.every(record=>record.disconnected>0) && audioOscillators.every(record=>record.disconnected>0)')
    assert not errors,errors
-   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion and 15 GPU cleanup cycles passed',flush=True)
+   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion 15 GPU cleanup cycles and full playback with the production header dropdown closed passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

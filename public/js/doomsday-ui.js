@@ -52,7 +52,7 @@ const portrait=`<svg viewBox="0 0 100 112" aria-hidden="true"><rect width="100" 
 
 // This guide presents the room event. Closing it never owns the simulation,
 // interrupts input, or changes the automatic warning/explosion timeline.
-export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>null,isShared=()=>true,announce=()=>{},voice,getPreferences=()=>({}),onEnableAudio=()=>{},effects,now=Date.now,random=Math.random}={}){
+export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>null,isShared=()=>true,announce=()=>{},voice,getPreferences=()=>({}),onEnableAudio=()=>{},getEvacuation=()=>null,onBoardAircraft=null,effects,now=Date.now,random=Math.random}={}){
  if(!document.querySelector('#doomsday-styles')){const link=document.createElement('link');link.id='doomsday-styles';link.rel='stylesheet';link.href=new URL('../assets/doomsday.css',import.meta.url).href;document.head.append(link);}
  let guideHidden=false,followChallenge=false;try{guideHidden=localStorage.getItem(guidePreference)==='true';followChallenge=localStorage.getItem(challengePreference)==='true';}catch{}
  const chip=document.createElement('button');chip.type='button';chip.className='doomsday-guide-chip';chip.hidden=true;chip.innerHTML='<span aria-hidden="true">◉</span><span>Radio &amp; sound<small data-chip-audio>Tap to check sound</small></span>';chip.setAttribute('aria-label','Show emergency guide');chip.setAttribute('aria-controls','doomsday-panel');chip.setAttribute('aria-expanded','false');
@@ -60,10 +60,13 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  panel.innerHTML=`<header><div><small data-panel-phase>Emergency standby</small><h3>Emergency radio</h3></div><button type="button" data-hide aria-label="Hide emergency guide">Hide</button></header><div class="doomsday-panel-content"><div class="doomsday-sound-controls" aria-label="Emergency sound controls"><label class="doomsday-switch-row"><span>Sirens &amp; blasts<strong data-sound-state>Off</strong></span><input type="checkbox" role="switch" data-siren aria-label="Sirens and explosions"></label><p data-audio-status role="status" aria-live="polite">Tap Enable sounds to hear the emergency.</p><div class="doomsday-audio"><button type="button" data-enable>Enable sounds</button><button type="button" data-test>Test sounds</button></div><p class="doomsday-audio-help">Enable sirens, explosions and radio for this session. Turning effects off leaves radio calls on.</p><small class="doomsday-device-hint">If quiet, raise your phone’s media volume.</small></div><label class="doomsday-switch-row doomsday-challenge-toggle"><span>Follow challenge<strong data-follow-state>Off</strong><small id="doomsday-follow-hint">Quest directions and markers. The event continues either way.</small></span><input type="checkbox" role="switch" data-follow-challenge aria-label="Follow emergency challenge" aria-describedby="doomsday-follow-hint"></label><div class="doomsday-dispatch"><div class="doomsday-portrait">${portrait}</div><div class="doomsday-transmission"><span data-radio-status>RADIO CONNECTED</span><div class="doomsday-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p data-transcript>Standing by for emergency dispatch.</p></div></div><button type="button" class="doomsday-replay" data-replay>Replay radio</button><div data-scenario></div><p class="doomsday-guide-hint">Hide this guide to see more of the world. Sound and the event stay active.</p></div><p class="doomsday-scroll-hint" aria-hidden="true">Swipe up for challenge &amp; radio ↑</p>`;
  const banner=document.createElement('div');banner.className='doomsday-banner';banner.hidden=true;banner.setAttribute('role','status');banner.innerHTML='<span aria-hidden="true">☢</span><div><strong data-phase></strong><small data-task></small><time data-countdown></time></div>';
  const menu=document.createElement('div');menu.className='doomsday-menu';menu.dataset.gameViewOverflow='true';menu.append(chip,panel);stage.append(menu,banner);
+ const evacuation=document.createElement('section');evacuation.className='doomsday-evacuation';evacuation.hidden=true;evacuation.setAttribute('aria-label','Emergency aircraft onboarding');evacuation.innerHTML='<h4>Emergency aircraft · optional</h4><ol><li data-evac-step="board">Board an available emergency cockpit.</li><li data-evac-step="depart">Choose Emergency departure in the cockpit, or fly manually.</li><li data-evac-step="complete">Reach a safe airborne climb.</li></ol><p data-evac-status role="status" aria-live="polite"></p><div data-evac-aircraft></div><small>Flight progress is separate from the supply and relay quests. Movement and manual controls remain available.</small>';
+ panel.querySelector('[data-scenario]').before(evacuation);
  const followControl=panel.querySelector('[data-follow-challenge]');followControl.checked=followChallenge;panel.dataset.followChallenge=String(followChallenge);
  const audio=createDoomsdayAudio({getPreferences,isSpeaking:()=>!!(voice?.state?.audible??voice?.state?.speaking)});
  let manualGuideOpen=false,audioBusy=false,enableSequence=0;
  let local={},worldId=null,state=null,disposed=false,generation=0,signature='',spoken='',runId=null,shelterArrived=false,rawState=null,receivedAt=0,transcript='',radioSequence=0,captionSequence=0,activeRadio=0,minimumRadio=0,speechActive=false,nextNoticeAt=0,noticeSequence=0;
+ let boardingId=null,boardingRequestId=null,boardingSequence=0,boardingMessage='',evacuationAircraftSignature='',evacuationSpoken='',evacuationPending=null;const evacuationBindings=[];
  const guideAvailable=()=>!!state&&state.phase!=='idle'&&(state.phase!=='all-clear'||state.presentationTime-state.phaseStartedAt<8000);
  const showGuide=()=>{const available=!!state&&!!getEnvironment();panel.hidden=!available||!manualGuideOpen;chip.hidden=!available;chip.setAttribute('aria-expanded',String(!panel.hidden));};
  function hideGuide(value){if(value)manualGuideOpen=false;else manualGuideOpen=true;guideHidden=value;try{localStorage.setItem(guidePreference,String(value));}catch{}showGuide();}
@@ -83,6 +86,38 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  const fixed=[bindGameActionButton(chip,()=>hideGuide(!panel.hidden)),bindGameActionButton(panel.querySelector('[data-hide]'),()=>hideGuide(true))];
  const soundControl=panel.querySelector('[data-siren]'),audioStatus=panel.querySelector('[data-audio-status]'),enableButton=panel.querySelector('[data-enable]'),testButton=panel.querySelector('[data-test]'),replayButton=panel.querySelector('[data-replay]'),soundState=panel.querySelector('[data-sound-state]'),followState=panel.querySelector('[data-follow-state]'),chipAudio=chip.querySelector('[data-chip-audio]');
  const setText=(node,text)=>{if(node.textContent!==text)node.textContent=text;};
+ function resetEvacuation(){boardingSequence++;boardingId=boardingRequestId=null;boardingMessage='';evacuationAircraftSignature=evacuationSpoken='';evacuationPending=null;for(const unbind of evacuationBindings.splice(0))unbind();evacuation.querySelector('[data-evac-aircraft]').replaceChildren();evacuation.hidden=true;}
+ function evacuationSpeechKey(progress){
+  if(!state?.active||!state.id||progress?.eventId!==state.id||progress.status==='ended')return null;
+  const stage=progress.status==='complete'||progress.stage==='complete'?'complete':Number.isFinite(progress.boardedAt)?'boarded':null;
+  return stage?progress.eventId+':'+stage:null;
+ }
+ function renderEvacuation(){
+  const data=getEvacuation();evacuation.hidden=!data;if(!data){evacuationPending=null;return;}
+  const aircraft=Array.isArray(data.aircraft)?data.aircraft:[],progress=data.progress?.eventId===state?.id?data.progress:null,complete=progress?.status==='complete'||progress?.stage==='complete',boarded=Number.isFinite(progress?.boardedAt),ended=progress?.status==='ended';
+  if(aircraft.some(craft=>craft.id===boardingRequestId&&craft.own))boardingMessage='';
+  const completionMessage=data.canAssist===false?'Evacuation flight airborne. Safe climb confirmed. Continue manual flight and choose a clear landing area when ready.':'Evacuation flight airborne. Safe climb confirmed. Continue manual flight, or choose Land for an assisted return.';
+  const messages=complete?completionMessage:ended?'This response has ended. Emergency aircraft remain available for normal flight.':progress?.stage==='depart'?(progress.mode==='manual'?'Manual evacuation flight active. Build safe airspeed and climb steadily; the flight controls remain yours.':'Departure in progress. Keep the controls centered for assistance, or move the stick to take manual control.'):progress?.stage==='preflight'?(data.canAssist===false?'Cockpit confirmed. Use manual flight controls and a clear departure area to reach a safe airborne climb.':'Cockpit confirmed. Choose Emergency departure in the flight controls for checks, taxi, clearance and climb.'):aircraft.some(craft=>craft.own)?(data.canAssist===false?'Cockpit ready. Use manual flight controls and a clear departure area. The next alert will track your evacuation climb.':'Cockpit ready. Choose Emergency departure in the flight controls when ready. The next alert will track your evacuation climb.'):aircraft.length?'Choose an available emergency cockpit below. Boarding is optional; shelter, supply and relay objectives continue separately.':'No emergency aircraft is available on this map. Use the shelter and follow the supply and relay response.';
+  setText(evacuation.querySelector('[data-evac-status]'),boardingId?'Boarding emergency aircraft…':boardingMessage||messages);
+  setText(evacuation.querySelector('[data-evac-step="depart"]'),data.canAssist===false?'Use manual flight controls and a clear departure area.':'Choose Emergency departure in the cockpit, or fly manually.');
+  for(const step of evacuation.querySelectorAll('[data-evac-step]')){const done=step.dataset.evacStep==='board'?boarded:step.dataset.evacStep==='depart'?progress?.stage==='depart'||complete:complete;step.classList.toggle('is-complete',!!done);}
+  const nextSignature=JSON.stringify(aircraft.map(craft=>[craft.id,craft.name,!!craft.available,!!craft.own]));
+  if(evacuationAircraftSignature!==nextSignature){
+   evacuationAircraftSignature=nextSignature;for(const unbind of evacuationBindings.splice(0))unbind();const buttons=evacuation.querySelector('[data-evac-aircraft]');buttons.replaceChildren();
+   for(const craft of aircraft){const button=document.createElement('button');button.type='button';button.dataset.boardAircraft=craft.id;button.dataset.name=craft.name||'emergency aircraft';button.dataset.available=String(!!craft.available);button.dataset.own=String(!!craft.own);evacuationBindings.push(bindGameActionButton(button,()=>boardEmergencyAircraft(craft.id)));buttons.append(button);}
+  }
+  for(const button of evacuation.querySelectorAll('[data-board-aircraft]')){const own=button.dataset.own==='true',available=button.dataset.available==='true';button.disabled=!!boardingId||own||!available||!onBoardAircraft;button.setAttribute('aria-busy',String(boardingId===button.dataset.boardAircraft));setText(button,boardingId===button.dataset.boardAircraft?'Boarding…':own?button.dataset.name+' · In cockpit':available?'Board '+button.dataset.name:button.dataset.name+' · Occupied');}
+  const key=evacuationSpeechKey(progress);
+  if(evacuationPending?.key!==key)evacuationPending=null;
+  if(key&&key!==evacuationSpoken&&key!==evacuationPending?.key)evacuationPending={key,atGeneration:generation,text:complete?'Cole here. '+completionMessage:data.canAssist===false?'Cole here. Emergency cockpit confirmed. Use manual flight controls and a clear departure area. Keep your radio on.':'Cole here. Emergency cockpit confirmed. Choose Emergency departure in the flight controls for checks, taxi, runway clearance and climb. Manual control remains available.'};
+ }
+ async function boardEmergencyAircraft(id){
+  const craft=getEvacuation()?.aircraft?.find(craft=>craft.id===id);if(disposed||boardingId||!craft?.available||craft.own||!onBoardAircraft)return;
+  const at=generation,sequence=++boardingSequence;boardingId=boardingRequestId=id;boardingMessage='';voice?.unlock?.();renderEvacuation();
+  try{const result=await onBoardAircraft(id);if(disposed||at!==generation||sequence!==boardingSequence)return;boardingMessage=result===false?'Boarding did not complete. Choose the aircraft again to retry.':'Boarding request accepted. Waiting for cockpit confirmation.';}
+  catch(error){if(!disposed&&at===generation&&sequence===boardingSequence)boardingMessage=error?.message||'Unable to board. Choose an available aircraft and try again.';}
+  finally{if(!disposed&&at===generation&&sequence===boardingSequence){boardingId=null;if(getEvacuation()?.aircraft?.some(craft=>craft.id===id&&craft.own))boardingMessage='';renderEvacuation();}}
+ }
  function renderAudio(){
   const status=audio.status||{code:'locked',label:'Tap Enable sounds to hear the emergency.'},code=status.code||status.state;
   const enabled=['ready','playing'].includes(code),available=code!=='hidden';
@@ -126,7 +161,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  }
  function tick(time=0,{reducedMotion=false}={}){
   if(disposed)return;panel.dataset.reducedMotion=String(reducedMotion);const environment=getEnvironment();
-  if(worldId!==environment?.id){worldId=environment?.id;local={};manualGuideOpen=false;enableSequence++;audioBusy=false;generation++;signature=spoken='';runId=null;shelterArrived=false;nextNoticeAt=0;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;}
+  if(worldId!==environment?.id){worldId=environment?.id;local={};manualGuideOpen=false;enableSequence++;audioBusy=false;generation++;resetEvacuation();signature=spoken='';runId=null;shelterArrived=false;nextNoticeAt=0;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;}
   if(!environment){audio.stop();return;}
   if(isShared()){
    const incoming=getState();if(!incoming||incoming.mapId!==worldId){panel.hidden=chip.hidden=banner.hidden=true;audio.stop();effects?.reset();return;}
@@ -138,7 +173,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   }
   // World events never open the menu or its radio controls automatically.
   const phaseKey=state.id+':'+state.phase;
-  if(runId!==state.id){runId=state.id;shelterArrived=false;}
+  if(runId!==state.id){runId=state.id;shelterArrived=false;evacuationSpoken='';evacuationPending=null;}
   const shelter=state.objectives.find(o=>o.id==='shelter');
   // The room objective belongs to the first responder. Arrival feedback is
   // personal: another player checking in cannot acknowledge this viewer.
@@ -155,6 +190,11 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
    const line=shelterBriefing(state.phase,followChallenge);nextNoticeAt=state.presentationTime+noticeIntervalMs;
    speak(line,state.id+':shelter',{priority:'normal',captionNow:true});announce(line);
   }
+  renderEvacuation();
+  // Cockpit onboarding waits for the nuclear dispatch and never opens the menu.
+  const evacuationVoice=voice?.state||{};
+  if(evacuationPending&&(evacuationPending.atGeneration!==generation||evacuationPending.key!==evacuationSpeechKey(getEvacuation()?.progress)))evacuationPending=null;
+  if(evacuationPending&&!speechActive&&!evacuationVoice.speaking&&!evacuationVoice.outputBusy&&!evacuationVoice.loading&&!evacuationVoice.pending){const call=evacuationPending;evacuationPending=null;evacuationSpoken=call.key;speak(call.text,'evacuation:'+call.key,{priority:'normal',captionNow:true});announce(call.text);}
   const remaining=state.phaseEndsAt?Math.max(0,Math.ceil((state.phaseEndsAt-state.presentationTime)/1000)):0;
   const countdownLabel={warning:'Detonations in ',detonation:'Fallout in ',fallout:'Recovery in ',recovery:'Clearing in ',clearing:'Normal conditions in '}[state.phase]||'';
   banner.querySelector('[data-countdown]').textContent=remaining&&countdownLabel?countdownLabel+remaining+'s':'';
@@ -174,5 +214,5 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   }
   audio.update(state,time);renderAudio();effects?.update(state,environment,getPosition(),time,{reducedMotion,showObjectives:followChallenge});
  }
- return {tick,open:()=>hideGuide(false),close:()=>hideGuide(true),getState:()=>state,followingChallenge:()=>followChallenge,reset(){manualGuideOpen=false;enableSequence++;audioBusy=false;worldId=null;state=rawState=null;generation++;nextNoticeAt=0;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;},dispose(){if(disposed)return;disposed=true;enableSequence++;audioBusy=false;generation++;radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();panel.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);soundControl.removeEventListener('change',soundChanged);menu.remove();banner.remove();}};
+ return {tick,open:()=>hideGuide(false),close:()=>hideGuide(true),getState:()=>state,followingChallenge:()=>followChallenge,reset(){manualGuideOpen=false;enableSequence++;audioBusy=false;worldId=null;state=rawState=null;generation++;resetEvacuation();nextNoticeAt=0;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=chip.hidden=banner.hidden=true;},dispose(){if(disposed)return;disposed=true;enableSequence++;audioBusy=false;generation++;resetEvacuation();radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();panel.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);soundControl.removeEventListener('change',soundChanged);menu.remove();banner.remove();}};
 }

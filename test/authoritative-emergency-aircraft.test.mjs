@@ -72,3 +72,19 @@ test('expired connections and empty fuel stop a departure without retaining a ru
  await assert.rejects(f.send('aircraft-assist',{operation:'emergency-departure',vehicleId:aircraftId}),/Fuel is empty/);
  snapshot=await f.runtime.snapshot(f.world.id,f.world);assert.notEqual(snapshot.actors[aircraftId].flight.assist,'emergency-departure');
 });
+
+test('an actual room recognizes emergency boarding, publishes optional progress and retains the original response quests',async()=>{
+ const f=await fixture(),aircraftId='airport-evacuation-flight';
+ await f.store.update(f.world.id,room=>{room.simulation.doomsday.nextEventAt=f.now;});
+ let snapshot=await f.send('input',{input:{}});assert.equal(snapshot.doomsday.phase,'warning');
+ assert.equal(snapshot.players[f.id].emergencyEvacuation.stage,'board');
+ snapshot=await f.send('map-access',{entityId:aircraftId});assert.equal(snapshot.players[f.id].emergencyEvacuation.stage,'preflight');
+ const eventId=snapshot.doomsday.id;
+ snapshot=await f.send('aircraft-assist',{operation:'emergency-departure',vehicleId:aircraftId});
+ for(let index=0;index<8;index++)snapshot=await f.send('input',{input:{}},250);
+ assert.equal(snapshot.players[f.id].emergencyEvacuation.stage,'depart');
+ assert.equal(snapshot.players[f.id].emergencyEvacuation.completedAt,null);
+ assert.equal(snapshot.doomsday.id,eventId);assert.equal(snapshot.doomsday.objectives.filter(o=>!o.optional).every(o=>!o.completed),true);
+ snapshot=await f.send('map-access',{entityId:'airport-command-flight'});
+ assert.equal(snapshot.players[f.id].emergencyEvacuation.stage,'preflight');assert.equal(snapshot.players[f.id].emergencyEvacuation.vehicleId,'airport-command-flight');
+});
