@@ -19,6 +19,20 @@ test('two precise mouse, touch or pen taps relocate exactly once',()=>{
  }
 });
 
+test('native-only double clicks relocate once and respect readiness and disposal',()=>{
+ const f=fixture();
+ f.send('dblclick',{pointerType:'mouse'});assert.deepEqual(f.taps,[[40,70]]);
+ f.send('dblclick',{pointerType:'mouse'});assert.equal(f.taps.length,1,'a repeated compatibility event cannot replay travel');
+ f.advance(500);f.setReady(false);f.send('dblclick');assert.equal(f.taps.length,1);
+ f.setReady(true);f.send('dblclick');assert.equal(f.taps.length,2);
+ f.advance(500);f.dispose();f.send('dblclick');assert.equal(f.taps.length,2);
+});
+
+test('a native compatibility double click after a drag does not relocate',()=>{
+ const f=fixture();f.send('pointerdown',{pointerType:'mouse'});f.send('pointermove',{clientX:80,pointerType:'mouse'});f.send('pointerup',{pointerType:'mouse'});f.send('dblclick',{pointerType:'mouse'});
+ assert.deepEqual(f.taps,[]);f.dispose();
+});
+
 test('dragging, multitouch, hold, cancelled touches and outside controls do not become travel',()=>{
  for(const interrupt of [
   f=>{f.send('pointerdown');f.send('pointermove',{clientX:80});f.send('pointermove');f.send('pointerup');},

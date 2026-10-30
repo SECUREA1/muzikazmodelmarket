@@ -1,3 +1,5 @@
+import {DOOMSDAY_MODEL_INFO} from './doomsday-config.js';
+import {createDoomsdayModel} from './doomsday-models.js';
 import {FOREST_SNAKE_MODEL_INFO} from './forest-snake-items.js';
 import {createForestSnakeModel,updateForestSnakeModel} from './forest-snake-model.js';
 import {QUARRY_MODEL_INFO} from './quarry-config.js';
@@ -59,6 +61,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...DOOMSDAY_MODEL_INFO,
   ...QUARRY_MODEL_INFO,
   ...FOREST_HARVEST_MODEL_INFO,
   ...FOREST_SNAKE_MODEL_INFO,
@@ -393,6 +396,7 @@ export function createBuilderModel(id,options={}) {
 }
 
 function buildNativeModel(id,options={}) {
+  if(DOOMSDAY_MODEL_INFO[id])return createDoomsdayModel(id);
   if(QUARRY_MODEL_INFO[id])return createQuarryModel(id);
   if(FOREST_SNAKE_MODEL_INFO[id])return createForestSnakeModel(id);
   if(FOREST_HARVEST_MODEL_INFO[id])return createForestHarvestModel(id);

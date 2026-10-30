@@ -123,3 +123,5 @@ body .house-explorer-shell.player-hide-action-bars .house-control-dock .game-doc
 .house-explorer-shell.player-hide-action-bars .house-bottom-controls>:not(.game-dock-actions),
 .house-explorer-shell.player-hide-action-bars .game-dock-actions>:not(#house-view-options){display:none!important}
 body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-view-options{position:absolute;top:8px;right:8px;z-index:40;flex:none;width:44px;min-width:44px;height:44px;border:1px solid #6c8d4f;background:#132922ed}
+/* An open More menu must sit above nonmodal resident invitations. */
+.house-stage>.game-display-flow-views:has(.game-view-overflow:not([hidden])){z-index:36}

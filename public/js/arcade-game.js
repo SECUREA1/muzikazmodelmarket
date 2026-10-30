@@ -1,3 +1,4 @@
+import {mountNativeDoomsday} from './native-doomsday.js';
 import {createOutdoorScenery} from './environments/outdoor-scenery.js';
 import {createDayNightLighting} from './environments/day-night-lighting.js';
 import {finishNativeWorldDesign} from './environments/native-world-design-finish.js';
@@ -229,6 +230,7 @@ function resizeArcadeViewport(){const width=Math.max(1,$('#world').clientWidth),
 addEventListener('resize',resizeArcadeViewport);new ResizeObserver(resizeArcadeViewport).observe($('#world'));
 let slowDraws=0,quality='high';
 function animate(now){
+ arcadeDoomsday.tick(now/1000);
  roomBuilding?.update();
  deedDeliveryScene?.tick();
 
@@ -437,7 +439,7 @@ for(const button of document.querySelectorAll('[data-game-key]')){button.onpoint
 
 if(!startupError)nativeGuide.enter({id:environmentId,name:mapName,game:'arcade'});
 refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
-window.NeonJunction=Object.freeze({snapshot:()=>({deedDelivery:deedDeliveryScene?.snapshot()||null,dayNight:{...dayNightLighting.state},challenge:nativeChallenges.snapshot(),mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
+window.NeonJunction=Object.freeze({snapshot:()=>({doomsday:arcadeDoomsday.getState(),deedDelivery:deedDeliveryScene?.snapshot()||null,dayNight:{...dayNightLighting.state},challenge:nativeChallenges.snapshot(),mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
 setExploration(cameraMode!=='first-person'?'overview':'walk');
 // Always arrive in exploration, including links to an individual attraction.
 // Games and rides require the explicit Enter/E or attraction-menu action.
@@ -488,3 +490,15 @@ function updateArcadeChallenges(){
  nativeChallenges.update({sessionId:environmentId+':'+(requestedPart||'park')+':'+nativeArcadeEpoch,playing:!startupError&&availableAttractionIds().size>0,spectating:game!==null&&(localSpectator||liveGame&&roomSnapshot?.role==='spectator'),metrics:{rounds:nativeArcadeRounds,laps:nativeRideLaps}});
 }
 updateArcadeChallenges();
+
+// The arrival promenade stays reachable while the park remains in free play.
+const arcadeResponseSites=[[-5,14],[0,14],[5,14]].map(([x,z],index)=>{
+ const probe={...walker};let point={x,y:walkerGroundAt(x,z),z};
+ if(!relocateArcadeWalker(probe,point,{bounds,colliders:collisionBoxes})){
+  const candidates=[];for(let dz=0;dz<8;dz++)for(let dx=-8;dx<=8;dx+=2)candidates.push({x:dx,y:walkerGroundAt(dx,15-dz),z:15-dz});
+  point=candidates.find(candidate=>relocateArcadeWalker(probe,candidate,{bounds,colliders:collisionBoxes}))||{x:walker.x,y:walker.ground,z:walker.z};
+ }
+ return {id:['shelter','supplies','recovery'][index],position:point};
+});
+const arcadeDoomsday=mountNativeDoomsday({scene,toolbar:arcadePeopleToolbar,getEnvironment:()=>!startupError?{...mapRecord,id:environmentId,name:mapName,doomsday:{objectives:arcadeResponseSites}}:null,getPosition:()=>({x:walker.x,y:walker.ground,z:walker.z}),announce:message=>toast(message)});
+addEventListener('pagehide',event=>{if(event.persisted)arcadeDoomsday.reset();else arcadeDoomsday.dispose();});

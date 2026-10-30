@@ -19,6 +19,9 @@ async def check_world(context, base, world):
     try:
         await page.goto(base + '/model-explorer.html?environment=' + world + '&autoplay=1&mode=multiplayer', wait_until='domcontentloaded', timeout=90000)
         await page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady && MuzikazHouseExplorer.snapshot().serverReady', timeout=180000)
+        close_quests = page.get_by_role('button', name='Close local quests', exact=True)
+        if await close_quests.is_visible():
+            await close_quests.click()
         print(world + ': ground travel ready', flush=True)
         await page.evaluate('''()=>{window.groundEvents=[];for(const type of ['pointerdown','pointerup','lostpointercapture'])document.addEventListener(type,event=>groundEvents.push({type,target:event.target.id,button:event.button,pointer:event.pointerType,primary:event.isPrimary,time:event.timeStamp,x:event.clientX,y:event.clientY}),true);}''')
         canvas = page.locator('#house-explorer-canvas')

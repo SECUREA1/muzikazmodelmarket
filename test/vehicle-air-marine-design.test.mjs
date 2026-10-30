@@ -62,7 +62,7 @@ function assertOriginal(root,before,id){
  }
 }
 test('aviation and marine coverage matches every canonical aircraft and watercraft ID',()=>{
- assert.ok(Object.isFrozen(VEHICLE_AIR_MARINE_DESIGN_IDS));assert.equal(VEHICLE_AIR_MARINE_DESIGN_IDS.length,13);
+ assert.ok(Object.isFrozen(VEHICLE_AIR_MARINE_DESIGN_IDS));assert.equal(VEHICLE_AIR_MARINE_DESIGN_IDS.length,15);
  assert.deepEqual([...VEHICLE_AIR_MARINE_DESIGN_IDS].sort(),expectedIds.toSorted());
  assert.ok(!VEHICLE_AIR_MARINE_DESIGN_IDS.includes('shipping-port-crane'));
 });

@@ -251,6 +251,22 @@ activities menu. Enter from the world menu’s **Prison & escape** category or o
 `model-explorer.html?environment=ironwood-prison&house=ironwood-prison&mode=multiplayer&autoplay=1`.
 See [prison controls and challenges](docs/prison-world.md). Six role-specific daily contracts add saved ranks and token rewards. Four supply packets stock a portable prison pouch, and milestone rewards can be collected into the account Backpack and placed in other worlds. Versioned room messages and durable earned-item receipts protect purchases, ownership and reconnects.
 
+## Doomsday response
+
+Open **Doomsday** in the game toolbar (or its **More** menu) to start a fictional
+nuclear emergency. Check in at the marked shelter, recover relief supplies, and
+restore the recovery relay to progress from warning through fallout to all clear.
+The shared scenario runs independently in each explorer map; hockey and arcade
+include local response exercises alongside their matches and attractions. The menu
+can end or replay an exercise. Glowing skylines, fallout dust, sirens, and spoken objectives follow
+the phase. Sirens respect effects volume, mute, and speech playback; scenery respects reduced motion.
+Movement, map travel, and vehicle controls remain available throughout.
+
+The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
+aircraft, continuity shelter, siren masts, relief cache, and emergency apron.
+Map previews resolve the saved destination model, and double-tapping or
+double-clicking walkable ground shows loading feedback and an exact arrival marker.
+
 ## Map travel and vehicle loading
 
 The permanent **MUZIKAZ Missile & Rocket Factory** shares the existing server,

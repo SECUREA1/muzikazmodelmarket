@@ -1404,7 +1404,36 @@
       ],
       "ceiling": 140
     },
-    "contentUpdatedAt": "2026-10-29T12:00:00.000Z",
+    "doomsday": {
+      "enabled": true,
+      "objectives": [
+        {
+          "id": "shelter",
+          "position": {
+            "x": -150,
+            "y": 0,
+            "z": 33
+          }
+        },
+        {
+          "id": "supplies",
+          "position": {
+            "x": -138,
+            "y": 0,
+            "z": 41
+          }
+        },
+        {
+          "id": "recovery",
+          "position": {
+            "x": -150,
+            "y": 0,
+            "z": 55
+          }
+        }
+      ]
+    },
+    "contentUpdatedAt": "2026-10-30T12:00:00.000Z",
     "permanent": true,
     "publicDestination": true,
     "proceduralLand": true,
@@ -1425,7 +1454,7 @@
       "z": 74,
       "rotationY": 0
     },
-    "description": "An expanded 2 km airport world with three flyable aircraft and four connected airfields. Fly to Alpine Ridge for a paved mountain runway, taxiway, parking apron, walk-in lodge, ranger station, supply store, forest campground, lake and lookout trails. Automatic flights, ground services, mountain supply and camper evacuation missions, and on-foot collection quests connect the full experience. A counted-freight terminal and paved apron access connect to the Strait’s sea, road and cargo-flight network through a reciprocal freight gateway.",
+    "description": "An expanded 2 km airport world with five flyable aircraft and four connected airfields. Nightfall Command and Daybreak Evacuation join a walk-in fallout shelter, relief supplies and a civil-defense recovery relay for the cross-map Doomsday exercise. Fly to Alpine Ridge for a paved mountain runway, taxiway, parking apron, walk-in lodge, ranger station, supply store, forest campground, lake and lookout trails. Automatic flights, ground services, mountain supply and camper evacuation missions, and on-foot collection quests connect the full experience. A counted-freight terminal and paved apron access connect to the Strait’s sea, road and cargo-flight network through a reciprocal freight gateway.",
     "streets": [
       {
         "id": "airport-access",
@@ -25021,6 +25050,317 @@
           }
         },
         {
+          "id": "airport-continuity-shelter",
+          "modelId": "fallout-shelter",
+          "placementAnchor": "collider-base",
+          "name": "Continuity Fallout Shelter",
+          "position": {
+            "x": -150,
+            "y": 0,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 7,
+            "destructible": false,
+            "prompt": "Check the continuity shelter"
+          },
+          "dialogueSettings": {
+            "text": "Civil defense exercise shelter. Open Doomsday to start the warning, supply recovery and relay restoration stages. Travel, flight and movement remain available throughout the exercise."
+          }
+        },
+        {
+          "id": "airport-relief-cache",
+          "modelId": "emergency-supply-cache",
+          "placementAnchor": "collider-base",
+          "name": "Emergency Relief Supplies",
+          "position": {
+            "x": -138,
+            "y": 0,
+            "z": 39
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "destructible": false,
+            "prompt": "Inspect emergency relief supplies"
+          },
+          "dialogueSettings": {
+            "text": "Water, first-aid kits and relay batteries are ready for the fallout recovery exercise. Follow the marked supply objective in Doomsday."
+          }
+        },
+        {
+          "id": "airport-recovery-relay",
+          "modelId": "nuclear-warning-beacon",
+          "placementAnchor": "collider-base",
+          "name": "Continuity Recovery Relay",
+          "position": {
+            "x": -150,
+            "y": 0,
+            "z": 53
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "destructible": false,
+            "prompt": "Inspect the recovery relay"
+          },
+          "dialogueSettings": {
+            "text": "Community warning and recovery relay. During the final stage, check in here to send the all-clear."
+          }
+        },
+        {
+          "id": "airport-terminal-warning-siren",
+          "modelId": "nuclear-warning-beacon",
+          "placementAnchor": "collider-base",
+          "name": "Terminal Nuclear Warning Siren",
+          "position": {
+            "x": -80,
+            "y": 0,
+            "z": 70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "destructible": false,
+            "prompt": "Read emergency warning guidance"
+          },
+          "dialogueSettings": {
+            "text": "The fictional Doomsday scenario is available on every map. Start it from the Doomsday menu to hear warning sirens and follow the shelter, supply and recovery objectives. You can mute sirens or end the exercise at any time."
+          }
+        },
+        {
+          "id": "airport-command-flight",
+          "modelId": "doomsday-command-aircraft",
+          "placementAnchor": "aircraft-origin",
+          "name": "Nightfall · Doomsday Command",
+          "position": {
+            "x": -12,
+            "y": 0.4,
+            "z": 110
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter emergency aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "airport-command-flight-stand-0",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "command flight stand 0",
+          "position": {
+            "x": -12,
+            "y": 0,
+            "z": 107
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-command-flight-stand-1",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "command flight stand 1",
+          "position": {
+            "x": -12,
+            "y": 0,
+            "z": 113
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-evacuation-flight",
+          "modelId": "doomsday-evacuation-aircraft",
+          "placementAnchor": "aircraft-origin",
+          "name": "Daybreak · Civil Evacuation",
+          "position": {
+            "x": 4,
+            "y": 0.4,
+            "z": 110
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter emergency aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "airport-evacuation-flight-stand-0",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "evacuation flight stand 0",
+          "position": {
+            "x": 4,
+            "y": 0,
+            "z": 107
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-evacuation-flight-stand-1",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "evacuation flight stand 1",
+          "position": {
+            "x": 4,
+            "y": 0,
+            "z": 113
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 5
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-continuity-flight-guide",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Emergency Flight Stands",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 115
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Emergency Flight Stands"
+          },
+          "dialogueSettings": {
+            "text": "Nightfall relays civil-defense communications; Daybreak carries emergency relief supplies. Both are unarmed public aircraft with working flight controls and the shared Tower assistance. Open the map, select either aircraft, then choose takeoff or Fly to a landing strip."
+          }
+        },
+        {
           "id": "airport-welcome",
           "modelId": "street-sign",
           "placementAnchor": "collider-base",
@@ -27304,6 +27644,46 @@
             "description": "Walk-in timber rest cabin on the lantern trail. Find the trail supply pack beside its porch."
           },
           {
+            "id": "continuity-shelter",
+            "name": "Continuity Fallout Shelter",
+            "x": -150,
+            "y": 0,
+            "z": 33,
+            "width": 14,
+            "depth": 12,
+            "description": "Open-entry civil-defense shelter and the warning-stage check-in for Doomsday."
+          },
+          {
+            "id": "emergency-supplies",
+            "name": "Emergency Relief Supplies",
+            "x": -138,
+            "y": 0,
+            "z": 39,
+            "width": 8,
+            "depth": 8,
+            "description": "Emergency water, first aid and relay batteries for the fallout supply objective."
+          },
+          {
+            "id": "recovery-relay",
+            "name": "Continuity Recovery Relay",
+            "x": -150,
+            "y": 0,
+            "z": 53,
+            "width": 8,
+            "depth": 8,
+            "description": "Civil-defense warning siren and the final community all-clear relay."
+          },
+          {
+            "id": "continuity-apron",
+            "name": "Doomsday Command & Evacuation Stands",
+            "x": -4,
+            "y": 0,
+            "z": 110,
+            "width": 32,
+            "depth": 15,
+            "description": "Two additional public, unarmed aircraft: Nightfall Command and Daybreak Evacuation. Select and board from the local map."
+          },
+          {
             "id": "runway",
             "name": "Runway 18 / 36",
             "x": 40,
@@ -27319,7 +27699,7 @@
             "z": 62,
             "width": 44,
             "depth": 26,
-            "description": "Three public aircraft, ready to enter and fly. Ground service repairs and refuels parked aircraft."
+            "description": "Three touring aircraft plus two emergency aircraft at the continuity stands, ready to enter and fly. Ground service repairs and refuels parked aircraft."
           },
           {
             "id": "executive-club",

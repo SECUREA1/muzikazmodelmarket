@@ -30,7 +30,7 @@ try:
           const projection=THREE.PerspectiveCamera.prototype.updateProjectionMatrix;THREE.PerspectiveCamera.prototype.updateProjectionMatrix=function(...args){window.previewCamera=this;return projection.apply(this,args);};
           const add=THREE.Scene.prototype.add;
           THREE.Scene.prototype.add=function(...objects){window.renderedScene=this;return add.apply(this,objects);};
-          window.mount=async world=>{window.previewMount?.dispose();window.renderedScene=null;window.world=world;const {mountWorldPreview}=await import('/public/js/world-destination-preview.js');window.previewMount=mountWorldPreview(document.querySelector('#preview'),world,{resolve:false,autoStart:true});};
+          window.mount=async (world,resolve=false)=>{window.previewMount?.dispose();window.renderedScene=null;window.world=world;const {mountWorldPreview}=await import('/public/js/world-destination-preview.js');window.previewMount=mountWorldPreview(document.querySelector('#preview'),world,{resolve,autoStart:true});};
           const {airportWorld}=await import('/airport-world.mjs');await mount(airportWorld());
         }''')
         page.wait_for_function("document.querySelector('#preview button').textContent==='Close 3D' && window.renderedScene", timeout=60000)
@@ -39,15 +39,30 @@ try:
           const ids=new Set(roots.map(object=>object.userData.atlasItemId));
           return {camera:previewCamera.position.toArray(),runway:world.airport.runway,total:world.builderScene.objects.length,rendered:roots.length,
             missing:world.builderScene.objects.filter(item=>!ids.has(item.id)).map(item=>item.id),
-            craft:roots.filter(object=>object.userData.aircraftModel).length,
+            craft:roots.filter(object=>object.userData.aircraftModel).map(object=>object.userData.atlasItemId),
             terminal:roots.some(object=>object.userData.atlasItemId.startsWith('airport-terminal-')),
             mountain:roots.some(object=>object.userData.atlasItemId.includes('peak-'))};
         }''')
         assert airport['total'] > 100, airport
         assert sum(value * value for value in airport['camera']) ** .5 < 600, airport
         assert airport['rendered'] == airport['total'] and not airport['missing'], airport
-        assert airport['craft'] == 3 and airport['terminal'] and airport['mountain'], airport
+        assert set(airport['craft']) == {'airport-flight-1', 'airport-flight-2', 'airport-flight-3',
+                                         'airport-command-flight', 'airport-evacuation-flight'}, airport
+        assert airport['terminal'] and airport['mountain'], airport
         page.screenshot(path='/workspace/accurate-airport-preview.png')
+        saved_airport = page.evaluate('world')
+        page.route('**/api/environments/muzikaz-airport', lambda route: route.fulfill(
+            json={'success': True, 'data': saved_airport}))
+        page.evaluate('''async()=>{
+          await mount({id:'muzikaz-airport',name:'Stale list entry',modelUrl:'/wrong-house.glb',builderScene:{layout:'grand-floor',mapSize:40,objects:[{id:'wrong-house',modelId:'sofa'}]}},true);
+        }''')
+        page.wait_for_function("document.querySelector('#preview button').textContent==='Close 3D' && window.renderedScene", timeout=60000)
+        canonical = page.evaluate('''()=>{
+          const ids=[];renderedScene.traverse(object=>{if(object.userData.atlasItemId)ids.push(object.userData.atlasItemId);});
+          return {id:document.querySelector('#preview canvas').dataset.worldId,name:document.querySelector('#preview canvas').getAttribute('aria-label'),ids};
+        }''')
+        assert canonical['id'] == saved_airport['id'] and saved_airport['name'] in canonical['name'], canonical
+        assert 'wrong-house' not in canonical['ids'] and len(canonical['ids']) == airport['total'], canonical
         page.evaluate('''async()=>{
           const {neonMarina}=await import('/neon-marina.mjs'),marina=neonMarina();
           await mount({id:'harbor-preview',name:'Neon Docks',proceduralLand:true,builderScene:{layout:'grand-floor',mapSize:1024,objects:marina.objects,layoutMeta:{harbor:marina.harbor}}});
@@ -80,6 +95,6 @@ try:
         assert page.locator('#preview canvas').count() == 0
         assert not errors, errors
         browser.close()
-        print(f"Full airport ({airport['rendered']} objects, terminal, 3 aircraft and mountain), harbor, authored GLB base, custom drawing, exact placed GLB and disposal passed.")
+        print(f"Full airport ({airport['rendered']} objects, terminal, 5 aircraft including command/evacuation and mountain), canonical destination resolution, harbor, authored GLB base, custom drawing, exact placed GLB and disposal passed.")
 finally:
     server.shutdown()

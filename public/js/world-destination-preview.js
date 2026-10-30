@@ -1,14 +1,9 @@
 import {SharedGameInventory} from './shared-game-inventory.js';
-import {worldPreviewData,previewWorldId,worldPreviewKey} from './world-preview-data.js';
+import {worldPreviewData,worldPreviewKey} from './world-preview-data.js';
+import {createWorldPreviewResolver} from './world-preview-record.js';
 import {firingRangeLocations,rangeLocalToWorld} from './firing-range.js';
-const records=new Map(),mounted=new WeakMap();let active=null;
-function fetchWorld(world){
- if(world.builderScene||world.modelUrl||world.modelUrls?.length)return Promise.resolve(world);
- const id=previewWorldId(world);if(!id)return Promise.resolve(world);
- const key=worldPreviewKey(world);
- if(!records.has(key)){const pending=new SharedGameInventory().api('/api/environments/'+encodeURIComponent(id)).then(result=>({...world,...result})).catch(error=>{records.delete(key);throw error;});records.set(key,pending);if(records.size>24)records.delete(records.keys().next().value);}
- return records.get(key);
-}
+const mounted=new WeakMap();let active=null;
+const fetchWorld=createWorldPreviewResolver(path=>new SharedGameInventory().api(path));
 function overview(world){
  const data=worldPreviewData(world),ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 320 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',data.name+' map overview');
  const add=(tag,attrs)=>{const node=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,String(value));svg.append(node);};
@@ -35,7 +30,7 @@ export function mountWorldPreview(root,world,{resolve=true,autoStart=false}={}){
   const stop=()=>{if(request!==generation)return;generation++;cancelAnimationFrame(frame);resizeObserver?.disconnect();visibilityObserver?.disconnect();lifecycleObserver?.disconnect();controls?.dispose();plot?.dispose();renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();poster.hidden=false;loading=false;stop3d=null;delete root.dataset.worldPreviewActive;if(active===stop)active=null;button.disabled=false;button.textContent='View 3D';if(!destroyed)setPoster(current);};
   active=stop;stop3d=stop;root.dataset.worldPreviewActive='true';if(typeof MutationObserver!=='undefined'){lifecycleObserver=new MutationObserver(()=>{if(!root.isConnected)stop();});lifecycleObserver.observe(document.body,{childList:true,subtree:true});}
   try{
-   current=resolve?await fetchWorld(current):current;const [THREE,{OrbitControls},{loadAtlasPlotScene}]=await Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/controls/OrbitControls.js'),import('./atlas-plot-scene.js')]);
+   current=resolve?await fetchWorld(world):current;const [THREE,{OrbitControls},{loadAtlasPlotScene}]=await Promise.all([import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/controls/OrbitControls.js'),import('./atlas-plot-scene.js')]);
    if(destroyed||request!==generation||!root.isConnected){stop();return;}
    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;
    plot=await loadAtlasPlotScene(current,null,renderer,{current:()=>!destroyed&&request===generation&&root.isConnected});
@@ -45,7 +40,7 @@ export function mountWorldPreview(root,world,{resolve=true,autoStart=false}={}){
    const bounds=new THREE.Box3().setFromObject(content);if(bounds.isEmpty())throw Error('Empty world preview');const size=bounds.getSize(new THREE.Vector3()),worldRadius=Math.max(size.x,size.y,size.z,1),framing=bounds.clone(),runway=current.airport?.runway;
    if(runway){const reach=Math.max(Number(runway.length)||200,160),x=Number(runway.x)||0,z=Number(runway.z)||0;framing.intersect(new THREE.Box3(new THREE.Vector3(x-reach*.95,-10,z-reach*.6),new THREE.Vector3(x+reach*.25,30,z+reach*.6)));}
    const center=framing.getCenter(new THREE.Vector3()),frameSize=framing.getSize(new THREE.Vector3()),radius=Math.max(frameSize.x,frameSize.y,frameSize.z,10),camera=new THREE.PerspectiveCamera(42,1,Math.max(.01,radius/1000),worldRadius*30);camera.position.copy(center).add(new THREE.Vector3(radius*.9,radius*.75,radius*.9));if(data.basketball)camera.position.set(15,10,23);if(rangeLocation)camera.position.copy(rangeLocalToWorld(rangeLocation,{x:27,y:22,z:29}));
-   renderer.domElement.setAttribute('aria-label',data.name+' interactive 3D preview');renderer.domElement.setAttribute('role','img');viewport.append(renderer.domElement);poster.hidden=true;
+   renderer.domElement.setAttribute('aria-label',data.name+' interactive 3D preview');renderer.domElement.setAttribute('role','img');renderer.domElement.dataset.worldId=data.id;viewport.append(renderer.domElement);poster.hidden=true;
    controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(data.basketball?new THREE.Vector3(0,2,0):rangeLocation?rangeLocalToWorld(rangeLocation,{x:0,y:1,z:-2}):center);controls.enableDamping=true;controls.enablePan=true;controls.minDistance=Math.max(.5,radius/2000);controls.maxDistance=worldRadius*4;controls.update();
    const resize=()=>{const width=Math.max(1,viewport.clientWidth),height=Math.max(1,viewport.clientHeight);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();};resize();resizeObserver=new ResizeObserver(resize);resizeObserver.observe(viewport);
    if(typeof IntersectionObserver!=='undefined'){visibilityObserver=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;});visibilityObserver.observe(root);}

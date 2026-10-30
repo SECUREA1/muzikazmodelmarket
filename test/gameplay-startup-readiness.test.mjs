@@ -21,6 +21,8 @@ function fixture(extra={}){
  const controls=new Map(['house-outside-button','house-world-button','house-environment-select','house-environment-list-toggle'].map(id=>[id,{disabled:false}])),events=[],readinessChanges=[],statuses=[];
  const reset=()=>{};
  const context=vm.createContext({
+  forestSnakeSpeech:{reset,update:reset},doomsdayUI:{reset,update:reset},
+  pingPongScene:{reset,receive:reset},pingPongUI:{reset,update:reset},resetPingPong:reset,triggerPingPong:()=>false,
   sun:{},renderer:{},baselineWorldQuality:{},quality:{},applyForestryRenderQuality:reset,forestUI:{close:reset,update:reset,visible:()=>false},quarryUI:{reset,update:reset},deedDeliveryScene:{reset,update:reset},worldNightLights:{reset,update:reset},vehicleNightLights:{reset,update:reset},flashlight:{reset,update:reset},islandUI:{reset(){},update(){}},islandBuzz:{reset(){}},console,URL,Promise,queueMicrotask,isPrisonEnvironment,prisonUI:{update(){},visible:()=>false},performance:{now:()=>1000},isFishingTool,isTropicalIslandMap,tropicalIslandPlayUrl,gameplayOverlayOpen:()=>false,shippingUI:{visible:()=>false,menuOpen:()=>false,update:reset,reset},shippingScene:{update:reset,reset},shippingPortScene:{update:reset,reset},shippingActivityAnnouncements:{update:reset,reset},fishingUI:{visible:()=>false,playing:()=>false,active:()=>false,open:()=>false,update:reset,reset},fishingScene:{update:reset,reset},fishingVRScreen:{setVisible:reset},releaseXRFishingInputs:reset,xrFishingSeatKey:null,xrFishingDesktopLook:null,fishingViewEnabled:false,gameActionLoading:()=>({begin:()=>({finish(){},fail(){}})}),gameplayAnnouncements:{say(){},update(){},reset},gameplayVoice:{reset},transportActivity:{update:reset},guideAudio:{enter:reset,leave:reset},fitnessUI:{visible:()=>false,update(){}},factoryUI:{visible:()=>false,update(){}},worldSupplyUI:{visible:()=>false,update(){},reset},factoryTestingUI:{visible:()=>false,update(){}},factoryLogisticsUI:{visible:()=>false,update(){},close(){}},factoryLogisticsXRMenu:false,xrGameControls:null,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},
   document:{getElementById:id=>controls.get(id),dispatchEvent:event=>events.push(event)},window:{dispatchEvent:event=>events.push(event)},
   location:{href:'http://localhost/model-explorer.html?environment=muzikaz-airport&autoplay=1'},freshWorldUrl,
@@ -54,6 +56,7 @@ function worldHandoffFixture(){
   console:{...console,error:noop},gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:oldClient,serverVehicleId:'old-vehicle',serverMovementRevision:12,
   registry:{refresh:async()=>{},find:()=>destination},canonicalWorldId:id=>id,isArcadeMap:()=>false,isHockeyMap:()=>false,
   startEnvironment:'muzikaz-airport',replaceGameLocation:noop,transportActivity:{close:()=>trace.push('transport-close')},
+  doomsdayUI:{reset:()=>trace.push('doomsday-reset')},
   ownedPlacement:{reset:noop},updateFunhouseWaterGun:noop,roadVehicleUI:{update:noop},constructionScene:{reset:noop},constructionCamera:{reset:noop},
   buildingToggle:{update:noop},buildRoomButton:{disabled:false},liveRangeHud:null,rangeScenes:{clear:noop,refresh:noop},rangeFeedback:{reset:noop},
   stage:{classList:{remove:noop,add:noop}},gameEconomy:null,serverPlayerRoots:new Map(),disposeProjection:noop,clearServerRadTox:noop,
@@ -91,6 +94,7 @@ test('internal startup deployment retires the old room and activates only after 
   assert.equal(context.worldLoadGeneration,2);assert.equal(context.authoritativeClient,null);assert.equal(context.startEnvironment,f.destination.id);
   assert.equal(context.serverVehicleId,null);assert.equal(context.serverMovementRevision,null);
   assert.ok(trace.indexOf('old-stop')<trace.indexOf('load'));assert.ok(trace.indexOf('muzikaz:multiplayer-world-change')<trace.indexOf('load'));
+  assert.ok(trace.indexOf('doomsday-reset')>=0&&trace.indexOf('doomsday-reset')<trace.indexOf('load'),'previous warning effects stop before loading another map');
   assert.equal(context.gameplayControlsReady(),false);assert.ok([...controls.values()].every(control=>control.disabled));
   assert.equal(events.filter(event=>event.type==='muzikaz:multiplayer-world-change').length,1);
   f.asset.resolve(f.loadResult);await Promise.race([f.connected.promise,loading.then(()=>assert.fail('The destination completed without joining its room.'))]);
@@ -195,10 +199,11 @@ test('world navigation stays disabled through joining and restores only for a co
 });
 
 test('resetting a room clears facility gates and machine controls before a retry',()=>{
- const panels=new Set(['prison','factory','supply','testing','logistics','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene']);let machineHeld=true,stops=0,costumeClears=0;
+ const panels=new Set(['prison','factory','supply','testing','logistics','fitness','ski','device','land','casino','funhouse','yacht','fishing','fishing-scene','doomsday']);let machineHeld=true,stops=0,costumeClears=0;
  const facility=name=>({visible:()=>panels.has(name),update(snapshot){if(!snapshot)panels.delete(name);}});
  const {context}=fixture({gameplayStarted:true,serverPlayerInitialized:true,authoritativeClient:{ready:true,stop(){stops++;}},
   fishingUI:{reset:()=>panels.delete('fishing')},fishingScene:{reset:()=>panels.delete('fishing-scene')},prisonUI:facility('prison'),factoryUI:facility('factory'),worldSupplyUI:{reset:()=>panels.delete('supply')},factoryTestingUI:facility('testing'),factoryLogisticsUI:facility('logistics'),fitnessUI:facility('fitness'),constructionUI:{update(snapshot){if(!Object.keys(snapshot.players).length)machineHeld=false;}},
+  doomsdayUI:{reset:()=>panels.delete('doomsday')},
   skiResortControls:{update:()=>panels.delete('ski')},deviceUI:{reset:()=>panels.delete('device')},landSaleUI:{reset:()=>panels.delete('land')},casinoUI:{reset:()=>panels.delete('casino')},funhouseUI:{reset:()=>panels.delete('funhouse')},clearFunhouseCostume:()=>{costumeClears++;},yachtGames:{reset:()=>panels.delete('yacht')}
  });
  context.resetRoomConnection();
