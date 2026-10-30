@@ -1,3 +1,4 @@
+import {revealGameViewControl} from './game-display-flow.js';
 import {isPrisonEnvironment} from './prison-config.js';
 import {isCasinoEnvironment} from './casino-config.js';
 import {isFunhouseEnvironment} from './clown-funhouse-config.js';
@@ -59,7 +60,7 @@ export function mountMapQuestPrompts({stage,command,onOpenAssignments}){
  let world=null,snapshot=null,self=null,environment=null,offers=[],selection='',busy=false,mode='offers',result=null,lastMissionKey='',seenResults=new Set(),arrivalShown=false,disposed=false,renderKey='',requestVersion=0;
  const button=(label,run)=>{const node=document.createElement('button');node.type='button';node.textContent=label;node.addEventListener('click',run);return node;};
  const paragraph=(value,className)=>{const node=document.createElement('p');node.textContent=value;if(className)node.className=className;return node;};
- function open({automatic=false,view}={}){if(isPrisonEnvironment(environment))return;if(view)mode=view;const changed=panel.hidden;panel.hidden=false;launcher.setAttribute('aria-expanded','true');if(changed&&!automatic){requestGameInputRelease('quests-open',document);document.exitPointerLock?.();close.focus({preventScroll:true});}render();}
+ function open({automatic=false,view}={}){if(isPrisonEnvironment(environment))return;if(!automatic)revealGameViewControl(launcher);if(view)mode=view;const changed=panel.hidden;panel.hidden=false;launcher.setAttribute('aria-expanded','true');if(changed&&!automatic){requestGameInputRelease('quests-open',document);document.exitPointerLock?.();close.focus({preventScroll:true});}render();}
  function hide(){if(panel.hidden)return;requestGameInputRelease('quests-close',document);panel.hidden=true;launcher.setAttribute('aria-expanded','false');if(panel.contains(document.activeElement))launcher.focus({preventScroll:true});}
  function setFeedback(value){feedback.textContent=value||'';}
  async function request(operation,fields={}){

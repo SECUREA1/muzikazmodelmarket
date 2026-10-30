@@ -28,7 +28,8 @@ try:
    panel=page.locator('.doomsday-guide');assert panel.is_hidden()
    more.click();assert panel.is_visible()
    assert 'Explore while standing by' in page.locator('[data-flow-title]').text_content()
-   page.get_by_text('View full response flow',exact=True).click()
+   page.get_by_role('button',name='Emergency response flow',exact=True).click()
+   assert page.locator('.doomsday-game-flow details').get_attribute('open') is not None
    assert page.locator('[data-flow-step=standby]').get_attribute('aria-current')=='step'
    assert panel.evaluate("n=>!!n.closest('.game-view-overflow')")
    assert page.get_by_role('switch',name='Sirens and explosions',exact=True).is_visible()

@@ -295,6 +295,15 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
+All secondary game buttons, including the World/Backpack/Tools/Settings/Build
+dock, remain inside the header **More view controls** extension at every screen
+width. Its **Emergency response flow** button opens the complete response steps.
+A shared control catalog records labels, categories and component locations,
+including late-added controls and map-specific launchers. Existing handlers and
+availability checks stay attached; movement sticks and immediate vehicle/fire/use
+controls remain in their gameplay positions. The extension scrolls within the
+stage and leaves room for primary controls.
+
 The header **More view controls** dropdown contains the emergency controls directly, also reachable from Settings navigation. There is no separate Radio & sound toggle. Closing the header menu hides the controls, including during new events. Native games use a compact **Game flow & sound** header dropdown. A response overview explains the current phase; **View full response flow** shows shelter, impacts, optional aircraft, supplies, relay and all-clear steps using actual progress. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without

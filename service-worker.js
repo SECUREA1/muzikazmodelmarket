@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.6.22-emergency-game-flow';
+const CACHE = 'muzikaz-world-v2.6.23-complete-header-controls';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
