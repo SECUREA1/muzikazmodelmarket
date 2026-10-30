@@ -114,3 +114,12 @@
  .house-stage:fullscreen .doomsday-panel{max-height:calc(100% - 250px - env(safe-area-inset-bottom,0px))!important}
  .house-stage:-webkit-full-screen .doomsday-panel{max-height:calc(100% - 250px - env(safe-area-inset-bottom,0px))!important}
 }
+
+/* Radio controls belong to the header menu, never to a floating page chip. */
+:is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-guide-chip{position:static!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;margin:0!important;min-height:44px;text-align:left}
+:is(.house-stage,.native-doomsday,main) .doomsday-menu .doomsday-panel{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;max-height:55dvh!important;margin:8px 0 0!important}
+.doomsday-menu{min-width:0;max-width:100%;pointer-events:auto}
+.native-radio-menu{position:fixed;top:8px;right:8px;width:min(340px,calc(100vw - 16px));pointer-events:auto;color:#efffec;background:#142c29;border-radius:10px;padding:8px;box-sizing:border-box}
+.native-radio-menu summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+
+.native-radio-menu .doomsday-guide-chip{display:none!important}

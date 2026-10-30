@@ -295,7 +295,7 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-The **Radio & sound** button remains available during quiet intervals. **Enable
+The header **More view controls** dropdown contains **Radio & sound**, also listed in Settings navigation. Its controls expand inside the dropdown and stay closed until requested, including during new events. Native games use a compact header dropdown. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without
 starting an event. The panel reports muted, paused and ready states, and provides
