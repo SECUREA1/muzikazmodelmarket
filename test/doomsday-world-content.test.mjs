@@ -13,6 +13,7 @@ import {startAircraftAssist,aircraftAssistedInput} from '../server-aircraft-acce
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
+import {isDoomsdayObjectiveNearby} from '../public/js/doomsday-rules.js';
 
 test('emergency assets are reusable native models with live, unarmed aircraft rigs and catalog artwork',async()=>{
  for(const id of Object.keys(DOOMSDAY_MODEL_INFO)){
@@ -33,9 +34,14 @@ test('airport emergency response sites have supported ground and a traversable s
  const environment=airportWorld(),collision=new ServerBuilderCollision(),config=doomsdayForEnvironment(environment);
  assert.equal(config.objectives.length,3);
  for(const objective of config.objectives){const floor=collision.groundAt(environment,objective.position);assert.ok(floor,objective.id+' has a collision-supported destination');}
+ const shelter=config.objectives.find(objective=>objective.id==='shelter');
+ assert.deepEqual(shelter.arrivalArea,{minX:-155,maxX:-145,minZ:26,maxZ:35});
  let position=collision.safeSpawn(environment,{x:-150,y:0,z:37});
- while(position.z>32.5){const next=collision.resolve(environment,position,{...position,z:position.z-.2},{});assert.ok(position.z-next.z>.1,'shelter entrance stays open');position=next;}
+ assert.equal(isDoomsdayObjectiveNearby(position,shelter),false,'the promenade outside the shelter is not an arrival');
+ while(position.z>27.2){const next=collision.resolve(environment,position,{...position,z:position.z-.2},{});assert.ok(position.z-next.z>.1,'shelter entrance and interior stay open');position=next;if(position.z<=35)assert.equal(isDoomsdayObjectiveNearby(position,shelter),true,'every step from the doorway to the back interior is recognized');}
  assert.ok(position.y>.1,'shelter floor supports the visitor');
+ assert.ok(Math.hypot(position.x-shelter.position.x,position.z-shelter.position.z)>4.5,'the back interior extends beyond the old marker radius');
+ assert.equal(isDoomsdayObjectiveNearby({x:-150,y:3.23,z:30},shelter),false,'standing on the roof is not entering the shelter');
  const command=createBuilderModel('doomsday-command-aircraft');assert.ok(command.getObjectByName('CONTINUITY_COMMUNICATIONS_DOME'));
  const rescue=createBuilderModel('doomsday-evacuation-aircraft');assert.ok(rescue.getObjectByName('FIRST_AID_CARGO'));
 });

@@ -1413,6 +1413,12 @@
             "x": -150,
             "y": 0,
             "z": 33
+          },
+          "arrivalArea": {
+            "minX": -155,
+            "maxX": -145,
+            "minZ": 26,
+            "maxZ": 35
           }
         },
         {
@@ -1433,7 +1439,7 @@
         }
       ]
     },
-    "contentUpdatedAt": "2026-10-30T12:00:00.000Z",
+    "contentUpdatedAt": "2026-10-30T18:00:00.000Z",
     "permanent": true,
     "publicDestination": true,
     "proceduralLand": true,
@@ -25076,7 +25082,7 @@
             "prompt": "Check the continuity shelter"
           },
           "dialogueSettings": {
-            "text": "Civil defense shelter. Emergency warnings arrive sporadically, first shortly after arrival and later at random intervals. Listen for Cole on the radio, take cover before the distant explosions, then follow the supply and recovery markers. Quests register on arrival. You can hide the radio guide while travel, flight and movement remain available."
+            "text": "Civil defense shelter. Enter the doorway or shelter interior and Cole confirms your arrival automatically, including during the blasts or fallout. Stay under cover until the blasts pass; the supply response and recovery relay follow automatically. Use Follow challenge for objective markers. You can hide the radio guide while the event, sirens, travel, flight and movement stay active."
           }
         },
         {

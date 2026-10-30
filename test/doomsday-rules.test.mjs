@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DOOMSDAY_TIMING as T,doomsdayCommand,doomsdayView,stepDoomsday} from '../public/js/doomsday-rules.js';
+import {DOOMSDAY_TIMING as T,doomsdayCommand,doomsdayView,stepDoomsday,isDoomsdayObjectiveNearby} from '../public/js/doomsday-rules.js';
 
 const environment={id:'test-emergency-map',spawn:{x:12,y:2,z:-4}};
 function fixture({random=()=>0}={}){
@@ -94,6 +94,24 @@ test('version3 active sessions preserve their quests and discard timer-only phas
  const recovery=f.view();assert.equal(recovery.phase,'recovery');assert.equal(recovery.clearAt,null);
 });
 
+test('original version2 active sessions preserve every phase and completed quest until the actual all-clear',()=>{
+ for(const phase of ['warning','detonation','fallout','recovery']){
+  let samples=0;const f=fixture({random:()=>{samples++;return 0;}});let state=f.begin();
+  f.player.position={...state.objectives[0].position};state=f.tick(f.now+1);assert.equal(state.objectives[0].completed,true);
+  f.player.position={x:100,y:0,z:100};
+  if(phase==='detonation')state=f.tick(state.detonationAt);
+  if(phase==='fallout')state=f.tick(state.falloutAt);
+  if(phase==='recovery'){f.player.position={...state.objectives[1].position};state=f.tick(state.suppliesReadyAt);}
+  const original=structuredClone(state);f.sim.doomsday.version=2;
+  for(const field of ['cycle','scheduledAt','nextEventAt','recoveryAt','clearingAt','clearAt'])delete f.sim.doomsday[field];
+  state=f.view();assert.equal(state.version,4);assert.equal(state.id,original.id);assert.equal(state.phase,phase);assert.equal(state.active,true);assert.equal(state.cycle,1);assert.equal(state.nextEventAt,null);assert.equal(state.clearAt,null);assert.equal(state.awaitingArrival,false);assert.equal(samples,1,'migration does not schedule or restart an active event');
+  for(const field of ['startedAt','phaseStartedAt','serverTime','detonationAt','falloutAt'])assert.equal(state[field],original[field],field);
+  assert.deepEqual(state.objectives,original.objectives);assert.equal(state.revision,original.revision+1);assert.equal(f.view().revision,state.revision,'migration runs once');
+  if(phase==='fallout'||phase==='recovery'){f.player.position={x:100,y:0,z:100};state=f.tick(f.now+120000);assert.equal(state.phase,phase);assert.equal(state.nextEventAt,null,'an unfinished original quest stays active');}
+  state=f.finish();assert.equal(state.phase,'all-clear');assert.equal(state.completedCount,3);assert.equal(state.nextEventAt-state.clearAt,T.repeatMinMs);assert.equal(samples,2,'only true all-clear samples the next quiet break');
+ }
+});
+
 test('completed version3 schedules keep their sampled delay but move it after actual all-clear',()=>{
  const f=fixture();f.begin();const finished=f.finish(),sampled=700000;
  f.sim.doomsday.version=3;f.sim.doomsday.nextEventAt=finished.startedAt+sampled;
@@ -106,4 +124,50 @@ test('authored checkpoint floors resolve once per actual event, never during idl
  const f=fixture();let calls=0;const options={resolvePoint:point=>{calls++;return {...point,y:8};}};
  let state=f.tick(100,options);assert.equal(calls,0);state=f.tick(state.nextEventAt,options);assert.equal(calls,3);assert.ok(state.objectives.every(o=>o.position.y===8));
  f.tick(f.now+1,options);assert.equal(calls,3);state=f.finish();f.tick(state.nextEventAt,options);assert.equal(calls,6);
+});
+
+const shelterArea={minX:-155,maxX:-145,minZ:26,maxZ:35};
+const shelterWorld={id:'shelter-footprint',spawn:{x:0,y:0,z:0},doomsday:{objectives:[{id:'shelter',position:{x:-150,y:0,z:33},arrivalArea:shelterArea},{id:'supplies',position:{x:-138,y:0,z:41}},{id:'recovery',position:{x:-150,y:0,z:55}}]}};
+
+test('the whole authored shelter footprint registers while outside, roof and distant vehicles do not',()=>{
+ const objective={id:'shelter',position:{x:-150,y:.18,z:33},arrivalArea:shelterArea};
+ for(const position of [{x:-154.5,y:.18,z:26.5},{x:-145.5,y:.18,z:26.5},{x:-150,y:.18,z:35}])assert.equal(isDoomsdayObjectiveNearby(position,objective),true,'interior corners and the open doorway are shelter arrivals');
+ for(const position of [{x:-155.01,y:.18,z:30},{x:-150,y:.18,z:35.01},{x:-150,y:3.225,z:30},{x:-150,y:30,z:30},{x:100,y:.18,z:100},{x:NaN,y:.18,z:30},{x:-150,y:Infinity,z:30}])assert.equal(isDoomsdayObjectiveNearby(position,objective),false);
+ assert.equal(isDoomsdayObjectiveNearby({x:-154.5,y:0,z:26.5},{...objective,id:'supplies'}),false,'supply and relay objectives keep their ordinary radius even with stray area metadata');
+ assert.equal(isDoomsdayObjectiveNearby({x:-150,y:0,z:33},{...objective,arrivalArea:{...shelterArea,minX:NaN}}),true,'invalid optional bounds safely use the ordinary radius');
+ assert.equal(isDoomsdayObjectiveNearby({x:-150,y:0,z:33},null),false);
+});
+
+test('shelter arrival confirms automatically in every live response phase without skipping blasts or shortening the challenge',()=>{
+ for(const phase of ['warning','detonation','fallout','recovery']){
+  const sim={},player={actorId:'account:arrival-'+phase,health:100,position:{x:100,y:0,z:100},vehicleId:null,input:{forward:1}};
+  const tick=at=>stepDoomsday(sim,shelterWorld,at,{players:[player],random:()=>0});
+  let state=tick(100);state=tick(state.nextEventAt);const detonationAt=state.detonationAt,falloutAt=state.falloutAt;
+  let arrivalAt=state.startedAt+1;
+  if(phase==='detonation')arrivalAt=detonationAt+1;
+  if(phase==='fallout')arrivalAt=falloutAt+1;
+  if(phase==='recovery'){player.position={...state.objectives.find(item=>item.id==='supplies').position};state=tick(state.suppliesReadyAt);arrivalAt=state.serverTime+1;}
+  player.position={x:-154.5,y:0,z:26.5};state=tick(arrivalAt);
+  const shelter=state.objectives.find(item=>item.id==='shelter');assert.equal(shelter.completed,true,phase);assert.equal(shelter.completedBy,player.actorId);assert.equal(state.phase,phase);assert.equal(state.active,true);assert.equal(state.nextEventAt,null);assert.equal(state.detonationAt,detonationAt);assert.equal(state.falloutAt,falloutAt);assert.equal(state.clearAt,null);assert.deepEqual(player.input,{forward:1});
+  const revision=state.revision;state=tick(arrivalAt+1);assert.equal(state.revision,revision,'remaining inside does not complete the objective repeatedly');
+ }
+});
+
+test('standing in the shelter as warning begins registers immediately and later visitors retain a shared completion',()=>{
+ const sim={},first={actorId:'account:first',health:100,position:{x:-154.5,y:0,z:26.5}},second={actorId:'account:second',health:100,position:{x:100,y:0,z:100}};
+ let state=stepDoomsday(sim,shelterWorld,100,{players:[first,second],random:()=>0});state=stepDoomsday(sim,shelterWorld,state.nextEventAt,{players:[first,second],random:()=>0});
+ const shelter=state.objectives.find(item=>item.id==='shelter');assert.equal(shelter.completedBy,first.actorId);assert.equal(shelter.completedAt,state.startedAt);
+ first.position={x:100,y:0,z:100};second.position={x:-145.5,y:0,z:26.5};
+ state=stepDoomsday(sim,shelterWorld,state.detonationAt,{players:[first,second],random:()=>0});
+ assert.equal(state.objectives.find(item=>item.id==='shelter').completedBy,first.actorId,'the room completion keeps its original responder');
+ assert.equal(isDoomsdayObjectiveNearby(second.position,state.objectives.find(item=>item.id==='shelter')),true,'the second visitor can receive their own arrival confirmation');
+});
+
+test('existing version4 sessions adopt authored shelter bounds without resetting their active event or quests',()=>{
+ const world={...shelterWorld,doomsday:{objectives:shelterWorld.doomsday.objectives.map(item=>{const copy={...item};delete copy.arrivalArea;return copy;})}},sim={},player={actorId:'account:existing',health:100,position:{x:100,y:0,z:100}};
+ let state=stepDoomsday(sim,world,100,{players:[player],random:()=>0});state=stepDoomsday(sim,world,state.nextEventAt,{players:[player],random:()=>0});
+ player.position={...state.objectives.find(item=>item.id==='supplies').position};state=stepDoomsday(sim,world,state.suppliesReadyAt,{players:[player],random:()=>0});assert.equal(state.phase,'recovery');
+ const id=state.id,revision=state.revision;
+ state=doomsdayView(sim,shelterWorld);assert.equal(state.version,4);assert.equal(state.id,id);assert.equal(state.phase,'recovery');assert.equal(state.revision,revision+1);assert.equal(state.nextEventAt,null);assert.equal(state.objectives[1].completedBy,player.actorId);assert.deepEqual(state.objectives[0].arrivalArea,shelterArea);
+ assert.equal(doomsdayView(sim,shelterWorld).revision,state.revision,'unchanged metadata is not re-applied every tick');
 });

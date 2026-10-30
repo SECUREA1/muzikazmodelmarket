@@ -270,6 +270,12 @@ does not start, stop, or shorten an event. Hiding the guide is a separate contro
 Objectives register automatically when players reach their sites; the shelter is
 optional and never delays the explosions.
 
+The airport shelter recognizes its doorway and full interior throughout warning,
+detonation, fallout and recovery. Cole confirms each visitor’s own arrival and
+explains the next stage, including when the guide is hidden or challenge tracking
+is off. Supplies and the relay continue automatically on arrival; no check-in or
+advance button is required. Entering the shelter keeps the active event running.
+
 Each explorer room shares one event; hockey and arcade use local exercises.
 Three staggered blasts have matching explosion sounds, and the last fireball and
 shockwave finish as fallout begins. Loud sirens and rotating amber beacons continue

@@ -58,3 +58,19 @@ test('proximity quests end the challenge; fresh empty destinations arm their own
  const visitor={accountId:'fresh',username:'Fresh',stats:{health:100}};state=await f.runtime.command(f.world.id,f.world,visitor,{action:'join',requestId:'fresh-arrival'});
  assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.nextEventAt,expiredNow+T.initialMinMs);assert.equal(state.doomsday.id,previousId,'arming never instantly replays the old catastrophe');f.runtime.now=nowBefore;
 });
+
+test('the airport rear shelter interior confirms arrival during detonations and keeps the full next steps active',async t=>{
+ const f=await fixture(t);let state=await f.send('join');state=await f.at(state.doomsday.nextEventAt);
+ const id=state.doomsday.id,detonationAt=state.doomsday.detonationAt,falloutAt=state.doomsday.falloutAt;
+ const shelter=state.doomsday.objectives.find(item=>item.id==='shelter');
+ assert.deepEqual(shelter.arrivalArea,{minX:-155,maxX:-145,minZ:26,maxZ:35});
+ state=await f.at(detonationAt);assert.equal(state.doomsday.phase,'detonation');assert.equal(state.doomsday.objectives.find(item=>item.id==='shelter').completed,false);
+ state=await f.send('map-access',{position:{x:-150,y:.18,z:27.2}});
+ const player=state.players[f.id],confirmed=state.doomsday.objectives.find(item=>item.id==='shelter');
+ assert.ok(Math.hypot(player.position.x-shelter.position.x,player.position.z-shelter.position.z)>4.5,'the real interior is outside the old marker circle');
+ assert.equal(confirmed.completed,true);assert.equal(confirmed.completedBy,f.id);assert.equal(state.doomsday.phase,'detonation');assert.equal(state.doomsday.id,id);assert.equal(state.doomsday.falloutAt,falloutAt);assert.equal(state.doomsday.nextEventAt,null);
+ state=await f.at(falloutAt+60000);assert.equal(state.doomsday.phase,'fallout');assert.equal(state.doomsday.active,true);assert.equal(state.doomsday.currentObjectiveId,'supplies');assert.equal(state.doomsday.clearAt,null);
+ state=await f.send('map-access',{position:state.doomsday.objectives.find(item=>item.id==='supplies').position});assert.equal(state.doomsday.phase,'recovery');assert.equal(state.doomsday.currentObjectiveId,'recovery');
+ state=await f.send('map-access',{position:state.doomsday.objectives.find(item=>item.id==='recovery').position});assert.equal(state.doomsday.phase,'clearing');assert.equal(state.doomsday.clearAt-f.now,T.clearingMs);
+ state=await f.at(state.doomsday.clearAt);assert.equal(state.doomsday.phase,'all-clear');assert.equal(state.doomsday.nextEventAt-state.doomsday.clearAt,T.repeatMinMs);
+});

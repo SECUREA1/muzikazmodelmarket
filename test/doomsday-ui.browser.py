@@ -24,7 +24,7 @@ try:
     const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
     const {doomsdayView,stepDoomsday}=await import('/public/js/doomsday-rules.js');
     const {gameplayOverlayOpen}=await import('/public/js/game-menu-controls.js');
-    window.clock=100000;window.enteredAt=clock;window.env={id:'radio-airport',name:'Airport response',spawn:{x:0,y:0,z:0}};window.position={x:20,y:0,z:20};window.sim={};window.spoken=[];window.notices=[];window.moves=0;window.shared=true;window.randomDraws=0;window.eventIds=new Set();
+    window.clock=100000;window.enteredAt=clock;window.env={id:'radio-airport',name:'Airport response',spawn:{x:0,y:0,z:0}};window.position={x:20,y:0,z:20};window.sim={};window.spoken=[];window.notices=[];window.moves=0;window.shared=true;window.otherPlayers=[];window.randomDraws=0;window.eventIds=new Set();
     window.random=()=>{randomDraws++;return .25;};
     window.scene=new THREE.Scene();scene.background=new THREE.Color('#14252d');
     window.camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,700);camera.position.set(0,7,24);camera.lookAt(0,10,-160);
@@ -36,7 +36,13 @@ try:
     window.ui=mountDoomsdayUI({stage:document.querySelector('main'),getEnvironment:()=>env,getPosition:()=>position,getState:()=>doomsdayView(sim,env),isShared:()=>shared,effects,voice,announce:text=>notices.push(text),getPreferences:()=>({effectsMuted:true}),now:()=>clock,random});
     window.blocked=gameplayOverlayOpen;document.querySelector('#walk').onclick=()=>moves++;document.addEventListener('keydown',event=>{if(event.key==='w'&&!blocked())moves++;});
     window.reach=id=>{position={...ui.getState().objectives.find(o=>o.id===id).position};};
-    renderer.setAnimationLoop(time=>{if(shared)stepDoomsday(sim,env,clock,{players:[{id:'pilot',health:100,position}],random});ui.tick(time/1000);if(ui.getState()?.id)eventIds.add(ui.getState().id);renderer.render(scene,camera);});
+    window.arrivalCount=()=>spoken.filter(call=>call.text.includes('Shelter reached.')).length;
+    window.beginShelterCase=(suffix,inside=false)=>{
+     deferRadio=false;voice.state.speaking=voice.state.outputBusy=false;voice.state.pending=0;otherPlayers=[];shared=true;sim={};clock+=10000;
+     env={id:'shelter-'+suffix,name:'Shelter arrival check',doomsday:{objectives:[{id:'shelter',position:{x:0,y:0,z:0},arrivalArea:{minX:-5,maxX:5,minZ:-4,maxZ:4}},{id:'supplies',position:{x:12,y:0,z:-12}},{id:'recovery',position:{x:20,y:0,z:-20}}]}};
+     position=inside?{x:4.8,y:0,z:3.8}:{x:20,y:0,z:20};window.beforeArrival=arrivalCount();window.beforeCaseSpeech=spoken.length;
+    };
+    renderer.setAnimationLoop(time=>{if(shared&&env)stepDoomsday(sim,env,clock,{players:[{id:'pilot',health:100,position},...otherPlayers],random});ui.tick(time/1000);if(ui.getState()?.id)eventIds.add(ui.getState().id);renderer.render(scene,camera);});
    }''')
    guide=page.locator('.doomsday-guide')
    page.wait_for_function("ui.getState()?.nextEventAt>clock")
@@ -202,6 +208,7 @@ try:
    page.wait_for_function("ui.getState().phase==='warning' && waitingRadios.length===1")
    page.evaluate("reach('shelter')");page.wait_for_function('waitingRadios.length===2')
    page.evaluate('voice.state.speaking=true;waitingRadios[0].onStarted()');assert guide.get_attribute('data-speaking')=='true'
+   assert 'Shelter reached' in guide.locator('[data-transcript]').inner_text(),'An older queued warning overwrote the confirmed arrival.'
    page.evaluate('waitingRadios[0].onFinished();waitingRadios[1].onStarted();waitingRadios[0].onFinished()')
    assert guide.get_attribute('data-speaking')=='true','old completion ended the newer shelter transmission'
    page.evaluate('clock+=18000')
@@ -209,9 +216,88 @@ try:
    page.evaluate('waitingRadios[2].onStarted();waitingRadios[1].onStarted();waitingRadios[1].onFinished()')
    assert guide.get_attribute('data-speaking')=='true'
    assert 'Detonations' in guide.locator('[data-transcript]').inner_text()
+   # A player already in the shelter footprint is recognized on the first
+   # warning snapshot, even with tracking off and the guide hidden.
+   page.evaluate('deferRadio=false;voice.state.outputBusy=false')
+   follow.uncheck()
+   page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
+   page.evaluate("beginShelterCase('already-inside',true)")
+   page.wait_for_function("ui.getState()?.mapId==='shelter-already-inside' && ui.getState().phase==='idle'")
+   page.evaluate('clock=ui.getState().nextEventAt')
+   page.wait_for_function("ui.getState().phase==='warning' && arrivalCount()===beforeArrival+1")
+   assert page.evaluate('spoken.length===beforeCaseSpeech+1'),'Initial arrival queued an obsolete get-to-shelter briefing.'
+   assert guide.is_hidden() and not page.evaluate('ui.followingChallenge()')
+   assert 'Shelter reached' in page.locator('.doomsday-banner').inner_text()
+   assert 'arrival is confirmed' in guide.locator('.doomsday-phase p').inner_text()
+   assert page.evaluate("ui.getState().objectives.find(o=>o.id==='shelter').completed")
+   arrival=page.evaluate('spoken.at(-1)')
+   assert arrival['gender']=='male' and arrival['effect']=='walkie' and arrival['priority']=='emergency'
+   assert 'supply response' in arrival['text'].lower() and 'Stay under cover' in arrival['text']
+   first_arrival=page.evaluate('arrivalCount()')
+   page.evaluate('finishRadio();position={x:20,y:0,z:20};clock+=100');page.wait_for_timeout(80)
+   page.evaluate('position={x:4.8,y:0,z:3.8};clock+=100');page.wait_for_timeout(80)
+   assert page.evaluate('arrivalCount()')==first_arrival,'Reentering the same event repeated shelter check-in.'
+   page.evaluate('clock=ui.getState().falloutAt')
+   page.wait_for_function("ui.getState().phase==='fallout'")
+   assert 'Relief supply collection is the next response step' in page.evaluate('spoken.at(-1).text')
+   assert not page.evaluate('ui.followingChallenge()')
+   assert page.evaluate('effects.root.visible && ui.getState().nextEventAt===null'),'Shelter arrival stopped the event.'
+   # A room-wide completion cannot confirm a distant viewer. On their own
+   # late arrival, even outside the old center radius, give current next steps.
+   page.evaluate("beginShelterCase('other-responder')")
+   page.wait_for_function("ui.getState()?.mapId==='shelter-other-responder' && ui.getState().phase==='idle'")
+   page.evaluate('clock=ui.getState().nextEventAt')
+   page.wait_for_function("ui.getState().phase==='warning'")
+   page.evaluate("otherPlayers=[{id:'other',actorId:'other',health:100,position:{x:0,y:0,z:0}}]")
+   page.wait_for_function("ui.getState().objectives.find(o=>o.id==='shelter').completedBy==='other'")
+   assert page.evaluate('arrivalCount()===beforeArrival'),'Another responder falsely acknowledged this viewer.'
+   page.evaluate('clock=ui.getState().falloutAt+6000;position={x:4.8,y:4,z:3.8}')
+   page.wait_for_function("ui.getState().phase==='fallout'");page.wait_for_timeout(80)
+   assert page.evaluate('arrivalCount()===beforeArrival'),'Flying over a shelter acknowledged arrival.'
+   page.evaluate('position.y=0')
+   page.wait_for_function('arrivalCount()===beforeArrival+1')
+   assert 'Relief supply collection is the next response step' in page.evaluate('spoken.at(-1).text')
+   assert page.evaluate("ui.getState().objectives.find(o=>o.id==='shelter').completedBy==='other'")
+   assert guide.is_hidden() and not page.evaluate('ui.followingChallenge()')
+   # Shelter recognition also works during the blasts, then advances the
+   # instructions automatically to supply collection without skipping fallout.
+   page.evaluate("beginShelterCase('during-blasts')")
+   page.wait_for_function("ui.getState()?.mapId==='shelter-during-blasts' && ui.getState().phase==='idle'")
+   page.evaluate('clock=ui.getState().nextEventAt')
+   page.wait_for_function("ui.getState().phase==='warning'")
+   page.evaluate('clock=ui.getState().detonationAt')
+   page.wait_for_function("ui.getState().phase==='detonation'")
+   page.evaluate('position={x:4.8,y:0,z:3.8}')
+   page.wait_for_function('arrivalCount()===beforeArrival+1')
+   assert page.evaluate("ui.getState().phase==='detonation' && ui.getState().objectives.find(o=>o.id==='shelter').completed")
+   assert 'Stay under cover until the blast passes' in page.evaluate('spoken.at(-1).text')
+   assert 'Detonations' in page.evaluate('spoken.at(-1).text')
+   page.get_by_role('button',name='Show emergency guide',exact=True).tap();follow.check()
+   assert 'shelter arrival is confirmed' in page.evaluate('spoken.at(-1).text')
+   page.get_by_role('button',name='Hide emergency guide',exact=True).tap()
+   page.evaluate('clock=ui.getState().falloutAt+6000')
+   page.wait_for_function("ui.getState().phase==='fallout'")
+   assert 'supply cache' in page.evaluate('spoken.at(-1).text').lower()
+   page.evaluate("reach('supplies')")
+   page.wait_for_function("ui.getState().phase==='recovery'")
+   assert 'recovery relay' in page.evaluate('spoken.at(-1).text').lower()
+   # First entry during recovery gives the relay step, never an obsolete
+   # warning or supply instruction, and still leaves the full event active.
+   page.evaluate("beginShelterCase('during-recovery')")
+   page.wait_for_function("ui.getState()?.mapId==='shelter-during-recovery' && ui.getState().phase==='idle'")
+   page.evaluate('clock=ui.getState().nextEventAt')
+   page.wait_for_function("ui.getState().phase==='warning'")
+   page.evaluate("clock=ui.getState().falloutAt+6000;reach('supplies')")
+   page.wait_for_function("ui.getState().phase==='recovery'")
+   page.evaluate('position={x:4.8,y:0,z:3.8}')
+   page.wait_for_function('arrivalCount()===beforeArrival+1')
+   assert 'marked recovery relay' in page.evaluate('spoken.at(-1).text')
+   assert 'supply beacon' not in page.evaluate('spoken.at(-1).text')
+   assert page.evaluate("ui.getState().phase==='recovery' && ui.getState().active && ui.getState().nextEventAt===null")
+   assert guide.is_hidden() and page.evaluate('ui.followingChallenge()')
    page.evaluate('env=null;ui.reset()');assert guide.is_hidden()
    assert not errors,errors
-   print(f'{width}px: optional challenge toggle, persisted choices, full quest-led event, bounded ongoing notices, quiet recurrence and movement passed',flush=True)
+   print(f'{width}px: personal shelter arrival in every active stage, automatic next steps, optional challenge toggle, full quest-led event, ongoing notices and movement passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()

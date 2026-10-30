@@ -132,6 +132,25 @@ async def main():
                     await page.screenshot(path='/workspace/automatic-doomsday-world-fallout.png')
                     print('airport: real timed detonations and fallout continue with guide hidden', flush=True)
                     assert state['doomsday']['phaseEndsAt'] is None and state['doomsday']['recoveryAt'] is None, 'Fallout was shortened by a timeout.'
+
+                    # Enter the back of the real shelter, beyond the old marker
+                    # radius, with both the guide and optional challenge off.
+                    await command(airport, 'map-access', position={'x': -150, 'y': 0, 'z': 28})
+                    await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday.objectives.some(o=>o.id==='shelter'&&o.completed)")
+                    await page.wait_for_function("document.querySelector('#doomsday-panel [data-transcript]').textContent.includes('Shelter reached')")
+                    arrival = await page.locator('#doomsday-panel [data-transcript]').text_content()
+                    assert 'next response step' in arrival and 'Relief supply' in arrival, arrival
+                    assert await page.locator('.doomsday-guide').is_hidden()
+                    assert not await page.locator('input[data-follow-challenge]').is_checked(), 'Shelter entry forced challenge tracking on.'
+                    inside = await page.evaluate('MuzikazHouseExplorer.snapshot()')
+                    assert inside['doomsday']['id'] == event_id and inside['doomsday']['phase'] == 'fallout' and inside['doomsday']['active']
+                    assert inside['doomsday']['nextEventAt'] is None and not inside['player']['inputBlocked']
+                    before_inside = inside['player']['position']
+                    await page.keyboard.down('w');await page.wait_for_timeout(500);await page.keyboard.up('w')
+                    after_inside = (await page.evaluate('MuzikazHouseExplorer.snapshot()'))['player']['position']
+                    assert math.hypot(after_inside[0] - before_inside[0], after_inside[2] - before_inside[2]) > .1, 'Shelter arrival blocked movement.'
+                    print('airport: back-interior arrival recognized automatically, next step announced, event and movement remain active with challenge off', flush=True)
+
                     await page.get_by_role('button', name='Show emergency guide', exact=True).click()
                     follow = page.locator('input[data-follow-challenge]')
                     assert not await follow.is_checked(), 'Challenge tracking must be optional and off by default.'
