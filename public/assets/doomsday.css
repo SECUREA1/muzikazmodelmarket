@@ -184,3 +184,25 @@
 .native-radio-menu:not([open]){display:none}
 .native-radio-menu[open]{top:60px;max-height:max(120px,calc(100dvh - 232px))}
 :is(.house-stage,.native-doomsday,main) .doomsday-panel-navigation{grid-template-columns:1fr}
+
+/* One live countdown and one live radio card, anchored below the regular header. */
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack{position:absolute;top:64px;left:8px;z-index:34;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:min(340px,calc(100% - 88px));max-height:calc(100% - 76px);min-width:0;pointer-events:none}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack[hidden]{display:none!important}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack>.doomsday-subpanel{flex:1 1 160px;min-height:96px;min-width:0;margin:0;padding:6px;overflow:auto;overscroll-behavior:contain;pointer-events:auto;border:1px solid #a0c782;border-radius:10px;background:#10251ffa;color:#f0ffe8;font:12px/1.4 system-ui;box-shadow:0 6px 22px #0007;box-sizing:border-box}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack>.doomsday-subpanel>header{position:sticky;top:-6px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;margin:-6px -6px 6px;padding:4px 6px;background:#173329;border-bottom:1px solid #719365;box-sizing:border-box}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack h4{margin:0;color:#f3ffe5;font:750 12px/1.3 system-ui}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack header button{width:auto!important;min-width:44px;min-height:44px;padding:7px!important;margin:0;flex:0 0 auto;box-sizing:border-box;border:1px solid #88a985;border-radius:7px;background:#274231;color:#f0ffe8;font:700 11px system-ui}
+.emergency-popup-countdown{display:block;font:800 14px/1.3 system-ui;color:#ffe0a3}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack .doomsday-banner{position:static;inset:auto;transform:none;width:100%;max-width:100%;box-sizing:border-box;margin:0 0 7px;padding:6px;font-size:12px}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack .doomsday-dispatch{display:block;margin:0 0 7px}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack .doomsday-portrait{position:static;display:block;float:none;width:34px;min-width:34px;height:40px;margin:0;border:0;overflow:hidden;flex:0 0 34px}
+.emergency-popup-stack .doomsday-portrait svg{display:block;width:100%;height:100%}
+:is(.house-stage,.native-doomsday,main) .emergency-popup-stack .doomsday-transmission p{margin:4px 0;font:12px/1.4 system-ui}
+.emergency-announcement-popup[data-speaking=true] .radio-mouth{transform-box:fill-box;transform-origin:center;animation:radio-mouth .2s ease-in-out infinite alternate}
+.emergency-announcement-popup[data-speaking=true] .radio-led{animation:radio-led .55s ease-in-out infinite alternate}
+.emergency-announcement-popup[data-speaking=true] .doomsday-wave i{animation:radio-bars .35s ease-in-out infinite alternate}
+.native-doomsday .emergency-popup-stack{position:fixed;max-height:calc(100dvh - 76px)}
+@media(max-height:480px){:is(.house-stage,.native-doomsday,main) .emergency-popup-stack{flex-direction:row;width:min(620px,calc(100% - 88px))}.native-doomsday .emergency-popup-stack{max-height:max(96px,calc(100dvh - 244px))}}
+@media(prefers-reduced-motion:reduce){.emergency-popup-stack .radio-mouth,.emergency-popup-stack .radio-led,.emergency-popup-stack .doomsday-wave i{animation:none!important}}
+
+.emergency-popup-stack[data-reduced-motion=true] .radio-mouth,.emergency-popup-stack[data-reduced-motion=true] .radio-led,.emergency-popup-stack[data-reduced-motion=true] .doomsday-wave i{animation:none!important}

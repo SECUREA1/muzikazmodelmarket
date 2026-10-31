@@ -33,12 +33,15 @@ async def main():
      await more.wait_for(state='visible')
      if os.environ.get('EXPECT_AUTO_NUCLEAR')=='1':
       await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.active",timeout=190000)
-      await page.wait_for_function("document.querySelector('.game-view-more')?.getAttribute('aria-expanded')==='true' && !document.querySelector('#emergency-nuclear-panel')?.hidden")
+      await page.wait_for_function("document.querySelector('.game-view-more')?.getAttribute('aria-expanded')==='false' && !document.querySelector('#emergency-nuclear-panel')?.hidden")
       assert await page.locator('#emergency-nuclear-panel').is_visible()
+      assert await page.locator('#emergency-announcement-panel').is_visible()
+      assert await page.locator('#emergency-nuclear-panel').evaluate("n=>!!n.closest('.emergency-popup-stack') && !n.closest('.game-view-overflow')")
+      assert await page.locator('.emergency-popup-stack').evaluate("n=>{const r=n.getBoundingClientRect(),s=document.querySelector('.house-stage').getBoundingClientRect();return r.left>=s.left&&r.left<s.left+20&&r.top>=s.top+50&&r.top<s.top+80;}")
       assert 'in ' in await page.locator('#emergency-nuclear-panel [data-countdown]').text_content()
-      assert await page.locator('.doomsday-banner').evaluate("n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}"),'The actual popup countdown is clipped.'
+      assert await page.locator('#emergency-nuclear-panel [data-countdown]').evaluate("n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}"),'The actual popup countdown is clipped.'
       await page.screenshot(path='/workspace/automatic-nuclear-world-popup.png')
-      await more.click()
+      await page.get_by_role('button',name='Close Nuclear event',exact=True).click()
       await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.phase==='fallout'",timeout=40000)
       assert await more.get_attribute('aria-expanded')=='false','An existing event reopened after dismissal.'
       print('airport: automatic real nuclear countdown opens once and remains dismissed through fallout',flush=True)

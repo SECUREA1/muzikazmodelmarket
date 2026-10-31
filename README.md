@@ -298,13 +298,18 @@ vehicle controls stay available throughout.
 The regular game header, dock, movement and vehicle controls keep their original
 layout. Two compact header buttons add **Radio & sound** and **Nuclear event**.
 Radio opens its sound controls; Nuclear opens the active countdown and challenge
-panel. Both toggle their panel closed again, and each panel has its own Close
+popup at the top left of the game. Both toggle their panel closed again, and each panel has its own Close
 button. Emergency response flow and aircraft onboarding remain available inside
 the companion panel without moving the ordinary game buttons into it.
-Each new event automatically opens the nuclear countdown once. Closing it keeps
-it dismissed through that event; the next event opens it again. The **Auto-show
+Each new event automatically opens the top-left nuclear countdown once, without
+opening the header menu. Cole’s event announcements appear in a separate radio
+popup with the animated portrait and current transcript. The same live panels
+are reused; there are no duplicate countdowns, header buttons or radio controls.
+Closing the nuclear popup keeps it dismissed through that event; the next event opens it again. The **Auto-show
 event panel** switch can suppress future popups without changing the response.
-Native games use the same two emergency buttons. The response flow still shows
+Native games use the same two emergency buttons and top-left popups. Radio settings
+can reopen the latest announcement after it is dismissed. Repeated mounting is
+idempotent and resizing retains the original controls and handlers. The response flow still shows
 shelter, impacts, optional aircraft, supplies, relay and all-clear progress. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without

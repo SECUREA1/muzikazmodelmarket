@@ -97,8 +97,8 @@ try:
     if(renderer.info.memory.geometries>base.geometries||renderer.info.memory.textures>base.textures)throw Error('Repeated scenario retained GPU resources');
     effects.dispose();audio.dispose();renderer.render(scene,camera);
    }''')
-   # A new event restores its countdown panel. Closing that panel afterwards
-   # must affect controls only, never the full audiovisual event playback.
+   # New alerts open the single top-left countdown and radio announcement.
+   # Closing them never changes the full audiovisual event playback.
    page.evaluate('''async()=>{
     const {mountDoomsdayUI}=await import('/public/js/doomsday-ui.js'),{mountGameDisplayFlow}=await import('/public/js/game-display-flow.js'),{createDoomsdayScene}=await import('/public/js/doomsday-scene.js');
     window.AudioContext=function(){return makeObservedContext();};
@@ -113,10 +113,16 @@ try:
     window.beforeHeaderBooms=boomCount();headerDraw('warning');
    }''')
    page.wait_for_function("document.querySelector('.doomsday-menu')?.closest('.game-view-overflow')")
-   page.wait_for_function("!document.querySelector('.game-view-overflow').hidden && document.querySelector('[data-emergency-panel-toggle=nuclear]').getAttribute('aria-expanded')==='true'")
+   page.wait_for_function("document.querySelector('.game-view-overflow').hidden && document.querySelector('[data-emergency-panel-toggle=nuclear]').getAttribute('aria-expanded')==='true'")
    assert page.locator('#emergency-nuclear-panel').is_visible()
+   assert page.locator('#emergency-announcement-panel').is_visible()
+   assert page.locator('.emergency-popup-stack > #emergency-nuclear-panel').count()==1
+   assert page.locator('.emergency-popup-stack > #emergency-announcement-panel').count()==1
+   assert page.locator('[data-transcript],.doomsday-dispatch,[data-countdown]').count()==3,'Popup creation duplicated live content.'
+   popup=page.locator('.emergency-popup-stack').bounding_box();assert popup['x']<=16 and 55<=popup['y']<=80,popup
    assert page.locator('#emergency-nuclear-panel [data-countdown]').text_content()=='Detonations in 18s'
    page.evaluate('headerUI.close()')
+   assert page.locator('#emergency-nuclear-panel').is_hidden() and page.locator('#emergency-announcement-panel').is_hidden()
    assert page.locator('.game-view-overflow').is_hidden()
    assert page.locator('.doomsday-guide,.doomsday-banner').evaluate_all('nodes=>nodes.every(n=>!n.getClientRects().length)')
    page.mouse.click(width//2,height-20)
@@ -135,7 +141,7 @@ try:
    page.evaluate("headerDraw('clearing',8000);headerDraw('all-clear');headerUI.dispose();flow.dispose();menuStage.remove();renderer.render(scene,camera)")
    assert page.evaluate('audioGains.every(record=>record.disconnected>0) && audioOscillators.every(record=>record.disconnected>0)')
    assert not errors,errors
-   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion 15 GPU cleanup cycles and automatic countdown popup plus full playback after closing the production header dropdown passed',flush=True)
+   print(f'{width}px: all 3 rendered impacts and Web Audio booms, speech ducking, long recovery sirens, synchronized clearing, all-clear cleanup, reduced motion 15 GPU cleanup cycles and single top-left countdown and announcement popups plus full playback after dismissal passed',flush=True)
    page.close()
   browser.close()
 finally: server.shutdown()
