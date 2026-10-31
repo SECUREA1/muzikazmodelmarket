@@ -100,7 +100,7 @@ export function createWorldDeedDeliveryScene({scene,inventory,pollMs=4000,create
  const clear=()=>{clearGroup(markers);clearGroup(routes);clearGroup(fleet);vehicles.clear();markerSignature=routeSignature='';serverTime=receivedAt=0;root.visible=false;};
  function factory(){
   if(modelFactory)return Promise.resolve(modelFactory);
-  modelsTask ||= import('./builder-models-3d.js').then(module=>{modelFactory=module.createBuilderModel;return modelFactory;}).catch(()=>null);
+  modelsTask ||= import('./builder-models-3d.js?v=forge-atelier-20261031').then(module=>{modelFactory=module.createBuilderModel;return modelFactory;}).catch(()=>null);
   return modelsTask;
  }
  async function install(row,entry){

@@ -1,4 +1,4 @@
-import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js';
+import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js?v=forge-atelier-20261031';
 import {mountMarketPreviewTuner} from './market-preview-tuner.js';
 import {catalogSupplyLabel} from './catalog-supply.js';
 import {buildingCatalogCategories,BUILDING_CATALOG_FUNCTIONS,matchesBuildingCatalogItem} from './in-game-building-catalog.js';

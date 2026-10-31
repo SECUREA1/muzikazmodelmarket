@@ -15,12 +15,12 @@ import {HOCKEY_TRIGGER_MODES,selectHockeyTriggerAction,createHockeyTrigger} from
 import {updateHockeyScoreboard} from './hockey-facilities.js';
 import {OrbitControls} from '../vendor/three/addons/controls/OrbitControls.js';
 import {HOCKEY_TIERS,changeHockeyLine,toggleHockeyGoalie,switchHockeyPlayer,requestHockeyTimeout} from './hockey-rules.js';
-import {createBuilderModel,createGeneratedAsset} from './builder-models-3d.js';
+import {createBuilderModel,createGeneratedAsset} from './builder-models-3d.js?v=forge-atelier-20261031';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createHockey,joinHockey,leaveHockey,hockeyInput,stepHockey,nextHockeyGame,restartHockey,isHockeyMap,attackDirection,relocateHockeyPlayer} from './hockey-rules.js';
 import {createHockeyArena,createHockeyItem,animateHockeyPlayer,createHockeyViewRig,animateHockeyViewRig,batchHockeyArena,batchHockeySkater} from './hockey-models.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
-import {mountWorldSupplyUI} from './world-supply-ui.js';
+import {mountWorldSupplyUI} from './world-supply-ui.js?v=forge-atelier-20261031';
 import {createWorldDeedDeliveryScene} from './world-deed-delivery-scene.js';
 import {ensurePlayAccess} from './play-access.js';
 import {hockeyCameraPose,hockeySkateVector,hockeyViewHeading,hockeyAimPoint,HOCKEY_PLAYER_VIEWS,hockeyViewForGameCamera,hockeyGameCameraForView} from './hockey-camera.js';

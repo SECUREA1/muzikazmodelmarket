@@ -4,7 +4,7 @@ import {mountStoreAddressUI} from './store-address-ui.js';
 import {organizeMarketWorkspace,releaseMarketWorkspacePreview} from './market-workspace.js';
 import {MARKET_USE_CASES,marketFacets,marketSubcategoryOptions} from './market-facets.js';
 import {materialBulkQuote,usdEquivalent} from './game-item-pricing.js';
-import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js';
+import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js?v=forge-atelier-20261031';
 import {storeProductIdentity} from './store-product-displays.js';
 import {marketCategory,marketCategoryOptions} from './market-categories.js';
 import { decorateMenuClose } from './fullscreen-panels.js';

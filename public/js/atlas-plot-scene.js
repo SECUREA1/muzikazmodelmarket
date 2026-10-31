@@ -1,7 +1,7 @@
 import {disposeModelResources} from './game-graphics-resources.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {EnvironmentLoader} from './environments/environment-loader.js';
-import {createBuilderModel,createGeneratedAsset} from './builder-models-3d.js';
+import {createBuilderModel,createGeneratedAsset} from './builder-models-3d.js?v=forge-atelier-20261031';
 import {createSavedCustomModel,prepareAuthoredBuilderModel} from './authored-builder-models.js';
 import {createBuildingBlock,toggleBuildingObject} from './building-materials.js';
 import {placementBounds} from './placed-item-collision.js';

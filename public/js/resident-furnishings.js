@@ -1,5 +1,5 @@
 import * as T from '../vendor/three/three.module.min.js';
-import {createBuilderModel} from './builder-models-3d.js';
+import {createBuilderModel} from './builder-models-3d.js?v=forge-atelier-20261031';
 import {placementBounds} from './placed-item-collision.js';
 import {isCleanSportsEnvironment} from './sports-worlds.js';
 import {harborWaterAt} from './harbor-water.js';

@@ -1,6 +1,6 @@
 (async function () {
   'use strict';
-  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js');
+  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js?v=forge-atelier-20261031');
   const {organizeMarketWorkspace}=await import('./public/js/market-workspace.js');
   const shelves = [...document.querySelectorAll('[data-user-market-listings]')];
   if (!shelves.length) return;

@@ -1,7 +1,7 @@
-import {FORGE_ID,FORGE_STATIONS,FORGE_CREW,isForgeEnvironment,forgeStations,forgeCrew} from './forge-config.js?v=forge-metallurgy-20261031';
-import {FORGE_ITEMS,forgeItemSettings} from './forge-items.js?v=forge-metallurgy-20261031';
+import {FORGE_ID,FORGE_STATIONS,FORGE_CREW,isForgeEnvironment,forgeStations,forgeCrew,forgeObjectPoint} from './forge-config.js?v=forge-atelier-20261031';
+import {FORGE_ITEMS,forgeItemSettings} from './forge-items.js?v=forge-atelier-20261031';
 const clone=value=>structuredClone(value);
-export const FORGE_BUILDER_LAYOUT=Object.freeze({name:'Emberfall · Traditional Forge',icon:'⚒',description:'A complete editable smithy with charcoal hearth, anvil, quenching, tempering, finishing, market items and three AI specialists.',color:0x53453a,sky:0x251c19,mapSize:128,mapColor:'#ef9a49'});
+export const FORGE_BUILDER_LAYOUT=Object.freeze({name:'Emberfall · Traditional Forge',icon:'⚒',description:'A complete editable smithy with six defined work bays, a product gallery, live MZK market, receipt-backed dispatch yard, marked courier lanes and three AI specialists.',color:0x53453a,sky:0x251c19,mapSize:128,mapColor:'#ef9a49'});
 const settings=source=>({...clone(source||{}),enabled:true,currency:'MZK',editableStations:true,editableCrew:true,stations:clone(FORGE_STATIONS),crew:clone(FORGE_CREW)});
 const placed=(id,modelId,name,x,z,extra={})=>({id,modelId,asset:{buildAssetId:modelId},name,position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},placementAnchor:'collider-base',functionalSettings:forgeItemSettings(modelId)||{behavior:'decor',active:true,destructible:false,damage:0},...extra});
 export function forgeBuilderObjects(){
@@ -16,10 +16,16 @@ export function forgeBuilderObjects(){
  for(const station of FORGE_STATIONS){
   box('forge-bay-pad-'+station.kind,station.name+' · stone work pad',station.position.x,-.08,-11,10,.08,11,'#62574c');
   box('forge-bay-marker-'+station.kind,'Brass bay threshold',station.position.x,.003,-5.3,8,.01,.1,'#bd8d49');
+  // Low, flush guides keep the working approach open while making each cell legible.
+  for(const side of [-1,1])box('forge-bay-border-'+station.kind+'-'+side,station.name+' · inset bay edge',station.position.x+side*5.05,.002,-11,.06,.008,11,'#bd8d49');
+  box('forge-bay-header-'+station.kind,station.name+' · suspended workstation header',station.position.x,4.7,-17,8.4,.3,.18,'#b28b55');
  }
  box('forge-main-aisle','Wide sandstone workshop aisle',0,-.06,5,83,.06,17,'#8c7960');
- box('forge-arrival-path','Forge arrival avenue',0,-.06,29,14,.06,30,'#88775e');
+ box('forge-arrival-path','Forge arrival avenue',0,-.06,25.75,14,.06,23.5,'#88775e');
  box('forge-rear-chimney','Hearth extraction chimney',-18,6,-18,2,7,2,'#4b3c34');
+ // North-side service shelves and the inspection side keep tools off the operator aisle.
+ for(const x of [-30,-6,18])box('forge-work-bay-sill-'+x,'Raised stone service sill',x,0,-20,8.8,.23,.7,'#6f6253');
+ for(const x of [-24,-12,0,12,24])box('forge-clerestory-fin-'+x,'High copper clerestory fin',x,8.25,-3,.12,.9,36,'#9b7850');
  for(const [id,model,name,x,z] of [
   ['forge-bellows-display','forge-bellows','Leather bellows · hearth air supply',-22,-13],
   ['forge-coal-supply','forge-coal-bin','Counted coal reserve',-35,-18],
@@ -41,14 +47,49 @@ export function forgeBuilderObjects(){
   objects.push(placed('forge-shop-plinth-'+index,'material:display-plinth','Forge Market · '+FORGE_ITEMS[productId].name,18+index*4,21,{functionalSettings:{behavior:'decor',storeProductIds:[productId],destructible:false,damage:0}}));
  }
  sign('forge-shop-board','FORGE MARKET · Inspect, buy & trade',21,29,'Inspect a displayed item for its live MZK offer or use the Market terminal to browse equipment, metalwork and member trades. Purchased items share the same Backpack and Builder identity as forged pieces. Stock and delivery availability come from the world supply system.');
+ // Dispatch has empty physical staging pads. Sealed crates are added by the
+ // receipt-backed activity projection only when real warehouse units exist.
+ box('forge-dispatch-apron','Freight yard · level sandstone apron',-35,-.06,26.5,27,.06,22,'#756b5d');
+ box('forge-dispatch-west-wall','Freight shed · dressed stone west wall',-48,0,28,.45,3.4,25,'#5d554a');
+ for(const x of [-47,-24])for(const z of [16,38])box('forge-dispatch-post-'+x+'-'+z,'Freight shed · braced canopy post',x,0,z,.45,6.3,.45,'#514739');
+ box('forge-dispatch-canopy','Freight shed · copper dispatch canopy',-35,6.3,27,25,.2,24,'#8b7051');
+ for(const z of [16,38])box('forge-dispatch-roof-beam-'+z,'Freight shed · high roof beam',-35,6,z,25,.3,.4,'#453d32');
+ box('forge-courier-lane','Dispatch · clear courier lane',-36.3,-.03,28,2.8,.04,26,'#a79b82');
+ for(const x of [-37.8,-34.8])box('forge-courier-edge-'+x,'Dispatch · flush brass lane edge',x,.003,28,.08,.008,26,'#d4ab62');
+ for(const z of [18,24,30,36])box('forge-courier-chevron-'+z,'Dispatch · inset route chevron',-36.3,.014,z,1.8,.008,.14,'#d4ab62');
+ for(const [index,z]of [21,28,35].entries()){
+  box('forge-cargo-pallet-'+index,'Counted freight staging pad '+(index+1),-41,0,z,4.8,.3,4.8,'#66513d');
+  for(const side of [-1,1])box('forge-cargo-strap-'+index+'-'+side,'Staging pad · brass index strip',-41+side*1.8,.3,z,.08,.008,4.4,'#bd9255');
+ }
+ objects.push(placed('forge-dispatch-desk','factory-export-terminal','Emberfall · Sealed freight & route desk',-31,21,{functionalSettings:{behavior:'interact',active:true,forgeDispatch:true,forgeDispatchSection:'dispatch',forgeDispatchApproach:{x:0,y:0,z:4},factoryStation:false,logisticsStation:false,interactionDistance:6,destructible:false,damage:0,prompt:'Inspect sealed lots & shipping routes · E / Use'}}));
+ objects.push(placed('forge-dispatch-inspection','forge-finishing-bench','Freight inspection · Maker marks & seals',-25,34,{functionalSettings:{behavior:'talk',forgeStation:false,forgeInspection:true,interactionDistance:5,destructible:false,damage:0,prompt:'Inspect freight ownership & seals · E / Use'},dialogueSettings:{text:'A sealed freight unit consumes its exact hand-forged Backpack copy. Its maker receipt follows the counted warehouse lot. Shipping reservations move existing units; destination stock increases only after the verified route and final delivery are complete. Inspect the route desk before booking dispatch.'}}));
+ objects.push(placed('forge-trade-policy-board','street-sign','MZK · Ownership, freight & delivery rules',-18,22,{functionalSettings:{behavior:'interact',active:true,forgePolicy:true,forgePolicyApproach:{x:0,y:0,z:4},interactionDistance:6,destructible:false,damage:0,prompt:'MZK ownership, freight & delivery rules · E / Use'}}));
+ sign('forge-freight-board','DISPATCH · From maker to destination',-45,40,'The staging pads start empty. Only verified warehouse stock appears as sealed crates. Use the route desk to seal a creation from Backpack, inspect its counted lot and dispatch it through an available shipping route. The gold lane stays clear for couriers and operators.');
+ box('forge-market-walk','Market · sandstone product gallery walk',25,-.04,27,23,.05,15,'#96846b');
+ box('forge-route-promenade','Forge · connected shop and gateway promenade',0,-.05,40,97,.05,5,'#8e826d');
+
  for(const x of [-40,40])for(const z of [24,42])objects.push(placed('forge-yard-light-'+x+'-'+z,'lamp-post','Smithy yard lantern',x,z));
- for(const [id,name,x,target]of [['forge-commons-gate','World Commons',-23,'public-commons'],['forge-factory-gate','World Item Factory',23,'world-item-factory']])objects.push(placed(id,'archway',name+' gateway',x,43,{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:name+' · E / Use',portal:{enabled:true,destinationType:'map',targetMapId:target},destructible:false,damage:0}}));
+ for(const [id,name,x,target]of [['forge-commons-gate','World Commons',-23,'public-commons'],['forge-factory-gate','World Item Factory',23,'world-item-factory'],['forge-shipping-gate','Playable shipping routes',46,'hormuz-shipping']])objects.push(placed(id,'archway',name+' gateway',x,43,{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:name+' · E / Use',portal:{enabled:true,destinationType:'map',targetMapId:target},destructible:false,damage:0}}));
  return objects;
 }
 export function forgeBuilderLayoutMeta(scene,base={}){
  if(!isForgeEnvironment({builderScene:scene})&&!scene.sourceForge?.enabled)return {...base};
  const forge=settings(scene.sourceForge||scene.layoutMeta?.forge),environment={forge,builderScene:scene},old=scene.layoutMeta?.locations||[],retained=old.filter(place=>!place.forgeStationId&&!FORGE_STATIONS.some(station=>station.id===place.id));
- return {...base,...scene.layoutMeta,color:0x53453a,forge,locations:[...forgeStations(environment).map(station=>({id:station.id,forgeStationId:station.id,name:station.name,x:station.approach.x,y:station.approach.y,z:station.approach.z,width:9,depth:8,description:station.description})),...retained],residents:forgeCrew(environment)};
+ const available=object=>object&&object.enabled!==false&&object.active!==false&&object.visible!==false&&!object.deleted&&!object.disabled&&object.functionalSettings?.active!==false&&object.functionalSettings?.enabled!==false&&!object.functionalSettings?.disabled;
+ const activeObject=id=>(scene.objects||[]).find(object=>object.id===id&&available(object));
+ const service=flag=>(scene.objects||[]).find(object=>available(object)&&object.functionalSettings?.[flag]);
+ const desk=service('forgeDispatch'),policy=service('forgePolicy');
+ const yard=desk?{id:'forge-dispatch-yard',sourceMapId:'factory',dispatchObjectId:desk.id,dispatchPosition:forgeObjectPoint(desk),workshopAisleZ:0,dispatchApproach:forgeObjectPoint(desk,desk.functionalSettings?.forgeDispatchApproach||{x:0,y:0,z:4}),courierWaypoints:[18,24,30,36].flatMap(z=>{const marker=activeObject('forge-courier-chevron-'+z);return marker?[forgeObjectPoint(marker)]:[];}),cargoSlots:[0,1,2].flatMap(index=>{const object=activeObject('forge-cargo-pallet-'+index);return object?[{id:object.id,objectId:object.id,position:forgeObjectPoint(object,{x:0,y:1.2,z:0}),capacity:1}]:[];})}:null;
+ const workspaces=forgeStations(environment).map(station=>{
+  const dx=station.approach.x-station.position.x,dz=station.approach.z-station.position.z,span=Math.hypot(dx,dz)||1;
+  const position={x:station.approach.x+dz/span*3.4+dx/span*2.8,y:station.approach.y,z:station.approach.z-dx/span*3.4+dz/span*2.8};
+  return {id:'forge-workspace-'+station.id,kind:station.kind,stationId:station.id,position,approach:{...station.approach}};
+ });
+ const dynamicIds=new Set(['forge-dispatch-yard','forge-policies']);
+ const locations=retained.filter(place=>!dynamicIds.has(place.id));
+ if(yard)locations.push({id:'forge-dispatch-yard',name:'Sealed freight · Dispatch & shipping routes',...yard.dispatchApproach,width:19,depth:14,description:'Seal exact Backpack creations into counted warehouse units, inspect real stock and choose a verified shipping route.'});
+ if(policy)locations.push({id:'forge-policies',name:'MZK ownership · Trading & freight policies',...forgeObjectPoint(policy,policy.functionalSettings?.forgePolicyApproach||{x:0,y:0,z:4}),width:8,depth:8,description:'Review MZK kit prices, Backpack ownership, resale receipts, sealing and delivery policies.'});
+ return {...base,...scene.layoutMeta,color:0x53453a,forge,forgeYard:yard,forgeCrewWorkspaces:workspaces,locations:[...forgeStations(environment).map(station=>({id:station.id,forgeStationId:station.id,name:station.name,x:station.approach.x,y:station.approach.y,z:station.approach.z,width:9,depth:8,description:station.description})),...locations],residents:forgeCrew(environment)};
 }
 export function editableForgeScene(input){
  const scene=clone(input);if(!isForgeEnvironment({builderScene:scene})&&!isForgeEnvironment(scene.baseEnvironment))return scene;

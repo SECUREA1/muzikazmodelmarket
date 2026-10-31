@@ -23,6 +23,13 @@ function rotated(point,rotation){
  const ix=qw*point.x+qy*point.z-qz*point.y,iy=qw*point.y+qz*point.x-qx*point.z,iz=qw*point.z+qx*point.y-qy*point.x,iw=-qx*point.x-qy*point.y-qz*point.z;
  return {x:ix*qw+iw*-qx+iy*-qz-iz*-qy,y:iy*qw+iw*-qy+iz*-qx-ix*-qz,z:iz*qw+iw*-qz+ix*-qy-iy*-qx};
 }
+/** Resolve an authored local working point through saved translation, rotation
+ * and scale. Dispatch pads and scene projections share the same geometry. */
+export function forgeObjectPoint(object={},local={}){
+ const position=vector(object.position),rotation=vector(object.rotation),scale=typeof object.scale==='number'?{x:object.scale,y:object.scale,z:object.scale}:vector(object.scale,1),point=vector(local);
+ const offset=rotated({x:point.x*scale.x,y:point.y*scale.y,z:point.z*scale.z},rotation);
+ return {x:position.x+offset.x,y:position.y+offset.y,z:position.z+offset.z};
+}
 /** Deleted or disabled stations stay deleted; saved positions own interaction pads. */
 export function forgeStations(environment={}){
  if(!isForgeEnvironment(environment)||environment.forge?.enabled===false||environment.builderScene?.sourceForge?.enabled===false)return [];
@@ -33,6 +40,16 @@ export function forgeStations(environment={}){
   if(!canonical||seen.has(id)||!active(object)||!active(functional)||functional.forgeEnabled===false)return [];seen.add(id);
   const position=vector(object.position),rotation=vector(object.rotation),scale=typeof object.scale==='number'?{x:object.scale,y:object.scale,z:object.scale}:vector(object.scale,1),approach=vector(functional.forgeApproach||{x:0,y:0,z:5}),offset=rotated({x:approach.x*scale.x,y:approach.y*scale.y,z:approach.z*scale.z},rotation);
   return [{...canonical,id:object.id||canonical.id,objectId:object.id,position,approach:{x:position.x+offset.x,y:position.y+offset.y,z:position.z+offset.z},interactionDistance:Math.max(.5,Math.min(6,finite(functional.interactionDistance,canonical.interactionDistance))),name:object.name||canonical.name}];
+ });
+}
+/** Saved physical service desks remain interactive after custom map edits. */
+export function forgeServicePoints(environment={}){
+ if(!isForgeEnvironment(environment))return [];
+ return (environment.builderScene?.objects||[]).flatMap(object=>{
+  const functional=object.functionalSettings||{},kind=functional.forgeDispatch?'dispatch':functional.forgePolicy?'policy':null;
+  if(!kind||!active(object)||!active(functional))return [];
+  const local=kind==='dispatch'?functional.forgeDispatchApproach:functional.forgePolicyApproach;
+  return [{id:object.id,objectId:object.id,kind,name:object.name||'Forge '+kind,position:vector(object.position),approach:forgeObjectPoint(object,local||{x:0,y:0,z:4}),interactionDistance:Math.max(.5,finite(functional.interactionDistance,6))}];
  });
 }
 export function nearestForgeStation(environment,position,kind){

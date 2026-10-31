@@ -1,4 +1,4 @@
-import {previewDescriptor,safePreviewUrl} from './market-item-preview.js';
+import {previewDescriptor,safePreviewUrl} from './market-item-preview.js?v=forge-atelier-20261031';
 import {mountMarketPreviewTuner} from './market-preview-tuner.js';
 import {mountProductActions} from './product-actions.js';
 const instances=new WeakMap();

@@ -30699,7 +30699,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-aegis-shield.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-aegis-shield.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30782,7 +30782,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-anvil.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-anvil.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30870,7 +30870,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-battle-axe.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-battle-axe.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30953,7 +30953,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-bellows.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-bellows.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31036,7 +31036,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-bronze-bell.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-bronze-bell.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31121,7 +31121,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-bronze-ingot.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-bronze-ingot.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31204,7 +31204,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-coal.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-coal.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31287,7 +31287,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-coal-bin.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-coal-bin.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31370,7 +31370,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-dagger.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-dagger.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31453,7 +31453,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-damascus-blade.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-damascus-blade.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31536,7 +31536,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-finishing-bench.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-finishing-bench.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31624,7 +31624,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-grinding-wheel.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-grinding-wheel.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31707,7 +31707,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-hammer.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-hammer.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31790,7 +31790,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-hearth.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-hearth.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31878,7 +31878,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-iron-gate.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-iron-gate.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31961,7 +31961,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-iron-ingot.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-iron-ingot.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32044,7 +32044,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-lantern.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-lantern.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32128,7 +32128,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-master-smith.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-master-smith.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32211,7 +32211,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-metallurgist.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-metallurgist.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32294,7 +32294,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-pickaxe.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-pickaxe.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32377,7 +32377,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-quartermaster.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-quartermaster.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32460,7 +32460,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-quench-tank.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-quench-tank.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32548,7 +32548,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-spear.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-spear.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32631,7 +32631,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-steel-billet.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-steel-billet.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32714,7 +32714,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-stock-rack.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-stock-rack.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32802,7 +32802,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-tempering-oven.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-tempering-oven.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32890,7 +32890,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-tongs.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-tongs.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32973,7 +32973,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-warhammer.svg?v=forge-metallurgy-20261031",
+      "thumbnail": "/public/images/native-designs/forge-warhammer.svg?v=forge-atelier-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [

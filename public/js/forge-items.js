@@ -39,5 +39,5 @@ export function forgeItemSettings(id){
 export function forgeNativeItem(id){
  const value=FORGE_ITEMS[id];if(!value)return null;
  const function_data=forgeItemSettings(id);
- return {id,buildAssetId:id,name:value.name,description:value.description,dimensions:value.dimensions,type:value.kind==='crew'?'avatar':value.station?'interactive':'interior',category:value.kind==='crew'?'characters':value.kind==='tool'?'tools':'forge',builderCategory:'forge',priceMzk:value.priceMzk,useCostMzk:0,behavior:function_data.behavior,action:function_data.action,size:82,color:'#c28b4a',procedural:true,assetKind:'premade',image:'/public/images/native-designs/'+id+'.svg?v=forge-metallurgy-20261031',function_data,...(value.greeting?{dialogueSettings:{text:value.greeting}}:{})};
+ return {id,buildAssetId:id,name:value.name,description:value.description,dimensions:value.dimensions,type:value.kind==='crew'?'avatar':value.station?'interactive':'interior',category:value.kind==='crew'?'characters':value.kind==='tool'?'tools':'forge',builderCategory:'forge',priceMzk:value.priceMzk,useCostMzk:0,behavior:function_data.behavior,action:function_data.action,size:82,color:'#c28b4a',procedural:true,assetKind:'premade',image:'/public/images/native-designs/'+id+'.svg?v=forge-atelier-20261031',function_data,...(value.greeting?{dialogueSettings:{text:value.greeting}}:{})};
 }

@@ -65,7 +65,7 @@ import {createGameModelLoader,loadGameModel} from './public/js/game-model-loader
 import {readJsonResponse} from './public/js/json-response.js';
 import {readGameJson,readGameArray,writeGameStorage,isGameRecord} from './public/js/game-storage.js';
 import {clone as cloneSkeleton} from './public/vendor/three/addons/utils/SkeletonUtils.js';
-import {BUILDER_MODEL_INFO,createBuilderModel,createGeneratedAsset,updateBuilderModels} from './public/js/builder-models-3d.js';
+import {BUILDER_MODEL_INFO,createBuilderModel,createGeneratedAsset,updateBuilderModels} from './public/js/builder-models-3d.js?v=forge-atelier-20261031';
 import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
 
 const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', LOCAL_MAPS_KEY='muzikaz.environmentBuilder.localMaps.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', PLAY_BACKUP_KEY='muzikaz.environmentBuilder.playSceneBackup.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1', ONLINE_MODELS_KEY='muzikaz.environmentBuilder.onlineModels.v1';

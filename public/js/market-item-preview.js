@@ -79,7 +79,7 @@ export function previewModelSource(item){return item.materialId?'material':item.
 export function disposePreviewModel(root){const release=root?.userData?.productPreviewRelease;if(release){delete root.userData.productPreviewRelease;release();}else disposeModelResources(root);}
 export async function loadPreviewModel(record,{renderer,signal,timeout=12000}={}){
  const item=previewDescriptor(record);
- modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('./game-model-loader.js'),import('./builder-models-3d.js'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
+ modules ||= Promise.all([import('../vendor/three/three.module.min.js'),import('./game-model-loader.js'),import('./builder-models-3d.js?v=forge-atelier-20261031'),import('./building-materials.js'),import('./authored-builder-models.js'),import('./held-tool-design-finish.js')]);
  const [THREE,{createGameModelLoader,loadGameModel},{createBuilderModel,createGeneratedAsset},{createBuildingBlock},{prepareAuthoredBuilderModel,createSavedCustomModel},{createHeldToolModel}]=await modules;
  if(signal?.aborted)throw new DOMException('Preview canceled','AbortError');
  let root,timer,animations=[];const controller=new AbortController(),cancel=()=>controller.abort();signal?.addEventListener('abort',cancel,{once:true});

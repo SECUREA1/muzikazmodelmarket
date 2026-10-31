@@ -4,7 +4,7 @@ import {organizeMarketWorkspace} from './market-workspace.js';
 import {MARKET_USE_CASES} from './market-facets.js';
 import {MARKET_SOURCES,initialMarketSource,matchesMarketSource,mainMarketEntries,mainMarketOptions,filterMainMarket} from './main-market-filters.js';
 import {usdEquivalent} from './game-item-pricing.js';
-import {marketItemPreview,hydrateMarketPreviews} from './market-item-preview.js';
+import {marketItemPreview,hydrateMarketPreviews} from './market-item-preview.js?v=forge-atelier-20261031';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 import {createGameMarketplace} from './in-game-market.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

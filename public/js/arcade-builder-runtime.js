@@ -20,7 +20,7 @@ export async function loadArcadeBuilderObjects(builderScene = {}, config = {}) {
     const id = record.asset?.buildAssetId || definition?.buildAssetId || record.modelId;
     const key = definition?.modelUrl || record.modelUrl || record.asset?.modelUrl || id;
     if (!templates.has(key)) templates.set(key, (async () => {
-      factories ||= await import('./builder-models-3d.js');
+      factories ||= await import('./builder-models-3d.js?v=forge-atelier-20261031');
       let model = drawings.has(record.modelId) ? createDrawing(drawings.get(record.modelId)) : factories.createBuilderModel(id);
       if (!model && definition?.generated && definition.generator) model = factories.createGeneratedAsset(definition);
       const modelUrl = definition?.modelUrl || record.modelUrl || record.asset?.modelUrl;

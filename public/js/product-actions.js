@@ -1,4 +1,4 @@
-import {previewDescriptor,previewModelSource} from './market-item-preview.js';
+import {previewDescriptor,previewModelSource} from './market-item-preview.js?v=forge-atelier-20261031';
 import {productShareUrl,shareProduct} from './product-share.js';
 
 // Only the selected product owns these controls. Neither sharing nor opening
@@ -12,7 +12,7 @@ export function mountProductActions(row,record){
  figure.after(bar);const owner={};let disposed=false,previewModule=null,opened=false;
  const show=async(mode,button)=>{
   button.disabled=true;status.textContent='Opening product preview…';
-  try{previewModule=await import('./product-preview.js');if(disposed)return;opened=true;await previewModule.openProductPreview(record,{mode,owner});if(!disposed)status.textContent='';}
+  try{previewModule=await import('./product-preview.js?v=forge-atelier-20261031');if(disposed)return;opened=true;await previewModule.openProductPreview(record,{mode,owner});if(!disposed)status.textContent='';}
   catch(error){if(!disposed)status.textContent=error.message||'This preview is unavailable. Try again.';}
   finally{if(!disposed)button.disabled=false;}
  };

@@ -19,7 +19,7 @@
     if(native){
       article.dataset.nativeAvatar=option.buildAssetId;
       preview.textContent='Preparing 3D preview…';
-      import('./market-item-preview.js').then(({marketItemPreview,hydrateMarketPreviews})=>{if(!article.isConnected)return;preview.innerHTML=marketItemPreview(option,{preferModel:true});hydrateMarketPreviews(preview);}).catch(()=>{preview.textContent='Native 3D avatar · '+option.name;});
+      import('./market-item-preview.js?v=forge-atelier-20261031').then(({marketItemPreview,hydrateMarketPreviews})=>{if(!article.isConnected)return;preview.innerHTML=marketItemPreview(option,{preferModel:true});hydrateMarketPreviews(preview);}).catch(()=>{preview.textContent='Native 3D avatar · '+option.name;});
     }else{
       button.disabled=true;button.textContent='Loading avatar…';
       preview.innerHTML='<model-viewer loading="eager" reveal="auto" camera-controls auto-rotate autoplay touch-action="pan-y" camera-orbit="0deg 75deg auto" min-camera-orbit="auto auto 60%" max-camera-orbit="auto auto 180%" field-of-view="30deg" max-field-of-view="45deg" environment-image="neutral" exposure="1.05" shadow-intensity="1" shadow-softness=".8" interaction-prompt="auto"><div slot="poster" class="avatar-model-poster">Preparing 3D preview…</div><div slot="progress-bar" class="avatar-model-loading">Loading GLB…</div></model-viewer>';

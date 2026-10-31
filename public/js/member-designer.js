@@ -1,5 +1,5 @@
 import {factoryDeedOrderUrl} from './world-factory-links.js';
-import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js';
+import {marketItemPreview,hydrateMarketPreviews,releaseMarketPreviews} from './market-item-preview.js?v=forge-atelier-20261031';
 import {SharedGameInventory,watchInventoryChange,signalInventoryChange} from './shared-game-inventory.js';
 const designer=document.querySelector('#designer'),grid=document.querySelector('#owned-assets-grid');
 if(designer&&grid){

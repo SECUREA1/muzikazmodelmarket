@@ -10,7 +10,7 @@ export function closeProductPreview(options){return activePreview?.close(options
 export function getProductPreviewState(){return activePreview?.getState()||{mode:'closed',arSupported:null};}
 
 async function loadDefaultModel(record,options){
- const {previewDescriptor,loadPreviewModel}=await import('./market-item-preview.js');
+ const {previewDescriptor,loadPreviewModel}=await import('./market-item-preview.js?v=forge-atelier-20261031');
  return loadPreviewModel(previewDescriptor(record),options);
 }
 
@@ -18,7 +18,7 @@ export async function createProductPreviewRuntime({canvas,stage,window,onXRState
  const [T,{OrbitControls},{disposeModelResources},{setGroundLandscapeProjectionScale}]=await Promise.all([
   import('../vendor/three/three.module.min.js'),import('../vendor/three/addons/controls/OrbitControls.js'),import('./game-graphics-resources.js'),import('./ground-landscape-design.js'),
  ]);
- const renderer=new T.WebGLRenderer({canvas,alpha:true,antialias:false,powerPreference:'low-power'});
+ const renderer=new T.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power'});
  renderer.setPixelRatio(Math.min(Number(window.devicePixelRatio)||1,1.5));renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local');
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(42,1,.01,100);camera.position.set(.85,.6,1.05);

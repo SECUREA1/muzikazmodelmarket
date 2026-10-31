@@ -91359,8 +91359,8 @@
   {
     "id": "traditional-forge",
     "name": "Emberfall · Traditional Forge",
-    "label": "Heat · hammer · quench · temper · masterwork",
-    "description": "A traditional metallurgy workshop with ten hand-forged designs, six working stations, three AI specialists and nine persistent commissions. Forge blades, axes, spears, daggers, warhammers, shields and pickaxes, build an iron gate, light a crafted lantern or ring a bronze bell. Buy and resell canonical MZK items at the live forge market, seal individual creations into counted warehouse lots, and send them through verified sea freight to stores, maps and deeds. Finished items retain their native identity in Backpack and Builder.",
+    "label": "Six live work bays · maker gallery · sealed freight yard",
+    "description": "A detailed traditional metallurgy workshop with ten hand-forged designs, six animated work bays, a maker gallery, live MZK market, sealed freight shed and three AI specialists with persistent commissions. Forge blades, axes, spears, daggers, warhammers, shields and pickaxes, build an iron gate, light a crafted lantern or ring a bronze bell. Buy and resell canonical MZK items at the live forge market, seal individual creations into counted warehouse lots, and send them through verified sea freight to stores, maps and deeds. Finished items retain their native identity in Backpack and Builder.",
     "category": "Forge & metallurgy",
     "game": "forge",
     "mapTheme": "industrial",
@@ -91541,7 +91541,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-31T12:27:28.461Z",
+    "contentUpdatedAt": "2026-10-31T12:54:05.676Z",
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 128,
@@ -91554,7 +91554,8 @@
     },
     "portalTargets": [
       "world-item-factory",
-      "public-commons"
+      "public-commons",
+      "hormuz-shipping"
     ],
     "streets": [],
     "builderScene": {
@@ -92546,6 +92547,108 @@
           }
         },
         {
+          "id": "forge-bay-border-sourcing--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "01 · Select metal & fuel · inset bay edge",
+          "position": {
+            "x": -35.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-sourcing-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "01 · Select metal & fuel · inset bay edge",
+          "position": {
+            "x": -24.95,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-sourcing",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "01 · Select metal & fuel · suspended workstation header",
+          "position": {
+            "x": -30,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
+            "useAccent": true
+          }
+        },
+        {
           "id": "forge-bay-pad-heat",
           "modelId": "material:cube",
           "asset": {
@@ -92610,6 +92713,108 @@
           },
           "materialSettings": {
             "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-heat--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "02 · Charcoal hearth · inset bay edge",
+          "position": {
+            "x": -23.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-heat-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "02 · Charcoal hearth · inset bay edge",
+          "position": {
+            "x": -12.95,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-heat",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "02 · Charcoal hearth · suspended workstation header",
+          "position": {
+            "x": -18,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
             "useAccent": true
           }
         },
@@ -92682,6 +92887,108 @@
           }
         },
         {
+          "id": "forge-bay-border-hammer--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "03 · Anvil & shaping · inset bay edge",
+          "position": {
+            "x": -11.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-hammer-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "03 · Anvil & shaping · inset bay edge",
+          "position": {
+            "x": -0.9500000000000002,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-hammer",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "03 · Anvil & shaping · suspended workstation header",
+          "position": {
+            "x": -6,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
+            "useAccent": true
+          }
+        },
+        {
           "id": "forge-bay-pad-quench",
           "modelId": "material:cube",
           "asset": {
@@ -92746,6 +93053,108 @@
           },
           "materialSettings": {
             "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-quench--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "04 · Quench bath · inset bay edge",
+          "position": {
+            "x": 0.9500000000000002,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-quench-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "04 · Quench bath · inset bay edge",
+          "position": {
+            "x": 11.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-quench",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "04 · Quench bath · suspended workstation header",
+          "position": {
+            "x": 6,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
             "useAccent": true
           }
         },
@@ -92818,6 +93227,108 @@
           }
         },
         {
+          "id": "forge-bay-border-temper--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "05 · Tempering oven · inset bay edge",
+          "position": {
+            "x": 12.95,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-temper-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "05 · Tempering oven · inset bay edge",
+          "position": {
+            "x": 23.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-temper",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "05 · Tempering oven · suspended workstation header",
+          "position": {
+            "x": 18,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
+            "useAccent": true
+          }
+        },
+        {
           "id": "forge-bay-pad-finish",
           "modelId": "material:cube",
           "asset": {
@@ -92886,6 +93397,108 @@
           }
         },
         {
+          "id": "forge-bay-border-finish--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "06 · Grind, inspect & collect · inset bay edge",
+          "position": {
+            "x": 24.95,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-border-finish-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "06 · Grind, inspect & collect · inset bay edge",
+          "position": {
+            "x": 35.05,
+            "y": 0.002,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.006666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-header-finish",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "06 · Grind, inspect & collect · suspended workstation header",
+          "position": {
+            "x": 30,
+            "y": 4.7,
+            "z": -17
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.000000000000001,
+            "y": 0.25,
+            "z": 0.15
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#b28b55",
+            "useAccent": true
+          }
+        },
+        {
           "id": "forge-main-aisle",
           "modelId": "material:cube",
           "asset": {
@@ -92929,7 +93542,7 @@
           "position": {
             "x": 0,
             "y": -0.06,
-            "z": 29
+            "z": 25.75
           },
           "rotation": {
             "x": 0,
@@ -92939,7 +93552,7 @@
           "scale": {
             "x": 11.666666666666668,
             "y": 0.05,
-            "z": 25
+            "z": 19.583333333333336
           },
           "placementAnchor": "collider-base",
           "functionalSettings": {
@@ -92984,6 +93597,278 @@
           },
           "materialSettings": {
             "accent": "#4b3c34",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-work-bay-sill--30",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Raised stone service sill",
+          "position": {
+            "x": -30,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.333333333333334,
+            "y": 0.19166666666666668,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#6f6253",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-work-bay-sill--6",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Raised stone service sill",
+          "position": {
+            "x": -6,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.333333333333334,
+            "y": 0.19166666666666668,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#6f6253",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-work-bay-sill-18",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Raised stone service sill",
+          "position": {
+            "x": 18,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 7.333333333333334,
+            "y": 0.19166666666666668,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#6f6253",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-clerestory-fin--24",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "High copper clerestory fin",
+          "position": {
+            "x": -24,
+            "y": 8.25,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.75,
+            "z": 30
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#9b7850",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-clerestory-fin--12",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "High copper clerestory fin",
+          "position": {
+            "x": -12,
+            "y": 8.25,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.75,
+            "z": 30
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#9b7850",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-clerestory-fin-0",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "High copper clerestory fin",
+          "position": {
+            "x": 0,
+            "y": 8.25,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.75,
+            "z": 30
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#9b7850",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-clerestory-fin-12",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "High copper clerestory fin",
+          "position": {
+            "x": 12,
+            "y": 8.25,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.75,
+            "z": 30
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#9b7850",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-clerestory-fin-24",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "High copper clerestory fin",
+          "position": {
+            "x": 24,
+            "y": 8.25,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.75,
+            "z": 30
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#9b7850",
             "useAccent": true
           }
         },
@@ -93660,6 +94545,1073 @@
           }
         },
         {
+          "id": "forge-dispatch-apron",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight yard · level sandstone apron",
+          "position": {
+            "x": -35,
+            "y": -0.06,
+            "z": 26.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 22.5,
+            "y": 0.05,
+            "z": 18.333333333333336
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#756b5d",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-west-wall",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · dressed stone west wall",
+          "position": {
+            "x": -48,
+            "y": 0,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.375,
+            "y": 2.8333333333333335,
+            "z": 20.833333333333336
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#5d554a",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-post--47-16",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · braced canopy post",
+          "position": {
+            "x": -47,
+            "y": 0,
+            "z": 16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.375,
+            "y": 5.25,
+            "z": 0.375
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#514739",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-post--47-38",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · braced canopy post",
+          "position": {
+            "x": -47,
+            "y": 0,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.375,
+            "y": 5.25,
+            "z": 0.375
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#514739",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-post--24-16",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · braced canopy post",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.375,
+            "y": 5.25,
+            "z": 0.375
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#514739",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-post--24-38",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · braced canopy post",
+          "position": {
+            "x": -24,
+            "y": 0,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.375,
+            "y": 5.25,
+            "z": 0.375
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#514739",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-canopy",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · copper dispatch canopy",
+          "position": {
+            "x": -35,
+            "y": 6.3,
+            "z": 27
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 20.833333333333336,
+            "y": 0.16666666666666669,
+            "z": 20
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#8b7051",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-roof-beam-16",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · high roof beam",
+          "position": {
+            "x": -35,
+            "y": 6,
+            "z": 16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 20.833333333333336,
+            "y": 0.25,
+            "z": 0.33333333333333337
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#453d32",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-roof-beam-38",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Freight shed · high roof beam",
+          "position": {
+            "x": -35,
+            "y": 6,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 20.833333333333336,
+            "y": 0.25,
+            "z": 0.33333333333333337
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#453d32",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-lane",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · clear courier lane",
+          "position": {
+            "x": -36.3,
+            "y": -0.03,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2.3333333333333335,
+            "y": 0.03333333333333333,
+            "z": 21.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#a79b82",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-edge--37.8",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · flush brass lane edge",
+          "position": {
+            "x": -37.8,
+            "y": 0.003,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 21.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-edge--34.8",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · flush brass lane edge",
+          "position": {
+            "x": -34.8,
+            "y": 0.003,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 21.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-chevron-18",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · inset route chevron",
+          "position": {
+            "x": -36.3,
+            "y": 0.014,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 0.006666666666666667,
+            "z": 0.11666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-chevron-24",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · inset route chevron",
+          "position": {
+            "x": -36.3,
+            "y": 0.014,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 0.006666666666666667,
+            "z": 0.11666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-chevron-30",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · inset route chevron",
+          "position": {
+            "x": -36.3,
+            "y": 0.014,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 0.006666666666666667,
+            "z": 0.11666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-courier-chevron-36",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Dispatch · inset route chevron",
+          "position": {
+            "x": -36.3,
+            "y": 0.014,
+            "z": 36
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 0.006666666666666667,
+            "z": 0.11666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#d4ab62",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-pallet-0",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Counted freight staging pad 1",
+          "position": {
+            "x": -41,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.25,
+            "z": 4
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#66513d",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-0--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -42.8,
+            "y": 0.3,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-0-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -39.2,
+            "y": 0.3,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-pallet-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Counted freight staging pad 2",
+          "position": {
+            "x": -41,
+            "y": 0,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.25,
+            "z": 4
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#66513d",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-1--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -42.8,
+            "y": 0.3,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-1-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -39.2,
+            "y": 0.3,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-pallet-2",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Counted freight staging pad 3",
+          "position": {
+            "x": -41,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.25,
+            "z": 4
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#66513d",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-2--1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -42.8,
+            "y": 0.3,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-cargo-strap-2-1",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Staging pad · brass index strip",
+          "position": {
+            "x": -39.2,
+            "y": 0.3,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.06666666666666667,
+            "y": 0.006666666666666667,
+            "z": 3.666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd9255",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-dispatch-desk",
+          "modelId": "factory-export-terminal",
+          "asset": {
+            "buildAssetId": "factory-export-terminal"
+          },
+          "name": "Emberfall · Sealed freight & route desk",
+          "position": {
+            "x": -31,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "forgeDispatch": true,
+            "forgeDispatchSection": "dispatch",
+            "forgeDispatchApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 4
+            },
+            "factoryStation": false,
+            "logisticsStation": false,
+            "interactionDistance": 6,
+            "destructible": false,
+            "damage": 0,
+            "prompt": "Inspect sealed lots & shipping routes · E / Use"
+          }
+        },
+        {
+          "id": "forge-dispatch-inspection",
+          "modelId": "forge-finishing-bench",
+          "asset": {
+            "buildAssetId": "forge-finishing-bench"
+          },
+          "name": "Freight inspection · Maker marks & seals",
+          "position": {
+            "x": -25,
+            "y": 0,
+            "z": 34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "forgeStation": false,
+            "forgeInspection": true,
+            "interactionDistance": 5,
+            "destructible": false,
+            "damage": 0,
+            "prompt": "Inspect freight ownership & seals · E / Use"
+          },
+          "dialogueSettings": {
+            "text": "A sealed freight unit consumes its exact hand-forged Backpack copy. Its maker receipt follows the counted warehouse lot. Shipping reservations move existing units; destination stock increases only after the verified route and final delivery are complete. Inspect the route desk before booking dispatch."
+          }
+        },
+        {
+          "id": "forge-trade-policy-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "MZK · Ownership, freight & delivery rules",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": 22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "active": true,
+            "forgePolicy": true,
+            "forgePolicyApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 4
+            },
+            "interactionDistance": 6,
+            "destructible": false,
+            "damage": 0,
+            "prompt": "MZK ownership, freight & delivery rules · E / Use"
+          }
+        },
+        {
+          "id": "forge-freight-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "DISPATCH · From maker to destination",
+          "position": {
+            "x": -45,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Read DISPATCH · From maker to destination",
+            "destructible": false,
+            "damage": 0
+          },
+          "dialogueSettings": {
+            "text": "The staging pads start empty. Only verified warehouse stock appears as sealed crates. Use the route desk to seal a creation from Backpack, inspect its counted lot and dispatch it through an available shipping route. The gold lane stays clear for couriers and operators."
+          }
+        },
+        {
+          "id": "forge-market-walk",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Market · sandstone product gallery walk",
+          "position": {
+            "x": 25,
+            "y": -0.04,
+            "z": 27
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 19.166666666666668,
+            "y": 0.04166666666666667,
+            "z": 12.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#96846b",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-route-promenade",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Forge · connected shop and gateway promenade",
+          "position": {
+            "x": 0,
+            "y": -0.05,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 80.83333333333334,
+            "y": 0.04166666666666667,
+            "z": 4.166666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#8e826d",
+            "useAccent": true
+          }
+        },
+        {
           "id": "forge-yard-light--40-24",
           "modelId": "lamp-post",
           "asset": {
@@ -93852,6 +95804,43 @@
             "destructible": false,
             "damage": 0
           }
+        },
+        {
+          "id": "forge-shipping-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Playable shipping routes gateway",
+          "position": {
+            "x": 46,
+            "y": 0,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Playable shipping routes · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "hormuz-shipping"
+            },
+            "destructible": false,
+            "damage": 0
+          }
         }
       ],
       "layoutMeta": {
@@ -93951,6 +95940,26 @@
             "width": 20,
             "depth": 14,
             "description": "Inspect real forge products, compare live MZK offers and shop through the shared Market terminal."
+          },
+          {
+            "id": "forge-dispatch-yard",
+            "name": "Sealed freight · Dispatch & shipping routes",
+            "x": -31,
+            "y": 0,
+            "z": 25,
+            "width": 19,
+            "depth": 14,
+            "description": "Seal exact Backpack creations into counted warehouse units, inspect real stock and choose a verified shipping route."
+          },
+          {
+            "id": "forge-policies",
+            "name": "MZK ownership · Trading & freight policies",
+            "x": -18,
+            "y": 0,
+            "z": 26,
+            "width": 8,
+            "depth": 8,
+            "description": "Review MZK kit prices, Backpack ownership, resale receipts, sealing and delivery policies."
           }
         ],
         "forge": {
@@ -94116,6 +96125,168 @@
             }
           ]
         },
+        "forgeYard": {
+          "id": "forge-dispatch-yard",
+          "sourceMapId": "factory",
+          "dispatchObjectId": "forge-dispatch-desk",
+          "dispatchPosition": {
+            "x": -31,
+            "y": 0,
+            "z": 21
+          },
+          "workshopAisleZ": 0,
+          "dispatchApproach": {
+            "x": -31,
+            "y": 0,
+            "z": 25
+          },
+          "courierWaypoints": [
+            {
+              "x": -36.3,
+              "y": 0.014,
+              "z": 18
+            },
+            {
+              "x": -36.3,
+              "y": 0.014,
+              "z": 24
+            },
+            {
+              "x": -36.3,
+              "y": 0.014,
+              "z": 30
+            },
+            {
+              "x": -36.3,
+              "y": 0.014,
+              "z": 36
+            }
+          ],
+          "cargoSlots": [
+            {
+              "id": "forge-cargo-pallet-0",
+              "objectId": "forge-cargo-pallet-0",
+              "position": {
+                "x": -41,
+                "y": 0.3,
+                "z": 21
+              },
+              "capacity": 1
+            },
+            {
+              "id": "forge-cargo-pallet-1",
+              "objectId": "forge-cargo-pallet-1",
+              "position": {
+                "x": -41,
+                "y": 0.3,
+                "z": 28
+              },
+              "capacity": 1
+            },
+            {
+              "id": "forge-cargo-pallet-2",
+              "objectId": "forge-cargo-pallet-2",
+              "position": {
+                "x": -41,
+                "y": 0.3,
+                "z": 35
+              },
+              "capacity": 1
+            }
+          ]
+        },
+        "forgeCrewWorkspaces": [
+          {
+            "id": "forge-workspace-forge-sourcing",
+            "kind": "sourcing",
+            "stationId": "forge-sourcing",
+            "position": {
+              "x": -26.6,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": -30,
+              "y": 0,
+              "z": -7
+            }
+          },
+          {
+            "id": "forge-workspace-forge-heat",
+            "kind": "heat",
+            "stationId": "forge-heat",
+            "position": {
+              "x": -14.6,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": -18,
+              "y": 0,
+              "z": -7
+            }
+          },
+          {
+            "id": "forge-workspace-forge-hammer",
+            "kind": "hammer",
+            "stationId": "forge-hammer",
+            "position": {
+              "x": -2.6,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": -6,
+              "y": 0,
+              "z": -7
+            }
+          },
+          {
+            "id": "forge-workspace-forge-quench",
+            "kind": "quench",
+            "stationId": "forge-quench",
+            "position": {
+              "x": 9.4,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": 6,
+              "y": 0,
+              "z": -7
+            }
+          },
+          {
+            "id": "forge-workspace-forge-temper",
+            "kind": "temper",
+            "stationId": "forge-temper",
+            "position": {
+              "x": 21.4,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": 18,
+              "y": 0,
+              "z": -7
+            }
+          },
+          {
+            "id": "forge-workspace-forge-finish",
+            "kind": "finish",
+            "stationId": "forge-finish",
+            "position": {
+              "x": 33.4,
+              "y": 0,
+              "z": -4.2
+            },
+            "approach": {
+              "x": 30,
+              "y": 0,
+              "z": -7
+            }
+          }
+        ],
         "residents": [
           {
             "id": "forge-master-smith-npc",

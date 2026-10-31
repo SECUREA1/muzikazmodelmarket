@@ -1,3 +1,4 @@
+import {forgePresentation} from './server-forge-presentation.mjs';
 import {forgeItemLike} from './forge-item-provenance.mjs';
 import {forgeCommand,forgeAccountState,resolveForgeAsset} from './server-forge.mjs';
 import {exportForestItem,resolveForestAsset,reconcileForestExports} from './server-forest-inventory.mjs';
@@ -997,6 +998,7 @@ const server = createServer(async (req, res) => {
       if(url.pathname.endsWith('/trace'))return sendJson(res,200,assetResponse(await worldSupply.trace({...options,productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
       return sendJson(res,200,assetResponse(await worldSupply.state({...options,mapId:url.searchParams.get('mapId')||undefined})));
     }
+    if(url.pathname==='/api/forge/presentation'&&req.method==='GET'){const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(forgePresentation(await userDatabase.read(),context.walletId,{mapId:String(url.searchParams.get('mapId')||'traditional-forge').slice(0,160)})));}
     if(url.pathname==='/api/world-supply/recipe'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.recipe(url.searchParams.get('itemId'),Number(url.searchParams.get('quantity')||1))));
     if(url.pathname==='/api/world-supply/trace'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.trace({productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
     if(url.pathname==='/api/world-supply'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.state({mapId:url.searchParams.get('mapId')||undefined})));

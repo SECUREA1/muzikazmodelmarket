@@ -1,4 +1,4 @@
-import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from './market-item-preview.js';
+import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from './market-item-preview.js?v=forge-atelier-20261031';
 // Interactive previews render only on input. Closing the controls releases the
 // renderer and aborts an outstanding asset request.
 export function mountMarketPreviewTuner(row,record){

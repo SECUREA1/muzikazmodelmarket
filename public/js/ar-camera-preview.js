@@ -33,7 +33,7 @@ export function createCameraPreview({document,window,navigator}){
 if(typeof window!=='undefined'&&typeof document!=='undefined'){
  let productPreview,request=0;
  const camera={
-  async open(record,{mode='camera'}={}){const token=++request;productPreview ||= import('./product-preview.js');const preview=await productPreview;if(token!==request)return;return preview.openProductPreview(record,{mode});},
+  async open(record,{mode='camera'}={}){const token=++request;productPreview ||= import('./product-preview.js?v=forge-atelier-20261031');const preview=await productPreview;if(token!==request)return;return preview.openProductPreview(record,{mode});},
   close(){request++;return productPreview?.then(preview=>preview.closeProductPreview());},
   async getState(){return productPreview?(await productPreview).getProductPreviewState():{mode:'closed',arSupported:null};},
  };window.MuzikazAR=camera;

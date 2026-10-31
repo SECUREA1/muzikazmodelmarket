@@ -1,4 +1,4 @@
-import {FORGE_RECIPES} from './forge-recipes.js?v=forge-metallurgy-20261031';
+import {FORGE_RECIPES} from './forge-recipes.js?v=forge-atelier-20261031';
 
 const quest=(id,name,contact,description,objective,rewardMzk,badge,extra={})=>Object.freeze({id,name,contact,description,objective,rewardMzk,badge,...extra});
 /** Commissions count protected workshop and commerce records. Displayed progress

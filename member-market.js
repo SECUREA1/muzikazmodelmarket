@@ -1,6 +1,6 @@
 (async function () {
   'use strict';
-  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js');
+  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js?v=forge-atelier-20261031');
   const select = document.querySelector('#exchange-member-select');
   const packs = document.querySelector('#exchange-packs');
   const trades = document.querySelector('#exchange-trades');

@@ -1,5 +1,5 @@
 import {deliveryObjectId} from './world-supply-address-ui.js';
-import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from './market-item-preview.js';
+import {previewDescriptor,previewModelSource,loadPreviewModel,disposePreviewModel} from './market-item-preview.js?v=forge-atelier-20261031';
 
 const retailBuildings=new Set(['general-store','corner-bakery','community-supermarket','fashion-boutique','neighborhood-pharmacy','artisan-workshop']);
 const retailLayouts=new Set(['vendor-street','market-square','mega-mall']);

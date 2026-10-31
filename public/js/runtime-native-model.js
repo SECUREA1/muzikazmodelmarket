@@ -2,7 +2,7 @@ import * as THREE from '../vendor/three/three.module.min.js';
 import {finishNativeDesign} from './native-design-system.js';
 
 let forgeFactory;
-const loadForge=()=>forgeFactory ||= import('./forge-models.js?v=forge-metallurgy-20261031');
+const loadForge=()=>forgeFactory ||= import('./forge-models.js?v=forge-atelier-20261031');
 
 /** A fresh world directory can arrive while a browser still has an older
  * native model catalogue. Forge identities have their own real model factory;

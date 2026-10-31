@@ -63,7 +63,7 @@ import {activateGameAudio,mountGameAudioActivation} from './game-audio-activatio
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var enginePath = './house-explorer-glb.js?v=forge-metallurgy-20261031';
+    var enginePath = './house-explorer-glb.js?v=forge-atelier-20261031';
     var recovery = new URLSearchParams(window.location.search).get('gameRecovery');
     if (recovery) enginePath += '&recovery=' + encodeURIComponent(recovery);
     loadTimer = window.setTimeout(function () { showStall(revision); }, 30000);

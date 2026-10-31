@@ -30,7 +30,7 @@ export function productFacts(record){
  ].filter(([,value])=>value!==undefined&&value!==null&&value!=='');
 }
 
-export async function initializeProductPage({document:doc=globalThis.document,location:pageLocation=globalThis.location,request,loadPreview=()=>import('./product-preview.js'),share=shareProduct}={}){
+export async function initializeProductPage({document:doc=globalThis.document,location:pageLocation=globalThis.location,request,loadPreview=()=>import('./product-preview.js?v=forge-atelier-20261031'),share=shareProduct}={}){
  const page=doc?.querySelector('[data-product-page]');if(!page)return null;
  const status=page.querySelector('[data-product-status]'),title=page.querySelector('[data-product-title]'),content=page.querySelector('[data-product-content]');
  const reference=new URL(pageLocation.href).searchParams.get('id'),controller=new AbortController();

@@ -1,7 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {supplySelectableCatalog,filterSupplyItems,supplyShipmentTask,supplyPortTransferText,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess,supplyOrderPresentation} from '../public/js/world-supply-ui.js';
+import {supplySelectableCatalog,filterSupplyItems,supplyShipmentTask,supplyPortTransferText,supplySourceStock,supplyRouteCapacity,supplyBuildPresentation,supplyShipmentAccess,supplyOrderPresentation,supplyFreightTraceTarget,supplyFreightTraceMarkup} from '../public/js/world-supply-ui.js';
 import {shippingSupplyManifest} from '../public/js/shipping-ui.js';
+
+test('freight links inspect the exact lot before the larger shipment',()=>{
+ assert.deepEqual(supplyFreightTraceTarget({lotId:' lot-a ',shipmentId:'ship-a'}),{lotId:'lot-a'});
+ assert.deepEqual(supplyFreightTraceTarget({shipmentId:'ship-a'}),{shipmentId:'ship-a'});
+ assert.equal(supplyFreightTraceTarget({itemId:'native:forge-blade',section:'trace'}),null);
+ const trace={lots:[{id:'lot-a',itemId:'native:forge-blade',blueprint:{name:'Finished blade'},quantity:1,availableQuantity:0},{id:'lot-b',itemId:'native:other',quantity:9,availableQuantity:2}],allocations:[{shipmentId:'ship-a',lots:[{lotId:'lot-a',quantity:1},{lotId:'lot-b',quantity:9}]}],shipments:[{id:'ship-a',itemId:'native:forge-blade',quantity:10,phase:'delivered',destinationMapId:'market-a',sourceMapId:'factory'}],stockReceipts:[{id:'other-lot-receipt',shipmentId:'ship-a',itemId:'native:forge-blade',quantity:9,destinationMapId:'market-a',lotAllocations:[{lotId:'lot-b',quantity:9}]},{id:'wrong-item-receipt',shipmentId:'ship-a',itemId:'native:other',quantity:1,destinationMapId:'market-a',lotAllocations:[{lotId:'lot-a',quantity:1}]},{id:'wrong-port-receipt',shipmentId:'ship-a',itemId:'native:forge-blade',quantity:1,destinationMapId:'market-b',lotAllocations:[{lotId:'lot-a',quantity:1}]}]};
+ let output=supplyFreightTraceMarkup({target:{lotId:'lot-a'},trace});
+ assert.match(output,/Warehouse lot inspection/);assert.match(output,/Finished blade/);assert.match(output,/factory → market-a/);
+ assert.match(output,/no matching stock receipt/);assert.doesNotMatch(output,/other-lot-receipt|wrong-item-receipt|wrong-port-receipt|native:other/);
+ trace.stockReceipts.push({id:'exact-receipt',shipmentId:'ship-a',itemId:'native:forge-blade',quantity:10,destinationMapId:'market-a',lotAllocations:[{lotId:'lot-a',quantity:1},{lotId:'lot-b',quantity:9}]});
+ output=supplyFreightTraceMarkup({target:{lotId:'lot-a'},trace});assert.match(output,/Destination stock confirmed: 1 units for this lot/);assert.match(output,/exact-receipt/);
+ const shipmentOutput=supplyFreightTraceMarkup({target:{shipmentId:'ship-a'},trace:{...trace,lots:[...trace.lots,{id:'unrelated-lot',itemId:'private-unrelated-item',quantity:7}]}});
+ assert.match(shipmentOutput,/Shipment inspection/);assert.doesNotMatch(shipmentOutput,/private-unrelated-item/);
+ assert.match(supplyFreightTraceMarkup({target:{lotId:'<lot>'}}),/&lt;lot&gt;/);
+});
 
 test('supply catalog search covers names, native identities and GLB paths without losing word matching',()=>{
  const catalog=[{id:'native:chair',name:'Oak chair',buildAssetId:'oak-chair',aliases:['imported-seat-alias'],nativeMaps:[{id:'harbor',name:'Neon Harbor',count:3,aliases:['harbor-seat']}]},{id:'model:harbor',name:'Freighter',modelUrl:'/public/models/sea/freighter.glb'}];

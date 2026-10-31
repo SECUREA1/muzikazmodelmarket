@@ -1,3 +1,4 @@
+import {prepareForgeCrewWork,stepForgeCrewWork} from './server-forge-crew-work.mjs';
 import {forgeCrew} from './public/js/forge-config.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {ensureResidentIntelligence,stepResidentLife,archiveResidentIntelligence} from './server-resident-life.mjs';
@@ -25,6 +26,6 @@ export function stepForgeResidents(sim,environment,now,dt,{collision,objects={}}
   if(npc.resident.appearance){npc.resident.appearance.outfit=source.color;npc.resident.appearance.skin=source.skin;}
   npc.name=source.name+' · '+source.role;
  }
- const cast=Object.values(sim.actors).filter(actor=>actor.resident?.forge);stepCommunityLife(sim,cast,now,dt);stepResidentLife(sim,environment,now,dt,{collision,objects});
+ const cast=Object.values(sim.actors).filter(actor=>actor.resident?.forge);prepareForgeCrewWork(sim,now);stepCommunityLife(sim,cast,now,dt);stepResidentLife(sim,environment,now,dt,{collision,objects});stepForgeCrewWork(sim,environment,now,dt,{collision,objects});
  for(const player of Object.values(sim.players)){const task=player.residentTask;if(task?.status==='active'&&(player.movementRevision||0)!==task.revision){task.status='cancelled';task.message='Travel reset this smithy favor.';}if(task?.status==='active'&&now>task.deadline){task.status='expired';task.message='Smithy favor expired. Ask a specialist for another objective.';}}
 }
