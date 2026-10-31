@@ -1,4 +1,4 @@
-"""Existing SVG actions stay across the top, with one live emergency radio card."""
+"""SVG actions share one header row and a readable overflow, with one live radio card."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -67,7 +67,7 @@ def hit_center(locator):
 
 def header_boxes(page, width):
     # Selector ownership, rather than the number of fixture actions, protects late controls too.
-    buttons = page.locator('[data-action]:visible, .emergency-radio-toggle:visible, .emergency-nuclear-toggle:visible, .game-view-more:visible')
+    buttons = page.locator('.game-display-flow-views > [data-action]:visible, .game-display-flow-views > .emergency-radio-toggle:visible, .game-display-flow-views > .emergency-nuclear-toggle:visible, .game-display-flow-views > .game-view-more:visible, .game-display-flow-views > div:not(.game-view-overflow) [data-action]:visible')
     boxes = []
     for index in range(buttons.count()):
         button = buttons.nth(index)
@@ -81,7 +81,23 @@ def header_boxes(page, width):
         for second in boxes[i + 1:]:
             overlap = min(first['x'] + first['width'], second['x'] + second['width']) - max(first['x'], second['x']) > .5 and min(first['y'] + first['height'], second['y'] + second['height']) - max(first['y'], second['y']) > .5
             assert not overlap, (width, 'SVG buttons overlap', first, second)
+    assert len({round(box['y']) for box in boxes}) == 1, (width, 'Header must stay on one row', boxes)
+    assert page.locator('.game-display-flow-views').evaluate('row=>row.scrollWidth<=row.clientWidth+1')
     return boxes
+
+
+def reveal_action(page, label):
+    button = page.get_by_role('button', name=label, exact=True)
+    if not button.is_visible():
+        page.get_by_role('button', name='More view controls', exact=True).click()
+    assert button.is_visible(), label
+    return button
+
+
+def close_more(page):
+    more = page.get_by_role('button', name='More view controls', exact=True)
+    if more.get_attribute('aria-expanded') == 'true':
+        more.click()
 
 
 try:
@@ -94,15 +110,13 @@ try:
             page.route('**/__header_svg', lambda route: route.fulfill(body=fixture, content_type='text/html'))
             page.goto(f'http://127.0.0.1:{server.server_port}/__header_svg')
             page.evaluate(setup)
-            page.wait_for_function('''()=>[...document.querySelectorAll('[data-action]')].every(n=>!!n.closest('.game-display-flow-views')&&!n.closest('.game-view-overflow'))''')
+            page.wait_for_function('''()=>[...document.querySelectorAll('[data-action]')].every(n=>!!n.closest('.game-display-flow-views'))''')
             radio = page.get_by_role('button', name='Emergency radio', exact=True)
             more = page.get_by_role('button', name='More view controls', exact=True)
             popup = page.locator('#emergency-radio-popup')
             radio.wait_for(state='visible')
             boxes = header_boxes(page, width)
-            if width <= 390:
-                assert len({round(box['y']) for box in boxes}) >= 2, 'Narrow screens must retain every SVG using header rows.'
-            assert page.get_by_role('button', name='Factory', exact=True).is_disabled()
+            assert page.locator('.factory-toggle').is_disabled()
             assert page.locator('.forest-toggle').is_hidden()
             assert page.evaluate('remount()&&[...originals].every(([key,n])=>document.querySelector(`[data-action="${key}"]`)===n)')
             assert page.evaluate('dock.parentElement===dockParent&&!dock.closest(".game-view-overflow")')
@@ -111,28 +125,43 @@ try:
 
             # All icon callbacks retain their original controls; optional panels still open.
             for label, key in [('Camera view', 'camera'), ('Flashlight', 'flashlight'), ('Quests', 'quests'), ('District map', 'district'), ('Airport tower', 'airport'), ('Fitness', 'fitness')]:
-                page.get_by_role('button', name=label, exact=True).click()
+                reveal_action(page, label).click()
                 assert page.evaluate('(key)=>clicks[key]', key) == 1
+                close_more(page)
             for label, target in [('Vehicle activities', '#transport-panel'), ('Residents', '#resident-panel'), ('Live map', '#map-panel')]:
-                button = page.get_by_role('button', name=label, exact=True)
+                button = reveal_action(page, label)
                 button.click()
                 panel = page.locator(target)
                 assert panel.is_visible() and hit_center(panel), (width, label, 'companion is unreachable')
                 assert panel.bounding_box()['y'] >= max(box['y'] + box['height'] for box in boxes) - 1, (width, label, 'companion covers lower icon rows')
                 button.click()
                 assert panel.is_hidden()
+                close_more(page)
 
-            # Only text-based secondary actions need More; SVG launchers stay above it.
+            # More keeps the remaining real SVG and text controls in one list.
             more.click()
             overflow = page.locator('.game-view-overflow')
             assert overflow.is_visible()
-            assert overflow.locator('[data-action],.emergency-radio-toggle,.emergency-nuclear-toggle').count() == 0
+            if width <= 390:
+                assert overflow.locator('[data-action]').count() > 0
+                assert overflow.locator('[data-action]').first.get_attribute('data-game-control-label')
             flow = overflow.get_by_role('button', name='Emergency response flow', exact=True)
             assert flow.is_visible() and hit_center(flow)
             flow.click()
             assert popup.is_visible() and overflow.is_hidden()
             assert page.locator('#emergency-flow-panel').is_visible()
             page.get_by_role('button', name='Close emergency radio', exact=True).click()
+
+            # An open companion remains reachable when narrowing moves it into More.
+            reveal_action(page, 'Residents').click()
+            page.set_viewport_size({'width': 320, 'height': height})
+            page.wait_for_function('document.querySelector(".game-view-overflow .world-resident-ui")&&!document.querySelector(".game-view-overflow").hidden')
+            page.wait_for_function('''()=>{const n=document.querySelector('#resident-panel'),r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}''')
+            assert page.locator('#resident-panel').is_visible() and hit_center(page.locator('#resident-panel'))
+            page.set_viewport_size({'width': width, 'height': height})
+            reveal_action(page, 'Residents').click()
+            close_more(page)
+            boxes = header_boxes(page, width)
 
             # Repeated fitting never reparents a held or focused icon.
             radio.focus()
@@ -151,11 +180,13 @@ try:
 
             # Runtime availability and newly mounted SVG actions participate in the header.
             page.evaluate('''()=>{document.querySelector('.forest-toggle').hidden=false;const group=document.createElement('div');group.className='broadcast-controls';const button=document.createElement('button');button.setAttribute('aria-label','Broadcast view');button.dataset.action='broadcast';button.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 6h16v12H4z"/></svg>';button.onclick=()=>clicks.broadcast=(clicks.broadcast||0)+1;group.append(button);stage.append(group);}''')
-            page.get_by_role('button', name='Forest', exact=True).wait_for(state='visible')
+            page.wait_for_function('!document.querySelector(".forest-toggle").hidden')
             page.wait_for_function('!!document.querySelector("[data-action=broadcast]")?.closest(".game-display-flow-views")')
             boxes = header_boxes(page, width)
-            page.get_by_role('button', name='Forest', exact=True).click()
-            page.get_by_role('button', name='Broadcast view', exact=True).click()
+            reveal_action(page, 'Forest').click()
+            close_more(page)
+            reveal_action(page, 'Broadcast view').click()
+            close_more(page)
             assert page.evaluate('clicks.forest===1&&clicks.broadcast===1')
             page.evaluate('document.querySelector(".forest-toggle").hidden=true')
             assert page.locator('.forest-toggle').is_hidden()
@@ -163,7 +194,7 @@ try:
             page.set_viewport_size({'width': width, 'height': height})
             boxes = header_boxes(page, width)
 
-            # The one emergency card starts below the actual wrapped rows.
+            # The one emergency card starts below the single header row.
             page.locator('#move').focus()
             page.evaluate('advance(sim.doomsday.nextEventAt)')
             popup.wait_for(state='visible')
@@ -186,7 +217,7 @@ try:
             assert page.evaluate('dock.parentElement===dockParent')
             assert page.evaluate('(()=>{const ids=[...document.querySelectorAll("[id]")].map(n=>n.id);return ids.length===new Set(ids).size;})()')
             assert not errors, errors
-            print(f'{width}x{height}: all SVG icons across top, wrapped rows, original callbacks/panels, one radio below header, focus/capture and gameplay passed', flush=True)
+            print(f'{width}x{height}: one header row, labeled overflow, original callbacks/panels, one radio below header, focus/capture and gameplay passed', flush=True)
             page.close()
         browser.close()
 finally:

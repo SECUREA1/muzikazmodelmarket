@@ -9,6 +9,19 @@ import {LEGACY_SESSION_HASH} from '../opaque-session-secrets.mjs';
 
 const account = { accountId: 'account-1', primaryEthereumWallet: '0x1111111111111111111111111111111111111111' };
 
+test('persistent guest accounts survive inactivity and server restart until explicit logout',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'mzk-guest-persistent-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const file=join(directory,'sessions.json');let now=Date.now();
+ const options={ttlSeconds:60,persistent:true,clock:()=>now};
+ const store=new DurableSessionStore(file,options),guest=await store.createSession({accountId:'guest-player'});
+ assert.equal(guest.session.expiresAt,null);
+ now+=401*24*60*60*1000;
+ const restarted=new DurableSessionStore(file,options),restored=await restarted.authenticateSession(guest.token);
+ assert.equal(restored.accountId,'guest-player');assert.equal(restored.expiresAt,null);
+ await restarted.revokeSession(guest.token);
+ assert.equal(await store.authenticateSession(guest.token),null,'logout still invalidates the durable guest proof');
+});
+
 test('account sessions are hashed, durable across store instances, independently revoked, and expire', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'mzk-sessions-')); t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'account-sessions.json'); let now = Date.now();

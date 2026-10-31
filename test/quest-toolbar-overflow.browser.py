@@ -20,7 +20,7 @@ try:
     document.body.innerHTML='<main class="house-stage" style="position:fixed;top:0;left:0;width:min(390px,100vw);height:100dvh"><canvas id="game" tabindex="0" style="width:100%;height:100%"></canvas></main>';
     const [{mountGameDisplayFlow},{mountMapQuestPrompts},{mountTransportActivity},{mountWorldResidentUI},THREE]=await Promise.all([import('/public/js/game-display-flow.js'),import('/public/js/map-quest-prompts.js'),import('/public/js/transport-activity.js'),import('/public/js/world-resident-ui.js'),import('/public/vendor/three/three.module.min.js')]);
     const stage=document.querySelector('main');window.flow=mountGameDisplayFlow(stage);
-    for(const name of ['game-camera-toggle','district-map-toggle','live-local-map',...Array(7).fill('factory-toggle')]){const button=document.createElement('button');button.className=name;button.setAttribute('aria-label',name);button.textContent='Control';stage.append(button);}
+    for(const name of ['game-camera-toggle','district-map-toggle','live-local-map',...Array(7).fill('factory-toggle')]){const button=document.createElement('button');button.className=name;button.setAttribute('aria-label',name);button.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';stage.append(button);}
     window.releases=[];window.gameKeys=[];document.addEventListener('muzikaz:release-game-input',event=>releases.push(event.detail.reason));window.addEventListener('keydown',event=>gameKeys.push(event.key));
     window.world={id:'factory-demo',name:'Factory floor'};
     const offer={id:'factory-tour',title:'Factory tour',mode:'foot',siteQuest:true,kind:'site-tour',reward:250,timeLimit:600,description:'Inspect the real factory floor.'};

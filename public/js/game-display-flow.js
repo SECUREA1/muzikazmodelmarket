@@ -59,8 +59,8 @@ export function mountGameDisplayFlow(stage){
  }
  function fit(){
   frame=null;if(fitting)return;fitting=true;
-  // Every available SVG launcher stays across the top. Keep original grouped
-  // components intact so their companion panels and input handlers still work.
+  // Keep one row at full touch-target size. Overflow moves the original
+  // component, retaining its companion panels, disabled state and handlers.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
   const priority=node=>{const i=['game-flashlight-toggle','game-camera-toggle','map-quest-launcher','emergency-radio-toggle','emergency-nuclear-toggle','district-map-toggle','live-local-map','doomsday-menu','game-viewport-toggle','factory-toggle','prison-toggle','factory-testing-toggle','factory-logistics-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?20:i;};groups.sort((a,b)=>priority(a)-priority(b));
   // Status badges and repeated snapshots do not change the toolbar footprint.
@@ -68,10 +68,22 @@ export function mountGameDisplayFlow(stage){
   const layout=layoutState();
   if(lastLayout&&layout.length===lastLayout.length&&layout.every((value,index)=>value===lastLayout[index])){measureHeader();fitting=false;return;}
   lastLayout=layout;
-  const pinned=groups.filter(node=>node.dataset.gameViewOverflow!=='true'&&launchers(node).some(button=>button.querySelector('svg'))),secondary=groups.filter(node=>!pinned.includes(node));
+  const candidates=groups.filter(node=>node.dataset.gameViewOverflow!=='true'&&launchers(node).some(button=>button.querySelector('svg')));
+  const visibleLaunchers=node=>available(node)?launchers(node).filter(available):[];
+  // Header launchers are consistently 44px with a 4px gap, including grouped
+  // camera/sports actions. Reserve More before allocating the available slots.
+  const capacity=Math.max(0,Math.floor((views.clientWidth+4)/48));
+  const hasSecondary=groups.some(node=>!candidates.includes(node)&&visibleLaunchers(node).length);
+  const count=candidates.reduce((total,node)=>total+visibleLaunchers(node).length,0);
+  let remaining=Math.max(0,capacity-(hasSecondary||count>capacity?1:0));
+  const pinned=candidates.filter(node=>{const size=visibleLaunchers(node).length;if(!size||size>remaining)return false;remaining-=size;return true;}),secondary=groups.filter(node=>!pinned.includes(node));
   let pinnedAnchor=more;for(let i=pinned.length-1;i>=0;i--){const node=pinned[i];if(node.parentElement!==views||node.nextSibling!==pinnedAnchor)views.insertBefore(node,pinnedAnchor);pinnedAnchor=node;}
   let menuAnchor=null;for(let i=secondary.length-1;i>=0;i--){const node=secondary[i];if(node.parentElement!==overflow||node.nextSibling!==menuAnchor)overflow.insertBefore(node,menuAnchor);menuAnchor=node;for(const button of launchers(node))labelButton(button,node);}
-  more.hidden=![...overflow.children].some(available);if(more.hidden)closeOverflow();
+  more.hidden=!secondary.some(node=>visibleLaunchers(node).length);if(more.hidden)closeOverflow();
+  // An open conversation or map remains visible when a resize moves its
+  // launcher into More. Programmatic openings use the same overflow helper.
+  const openGroup=secondary.find(node=>available(node)&&[...node.querySelectorAll(panelControls)].some(panel=>!panel.hidden));
+  if(openGroup&&revealGameViewControl(openGroup))requestAnimationFrame(()=>{const panel=[...openGroup.querySelectorAll(panelControls)].find(panel=>!panel.hidden);if(!disposed&&panel&&!overflow.hidden)overflow.scrollTop+=panel.getBoundingClientRect().top-overflow.getBoundingClientRect().top-6;});
   measureHeader();fitting=false;
  }
  const schedule=()=>{if(disposed)return;if(frame===null)frame=requestAnimationFrame(fit);};

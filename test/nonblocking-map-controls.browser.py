@@ -123,6 +123,9 @@ async def foot_controls(page, cdp, rows, label):
         await page.keyboard.up('w')
     keyboard_progress = distance(start,(await snapshot(page))['player']['position'])
     await page.wait_for_function('MuzikazHouseExplorer.snapshot().player.serverGrounded',timeout=20000)
+    # Space retains its jump meaning when the companion's Close button has
+    # focus, instead of dispatching a native click that dismisses the map.
+    await page.locator('.district-map-dialog').get_by_role('button',name='Close',exact=True).focus()
     await page.evaluate('''()=>{window.openMapJump=[];window.openMapJumpActive=true;const sample=()=>{if(!openMapJumpActive)return;openMapJump.push(MuzikazHouseExplorer.snapshot().player.position[1]);requestAnimationFrame(sample);};requestAnimationFrame(sample);}''')
     before = len(rows)
     await page.keyboard.down('Space')

@@ -44,8 +44,18 @@ export function mountDistrictMap({stage,command=null,getRoots=null,onFishing=()=
  const liveUpdates=holdLiveMapUpdates(dialog,()=>{if(dialog.open)refreshLive();});
  let environment=null,generation=0,live=null,selfId=null,map3D=null,mapView='plan',pending3D=null;
  const layoutTargets=new Set(),layoutSelector='.game-display-flow,.game-display-flow-views,.house-control-dock,.airport-flight-controls,.harbor-helm-controls,.construction-controls,.patrol-cannon';let layoutFrame=null;
+ function showMap(){
+  const modal=window.matchMedia(mobileMapQuery).matches;
+  dialog.dataset.gameplayBlocking=String(modal);dialog.setAttribute('aria-modal',String(modal));
+  if(modal)dialog.showModal();else dialog.show();
+ }
  function fitCompanionMap(){
   if(!dialog.open||disposed)return;
+  // The same open map can cross the phone/desktop breakpoint. CSS alone
+  // cannot release a native modal's focus trap or make a companion modal.
+  if(dialog.matches(':modal')!==window.matchMedia(mobileMapQuery).matches){
+   requestGameInputRelease('map-mode-change');dialog.close();showMap();
+  }
   dialog.style.setProperty('--map-toolbar-height',Math.ceil(header.getBoundingClientRect().height)+'px');
   // Phones use the full visible screen, including in landscape. Gameplay HUD
   // controls must not squeeze the map into the small gap between them.
@@ -226,13 +236,20 @@ export function mountDistrictMap({stage,command=null,getRoots=null,onFishing=()=
   renderVehicleRoutes();refreshLive();
  }
  button.onclick=async()=>{
-  if(!mapReady())return;mini.close?.();if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;mapView=window.matchMedia(mobileMapQuery).matches?'3d':'plan';title.textContent=environment.name;search.value='';atlasLoading=true;deedsGroup.details.hidden=true;deedsGroup.body.replaceChildren();selectSection('map');renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open){if(window.matchMedia(mobileMapQuery).matches)dialog.showModal();else dialog.show();}dialog.scrollTop=0;fitCompanionMap();switchView(mapView);requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();if(selectedLocation?.waypoint)focusPlan(selectedLocation);else fitPlan();});
+  if(!mapReady())return;mini.close?.();if(!dialog.open)requestGameInputRelease('map-open');const current=++generation;mapView=window.matchMedia(mobileMapQuery).matches?'3d':'plan';title.textContent=environment.name;search.value='';atlasLoading=true;deedsGroup.details.hidden=true;deedsGroup.body.replaceChildren();selectSection('map');renderMap();status.textContent='Loading the live land directory…';(document.fullscreenElement||stage.closest('.house-explorer-shell')||document.body).append(dialog);document.exitPointerLock?.();button.setAttribute('aria-expanded','true');if(!dialog.open)showMap();dialog.scrollTop=0;fitCompanionMap();switchView(mapView);requestAnimationFrame(()=>{if(current!==generation||!dialog.open)return;fitCompanionMap();if(selectedLocation?.waypoint)focusPlan(selectedLocation);else fitPlan();});
   try{const atlas=await fetchAtlas();if(current!==generation)return;const places=districtDestinations(environment,atlas.locations||[]);status.textContent=places.filter(place=>place.deedId).length+' recorded deeds · '+places.length+' connected destinations';deedsGroup.details.hidden=!places.length;atlasLoading=false;
 
    for(const place of places){const card=node('article',null,deedsGroup.body);card.dataset.mapSearchItem='';node('h4',place.name,card);node('p',(place.deedId?'Deed '+place.deedId:'World destination')+' · '+(place.ownerName||'Community'),card);const link=node('a','Enter '+place.name,card);link.href='model-explorer.html?environment='+encodeURIComponent(place.mapId)+'&autoplay=1';link.addEventListener('click',()=>actionLoading.begin('Loading '+place.name+'…'));}filterDirectory();
   }catch(error){if(current===generation){atlasLoading=false;deedsGroup.details.hidden=true;status.textContent=error.message;filterDirectory();}}
  };
- dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.close();}else if((event.key===' '||event.key==='Enter')&&event.target.closest?.('button,a[href],summary,[role=button]'))event.stopPropagation();});
- dialog.addEventListener('close',()=>{requestGameInputRelease('map-close');generation++;map3D?.dispose();map3D=null;button.setAttribute('aria-expanded','false');const target=mapReady()?button:stage.querySelector('canvas');target?.focus({preventScroll:true});});
+ dialog.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.close();return;}
+  if(dialog.matches(':modal')||event.defaultPrevented||event.target.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]')){event.stopPropagation();return;}
+  if(event.key==='Enter'&&event.target.closest?.('button,a[href],summary,[role=button]'))event.stopPropagation();
+  // Desktop maps share movement input. Space jumps instead of activating a
+  // focused Close, travel or section button; Enter still selects that button.
+  if(event.key===' '&&event.target.closest?.('button,a[href],summary,[role=button]'))event.preventDefault();
+ });
+ dialog.addEventListener('close',()=>{if(dialog.open)return;requestGameInputRelease('map-close');generation++;map3D?.dispose();map3D=null;button.setAttribute('aria-expanded','false');const target=mapReady()?button:stage.querySelector('canvas');target?.focus({preventScroll:true});});
  return {button,dialog,openAt(details){if(!mapReady())return false;const waypoint=localMapWaypoint(environment,details);if(!dialog.open)void button.onclick();if(!waypoint)return false;selectSection('map');chooseTag(waypoint);focusPlan(waypoint);map3D?.updateLive(live,selfId);map3D?.focus({x:waypoint.x,y:waypoint.y,z:waypoint.z},48);return true;},setReady(value){const next=value===true;if(next===requestedReady)return;requestedReady=next;applyReadiness();},updateLive(snapshot,id){live=snapshot;selfId=id;mini.updateLive(snapshot,id);if(dialog.open)liveUpdates.update();},update(value){live=null;selfId=null;craftButtons.clear();browsingReady=false;environment=value;mini.update(value);generation++;applyReadiness();if(dialog.open)dialog.close();},dispose(){disposed=true;liveUpdates.dispose();layoutResize.disconnect();layoutChanges.disconnect();if(layoutFrame!==null)cancelAnimationFrame(layoutFrame);window.removeEventListener('resize',scheduleMapLayout);window.removeEventListener('scroll',scheduleMapLayout);window.visualViewport?.removeEventListener('resize',scheduleMapLayout);window.visualViewport?.removeEventListener('scroll',scheduleMapLayout);generation++;map3D?.dispose();map3D=null;questPanel.dispose();planResize.disconnect();mini.dispose();mapStyle.remove();button.remove();dialog.remove();css.remove();}};
 }

@@ -16,7 +16,19 @@ export class SharedGameInventory {
   // Let queued fetch completions run after a long rendering task before
   // treating an overdue main-thread timer as a lost server connection.
   timer=setTimeout(deadline,timeout);
-  try{const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{credentials:'include',cache:'no-store',retries:0,...options,signal:controller.signal,timeout,deadlineManaged:true,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});const payload=await readJsonResponse(response);if(!response.ok||payload.success===false)throw Object.assign(new Error(payload.message||payload.error||(response.status===401?'Your game session has expired. Continue as guest or sign in again.':response.status>=500?'The game server is temporarily unavailable. Please try again.':'This game action could not be completed. Please try again.')),{status:response.status,code:payload.code});return payload.data;}finally{clearTimeout(timer);external?.removeEventListener('abort',cancel);}
+  try{
+   const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{credentials:'include',cache:'no-store',retries:0,...options,signal:controller.signal,timeout,deadlineManaged:true,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});
+   const payload=await readJsonResponse(response);
+   if(!response.ok||payload.success===false)throw Object.assign(new Error(payload.message||payload.error||(response.status===401?'Your game session has expired. Continue as guest or sign in again.':response.status>=500?'The game server is temporarily unavailable. Please try again.':'This game action could not be completed. Please try again.')),{status:response.status,code:payload.code});
+   // Guest and in-game sign-in use the same persistent bearer fallback as
+   // member login. Cookies alone cannot retain a guest on cross-origin hosts.
+   if(/^\/api\/access\/(guest|free-play)$/.test(path)&&payload.data?.sessionToken){
+    const connection=window.MUZIKAZ_API;
+    if(connection?.getSessionToken?.()!==payload.data.sessionToken)connection?.setGameSessionToken?.('');
+    connection?.setSessionToken?.(payload.data.sessionToken);
+   }
+   return payload.data;
+  }finally{clearTimeout(timer);external?.removeEventListener('abort',cancel);}
  }
 
  async recordTelemetry(health,world){const bootstrap=await this.session();return this.api('/api/rpg/telemetry',{method:'POST',headers:{'X-CSRF-Token':bootstrap.csrfToken},body:JSON.stringify({health,world})});}

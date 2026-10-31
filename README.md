@@ -295,8 +295,8 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-All available SVG control icons appear across the top game header, wrapping
-into additional rows on smaller screens. **More** holds the remaining text
+The game header stays on one row at full touch-target size. **More** holds
+controls that do not fit the screen, with readable labels and the original
 actions, including the response guide. Every action keeps its original handler;
 the bottom dock, movement sticks, primary actions and vehicle controls stay in place.
 The emergency popup and local map open below the actual header height.
@@ -476,6 +476,8 @@ settings live in `public/js/flamethrower.js` under `FLAME_CONFIG`.
 ## Persistent sessions, library and hosted deeds
 
 Account sessions persist until explicit logout/revocation. The HttpOnly account cookie is renewed with a browser-compatible 400-day lifetime, with a persistent bearer fallback for cross-origin pages. Short-lived game sessions still expire normally. Previously expired or revoked credentials are never restored. Logout revokes the server session and clears browser credentials.
+
+Guest passes and in-game account sign-in save that same bearer fallback, so blocked API cookies do not replace the player after reloading or changing maps. A successful login clears any game proof tied to the previous session. Browser storage restrictions fall back to session storage or memory for the current page; clearing all browser credentials removes the ability to resume an anonymous guest.
 
 `GET/POST /api/custom-items` stores signed-in custom library items in the same server inventory used by Backpack and member marketplace sales. PNG drawings are decorative shared-room items; GLB customization requires an owned model. Previews do not grant ownership or gameplay upgrades. Existing browser-only drafts are not imported as paid assets.
 

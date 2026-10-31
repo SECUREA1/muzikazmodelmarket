@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
 import {createNeuralCharacterSpeech,GameSpeechUtterance} from '../public/js/neural-character-speech.js';
+import {SharedGameInventory} from '../public/js/shared-game-inventory.js';
 
 const source = await readFile(new URL('../public/js/api-connection.js', import.meta.url), 'utf8');
 function loadConnection(fetch, configured = '', storage = new Map(), timers = {}) {
@@ -377,4 +378,39 @@ test('a rejected current login is still cleared rather than bypassing revocation
  window.MUZIKAZ_API.setSessionToken('revoked-current-proof');
  assert.equal((await window.MUZIKAZ_API.fetch('/api/market/session')).status,401);
  assert.equal(window.MUZIKAZ_API.getSessionToken(),'');
+});
+
+test('in-game guest and account login retain their identity even with browser storage blocked',async()=>{
+ const previous=globalThis.window;
+ try{
+  for(const path of ['/api/access/guest','/api/access/free-play']){
+   let sent;
+   const {window}=loadConnection(async(url,options)=>{
+    if(url.endsWith('/api/health'))return health();
+    if(url.endsWith(path))return Response.json({success:true,data:{authenticated:true,sessionToken:'new-play-session'}});
+    sent=new Headers(options.headers);return Response.json({success:true,data:{account:{accountId:'same-player'}}});
+   });
+   for(const name of ['localStorage','sessionStorage'])Object.defineProperty(window,name,{get(){throw Error('Storage blocked');}});
+   globalThis.window=window;
+   window.MUZIKAZ_API.setSessionToken('old-session');window.MUZIKAZ_API.setGameSessionToken('old-game');
+   await new SharedGameInventory().api(path,{method:'POST',body:'{}'});
+   assert.equal(window.MUZIKAZ_API.getSessionToken(),'new-play-session');
+   assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'','a game proof bound to the old login must be cleared');
+   await new SharedGameInventory().session();
+   assert.equal(sent.get('authorization'),'Bearer new-play-session');
+   assert.equal(sent.has('x-game-session'),false);
+  }
+ }finally{globalThis.window=previous;}
+});
+
+test('failed guest creation preserves the current account and gameplay proof',async()=>{
+ const previous=globalThis.window;
+ try{
+  const {window}=loadConnection(async url=>url.endsWith('/api/health')?health():Response.json({success:false,code:'SERVER_BUSY',data:{sessionToken:'unconfirmed'}},{status:503}));
+  globalThis.window=window;
+  window.MUZIKAZ_API.setSessionToken('current-account');window.MUZIKAZ_API.setGameSessionToken('current-game');
+  await assert.rejects(new SharedGameInventory().api('/api/access/guest',{method:'POST',body:'{}'}),{status:503,code:'SERVER_BUSY'});
+  assert.equal(window.MUZIKAZ_API.getSessionToken(),'current-account');
+  assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'current-game');
+ }finally{globalThis.window=previous;}
 });
