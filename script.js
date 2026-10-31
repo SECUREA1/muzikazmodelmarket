@@ -176,6 +176,7 @@ function syncCartCount() {
 
 function normalizeDeliverable(deliverable) {
   if(['alpine-quad','grand-tourer','touring-motorcycle'].includes(deliverable?.buildAssetId))return {id:String(deliverable.id||'builder-'+deliverable.buildAssetId),name:String(deliverable.name||'Road vehicle'),buildAssetId:deliverable.buildAssetId,assetType:'vehicles',format:'procedural-3d',thumbnailUrl:'/public/images/vehicles/'+deliverable.buildAssetId+'.svg',category:'Vehicles'};
+  if(/^forge-[a-z0-9-]+$/.test(deliverable?.buildAssetId||''))return {id:String(deliverable.id||'native-'+deliverable.buildAssetId),name:String(deliverable.name||'Forge item'),buildAssetId:deliverable.buildAssetId,assetType:String(deliverable.assetType||'props'),format:'procedural-3d',thumbnailUrl:'/public/images/native-designs/'+deliverable.buildAssetId+'.svg',category:'Forge & metallurgy'};
   if (!deliverable?.modelUrl || !/\.(?:glb|gltf)(?:[?#]|$)/i.test(deliverable.modelUrl)) return null;
   return {
     id: String(deliverable.id || deliverable.modelUrl),

@@ -30699,7 +30699,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-aegis-shield.svg",
+      "thumbnail": "/public/images/native-designs/forge-aegis-shield.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30771,7 +30771,7 @@
         "forgeCrew": false,
         "forgeProduct": "forge-aegis-shield",
         "forgeMaterial": false,
-        "prompt": "Inspect Aegis Forged Shield · E / Use"
+        "prompt": "Pick up Aegis Forged Shield · E / Use"
       }
     },
     {
@@ -30782,7 +30782,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-anvil.svg",
+      "thumbnail": "/public/images/native-designs/forge-anvil.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30870,7 +30870,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-battle-axe.svg",
+      "thumbnail": "/public/images/native-designs/forge-battle-axe.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -30942,7 +30942,7 @@
         "forgeCrew": false,
         "forgeProduct": "forge-battle-axe",
         "forgeMaterial": false,
-        "prompt": "Inspect Ironwake Battle Axe · E / Use"
+        "prompt": "Pick up Ironwake Battle Axe · E / Use"
       }
     },
     {
@@ -30953,7 +30953,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-bellows.svg",
+      "thumbnail": "/public/images/native-designs/forge-bellows.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31029,6 +31029,91 @@
       }
     },
     {
+      "assetId": "native-forge-bronze-bell",
+      "name": "Resonant Bronze Bell",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-bronze-bell.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-bronze-bell",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.25,
+        1.75,
+        0.8
+      ],
+      "priceMzk": 380,
+      "description": "A cast and forged bronze workshop bell with a flared skirt, engraved waist, hanging yoke and visible clapper. Use it to ring the quartermaster’s call.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "use",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeBell": true,
+        "cooldown": 1,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-bronze-bell",
+        "forgeMaterial": false,
+        "prompt": "Ring Resonant Bronze Bell · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-bronze-ingot",
       "name": "Bronze Alloy Ingot",
       "category": "forge",
@@ -31036,7 +31121,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-bronze-ingot.svg",
+      "thumbnail": "/public/images/native-designs/forge-bronze-ingot.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31119,7 +31204,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-coal.svg",
+      "thumbnail": "/public/images/native-designs/forge-coal.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31202,7 +31287,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-coal-bin.svg",
+      "thumbnail": "/public/images/native-designs/forge-coal-bin.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31278,6 +31363,89 @@
       }
     },
     {
+      "assetId": "native-forge-dagger",
+      "name": "Cinderfang Dagger",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-dagger.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-dagger",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.24,
+        0.64,
+        0.1
+      ],
+      "priceMzk": 280,
+      "description": "A compact pattern welded dagger with a faceted bronze pommel, fullered blade and stitched leather grip. A fast close range forged weapon.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-dagger",
+        "forgeMaterial": false,
+        "prompt": "Pick up Cinderfang Dagger · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-damascus-blade",
       "name": "Stormfold Damascus Blade",
       "category": "forge",
@@ -31285,7 +31453,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-damascus-blade.svg",
+      "thumbnail": "/public/images/native-designs/forge-damascus-blade.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31357,7 +31525,7 @@
         "forgeCrew": false,
         "forgeProduct": "forge-damascus-blade",
         "forgeMaterial": false,
-        "prompt": "Inspect Stormfold Damascus Blade · E / Use"
+        "prompt": "Pick up Stormfold Damascus Blade · E / Use"
       }
     },
     {
@@ -31368,7 +31536,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-finishing-bench.svg",
+      "thumbnail": "/public/images/native-designs/forge-finishing-bench.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31456,7 +31624,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-grinding-wheel.svg",
+      "thumbnail": "/public/images/native-designs/forge-grinding-wheel.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31539,7 +31707,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-hammer.svg",
+      "thumbnail": "/public/images/native-designs/forge-hammer.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31611,7 +31779,7 @@
         "forgeCrew": false,
         "forgeProduct": false,
         "forgeMaterial": false,
-        "prompt": "Inspect Cross Peen Smithing Hammer · E / Use"
+        "prompt": "Pick up Cross Peen Smithing Hammer · E / Use"
       }
     },
     {
@@ -31622,7 +31790,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-hearth.svg",
+      "thumbnail": "/public/images/native-designs/forge-hearth.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31703,6 +31871,89 @@
       }
     },
     {
+      "assetId": "native-forge-iron-gate",
+      "name": "Emberfall Iron Gate",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-iron-gate.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-iron-gate",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.2,
+        3.1,
+        0.28
+      ],
+      "priceMzk": 620,
+      "description": "A riveted wrought iron gate with spearpoint bars, a bronze maker crest, real hinge barrels and a latch. Use it to open or close an entrance in your map.",
+      "behavior": "door",
+      "function_data": {
+        "active": true,
+        "behavior": "door",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-iron-gate",
+        "forgeMaterial": false,
+        "prompt": "Open / close Emberfall Iron Gate · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-iron-ingot",
       "name": "Refined Iron Ingot",
       "category": "forge",
@@ -31710,7 +31961,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-iron-ingot.svg",
+      "thumbnail": "/public/images/native-designs/forge-iron-ingot.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31786,6 +32037,90 @@
       }
     },
     {
+      "assetId": "native-forge-lantern",
+      "name": "Emberglass Lantern",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-lantern.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-lantern",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.62,
+        1.05,
+        0.62
+      ],
+      "priceMzk": 210,
+      "description": "A forged iron lantern with amber glass, protective ribs, a brass vented roof and a warm flame core. Use it to switch the lantern glow on or off.",
+      "behavior": "switch",
+      "function_data": {
+        "active": true,
+        "behavior": "switch",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeLantern": true,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-lantern",
+        "forgeMaterial": false,
+        "prompt": "Light / extinguish Emberglass Lantern · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-master-smith",
       "name": "Brann Emberhand · Master Smith",
       "category": "forge",
@@ -31793,7 +32128,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-master-smith.svg",
+      "thumbnail": "/public/images/native-designs/forge-master-smith.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31876,7 +32211,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-metallurgist.svg",
+      "thumbnail": "/public/images/native-designs/forge-metallurgist.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -31952,6 +32287,89 @@
       }
     },
     {
+      "assetId": "native-forge-pickaxe",
+      "name": "Deepvein Pickaxe",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-pickaxe.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-pickaxe",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.05,
+        1.3,
+        0.2
+      ],
+      "priceMzk": 340,
+      "description": "A curved forged steel pick with a broad adze end, reinforced bronze eye and long ash handle. Hold it for a heavy controlled strike.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-pickaxe",
+        "forgeMaterial": false,
+        "prompt": "Pick up Deepvein Pickaxe · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-quartermaster",
       "name": "Kade Ironledger · Forge Quartermaster",
       "category": "forge",
@@ -31959,7 +32377,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-quartermaster.svg",
+      "thumbnail": "/public/images/native-designs/forge-quartermaster.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32042,7 +32460,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-quench-tank.svg",
+      "thumbnail": "/public/images/native-designs/forge-quench-tank.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32123,6 +32541,89 @@
       }
     },
     {
+      "assetId": "native-forge-spear",
+      "name": "Ashenreach Spear",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-spear.svg?v=forge-metallurgy-20261031",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-spear",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.34,
+        2.4,
+        0.18
+      ],
+      "priceMzk": 510,
+      "description": "A leaf shaped forged steel spear with a bronze socket, long ash shaft and wrapped hand grip. Hold it and use the fire control for a measured reach strike.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-spear",
+        "forgeMaterial": false,
+        "prompt": "Pick up Ashenreach Spear · E / Use"
+      }
+    },
+    {
       "assetId": "native-forge-steel-billet",
       "name": "Layered Steel Billet",
       "category": "forge",
@@ -32130,7 +32631,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-steel-billet.svg",
+      "thumbnail": "/public/images/native-designs/forge-steel-billet.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32213,7 +32714,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-stock-rack.svg",
+      "thumbnail": "/public/images/native-designs/forge-stock-rack.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32301,7 +32802,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-tempering-oven.svg",
+      "thumbnail": "/public/images/native-designs/forge-tempering-oven.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32389,7 +32890,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-tongs.svg",
+      "thumbnail": "/public/images/native-designs/forge-tongs.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32461,7 +32962,7 @@
         "forgeCrew": false,
         "forgeProduct": false,
         "forgeMaterial": false,
-        "prompt": "Inspect Blacksmith Tongs · E / Use"
+        "prompt": "Pick up Blacksmith Tongs · E / Use"
       }
     },
     {
@@ -32472,7 +32973,7 @@
       "source": "public/models/backpack-assets.json",
       "generated": false,
       "modelPath": "",
-      "thumbnail": "/public/images/native-designs/forge-warhammer.svg",
+      "thumbnail": "/public/images/native-designs/forge-warhammer.svg?v=forge-metallurgy-20261031",
       "generator": null,
       "defaultTransform": {
         "position": [
@@ -32544,7 +33045,7 @@
         "forgeCrew": false,
         "forgeProduct": "forge-warhammer",
         "forgeMaterial": false,
-        "prompt": "Inspect Emberstrike Warhammer · E / Use"
+        "prompt": "Pick up Emberstrike Warhammer · E / Use"
       }
     },
     {
@@ -34235,7 +34736,7 @@
     }
   ],
   "audit": {
-    "assetCount": 492,
+    "assetCount": 498,
     "generatedCount": 44,
     "warnings": [
       {

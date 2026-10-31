@@ -1,8 +1,9 @@
 import {fullscreenPanel} from './fullscreen-panels.js';
 import {loadGameMenuStyles} from './game-menu-controls.js';
 import {requestGameInputRelease} from './game-input-release.js';
-import {forgeStations,isForgeEnvironment} from './forge-config.js';
-import {FORGE_RECIPES,FORGE_MATERIALS,FORGE_STAGE_ORDER,FORGE_STRIKE_COOLDOWN_MS} from './forge-recipes.js';
+import {forgeStations,isForgeEnvironment} from './forge-config.js?v=forge-metallurgy-20261031';
+import {FORGE_QUESTS} from './forge-quests.js?v=forge-metallurgy-20261031';
+import {FORGE_RECIPES,FORGE_MATERIALS,FORGE_STAGE_ORDER,FORGE_STRIKE_COOLDOWN_MS} from './forge-recipes.js?v=forge-metallurgy-20261031';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const distance=(a,b)=>a&&b?Math.hypot(a.x-b.x,(a.y||0)-(b.y||0),a.z-b.z):Infinity;
@@ -23,7 +24,7 @@ export function forgeJobView(job,recipe,now){
  return {stage,status:collected?'collected':processing?'processing':'awaiting',remaining,progress,strikes,required,completed:collected?FORGE_STAGE_ORDER.length:FORGE_STAGE_ORDER.indexOf(stage),total:FORGE_STAGE_ORDER.length};
 }
 
-export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announce=()=>{},onWaypoint=()=>{}}){
+export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announce=()=>{},onWaypoint=()=>{},onFreight=null,onCommerce=null}){
  loadGameMenuStyles();
  if(!document.querySelector('#forge-ui-styles')){const link=document.createElement('link');link.id='forge-ui-styles';link.rel='stylesheet';link.href=new URL('../assets/forge-ui.css',import.meta.url).href;document.head.append(link);}
  const trigger=document.createElement('button');trigger.type='button';trigger.className='forge-toggle';trigger.hidden=true;trigger.innerHTML=icon+'<span>Forge</span>';trigger.setAttribute('aria-label','Open forge workshop');trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-controls','forge-workspace');trigger.setAttribute('aria-expanded','false');stage.append(trigger);
@@ -37,13 +38,14 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
  <div class="forge-workpiece" data-workpiece><div class="forge-workpiece-icon" aria-hidden="true">${icon}</div><div><h5 data-stage-name>Choose a recipe</h5><p data-stage-description>Select a piece above, then collect its metal and fuel kit at the stock rack.</p></div></div>
  <div class="forge-meter" data-meter hidden><progress max="1" value="0" data-progress aria-label="Current forging stage progress"></progress><span data-timer></span></div>
  <p class="forge-location" data-location></p><div class="forge-actions"><button class="forge-primary" type="button" data-work-action>Buy material kit</button><button type="button" data-find-required>Find stock rack ↗</button></div>
- <p class="forge-help" data-work-help>Kit prices cover the counted metal and coal used in this workpiece.</p><div class="forge-collected" data-collected hidden><strong>Forged. Finished. Yours.</strong><p>Your piece is saved in your Backpack, ready to place in your game or Builder map. Pick it up with E / Use, then use the fire control to swing a weapon or raise the shield.</p><a href="builder-market.html#backpack" target="_blank" rel="noopener">Open Builder Backpack ↗</a></div>
+ <p class="forge-help" data-work-help>Kit prices cover the counted metal and coal used in this workpiece.</p><div class="forge-collected" data-collected hidden><strong>Forged. Finished. Yours.</strong><p>Your piece is saved in your Backpack, ready to place in your game or Builder map. Use E / Use for its own interaction: pick up weapons and use the fire control to swing or guard; operate gates, lanterns and bells directly.</p><a href="builder-market.html#backpack" target="_blank" rel="noopener">Open Builder Backpack ↗</a><button type="button" data-forge-export>Seal for world freight</button><button type="button" data-quest-destination="supply">Inspect warehouse & dispatch ↗</button><p class="forge-help">Freight seals this exact Backpack item into finite warehouse stock for shipping and in-world shops.</p></div>
  </section><aside class="forge-card forge-stations"><span class="forge-eyebrow">THE WORKSHOP FLOOR</span><h4>Follow the fire</h4><p class="forge-help">Visit each station in order. Close this workshop to walk, or choose a station below.</p><nav aria-label="Forge stations" data-stations></nav><div class="forge-record"><span class="forge-eyebrow">YOUR SMITHING RECORD</span><strong data-record>0 pieces forged</strong><div data-badges></div><p data-recipe-progress></p></div></aside></div>
+ <section class="forge-commissions"><div class="forge-section-heading"><div><span class="forge-eyebrow">03 / THE SMITHY’S WORK ORDERS</span><h4>Commissions & journeys</h4></div><span>Permanent progress. One reward per commission.</span></div><p class="forge-help">Accept a commission from the crew, complete its workshop or commerce objective, then return to the stock rack or finishing bench to collect your reward. Completed workshop records count.</p><div class="forge-quest-grid" data-forge-quests></div></section>
  <section class="forge-crew-note"><span aria-hidden="true">✦</span><p><strong>Learn from the forge crew.</strong> Talk to Brann Emberhand at the anvil, Dr. Sera Vale by the heat-treatment line, and Kade Ironledger near the stock rack. Open Quests for workshop routes and challenges.</p></section>
  </div><footer class="forge-footer"><p data-status role="status" aria-live="polite">Choose a recipe to begin.</p><button type="button" data-close>Return to forge →</button></footer>`;
  const $=selector=>panel.querySelector(selector);
  let environment=null,snapshot=null,self=null,selfId=null,personal=null,stations=[],selectedRecipeId=FORGE_RECIPES[0]?.id,selectedStationId=null,busy=false,disposed=false,revision=0,serverAt=0,receivedAt=performance.now(),timer=null,lastPoll=0,lastStrike=0,balance=null;
- const cache=new Map();
+ const cache=new Map(),exportedItems=new Set();
  const screen=fullscreenPanel(panel,{onOpen(){document.exitPointerLock?.();requestGameInputRelease('forge-open');onOpen();},onClose(){trigger.setAttribute('aria-expanded','false');clearInterval(timer);timer=null;onClose();}});screen.dialog.classList.add('forge-dialog');
  const text=(selector,value)=>{const node=$(selector),next=String(value??'');if(node.textContent!==next)node.textContent=next;};
  const html=(key,selector,value)=>{if(cache.get(key)!==value){cache.set(key,value);$(selector).innerHTML=value;}};
@@ -69,12 +71,17 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   const required=requiredStation();
   html('stations','[data-stations]',stations.map((station,index)=>`<button type="button" data-route="${esc(station.id)}" data-current="${station.id===required?.id}"><span class="forge-station-number">${String(index+1).padStart(2,'0')}</span><span><strong>${esc(station.name.replace(/^\d+\s*·\s*/,''))}</strong><small>${within(station)?'You are here':Number.isFinite(stationDistance(station))?Math.round(stationDistance(station))+' m away':'Find on the map'}</small></span><span aria-hidden="true">↗</span></button>`).join(''));
  }
+ function commissionCounter(){return stations.filter(station=>['sourcing','finish'].includes(station.kind)).sort((a,b)=>stationDistance(a)-stationDistance(b))[0];}
+ function renderCommissions(){
+  const quests=personal?.progress?.quests||[],counter=commissionCounter();
+  html('quests','[data-forge-quests]',quests.map(quest=>`<article class="forge-commission" data-quest-status="${esc(quest.status)}"><div class="forge-commission-title"><span>${esc(quest.contact)}</span><strong>${esc(quest.name)}</strong></div><p>${esc(quest.description)}</p><p class="forge-quest-objective">${esc(quest.objective)}</p><progress max="${quest.target}" value="${quest.current}" aria-label="${esc(quest.name)} progress"></progress><div class="forge-quest-readout"><span>${quest.current} / ${quest.target}</span><strong>${quest.rewardMzk} MZK · ${esc(quest.badge)}</strong></div>${quest.missingDesigns?.length&&quest.accepted?`<p class="forge-help">Still to forge: ${quest.missingDesigns.map(design=>esc(design.name)).join(', ')}</p>`:''}<div class="forge-quest-actions">${quest.claimed?'<span class="forge-quest-earned">✓ Commission rewarded</span>':!quest.unlocked?`<span class="forge-help">First claim ${esc((quest.requires||[]).map(id=>FORGE_QUESTS.find(value=>value.id===id)?.name||id).join(', '))}.</span>`:!quest.accepted?`<button type="button" data-quest-accept="${esc(quest.id)}"${busy||!ready()||!stationary()?' disabled':''}>Accept commission</button>`:quest.complete?`<button type="button" data-quest-claim="${esc(quest.id)}"${busy||!ready()||!within(counter)?' disabled':''}>Collect ${quest.rewardMzk} MZK</button>${!within(counter)?'<button type="button" data-quest-find>Find handover counter ↗</button>':''}`:'<span class="forge-help">Commission in progress</span>'}${quest.destination&&quest.accepted&&!quest.claimed?`<button type="button" data-quest-destination="${esc(quest.destination)}">${quest.destination==='market'?'Open Trading Market':quest.destination==='shipping'?'Visit shipping lanes':'Open world supply'} ↗</button>`:''}</div></article>`).join('')||'<p class="forge-help">Workshop commissions appear when your forge account connects.</p>');
+ }
  function render(){
   if(disposed)return;
   trigger.hidden=!enabled();text('[data-connection]',ready()?'WORKSHOP CONNECTED':'CONNECTING TO WORKSHOP');text('[data-balance]',Number.isFinite(balance)?balance.toLocaleString()+' MZK':'');$('[data-offline]').hidden=ready();
   if(!screen.dialog.open)return;
   const job=personal?.job,active=activeJob(),recipe=recipeFor(active?.recipeId)||selectedRecipe(),view=forgeJobView(active,recipe,now()),required=requiredStation(),inReach=within(required),collected=job?.status==='collected';
-  renderRecipes();renderStations();
+  renderRecipes();renderStations();renderCommissions();
   text('[data-job-title]',active?.name||recipe?.name||'Start with metal & fuel');
   text('[data-phase]',view.status==='processing'?'IN THE FIRE':active?'STAGE '+(view.completed+1)+' / '+view.total:collected?'PIECE COLLECTED':'READY TO BEGIN');
   html('stages','[data-stages]',FORGE_STAGE_ORDER.map((id,index)=>`<li data-state="${active?(index<view.completed?'complete':id===view.stage?'current':'pending'):'pending'}"${active&&id===view.stage?' aria-current="step"':''}><span>${index<view.completed?'✓':String(index+1).padStart(2,'0')}</span>${esc(title(id))}</li>`).join(''));
@@ -89,6 +96,7 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   text('[data-find-required]','Find '+(required?.name.replace(/^\d+\s*·\s*/,'')||'station')+' ↗');$('[data-find-required]').disabled=!required;
   text('[data-work-help]',active?active.message||'Your workpiece stays with your account. Return here to continue forging.':Number.isFinite(balance)&&balance<recipe.costMzk?'Your balance is below this kit price. Add MZK or select another recipe.':'Kit price covers '+recipe?.materials.map(material=>material.quantity+' × '+(FORGE_MATERIALS[material.id]?.name||title(material.id))).join(', ')+'.');
   $('[data-collected]').hidden=!collected;
+  const sealed=job?.exportedAt||exportedItems.has(job?.itemId);$('[data-forge-export]').hidden=typeof onFreight!=='function';$('[data-forge-export]').disabled=busy||!ready()||!job?.itemId||!!sealed;text('[data-forge-export]',sealed?'Sealed in world warehouse':'Seal for world freight');
   const progress=personal?.progress||{},count=Number(progress.completedItems)||0;text('[data-record]',count+' '+(count===1?'piece':'pieces')+' forged');
   html('badges','[data-badges]',(progress.badges||[]).map(badge=>'<span class="forge-badge">✦ '+esc(title(typeof badge==='string'?badge:badge.name||badge.id))+'</span>').join(''));
   text('[data-recipe-progress]',FORGE_RECIPES.filter(recipe=>(progress.byRecipe?.[recipe.id]||0)>0).length+' / '+FORGE_RECIPES.length+' designs mastered');
@@ -116,6 +124,16 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   catch(error){if(!disposed&&issued===revision)message(error.message||'The workshop could not confirm your work.',true);return null;}
   finally{if(!disposed&&issued===revision){busy=false;render();}}
  }
+ async function sealFreight(){
+  const job=personal?.job;if(busy||!ready()||!job?.itemId||typeof onFreight!=='function')return;
+  const issued=revision;busy=true;render();
+  try{
+   const response=await onFreight({itemId:job.itemId,requestId:crypto.randomUUID()});if(disposed||issued!==revision)return;
+   const result=response?.data||response;if(!result)throw Error('The world warehouse could not confirm this export.');exportedItems.add(job.itemId);
+   message(result.message||'Your exact Backpack item is sealed in the world warehouse. Open world supply to dispatch it.');
+  }catch(error){if(!disposed&&issued===revision)message(error.message||'Unable to seal this item for freight.',true);}
+  finally{if(!disposed&&issued===revision){busy=false;render();}}
+ }
  function tick(){
   if(disposed||!screen.dialog.open)return;render();
   const job=activeJob();if(job?.status==='processing'&&Number(job.readyAt)<=now()&&!busy&&now()-lastPoll>=1200){lastPoll=now();void send('forge-status');}
@@ -130,6 +148,11 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   if(button.dataset.recipe){selectedRecipeId=button.dataset.recipe;render();return;}
   if(button.dataset.route){route(stations.find(station=>station.id===button.dataset.route));return;}
   if(button.hasAttribute('data-find-required')){route(requiredStation());return;}
+  if(button.dataset.questAccept){void send('forge-accept-quest',{questId:button.dataset.questAccept});return;}
+  if(button.dataset.questClaim){void send('forge-claim-quest',{questId:button.dataset.questClaim,stationId:commissionCounter()?.id});return;}
+  if(button.hasAttribute('data-quest-find')){route(commissionCounter());return;}
+  if(button.dataset.questDestination){const destination=button.dataset.questDestination;close();if(typeof onCommerce==='function')void Promise.resolve(onCommerce(destination)).catch(error=>announce(error.message));else window.open(destination==='shipping'?'model-explorer.html?environment=hormuz-shipping&mode=multiplayer&autoplay=1':destination==='market'?'model-market.html':'builder-market.html','_blank','noopener');return;}
+  if(button.hasAttribute('data-forge-export')){void sealFreight();return;}
   if(button.hasAttribute('data-work-action')){const job=activeJob(),station=requiredStation();if(job){if(job.stage==='hammer')lastStrike=now();void send('forge-'+job.stage,{jobId:job.id,stationId:station?.id});}else void send('forge-start',{recipeId:selectedRecipeId,stationId:station?.id});}
  });
  return {update,open,close,near,visible:()=>screen.dialog.open,dispose(){if(disposed)return;close();disposed=true;revision++;screen.disconnect();trigger.remove();screen.dialog.remove();}};

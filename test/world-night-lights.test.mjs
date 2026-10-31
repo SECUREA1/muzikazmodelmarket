@@ -111,3 +111,18 @@ test('night window clones follow original reflections without repeated dimming d
  clone.envMapIntensity=.77;lighting.dispose();assert.equal(clone.envMapIntensity,.77);assert.equal(original.envMapIntensity,2);
  manager.reset();assert.equal(window.material,original);manager.dispose();
 });
+
+test('night scenery does not override a player-switched forge lantern',()=>{
+ const {root,manager}=setup();
+ const lantern=new THREE.Group();lantern.userData.modelId='forge-lantern';root.add(lantern);
+ const flame=new THREE.Mesh(new THREE.ConeGeometry(.08,.3,8),new THREE.MeshStandardMaterial({color:0xffb84f,emissive:0xff971e,emissiveIntensity:0}));flame.name='FORGE_LANTERN_FLAME';lantern.add(flame);
+ const original=flame.material;
+ manager.update({state:night,anchor:{x:0,y:0,z:0},roots:[root],now:0});
+ assert.equal(flame.material,original);assert.equal(flame.material.emissiveIntensity,0);assert.equal(manager.stats.activeLights,0);
+ flame.material.emissiveIntensity=1.5;lantern.userData.serverSwitched=true;
+ manager.update({state:night,anchor:{x:0,y:0,z:0},roots:[root],now:2100});
+ assert.equal(flame.material,original);assert.equal(flame.material.emissiveIntensity,1.5);
+ flame.material.emissiveIntensity=0;lantern.userData.serverSwitched=false;
+ manager.update({state:night,anchor:{x:0,y:0,z:0},roots:[root],now:4200});
+ assert.equal(flame.material.emissiveIntensity,0);manager.dispose();flame.geometry.dispose();original.dispose();
+});

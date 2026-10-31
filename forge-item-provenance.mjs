@@ -14,6 +14,7 @@ function receiptOwner(data,receipt,itemId){
 /** Immutable receipts and a durable transfer index authorize portable outputs. */
 export function ownedForgeItem(data,wallet,itemId){
  if(typeof itemId!=='string'||!data.users?.[wallet]?.items?.some(item=>item.id===itemId))return null;
+ if((data.transactions||[]).some(receipt=>receipt.type==='FORGE_FREIGHT_EXPORT'&&receipt.sourceItemId===itemId))return null;
  for(const ownReceipt of [true,false])for(const receipt of data.transactions||[]){
   if(Boolean(receipt.walletId===wallet)!==ownReceipt)continue;
   let buildAssetId=null,sku=null,crafted=false;

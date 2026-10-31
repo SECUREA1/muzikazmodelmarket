@@ -1,5 +1,7 @@
+import {recordForgeCommerce} from './forge-commerce.mjs';
 import {prisonRewardFor} from './public/js/prison-rewards.js';
 import {isRoadVehicle} from './public/js/road-vehicles.js';
+import {isForgeStoreDeliverable} from './store-catalog.mjs';
 import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import {publicProductVisual} from './public-product-visual.mjs';
@@ -459,6 +461,7 @@ export class UserJsonDatabase {
       buyerUser.revision = Number(buyerUser.revision || 0) + 1; sellerUser.revision = Number(sellerUser.revision || 0) + 1;
       const trade = { id: `trade-${data.trades.length + 1}`, requestId: id, buyerId: buyer, sellerId: seller, itemId, itemName: String(item.name || item.title || item.id), priceMzk: price, createdAt: now };
       data.trades.push(trade); if (data.trades.length > 1000) data.trades.splice(0, data.trades.length - 1000);
+      if(forgeProof?.crafted)recordForgeCommerce(data,seller,'sales',id);
       appendTransaction(data, { type: 'MARKET_PURCHASE', walletId: buyer, counterpartyId: seller, amountMzk: -price, balanceAfterMzk: buyerUser.tokens.MZK, requestId: id, tradeId: trade.id });
       appendTransaction(data, { type: 'MARKET_SALE', walletId: seller, counterpartyId: buyer, amountMzk: price, balanceAfterMzk: sellerUser.tokens.MZK, requestId: id, tradeId: trade.id });
       return trade;
@@ -547,6 +550,7 @@ export class UserJsonDatabase {
       if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}
       if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});
       user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;
+      if(action==='buy'&&String(item.buildAssetId||'').startsWith('forge-'))recordForgeCommerce(data,wallet,'stockOrders',requestId);
       return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,...(mapId?{mapId}:{}),reason:item.name});
     });
   }
@@ -603,6 +607,7 @@ export class UserJsonDatabase {
       const acquiredAt=new Date().toISOString(),granted=[];
       for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),catalogId:item.catalogId||item.id,quantity:1,source:'mzk-store',acquiredAt});
       user.tokens.MZK-=amountMzk;user.items.push(...granted);user.updatedAt=acquiredAt;user.revision=Number(user.revision||0)+1;
+      if(granted.some(item=>String(item.buildAssetId||'').startsWith('forge-')))recordForgeCommerce(data,wallet,'stockOrders',requestId);
       return appendTransaction(data,{type:'STORE_PURCHASE',walletId:wallet,amountMzk:-amountMzk,balanceAfterMzk:user.tokens.MZK,requestId,items:granted});
     });
   }
@@ -610,7 +615,7 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId);
     if(order.purchaseType!=='MARKETPLACE'||!['PAID','FULFILLED'].includes(order.paymentStatus)||!order.memberAccountId)throw Object.assign(new Error('A verified member marketplace payment is required.'),{statusCode:409});
     const lines=order.metadata?.items||[];
-    if(!lines.length||lines.some(item=>(!item.deliverable?.modelUrl&&!isRoadVehicle({asset:item.deliverable}))||!item.deliverable?.id))throw new Error('The verified order has no deliverable models.');
+    if(!lines.length||lines.some(item=>(!item.deliverable?.modelUrl&&!isRoadVehicle({asset:item.deliverable})&&!isForgeStoreDeliverable(item.deliverable))||!item.deliverable?.id))throw new Error('The verified order has no deliverable models.');
     const items=lines.map(line=>({...line.deliverable,assetType:line.deliverable.assetType||line.deliverable.type||'prop',type:line.deliverable.assetType||line.deliverable.type||'prop',quantity:line.quantity,priceUsd:line.price}));
     return this.transaction(data=>{
       const prior=data.transactions.find(item=>item.type==='VERIFIED_STORE_PURCHASE'&&item.requestId===order.orderId);if(prior){if(prior.accountId!==order.memberAccountId&&prior.walletId!==wallet)throw Object.assign(new Error('This order belongs to another member.'),{statusCode:403});return prior;}
@@ -622,6 +627,7 @@ export class UserJsonDatabase {
       const now=new Date().toISOString(),granted=[];
       for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),quantity:1,source:'verified-store',orderId:order.orderId,acquiredAt:now});
       user.items.push(...granted);user.updatedAt=now;user.revision=Number(user.revision||0)+1;
+      if(granted.some(item=>String(item.buildAssetId||'').startsWith('forge-')))recordForgeCommerce(data,wallet,'stockOrders',order.orderId);
       return appendTransaction(data,{type:'VERIFIED_STORE_PURCHASE',accountId:order.memberAccountId,walletId:wallet,amountMzk:0,balanceAfterMzk:user.tokens.MZK,requestId:order.orderId,items:granted});
     });
   }

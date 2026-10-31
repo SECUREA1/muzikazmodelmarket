@@ -1,5 +1,5 @@
-import {FORGE_ID,FORGE_STATIONS,FORGE_CREW,isForgeEnvironment,forgeStations,forgeCrew} from './forge-config.js';
-import {forgeItemSettings} from './forge-items.js';
+import {FORGE_ID,FORGE_STATIONS,FORGE_CREW,isForgeEnvironment,forgeStations,forgeCrew} from './forge-config.js?v=forge-metallurgy-20261031';
+import {FORGE_ITEMS,forgeItemSettings} from './forge-items.js?v=forge-metallurgy-20261031';
 const clone=value=>structuredClone(value);
 export const FORGE_BUILDER_LAYOUT=Object.freeze({name:'Emberfall · Traditional Forge',icon:'⚒',description:'A complete editable smithy with charcoal hearth, anvil, quenching, tempering, finishing, market items and three AI specialists.',color:0x53453a,sky:0x251c19,mapSize:128,mapColor:'#ef9a49'});
 const settings=source=>({...clone(source||{}),enabled:true,currency:'MZK',editableStations:true,editableCrew:true,stations:clone(FORGE_STATIONS),crew:clone(FORGE_CREW)});
@@ -32,6 +32,15 @@ export function forgeBuilderObjects(){
  sign('forge-welcome-board','EMBERFALL · Forge work orders',-10,35,'Traditional forging: buy a measured material kit at the stock rack, heat, hammer, quench, temper, then finish. Walk to each named station and use Forge controls. Completed creations are saved in your Backpack. Meet Brann, Sera and Kade for guidance, objectives and conversation.');
  sign('forge-market-board','MZK Market · Tools, metal & finished items',10,35,'Forge stations, tools, materials, crew and finished pieces share the game item catalogue. Use Trading Market to buy with MZK, then open Backpack to equip or place compatible items in a world or your Builder map.');
  sign('forge-metallurgy-board','The art of heat treatment',24,10,'Heat makes the billet workable. Hammering shapes the hot metal. Quenching and tempering follow the work order’s heat-treatment stage. Inspect the final piece at the finishing bench.');
+ // The same physical market device and product shelves used by public shops
+ // open live offers; browsing these displays never grants a free product.
+ const products=Object.entries(FORGE_ITEMS).filter(([,item])=>item.kind==='product').map(([id])=>id);
+ objects.push(placed('forge-market-kiosk','market-atm','Emberfall MZK Forge Market',29,27,{functionalSettings:{behavior:'interact',device:'market-atm',interactionDistance:5,storeProductIds:products,prompt:'Shop forge equipment & metalwork · E / Use',destructible:false,damage:0}}));
+ for(const [index,productId]of ['forge-damascus-blade','forge-aegis-shield','forge-lantern','forge-bronze-bell'].entries()){
+  if(!FORGE_ITEMS[productId])continue;
+  objects.push(placed('forge-shop-plinth-'+index,'material:display-plinth','Forge Market · '+FORGE_ITEMS[productId].name,18+index*4,21,{functionalSettings:{behavior:'decor',storeProductIds:[productId],destructible:false,damage:0}}));
+ }
+ sign('forge-shop-board','FORGE MARKET · Inspect, buy & trade',21,29,'Inspect a displayed item for its live MZK offer or use the Market terminal to browse equipment, metalwork and member trades. Purchased items share the same Backpack and Builder identity as forged pieces. Stock and delivery availability come from the world supply system.');
  for(const x of [-40,40])for(const z of [24,42])objects.push(placed('forge-yard-light-'+x+'-'+z,'lamp-post','Smithy yard lantern',x,z));
  for(const [id,name,x,target]of [['forge-commons-gate','World Commons',-23,'public-commons'],['forge-factory-gate','World Item Factory',23,'world-item-factory']])objects.push(placed(id,'archway',name+' gateway',x,43,{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:name+' · E / Use',portal:{enabled:true,destinationType:'map',targetMapId:target},destructible:false,damage:0}}));
  return objects;
@@ -51,5 +60,5 @@ export function editableForgeScene(input){
  scene.layoutMeta=forgeBuilderLayoutMeta(scene,scene.layoutMeta||{});return scene;
 }
 export function createForgeBuilderScene({id='custom-forge',name='Emberfall · Custom Forge'}={}){
- return editableForgeScene({version:3,id,name,layout:'forge',sourceLayout:'forge',sourceGame:'forge',sourceEnvironmentId:FORGE_ID,mapSize:128,weather:'clear',sourceSpawn:{x:0,y:.02,z:37,rotationY:0},sourceForge:settings(),objects:forgeBuilderObjects(),layoutMeta:{color:0x53453a,locations:[{id:'forge-arrival',name:'Forge arrival & work orders',x:0,y:.02,z:37,width:38,depth:14,description:'Read the work orders, meet the smithy crew and visit the neighboring World Item Factory.'},{id:'forge-crew-court',name:'Smiths’ courtyard',x:0,z:7,width:68,depth:14,description:'Meet the master smith, metallurgist and quartermaster for local objectives and forging advice.'}]},gameplay:{multiplayer:true,friendlyFire:false,radTox:false,forge:{enabled:true}}});
+ return editableForgeScene({version:3,id,name,layout:'forge',sourceLayout:'forge',sourceGame:'forge',sourceEnvironmentId:FORGE_ID,mapSize:128,weather:'clear',sourceSpawn:{x:0,y:.02,z:37,rotationY:0},sourceForge:settings(),objects:forgeBuilderObjects(),layoutMeta:{color:0x53453a,locations:[{id:'forge-arrival',name:'Forge arrival & work orders',x:0,y:.02,z:37,width:38,depth:14,description:'Read the work orders, meet the smithy crew and visit the neighboring World Item Factory.'},{id:'forge-crew-court',name:'Smiths’ courtyard',x:0,z:7,width:68,depth:14,description:'Meet the master smith, metallurgist and quartermaster for local objectives and forging advice.'},{id:'forge-market',name:'Emberfall MZK Market & product gallery',x:27,y:.02,z:30,width:20,depth:14,description:'Inspect real forge products, compare live MZK offers and shop through the shared Market terminal.'}]},gameplay:{multiplayer:true,friendlyFire:false,radTox:false,forge:{enabled:true}}});
 }

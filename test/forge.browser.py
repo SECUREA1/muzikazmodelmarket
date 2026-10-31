@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory(prefix='forge-browser-') as directory:
                         page.wait_for_function('document.querySelector("#forge-workspace [data-work-action]").textContent!=="Working…"')
                         assert panel.locator('[data-status]').get_attribute('data-error')!='true',panel.locator('[data-status]').inner_text()
                         return result
-                    open_forge();expect(panel.locator('[data-recipe]')).to_have_count(4)
+                    open_forge();expect(panel.locator('[data-recipe]')).to_have_count(10)
                     page.screenshot(path=str(ARTIFACTS/'forge-workshop.png'))
                     find_required();started=act('forge-start');job=started['result']['forge']['job']
                     assert started['result']['forge']['balance']==4924

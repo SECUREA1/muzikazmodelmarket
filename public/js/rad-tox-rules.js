@@ -1,4 +1,4 @@
-import {isForgeEnvironment} from './forge-config.js';
+import {isForgeEnvironment} from './forge-config.js?v=forge-metallurgy-20261031';
 import {isForestHarvestEnvironment} from './forest-harvest-config.js';
 import {isTropicalIslandEnvironment} from './tropical-island-config.js';
 import {isPrisonEnvironment} from './prison-config.js';

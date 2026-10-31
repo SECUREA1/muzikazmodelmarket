@@ -50,7 +50,7 @@ if (!Array.isArray(publicBackpackCatalog.assets) || !publicBackpackCatalog.asset
 for (const asset of publicBackpackCatalog.assets) {
   if (asset.visibility !== 'public') continue;
   if (!asset.thumbnailUrl) throw new Error(`Active Backpack asset ${asset.id} is missing its dedicated graphic.`);
-  const thumbnailPath = `dist/${asset.thumbnailUrl.replace(/^\//, '')}`;
+  const thumbnailPath = `dist/${asset.thumbnailUrl.split(/[?#]/,1)[0].replace(/^\//, '')}`;
   await access(thumbnailPath);
   const thumbnail = await readFile(thumbnailPath, 'utf8');
   if (!thumbnail.includes('<title') || !thumbnail.includes('<desc')) throw new Error(`${thumbnailPath} must include an accessible title and description.`);

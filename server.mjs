@@ -1000,7 +1000,7 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/world-supply/recipe'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.recipe(url.searchParams.get('itemId'),Number(url.searchParams.get('quantity')||1))));
     if(url.pathname==='/api/world-supply/trace'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.trace({productionId:url.searchParams.get('productionId')||undefined,shipmentId:url.searchParams.get('shipmentId')||undefined,lotId:url.searchParams.get('lotId')||undefined})));
     if(url.pathname==='/api/world-supply'&&req.method==='GET')return sendJson(res,200,assetResponse(await worldSupply.state({mapId:url.searchParams.get('mapId')||undefined})));
-    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|order|order-address|order-quarry|register-design|dispatch|cancel|pause|resume)$/);
+    const supplyAction=url.pathname.match(/^\/api\/world-supply\/(quote|produce|order|order-address|order-quarry|export-forge|register-design|dispatch|cancel|pause|resume)$/);
     if(supplyAction&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
       return sendJson(res,200,assetResponse(await worldSupply.action(context.walletId,supplyAction[1],await bodyJson(req))));

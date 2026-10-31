@@ -27,7 +27,7 @@ export function createWorldNightLights({scene,maxLights=4,scanInterval=2000,maxS
  function visible(node){for(let current=node;current;current=current.parent){if(current.visible===false)return false;if(current===scene)return true;}return false;}
  function context(node){
   let lamp=false;
-  for(let current=node;current&&current!==scene;current=current.parent){const data=current.userData||{};if(vehicleData(data))return null;lamp||=lampModel.test(data.modelId||data.asset?.buildAssetId||'');}
+  for(let current=node;current&&current!==scene;current=current.parent){const data=current.userData||{};if(vehicleData(data)||(data.modelId||data.asset?.buildAssetId)==='forge-lantern'||data.functionalSettings?.forgeLantern)return null;lamp||=lampModel.test(data.modelId||data.asset?.buildAssetId||'');}
   return {lamp};
  }
  function restoreSurface(record){if(record.node.material===record.night)record.node.material=record.original;for(const material of record.owned)material.dispose();}

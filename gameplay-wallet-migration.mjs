@@ -1,6 +1,6 @@
 // The account identity stays stable when a member connects a wallet. Move the
 // private gameplay ledger with its wallet record; never copy or reseed stock.
-const fields=new Set(['walletId','ownerId','owner_id','recipientId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id','transferredFrom']);
+const fields=new Set(['walletId','ownerId','owner_id','recipientId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id','transferredFrom','forgeWalletId']);
 const own=(object,key)=>Object.hasOwn(object,key);
 export function migrateGameplayWallet(data,previousWallet,wallet){
  if(previousWallet===wallet)return;

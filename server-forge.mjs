@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {cleanWallet} from './user-json-database.mjs';
 import {FORGE_ID,FORGE_STATIONS,isForgeEnvironment,forgeStations} from './public/js/forge-config.js';
 import {FORGE_RECIPES,FORGE_STAGE_ORDER,FORGE_STRIKE_COOLDOWN_MS,forgeRecipe} from './public/js/forge-recipes.js';
+import {forgeQuest,forgeQuestView} from './public/js/forge-quests.js';
 import {ownedForgeItem,canonicalForgeItem} from './forge-item-provenance.mjs';
 
 const fail=(message,statusCode=409)=>{throw Object.assign(Error(message),{statusCode});};
@@ -11,7 +12,7 @@ const stationRevision=station=>JSON.stringify([station.id,station.kind,station.p
 const stageName=kind=>FORGE_STATIONS.find(station=>station.kind===kind)?.name||kind;
 function account(data,wallet){data.forge ||= {accounts:{},stationLocks:{}};data.forge.accounts ||= {};data.forge.stationLocks ||= {};return data.forge.accounts[wallet] ||= {job:null,completedItems:0,totalSpentMzk:0,byRecipe:{},badges:[]};}
 function userFor(data,wallet){const user=data.users[wallet];if(!user)fail('Member wallet not found.',404);user.tokens ||= {MZK:0};user.items ||= [];return user;}
-const progress=state=>({completedItems:state.completedItems,totalSpentMzk:state.totalSpentMzk,byRecipe:{...state.byRecipe},badges:[...state.badges]});
+const progress=state=>({completedItems:state.completedItems,totalSpentMzk:state.totalSpentMzk,byRecipe:{...state.byRecipe},badges:[...state.badges],quests:forgeQuestView(state)});
 const snapshot=(state,user)=>({job:copy(state.job),progress:progress(state),balance:Number(user.tokens.MZK||0)});
 export const publicForgeState=state=>state?{job:copy(state.job||null),progress:copy(state.progress||{})}:null;
 function release(data,job){for(const [id,lock]of Object.entries(data.forge.stationLocks))if(lock.jobId===job.id)delete data.forge.stationLocks[id];}
@@ -41,18 +42,38 @@ export async function forgeCommand(sim,player,environment,command,now,{database,
  if(!Number.isFinite(now))fail('The forge server clock is unavailable.',422);
  const wallet=cleanWallet(walletId),action=command.action,stations=forgeStations(environment);
  if(player.walletId&&cleanWallet(player.walletId)!==wallet)fail('This work order belongs to another account.',403);
- if(!['forge-status','forge-start',...FORGE_STAGE_ORDER.map(stage=>'forge-'+stage)].includes(action))fail('Choose a supported forge action.',422);
+ if(!['forge-status','forge-start','forge-accept-quest','forge-claim-quest',...FORGE_STAGE_ORDER.map(stage=>'forge-'+stage)].includes(action))fail('Choose a supported forge action.',422);
  if(action!=='forge-status'&&(player.health<=0||player.replacedByRoom||player.grounded===false||player.vehicleId||player.seatedId||player.heldId))fail('Stand on the forge floor with your hands free before working.');
  const requestId=String(command.requestId||'');
  if(action!=='forge-status'&&(!requestId||requestId.length>140||/[\x00-\x1f\x7f]/.test(requestId)))fail('A forge request id of 1 to 140 characters is required.',422);
- const signature=JSON.stringify([action,command.recipeId||null,command.jobId||null,command.stationId||null]);
+ const signature=JSON.stringify(action==='forge-accept-quest'||action==='forge-claim-quest'?[action,command.questId||null,command.stationId||null]:[action,command.recipeId||null,command.jobId||null,command.stationId||null]);
  const response=await database.transaction(data=>{
   const user=userFor(data,wallet),state=account(data,wallet);advance(data,state,environment,stations,now);
   const prior=action!=='forge-status'&&(data.transactions||[]).find(row=>row.type==='FORGE_COMMAND'&&row.walletId===wallet&&row.requestId===requestId);
   if(prior){if(prior.signature!==signature)fail('This request id was already used for another forge action.');const receipt=(data.transactions||[]).find(row=>row.id===prior.forgeReceiptId);return {message:prior.message,forge:snapshot(state,user),duplicate:true,...(receipt?{forgeReceipt:receipt}:{}),...(prior.itemId&&ownedForgeItem(data,wallet,prior.itemId)?{item:canonicalForgeItem(ownedForgeItem(data,wallet,prior.itemId))}:{})};}
   if(action==='forge-status')return {message:state.job?.message||'Choose a workpiece at the metal and fuel rack.',forge:snapshot(state,user)};
-  let job=state.job,item=null,receipt=null;
-  if(action==='forge-start'){
+  let job=state.job,item=null,receipt=null,message=null;
+  if(action==='forge-accept-quest'||action==='forge-claim-quest'){
+   const definition=forgeQuest(command.questId);if(!definition)fail('Choose a listed forge commission.',422);
+   state.quests ||= {accepted:{},claimed:{}};state.quests.accepted ||= {};state.quests.claimed ||= {};
+   const quest=forgeQuestView(state).find(value=>value.id===definition.id);
+   if(!quest.unlocked)fail('Complete and claim the preceding forge commission first.');
+   if(quest.claimed)return {message:'This forge commission has already been rewarded.',forge:snapshot(state,user),duplicate:true};
+   if(action==='forge-accept-quest'){
+    if(quest.accepted)return {message:'This forge commission is already in your work orders.',forge:snapshot(state,user),duplicate:true};
+    state.quests.accepted[quest.id]={acceptedAt:now};message=quest.contact+' · '+quest.objective+' Your completed workshop record counts toward this commission.';
+   }else{
+    if(!quest.accepted)fail('Accept this forge commission before collecting its reward.');
+    if(!quest.complete)fail('Complete the forge commission’s workshop or verified commerce objective first.');
+    const counters=stations.filter(station=>['sourcing','finish'].includes(station.kind)&&(!command.stationId||station.id===command.stationId));
+    if(!counters.some(station=>distance(player.position,station.approach||station.position)<=station.interactionDistance))fail('Walk closer to the stock rack or finishing bench to collect your commission.');
+    const balance=Number(user.tokens.MZK||0)+definition.rewardMzk;if(!Number.isSafeInteger(balance))fail('Your MZK balance cannot accept this commission reward.');
+    user.tokens.MZK=balance;
+    receipt=record(data,user,wallet,'FORGE_QUEST_REWARD',now,{requestId,questId:definition.id,amountMzk:definition.rewardMzk,badge:definition.badge,environmentId:environment.id});
+    state.quests.claimed[quest.id]={claimedAt:now,receiptId:receipt.id};if(!state.badges.includes(definition.badge))state.badges.push(definition.badge);
+    message=definition.name+' completed · '+definition.rewardMzk+' MZK and '+definition.badge+' earned.';
+   }
+  }else if(action==='forge-start'){
    const recipe=forgeRecipe(command.recipeId);if(!recipe)fail('Choose a listed forge recipe.',422);
    proximity(player,stations,'sourcing',command.stationId);
    const missing=FORGE_STAGE_ORDER.find(stage=>!stations.some(station=>station.kind===stage));if(missing)fail('Place or enable '+stageName(missing)+' before funding a workpiece.');
@@ -88,8 +109,8 @@ export async function forgeCommand(sim,player,environment,command,now,{database,
    }
   }
   user.revision=Number(user.revision||0)+1;user.updatedAt=new Date(now).toISOString();
-  record(data,user,wallet,'FORGE_COMMAND',now,{requestId,signature,jobId:job.id,message:job.message,...(receipt?{forgeReceiptId:receipt.id}:{}),...(item?{itemId:item.id}:{})});
-  return {message:job.message,forge:snapshot(state,user),...(item?{item}:{}),...(receipt?{forgeReceipt:receipt}:{})};
+  record(data,user,wallet,'FORGE_COMMAND',now,{requestId,signature,...(job?{jobId:job.id}:{}),message:message||job?.message,...(receipt?{forgeReceiptId:receipt.id}:{}),...(item?{itemId:item.id}:{})});
+  return {message:message||job?.message,forge:snapshot(state,user),...(item?{item}:{}),...(receipt?{forgeReceipt:receipt}:{})};
  });
  player.forge=response.forge;sim.forgeEnabled=true;sim.forgeStations=stations;return response;
 }

@@ -37,7 +37,14 @@ test('a root evaluation failure after engine-ready still requires a fresh docume
  f.emit('muzikaz:rad-tox-native-error',{message:'Incomplete world'});f.click();assert.equal(f.navigations.length,1,'later native failure cannot erase a known rejected evaluation');assert.equal(f.imports.length,1);
 });
 
+test('a missing native forge model retries in a fresh document instead of retaining the same stale catalogue',()=>{
+ const f=fixture('?environment=traditional-forge&autoplay=1');f.emit('muzikaz:rad-tox-engine-ready');
+ f.emit('muzikaz:rad-tox-native-error',{message:'Unable to prepare 01 · Select metal & fuel: its saved 3D model definition is unavailable.'});
+ assert.equal(f.navigations.length,0,'recovery requires the explicit retry action');f.click();
+ assert.equal(f.navigations.length,1);const target=new URL(f.navigations[0]);assert.equal(target.searchParams.get('environment'),'traditional-forge');assert.ok(target.searchParams.get('gameRecovery'));assert.equal(f.requests.length,1,'old native initialization is not repeated in place');
+});
+
 test('recovery autoplay is a single attempt and a repeated failure waits for another user action',async()=>{
- const f=fixture('?environment=custom-map&mode=solo&builder=retained&autoplay=1&gameRecovery=previous#spawn');assert.equal(f.imports.length,1);assert.match(f.imports[0].path,/v=fresh-map-room-20261028/);assert.match(f.imports[0].path,/recovery=previous/);
+ const f=fixture('?environment=custom-map&mode=solo&builder=retained&autoplay=1&gameRecovery=previous#spawn');assert.equal(f.imports.length,1);assert.match(f.imports[0].path,/v=forge-metallurgy-20261031/);assert.match(f.imports[0].path,/recovery=previous/);
  f.imports[0].reject(Error('Still unavailable'));await flush();assert.equal(f.navigations.length,0);assert.equal(f.button.disabled,false);f.click();const target=new URL(f.navigations[0]);assert.equal(target.searchParams.get('builder'),'retained');assert.equal(target.searchParams.get('mode'),'solo');assert.notEqual(target.searchParams.get('gameRecovery'),'previous');assert.equal(target.hash,'#spawn');
 });

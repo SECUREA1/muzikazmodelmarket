@@ -2,6 +2,11 @@ import {forgeCrew} from './public/js/forge-config.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {ensureResidentIntelligence,stepResidentLife,archiveResidentIntelligence} from './server-resident-life.mjs';
 import {stepCommunityLife} from './server-community-life.mjs';
+const commissionBriefings={
+ 'Master smith':'Open Forge and choose Commissions & journeys for Your first maker’s mark, The steady hammer and Armory of Emberfall. Accept a work order, complete the named designs, then collect your reward at the stock rack or finishing bench.',
+ Metallurgist:'My commissions are The voice of bronze and Master of every pattern. Forge the named designs and claim each completed commission at the stock rack or finishing bench. Your permanent design record counts.',
+ Quartermaster:'Open the forge commissions for your first crafted market sale, a verified shipping delivery and a completed store-stock order. A listing, pending shipment or unpaid order does not count. Seal a completed Backpack item for world freight to start its supply journey.'
+};
 /** Smithy specialists share resident memory, conversations, favors and routines. */
 export function stepForgeResidents(sim,environment,now,dt,{collision,objects={}}={}){
  sim.actors||={};sim.players||={};const crew=forgeCrew(environment),expected=new Set(crew.map(person=>person.id)),locations=localMapLocations(environment);
@@ -15,7 +20,7 @@ export function stepForgeResidents(sim,environment,now,dt,{collision,objects={}}
   npc.definition={objectId:source.id,modelId:source.modelId,name:source.name,position:{...home},gameplay:{behavior:'talk',interactionDistance:4,cooldown:1,prompt:'Talk / forge objectives · '+source.name},dialogue:{text:source.greeting}};
   npc.active=true;npc.health=100;npc.destructible=false;npc.spawned=true;npc.trafficAI=true;
   const locationIndex=locations.reduce((best,place,i)=>Math.hypot(place.x-home.x,place.z-home.z)<Math.hypot((locations[best]?.x??1e9)-home.x,(locations[best]?.z??1e9)-home.z)?i:best,0);
-  Object.assign(npc.resident,{forge:true,isAI:true,ageGroup:'adult',role:source.role,name:source.name,color:source.color,skin:source.skin,locationIndex,placeName:locations[locationIndex]?.name||environment.name,task:source.task,workLabel:source.task,tip:source.greeting,ask:'Could you check the smithy work stations and return for a forge handover?',prop:'clipboard'});
+  Object.assign(npc.resident,{forge:true,isAI:true,ageGroup:'adult',role:source.role,name:source.name,color:source.color,skin:source.skin,locationIndex,placeName:locations[locationIndex]?.name||environment.name,task:source.task,workLabel:source.task,tip:source.greeting+' '+(commissionBriefings[source.role]||''),ask:'Could you check the smithy work stations and return for a forge handover?',prop:'clipboard'});
   ensureResidentIntelligence(sim,npc,environment,now);
   if(npc.resident.appearance){npc.resident.appearance.outfit=source.color;npc.resident.appearance.skin=source.skin;}
   npc.name=source.name+' · '+source.role;

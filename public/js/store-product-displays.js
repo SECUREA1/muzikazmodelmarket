@@ -55,6 +55,17 @@ export function storeDisplayProducts(records=[]){
  return result;
 }
 
+// A specialist shop may curate its shelves by native model or sale identity.
+// The original offer remains intact, so inspection uses the same live MZK
+// purchase/trade route as the main marketplace.
+export function storeFixtureProducts(products=[],root){
+ const settings=root?.userData?.functionalSettings||root?.userData||{};
+ const ids=Array.isArray(settings.storeProductIds)?settings.storeProductIds.filter(value=>typeof value==='string'):[];
+ const skus=Array.isArray(settings.storeProductSkus)?settings.storeProductSkus.filter(value=>typeof value==='string'):[];
+ if(!ids.length&&!skus.length)return products;
+ return products.filter(product=>(!ids.length||ids.includes(product.item.buildAssetId))&&(!skus.length||skus.includes(product.identity)));
+}
+
 // Coordinates are local to the existing fixture. Nothing is attached to an
 // entrance, a market control deck, the road or the centre of a shop aisle.
 export function storeDisplaySlots(THREE,root){
@@ -199,8 +210,10 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
   state.status='idle';trimCache();
  }
  async function populate(state){
-  if(!products.length||state.status!=='idle')return;state.status='loading';
-  const product=products[cursor++%products.length],entry=template(product),generation=++state.generation;state.template=entry;state.product=product;
+  if(!products.length||state.status!=='idle')return;
+  const curated=storeFixtureProducts(products,state.host);if(!curated.length)return;
+  state.status='loading';
+  const product=curated[(curated===products?cursor++:state.cursor++)%curated.length],entry=template(product),generation=++state.generation;state.template=entry;state.product=product;
   try{
    const source=await entry.promise;if(disposed||state.generation!==generation||!fixtures.has(state.key))return;
    let cardOwned=false,fallbackReason=entry.fallbackReason||'',cost=addCost(entry.complexity,overhead(state)),copy;
@@ -240,7 +253,7 @@ export function createStoreProductDisplays({THREE,getRoots=()=>[],getPosition=()
   while(stack.length&&inspected++<5000){
    const root=stack.pop();if(!root||visited.has(root)||root.userData.storeProductDisplay)continue;visited.add(root);
    const slots=storeDisplaySlots(THREE,root);
-   for(const slot of slots){const key=root.uuid+':'+slot.key;found.add(key);if(!fixtures.has(key))fixtures.set(key,{key,host:root,slot,generation:0,status:'idle',hidden:[],group:null,template:null});}
+   for(const slot of slots){const key=root.uuid+':'+slot.key;found.add(key);if(!fixtures.has(key))fixtures.set(key,{key,host:root,slot,cursor:0,generation:0,status:'idle',hidden:[],group:null,template:null});}
    if(!slots.length&&!root.isMesh&&(!root.userData.builderObject&&!root.userData.builderObjectId||retailLayouts.has(root.userData.layoutScene)))stack.push(...root.children);
   }
   for(const [key,state]of fixtures)if(!found.has(key)){release(state);fixtures.delete(key);}

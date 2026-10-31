@@ -6,6 +6,8 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 import {clone as cloneGameSkeleton} from '../public/vendor/three/addons/utils/SkeletonUtils.js';
 import {prepareGameItems} from '../public/js/game-load-work.js';
 import {disposeGameModel} from '../public/js/game-model-loader.js';
+import {createNativeModelCache} from '../public/js/native-model-cache.js';
+import {resolveRuntimeNativeModel} from '../public/js/runtime-native-model.js';
 
 const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
 const functionSource=source.slice(source.indexOf('  async function loadBuilderDecor('),source.indexOf('\n\n  const avatarLoader'));
@@ -15,7 +17,7 @@ const model=()=>{const scene=new THREE.Group();scene.add(new THREE.Mesh(new THRE
 function fixture(load){
   const decor=new THREE.Group(),calls=[],progress=[],collisions=[];
   const context=vm.createContext({
-    THREE,cloneGameSkeleton,disposeGameModel,worldLoadGeneration:1,builderDecor:decor,prepareGameItems,
+    THREE,cloneGameSkeleton,disposeGameModel,createNativeModelCache,resolveRuntimeNativeModel,worldLoadGeneration:1,builderDecor:decor,prepareGameItems,
     AbortController,builderDecorLoad:null,loadGameModel:(loader,url,options)=>loader.loadAsync(url,options),
     serverHostedRoom:false,console,clearBuilderDecor(){context.builderDecorLoad?.abort();context.builderDecorLoad=null;decor.clear();},
     envLoader:{bounds:new THREE.Box3(new THREE.Vector3(-10,0,-10),new THREE.Vector3(10,2,10)),setSupplementalCollisionRoots(roots){collisions.push({roots,count:decor.children.length});}},
@@ -76,7 +78,7 @@ test('starting a replacement world aborts the obsolete authored download without
     if(url.includes('new.glb'))return Promise.resolve(model());
     oldSignal=signal;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('Canceled','AbortError')),{once:true}));
   });
-  const obsolete=f.load(scene());await Promise.resolve();
+  const obsolete=f.load(scene());await new Promise(resolve=>setImmediate(resolve));assert.ok(oldSignal,'the obsolete model request has started before replacing it');
   f.context.worldLoadGeneration++;
   const next=scene();next.placedModels[0].modelUrl='/uploads/models/new.glb';
   const current=await f.load(next);

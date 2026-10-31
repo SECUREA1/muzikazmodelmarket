@@ -1,4 +1,4 @@
-import {FORGE_ITEMS} from './forge-items.js';
+import {FORGE_ITEMS} from './forge-items.js?v=forge-metallurgy-20261031';
 import {FACTORY_LOGISTICS_ITEMS} from './factory-logistics-items.js';
 import {FACTORY_TESTING_ITEMS} from './factory-testing-items.js';
 import {FACTORY_ITEMS} from './missile-factory-items.js';

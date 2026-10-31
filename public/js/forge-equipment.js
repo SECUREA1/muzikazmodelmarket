@@ -4,6 +4,9 @@ export const FORGE_EQUIPMENT=Object.freeze({
  'forge-damascus-blade':Object.freeze({kind:'melee',label:'Stormfold Damascus Blade',damage:38,range:3,cooldownMs:550}),
  'forge-battle-axe':Object.freeze({kind:'melee',label:'Ironwake Battle Axe',damage:46,range:2.8,cooldownMs:750}),
  'forge-warhammer':Object.freeze({kind:'melee',label:'Emberstrike Warhammer',damage:55,range:2.5,cooldownMs:950}),
+ 'forge-spear':Object.freeze({kind:'melee',label:'Ashenreach Spear',damage:34,range:3.8,cooldownMs:800}),
+ 'forge-dagger':Object.freeze({kind:'melee',label:'Cinderfang Dagger',damage:24,range:1.9,cooldownMs:380}),
+ 'forge-pickaxe':Object.freeze({kind:'melee',label:'Deepvein Pickaxe',damage:48,range:2.6,cooldownMs:1100}),
  'forge-aegis-shield':Object.freeze({kind:'shield',label:'Aegis Forged Shield',guardMs:900,cooldownMs:1500})
 });
 export function forgeEquipmentForActor(actor){

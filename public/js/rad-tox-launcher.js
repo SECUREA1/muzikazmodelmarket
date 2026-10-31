@@ -63,7 +63,7 @@ import {activateGameAudio,mountGameAudioActivation} from './game-audio-activatio
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var enginePath = './house-explorer-glb.js?v=fresh-map-room-20261028';
+    var enginePath = './house-explorer-glb.js?v=forge-metallurgy-20261031';
     var recovery = new URLSearchParams(window.location.search).get('gameRecovery');
     if (recovery) enginePath += '&recovery=' + encodeURIComponent(recovery);
     loadTimer = window.setTimeout(function () { showStall(revision); }, 30000);
@@ -87,7 +87,11 @@ import {activateGameAudio,mountGameAudioActivation} from './game-audio-activatio
   });
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (!restarting && stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) {
-    if (!restarting) showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.', moduleFailed || !engineReady);
+    var message=(failure.detail && failure.detail.message) || 'The playable world could not be initialized.';
+    // An older native catalogue or a rejected imported factory stays in this
+    // document's module map. Explicit retry must also replace that document.
+    var staleModel=/saved 3D model definition is unavailable|Failed to fetch dynamically imported module|Importing a module script failed/i.test(message);
+    if (!restarting) showError(message, moduleFailed || !engineReady || staleModel);
   });
   // Builder TEST GAME links have always used autoplay=1. The engine is loaded
   // on demand now, so consume that launch contract here; waiting for its own

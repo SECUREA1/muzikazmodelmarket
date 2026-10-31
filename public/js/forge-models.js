@@ -1,12 +1,12 @@
 import * as T from '../vendor/three/three.module.min.js';
-import {FORGE_ITEMS} from './forge-items.js';
+import {FORGE_ITEMS} from './forge-items.js?v=forge-metallurgy-20261031';
 
 /** Metre scaled, reusable smithy models; no recipe reward is granted by rendering. */
 export function createForgeModel(id){
  const info=FORGE_ITEMS[id];if(!info)return null;
  const root=new T.Group();root.name=info.name;root.userData={builderObject:true,modelId:id,forgeModel:true,dimensions:info.dimensions};
  const mat=(color,roughness=.6,metalness=.25,extra={})=>new T.MeshStandardMaterial({color,roughness,metalness,...extra});
- const steel=mat('#687682',.32,.85),edge=mat('#d0d9dc',.2,.92),dark=mat('#20272b',.8,.5),bronze=mat('#b88342',.35,.8),wood=mat('#765039',.95,.02),leather=mat('#493226',.9,.03),brick=mat('#62433a',.95,.05),ember=mat('#ee7033',.8,.05,{emissive:'#fb4d19',emissiveIntensity:.8}),water=mat('#467c8a',.15,.35,{transparent:true,opacity:.82}),stone=mat('#858176',1,.02),cloth=mat('#b5a17a',1,.01);
+ const steel=mat('#87939b',.36,.58),edge=mat('#d0d9dc',.24,.72),dark=mat('#343d42',.8,.32),bronze=mat('#c49655',.4,.6),wood=mat('#765039',.95,.02),leather=mat('#493226',.9,.03),brick=mat('#62433a',.95,.05),ember=mat('#ee7033',.8,.05,{emissive:'#fb4d19',emissiveIntensity:.8}),water=mat('#467c8a',.15,.35,{transparent:true,opacity:.82}),stone=mat('#858176',1,.02),cloth=mat('#b5a17a',1,.01);
  const mesh=(name,geometry,material,position,parent=root,rotation=[0,0,0],collide=true)=>{const value=new T.Mesh(geometry,material);value.name=name;value.position.fromArray(position);value.rotation.set(...rotation);value.castShadow=value.receiveShadow=true;value.userData.collisionDisabled=!collide;parent.add(value);return value;};
  const box=(name,size,position,material=steel,parent=root,rotation=[0,0,0],collide=true)=>mesh(name,new T.BoxGeometry(...size),material,position,parent,rotation,collide);
  const cyl=(name,radius,height,position,material=steel,parent=root,rotation=[0,0,0],collide=true)=>mesh(name,new T.CylinderGeometry(radius,radius,height,16),material,position,parent,rotation,collide);
@@ -56,6 +56,46 @@ export function createForgeModel(id){
   box('FORGE_AXE_HAFT',[.07,1.25,.07],[0,.625,0],wood);shape('FORGE_CRESCENT_AXE_HEAD',[[0,.9],[.22,.96],[.42,.82],[.52,1.04],[.49,1.3],[.23,1.19],[0,1.18]],.09,steel);shape('FORGE_AXE_CUTTING_BEVEL',[[.42,.82],[.52,1.04],[.49,1.3],[.46,1.22],[.48,1.04],[.4,.9]],.095,edge);box('FORGE_AXE_EYE',[.15,.3,.16],[0,1.04,0],bronze);for(let n=0;n<8;n++)cyl('FORGE_AXE_HAFT_WRAP',.05,.025,[0,.12+n*.047,0],leather);
  }else if(id==='forge-aegis-shield'){
   const points=[[-.4,.88],[-.34,1.1],[.34,1.1],[.4,.88],[.3,.35],[0,0],[-.3,.35]];shape('FORGE_SHIELD_BRONZE_RIM',points,.12,bronze);shape('FORGE_SHIELD_STEEL_FACE',points.map(([x,y])=>[x*.89,(y-.55)*.9+.55]),.14,steel,-.02);const boss=sphere('FORGE_SHIELD_BOSS',.16,[0,.65,-.095],bronze);boss.scale.z=.7;for(const y of [.38,.85])box('FORGE_SHIELD_REAR_STRAP',[.4,.055,.05],[0,y,.09],leather);for(const x of [-.27,.27])for(const y of [.5,.9])sphere('FORGE_SHIELD_RIVET',.025,[x,y,-.11],bronze);shape('FORGE_SHIELD_CREST',[[-.06,.38],[.07,.59],[.02,.59],[.09,.83],[-.08,.58],[-.025,.58]],.01,bronze,-.12);
+ }else if(id==='forge-spear'){
+  cyl('FORGE_SPEAR_ASH_SHAFT',.037,1.84,[0,.94,0],wood);cyl('FORGE_SPEAR_BRONZE_SOCKET',.065,.34,[0,1.87,0],bronze);
+  shape('FORGE_SPEAR_LEAF_BLADE',[[-.035,1.94],[-.15,2.13],[0,2.4],[.15,2.13],[.035,1.94]],.055,steel);
+  rod('FORGE_SPEAR_CENTER_RIDGE',[0,2,.04],[0,2.35,.04],.012,edge);cyl('FORGE_SPEAR_BUTT_CAP',.05,.1,[0,.05,0],dark);
+  for(let n=0;n<15;n++)cyl('FORGE_SPEAR_LEATHER_WRAP',.048,.025,[0,.78+n*.033,0],leather);rivets([-.035,.035],1.84,.07);
+ }else if(id==='forge-dagger'){
+  shape('FORGE_DAGGER_FULLER_BLADE',[[-.055,.23],[-.075,.49],[0,.64],[.075,.49],[.055,.23]],.035,steel);
+  rod('FORGE_DAGGER_BRIGHT_FULLER',[0,.28,.024],[0,.56,.024],.008,edge);box('FORGE_DAGGER_CROSSGUARD',[.24,.038,.1],[0,.235,0],bronze);
+  box('FORGE_DAGGER_STITCHED_GRIP',[.065,.17,.07],[0,.125,0],leather);mesh('FORGE_DAGGER_FACETED_POMMEL',new T.OctahedronGeometry(.045),bronze,[0,.025,0]);
+  for(let n=0;n<5;n++)cyl('FORGE_DAGGER_GRIP_BINDING',.04,.012,[0,.063+n*.028,0],bronze);
+ }else if(id==='forge-pickaxe'){
+  box('FORGE_PICK_ASH_HANDLE',[.085,1.2,.085],[0,.6,0],wood);for(let n=0;n<9;n++)cyl('FORGE_PICK_WRAPPED_GRIP',.063,.025,[0,.15+n*.045,0],leather);
+  shape('FORGE_CURVED_PICK_HEAD',[[-.53,1.02],[-.34,1.21],[-.08,1.29],[.16,1.29],[.48,1.13],[.52,1.04],[.13,1.16],[-.1,1.16],[-.34,1.12]],.14,steel);
+  box('FORGE_PICK_BRONZE_EYE',[.22,.25,.2],[0,1.17,0],bronze);box('FORGE_PICK_WEDGE',[.1,.045,.16],[0,1.315,0],dark);rivets([-.06,.06],1.17,.115);
+  shape('FORGE_PICK_POLISHED_TIP',[[-.53,1.02],[-.36,1.12],[-.34,1.16],[-.44,1.1]],.145,edge);
+ }else if(id==='forge-iron-gate'){
+  for(const x of [-1.48,1.48]){box('FORGE_GATE_OUTER_STILE',[.16,2.7,.22],[x,1.35,0],dark);cyl('FORGE_GATE_POST_CAP',.14,.1,[x,2.76,0],bronze);}
+  for(const y of [.18,.56,2.31])box('FORGE_GATE_CROSSRAIL',[3,.13,.16],[0,y,0],steel);
+  for(let x=-1.2;x<=1.21;x+=.3){box('FORGE_GATE_IRON_PICKET',[.07,2.65,.075],[x,1.4,0],steel);mesh('FORGE_GATE_SPEARPOINT',new T.OctahedronGeometry(.13),bronze,[x,2.88,0]);}
+  for(const y of [.48,2.15])cyl('FORGE_GATE_HINGE_BARREL',.1,.3,[-1.58,y,0],bronze);box('FORGE_GATE_LATCH',[.35,.1,.12],[1.24,1.25,-.11],bronze);
+  const crest=mesh('FORGE_GATE_MAKER_CREST',new T.CylinderGeometry(.32,.32,.07,8),bronze,[0,1.4,-.1],root,[Math.PI/2,0,0]);
+  shape('FORGE_GATE_EMBER_SIGIL',[[-.04,1.13],[.09,1.43],[.03,1.43],[.1,1.66],[-.1,1.38],[-.025,1.38]],.02,dark,-.15);
+  for(const x of [-1.48,1.48])rivets([x],.56,-.125);rivets([-1.1,-.6,0,.6,1.1],2.31,-.1);
+ }else if(id==='forge-lantern'){
+  const glass=mat('#eab15c',.28,.15,{transparent:true,opacity:.37}),glow=mat('#e88f35',.5,0,{emissive:'#ff9e32',emissiveIntensity:0});
+  box('FORGE_LANTERN_FOOT',[.58,.1,.58],[0,.05,0],dark);box('FORGE_LANTERN_GLASS',[.43,.49,.43],[0,.36,0],glass);
+  for(const x of [-.25,.25])for(const z of [-.25,.25])box('FORGE_LANTERN_PROTECTIVE_RIB',[.045,.57,.045],[x,.36,z],steel);
+  mesh('FORGE_LANTERN_VENTED_ROOF',new T.ConeGeometry(.44,.19,4),bronze,[0,.72,0],root,[0,Math.PI/4,0]);
+  cyl('FORGE_LANTERN_CHIMNEY',.09,.11,[0,.85,0],dark);mesh('FORGE_LANTERN_HANGING_LOOP',new T.TorusGeometry(.13,.024,8,20),bronze,[0,.96,0]);
+  cyl('FORGE_LANTERN_BURNER',.13,.08,[0,.16,0],bronze);const flame=mesh('FORGE_LANTERN_FLAME',new T.ConeGeometry(.085,.3,10),glow,[0,.35,0],root,[0,0,0],false);flame.userData.forgeLanternFlame=true;
+  for(const x of [-.15,0,.15])box('FORGE_LANTERN_ROOF_VENT',[.035,.03,.015],[x,.75,-.25],dark);rivets([-.25,.25],.12,-.28);
+ }else if(id==='forge-bronze-bell'){
+  for(const x of [-.52,.52]){box('FORGE_BELL_TIMBER_POST',[.17,1.55,.38],[x,.775,0],wood);box('FORGE_BELL_IRON_FOOT',[.35,.1,.8],[x,.05,0],dark);}
+  box('FORGE_BELL_TIMBER_YOKE',[1.25,.2,.3],[0,1.65,0],wood);rod('FORGE_BELL_AXLE',[-.55,1.4,0],[.55,1.4,0],.045,steel);
+  const swing=new T.Group();swing.name='FORGE_BELL_SWING';swing.position.set(0,1.4,0);root.add(swing);swing.userData.forgeBellSwing=true;
+  const profile=[[.06,0],[.14,-.08],[.17,-.22],[.19,-.4],[.23,-.58],[.34,-.72],[.4,-.76],[.4,-.82],[.33,-.82],[.28,-.75],[.19,-.6],[.14,-.4],[.12,-.2],[.07,-.1]].map(([x,y])=>new T.Vector2(x,y));
+  mesh('FORGE_BRONZE_BELL_BODY',new T.LatheGeometry(profile,28),bronze,[0,0,0],swing);
+  for(const y of [-.28,-.38,-.67])mesh('FORGE_BELL_ENGRAVED_RING',new T.TorusGeometry(y<-.6?.28:.178,.013,6,28),edge,[0,y,0],swing,[Math.PI/2,0,0],false);
+  rod('FORGE_BELL_CLAPPER_STEM',[0,-.08,0],[0,-.75,0],.022,dark,swing);sphere('FORGE_BELL_CLAPPER',.07,[0,-.77,0],dark,swing);
+  cyl('FORGE_BELL_YOKE_BOLT',.05,.2,[0,1.75,0],bronze);for(const x of [-.52,.52])rivets([x],1.65,-.18);
  }else if(info.kind==='crew'){
   const skin=mat(id==='forge-metallurgist'?'#bf8f70':'#956d51',.95,.01),outfit=mat(id==='forge-metallurgist'?'#486c6b':id==='forge-quartermaster'?'#69704b':'#784937',.9,.01),hair=mat(id==='forge-master-smith'?'#908679':'#312e2a',1,.01);
   for(const side of [-1,1]){box('FORGE_SMITH_BOOT',[.2,.17,.33],[side*.15,.085,-.035],dark);box('FORGE_SMITH_TROUSER',[.18,.66,.2],[side*.15,.48,0],dark);const arm=new T.Group();arm.name='FORGE_SMITH_ARM';arm.position.set(side*.32,1.42,0);arm.userData.forgeArm=side;root.add(arm);box('FORGE_SMITH_SLEEVE',[.16,.3,.2],[0,-.16,0],outfit,arm);box('FORGE_SMITH_FOREARM',[.14,.28,.16],[0,-.43,0],skin,arm);sphere('FORGE_SMITH_HAND',.085,[0,-.58,0],skin,arm);}
@@ -70,5 +110,5 @@ export function createForgeModel(id){
 }
 export function updateForgeModel(root,elapsed=0){
  if(!root?.userData.forgeModel)return false;
- root.traverse(part=>{if(part.userData.forgeGrindingWheel&&root.userData.forgeWorking)part.rotation.x=elapsed*3;if(part.userData.forgeArm)part.rotation.x=Math.sin(elapsed*.85+part.userData.forgeArm)*.025;});return true;
+ root.traverse(part=>{if(part.userData.forgeGrindingWheel&&root.userData.forgeWorking)part.rotation.x=elapsed*3;if(part.userData.forgeBellSwing){const age=elapsed-(Number.isFinite(root.userData.forgeBellRungAt)?root.userData.forgeBellRungAt:-100);part.rotation.z=age>=0&&age<3?Math.sin(age*13)*.16*Math.exp(-age*1.2):0;}if(part.userData.forgeArm)part.rotation.x=Math.sin(elapsed*.85+part.userData.forgeArm)*.025;});return true;
 }

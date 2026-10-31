@@ -1,5 +1,5 @@
 import {FOREST_SNAKE_ITEMS,forestSnakeNativeItem} from './forest-snake-items.js';
-import {FORGE_ITEMS,forgeNativeItem} from './forge-items.js';
+import {FORGE_ITEMS,forgeNativeItem} from './forge-items.js?v=forge-metallurgy-20261031';
 import {QUARRY_MODEL_INFO} from './quarry-config.js';
 import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';
 import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';

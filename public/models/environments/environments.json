@@ -91360,7 +91360,7 @@
     "id": "traditional-forge",
     "name": "Emberfall · Traditional Forge",
     "label": "Heat · hammer · quench · temper · masterwork",
-    "description": "A traditional metallurgy workshop with glowing charcoal hearth, leather bellows, anvils, a quench bath, tempering oven and grinding and inspection benches. Turn measured metal and fuel kits into Damascus blades, warhammers, battle axes and Aegis shields through server-confirmed work orders. Meet master smith Brann Emberhand, metallurgist Sera Vale and quartermaster Kade Ironledger for conversation and local quests. Finished items join your Backpack and share the MZK market and Builder catalogue.",
+    "description": "A traditional metallurgy workshop with ten hand-forged designs, six working stations, three AI specialists and nine persistent commissions. Forge blades, axes, spears, daggers, warhammers, shields and pickaxes, build an iron gate, light a crafted lantern or ring a bronze bell. Buy and resell canonical MZK items at the live forge market, seal individual creations into counted warehouse lots, and send them through verified sea freight to stores, maps and deeds. Finished items retain their native identity in Backpack and Builder.",
     "category": "Forge & metallurgy",
     "game": "forge",
     "mapTheme": "industrial",
@@ -91541,7 +91541,7 @@
     "canEdit": false,
     "ownerId": "muzikaz",
     "ownerName": "MUZIKAZ",
-    "contentUpdatedAt": "2026-10-31T12:00:00.000Z",
+    "contentUpdatedAt": "2026-10-31T12:27:28.461Z",
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 128,
@@ -93136,7 +93136,7 @@
             "forgeCrew": false,
             "forgeProduct": false,
             "forgeMaterial": false,
-            "prompt": "Inspect Cross Peen Smithing Hammer · E / Use"
+            "prompt": "Pick up Cross Peen Smithing Hammer · E / Use"
           }
         },
         {
@@ -93174,7 +93174,7 @@
             "forgeCrew": false,
             "forgeProduct": false,
             "forgeMaterial": false,
-            "prompt": "Inspect Blacksmith Tongs · E / Use"
+            "prompt": "Pick up Blacksmith Tongs · E / Use"
           }
         },
         {
@@ -93451,6 +93451,212 @@
           },
           "dialogueSettings": {
             "text": "Heat makes the billet workable. Hammering shapes the hot metal. Quenching and tempering follow the work order’s heat-treatment stage. Inspect the final piece at the finishing bench."
+          }
+        },
+        {
+          "id": "forge-market-kiosk",
+          "modelId": "market-atm",
+          "asset": {
+            "buildAssetId": "market-atm"
+          },
+          "name": "Emberfall MZK Forge Market",
+          "position": {
+            "x": 29,
+            "y": 0,
+            "z": 27
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "device": "market-atm",
+            "interactionDistance": 5,
+            "storeProductIds": [
+              "forge-damascus-blade",
+              "forge-warhammer",
+              "forge-battle-axe",
+              "forge-aegis-shield",
+              "forge-spear",
+              "forge-dagger",
+              "forge-pickaxe",
+              "forge-iron-gate",
+              "forge-lantern",
+              "forge-bronze-bell"
+            ],
+            "prompt": "Shop forge equipment & metalwork · E / Use",
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-shop-plinth-0",
+          "modelId": "material:display-plinth",
+          "asset": {
+            "buildAssetId": "material:display-plinth"
+          },
+          "name": "Forge Market · Stormfold Damascus Blade",
+          "position": {
+            "x": 18,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "storeProductIds": [
+              "forge-damascus-blade"
+            ],
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-shop-plinth-1",
+          "modelId": "material:display-plinth",
+          "asset": {
+            "buildAssetId": "material:display-plinth"
+          },
+          "name": "Forge Market · Aegis Forged Shield",
+          "position": {
+            "x": 22,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "storeProductIds": [
+              "forge-aegis-shield"
+            ],
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-shop-plinth-2",
+          "modelId": "material:display-plinth",
+          "asset": {
+            "buildAssetId": "material:display-plinth"
+          },
+          "name": "Forge Market · Emberglass Lantern",
+          "position": {
+            "x": 26,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "storeProductIds": [
+              "forge-lantern"
+            ],
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-shop-plinth-3",
+          "modelId": "material:display-plinth",
+          "asset": {
+            "buildAssetId": "material:display-plinth"
+          },
+          "name": "Forge Market · Resonant Bronze Bell",
+          "position": {
+            "x": 30,
+            "y": 0,
+            "z": 21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "storeProductIds": [
+              "forge-bronze-bell"
+            ],
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-shop-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "FORGE MARKET · Inspect, buy & trade",
+          "position": {
+            "x": 21,
+            "y": 0,
+            "z": 29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Read FORGE MARKET · Inspect, buy & trade",
+            "destructible": false,
+            "damage": 0
+          },
+          "dialogueSettings": {
+            "text": "Inspect a displayed item for its live MZK offer or use the Market terminal to browse equipment, metalwork and member trades. Purchased items share the same Backpack and Builder identity as forged pieces. Stock and delivery availability come from the world supply system."
           }
         },
         {
@@ -93735,6 +93941,16 @@
             "width": 68,
             "depth": 14,
             "description": "Meet the master smith, metallurgist and quartermaster for local objectives and forging advice."
+          },
+          {
+            "id": "forge-market",
+            "name": "Emberfall MZK Market & product gallery",
+            "x": 27,
+            "y": 0.02,
+            "z": 30,
+            "width": 20,
+            "depth": 14,
+            "description": "Inspect real forge products, compare live MZK offers and shop through the shared Market terminal."
           }
         ],
         "forge": {
