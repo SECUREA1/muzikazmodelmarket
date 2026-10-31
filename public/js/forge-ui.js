@@ -48,6 +48,7 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
  const $=selector=>panel.querySelector(selector);
  let environment=null,snapshot=null,self=null,selfId=null,personal=null,stations=[],selectedRecipeId=FORGE_RECIPES[0]?.id,selectedStationId=null,busy=false,disposed=false,revision=0,serverAt=0,receivedAt=performance.now(),timer=null,lastPoll=0,lastStrike=0,balance=null,supplyState=null;
  const cache=new Map(),exportedItems=new Set();
+ let linkedForgeItem=new URL(location.href).searchParams.get('forgeItem');
  const screen=fullscreenPanel(panel,{onOpen(){document.exitPointerLock?.();requestGameInputRelease('forge-open');onOpen();},onClose(){trigger.setAttribute('aria-expanded','false');clearInterval(timer);timer=null;onClose();}});screen.dialog.classList.add('forge-dialog');
  const text=(selector,value)=>{const node=$(selector),next=String(value??'');if(node.textContent!==next)node.textContent=next;};
  const html=(key,selector,value)=>{if(cache.get(key)!==value){cache.set(key,value);$(selector).innerHTML=value;}};
@@ -82,7 +83,7 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
  function commerce(destination,details={}){close();if(typeof onCommerce==='function')void Promise.resolve(onCommerce(destination,details)).catch(error=>announce(error.message));else window.open(destination==='shipping'?'model-explorer.html?environment=hormuz-shipping&mode=multiplayer&autoplay=1':destination==='market'?'model-market.html':'builder-market.html','_blank','noopener');}
  function renderTrade(){
   const item=tradeSelection(),view=forgeRouteView({job:personal?.job,supply:supplyState});
-  if(item)html('trade-item','[data-trade-item]',`<img src="${esc(item.image)}" alt="${esc(item.name)}"><div><span class="forge-eyebrow">ONE NATIVE 3D MODEL</span><strong>${esc(item.name)}</strong><p>${item.kitPriceMzk} MZK material kit · ${item.marketPriceMzk} MZK native market price</p><p class="forge-help">${item.dimensions.map(value=>Number(value).toFixed(2)).join(' × ')} m · The same shape and function in Backpack, Builder, shops and shared worlds.</p><div class="forge-trade-actions"><button type="button" data-forge-preview>Inspect 3D item</button><button type="button" data-trade-destination="market">View exact market offer ↗</button><a href="builder-market.html#backpack" target="_blank" rel="noopener">Builder Backpack ↗</a></div></div>`);
+  if(item)html('trade-item','[data-trade-item]',`<img src="${esc(item.image)}" alt="${esc(item.name)}"><div><span class="forge-eyebrow">ONE NATIVE 3D MODEL</span><strong>${esc(item.name)}</strong><p>${item.kitPriceMzk} MZK material kit · ${item.marketPriceMzk} MZK native market price</p><p class="forge-help">${item.dimensions.map(value=>Number(value).toFixed(2)).join(' × ')} m · The same shape and function in Backpack, Builder, shops and shared worlds.</p><div class="forge-trade-actions"><button type="button" data-forge-preview>Inspect 3D item</button><button type="button" data-trade-destination="market">View exact market offer ↗</button><button type="button" data-trade-destination="requests">World making requests ↗</button><a href="builder-market.html#backpack" target="_blank" rel="noopener">Builder Backpack ↗</a></div></div>`);
   const receiptLabels={workOrderId:'Work order',backpackItemId:'Original Backpack item',lotId:'Sealed warehouse lot',shipmentId:'Shipping manifest',routeId:'Route',destinationMapId:'Receiving map',stockReceiptId:'Destination stock receipt'};
   html('trade-route','[data-trade-route]',`<h5>${personal?.job?'Current / last work order · '+esc(personal.job.name||recipeFor(personal.job.recipeId)?.name||'Forged workpiece'):'Plan your item’s journey'}</h5><ol aria-label="Workpiece and freight route">${view.steps.map(step=>`<li data-state="${step.state}"${step.state==='current'?' aria-current="step"':''}><span>${step.state==='complete'?'✓':'○'}</span>${esc(step.label)}</li>`).join('')}</ol><p class="forge-route-state" role="status">${esc(view.label)}</p>${view.sealed&&!view.hasSupply?'<p class="forge-help">Open World Supply to refresh this lot’s live route and receiving receipts. A sealed workpiece is warehouse stock, not a second Backpack copy.</p>':''}<div class="forge-trade-actions"><button type="button" data-trade-destination="supply">${view.sealed?'Inspect this warehouse lot':'World Supply & route quotes'} ↗</button><button type="button" data-trade-destination="shipping">Visit playable shipping lanes ↗</button></div>${Object.values(view.references).some(Boolean)?`<details class="forge-receipt-details"><summary>Workpiece &amp; freight receipts</summary><dl>${Object.entries(view.references).filter(([,value])=>value).map(([key,value])=>`<dt>${receiptLabels[key]}</dt><dd>${esc(value)}</dd>`).join('')}</dl></details>`:''}`);
  }
@@ -121,6 +122,7 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   if(disposed)return;
   if(env?.id!==environment?.id||id!==selfId){revision++;busy=false;balance=null;supplyState=null;selectedStationId=null;cache.clear();if(screen.dialog.open)close();}
   environment=env;snapshot=next;selfId=id;self=next?.players?.[id]||null;
+  if(linkedForgeItem&&enabled()&&self){const itemId=linkedForgeItem;linkedForgeItem=null;queueMicrotask(()=>{if(!disposed)openRecipe(itemId);});}
   const result=next?.result?.forge;
   personal=self?.forge?{...self.forge,...(result||{})}:result||null;
   if(Number.isFinite(personal?.balance))balance=personal.balance;
@@ -158,6 +160,11 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   if(!enabled())return false;selectedStationId=typeof stationId==='string'?stationId:stationId?.id||stationId?.stationId||null;trigger.setAttribute('aria-expanded','true');screen.open();render();if(!timer)timer=setInterval(tick,250);if(ready())void send('forge-status');return true;
  }
  function close(){screen.close();clearInterval(timer);timer=null;}
+ function openRecipe(itemId){
+  const recipe=FORGE_RECIPES.find(value=>value.buildAssetId===String(itemId||'').replace(/^native:/,''));if(!recipe)return false;
+  const job=activeJob();if(!job)selectedRecipeId=recipe.id;
+  const opened=open();if(job&&job.recipeId!==recipe.id)message('Finish your saved workpiece before starting '+recipe.name+'.');return opened;
+ }
  trigger.addEventListener('click',()=>open());$('[data-close]').addEventListener('click',close);
  panel.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button||button.disabled)return;
@@ -174,5 +181,5 @@ export function mountForgeUI({stage,command,onOpen=()=>{},onClose=()=>{},announc
   if(button.hasAttribute('data-forge-export')){void sealFreight();return;}
   if(button.hasAttribute('data-work-action')){const job=activeJob(),station=requiredStation();if(job){if(job.stage==='hammer')lastStrike=now();void send('forge-'+job.stage,{jobId:job.id,stationId:station?.id});}else void send('forge-start',{recipeId:selectedRecipeId,stationId:station?.id});}
  });
- return {update,updateCommerce(next){supplyState=next||null;render();},open,openPolicy,close,near,visible:()=>screen.dialog.open,dispose(){if(disposed)return;close();disposed=true;revision++;screen.disconnect();trigger.remove();screen.dialog.remove();}};
+ return {update,updateCommerce(next){supplyState=next||null;render();},open,openRecipe,openPolicy,close,near,visible:()=>screen.dialog.open,dispose(){if(disposed)return;close();disposed=true;revision++;screen.disconnect();trigger.remove();screen.dialog.remove();}};
 }

@@ -57,6 +57,7 @@ export function forgeRouteView({job=null,supply=null}={}){
 export function forgeCommerceTarget({destination,selectedRecipeId,job=null,supply=null}={}){
  const route=forgeRouteView({job,supply}),recipeId=destination==='supply'&&route.sealed?job?.recipeId:selectedRecipeId,item=forgeTradeItem(recipeId);
  if(destination==='market')return {sku:item?.sku,itemId:item?.sku};
+ if(destination==='requests')return {itemId:item?.sku,section:'requests',quantity:1};
  if(destination==='supply')return {sku:item?.sku,itemId:item?.sku,...(route.references.lotId?{lotId:route.references.lotId}:{}),...(route.references.shipmentId?{shipmentId:route.references.shipmentId}:{}),section:route.sealed?'trace':'shipments',sourceMapId:'factory',quantity:1};
  return {};
 }

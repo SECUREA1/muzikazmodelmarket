@@ -1,7 +1,7 @@
 import {createForgeSceneActivity} from './forge-scene-activity.js?v=forge-atelier-20261031';
 import {createForgePresentationClient} from './forge-presentation-client.js?v=forge-atelier-20261031';
 import {heldForgeEquipment} from './forge-equipment.js?v=forge-atelier-20261031';
-import {mountForgeUI} from './forge-ui.js?v=forge-atelier-20261031';
+import {mountForgeUI} from './forge-ui.js?v=world-requests-20261031';
 import {isForgeEnvironment} from './forge-config.js?v=forge-atelier-20261031';
 import {emergencyEvacuationView} from './emergency-evacuation.js';
 import {mountDoomsdayUI} from './doomsday-ui.js';
@@ -42,7 +42,7 @@ import {bindGroundDoubleTap,groundPointFromPointer} from './ground-double-tap.js
 import {worldPopulation} from './world-population.js';
 import {mountFitnessUI} from './fitness-ui.js';
 import {mountMissileFactoryUI} from './missile-factory-ui.js';
-import {mountWorldSupplyUI} from './world-supply-ui.js?v=forge-atelier-20261031';
+import {mountWorldSupplyUI} from './world-supply-ui.js?v=world-requests-20261031';
 import {createWorldDeedDeliveryScene} from './world-deed-delivery-scene.js';
 import {mountFactoryTestingUI} from './factory-testing-ui.js';
 import {mountFactoryLogisticsUI} from './factory-logistics-ui.js';
@@ -1342,7 +1342,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const fitnessUI=mountFitnessUI(stage,serverCommand,{onOpen:()=>stage.classList.add('fitness-training-overlay'),onClose:()=>stage.classList.remove('fitness-training-overlay'),announce:setStatus});
   const factoryUI=mountMissileFactoryUI(stage,serverCommand,{announce:setStatus,getPosition:()=>playerRig.position});
   const prisonUI=mountPrisonGame(stage,{command:serverCommand,announce:setStatus,getPosition:()=>playerRig.position,onOpen:lockMenuInput,onClose:()=>canvas.focus({preventScroll:true})});
-  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onState:state=>{if(activeEnvironment?.worldSupply?.enabled)envLoader.world?.traverse(object=>object.userData.setWorldFactoryProductionState?.(state.production));},onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:options=>shippingUI.open(options),onMap:details=>districtMap.openAt(details),onNavigate:destinationId=>loadById(destinationId),announce:setStatus});
+  const worldSupplyUI=mountWorldSupplyUI({stage,inventory:sharedInventory,command:serverCommand,onState:state=>{if(activeEnvironment?.worldSupply?.enabled)envLoader.world?.traverse(object=>object.userData.setWorldFactoryProductionState?.(state.production));},onOpen:lockMenuInput,onClose:lockMenuInput,onShipping:options=>shippingUI.open(options),onMap:details=>districtMap.openAt(details),onNavigate:async(destinationId,details={})=>{const loaded=await loadById(destinationId);if(loaded&&destinationId==='traditional-forge'&&details.itemId)forgeUI.openRecipe(details.itemId);return loaded;},announce:setStatus});
   worldSupplyUI.update(null,null,activeEnvironment);
   const deedDeliveryScene=createWorldDeedDeliveryScene({scene,inventory:sharedInventory});
   deedDeliveryScene.update(activeEnvironment);

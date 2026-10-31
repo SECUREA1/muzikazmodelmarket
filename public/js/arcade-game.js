@@ -19,7 +19,7 @@ import {createArcadeMatch} from './arcade-match.js';
 import {LocalArcadeMotion,createArcadeInputStream} from './arcade-local-motion.js';
 import {resolveArcadeBasketballAction} from './arcade-basketball-actions.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
-import {mountWorldSupplyUI} from './world-supply-ui.js?v=forge-atelier-20261031';
+import {mountWorldSupplyUI} from './world-supply-ui.js?v=world-requests-20261031';
 import {createWorldDeedDeliveryScene} from './world-deed-delivery-scene.js';
 import {ensurePlayAccess} from './play-access.js';
 import * as T from '../vendor/three/three.module.min.js';

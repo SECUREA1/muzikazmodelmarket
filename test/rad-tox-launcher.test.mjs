@@ -45,6 +45,6 @@ test('a missing native forge model retries in a fresh document instead of retain
 });
 
 test('recovery autoplay is a single attempt and a repeated failure waits for another user action',async()=>{
- const f=fixture('?environment=custom-map&mode=solo&builder=retained&autoplay=1&gameRecovery=previous#spawn');assert.equal(f.imports.length,1);assert.match(f.imports[0].path,/v=forge-atelier-20261031/);assert.match(f.imports[0].path,/recovery=previous/);
+ const f=fixture('?environment=custom-map&mode=solo&builder=retained&autoplay=1&gameRecovery=previous#spawn');assert.equal(f.imports.length,1);assert.match(f.imports[0].path,/v=world-requests-20261031/);assert.match(f.imports[0].path,/recovery=previous/);
  f.imports[0].reject(Error('Still unavailable'));await flush();assert.equal(f.navigations.length,0);assert.equal(f.button.disabled,false);f.click();const target=new URL(f.navigations[0]);assert.equal(target.searchParams.get('builder'),'retained');assert.equal(target.searchParams.get('mode'),'solo');assert.notEqual(target.searchParams.get('gameRecovery'),'previous');assert.equal(target.hash,'#spawn');
 });

@@ -1,9 +1,11 @@
+import {createHash} from 'node:crypto';
 // The account identity stays stable when a member connects a wallet. Move the
 // private gameplay ledger with its wallet record; never copy or reseed stock.
-const fields=new Set(['walletId','ownerId','owner_id','recipientId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id','transferredFrom','forgeWalletId']);
+const fields=new Set(['walletId','ownerId','owner_id','recipientId','claimantId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id','transferredFrom','forgeWalletId']);
 const own=(object,key)=>Object.hasOwn(object,key);
 export function migrateGameplayWallet(data,previousWallet,wallet){
  if(previousWallet===wallet)return;
+ const movedRequests=Object.values(data.worldSupply?.itemRequests||{}).filter(request=>request.recipientId===previousWallet&&request.address?.position&&request.address?.addressLine);
  function rekey(store,separator=''){
   if(!store||typeof store!=='object')return;
   for(const key of Object.keys(store)){
@@ -32,4 +34,11 @@ export function migrateGameplayWallet(data,previousWallet,wallet){
  }
  // Proof ids and stable room actor ids are deliberately left untouched.
  for(const name of [...stores,'factoryModelOwnership','forgeItemOwnership','worldSupply'])walk(data[name]);
+ // The address fingerprint includes its recipient. A connected wallet keeps
+ // the same receiving person and physical doorstep, so update only that saved
+ // identity component; a moved or transferred real address still fails review.
+ for(const request of movedRequests){
+  const address=request.address,revision=createHash('sha256').update(JSON.stringify([address.id,address.position,wallet,address.name,address.addressLine])).digest('hex').slice(0,24);
+  request.addressRevision=revision;address.revision=revision;
+ }
 }
