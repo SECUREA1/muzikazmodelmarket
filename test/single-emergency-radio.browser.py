@@ -1,4 +1,4 @@
-"""Two header actions and one emergency radio popup across mobile and desktop."""
+"""SVG header actions and one emergency radio popup across mobile and desktop."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -71,15 +71,15 @@ def assert_unique(page):
 
 
 def assert_header(page, width):
-    page.wait_for_function('''()=>{const v=document.querySelector('.game-display-flow-views');return v&&[...v.children].filter(n=>n.matches('button')&&!n.hidden).length===2;}''')
+    page.wait_for_function('''()=>{const v=document.querySelector('.game-display-flow-views');return v&&[...v.children].filter(n=>n.matches('button')&&!n.hidden).length===3;}''')
     radio = page.get_by_role('button', name='Emergency radio', exact=True)
     more = page.get_by_role('button', name='More view controls', exact=True)
-    for button in [radio, more]:
+    for button in [radio, page.get_by_role('button', name='Nuclear event', exact=True), more]:
         assert button.evaluate('n=>n.parentElement.classList.contains("game-display-flow-views")')
         box = button.bounding_box()
         assert box['width'] >= 44 and box['height'] >= 44 and box['x'] >= 0 and box['x'] + box['width'] <= width + 1, box
         assert hit_center(button)
-    for selector in ['.game-camera-toggle', '.game-flashlight-toggle', '.map-quest-launcher', '.district-map-toggle', '.factory-toggle', '.factory-testing-toggle', '.factory-logistics-toggle', '.prison-toggle', '.airport-ops-toggle', '.forest-toggle', '.fitness-toggle', '.transport-activity', '.world-resident-ui', '.live-local-map', '.emergency-nuclear-toggle']:
+    for selector in ['.game-camera-toggle', '.game-flashlight-toggle', '.map-quest-launcher', '.district-map-toggle', '.factory-toggle', '.factory-testing-toggle', '.factory-logistics-toggle', '.prison-toggle', '.airport-ops-toggle', '.forest-toggle', '.fitness-toggle', '.transport-activity', '.world-resident-ui', '.live-local-map']:
         assert page.locator(selector).count() == 1, selector
         assert page.locator(selector).evaluate('n=>!!n.closest(".game-view-overflow")'), selector
     return radio, more
@@ -97,11 +97,11 @@ try:
             assert page.evaluate('remount()'), 'A repeated mount created a second header or radio.'
             assert_unique(page)
 
-            # Every additional header action lives in one menu; regular gameplay stays in place.
+            # Text-only fixture header actions stay in More; regular gameplay stays in place.
             more.click()
             overflow = page.locator('.game-view-overflow')
             assert overflow.is_visible() and popup.is_hidden()
-            for label in ['Camera view', 'Flashlight', 'Quests', 'District map', 'Factory', 'Factory testing', 'Factory logistics', 'Prison', 'Airport', 'Forest', 'Fitness', 'Vehicle activities', 'Residents', 'Map', 'Nuclear event']:
+            for label in ['Camera view', 'Flashlight', 'Quests', 'District map', 'Factory', 'Factory testing', 'Factory logistics', 'Prison', 'Airport', 'Forest', 'Fitness', 'Vehicle activities', 'Residents', 'Map']:
                 button = overflow.get_by_role('button', name=label, exact=True)
                 assert button.count() == 1, label
                 button.scroll_into_view_if_needed()
@@ -142,7 +142,8 @@ try:
             assert more.get_attribute('aria-expanded') == 'false' and overflow.is_hidden(), 'An automatic alert left More covering the radio popup.'
             stage_box, box = page.locator('.house-stage').bounding_box(), popup.bounding_box()
             assert stage_box['x'] <= box['x'] <= stage_box['x'] + 20
-            assert stage_box['y'] + 44 <= box['y'] <= stage_box['y'] + 90
+            header_box = page.locator('.game-display-flow-views').bounding_box()
+            assert header_box['y'] + header_box['height'] <= box['y'] <= header_box['y'] + header_box['height'] + 24
             assert box['x'] + box['width'] <= stage_box['x'] + stage_box['width'] + 1
             assert page.evaluate('document.activeElement===document.getElementById("move")&&!blocked()')
             page.keyboard.press('w')
@@ -161,7 +162,7 @@ try:
             assert more.get_attribute('aria-expanded') == 'false'
             page.get_by_role('button', name='Close emergency radio', exact=True).click()
             more.click()
-            overflow.get_by_role('button', name='Nuclear event', exact=True).click()
+            page.get_by_role('button', name='Nuclear event', exact=True).click()
             assert popup.is_visible() and more.get_attribute('aria-expanded') == 'false'
             assert countdown.text_content() == 'Fallout in 7s'
             page.get_by_role('button', name='Close emergency radio', exact=True).click()
@@ -182,7 +183,7 @@ try:
                 assert more.get_attribute('aria-expanded') == 'false'
                 assert_unique(page)
 
-            # Viewport refits preserve the same popup and the same two header actions.
+            # Viewport refits preserve the same popup and the same SVG header actions.
             page.get_by_role('button', name='Close emergency radio', exact=True).click()
             page.set_viewport_size({'width': max(320, width - 10), 'height': height})
             page.set_viewport_size({'width': width, 'height': height})
@@ -193,7 +194,7 @@ try:
             assert page.evaluate('clicks.fire===2&&clicks.move===2&&!blocked()')
             assert page.locator('.mobile-move-pad').is_visible()
             assert not errors, errors
-            print(f'{width}x{height}: two header actions, complete More list, one countdown/radio popup, dismissal/refits, preserved dock and movement passed', flush=True)
+            print(f'{width}x{height}: SVG header actions, text-only More list, one countdown/radio popup, dismissal/refits, preserved dock and movement passed', flush=True)
             page.close()
 
         page, errors = new_page(browser, 390, 844, automatic=False)

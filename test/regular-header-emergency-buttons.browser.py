@@ -1,4 +1,4 @@
-"""Keep regular controls with Radio, More, and one combined emergency popup."""
+"""Keep SVG header controls with More, and one combined emergency popup."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
@@ -35,12 +35,12 @@ try:
    radio.wait_for(state='visible');more.wait_for(state='visible')
    popup=page.locator('#emergency-radio-popup')
    assert page.evaluate('dock.parentElement===dockParent && !dock.closest(".game-view-overflow")')
-   for control in [radio,more]:
+   for control in [radio,nuclear,more]:
     assert control.evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
     box=control.bounding_box();assert box['width']>=44 and box['height']>=44 and box['x']>=0 and box['x']+box['width']<=width+1,(width,box)
     assert control.evaluate("n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}")
-   assert page.locator('.game-display-flow-views > button').count()==2
-   for selector in ['.game-camera-toggle','.game-flashlight-toggle','.live-local-map','.emergency-nuclear-toggle']:
+   assert page.locator('.game-display-flow-views > button').count()==3
+   for selector in ['.game-camera-toggle','.game-flashlight-toggle','.live-local-map']:
     assert page.locator(selector).evaluate("n=>!!n.closest('.game-view-overflow')")
    more.click();assert nuclear.is_visible() and nuclear.is_disabled();more.click()
    for label in ['World','Settings','Build']:page.get_by_role('button',name=label,exact=True).click()
@@ -67,7 +67,7 @@ try:
    assert page.locator('.mobile-move-pad').is_visible()
    assert page.evaluate('dock.parentElement===dockParent')
    assert not errors,errors
-   print(f'{width}x{height}: Radio + More, one live countdown/radio popup, original dock and movement passed',flush=True)
+   print(f'{width}x{height}: SVG header actions + More, one live countdown/radio popup, original dock and movement passed',flush=True)
    page.close()
   browser.close()
 finally:server.shutdown()

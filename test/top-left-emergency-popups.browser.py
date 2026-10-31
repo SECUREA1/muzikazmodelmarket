@@ -56,8 +56,8 @@ try:
    more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
    nuclear=page.get_by_role('button',name='Nuclear event',exact=True,include_hidden=True)
    popup=page.locator('#emergency-radio-popup')
-   assert page.locator('.game-display-flow-views > button').count()==2
-   assert nuclear.evaluate('n=>!!n.closest(".game-view-overflow")')
+   assert page.locator('.game-display-flow-views > button').count()==3
+   assert nuclear.evaluate('n=>n.parentElement.classList.contains("game-display-flow-views")')
    panel=page.locator('#emergency-nuclear-panel');announcement=page.locator('#emergency-announcement-panel')
    assert panel.is_hidden() and announcement.is_hidden()
    assert more.get_attribute('aria-expanded')=='false'
@@ -66,7 +66,8 @@ try:
    assert more.get_attribute('aria-expanded')=='false','Automatic popups opened the regular header menu.'
    assert panel.evaluate('n=>n.closest(".emergency-popup-stack").parentElement.classList.contains("house-stage")&&!n.closest(".game-view-overflow")')
    stage_box=page.locator('.house-stage').bounding_box();stack_box=page.locator('.emergency-popup-stack').bounding_box()
-   assert stage_box['x']<=stack_box['x']<=stage_box['x']+20 and stage_box['y']+44<=stack_box['y']<=stage_box['y']+90,(width,stage_box,stack_box)
+   header_box=page.locator('.game-display-flow-views').bounding_box()
+   assert stage_box['x']<=stack_box['x']<=stage_box['x']+20 and header_box['y']+header_box['height']<=stack_box['y']<=header_box['y']+header_box['height']+24,(width,header_box,stack_box)
    assert stack_box['x']+stack_box['width']<=stage_box['x']+stage_box['width']+1
    countdown=panel.locator('[data-countdown]');assert countdown.text_content()=='Detonations in 18s' and hit_center(countdown),(width,'countdown clipped')
    assert 'Cole' in announcement.locator('[data-transcript]').text_content()

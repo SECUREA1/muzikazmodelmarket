@@ -47,27 +47,32 @@ export function mountGameDisplayFlow(stage){
    for(const button of controls){
     let hidden=false;
     for(let node=button;node&&node!==views&&node!==overflow;node=node.parentElement)if(node.hidden){hidden=true;break;}
-    state.push(button,hidden);
+    state.push(button,hidden,!!button.querySelector('svg'));
    }
   }
   return state;
  }
+ function measureHeader(){
+  const height=Math.max(44,Math.ceil(views.getBoundingClientRect().height));
+  const set=(name,value)=>{if(stage.style.getPropertyValue(name)!==value)stage.style.setProperty(name,value);};
+  set('--game-view-controls-height',height+'px');set('--game-header-menu-height',Math.max(100,stage.clientHeight-height-136)+'px');
+ }
  function fit(){
   frame=null;if(fitting)return;fitting=true;
-  // The radio and More are the only top-row buttons. Every secondary header
-  // control keeps its original node, handler and runtime availability in More.
+  // Every available SVG launcher stays across the top. Keep original grouped
+  // components intact so their companion panels and input handlers still work.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
-  const priority=node=>{const i=['emergency-nuclear-toggle','doomsday-menu','game-camera-toggle','map-quest-launcher','district-map-toggle','live-local-map','game-flashlight-toggle','game-viewport-toggle','factory-toggle','prison-toggle','factory-testing-toggle','factory-logistics-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?20:i;};groups.sort((a,b)=>priority(a)-priority(b));
+  const priority=node=>{const i=['game-flashlight-toggle','game-camera-toggle','map-quest-launcher','emergency-radio-toggle','emergency-nuclear-toggle','district-map-toggle','live-local-map','doomsday-menu','game-viewport-toggle','factory-toggle','prison-toggle','factory-testing-toggle','factory-logistics-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?20:i;};groups.sort((a,b)=>priority(a)-priority(b));
   // Status badges and repeated snapshots do not change the toolbar footprint.
   // Reparenting an unchanged overflow group drops focus and pointer capture.
   const layout=layoutState();
-  if(lastLayout&&layout.length===lastLayout.length&&layout.every((value,index)=>value===lastLayout[index])){fitting=false;return;}
+  if(lastLayout&&layout.length===lastLayout.length&&layout.every((value,index)=>value===lastLayout[index])){measureHeader();fitting=false;return;}
   lastLayout=layout;
-  const pinned=groups.filter(node=>node.matches('.emergency-radio-toggle')),secondary=groups.filter(node=>!pinned.includes(node));
+  const pinned=groups.filter(node=>node.dataset.gameViewOverflow!=='true'&&launchers(node).some(button=>button.querySelector('svg'))),secondary=groups.filter(node=>!pinned.includes(node));
   let pinnedAnchor=more;for(let i=pinned.length-1;i>=0;i--){const node=pinned[i];if(node.parentElement!==views||node.nextSibling!==pinnedAnchor)views.insertBefore(node,pinnedAnchor);pinnedAnchor=node;}
   let menuAnchor=null;for(let i=secondary.length-1;i>=0;i--){const node=secondary[i];if(node.parentElement!==overflow||node.nextSibling!==menuAnchor)overflow.insertBefore(node,menuAnchor);menuAnchor=node;for(const button of launchers(node))labelButton(button,node);}
   more.hidden=![...overflow.children].some(available);if(more.hidden)closeOverflow();
-  stage.style.setProperty('--game-view-controls-height','44px');stage.style.setProperty('--game-header-menu-height',Math.max(100,stage.clientHeight-180)+'px');fitting=false;
+  measureHeader();fitting=false;
  }
  const schedule=()=>{if(disposed)return;if(frame===null)frame=requestAnimationFrame(fit);};
  const refit=()=>{lastLayout=null;schedule();};

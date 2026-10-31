@@ -31,7 +31,7 @@ try:
    item.tap();assert page.get_by_role('dialog',name='Interactive device',exact=True).is_visible()
    page.locator('[data-device-close]').click();portal.tap();assert page.evaluate('window.commands')==[{'entityId':'arcade'},{'entityId':'portal'}]
    page.evaluate('window.pair.renderPortal(null)');assert item.is_visible() and not portal.is_visible()
-   page.evaluate('''()=>{const stage=document.querySelector('.house-stage');for(const name of ['emergency-radio-toggle','game-camera-toggle','broadcast-controls']){const el=document.createElement(name==='broadcast-controls'?'div':'button');el.className=name;if(name!=='broadcast-controls'){el.textContent=name==='game-camera-toggle'?'View':'Emergency radio';if(name==='game-camera-toggle')el.onclick=()=>window.viewClicks=(window.viewClicks||0)+1;}else for(let i=0;i<5;i++){const b=document.createElement('button');b.textContent='Camera '+i;el.append(b);}stage.append(el);}}''')
+   page.evaluate('''()=>{const stage=document.querySelector('.house-stage');for(const name of ['emergency-radio-toggle','game-camera-toggle','broadcast-controls']){const el=document.createElement(name==='broadcast-controls'?'div':'button');el.className=name;if(name!=='broadcast-controls'){el.textContent=name==='game-camera-toggle'?'View':'Emergency radio';if(name==='emergency-radio-toggle')el.insertAdjacentHTML('beforeend','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v14H7z"/></svg>');if(name==='game-camera-toggle')el.onclick=()=>window.viewClicks=(window.viewClicks||0)+1;}else for(let i=0;i<5;i++){const b=document.createElement('button');b.textContent='Camera '+i;el.append(b);}stage.append(el);}}''')
    page.wait_for_selector('.game-view-overflow .game-camera-toggle',state='attached')
    assert page.locator('.game-display-flow-views > button').count()==2
    assert page.locator('.emergency-radio-toggle').evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
@@ -57,7 +57,7 @@ try:
    page.wait_for_function("document.querySelector('.game-display-flow > .road-vehicle-controls')!==null")
    assert page.locator('.road-vehicle-controls').is_visible()
    page.get_by_role('button',name='More view controls',exact=True).tap()
-   assert page.locator('.game-view-overflow .sports-action-utilities').is_visible()
+   assert page.locator('.game-display-flow-views>.sports-action-utilities').is_visible()
    assert page.locator('.house-control-dock').is_visible()
    assert page.locator('.game-camera-toggle').is_visible()
    for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert page.locator('.'+name).is_visible()

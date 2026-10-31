@@ -1,4 +1,4 @@
-"""Actual mobile airport: Radio + More, one emergency card, and original controls."""
+"""Actual mobile airport: SVG header icons, one emergency card, and original controls."""
 from pathlib import Path
 import asyncio,math,os,socket,subprocess,tempfile
 from playwright.async_api import async_playwright
@@ -37,7 +37,7 @@ async def main():
       assert await page.locator('#emergency-nuclear-panel').is_visible()
       assert await page.locator('#emergency-announcement-panel').is_visible()
       assert await page.locator('#emergency-nuclear-panel').evaluate("n=>!!n.closest('.emergency-popup-stack') && !n.closest('.game-view-overflow')")
-      assert await page.locator('.emergency-popup-stack').evaluate("n=>{const r=n.getBoundingClientRect(),s=document.querySelector('.house-stage').getBoundingClientRect();return r.left>=s.left&&r.left<s.left+20&&r.top>=s.top+50&&r.top<s.top+80;}")
+      assert await page.locator('.emergency-popup-stack').evaluate("n=>{const r=n.getBoundingClientRect(),s=document.querySelector('.house-stage').getBoundingClientRect();return r.left>=s.left&&r.left<s.left+20&&r.top>=document.querySelector('.game-display-flow-views').getBoundingClientRect().bottom&&r.top<document.querySelector('.game-display-flow-views').getBoundingClientRect().bottom+24;}")
       assert 'in ' in await page.locator('#emergency-nuclear-panel [data-countdown]').text_content()
       assert await page.locator('#emergency-nuclear-panel [data-countdown]').evaluate("n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}"),'The actual popup countdown is clipped.'
       await page.screenshot(path='/workspace/automatic-nuclear-world-popup.png')
@@ -50,11 +50,12 @@ async def main():
       assert await page.locator('#emergency-radio-popup').is_visible(),'A new fallout announcement did not reopen the one radio card.'
       await page.get_by_role('button',name='Close emergency radio',exact=True).click()
       print('airport: one real countdown/radio card dismisses current calls and reopens for new announcements',flush=True)
-     await page.wait_for_function("document.querySelector('.emergency-radio-toggle')?.parentElement.classList.contains('game-display-flow-views') && !!document.querySelector('.emergency-nuclear-toggle')?.closest('.game-view-overflow')")
+     await page.wait_for_function("document.querySelector('.emergency-radio-toggle')?.parentElement.classList.contains('game-display-flow-views') && document.querySelector('.emergency-nuclear-toggle')?.parentElement.classList.contains('game-display-flow-views')")
      assert await page.locator('.game-dock-actions').evaluate("n=>!n.closest('.game-view-overflow') && !!n.closest('.house-control-dock')")
      assert await page.get_by_role('button',name='Emergency radio',exact=True).is_visible()
      assert await page.locator('.emergency-nuclear-toggle').count()==1
-     assert await page.locator('.game-display-flow-views > button').count()==2
+     assert await page.locator('.game-display-flow-views > button').count()>2
+     assert await page.locator('.game-display-flow-views').evaluate("v=>{const icons=[...v.querySelectorAll('button')].filter(n=>n.querySelector('svg')&&n.getClientRects().length&&!n.closest('.world-resident-panel,.transport-radio-panel,.live-local-map [data-body]'));return icons.length>3&&icons.every(n=>!n.closest('.game-view-overflow'));}"),'A visible SVG launcher was left inside More.'
      assert await more.is_visible()
      assert await page.locator('.mobile-move-pad').is_visible()
      assert await page.locator('.doomsday-guide-chip').count()==0
@@ -78,7 +79,7 @@ async def main():
      await page.wait_for_function("document.querySelector('.doomsday-game-flow details').open")
      assert await page.locator('[data-flow-step=impacts]').is_visible()
      assert await page.locator('[data-flow-step=recovery]').is_visible()
-     print('airport: Radio + More, one popup with sound and guidance, and original dock controls passed',flush=True)
+     print('airport: SVG icons across header, one popup with sound and guidance, and original dock controls passed',flush=True)
      await page.get_by_role('button',name='Close emergency radio',exact=True).click()
      # Existing handlers must still open their actual world and settings screens.
      for selector,expected in [('#house-world-button',None),('#house-view-options','Settings & Explorer options')]:

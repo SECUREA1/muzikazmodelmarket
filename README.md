@@ -295,10 +295,11 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-The game header has exactly two controls: **Emergency radio** and **More**.
-More opens a compact, labeled list of the additional header actions, including
-the nuclear event and response guide. Every action keeps its original handler;
+All available SVG control icons appear across the top game header, wrapping
+into additional rows on smaller screens. **More** holds the remaining text
+actions, including the response guide. Every action keeps its original handler;
 the bottom dock, movement sticks, primary actions and vehicle controls stay in place.
+The emergency popup and local map open below the actual header height.
 
 Emergency radio opens one nonmodal popup at the top left, combining the live
 countdown, Cole’s animated portrait, current announcement and replay. Sound
@@ -307,7 +308,7 @@ are in collapsible sections in that same popup. One Close button dismisses the
 whole card. Each new event opens it once; a new radio announcement can reopen
 the same card, while duplicate callbacks from a dismissed call cannot. **Auto-show
 event panel** suppresses automatic popups without changing the response or audio.
-Native games use the same radio and More arrangement. Repeated mounts and
+Native games show their radio, nuclear and More icons across the top. Repeated mounts and
 viewport changes retain the original controls without duplicate buttons or panels.
 
 The response flow shows shelter, impacts, optional aircraft, supplies, relay and

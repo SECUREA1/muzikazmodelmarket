@@ -42,8 +42,8 @@ try:
    nuclear=page.get_by_role('button',name='Nuclear event',exact=True,include_hidden=True)
    popup=page.locator('#emergency-radio-popup');panel=page.locator('#emergency-nuclear-panel');countdown=panel.locator('[data-countdown]')
    assert more.get_attribute('aria-expanded')=='false' and popup.is_hidden()
-   assert page.locator('.game-display-flow-views > button').count()==2
-   assert nuclear.evaluate('n=>!!n.closest(".game-view-overflow")')
+   assert page.locator('.game-display-flow-views > button').count()==3
+   assert nuclear.evaluate('n=>n.parentElement.classList.contains("game-display-flow-views")')
    assert page.evaluate('!blocked()')
    assert page.evaluate('sim.doomsday.nextEventAt+18000-clock>=60000&&sim.doomsday.nextEventAt+18000-clock<=180000')
    page.evaluate('advance(sim.doomsday.nextEventAt)')
@@ -94,7 +94,7 @@ try:
    assert not errors,errors
    print(f'{width}x{height}: first/new-event countdown in one card, per-call dismissal, quest-led completion, focus and movement passed',flush=True)
    page.close()
-  # Opting out affects presentation only, and the original More action still works.
+  # Opting out affects presentation only, and the original nuclear header action still works.
   page=browser.new_page(viewport={'width':390,'height':844},has_touch=True)
   page.route('**/__automatic_panels',lambda route:route.fulfill(body=fixture,content_type='text/html'))
   page.goto(f'http://127.0.0.1:{server.server_port}/__automatic_panels');page.evaluate(setup,{})

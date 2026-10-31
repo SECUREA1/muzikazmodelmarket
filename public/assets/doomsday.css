@@ -241,3 +241,6 @@
 .native-emergency-controls .doomsday-section-toggle small{display:none}
 .native-doomsday .emergency-radio-popup{max-height:max(96px,calc(100dvh - 250px))}
 .house-stage:fullscreen .emergency-radio-popup,.house-stage:-webkit-full-screen .emergency-radio-popup{max-height:max(96px,calc(100% - 250px))}
+.house-stage .emergency-radio-popup{top:calc(var(--game-view-controls-height,44px) + 20px);max-height:calc(100% - var(--game-view-controls-height,44px) - 32px)}
+.house-stage:fullscreen .emergency-radio-popup,.house-stage:-webkit-full-screen .emergency-radio-popup{max-height:max(96px,calc(100% - var(--game-view-controls-height,44px) - 206px))}
+.native-doomsday>.emergency-nuclear-toggle{right:112px}

@@ -149,3 +149,17 @@ body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-vie
 .house-stage .game-view-more[data-emergency-active=true]{border-color:#ffe099;box-shadow:0 0 0 2px #d9a74566}
 .house-stage.player-hide-action-bars .game-display-flow-views>:is(.emergency-radio-toggle,.game-view-more):not([hidden]){display:grid!important}
 .house-stage.player-hide-action-bars .game-display-flow-views>.game-view-overflow:not([hidden]){display:flex!important}
+
+/* Show every SVG launcher across the top, wrapping at full touch-target size. */
+.house-stage>.game-display-flow-views{height:auto;min-height:44px;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:4px}
+.house-stage>.game-display-flow-views>.live-local-map{order:0;margin-left:0}
+.house-stage>.game-display-flow-views>.broadcast-controls,.house-stage>.game-display-flow-views>.sports-action-utilities{display:contents}
+.house-stage>.game-display-flow-views>.broadcast-controls>button{position:static!important;inset:auto!important;box-sizing:border-box;flex:0 0 44px;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px;min-height:44px;padding:8px!important;margin:0!important}
+.house-stage>.game-display-flow-views .game-view-overflow,.house-stage .game-display-flow-views .live-local-map [data-body]{top:calc(var(--game-view-controls-height,44px) + 8px)}
+.house-stage>.resident-visitor-prompt,.house-stage:has(>.game-display-flow)>.funhouse-audio-popover{top:calc(var(--game-view-controls-height,44px) + 20px)}
+.house-stage:has(>.game-display-flow)>.funhouse-audio-popover{max-height:calc(100% - var(--game-view-controls-height,44px) - 32px)}
+.house-stage>.game-display-flow-views>:is(.transport-activity,.world-resident-ui)>button{box-sizing:border-box;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px;min-height:44px;padding:8px!important;margin:0!important}
+/* Companion panels use the whole header as their anchor after wrapping. */
+.house-stage>.game-display-flow-views>:is(.transport-activity,.world-resident-ui){position:static!important;inset:auto!important;flex:0 0 44px;width:44px;height:44px;margin:0;padding:0}
+.house-stage .game-display-flow-views>:is(.transport-activity,.world-resident-ui)>:is(.transport-radio-panel,.world-resident-panel){position:absolute!important;inset:auto!important;top:calc(var(--game-view-controls-height,44px) + 8px)!important;left:0!important;box-sizing:border-box;width:min(360px,100%)!important;max-width:100%!important;max-height:var(--game-header-menu-height,55dvh)!important;overflow:auto!important;overscroll-behavior:contain;z-index:36}
+.house-stage .map-quest-card{top:calc(var(--game-view-controls-height,44px) + 20px);max-height:max(96px,calc(100% - var(--game-view-controls-height,44px) - 140px))}

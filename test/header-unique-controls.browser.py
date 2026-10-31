@@ -31,8 +31,8 @@ try:
    assert page.locator('.game-display-flow-views').count()==1 and page.locator('.game-view-more').count()==1
    assert page.locator('.emergency-radio-toggle').count()==1 and page.locator('.emergency-nuclear-toggle').count()==1
    assert page.evaluate('idsUnique()')
-   assert page.locator('.game-display-flow-views > button').count()==2
-   assert page.locator('.emergency-nuclear-toggle').evaluate("n=>!!n.closest('.game-view-overflow')")
+   assert page.locator('.game-display-flow-views > button').count()==3
+   assert page.locator('.emergency-nuclear-toggle').evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
    radio.focus();page.evaluate('''async()=>{for(let i=0;i<8;i++){refit();ui.tick(i/60);await new Promise(requestAnimationFrame);}}''')
    assert radio.evaluate('n=>document.activeElement===n'),'unchanged pinned refit dropped focus'
    page.evaluate('''()=>{window.presses=window.lostCapture=window.activations=0;const button=document.querySelector('.emergency-radio-toggle');button.addEventListener('pointerdown',event=>{presses++;button.setPointerCapture(event.pointerId);});button.addEventListener('lostpointercapture',()=>lostCapture++);button.addEventListener('click',()=>activations++);}''')
@@ -51,7 +51,7 @@ try:
    assert page.locator('.game-display-flow-views').count()==1 and page.locator('.emergency-radio-toggle,.emergency-nuclear-toggle').count()==2
    assert page.evaluate('idsUnique() && document.querySelector("#world")===world')
    assert page.locator('#emergency-radio-popup').count()==1
-   assert page.locator('.game-display-flow-views > button').count()==2
+   assert page.locator('.game-display-flow-views > button').count()==3
    assert not errors,errors
    print(f'{width}x{height}: one header/control instance, original handlers, unique IDs and held focus/capture survive refits',flush=True)
    page.close()
