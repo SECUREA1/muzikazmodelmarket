@@ -32,15 +32,15 @@ test('fallback covers every forge item while unknown identities remain unavailab
 });
 
 test('forge entry points version the engine and native catalogue so retry loads a current release',async()=>{
- const root=new URL('../',import.meta.url),version='forge-atelier-20261031',engineVersion='world-requests-20261031';
+ const root=new URL('../',import.meta.url),version='forge-atelier-20261031',engineVersion='forge-village-20261031';
  for(const page of ['model-explorer.html','model-market.html','index.html'])assert.ok((await readFile(new URL(page,root),'utf8')).includes('rad-tox-launcher.js?v='+engineVersion),page);
  const launcher=await readFile(new URL('public/js/rad-tox-launcher.js',root),'utf8');assert.ok(launcher.includes('house-explorer-glb.js?v='+engineVersion));
  const engine=await readFile(new URL('public/js/house-explorer-glb.js',root),'utf8');assert.ok(engine.includes('builder-models-3d.js?v='+version));
- const worker=await readFile(new URL('service-worker.js',root),'utf8');assert.ok(worker.includes('v2.6.33-world-requests'));
+ const worker=await readFile(new URL('service-worker.js',root),'utf8');assert.ok(worker.includes('v2.6.34-forge-village'));
  assert.equal(nativeDesignThumbnail('forge-stock-rack'),'/public/images/native-designs/forge-stock-rack.svg?v='+version);
  const modules=new URL('public/js/',root);
  for(const file of (await readdir(modules)).filter(name=>name.endsWith('.js'))){
   const source=await readFile(new URL(file,modules),'utf8');
-  for(const match of source.matchAll(/\b(?:from\s*|import\s*\()(['"])(\.\/forge-[a-z-]+\.js(?:\?[^'"]*)?)\1/g))assert.ok([version,engineVersion].some(release=>match[2].includes('?v='+release)),file+' must import a current version of its forge dependency: '+match[2]);
+  for(const match of source.matchAll(/\b(?:from\s*|import\s*\()(['"])(\.\/forge-[a-z-]+\.js(?:\?[^'"]*)?)\1/g))assert.ok([version,'world-requests-20261031',engineVersion].some(release=>match[2].includes('?v='+release)),file+' must import a current version of its forge dependency: '+match[2]);
  }
 });

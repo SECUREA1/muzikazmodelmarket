@@ -65,7 +65,7 @@ function createProceduralBuilderLand(environment) {
     const cuts=constructionCutoutPatches(environment),geometry=cuts.length?createConstructionBaseGeometry(THREE,layoutSize(built.mapSize),cuts,{color:Number(meta.color)||0x88745b,heightAt}):createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
     const terrain=new THREE.Mesh(geometry,layout==='firing-range'?createFiringRangeFloorMaterial(built.mapSize):createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
-    const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;
+    const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;root.userData.forgeVillage=layout==='forge';
     // Recreate the complete template, not merely its terrain plane. Every mesh
     // is part of the world root, so the standard collision pass automatically
     // makes buildings, trees, rails, cover and set dressing solid in Test Map.
@@ -102,7 +102,7 @@ function createProceduralBuilderLand(environment) {
     }
     finishLayoutArchitecture(root);
     root.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);applySportsSurfaces(root,layout);
-    if(!root.userData.firingRange&&!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
+    if(!root.userData.firingRange&&!root.userData.cleanSportsWorld&&!root.userData.forgeVillage)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     applyBuilderBaseTransform(root,built.baseTransform);
 
     return layout==='mountain-pass'?finishMountainTerrainDesign(THREE,root,{ridgeNames:['BUILDER_TEMPLATE_mountain-pass']}):root;

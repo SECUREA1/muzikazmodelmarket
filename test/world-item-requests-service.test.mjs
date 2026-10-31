@@ -46,6 +46,15 @@ async function fixture(t){
 }
 const requestOf=(state,id)=>state.inventoryRequests.find(row=>row.id===id);
 const balance=(f,wallet)=>f.db.get(wallet).then(user=>user.tokens.MZK);
+
+test('authored village street names preserve an in-flight request to the same verified doorway and recipient',async t=>{
+ const f=await fixture(t),request=await f.create();await f.claim(request);const job=await f.produce();await f.finish(job);
+ const fulfilled=await f.fulfill(request),shipment=(await f.state(MAKER)).shipments.find(row=>row.id===fulfilled.shipmentIds[0]);
+ await sail(f,shipment);const before=await balance(f,MAKER),oldAddress=await f.address();
+ f.maps[2].streets=[{id:'village-prom',name:'Coppergate Promenade',from:{x:0,z:0},to:{x:25,z:0},width:6}];
+ const renamed=await f.address();assert.notEqual(renamed.revision,oldAddress.revision);assert.deepEqual(renamed.position,oldAddress.position);
+ const state=await receive(f,shipment.id);assert.equal(requestOf(state,request.id).phase,'delivered');assert.equal(await balance(f,MAKER),before+REWARD);assert.equal(state.maps.find(row=>row.id==='request-city').stock[ITEM],1);
+});
 async function sail(f,shipment){
  const route=SHIPPING_ROUTES.find(row=>row.id===shipment.contractId),identity={walletId:OTHER},environment=f.maps[0],player={shipping:{}},startedAt=f.now,jobId='request-sea:'+shipment.id;
  await f.service.shippingAction(identity,{},player,environment,{operation:'reserve',shipmentId:shipment.id,contractId:route.id});

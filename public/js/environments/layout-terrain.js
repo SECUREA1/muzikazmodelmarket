@@ -1,3 +1,4 @@
+import {forgeVillageGroundColor} from '../forge-village-finish.js?v=forge-village-20261031';
 import * as THREE from '../../vendor/three/three.module.min.js';
 import {groundLandscapeProfile,createLandscapeGroundMaterial} from '../ground-landscape-design.js';
 export function layoutHeight(layout, x, z) {
@@ -38,6 +39,7 @@ export function createLayoutTerrain(layout, size, color=0x315b32) {
   const grain=Math.sin(x*1.7+Math.cos(z*.8))*.018+Math.cos(z*1.3-x*.6)*.014;
   const broad=Math.sin(x*.09)*Math.cos(z*.11)*.065;
   tint.copy(base).multiplyScalar(1+broad+grain);
+  if(layout==='forge')tint.setHex(forgeVillageGroundColor(x,z)).multiplyScalar(1+broad+grain);
   if(layout==='community-park'){
    const plaza=Math.hypot(x,z-8)<8.5;
    const promenade=Math.abs(x-8)<1.7&&z>=8&&z<=61;

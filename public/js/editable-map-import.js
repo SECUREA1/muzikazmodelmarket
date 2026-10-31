@@ -1,4 +1,4 @@
-import {editableForgeScene} from './forge-builder.js?v=forge-atelier-20261031';
+import {editableForgeScene} from './forge-builder.js?v=forge-village-20261031';
 import {FORGE_ITEMS,forgeNativeItem} from './forge-items.js?v=forge-atelier-20261031';
 import {FOREST_SNAKE_ITEMS,forestSnakeNativeItem} from './forest-snake-items.js';
 import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';

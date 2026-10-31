@@ -1,7 +1,8 @@
+import {FORGE_VILLAGE_SIZE,forgeVillageObjects,forgeVillageMeta,forgeVillageStreets} from './forge-village.js?v=forge-village-20261031';
 import {FORGE_ID,FORGE_STATIONS,FORGE_CREW,isForgeEnvironment,forgeStations,forgeCrew,forgeObjectPoint} from './forge-config.js?v=forge-atelier-20261031';
 import {FORGE_ITEMS,forgeItemSettings} from './forge-items.js?v=forge-atelier-20261031';
 const clone=value=>structuredClone(value);
-export const FORGE_BUILDER_LAYOUT=Object.freeze({name:'Emberfall · Traditional Forge',icon:'⚒',description:'A complete editable smithy with six defined work bays, a product gallery, live MZK market, receipt-backed dispatch yard, marked courier lanes and three AI specialists.',color:0x53453a,sky:0x251c19,mapSize:128,mapColor:'#ef9a49'});
+export const FORGE_BUILDER_LAYOUT=Object.freeze({name:'Emberfall · Traditional Forge',icon:'⚒',description:'An explorable forge village with a grand framed smithy, inn, metallurgy archive, guild museum, furnished artisan homes, civic market, cooling millrace and verified world freight.',color:0x53453a,sky:0x251c19,mapSize:FORGE_VILLAGE_SIZE,mapColor:'#ef9a49'});
 const settings=source=>({...clone(source||{}),enabled:true,currency:'MZK',editableStations:true,editableCrew:true,stations:clone(FORGE_STATIONS),crew:clone(FORGE_CREW)});
 const placed=(id,modelId,name,x,z,extra={})=>({id,modelId,asset:{buildAssetId:modelId},name,position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},placementAnchor:'collider-base',functionalSettings:forgeItemSettings(modelId)||{behavior:'decor',active:true,destructible:false,damage:0},...extra});
 export function forgeBuilderObjects(){
@@ -70,7 +71,13 @@ export function forgeBuilderObjects(){
 
  for(const x of [-40,40])for(const z of [24,42])objects.push(placed('forge-yard-light-'+x+'-'+z,'lamp-post','Smithy yard lantern',x,z));
  for(const [id,name,x,target]of [['forge-commons-gate','World Commons',-23,'public-commons'],['forge-factory-gate','World Item Factory',23,'world-item-factory'],['forge-shipping-gate','Playable shipping routes',46,'hormuz-shipping']])objects.push(placed(id,'archway',name+' gateway',x,43,{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:6,prompt:name+' · E / Use',portal:{enabled:true,destinationType:'map',targetMapId:target},destructible:false,damage:0}}));
- return objects;
+ const obsolete=object=>['forge-back-wall'].includes(object.id)||/^forge-(?:post-|roof-beam-|truss-|roof-wing-|clerestory-fin-)/.test(object.id);
+ const retained=objects.filter(object=>!obsolete(object));
+ for(const object of retained){
+  if(object.modelId==='material:cube'){const label=object.name.toLowerCase();object.functionalSettings.forgeVillageMaterial=/copper|brass|bronze/.test(label)?'copper':/timber|oak|wood|beam|post/.test(label)?'wood':'stone';}
+  if(object.modelId==='material:cube'&&(Number(object.position?.y)||0)<=.02&&(Number(object.scale?.y)||0)*1.2<=.16)Object.assign(object.functionalSettings,{forgeVillageSurface:true,forgeVillageSurfaceLayer:4});
+ }
+ return [...retained,...forgeVillageObjects()];
 }
 export function forgeBuilderLayoutMeta(scene,base={}){
  if(!isForgeEnvironment({builderScene:scene})&&!scene.sourceForge?.enabled)return {...base};
@@ -86,10 +93,12 @@ export function forgeBuilderLayoutMeta(scene,base={}){
   return {id:'forge-workspace-'+station.id,kind:station.kind,stationId:station.id,position,approach:{...station.approach}};
  });
  const dynamicIds=new Set(['forge-dispatch-yard','forge-policies']);
- const locations=retained.filter(place=>!dynamicIds.has(place.id));
+ const village=forgeVillageMeta(scene);
+ const locations=retained.filter(place=>!dynamicIds.has(place.id)&&!place.villageAnchorId&&!String(place.id||'').startsWith('forge-village-'));
+ if(village)locations.push(...village.locations);
  if(yard)locations.push({id:'forge-dispatch-yard',name:'Sealed freight · Dispatch & shipping routes',...yard.dispatchApproach,width:19,depth:14,description:'Seal exact Backpack creations into counted warehouse units, inspect real stock and choose a verified shipping route.'});
  if(policy)locations.push({id:'forge-policies',name:'MZK ownership · Trading & freight policies',...forgeObjectPoint(policy,policy.functionalSettings?.forgePolicyApproach||{x:0,y:0,z:4}),width:8,depth:8,description:'Review MZK kit prices, Backpack ownership, resale receipts, sealing and delivery policies.'});
- return {...base,...scene.layoutMeta,color:0x53453a,forge,forgeYard:yard,forgeCrewWorkspaces:workspaces,locations:[...forgeStations(environment).map(station=>({id:station.id,forgeStationId:station.id,name:station.name,x:station.approach.x,y:station.approach.y,z:station.approach.z,width:9,depth:8,description:station.description})),...locations],residents:forgeCrew(environment)};
+ return {...base,...scene.layoutMeta,color:0x53453a,forge,forgeVillage:village,forgeYard:yard,forgeCrewWorkspaces:workspaces,locations:[...forgeStations(environment).map(station=>({id:station.id,forgeStationId:station.id,name:station.name,x:station.approach.x,y:station.approach.y,z:station.approach.z,width:9,depth:8,description:station.description})),...locations],residents:forgeCrew(environment)};
 }
 export function editableForgeScene(input){
  const scene=clone(input);if(!isForgeEnvironment({builderScene:scene})&&!isForgeEnvironment(scene.baseEnvironment))return scene;
@@ -101,5 +110,5 @@ export function editableForgeScene(input){
  scene.layoutMeta=forgeBuilderLayoutMeta(scene,scene.layoutMeta||{});return scene;
 }
 export function createForgeBuilderScene({id='custom-forge',name='Emberfall · Custom Forge'}={}){
- return editableForgeScene({version:3,id,name,layout:'forge',sourceLayout:'forge',sourceGame:'forge',sourceEnvironmentId:FORGE_ID,mapSize:128,weather:'clear',sourceSpawn:{x:0,y:.02,z:37,rotationY:0},sourceForge:settings(),objects:forgeBuilderObjects(),layoutMeta:{color:0x53453a,locations:[{id:'forge-arrival',name:'Forge arrival & work orders',x:0,y:.02,z:37,width:38,depth:14,description:'Read the work orders, meet the smithy crew and visit the neighboring World Item Factory.'},{id:'forge-crew-court',name:'Smiths’ courtyard',x:0,z:7,width:68,depth:14,description:'Meet the master smith, metallurgist and quartermaster for local objectives and forging advice.'},{id:'forge-market',name:'Emberfall MZK Market & product gallery',x:27,y:.02,z:30,width:20,depth:14,description:'Inspect real forge products, compare live MZK offers and shop through the shared Market terminal.'}]},gameplay:{multiplayer:true,friendlyFire:false,radTox:false,forge:{enabled:true}}});
+ return editableForgeScene({version:3,id,name,layout:'forge',sourceLayout:'forge',sourceGame:'forge',sourceEnvironmentId:FORGE_ID,mapSize:FORGE_VILLAGE_SIZE,weather:'clear',streets:forgeVillageStreets(),sourceSpawn:{x:0,y:.02,z:37,rotationY:0},sourceForge:settings(),objects:forgeBuilderObjects(),layoutMeta:{color:0x53453a,locations:[{id:'forge-arrival',name:'Forge arrival & work orders',x:0,y:.02,z:37,width:38,depth:14,description:'Read the work orders, meet the smithy crew and visit the neighboring World Item Factory.'},{id:'forge-crew-court',name:'Smiths’ courtyard',x:0,z:7,width:68,depth:14,description:'Meet the master smith, metallurgist and quartermaster for local objectives and forging advice.'},{id:'forge-market',name:'Emberfall MZK Market & product gallery',x:27,y:.02,z:30,width:20,depth:14,description:'Inspect real forge products, compare live MZK offers and shop through the shared Market terminal.'}]},gameplay:{multiplayer:true,friendlyFire:false,radTox:false,forge:{enabled:true}}});
 }

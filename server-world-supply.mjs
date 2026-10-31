@@ -32,7 +32,13 @@ const own=(object,key)=>Object.hasOwn(object,key);
 const activePhases=new Set(['loading','secured','sailing','unloading']);
 const routes=SHIPPING_ROUTES.filter(route=>route.from!==route.to&&!route.factoryExport);
 function itemRequestAddressValid(data,record,directory){
- return !!directory?.addressValid(data,record)&&directory.addressFor(data,record.addressId)?.revision===record.addressRevision;
+ if(!directory?.addressValid(data,record))return false;
+ const current=directory.addressFor(data,record.addressId);if(!current)return false;
+ if(current.revision===record.addressRevision)return true;
+ // Renaming an atlas street changes the printed address, not its doorway.
+ // Keep paid work attached to that same verified recipient and physical point.
+ const saved=record.address;
+ return current.id===record.addressId&&current.mapId===record.destinationMapId&&current.kind===saved?.kind&&['x','y','z'].every(axis=>Number.isFinite(current.position?.[axis])&&Number.isFinite(saved?.position?.[axis])&&Math.abs(current.position[axis]-saved.position[axis])<1e-6);
 }
 function itemRequestDeliveryAddressValid(ledger,data,record,directory){
  if(!directory?.addressValid(data,record))return false;
