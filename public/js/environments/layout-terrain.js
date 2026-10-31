@@ -1,7 +1,7 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
 import {groundLandscapeProfile,createLandscapeGroundMaterial} from '../ground-landscape-design.js';
 export function layoutHeight(layout, x, z) {
-      if(layout==='world-item-factory')return 0;
+      if(layout==='world-item-factory'||layout==='forge')return 0;
       if(layout==='basketball-stadium'||layout==='basketball-arena'||layout==='firing-range')return 0;
       if(layout.startsWith('urban-')||layout.startsWith('camp-'))return 0;
       const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);
@@ -30,7 +30,7 @@ export function layoutSize(value) { return Math.max(40,Math.min(2000,Number(valu
 export function createLayoutTerrain(layout, size, color=0x315b32) {
  size=layoutSize(size);const segments=Math.min(160,Math.max(80,Math.round(size)));
  const geometry=new THREE.PlaneGeometry(size,size,segments,segments),positions=geometry.attributes.position,colors=[];
- geometry.userData.planarCollision=['grand-floor','community-park','basketball-stadium','basketball-arena','firing-range'].includes(layout)||layout.startsWith('urban-')||layout.startsWith('camp-');
+ geometry.userData.planarCollision=['grand-floor','community-park','basketball-stadium','basketball-arena','firing-range','forge'].includes(layout)||layout.startsWith('urban-')||layout.startsWith('camp-');
  const base=new THREE.Color(color),tint=new THREE.Color();
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),z=-positions.getY(i),height=layoutHeight(layout,x,z);
@@ -56,7 +56,7 @@ export function createLayoutMaterial(layout,size) {
  if(landscape)return createLandscapeGroundMaterial(THREE,{kind:landscape});
  // Repeatable local surface detail needs no image requests or browser canvas.
  const resolution=64,data=new Uint8Array(resolution*resolution*4);
- const stone=/urban|dungeon|mine|blacksite|cargo|range|railroad|market|mall|office|grand-floor/.test(layout);
+ const stone=/urban|dungeon|mine|blacksite|cargo|range|railroad|market|mall|office|grand-floor|forge/.test(layout);
  const sand=/desert|dune|airfield/.test(layout);
  const wood=/loft|suite|studio/.test(layout);
  for(let y=0;y<resolution;y++)for(let x=0;x<resolution;x++){

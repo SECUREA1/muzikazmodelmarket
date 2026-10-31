@@ -30692,6 +30692,1862 @@
       "multiplayerCompatible": true
     },
     {
+      "assetId": "native-forge-aegis-shield",
+      "name": "Aegis Forged Shield",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-aegis-shield.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-aegis-shield",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.8,
+        1.1,
+        0.2
+      ],
+      "priceMzk": 460,
+      "description": "A dished steel shield with a bronze rim, raised central boss and leather carrying straps.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-aegis-shield",
+        "forgeMaterial": false,
+        "prompt": "Inspect Aegis Forged Shield · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-anvil",
+      "name": "Master Smith Anvil",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-anvil.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-anvil",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.8,
+        1.25,
+        0.85
+      ],
+      "priceMzk": 240,
+      "description": "A horned steel anvil on an oak stump, with hardy hole, striking face and tool ledge.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "hammer",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Master Smith Anvil · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-battle-axe",
+      "name": "Ironwake Battle Axe",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-battle-axe.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-battle-axe",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.65,
+        1.3,
+        0.16
+      ],
+      "priceMzk": 390,
+      "description": "A crescent forged axe with a bright cutting bevel, decorated eye and leather wrapped haft.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-battle-axe",
+        "forgeMaterial": false,
+        "prompt": "Inspect Ironwake Battle Axe · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-bellows",
+      "name": "Leather Forge Bellows",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-bellows.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-bellows",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.5,
+        1.3,
+        2.2
+      ],
+      "priceMzk": 90,
+      "description": "A riveted leather and timber bellows for the smithing fire.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Inspect Leather Forge Bellows · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-bronze-ingot",
+      "name": "Bronze Alloy Ingot",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-bronze-ingot.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-bronze-ingot",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.6,
+        0.18,
+        0.28
+      ],
+      "priceMzk": 24,
+      "description": "A warm bronze alloy ingot for guards, fittings and decorative metalwork.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": "forge-bronze-ingot",
+        "prompt": "Inspect Bronze Alloy Ingot · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-coal",
+      "name": "Smithing Coal",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-coal.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-coal",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.55,
+        0.65,
+        0.45
+      ],
+      "priceMzk": 8,
+      "description": "A measured sack of forge fuel with a tied canvas neck and a coal sample.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": "forge-coal",
+        "prompt": "Inspect Smithing Coal · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-coal-bin",
+      "name": "Smithy Coal Bin",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-coal-bin.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-coal-bin",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.5,
+        0.95,
+        1.4
+      ],
+      "priceMzk": 65,
+      "description": "A braced timber coal bin with individual dark fuel lumps and a steel scoop.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Inspect Smithy Coal Bin · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-damascus-blade",
+      "name": "Stormfold Damascus Blade",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-damascus-blade.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-damascus-blade",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.38,
+        1.35,
+        0.12
+      ],
+      "priceMzk": 480,
+      "description": "A pattern welded blade with flowing steel layers, bronze guard and a leather wrapped hilt.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-damascus-blade",
+        "forgeMaterial": false,
+        "prompt": "Inspect Stormfold Damascus Blade · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-finishing-bench",
+      "name": "Smith Finishing Bench",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-finishing-bench.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-finishing-bench",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.4,
+        2,
+        1.5
+      ],
+      "priceMzk": 220,
+      "description": "A leather covered workbench with a vice, sharpening stones and maker stamp for completed metalwork.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "finish",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Smith Finishing Bench · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-grinding-wheel",
+      "name": "Treadle Grinding Wheel",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-grinding-wheel.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-grinding-wheel",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        1.4,
+        1.5,
+        1.2
+      ],
+      "priceMzk": 120,
+      "description": "A stone wheel on a timber treadle frame with a guarded steel shaft.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Inspect Treadle Grinding Wheel · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-hammer",
+      "name": "Cross Peen Smithing Hammer",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-hammer.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-hammer",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.4,
+        0.7,
+        0.15
+      ],
+      "priceMzk": 45,
+      "description": "A balanced forged steel hammer with an ash grip and polished striking faces.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Inspect Cross Peen Smithing Hammer · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-hearth",
+      "name": "Coal Fired Smithing Hearth",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-hearth.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-hearth",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.4,
+        3.8,
+        2.4
+      ],
+      "priceMzk": 360,
+      "description": "A brick charcoal hearth with a glowing firepot, steel hood and working air bellows.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "heat",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Coal Fired Smithing Hearth · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-iron-ingot",
+      "name": "Refined Iron Ingot",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-iron-ingot.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-iron-ingot",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.6,
+        0.18,
+        0.28
+      ],
+      "priceMzk": 18,
+      "description": "A stamped iron ingot ready for the forge stock rack.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": "forge-iron-ingot",
+        "prompt": "Inspect Refined Iron Ingot · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-master-smith",
+      "name": "Brann Emberhand · Master Smith",
+      "category": "forge",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-master-smith.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-master-smith",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.75,
+        1.9,
+        0.6
+      ],
+      "priceMzk": 300,
+      "description": "An apron wearing forge mentor who explains hammer work, commissions and maker marks.",
+      "behavior": "talk",
+      "function_data": {
+        "active": true,
+        "behavior": "talk",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": "master",
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Talk to Brann Emberhand · Master Smith · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-metallurgist",
+      "name": "Dr. Sera Vale · Metallurgist",
+      "category": "forge",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-metallurgist.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-metallurgist",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.72,
+        1.85,
+        0.6
+      ],
+      "priceMzk": 300,
+      "description": "A goggle wearing alloy specialist who guides material selection and quality inspection.",
+      "behavior": "talk",
+      "function_data": {
+        "active": true,
+        "behavior": "talk",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": "metallurgist",
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Talk to Dr. Sera Vale · Metallurgist · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-quartermaster",
+      "name": "Kade Ironledger · Forge Quartermaster",
+      "category": "forge",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-quartermaster.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-quartermaster",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.76,
+        1.88,
+        0.6
+      ],
+      "priceMzk": 300,
+      "description": "A ledger carrying supply keeper linking smithing commissions, MZK trading and the Backpack.",
+      "behavior": "talk",
+      "function_data": {
+        "active": true,
+        "behavior": "talk",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": "quartermaster",
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Talk to Kade Ironledger · Forge Quartermaster · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-quench-tank",
+      "name": "Forge Quench Tank",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-quench-tank.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-quench-tank",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        2.8,
+        1.25,
+        1.5
+      ],
+      "priceMzk": 160,
+      "description": "A riveted quenching trough with water, lifting tongs and an alloy inspection gauge.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "quench",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Forge Quench Tank · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-steel-billet",
+      "name": "Layered Steel Billet",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-steel-billet.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-steel-billet",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.72,
+        0.17,
+        0.23
+      ],
+      "priceMzk": 30,
+      "description": "A prepared laminated steel billet showing its stacked layers along the edge.",
+      "behavior": "decor",
+      "function_data": {
+        "active": true,
+        "behavior": "decor",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": "forge-steel-billet",
+        "prompt": "Inspect Layered Steel Billet · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-stock-rack",
+      "name": "Forge Metal Stock Rack",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-stock-rack.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-stock-rack",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.6,
+        2.2,
+        1.4
+      ],
+      "priceMzk": 180,
+      "description": "Numbered steel racks storing iron, bronze and layered billets for traditional forging.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "sourcing",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Forge Metal Stock Rack · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-tempering-oven",
+      "name": "Tempering Oven",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-tempering-oven.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-tempering-oven",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        3.2,
+        2.5,
+        2.3
+      ],
+      "priceMzk": 320,
+      "description": "A refractory lined tempering oven with inspection window, temperature dial and cooling rack.",
+      "behavior": "interact",
+      "function_data": {
+        "active": true,
+        "behavior": "interact",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": "temper",
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "forgeApproach": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "prompt": "Use Tempering Oven · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-tongs",
+      "name": "Blacksmith Tongs",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-tongs.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-tongs",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.23,
+        0.9,
+        0.12
+      ],
+      "priceMzk": 35,
+      "description": "Long handled steel tongs with a visible pivot and curved billet gripping jaws.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": false,
+        "forgeMaterial": false,
+        "prompt": "Inspect Blacksmith Tongs · E / Use"
+      }
+    },
+    {
+      "assetId": "native-forge-warhammer",
+      "name": "Emberstrike Warhammer",
+      "category": "forge",
+      "assetType": "props",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "",
+      "thumbnail": "/public/images/native-designs/forge-warhammer.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact",
+        "configure"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true,
+      "buildAssetId": "forge-warhammer",
+      "builderCategory": "forge",
+      "basketballTeam": null,
+      "format": "procedural-3d",
+      "native": true,
+      "dimensions": [
+        0.7,
+        1.25,
+        0.26
+      ],
+      "priceMzk": 420,
+      "description": "A forged steel warhammer with bronze cheek plates, peened rivets and a long ash grip.",
+      "behavior": "pickup",
+      "function_data": {
+        "active": true,
+        "behavior": "pickup",
+        "action": "none",
+        "destructible": false,
+        "damage": 0,
+        "interactionKey": "e",
+        "interactionDistance": 5,
+        "forgeStation": false,
+        "forgeCrew": false,
+        "forgeProduct": "forge-warhammer",
+        "forgeMaterial": false,
+        "prompt": "Inspect Emberstrike Warhammer · E / Use"
+      }
+    },
+    {
       "assetId": "nervey-the-nervous-system",
       "name": "Nervey The Nervous System",
       "category": "characters",
@@ -32379,7 +34235,7 @@
     }
   ],
   "audit": {
-    "assetCount": 470,
+    "assetCount": 492,
     "generatedCount": 44,
     "warnings": [
       {

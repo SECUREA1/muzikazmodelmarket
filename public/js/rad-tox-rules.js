@@ -1,3 +1,4 @@
+import {isForgeEnvironment} from './forge-config.js';
 import {isForestHarvestEnvironment} from './forest-harvest-config.js';
 import {isTropicalIslandEnvironment} from './tropical-island-config.js';
 import {isPrisonEnvironment} from './prison-config.js';
@@ -11,7 +12,7 @@ import {isFactoryTestingEnvironment} from './factory-test-config.js';
 import {isFunhouseEnvironment} from './clown-funhouse-config.js';
 
 // Keep Commons ground and tools available without ambient toxic encounters.
-export const isCleanCommonsEnvironment=environment=>isForestHarvestEnvironment(environment)||isTropicalIslandEnvironment(environment)||isPrisonEnvironment(environment)||isFactoryTestingEnvironment(environment)||isFunhouseEnvironment(environment)||isFactoryEnvironment(environment)||isFitnessEnvironment(environment)||environment?.id==='public-commons'||environment?.id==='muzikaz-casino'||environment?.game==='casino'||environment?.builderScene?.layout==='casino'||environment?.game==='ski'||environment?.game==='construction'||!!environment?.construction||!!environment?.builderScene?.layoutMeta?.construction||environment?.landLots?.length>0||!!environment?.lot;
+export const isCleanCommonsEnvironment=environment=>isForgeEnvironment(environment)||isForestHarvestEnvironment(environment)||isTropicalIslandEnvironment(environment)||isPrisonEnvironment(environment)||isFactoryTestingEnvironment(environment)||isFunhouseEnvironment(environment)||isFactoryEnvironment(environment)||isFitnessEnvironment(environment)||environment?.id==='public-commons'||environment?.id==='muzikaz-casino'||environment?.game==='casino'||environment?.builderScene?.layout==='casino'||environment?.game==='ski'||environment?.game==='construction'||!!environment?.construction||!!environment?.builderScene?.layoutMeta?.construction||environment?.landLots?.length>0||!!environment?.lot;
 
 // Equipping a tool does not require opting into an ambient toxic encounter.
 export const supportsWorldTools=environment=>Boolean(environment)&&environment.playable!==false;

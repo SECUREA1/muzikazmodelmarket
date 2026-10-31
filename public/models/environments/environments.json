@@ -77943,6 +77943,44 @@
           }
         },
         {
+          "id": "factory-forge-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Emberfall Traditional Forge",
+          "position": {
+            "x": 63,
+            "y": 0,
+            "z": 52
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Emberfall Traditional Forge · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "traditional-forge"
+            }
+          }
+        },
+        {
           "id": "factory-lamp--64--39",
           "modelId": "lamp-post",
           "asset": {
@@ -91317,5 +91355,2608 @@
       }
     },
     "playUrl": "model-explorer.html?environment=forest-harvest&house=forest-harvest&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "traditional-forge",
+    "name": "Emberfall · Traditional Forge",
+    "label": "Heat · hammer · quench · temper · masterwork",
+    "description": "A traditional metallurgy workshop with glowing charcoal hearth, leather bellows, anvils, a quench bath, tempering oven and grinding and inspection benches. Turn measured metal and fuel kits into Damascus blades, warhammers, battle axes and Aegis shields through server-confirmed work orders. Meet master smith Brann Emberhand, metallurgist Sera Vale and quartermaster Kade Ironledger for conversation and local quests. Finished items join your Backpack and share the MZK market and Builder catalogue.",
+    "category": "Forge & metallurgy",
+    "game": "forge",
+    "mapTheme": "industrial",
+    "mapColor": "#ef9a49",
+    "forge": {
+      "enabled": true,
+      "currency": "MZK",
+      "editableStations": true,
+      "editableCrew": true,
+      "stations": [
+        {
+          "id": "forge-sourcing",
+          "kind": "sourcing",
+          "name": "01 · Select metal & fuel",
+          "modelId": "forge-stock-rack",
+          "position": {
+            "x": -30,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": -30,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Choose a recipe and purchase its measured metal and coal kit with MZK."
+        },
+        {
+          "id": "forge-heat",
+          "kind": "heat",
+          "name": "02 · Charcoal hearth",
+          "modelId": "forge-hearth",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": -18,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Heat the billet to forging temperature before shaping it."
+        },
+        {
+          "id": "forge-hammer",
+          "kind": "hammer",
+          "name": "03 · Anvil & shaping",
+          "modelId": "forge-anvil",
+          "position": {
+            "x": -6,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": -6,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Strike the heated workpiece to draw, shape and consolidate the metal."
+        },
+        {
+          "id": "forge-quench",
+          "kind": "quench",
+          "name": "04 · Quench bath",
+          "modelId": "forge-quench-tank",
+          "position": {
+            "x": 6,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": 6,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Quench the shaped workpiece to harden it."
+        },
+        {
+          "id": "forge-temper",
+          "kind": "temper",
+          "name": "05 · Tempering oven",
+          "modelId": "forge-tempering-oven",
+          "position": {
+            "x": 18,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": 18,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Temper hardened metal to balance hardness and toughness."
+        },
+        {
+          "id": "forge-finish",
+          "kind": "finish",
+          "name": "06 · Grind, inspect & collect",
+          "modelId": "forge-finishing-bench",
+          "position": {
+            "x": 30,
+            "y": 0,
+            "z": -12
+          },
+          "approach": {
+            "x": 30,
+            "y": 0,
+            "z": -7
+          },
+          "interactionDistance": 5,
+          "description": "Finish and inspect the item, then collect it in your Backpack."
+        }
+      ],
+      "crew": [
+        {
+          "id": "forge-master-smith-npc",
+          "modelId": "forge-master-smith",
+          "name": "Brann Emberhand",
+          "role": "Master smith",
+          "color": "#b76a3f",
+          "skin": "#a36c4e",
+          "home": {
+            "x": -11,
+            "y": 0,
+            "z": 3
+          },
+          "task": "guiding hammer work and inspecting forged shapes",
+          "greeting": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+        },
+        {
+          "id": "forge-metallurgist-npc",
+          "modelId": "forge-metallurgist",
+          "name": "Dr. Sera Vale",
+          "role": "Metallurgist",
+          "color": "#527e89",
+          "skin": "#c99170",
+          "home": {
+            "x": 14,
+            "y": 0,
+            "z": 3
+          },
+          "task": "checking heat treatment and the balance of hardness and toughness",
+          "greeting": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+        },
+        {
+          "id": "forge-quartermaster-npc",
+          "modelId": "forge-quartermaster",
+          "name": "Kade Ironledger",
+          "role": "Quartermaster",
+          "color": "#7d8051",
+          "skin": "#785440",
+          "home": {
+            "x": -29,
+            "y": 0,
+            "z": 10
+          },
+          "task": "counting metal, coal and workshop orders",
+          "greeting": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+        }
+      ]
+    },
+    "worldId": "skyline-deck",
+    "source": "repository",
+    "visibility": "public",
+    "permanent": true,
+    "publicDestination": true,
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "proceduralLand": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-31T12:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 128,
+    "thumbnailUrl": "/public/images/forge/traditional-forge.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 37,
+      "rotationY": 0
+    },
+    "portalTargets": [
+      "world-item-factory",
+      "public-commons"
+    ],
+    "streets": [],
+    "builderScene": {
+      "version": 3,
+      "id": "traditional-forge",
+      "name": "Emberfall · Traditional Forge",
+      "layout": "forge",
+      "sourceLayout": "forge",
+      "sourceGame": "forge",
+      "sourceEnvironmentId": "traditional-forge",
+      "mapSize": 128,
+      "weather": "clear",
+      "sourceSpawn": {
+        "x": 0,
+        "y": 0.02,
+        "z": 37,
+        "rotationY": 0
+      },
+      "sourceForge": {
+        "enabled": true,
+        "currency": "MZK",
+        "editableStations": true,
+        "editableCrew": true,
+        "stations": [
+          {
+            "id": "forge-sourcing",
+            "kind": "sourcing",
+            "name": "01 · Select metal & fuel",
+            "modelId": "forge-stock-rack",
+            "position": {
+              "x": -30,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": -30,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Choose a recipe and purchase its measured metal and coal kit with MZK."
+          },
+          {
+            "id": "forge-heat",
+            "kind": "heat",
+            "name": "02 · Charcoal hearth",
+            "modelId": "forge-hearth",
+            "position": {
+              "x": -18,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": -18,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Heat the billet to forging temperature before shaping it."
+          },
+          {
+            "id": "forge-hammer",
+            "kind": "hammer",
+            "name": "03 · Anvil & shaping",
+            "modelId": "forge-anvil",
+            "position": {
+              "x": -6,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": -6,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Strike the heated workpiece to draw, shape and consolidate the metal."
+          },
+          {
+            "id": "forge-quench",
+            "kind": "quench",
+            "name": "04 · Quench bath",
+            "modelId": "forge-quench-tank",
+            "position": {
+              "x": 6,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": 6,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Quench the shaped workpiece to harden it."
+          },
+          {
+            "id": "forge-temper",
+            "kind": "temper",
+            "name": "05 · Tempering oven",
+            "modelId": "forge-tempering-oven",
+            "position": {
+              "x": 18,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": 18,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Temper hardened metal to balance hardness and toughness."
+          },
+          {
+            "id": "forge-finish",
+            "kind": "finish",
+            "name": "06 · Grind, inspect & collect",
+            "modelId": "forge-finishing-bench",
+            "position": {
+              "x": 30,
+              "y": 0,
+              "z": -12
+            },
+            "approach": {
+              "x": 30,
+              "y": 0,
+              "z": -7
+            },
+            "interactionDistance": 5,
+            "description": "Finish and inspect the item, then collect it in your Backpack."
+          }
+        ],
+        "crew": [
+          {
+            "id": "forge-master-smith-npc",
+            "modelId": "forge-master-smith",
+            "name": "Brann Emberhand",
+            "role": "Master smith",
+            "color": "#b76a3f",
+            "skin": "#a36c4e",
+            "home": {
+              "x": -11,
+              "y": 0,
+              "z": 3
+            },
+            "task": "guiding hammer work and inspecting forged shapes",
+            "greeting": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+          },
+          {
+            "id": "forge-metallurgist-npc",
+            "modelId": "forge-metallurgist",
+            "name": "Dr. Sera Vale",
+            "role": "Metallurgist",
+            "color": "#527e89",
+            "skin": "#c99170",
+            "home": {
+              "x": 14,
+              "y": 0,
+              "z": 3
+            },
+            "task": "checking heat treatment and the balance of hardness and toughness",
+            "greeting": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+          },
+          {
+            "id": "forge-quartermaster-npc",
+            "modelId": "forge-quartermaster",
+            "name": "Kade Ironledger",
+            "role": "Quartermaster",
+            "color": "#7d8051",
+            "skin": "#785440",
+            "home": {
+              "x": -29,
+              "y": 0,
+              "z": 10
+            },
+            "task": "counting metal, coal and workshop orders",
+            "greeting": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+          }
+        ]
+      },
+      "objects": [
+        {
+          "id": "forge-sourcing",
+          "modelId": "forge-stock-rack",
+          "asset": {
+            "buildAssetId": "forge-stock-rack"
+          },
+          "name": "01 · Select metal & fuel",
+          "position": {
+            "x": -30,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "sourcing",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "01 · Select metal & fuel · E / Use",
+            "forgeStationId": "forge-sourcing"
+          }
+        },
+        {
+          "id": "forge-heat",
+          "modelId": "forge-hearth",
+          "asset": {
+            "buildAssetId": "forge-hearth"
+          },
+          "name": "02 · Charcoal hearth",
+          "position": {
+            "x": -18,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "heat",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "02 · Charcoal hearth · E / Use",
+            "forgeStationId": "forge-heat"
+          }
+        },
+        {
+          "id": "forge-hammer",
+          "modelId": "forge-anvil",
+          "asset": {
+            "buildAssetId": "forge-anvil"
+          },
+          "name": "03 · Anvil & shaping",
+          "position": {
+            "x": -6,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "hammer",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "03 · Anvil & shaping · E / Use",
+            "forgeStationId": "forge-hammer"
+          }
+        },
+        {
+          "id": "forge-quench",
+          "modelId": "forge-quench-tank",
+          "asset": {
+            "buildAssetId": "forge-quench-tank"
+          },
+          "name": "04 · Quench bath",
+          "position": {
+            "x": 6,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "quench",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "04 · Quench bath · E / Use",
+            "forgeStationId": "forge-quench"
+          }
+        },
+        {
+          "id": "forge-temper",
+          "modelId": "forge-tempering-oven",
+          "asset": {
+            "buildAssetId": "forge-tempering-oven"
+          },
+          "name": "05 · Tempering oven",
+          "position": {
+            "x": 18,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "temper",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "05 · Tempering oven · E / Use",
+            "forgeStationId": "forge-temper"
+          }
+        },
+        {
+          "id": "forge-finish",
+          "modelId": "forge-finishing-bench",
+          "asset": {
+            "buildAssetId": "forge-finishing-bench"
+          },
+          "name": "06 · Grind, inspect & collect",
+          "position": {
+            "x": 30,
+            "y": 0,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "interact",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": "finish",
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "forgeApproach": {
+              "x": 0,
+              "y": 0,
+              "z": 5
+            },
+            "prompt": "06 · Grind, inspect & collect · E / Use",
+            "forgeStationId": "forge-finish"
+          }
+        },
+        {
+          "id": "forge-back-wall",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Soot-dark brick north wall",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": -23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 73.33333333333334,
+            "y": 5,
+            "z": 0.6666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#47372f",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-post--43--22",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Riveted timber roof support",
+          "position": {
+            "x": -43,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5833333333333334,
+            "y": 6.666666666666667,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-post--43-15",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Riveted timber roof support",
+          "position": {
+            "x": -43,
+            "y": 0,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5833333333333334,
+            "y": 6.666666666666667,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-post-43--22",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Riveted timber roof support",
+          "position": {
+            "x": 43,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5833333333333334,
+            "y": 6.666666666666667,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-post-43-15",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Riveted timber roof support",
+          "position": {
+            "x": 43,
+            "y": 0,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5833333333333334,
+            "y": 6.666666666666667,
+            "z": 0.5833333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-roof-beam--22",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Exposed smithy roof beam",
+          "position": {
+            "x": 0,
+            "y": 7.5,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 72.5,
+            "y": 0.45833333333333337,
+            "z": 0.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#362923",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-roof-beam-15",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Exposed smithy roof beam",
+          "position": {
+            "x": 0,
+            "y": 7.5,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 72.5,
+            "y": 0.45833333333333337,
+            "z": 0.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#362923",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-truss--32",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Open clerestory roof truss",
+          "position": {
+            "x": -32,
+            "y": 8,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.33333333333333337,
+            "y": 0.2916666666666667,
+            "z": 31.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-truss--16",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Open clerestory roof truss",
+          "position": {
+            "x": -16,
+            "y": 8,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.33333333333333337,
+            "y": 0.2916666666666667,
+            "z": 31.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-truss-0",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Open clerestory roof truss",
+          "position": {
+            "x": 0,
+            "y": 8,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.33333333333333337,
+            "y": 0.2916666666666667,
+            "z": 31.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-truss-16",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Open clerestory roof truss",
+          "position": {
+            "x": 16,
+            "y": 8,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.33333333333333337,
+            "y": 0.2916666666666667,
+            "z": 31.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-truss-32",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Open clerestory roof truss",
+          "position": {
+            "x": 32,
+            "y": 8,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.33333333333333337,
+            "y": 0.2916666666666667,
+            "z": 31.666666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#3d3028",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-roof-wing--34",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Copper standing-seam canopy",
+          "position": {
+            "x": -34,
+            "y": 8.5,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.833333333333334,
+            "y": 0.16666666666666669,
+            "z": 32.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#5b4c3e",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-roof-wing-34",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Copper standing-seam canopy",
+          "position": {
+            "x": 34,
+            "y": 8.5,
+            "z": -3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 15.833333333333334,
+            "y": 0.16666666666666669,
+            "z": 32.5
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#5b4c3e",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-sourcing",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "01 · Select metal & fuel · stone work pad",
+          "position": {
+            "x": -30,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-sourcing",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": -30,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-heat",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "02 · Charcoal hearth · stone work pad",
+          "position": {
+            "x": -18,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-heat",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": -18,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-hammer",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "03 · Anvil & shaping · stone work pad",
+          "position": {
+            "x": -6,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-hammer",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": -6,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-quench",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "04 · Quench bath · stone work pad",
+          "position": {
+            "x": 6,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-quench",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": 6,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-temper",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "05 · Tempering oven · stone work pad",
+          "position": {
+            "x": 18,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-temper",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": 18,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-pad-finish",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "06 · Grind, inspect & collect · stone work pad",
+          "position": {
+            "x": 30,
+            "y": -0.08,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8.333333333333334,
+            "y": 0.06666666666666667,
+            "z": 9.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#62574c",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bay-marker-finish",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Brass bay threshold",
+          "position": {
+            "x": 30,
+            "y": 0.003,
+            "z": -5.3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6.666666666666667,
+            "y": 0.008333333333333333,
+            "z": 0.08333333333333334
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#bd8d49",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-main-aisle",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Wide sandstone workshop aisle",
+          "position": {
+            "x": 0,
+            "y": -0.06,
+            "z": 5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 69.16666666666667,
+            "y": 0.05,
+            "z": 14.166666666666668
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#8c7960",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-arrival-path",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Forge arrival avenue",
+          "position": {
+            "x": 0,
+            "y": -0.06,
+            "z": 29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 11.666666666666668,
+            "y": 0.05,
+            "z": 25
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#88775e",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-rear-chimney",
+          "modelId": "material:cube",
+          "asset": {
+            "buildAssetId": "material:cube"
+          },
+          "name": "Hearth extraction chimney",
+          "position": {
+            "x": -18,
+            "y": 6,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.6666666666666667,
+            "y": 5.833333333333334,
+            "z": 1.6666666666666667
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          },
+          "materialSettings": {
+            "accent": "#4b3c34",
+            "useAccent": true
+          }
+        },
+        {
+          "id": "forge-bellows-display",
+          "modelId": "forge-bellows",
+          "asset": {
+            "buildAssetId": "forge-bellows"
+          },
+          "name": "Leather bellows · hearth air supply",
+          "position": {
+            "x": -22,
+            "y": 0,
+            "z": -13
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": false,
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "prompt": "Inspect Leather Forge Bellows · E / Use"
+          }
+        },
+        {
+          "id": "forge-coal-supply",
+          "modelId": "forge-coal-bin",
+          "asset": {
+            "buildAssetId": "forge-coal-bin"
+          },
+          "name": "Counted coal reserve",
+          "position": {
+            "x": -35,
+            "y": 0,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": false,
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "prompt": "Inspect Smithy Coal Bin · E / Use"
+          }
+        },
+        {
+          "id": "forge-grinding-display",
+          "modelId": "forge-grinding-wheel",
+          "asset": {
+            "buildAssetId": "forge-grinding-wheel"
+          },
+          "name": "Water-cooled finishing wheel",
+          "position": {
+            "x": 37,
+            "y": 0,
+            "z": -13
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "decor",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": false,
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "prompt": "Inspect Treadle Grinding Wheel · E / Use"
+          }
+        },
+        {
+          "id": "forge-hammer-display",
+          "modelId": "forge-hammer",
+          "asset": {
+            "buildAssetId": "forge-hammer"
+          },
+          "name": "Smith’s hammer",
+          "position": {
+            "x": -8,
+            "y": 0,
+            "z": -15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "pickup",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": false,
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "prompt": "Inspect Cross Peen Smithing Hammer · E / Use"
+          }
+        },
+        {
+          "id": "forge-tongs-display",
+          "modelId": "forge-tongs",
+          "asset": {
+            "buildAssetId": "forge-tongs"
+          },
+          "name": "Long-reach smithing tongs",
+          "position": {
+            "x": -16,
+            "y": 0,
+            "z": -16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "active": true,
+            "behavior": "pickup",
+            "action": "none",
+            "destructible": false,
+            "damage": 0,
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "forgeStation": false,
+            "forgeCrew": false,
+            "forgeProduct": false,
+            "forgeMaterial": false,
+            "prompt": "Inspect Blacksmith Tongs · E / Use"
+          }
+        },
+        {
+          "id": "forge-master-smith-npc",
+          "modelId": "forge-master-smith",
+          "asset": {
+            "buildAssetId": "forge-master-smith"
+          },
+          "name": "Brann Emberhand",
+          "position": {
+            "x": -11,
+            "y": 0,
+            "z": 3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "active": true,
+            "forgeCrewId": "forge-master-smith-npc",
+            "forgeCrew": {
+              "id": "forge-master-smith-npc",
+              "modelId": "forge-master-smith",
+              "name": "Brann Emberhand",
+              "role": "Master smith",
+              "color": "#b76a3f",
+              "skin": "#a36c4e",
+              "home": {
+                "x": -11,
+                "y": 0,
+                "z": 3
+              },
+              "task": "guiding hammer work and inspecting forged shapes",
+              "greeting": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+            },
+            "forgeCrewEnabled": true,
+            "interactionDistance": 4,
+            "prompt": "Talk / daily objectives · Brann Emberhand",
+            "destructible": false,
+            "damage": 0
+          },
+          "objectType": "npc",
+          "avatarSettings": {
+            "displayName": "Brann Emberhand",
+            "bodyColor": "#a36c4e",
+            "outfitColor": "#b76a3f"
+          },
+          "dialogueSettings": {
+            "text": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+          }
+        },
+        {
+          "id": "forge-metallurgist-npc",
+          "modelId": "forge-metallurgist",
+          "asset": {
+            "buildAssetId": "forge-metallurgist"
+          },
+          "name": "Dr. Sera Vale",
+          "position": {
+            "x": 14,
+            "y": 0,
+            "z": 3
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "active": true,
+            "forgeCrewId": "forge-metallurgist-npc",
+            "forgeCrew": {
+              "id": "forge-metallurgist-npc",
+              "modelId": "forge-metallurgist",
+              "name": "Dr. Sera Vale",
+              "role": "Metallurgist",
+              "color": "#527e89",
+              "skin": "#c99170",
+              "home": {
+                "x": 14,
+                "y": 0,
+                "z": 3
+              },
+              "task": "checking heat treatment and the balance of hardness and toughness",
+              "greeting": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+            },
+            "forgeCrewEnabled": true,
+            "interactionDistance": 4,
+            "prompt": "Talk / daily objectives · Dr. Sera Vale",
+            "destructible": false,
+            "damage": 0
+          },
+          "objectType": "npc",
+          "avatarSettings": {
+            "displayName": "Dr. Sera Vale",
+            "bodyColor": "#c99170",
+            "outfitColor": "#527e89"
+          },
+          "dialogueSettings": {
+            "text": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+          }
+        },
+        {
+          "id": "forge-quartermaster-npc",
+          "modelId": "forge-quartermaster",
+          "asset": {
+            "buildAssetId": "forge-quartermaster"
+          },
+          "name": "Kade Ironledger",
+          "position": {
+            "x": -29,
+            "y": 0,
+            "z": 10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "active": true,
+            "forgeCrewId": "forge-quartermaster-npc",
+            "forgeCrew": {
+              "id": "forge-quartermaster-npc",
+              "modelId": "forge-quartermaster",
+              "name": "Kade Ironledger",
+              "role": "Quartermaster",
+              "color": "#7d8051",
+              "skin": "#785440",
+              "home": {
+                "x": -29,
+                "y": 0,
+                "z": 10
+              },
+              "task": "counting metal, coal and workshop orders",
+              "greeting": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+            },
+            "forgeCrewEnabled": true,
+            "interactionDistance": 4,
+            "prompt": "Talk / daily objectives · Kade Ironledger",
+            "destructible": false,
+            "damage": 0
+          },
+          "objectType": "npc",
+          "avatarSettings": {
+            "displayName": "Kade Ironledger",
+            "bodyColor": "#785440",
+            "outfitColor": "#7d8051"
+          },
+          "dialogueSettings": {
+            "text": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+          }
+        },
+        {
+          "id": "forge-welcome-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "EMBERFALL · Forge work orders",
+          "position": {
+            "x": -10,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Read EMBERFALL · Forge work orders",
+            "destructible": false,
+            "damage": 0
+          },
+          "dialogueSettings": {
+            "text": "Traditional forging: buy a measured material kit at the stock rack, heat, hammer, quench, temper, then finish. Walk to each named station and use Forge controls. Completed creations are saved in your Backpack. Meet Brann, Sera and Kade for guidance, objectives and conversation."
+          }
+        },
+        {
+          "id": "forge-market-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "MZK Market · Tools, metal & finished items",
+          "position": {
+            "x": 10,
+            "y": 0,
+            "z": 35
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Read MZK Market · Tools, metal & finished items",
+            "destructible": false,
+            "damage": 0
+          },
+          "dialogueSettings": {
+            "text": "Forge stations, tools, materials, crew and finished pieces share the game item catalogue. Use Trading Market to buy with MZK, then open Backpack to equip or place compatible items in a world or your Builder map."
+          }
+        },
+        {
+          "id": "forge-metallurgy-board",
+          "modelId": "street-sign",
+          "asset": {
+            "buildAssetId": "street-sign"
+          },
+          "name": "The art of heat treatment",
+          "position": {
+            "x": 24,
+            "y": 0,
+            "z": 10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 4,
+            "prompt": "Read The art of heat treatment",
+            "destructible": false,
+            "damage": 0
+          },
+          "dialogueSettings": {
+            "text": "Heat makes the billet workable. Hammering shapes the hot metal. Quenching and tempering follow the work order’s heat-treatment stage. Inspect the final piece at the finishing bench."
+          }
+        },
+        {
+          "id": "forge-yard-light--40-24",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Smithy yard lantern",
+          "position": {
+            "x": -40,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-yard-light--40-42",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Smithy yard lantern",
+          "position": {
+            "x": -40,
+            "y": 0,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-yard-light-40-24",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Smithy yard lantern",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-yard-light-40-42",
+          "modelId": "lamp-post",
+          "asset": {
+            "buildAssetId": "lamp-post"
+          },
+          "name": "Smithy yard lantern",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "active": true,
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-commons-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "World Commons gateway",
+          "position": {
+            "x": -23,
+            "y": 0,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "World Commons · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "public-commons"
+            },
+            "destructible": false,
+            "damage": 0
+          }
+        },
+        {
+          "id": "forge-factory-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "World Item Factory gateway",
+          "position": {
+            "x": 23,
+            "y": 0,
+            "z": 43
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "World Item Factory · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-item-factory"
+            },
+            "destructible": false,
+            "damage": 0
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 5457210,
+        "locations": [
+          {
+            "id": "forge-sourcing",
+            "forgeStationId": "forge-sourcing",
+            "name": "01 · Select metal & fuel",
+            "x": -30,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Choose a recipe and purchase its measured metal and coal kit with MZK."
+          },
+          {
+            "id": "forge-heat",
+            "forgeStationId": "forge-heat",
+            "name": "02 · Charcoal hearth",
+            "x": -18,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Heat the billet to forging temperature before shaping it."
+          },
+          {
+            "id": "forge-hammer",
+            "forgeStationId": "forge-hammer",
+            "name": "03 · Anvil & shaping",
+            "x": -6,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Strike the heated workpiece to draw, shape and consolidate the metal."
+          },
+          {
+            "id": "forge-quench",
+            "forgeStationId": "forge-quench",
+            "name": "04 · Quench bath",
+            "x": 6,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Quench the shaped workpiece to harden it."
+          },
+          {
+            "id": "forge-temper",
+            "forgeStationId": "forge-temper",
+            "name": "05 · Tempering oven",
+            "x": 18,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Temper hardened metal to balance hardness and toughness."
+          },
+          {
+            "id": "forge-finish",
+            "forgeStationId": "forge-finish",
+            "name": "06 · Grind, inspect & collect",
+            "x": 30,
+            "y": 0,
+            "z": -7,
+            "width": 9,
+            "depth": 8,
+            "description": "Finish and inspect the item, then collect it in your Backpack."
+          },
+          {
+            "id": "forge-arrival",
+            "name": "Forge arrival & work orders",
+            "x": 0,
+            "y": 0.02,
+            "z": 37,
+            "width": 38,
+            "depth": 14,
+            "description": "Read the work orders, meet the smithy crew and visit the neighboring World Item Factory."
+          },
+          {
+            "id": "forge-crew-court",
+            "name": "Smiths’ courtyard",
+            "x": 0,
+            "z": 7,
+            "width": 68,
+            "depth": 14,
+            "description": "Meet the master smith, metallurgist and quartermaster for local objectives and forging advice."
+          }
+        ],
+        "forge": {
+          "enabled": true,
+          "currency": "MZK",
+          "editableStations": true,
+          "editableCrew": true,
+          "stations": [
+            {
+              "id": "forge-sourcing",
+              "kind": "sourcing",
+              "name": "01 · Select metal & fuel",
+              "modelId": "forge-stock-rack",
+              "position": {
+                "x": -30,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": -30,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Choose a recipe and purchase its measured metal and coal kit with MZK."
+            },
+            {
+              "id": "forge-heat",
+              "kind": "heat",
+              "name": "02 · Charcoal hearth",
+              "modelId": "forge-hearth",
+              "position": {
+                "x": -18,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": -18,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Heat the billet to forging temperature before shaping it."
+            },
+            {
+              "id": "forge-hammer",
+              "kind": "hammer",
+              "name": "03 · Anvil & shaping",
+              "modelId": "forge-anvil",
+              "position": {
+                "x": -6,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": -6,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Strike the heated workpiece to draw, shape and consolidate the metal."
+            },
+            {
+              "id": "forge-quench",
+              "kind": "quench",
+              "name": "04 · Quench bath",
+              "modelId": "forge-quench-tank",
+              "position": {
+                "x": 6,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": 6,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Quench the shaped workpiece to harden it."
+            },
+            {
+              "id": "forge-temper",
+              "kind": "temper",
+              "name": "05 · Tempering oven",
+              "modelId": "forge-tempering-oven",
+              "position": {
+                "x": 18,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": 18,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Temper hardened metal to balance hardness and toughness."
+            },
+            {
+              "id": "forge-finish",
+              "kind": "finish",
+              "name": "06 · Grind, inspect & collect",
+              "modelId": "forge-finishing-bench",
+              "position": {
+                "x": 30,
+                "y": 0,
+                "z": -12
+              },
+              "approach": {
+                "x": 30,
+                "y": 0,
+                "z": -7
+              },
+              "interactionDistance": 5,
+              "description": "Finish and inspect the item, then collect it in your Backpack."
+            }
+          ],
+          "crew": [
+            {
+              "id": "forge-master-smith-npc",
+              "modelId": "forge-master-smith",
+              "name": "Brann Emberhand",
+              "role": "Master smith",
+              "color": "#b76a3f",
+              "skin": "#a36c4e",
+              "home": {
+                "x": -11,
+                "y": 0,
+                "z": 3
+              },
+              "task": "guiding hammer work and inspecting forged shapes",
+              "greeting": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+            },
+            {
+              "id": "forge-metallurgist-npc",
+              "modelId": "forge-metallurgist",
+              "name": "Dr. Sera Vale",
+              "role": "Metallurgist",
+              "color": "#527e89",
+              "skin": "#c99170",
+              "home": {
+                "x": 14,
+                "y": 0,
+                "z": 3
+              },
+              "task": "checking heat treatment and the balance of hardness and toughness",
+              "greeting": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+            },
+            {
+              "id": "forge-quartermaster-npc",
+              "modelId": "forge-quartermaster",
+              "name": "Kade Ironledger",
+              "role": "Quartermaster",
+              "color": "#7d8051",
+              "skin": "#785440",
+              "home": {
+                "x": -29,
+                "y": 0,
+                "z": 10
+              },
+              "task": "counting metal, coal and workshop orders",
+              "greeting": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+            }
+          ]
+        },
+        "residents": [
+          {
+            "id": "forge-master-smith-npc",
+            "modelId": "forge-master-smith",
+            "name": "Brann Emberhand",
+            "role": "Master smith",
+            "color": "#b76a3f",
+            "skin": "#a36c4e",
+            "home": {
+              "x": -11,
+              "y": 0,
+              "z": 3
+            },
+            "task": "guiding hammer work and inspecting forged shapes",
+            "greeting": "Start at the metal rack, heat your billet, then bring it to the anvil. Quench, temper and finish in that order. Every finished piece goes into your Backpack."
+          },
+          {
+            "id": "forge-metallurgist-npc",
+            "modelId": "forge-metallurgist",
+            "name": "Dr. Sera Vale",
+            "role": "Metallurgist",
+            "color": "#527e89",
+            "skin": "#c99170",
+            "home": {
+              "x": 14,
+              "y": 0,
+              "z": 3
+            },
+            "task": "checking heat treatment and the balance of hardness and toughness",
+            "greeting": "Quenching hardens the workpiece. Tempering follows to restore toughness. Watch the work order and finish each stage before moving on."
+          },
+          {
+            "id": "forge-quartermaster-npc",
+            "modelId": "forge-quartermaster",
+            "name": "Kade Ironledger",
+            "role": "Quartermaster",
+            "color": "#7d8051",
+            "skin": "#785440",
+            "home": {
+              "x": -29,
+              "y": 0,
+              "z": 10
+            },
+            "task": "counting metal, coal and workshop orders",
+            "greeting": "Choose your item at the stock rack. The MZK kit price covers counted metal and fuel. Tools, stations, crew and finished forge pieces also appear in the market and Builder."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "forge": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=traditional-forge&house=traditional-forge&mode=multiplayer&autoplay=1"
   }
 ]

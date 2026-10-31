@@ -1,6 +1,6 @@
 // The account identity stays stable when a member connects a wallet. Move the
 // private gameplay ledger with its wallet record; never copy or reseed stock.
-const fields=new Set(['walletId','ownerId','owner_id','recipientId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id']);
+const fields=new Set(['walletId','ownerId','owner_id','recipientId','captainId','issuedTo','sellerId','buyerId','counterpartyId','from','to','creatorId','creator','user_id','transferredFrom']);
 const own=(object,key)=>Object.hasOwn(object,key);
 export function migrateGameplayWallet(data,previousWallet,wallet){
  if(previousWallet===wallet)return;
@@ -13,10 +13,13 @@ export function migrateGameplayWallet(data,previousWallet,wallet){
    store[next]=store[key];delete store[key];
   }
  }
- const stores=['factory','factoryTesting','factoryLogistics','shipping','fishing','fitness','prison'];
+ const stores=['factory','factoryTesting','factoryLogistics','shipping','fishing','fitness','prison','forge'];
  for(const name of stores)rekey(data[name]?.accounts);
  rekey(data.factoryLogistics?.productionCredits);
  rekey(data.factoryModelOwnership,'\n');
+ // Current forge keys contain immutable proof ids; support wallet-prefixed
+ // legacy keys as well, while migrating their wallet fields below.
+ rekey(data.forgeItemOwnership,'\n');
  rekey(data.worldSupply?.receipts,':');
  function walk(value){
   if(!value||typeof value!=='object')return;
@@ -28,5 +31,5 @@ export function migrateGameplayWallet(data,previousWallet,wallet){
   }
  }
  // Proof ids and stable room actor ids are deliberately left untouched.
- for(const name of [...stores,'factoryModelOwnership','worldSupply'])walk(data[name]);
+ for(const name of [...stores,'factoryModelOwnership','forgeItemOwnership','worldSupply'])walk(data[name]);
 }

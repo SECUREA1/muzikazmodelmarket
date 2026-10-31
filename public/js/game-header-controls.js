@@ -18,6 +18,7 @@ const controls=[
  ['harbor-radio','.harbor-ops-toggle','Harbor navigation and radio','activities'],
  ['ski','.ski-resort-toggle','Ski races and lifts','activities'],
  ['forest','.forest-toggle','Forest operations','activities'],
+ ['forge','.forge-toggle','Forge workshop','activities'],
  ['fitness','.fitness-toggle','Fitness activities','activities'],
  ['fishing','.fishing-toggle','Fishing and tackle','activities'],
  ['shipping','.shipping-toggle','Shipping operations','activities'],

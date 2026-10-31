@@ -1,12 +1,13 @@
 import {randomUUID} from 'node:crypto';
 import {healthAfterHit} from './public/js/rpg-combat-rules.js';
+import {forgeGuardActive} from './public/js/forge-equipment.js';
 export {PLAYER_HIT_CAPACITY} from './public/js/rpg-combat-rules.js';
 export const SPAWN_PROTECTION_MS=3000;
 export function newCombatStats(){return {shots:0,hits:0,misses:0,enemyHits:0,playerHits:0,enemyKills:0,playerKills:0,assists:0,deaths:0,hitsTaken:0,damageDealt:0,damageTaken:0,score:0,itemsCollected:[]};}
 export function combatStats(player){return player.combat ||= newCombatStats();}
 export function healPlayer(player,amount){player.health=Math.min(100,Math.max(0,player.health)+amount);return player.health;}
 export function damagePlayer(player,now,attacker=null){
- if(player.radToxReady===false || player.health<=0 || now<(player.shieldUntil||0) || now<(player.spawnProtectedUntil||0))return false;
+ if(player.radToxReady===false || player.health<=0 || now<(player.shieldUntil||0) || now<(player.spawnProtectedUntil||0) || forgeGuardActive(player,now))return false;
  const before=player.health;player.health=Number(healthAfterHit(before).toFixed(6));
  const damage=before-player.health,taken=combatStats(player);taken.hitsTaken++;taken.damageTaken+=damage;
  if(attacker){combatStats(attacker).damageDealt+=damage;player.lastDamager=attacker.actorId;}

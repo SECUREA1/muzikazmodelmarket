@@ -1,3 +1,4 @@
+import {forgeWorld} from './forge-world.mjs';
 import {worldItemFactoryWorld} from './world-item-factory-world.mjs';
 import {forestHarvestWorld} from './forest-harvest-world.mjs';
 import {landFieldWorlds} from './land-field-worlds.mjs';
@@ -87,7 +88,7 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[],{readon
 async function buildWorldDirectory(atlas,published,deeds=[]){
  // Permanent destinations are part of the world itself. A refresh of uploaded
  // or player-authored maps cannot remove them or override their shared room.
- const maps=[...new Map([...published,...permanentWorlds,worldItemFactoryWorld(),forestHarvestWorld(),shippingWorld(),...landFieldWorlds(deeds)].filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
+ const maps=[...new Map([...published,...permanentWorlds,worldItemFactoryWorld(),forgeWorld(),forestHarvestWorld(),shippingWorld(),...landFieldWorlds(deeds)].filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
  const initial=await atlas.synchronize(maps);
  const templates=[...maps,...Object.values(initial.cells).filter(cell=>cell.generated).map(cell=>cell.environment)];
  const plots=deeds.map(deed=>memberPlotEnvironment(deed,templates)).filter(Boolean);
@@ -102,7 +103,7 @@ async function buildWorldDirectory(atlas,published,deeds=[]){
   map.playUrl=isTropicalIslandMap(map)?tropicalIslandPlayUrl(map,{mode:solo?'solo':'multiplayer'}):page+'?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode='+(solo?'solo':'multiplayer')+'&autoplay=1';
   if(map.source!=='community-atlas'){
    const factoryNeighbors=map.id===FACTORY_ID?[PROVING_ID,'world-item-factory']:map.id===PROVING_ID?[FACTORY_ID]:map.id===COMPOUND_ID?[PROVING_ID]:[];
-   map.portalTargets=[...new Set([map.lot?.mapId,map.districtId,'public-commons',...factoryNeighbors,...(map.id==='forest-harvest'?['skyscraper-construction','world-item-factory']:['skyscraper-construction','world-item-factory'].includes(map.id)?['forest-harvest']:[]),...(map.id==='hormuz-shipping'?[SHIPPING_HARBOR_ID,'world-item-factory','muzikaz-airport']:map.id==='muzikaz-airport'?['hormuz-shipping']:map.id==='world-item-factory'?['hormuz-shipping','muzikaz-missile-factory']:[])].filter(id=>id&&id!==map.id&&byId.has(id)))];
+   map.portalTargets=[...new Set([map.lot?.mapId,map.districtId,'public-commons',...factoryNeighbors,...(map.id==='traditional-forge'?['world-item-factory']:map.id==='world-item-factory'?['traditional-forge']:[]),...(map.id==='forest-harvest'?['skyscraper-construction','world-item-factory']:['skyscraper-construction','world-item-factory'].includes(map.id)?['forest-harvest']:[]),...(map.id==='hormuz-shipping'?[SHIPPING_HARBOR_ID,'world-item-factory','muzikaz-airport']:map.id==='muzikaz-airport'?['hormuz-shipping']:map.id==='world-item-factory'?['hormuz-shipping','muzikaz-missile-factory']:[])].filter(id=>id&&id!==map.id&&byId.has(id)))];
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));
   }
  }

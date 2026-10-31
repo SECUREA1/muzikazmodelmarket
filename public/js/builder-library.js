@@ -1,3 +1,4 @@
+import {FORGE_ITEMS} from './forge-items.js';
 import {FACTORY_LOGISTICS_ITEMS} from './factory-logistics-items.js';
 import {FACTORY_TESTING_ITEMS} from './factory-testing-items.js';
 import {FACTORY_ITEMS} from './missile-factory-items.js';
@@ -7,9 +8,10 @@ import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {CAMP_ITEMS} from './summer-camp.js';
 import {LAYOUT_SCENES} from './builder-layout-scenes.js';
 import {FUNHOUSE_ITEMS} from './clown-funhouse-items.js';
-export const BUILDER_SECTIONS=[['all','All items'],['scene-layouts','In-map scenes'],['funhouse','Clown funhouse'],['factory','Factory & rockets'],['factory-testing','Factory tests & facility'],['fitness','Fitness & gym'],['summer-camp','Summer camp'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['audio','Music & audio'],['video','Screens & media'],['services','Shops & services'],['seating','Seating'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
+export const BUILDER_SECTIONS=[['all','All items'],['scene-layouts','In-map scenes'],['forge','Forge & metallurgy'],['funhouse','Clown funhouse'],['factory','Factory & rockets'],['factory-testing','Factory tests & facility'],['fitness','Fitness & gym'],['summer-camp','Summer camp'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['audio','Music & audio'],['video','Screens & media'],['services','Shops & services'],['seating','Seating'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
 export function builderSections(model){
  const tags=new Set([model.category,model.type].filter(Boolean)),id=model.buildAssetId||model.id,device=deviceDefinition(id,model.function_data||{});
+ if(FORGE_ITEMS[id]||model.function_data?.forgeStation||model.function_data?.forgeCrew)tags.add('forge');
  if(FUNHOUSE_ITEMS[id])tags.add('funhouse');
  if(FITNESS_ITEMS[id])tags.add('fitness');
  if(FACTORY_ITEMS[id]||model.function_data?.factoryCrewId)tags.add('factory');

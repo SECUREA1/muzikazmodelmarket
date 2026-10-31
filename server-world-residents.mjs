@@ -1,4 +1,6 @@
 import {isPrisonEnvironment} from './public/js/prison-config.js';
+import {isForgeEnvironment} from './public/js/forge-config.js';
+import {stepForgeResidents} from './server-forge-residents.mjs';
 import {isFunhouseEnvironment} from './public/js/clown-funhouse-config.js';
 import {residentIdentity} from './public/js/resident-personalities.js';
 import {stepCommunityLife} from './server-community-life.mjs';
@@ -175,6 +177,7 @@ export function stepWorldResidents(sim,environment,now,dt,{collision,objects={}}
  if(isCasinoEnvironment(environment)){stepCasinoResidents(sim,environment,now,dt,{collision,objects});return;}
  if(isFitnessEnvironment(environment)){stepFitnessResidents(sim,environment,now,dt,{collision,objects});return;}
  if(isFactoryEnvironment(environment)){stepFactoryResidents(sim,environment,now,dt,{collision,objects});return;}
+ if(isForgeEnvironment(environment)){stepForgeResidents(sim,environment,now,dt,{collision,objects});return;}
  const available=localMapLocations(environment).map((place,index)=>({place,index})).filter(({place:p})=>Number.isFinite(p.x)&&Number.isFinite(p.z)),players=Object.values(sim.players||{}).filter(p=>p.health>0&&now-p.lastSeen<15000),selected=new Map(available.slice(0,players.length?4:8).map(p=>[p.index,p]));for(const player of players)for(const entry of [...available].sort((a,b)=>gap(a.place,player.position)-gap(b.place,player.position)).slice(0,2))selected.set(entry.index,entry);const places=[...selected.values()].slice(0,12);
  for(const npc of residents(sim)){npc.resident.isAI=true;if(!npc.resident.ageGroup){const place=available.find(entry=>entry.index===npc.resident.locationIndex)?.place;npc.resident.ageGroup=!sim.construction&&npc.id.endsWith('-1')&&/court|park|commons|lounge|play|plaza|garden/i.test(place?.name||npc.resident.placeName||'')?'child':'adult';}ensureResidentIntelligence(sim,npc,environment,now);}
  for(const npc of residents(sim))if(npc.aiTask?.status!=='active'&&npc.resident.machineWork?.status!=='active'&&!npc.resident.sharedTask&&npc.resident.objective?.status!=='active'&&players.length&&!selected.has(npc.resident.locationIndex)&&players.every(p=>gap(p.position,npc.position)>60)&&!Object.values(sim.players).some(p=>p.residentTask?.status==='active'&&(p.residentTask.residentId===npc.id||p.residentTask.socialTargetId===npc.id)||p.residentVisit?.status==='active'&&p.residentVisit.residentId===npc.id||p.residentInvitation?.status==='offered'&&p.residentInvitation.residentId===npc.id&&now<p.residentInvitation.expiresAt)){archiveResidentIntelligence(sim,npc,environment,now);delete sim.actors[npc.id];if(sim.residentPlacementAttempts)delete sim.residentPlacementAttempts[npc.id];}

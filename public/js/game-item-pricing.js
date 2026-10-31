@@ -3,6 +3,7 @@ export const usdEquivalent=mzk=>'$'+(Number(mzk)/MZK_PER_USD).toFixed(2);
 export function catalogItemPrice(item){
  if(item.earnedOnly)return 0;
  if(item.basic)return 0;
+ if(String(item.buildAssetId||'').startsWith('forge-'))return Math.max(1,Math.min(1000,Number(item.priceMzk)||50));
  if(String(item.buildAssetId||'').startsWith('funhouse-'))return Math.max(10,Math.min(1000,Number(item.priceMzk)||100));
  if(String(item.buildAssetId||'').startsWith('fitness-'))return Math.max(10,Math.min(1000,Number(item.priceMzk)||50));
  if(/^(?:factory|testing)-/.test(String(item.buildAssetId||'')))return Math.max(10,Math.min(1000,Number(item.priceMzk)||50));

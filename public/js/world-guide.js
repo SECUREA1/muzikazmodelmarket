@@ -8,6 +8,7 @@ export function worldGuideIntroduction(environment={}, {solo=false}={}){
  else if(game==='fitness'||id==='muzikaz-fitness-centre')guidance='Walk to a training station and use its controls to start a set. The coaches can help you choose a workout.';
  else if(game==='factory-proving'||id==='muzikaz-factory-proving-grounds')guidance='Use the testing controls to prepare a saved factory model, deploy it on the pad and follow the launch checklist.';
  else if(game==='mountain-compound'||id==='muzikaz-mountain-compound')guidance='Follow the marked consoles and solve the containment power puzzle to reach the deeper bunker.';
+ else if(game==='forge'||id==='traditional-forge')guidance='Choose a metal and fuel kit at the stock rack, heat the billet, shape it at the anvil, quench, temper and finish it. Talk to the forge crew for quests. Finished items are saved to your Backpack.';
  else if(game==='missile-factory'||id==='muzikaz-missile-factory')guidance='Visit the factory stations to choose a recipe, fabricate an item, load it and complete its dispatch job.';
  else if(game==='construction'||id==='skyscraper-construction'||meta.construction)guidance='Open the construction controls to choose a machine or assign crew work. Follow the marked site objectives.';
  else if(game==='shipping'||meta.shipping)guidance='Open Shipping to choose a cargo contract. Load evenly, secure your cargo, then follow the chart to dock and unload.';

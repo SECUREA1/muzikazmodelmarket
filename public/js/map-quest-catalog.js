@@ -29,6 +29,7 @@ function harborWalkingArea(environment,origin){
 }
 
 function mapTheme(environment){
+ if(environment.game==='forge'||environment.forge?.enabled||environment.builderScene?.sourceForge?.enabled)return {tour:'Emberfall forge apprenticeship',challenge:'Smithy metallurgy station challenge',service:'Forge work order & equipment briefing'};
  if(isTropicalIslandEnvironment(environment))return {tour:'Palm Coast resort discovery',challenge:'Island passport route',service:'Resort welcome and activity briefing'};
  if(environment.airport?.enabled||environment.game==='airport')return {tour:'Airport ground discovery',challenge:'Airport ground route challenge',service:'Airport ground-service briefing'};
  if(environment.game==='shipping'||environment.builderScene?.layoutMeta?.shipping)return {tour:'Cargo terminal orientation',challenge:'Dock checkpoint challenge',service:'Shipping crew briefing'};
@@ -51,7 +52,7 @@ function interactionSite(object,origin){
  const config=object?.functionalSettings||object?.gameplay||{},behavior=config.behavior;
  if(!object?.id||!finitePoint(object.position)||config.enabled===false)return null;
  if(config.action&&config.action!=='none'||config.portal?.enabled||config.device)return null;
- const station=behavior==='interact'&&(config.fitnessStation||['host','vault'].includes(config.casinoStation));
+ const station=behavior==='interact'&&(config.forgeStation||config.fitnessStation||['host','vault'].includes(config.casinoStation));
  if(!['talk','switch','door','heal'].includes(behavior)&&!station)return null;
  // Do not assign a floor-level player to an elevated prop without an authored
  // location on that level; ground resolution still validates every chosen site.

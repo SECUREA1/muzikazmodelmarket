@@ -1,4 +1,5 @@
 import {FOREST_SNAKE_ITEMS,forestSnakeNativeItem} from './forest-snake-items.js';
+import {FORGE_ITEMS,forgeNativeItem} from './forge-items.js';
 import {QUARRY_MODEL_INFO} from './quarry-config.js';
 import {FOREST_HARVEST_ITEMS,forestHarvestNativeItem} from './forest-harvest-items.js';
 import {PRISON_ITEMS,prisonNativeItem} from './prison-items.js';
@@ -29,6 +30,7 @@ export const BUILTIN_BUILDER_ITEMS=[
   ['canopy-tree','Canopy Tree','landscape',100],['pine-tree','Pine Tree','landscape',90],['flower-bed','Flower Bed','landscape',75],['hedge-corner','Hedge Corner','landscape',105],['garden-rocks','Garden Rocks','landscape',80],['pond','Reflecting Pond','landscape',125],['path-tile','Path Tile','landscape',90],['hill','Soft Hill','landscape',135],['lamp-post','Lamp Post','landscape',62],['planter','Tall Planter','landscape',60],['pillow-ring','Pillow Ring Seat','interior',82],['sofa','Cloud Sofa','interior',100],['armchair','Accent Chair','interior',72],['coffee-table','Coffee Table','interior',70],['bookshelf','Bookshelf','interior',92],['floor-lamp','Floor Lamp','interior',58],['room-divider','Room Divider','interior',105],['kitchen-island','Kitchen Island','interior',110],['spiral-stairs','Spiral Stairs','interior',118],['archway','Archway','interior',100],['art-wall','Art Wall','interior',92],['studio-desk','Producer Studio Desk','interior',110],['recording-booth','Recording Booth','interior',125],['modular-wall','Modular Building Wall','interior',120],['glass-door','Glass Entry Door','interior',105],['loft-bed','Loft Bed','interior',120],['wardrobe','Walk-in Wardrobe','interior',105],['bathroom-vanity','Bathroom Vanity','interior',100],['dining-set','Dining Set','interior',120],['fireplace','Modern Fireplace','interior',110],['elevator','Working Elevator','interior',130]
 ].map(([id,name,type,size])=>({id,name,type,size,image:`public/images/builder-pack/${id}.svg`,behavior:['pillow-ring','sofa','armchair'].includes(id)?'seat':'decor',procedural:true,assetKind:'premade'}));
 export const GAMEPLAY_BUILDER_ITEMS=[
+ ...Object.keys(FORGE_ITEMS).map(id=>forgeNativeItem(id)),
  ...Object.entries(QUARRY_MODEL_INFO).map(([id,[name,description,dimensions]])=>({id,buildAssetId:id,name,description,dimensions,type:'interior',category:'props',size:95,image:'public/images/native-designs/'+id+'.svg',behavior:'decor',procedural:true,assetKind:'premade',function_data:{behavior:'decor',destructible:false,prompt:name}})),
  ...Object.keys(FOREST_HARVEST_ITEMS).map(id=>forestHarvestNativeItem(id)),
  ...Object.keys(FOREST_SNAKE_ITEMS).map(id=>forestSnakeNativeItem(id)),

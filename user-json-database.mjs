@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import {migrateGameplayWallet} from './gameplay-wallet-migration.mjs';
 import {marketplaceFactoryCatalog} from './world-factory-catalog.mjs';
 import {ownedFactoryModel,transferFactoryModel,factoryModelCertification,factoryModelTestLocked} from './factory-item-provenance.mjs';
+import {ownedForgeItem,transferForgeItem,forgeItemLike,canonicalForgeItem} from './forge-item-provenance.mjs';
 import {itemLocked} from './public/js/factory-logistics-config.js';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
 const RPG_CATALOG=JSON.parse(await readFile(new URL('./public/models/ioncore-rpg-items.json',import.meta.url),'utf8')).items;
@@ -98,6 +99,11 @@ function marketFactoryProof(data,wallet,item){
 function assertFactoryTradeAvailable(data,wallet,item,now=Date.now()){
  const proof=marketFactoryProof(data,wallet,item);
  if(itemLocked(data,wallet,item.id,now)||factoryModelTestLocked(data,proof,now))throw Object.assign(Error('Finish or cancel this item’s active launch or freight manifest before trading it.'),{statusCode:409});
+ return proof;
+}
+function assertForgeTradeAvailable(data,wallet,item){
+ const proof=ownedForgeItem(data,wallet,item?.id);
+ if(forgeItemLike(item)&&!proof)throw Object.assign(Error('A forge item requires a verified forging or purchase receipt.'),{statusCode:403});
  return proof;
 }
 function modelMarketMetadata(data,proof){
@@ -385,17 +391,18 @@ export class UserJsonDatabase {
     await this.initialize();
     const data = snapshot || await this.read();
     const proofs=new Map(),proofFor=(wallet,itemId)=>{const key=wallet+'\n'+itemId;if(!proofs.has(key))proofs.set(key,ownedFactoryModel(data,wallet,itemId));return proofs.get(key);};
+    const forgeProofs=new Map(),forgeProofFor=(wallet,itemId)=>{const key=wallet+'\n'+itemId;if(!forgeProofs.has(key))forgeProofs.set(key,ownedForgeItem(data,wallet,itemId));return forgeProofs.get(key);};
     return Object.values(data.users).flatMap((user) => {
       const sellerId = user.walletId;
       const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
-      return (user.items || []).filter((item) => item.listing?.active&&item.visibility!=='private'&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!forestBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))).map((item) => ({
+      return (user.items || []).filter((item) => item.listing?.active&&item.visibility!=='private'&&item.source!=='mzk-access-code'&&!prisonBoundItem(data,sellerId,item)&&!forestBoundItem(data,sellerId,item)&&!itemLocked(data,sellerId,item.id,Date.now())&&!factoryModelTestLocked(data,proofFor(sellerId,item.id))&&(!factoryModelLike(item)||proofFor(sellerId,item.id))&&(!forgeItemLike(item)||forgeProofFor(sellerId,item.id))).map((item) => ({
         sellerId, sellerName, itemId: item.id,
         itemName: String(item.name || item.title || item.id),
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
         thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
-        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...publicProductVisual(item),...modelMarketMetadata(data,proofFor(sellerId,item.id))
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item',...publicProductVisual(item),...modelMarketMetadata(data,proofFor(sellerId,item.id)),...(forgeProofFor(sellerId,item.id)?{itemName:canonicalForgeItem(forgeProofFor(sellerId,item.id)).name,buildAssetId:forgeProofFor(sellerId,item.id).buildAssetId,forgeItem:true}:{})
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }
@@ -412,7 +419,7 @@ export class UserJsonDatabase {
       if(prisonBoundItem(data,wallet,item))throw Object.assign(Error('Earned prison collectibles are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(forestBoundItem(data,wallet,item))throw Object.assign(Error('Earned forest items are bound to your Backpack and cannot be resold.'),{statusCode:403});
       if(item.shippingSupplyId||item.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403});
-      if(active)assertFactoryTradeAvailable(data,wallet,item);
+      if(active){assertFactoryTradeAvailable(data,wallet,item);assertForgeTradeAvailable(data,wallet,item);}
       item.listing = { active: Boolean(active), priceMzk: amount, updatedAt: new Date().toISOString() };
       user.updatedAt = item.listing.updatedAt;
       return item;
@@ -433,7 +440,7 @@ export class UserJsonDatabase {
       const item = sellerUser.items[index];if(forestBoundItem(data,seller,item))throw Object.assign(Error('Earned forest items are bound to their owner and cannot be traded.'),{statusCode:403});if(prisonBoundItem(data,seller,item))throw Object.assign(Error('Earned prison collectibles are bound to their owner and cannot be traded.'),{statusCode:403});if(item?.shippingSupplyId||item?.source==='shipping-delivery')throw Object.assign(new Error('Shipping stock is exchanged at a freight dock.'),{statusCode:403}); const price = Number(item?.listing?.priceMzk);
       if(item?.source==='mzk-access-code')throw new Error('Included basic equipment cannot be resold.');
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
-      const factoryProof=assertFactoryTradeAvailable(data,seller,item);
+      const factoryProof=assertFactoryTradeAvailable(data,seller,item),forgeProof=assertForgeTradeAvailable(data,seller,item);
       if(buyerUser.items.some(owned=>owned.id===item.id))throw Object.assign(Error('You already own an item with this inventory identity.'),{statusCode:409});
       if (expectedPriceMzk !== undefined && Number(expectedPriceMzk) !== price) throw new Error('The listing price changed. Refresh the market before buying.');
       if(item.economySku&&buyerUser.items.some(owned=>owned.economySku===item.economySku))throw new Error('You already own this upgrade.');
@@ -443,10 +450,11 @@ export class UserJsonDatabase {
       const sellerBalance = Number(sellerUser.tokens?.MZK || 0) + price;
       if (!Number.isSafeInteger(sellerBalance)) throw new Error('Seller balance exceeds the supported range.');
       sellerUser.tokens.MZK = sellerBalance;
-      sellerUser.items.splice(index, 1); item.listing = { ...item.listing, active: false };
+      sellerUser.items.splice(index, 1);if(forgeProof)Object.assign(item,canonicalForgeItem(forgeProof));item.listing = { ...item.listing, active: false };
       buyerUser.items.push(item);
       const now = new Date().toISOString(); buyerUser.updatedAt = now; sellerUser.updatedAt = now;
       transferFactoryModel(data,factoryProof,seller,buyer,now);
+      transferForgeItem(data,forgeProof,seller,buyer,now);
       if(item.type==='land-deed'){const deed=data.landDeeds?.[item.worldId];if(!deed||deed.ownerId!==seller||deed.status!=='active')throw new Error('The seller does not hold this land deed.');deed.ownerId=buyer;deed.updatedAt=now;}
       buyerUser.revision = Number(buyerUser.revision || 0) + 1; sellerUser.revision = Number(sellerUser.revision || 0) + 1;
       const trade = { id: `trade-${data.trades.length + 1}`, requestId: id, buyerId: buyer, sellerId: seller, itemId, itemName: String(item.name || item.title || item.id), priceMzk: price, createdAt: now };
@@ -478,15 +486,17 @@ export class UserJsonDatabase {
   async economy(walletId,mapId){
     const wallet=cleanWallet(walletId);
     const snapshot=await this.transaction(data=>{
-      const state=data.users[wallet]||{tokens:{MZK:0},items:[],memory:{}},factoryMetadata={};
+      const state=data.users[wallet]||{tokens:{MZK:0},items:[],memory:{}},factoryMetadata={},forgeMetadata={};
       for(const item of state.items){
         const proof=ownedFactoryModel(data,wallet,item.id);
         if(proof)factoryMetadata[item.id]={name:proof.name,...modelMarketMetadata(data,proof),freightReserved:itemLocked(data,wallet,item.id,Date.now()),testingReserved:factoryModelTestLocked(data,proof)};
+        const forgeProof=ownedForgeItem(data,wallet,item.id);if(forgeProof)forgeMetadata[item.id]=canonicalForgeItem(forgeProof);
       }
-      return {state,supply:ensureWorldSupply(data),factoryMetadata};
+      return {state,supply:ensureWorldSupply(data),factoryMetadata,forgeMetadata};
     });
-    const {state,supply,factoryMetadata}=snapshot;
-    const ownedAssets=state.items.map(item=>{
+    const {state,supply,factoryMetadata,forgeMetadata}=snapshot;
+    const ownedAssets=state.items.filter(item=>!forgeItemLike(item)||forgeMetadata[item.id]).map(item=>{
+      if(forgeMetadata[item.id])return {...forgeMetadata[item.id],listing:item.listing};
       if(factoryMetadata[item.id])return {...item,...factoryMetadata[item.id]};
       if(item.type==='land-entitlement')return {...item,assetType:'lands',requiresReveal:true};
       if(item.type==='land-deed')return {...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)};
@@ -521,7 +531,7 @@ export class UserJsonDatabase {
       if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}
       const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
       // Legacy inventory fields cannot replace an earned collectible receipt.
-      const owned=prisonReward?user.items.some(owned=>prisonReceipt(data,wallet,owned.id)?.buildAssetId===prisonReward.id):ownsEconomyItem(user,item);
+      const owned=prisonReward?user.items.some(owned=>prisonReceipt(data,wallet,owned.id)?.buildAssetId===prisonReward.id):forgeItemLike(item)?user.items.some(owned=>ownedForgeItem(data,wallet,owned.id)?.buildAssetId===item.buildAssetId):ownsEconomyItem(user,item);
       if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});
       if(action==='use'&&!owned)throw Object.assign(new Error(prisonReward?'Earn and collect this prison item before using it.':'Purchase this upgrade before using it.'),{statusCode:403});
       const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;

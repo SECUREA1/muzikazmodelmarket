@@ -73,7 +73,7 @@ export function buildWorldConnectivity(environments=[],atlas={}){
  }
  const regions=WORLD_DISTRICTS.map(region=>{
   const members=locations.filter(place=>place.regionId===region.id);
-  return {id:region.id,name:region.name,color:region.color,description:region.description,hubLabel:region.hubLabel,hubMapId:ids.has(districtMapId(region.id))?districtMapId(region.id):null,mapIds:members.map(place=>place.mapId),locationIds:members.map(place=>place.id),gateways:members.filter(place=>place.modes.includes('boat')||place.modes.includes('plane')||place.mapId==='world-item-factory').map(place=>({mapId:place.mapId,name:place.name,modes:place.modes}))};
+  return {id:region.id,name:region.name,color:region.color,description:region.description,hubLabel:region.hubLabel,hubMapId:ids.has(districtMapId(region.id))?districtMapId(region.id):null,mapIds:members.map(place=>place.mapId),locationIds:members.map(place=>place.id),gateways:members.filter(place=>place.modes.includes('boat')||place.modes.includes('plane')||['world-item-factory','traditional-forge'].includes(place.mapId)).map(place=>({mapId:place.mapId,name:place.name,modes:place.modes}))};
  });
  return {version:1,revision:Number(atlas.revision)||0,regions,locations,links,localLinks:localLinks(maps)};
 }
