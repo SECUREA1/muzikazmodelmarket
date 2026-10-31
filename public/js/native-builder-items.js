@@ -1,3 +1,4 @@
+import {BUNKER_ITEMS} from './bunker-items.js';
 import {FOREST_SNAKE_ITEMS,forestSnakeNativeItem} from './forest-snake-items.js';
 import {FORGE_ITEMS,forgeNativeItem} from './forge-items.js?v=forge-atelier-20261031';
 import {QUARRY_MODEL_INFO} from './quarry-config.js';
@@ -31,6 +32,7 @@ export const BUILTIN_BUILDER_ITEMS=[
 ].map(([id,name,type,size])=>({id,name,type,size,image:`public/images/builder-pack/${id}.svg`,behavior:['pillow-ring','sofa','armchair'].includes(id)?'seat':'decor',procedural:true,assetKind:'premade'}));
 export const GAMEPLAY_BUILDER_ITEMS=[
  ...Object.keys(FORGE_ITEMS).map(id=>forgeNativeItem(id)),
+ ...BUNKER_ITEMS,
  ...Object.entries(QUARRY_MODEL_INFO).map(([id,[name,description,dimensions]])=>({id,buildAssetId:id,name,description,dimensions,type:'interior',category:'props',size:95,image:'public/images/native-designs/'+id+'.svg',behavior:'decor',procedural:true,assetKind:'premade',function_data:{behavior:'decor',destructible:false,prompt:name}})),
  ...Object.keys(FOREST_HARVEST_ITEMS).map(id=>forestHarvestNativeItem(id)),
  ...Object.keys(FOREST_SNAKE_ITEMS).map(id=>forestSnakeNativeItem(id)),

@@ -103,6 +103,7 @@ export function recordSiteQuestInteraction(sim,player,entity,now,worldId){
  if(!q?.siteQuest||q.status!=='active'||player.vehicleMission?.status!=='active'||q.worldId!==worldId||!member||member.role==='observer'||point?.action!=='interact'||point.entityId!==entity?.id)return false;
  if(now>q.deadline||now-player.lastSeen>15000||player.health<=0||player.vehicleId||player.seatedId||player.skiLift||(player.movementRevision||0)!==member.revision||entity.active===false)return false;
  if(!pointReady(q,null,player.position,point,sim.actors)||distance(player.position,entity.position)>(Number(point.interactionDistance)||3)+.01)return false;
+ if(point.requiredState&&Object.entries(point.requiredState).some(([key,value])=>!['switched','open'].includes(key)||entity[key]!==value)){q.message=point.requiredState.open===false?'Close the marked blast shutter to confirm its seal.':'Enable the marked system to confirm readiness.';return false;}
  member.contribution++;nextPoint(sim,player,q,now);syncQuestTeams(sim,now);return true;
 }
 function stepNPCs(sim,player,q,environment,now,dt,collision,objects){sim.events||=[];const craft=sim.actors[q.vehicleId],position=craft?.position||player.position,protectedCraft=sim.actors[q.protectedId];

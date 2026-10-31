@@ -524,6 +524,10 @@ The shared header stays one row, switches to labeled icons when width is constra
 
 Visit **World Item Factory** in **Maps → Factories** (`model-explorer.html?environment=world-item-factory&autoplay=1`), or open **World item factory** in the explorer, arcade, hockey or island controls to build native and GLB catalog stock with bulk discounts. Each item begins with 1,000 global units once; purchases and physical deployments deplete stock. Dispatch completed batches through Hormuz or copied shipping maps, then finish the server-verified cargo voyage to restock a destination map warehouse or central world stores. Map stores share their warehouse inventory. See [world supply](docs/world-supply.md) for production, restocking, cancellation, and simulated onward transfers.
 
+## Null Sector underground bunker
+
+Visit **Maps → Bunker campaign → Underground Bunker** to descend twelve metres below the exposed surface, shelter from automatic airstrikes and nuclear fallout, and complete six operations with the responding crew. Its 24 native items, defense systems and editable map share the MZK market, Backpack and Builder; shop the curated collection at `builder-market.html?collection=bunker`. See [underground bunker](docs/underground-bunker.md).
+
 ## Timberland forestry and lumber
 
 Visit **Maps → Forestry → Timberland** to farm six tree species, fell and buck shared trees, drive logging machines, haul timber, mill selected lumber profiles, kiln-dry stock, and craft building pieces, furniture and items. Export finished work or dry lumber to Backpack for use on other maps. Grind stumps to reclaim land, or replant and tend the next harvest. See [forest harvesting](docs/forest-harvest.md) for controls, progression and validation.

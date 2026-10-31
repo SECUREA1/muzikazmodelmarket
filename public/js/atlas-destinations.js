@@ -26,6 +26,7 @@ export function destinationIcon(place) {
   const label = `${place.mapId || place.id || ''} ${place.name || ''} ${place.category || ''} ${place.game || ''}`;
   if (place.memberPlot || place.deedId || /deed|plot|land parcel/i.test(label)) return '⚑';
   if (isShippingDestination(place)||/shipping|hormuz/i.test(label)) return '🚢';
+  if (/bunker|hacker/i.test(label)) return '⌘';
   if (/prison|ironwood/i.test(label)) return '▥';
   if (isCompoundDestination(place)) return '🔒';
   if (isProvingDestination(place)) return '🚀';

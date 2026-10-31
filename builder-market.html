@@ -40,6 +40,8 @@
     <section class="builder-panel active" data-builder-panel="market" aria-labelledby="market-title">
       <section class="builder-native" aria-labelledby="native-market-title">
         <header><p class="kicker">Native game and builder catalog</p><h2 id="native-market-title">Build with the world’s working items</h2><p>Browse native models, map pieces, tools and interactive functions. Open an item to buy with MZK or use your owned copy through Backpack.</p></header>
+        <nav class="builder-collection-nav" aria-label="Native collections"><a href="builder-market.html">All native items</a><a href="builder-market.html?collection=bunker">Underground bunker collection</a></nav>
+        <section id="bunker-market-collection" class="bunker-market-collection" hidden aria-label="Bunker market collection"></section>
         <div class="builder-native__controls"><label>Find an item or function<input id="builder-native-search" type="search" placeholder="Item, map or function"></label><label>Category<select id="builder-native-category"><option value="">All categories</option></select></label><button id="builder-native-reset" type="button">RESET FILTERS</button><button id="builder-native-refresh" type="button">REFRESH</button></div>
         <p id="builder-native-status" role="status" aria-live="polite">Loading native items…</p><div class="builder-grid" id="builder-native-items"></div><button id="builder-native-more" type="button" hidden>SHOW MORE ITEMS</button>
       </section>

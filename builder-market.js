@@ -1,6 +1,8 @@
 (async function () {
   'use strict';
   const {marketItemPreview,hydrateMarketPreviews,openMarketPreview}=await import('./public/js/market-item-preview.js?v=forge-atelier-20261031');
+  const {isBunkerMarketItem,bunkerMarketKits}=await import('./public/js/bunker-market.js');
+  const collection=new URLSearchParams(location.search).get('collection');
   const categories = ['WORLD','BUILDINGS','PROPS','TERRAIN','NPC','AI','VEHICLES','GAME SYSTEMS','FUNCTIONS','AUDIO','EFFECTS','SCRIPTS','INTERACTIVE','UTILITIES'];
   let roomStyles = [{ id:'loft', name:'Open Studio', label:'Flexible creative loft', color:'#ff5ba7', walls:'l' }, { id:'suite', name:'Connected Suite', label:'Three linked rooms', color:'#61e7ff', walls:'h' }, { id:'courtyard', name:'Garden Courtyard', label:'Indoor / outdoor flow', color:'#b5ff55', walls:'u' }];
   let builderModels = [['canopy-tree','Canopy Tree','landscape'],['pine-tree','Pine Tree','landscape'],['flower-bed','Flower Bed','landscape'],['hedge-corner','Hedge Corner','landscape'],['garden-rocks','Garden Rocks','landscape'],['pond','Reflecting Pond','landscape'],['path-tile','Path Tile','landscape'],['hill','Soft Hill','landscape'],['lamp-post','Lamp Post','landscape'],['planter','Tall Planter','landscape'],['pillow-ring','Pillow Ring Seat','interior'],['sofa','Cloud Sofa','interior'],['armchair','Accent Chair','interior'],['coffee-table','Coffee Table','interior'],['bookshelf','Bookshelf','interior'],['floor-lamp','Floor Lamp','interior'],['room-divider','Room Divider','interior'],['kitchen-island','Kitchen Island','interior'],['spiral-stairs','Spiral Stairs','interior'],['archway','Archway','interior'],['art-wall','Art Wall','interior']];
@@ -22,7 +24,7 @@
   const nativeFunctions = item => [...new Set([item.nativeFunction, item.behavior, item.configuration?.behavior, item.function_data?.behavior, ...(item.interactions || [])].filter(value => typeof value === 'string' && value !== 'decor'))];
   function renderNativeCatalog() {
     const query = $('#builder-native-search').value.trim().toLowerCase(), category = $('#builder-native-category').value;
-    const matches = nativeItems.filter(item => (!category || item.category === category) && [item.name, item.description, item.category, ...nativeMaps(item), ...nativeFunctions(item), JSON.stringify(item.function_data || {}), ...(item.components || []).map(component => component.name)].join(' ').toLowerCase().includes(query));
+    const matches = nativeItems.filter(item => (collection!=='bunker'||isBunkerMarketItem(item)) && (!category || item.category === category) && [item.name, item.description, item.category, ...nativeMaps(item), ...nativeFunctions(item), JSON.stringify(item.function_data || {}), ...(item.components || []).map(component => component.name)].join(' ').toLowerCase().includes(query));
     const visible = matches.slice(0, nativeLimit);
     $('#builder-native-status').textContent = `${matches.length} of ${nativeItems.length} native items${visible.length < matches.length ? ` · showing ${visible.length}` : ''}.`;
     $('#builder-native-items').innerHTML = visible.map(item => {
@@ -33,6 +35,13 @@
     }).join('') || '<p class="builder-empty">No native items match your filters.</p>';
     $('#builder-native-more').hidden = visible.length >= matches.length;
     hydrateMarketPreviews($('#builder-native-items'));
+  }
+  function renderBunkerCollection(){
+    const section=$('#bunker-market-collection');if(!section)return;
+    section.hidden=collection!=='bunker';if(section.hidden)return;
+    const items=nativeItems.filter(isBunkerMarketItem),pieces=items.filter(item=>item.sku),map=items.find(item=>item.source==='native-map');
+    section.innerHTML=`<div class="bunker-market-intro"><div><p class="kicker">NULL SECTOR / WORKING SHELTER SYSTEMS</p><h2>Build below the surface.</h2><p>${pieces.length} native items: blast access, alarms, filtered air, backup power, water, medical supplies and your hacker crew. Each item opens its MZK offer and retains its controls in Backpack.</p>${map?`<a class="builder-link" href="${escapeHtml(map.builderUrl)}">EDIT THE COMPLETE BUNKER</a>`:''}</div><img src="public/images/bunker/underground-bunker.svg" alt="Underground bunker map cutaway" width="480" height="320"></div><div class="bunker-market-kits">${bunkerMarketKits(items).map(kit=>`<article><h3>${escapeHtml(kit.name)}</h3><p>${escapeHtml(kit.description)}</p><ul>${kit.items.map(item=>`<li><button type="button" data-native-open="${escapeHtml(item.sku)}">${escapeHtml(item.name)} <span>${Number(item.priceMzk).toLocaleString()} MZK</span></button></li>`).join('')}</ul></article>`).join('')}</div>`;
+    section.querySelectorAll('[data-native-open]').forEach(button=>button.addEventListener('click',()=>openNativeItem(button.dataset.nativeOpen).catch(error=>{$('#builder-native-status').textContent=error.message;})));
   }
   async function loadNativeCatalog() {
     const version = ++nativeVersion;
@@ -48,6 +57,7 @@
       $('#builder-native-category').innerHTML = '<option value="">All categories</option>' + categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
       $('#builder-native-category').value = categories.includes(selected) ? selected : '';
       nativeLimit = 36;
+      renderBunkerCollection();
       renderNativeCatalog();
     } catch (error) {
       if (version === nativeVersion) $('#builder-native-status').textContent = `${error.message} Refresh to retry the native catalog.`;

@@ -177,7 +177,7 @@ export function requestAIWorldAction(sim,player,npc,input={},now,context={}){
 }
 
 function autonomous(sim,environment,npc,now,context){
- const info=npc.resident;if(!info||info.factory||info.fitness||info.casino||npc.questContact||info.machineWork?.status==='active'||info.conversationId||info.speaking||info.activitySuspended||info.sharedTask||info.objective?.status==='active'||now<(info.pauseUntil||0)||info.goal?.kind==='practice')return;
+ const info=npc.resident;if(!info||info.bunkerResponse?.status==='active'||info.factory||info.fitness||info.casino||npc.questContact||info.machineWork?.status==='active'||info.conversationId||info.speaking||info.activitySuspended||info.sharedTask||info.objective?.status==='active'||now<(info.pauseUntil||0)||info.goal?.kind==='practice')return;
  info.nextWorldActionAt??=now+10000+hash(npc.id)%15000;
  if(now<info.nextWorldActionAt)return;
  info.nextWorldActionAt=now+30000+hash(npc.id+now)%25000;

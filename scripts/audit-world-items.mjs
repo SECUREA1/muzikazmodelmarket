@@ -8,6 +8,7 @@ import {BUILDER_MODEL_INFO,createBuilderModel} from '../public/js/builder-models
 import {nativeMarketCatalog} from '../native-market-catalog.mjs';
 import {ensureWorldSupply,supplyItem} from '../world-supply.mjs';
 import {WorldAtlas} from '../world-atlas.mjs';
+import {bunkerWorld} from '../bunker-world.mjs';
 import {airportWorld} from '../airport-world.mjs';
 import {constructionWorld} from '../construction-world.mjs';
 import {clownFunhouseWorld} from '../clown-funhouse-world.mjs';
@@ -37,7 +38,7 @@ async function modelFiles(directory=root){
 }
 export async function authoredPublicWorlds(){
  const manifest=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url),'utf8'));
- const runtime=[airportWorld(),constructionWorld(),clownFunhouseWorld(),casinoWorld(),pixelPeaksWorld(),missileFactoryWorld(),factoryProvingGroundsWorld(),mountainCompoundWorld(),fitnessWorld(),shippingWorld(),...landFieldWorlds()];
+ const runtime=[bunkerWorld(),airportWorld(),constructionWorld(),clownFunhouseWorld(),casinoWorld(),pixelPeaksWorld(),missileFactoryWorld(),factoryProvingGroundsWorld(),mountainCompoundWorld(),fitnessWorld(),shippingWorld(),...landFieldWorlds()];
  const authored=[...new Map([...manifest,...runtime].filter(map=>map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,{...map,source:map.source||'repository'}])).values()];
  const temporary=await mkdtemp(join(tmpdir(),'muzikaz-item-audit-'));
  try{

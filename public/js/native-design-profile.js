@@ -5,6 +5,7 @@ import {isCraftedMountainPreview} from './mountain-design-profile.js';
 import {equipmentArtworkUrl} from './equipment-art-profile.js';
 export const NATIVE_DESIGN_VERSION='crafted-native-v3';
 export function nativeDesignThumbnail(id){
+ if(String(id).startsWith('bunker-'))return '/public/images/bunker/'+id+'.svg';
  const equipment=equipmentArtworkUrl(id);if(equipment)return equipment;
  const revision=isCraftedVehicleDesign(id)?'-vehicle-v1':isCraftedMountainPreview(id)?'-mountain-v1':'';
  const release=String(id).startsWith('forge-')?'?v=forge-atelier-20261031':'';

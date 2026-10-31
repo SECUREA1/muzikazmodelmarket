@@ -1,4 +1,6 @@
 import {createWorldItemFactoryLand} from '../world-item-factory-scene.js';
+import {createBunkerLand} from '../bunker-scene.js';
+import {isBunkerEnvironment} from '../bunker-config.js';
 import {createForestHarvestLand} from '../forest-harvest-scene.js';
 import {isForestHarvestEnvironment} from '../forest-harvest-config.js';
 import {createPrisonLand} from '../prison-world.js';
@@ -37,6 +39,7 @@ export function createBuilderLand(environment) {
     return finishNativeWorldDesign(THREE,createProceduralBuilderLand(environment),environment);
 }
 function createProceduralBuilderLand(environment) {
+    if(isBunkerEnvironment(environment))return createBunkerLand(environment);
     if(isForestHarvestEnvironment(environment))return createForestHarvestLand(environment);
     if(environment.id==='world-item-factory'||environment.builderScene?.layout==='world-item-factory')return createWorldItemFactoryLand(environment);
     if(isTropicalIslandEnvironment(environment))return createTropicalIslandLand(environment);

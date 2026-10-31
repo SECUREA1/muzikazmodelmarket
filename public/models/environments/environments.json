@@ -77981,6 +77981,44 @@
           }
         },
         {
+          "id": "factory-bunker-gate",
+          "modelId": "archway",
+          "asset": {
+            "buildAssetId": "archway"
+          },
+          "name": "Underground bunker · hacker campaign",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "interact",
+            "factoryStation": false,
+            "logisticsStation": false,
+            "destructible": false,
+            "action": "teleport",
+            "interactionDistance": 6,
+            "prompt": "Underground bunker · hacker campaign · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "underground-bunker"
+            }
+          }
+        },
+        {
           "id": "factory-lamp--64--39",
           "modelId": "lamp-post",
           "asset": {
@@ -96345,5 +96383,6883 @@
       }
     },
     "playUrl": "model-explorer.html?environment=traditional-forge&house=traditional-forge&mode=multiplayer&autoplay=1"
+  },
+  {
+    "id": "underground-bunker",
+    "name": "Null Sector · Underground Bunker",
+    "label": "Twelve metres underground · airstrike & fallout protection · active AI response",
+    "description": "Arrive at an exposed surface warning station and descend twelve metres through an armoured access tunnel into Null Sector. Six connected underground rooms, sealed blast shutters, backup power and filtered air support protection from in-game airstrikes, nuclear impacts and fallout. Nyx, Rook, Patch and Echo respond to live alerts and active campaign operations. Inspect hacker consoles, server archives, hydroponics, medical supplies and emergency equipment; follow ordered objectives for world score. Every structural piece and prop uses a reusable native market item with MZK, Builder and Backpack support. The workshop connects to World Item Factory.",
+    "category": "Underground campaign & exploration",
+    "game": "bunker",
+    "mapTheme": "industrial",
+    "mapColor": "#69e6cc",
+    "indoor": true,
+    "outdoor": true,
+    "worldId": "volt-city",
+    "source": "repository",
+    "visibility": "public",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "sharedWorld": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "contentUpdatedAt": "2026-10-31T14:00:00.000Z",
+    "scale": 1,
+    "spaceScale": 1,
+    "thumbnailUrl": "/public/images/bunker/underground-bunker.svg",
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 70,
+      "rotationY": 0
+    },
+    "streets": [],
+    "bunker": {
+      "enabled": true,
+      "version": 2,
+      "crew": [
+        {
+          "id": "bunker-nyx",
+          "modelId": "bunker-hacker",
+          "name": "Nyx Vale",
+          "role": "Operations coordinator",
+          "home": {
+            "x": 12,
+            "y": -11.98,
+            "z": 4
+          },
+          "color": "#62edcc",
+          "skin": "#b98264",
+          "heading": 1.5707963267948966,
+          "task": "reviewing local system reports and coordinating bunker operations",
+          "greeting": "Welcome to Null Sector. Open Quests for power recovery, archive integrity or crew evacuation. You can take the operations in any order."
+        },
+        {
+          "id": "bunker-rook",
+          "modelId": "bunker-engineer",
+          "name": "Rook Mercer",
+          "role": "Power & fabrication engineer",
+          "home": {
+            "x": -12,
+            "y": -11.98,
+            "z": -18
+          },
+          "color": "#eab55e",
+          "skin": "#80543d",
+          "heading": -1.5707963267948966,
+          "task": "checking the power core, relay and workshop readiness",
+          "greeting": "The core and relay have working switches. Read the operations briefing, inspect each system and follow the active quest markers. The workshop connects to World Item Factory."
+        },
+        {
+          "id": "bunker-patch",
+          "modelId": "bunker-engineer",
+          "name": "Dr. Patch Okafor",
+          "role": "Medic & habitat keeper",
+          "home": {
+            "x": 12,
+            "y": -11.98,
+            "z": 26
+          },
+          "color": "#e18db6",
+          "skin": "#76503d",
+          "heading": 1.5707963267948966,
+          "task": "checking medical supplies, crew rest and habitat systems",
+          "greeting": "Recover at the med station before the evacuation drill. The bunks, grow beds and supply stores keep this place alive. I also have the usual local favors."
+        },
+        {
+          "id": "bunker-echo",
+          "modelId": "bunker-hacker",
+          "name": "Echo Sato",
+          "role": "Archive custodian",
+          "home": {
+            "x": 12,
+            "y": -11.98,
+            "z": -18
+          },
+          "color": "#9ea2fb",
+          "skin": "#d8b08e",
+          "heading": 1.5707963267948966,
+          "task": "checking the archive and preserving the crew’s records",
+          "greeting": "Our archive integrity operation checks the fabrication bench and server archive. Use each marked console in order; reading a remote marker does not complete it."
+        }
+      ],
+      "operationIds": [
+        "power",
+        "archive",
+        "evacuation",
+        "shelter",
+        "reserves",
+        "continuity"
+      ],
+      "defense": {
+        "minX": -27.5,
+        "maxX": 27.5,
+        "minY": -12.6,
+        "maxY": -8,
+        "minZ": -31.5,
+        "maxZ": 31.5,
+        "floorY": -12,
+        "ceilingY": -8,
+        "surfaceY": 0,
+        "sealDoorIds": [
+          "bunker-ingress-shutter"
+        ],
+        "powerId": "bunker-power-core",
+        "filtrationId": "bunker-filtration-unit",
+        "relayId": "bunker-power-relay",
+        "alarmConsoleId": "bunker-alert-console",
+        "medicalId": "bunker-med-station",
+        "shelterPoint": {
+          "x": 0,
+          "y": -11.98,
+          "z": 26
+        },
+        "archiveId": "bunker-archive-terminal",
+        "monitorId": "bunker-radiation-monitor",
+        "lockerId": "bunker-emergency-locker"
+      }
+    },
+    "bunkerDefense": {
+      "enabled": true,
+      "version": 1,
+      "structuralVersion": 2,
+      "undergroundLevel": -12,
+      "undergroundBounds": {
+        "minX": -27.5,
+        "maxX": 27.5,
+        "minY": -12.6,
+        "maxY": -8,
+        "minZ": -31.5,
+        "maxZ": 31.5
+      },
+      "surfaceEntry": {
+        "x": 0,
+        "y": 0.02,
+        "z": 70
+      },
+      "shelter": {
+        "x": 0,
+        "y": -11.98,
+        "z": 26
+      },
+      "stations": {
+        "alert": "bunker-alert-console",
+        "filtration": "bunker-filtration-unit",
+        "shutter": "bunker-ingress-shutter",
+        "monitor": "bunker-radiation-monitor",
+        "locker": "bunker-emergency-locker",
+        "power": "bunker-power-core",
+        "relay": "bunker-power-relay"
+      },
+      "sealDoorIds": [
+        "bunker-ingress-shutter"
+      ],
+      "initialSystems": {
+        "power": true,
+        "filtration": true,
+        "relay": true
+      }
+    },
+    "doomsday": {
+      "enabled": true,
+      "objectives": [
+        {
+          "id": "shelter",
+          "name": "Null Sector underground shelter",
+          "description": "Descend below ground and stay inside the sealed bunker during the warning and impacts.",
+          "position": {
+            "x": 0,
+            "y": -11.98,
+            "z": 26
+          },
+          "arrivalArea": {
+            "minX": -27.5,
+            "maxX": 27.5,
+            "minZ": -31.5,
+            "maxZ": 31.5
+          }
+        },
+        {
+          "id": "supplies",
+          "name": "Sealed bunker relief supplies",
+          "description": "Verify the medical and water reserves in the underground emergency locker.",
+          "position": {
+            "x": -10,
+            "y": -11.98,
+            "z": 24
+          }
+        },
+        {
+          "id": "recovery",
+          "name": "Underground emergency relay",
+          "description": "Restore communications from the protected engineering room.",
+          "position": {
+            "x": -8,
+            "y": -11.98,
+            "z": -18
+          }
+        }
+      ]
+    },
+    "builderScene": {
+      "version": 3,
+      "layout": "underground-bunker",
+      "mapSize": 160,
+      "objects": [
+        {
+          "id": "bunker-floor--24--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--24-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -24,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--24-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -24,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--16-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -16,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--16-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -16,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor--8-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": -8,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling--8-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": -8,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-0-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-0-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 0,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-8-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 8,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-8-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 8,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-16-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 16,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-16-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 16,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24--28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24--28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24--20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24--20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24--12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24--12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24--4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24--4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": -4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24-4",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24-4",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24-12",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24-12",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24-20",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24-20",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-floor-24-28",
+          "modelId": "bunker-floor",
+          "name": "Reinforced bunker floor",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 24,
+            "y": -12.2,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-ceiling-24-28",
+          "modelId": "bunker-ceiling",
+          "name": "Underground service ceiling",
+          "asset": {
+            "buildAssetId": "bunker-ceiling"
+          },
+          "position": {
+            "x": 24,
+            "y": -8,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Utility Ceiling"
+          }
+        },
+        {
+          "id": "bunker-wall-south-west",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -16,
+            "y": -12,
+            "z": 32
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-south-east",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": 32
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-north",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 0,
+            "y": -12,
+            "z": -32
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 14,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-west",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -28,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 16,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-east",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 28,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 16,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine--4-0",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine--4-1",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.5,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine--4-2",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": 11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.5,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine--4-3",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-door-west--22",
+          "modelId": "bunker-blast-door",
+          "name": "West room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-door-west-0",
+          "modelId": "bunker-blast-door",
+          "name": "West room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-door-west-22",
+          "modelId": "bunker-blast-door",
+          "name": "West room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": -4,
+            "y": -12,
+            "z": 22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-wall-spine-4-0",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine-4-1",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": -11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.5,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine-4-2",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": 11
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4.5,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-spine-4-3",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-door-east--22",
+          "modelId": "bunker-blast-door",
+          "name": "East room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-door-east-0",
+          "modelId": "bunker-blast-door",
+          "name": "East room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-door-east-22",
+          "modelId": "bunker-blast-door",
+          "name": "East room blast door",
+          "asset": {
+            "buildAssetId": "bunker-blast-door"
+          },
+          "position": {
+            "x": 4,
+            "y": -12,
+            "z": 22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close bunker blast door · E"
+          }
+        },
+        {
+          "id": "bunker-wall-room--16--12",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -16,
+            "y": -12,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-room--16-12",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": -16,
+            "y": -12,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-room-16--12",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": -12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-wall-room-16-12",
+          "modelId": "bunker-wall",
+          "name": "Reinforced bunker bulkhead",
+          "asset": {
+            "buildAssetId": "bunker-wall"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Armoured Wall"
+          }
+        },
+        {
+          "id": "bunker-checkin-terminal",
+          "modelId": "bunker-terminal",
+          "name": "Descent check-in & campaign briefing",
+          "asset": {
+            "buildAssetId": "bunker-terminal"
+          },
+          "position": {
+            "x": -2.5,
+            "y": -12,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Descent check-in & campaign briefing · E / Use",
+            "dialogue": {
+              "text": "NULL SECTOR // CREW CHECK-IN. Open Quests for six operations: power, archive, safe passage, shelter sealing, reserves and secure communications. Open People & favors to meet Nyx, Rook, Patch and Echo. Blast doors open with E / Use."
+            }
+          }
+        },
+        {
+          "id": "bunker-ops-terminal",
+          "modelId": "bunker-terminal",
+          "name": "Operations briefing terminal",
+          "asset": {
+            "buildAssetId": "bunker-terminal"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Operations briefing terminal · E / Use",
+            "dialogue": {
+              "text": "NULL SECTOR // OPERATIONS. Six independent operations cover power, archive recovery, safe passage, shelter sealing, reserves and secure communications. Visit the marked physical equipment in order. Finish each operation to earn world score and record your best time."
+            }
+          }
+        },
+        {
+          "id": "bunker-power-core",
+          "modelId": "bunker-power-core",
+          "name": "Contained bunker power core",
+          "asset": {
+            "buildAssetId": "bunker-power-core"
+          },
+          "position": {
+            "x": -17,
+            "y": -12,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "switch",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Contained bunker power core · E / Use",
+            "dialogue": {
+              "text": "POWER // CONTAINED CORE. Toggle the core using E / Use, then continue the recovery operation."
+            }
+          }
+        },
+        {
+          "id": "bunker-power-relay",
+          "modelId": "bunker-signal-relay",
+          "name": "Emergency signal relay",
+          "asset": {
+            "buildAssetId": "bunker-signal-relay"
+          },
+          "position": {
+            "x": -12,
+            "y": -12,
+            "z": -21
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "switch",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Emergency signal relay · E / Use",
+            "dialogue": {
+              "text": "SIGNAL // RELAY HANDOVER. Toggle the local relay and check the active mission marker."
+            }
+          }
+        },
+        {
+          "id": "bunker-archive-terminal",
+          "modelId": "bunker-terminal",
+          "name": "Server archive integrity terminal",
+          "asset": {
+            "buildAssetId": "bunker-terminal"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Server archive integrity terminal · E / Use",
+            "dialogue": {
+              "text": "ARCHIVE // INTEGRITY REVIEW. Inspect the rack aisles, read the archive record and continue to the extraction uplink when your quest requests it."
+            }
+          }
+        },
+        {
+          "id": "bunker-fabrication-bench",
+          "modelId": "bunker-workbench",
+          "name": "Salvage fabrication workbench",
+          "asset": {
+            "buildAssetId": "bunker-workbench"
+          },
+          "position": {
+            "x": -16,
+            "y": -12,
+            "z": 22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Salvage fabrication workbench · E / Use",
+            "dialogue": {
+              "text": "WORKSHOP // SALVAGE REVIEW. This workbench is a mission inspection point. Manufacture catalog items through the connected World Item Factory and the existing MZK supply system."
+            }
+          }
+        },
+        {
+          "id": "bunker-med-station",
+          "modelId": "bunker-med-station",
+          "name": "Crew recovery med station",
+          "asset": {
+            "buildAssetId": "bunker-med-station"
+          },
+          "position": {
+            "x": 20,
+            "y": -12,
+            "z": 24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "heal",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 15,
+            "prompt": "Crew recovery med station · E / Use",
+            "value": 30,
+            "dialogue": {
+              "text": "MEDICAL // CREW RECOVERY. Use this station to recover health, then continue the active operation."
+            }
+          }
+        },
+        {
+          "id": "bunker-extraction-terminal",
+          "modelId": "bunker-terminal",
+          "name": "Extraction manifest & uplink",
+          "asset": {
+            "buildAssetId": "bunker-terminal"
+          },
+          "position": {
+            "x": 0,
+            "y": -12,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Extraction manifest & uplink · E / Use",
+            "dialogue": {
+              "text": "UPLINK // EXTRACTION MANIFEST. Confirm the crew readiness record here when marked by your active quest. The Commons gateway remains available throughout the campaign."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-10--29",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 10,
+            "y": -12,
+            "z": -29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-10--25",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 10,
+            "y": -12,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-16--29",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": -29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-16--25",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 16,
+            "y": -12,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-22--29",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 22,
+            "y": -12,
+            "z": -29
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-rack-22--25",
+          "modelId": "bunker-server-rack",
+          "name": "Encrypted server archive rack",
+          "asset": {
+            "buildAssetId": "bunker-server-rack"
+          },
+          "position": {
+            "x": 22,
+            "y": -12,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Ghostline Server Rack",
+            "dialogue": {
+              "text": "Archive integrity is stable. Check the numbered compute trays and follow the campaign objectives before reporting to Cipher."
+            }
+          }
+        },
+        {
+          "id": "bunker-grow-bed--5",
+          "modelId": "bunker-hydroponics",
+          "name": "Life-support hydroponic grow bed",
+          "asset": {
+            "buildAssetId": "bunker-hydroponics"
+          },
+          "position": {
+            "x": -21,
+            "y": -12,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Hydroponic Garden",
+            "dialogue": {
+              "text": "The bunker survives on closed-loop water, fresh greens and careful maintenance. Inspect the irrigation manifold and air scrubber on your service round."
+            }
+          }
+        },
+        {
+          "id": "bunker-grow-bed-0",
+          "modelId": "bunker-hydroponics",
+          "name": "Life-support hydroponic grow bed",
+          "asset": {
+            "buildAssetId": "bunker-hydroponics"
+          },
+          "position": {
+            "x": -21,
+            "y": -12,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Hydroponic Garden",
+            "dialogue": {
+              "text": "The bunker survives on closed-loop water, fresh greens and careful maintenance. Inspect the irrigation manifold and air scrubber on your service round."
+            }
+          }
+        },
+        {
+          "id": "bunker-grow-bed-5",
+          "modelId": "bunker-hydroponics",
+          "name": "Life-support hydroponic grow bed",
+          "asset": {
+            "buildAssetId": "bunker-hydroponics"
+          },
+          "position": {
+            "x": -21,
+            "y": -12,
+            "z": 5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Hydroponic Garden",
+            "dialogue": {
+              "text": "The bunker survives on closed-loop water, fresh greens and careful maintenance. Inspect the irrigation manifold and air scrubber on your service round."
+            }
+          }
+        },
+        {
+          "id": "bunker-bunk-18",
+          "modelId": "bunker-bunk",
+          "name": "Underground crew bunk",
+          "asset": {
+            "buildAssetId": "bunker-bunk"
+          },
+          "position": {
+            "x": 25,
+            "y": -12,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "seat",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Rest on crew bunk",
+            "seatOffset": [
+              0,
+              0.58,
+              -0.1
+            ],
+            "exitOffset": [
+              0,
+              0,
+              -1.3
+            ]
+          }
+        },
+        {
+          "id": "bunker-bunk-23",
+          "modelId": "bunker-bunk",
+          "name": "Underground crew bunk",
+          "asset": {
+            "buildAssetId": "bunker-bunk"
+          },
+          "position": {
+            "x": 25,
+            "y": -12,
+            "z": 23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "seat",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Rest on crew bunk",
+            "seatOffset": [
+              0,
+              0.58,
+              -0.1
+            ],
+            "exitOffset": [
+              0,
+              0,
+              -1.3
+            ]
+          }
+        },
+        {
+          "id": "bunker-bunk-28",
+          "modelId": "bunker-bunk",
+          "name": "Underground crew bunk",
+          "asset": {
+            "buildAssetId": "bunker-bunk"
+          },
+          "position": {
+            "x": 25,
+            "y": -12,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "seat",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Rest on crew bunk",
+            "seatOffset": [
+              0,
+              0.58,
+              -0.1
+            ],
+            "exitOffset": [
+              0,
+              0,
+              -1.3
+            ]
+          }
+        },
+        {
+          "id": "bunker-salvage-cache-0",
+          "modelId": "bunker-supply-cache",
+          "name": "Bunker reserve supply cache",
+          "asset": {
+            "buildAssetId": "bunker-supply-cache"
+          },
+          "position": {
+            "x": -24,
+            "y": -12,
+            "z": 27
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "pickup",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Carry supply cache"
+          }
+        },
+        {
+          "id": "bunker-salvage-cache-1",
+          "modelId": "bunker-supply-cache",
+          "name": "Bunker reserve supply cache",
+          "asset": {
+            "buildAssetId": "bunker-supply-cache"
+          },
+          "position": {
+            "x": -23,
+            "y": -12,
+            "z": 19
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "pickup",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Carry supply cache"
+          }
+        },
+        {
+          "id": "bunker-salvage-cache-2",
+          "modelId": "bunker-supply-cache",
+          "name": "Bunker reserve supply cache",
+          "asset": {
+            "buildAssetId": "bunker-supply-cache"
+          },
+          "position": {
+            "x": -24,
+            "y": -12,
+            "z": -28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "pickup",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Carry supply cache"
+          }
+        },
+        {
+          "id": "bunker-salvage-cache-3",
+          "modelId": "bunker-supply-cache",
+          "name": "Bunker reserve supply cache",
+          "asset": {
+            "buildAssetId": "bunker-supply-cache"
+          },
+          "position": {
+            "x": 24,
+            "y": -12,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "pickup",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Carry supply cache"
+          }
+        },
+        {
+          "id": "bunker-salvage-cache-4",
+          "modelId": "bunker-supply-cache",
+          "name": "Bunker reserve supply cache",
+          "asset": {
+            "buildAssetId": "bunker-supply-cache"
+          },
+          "position": {
+            "x": -21,
+            "y": -12,
+            "z": 7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "pickup",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Carry supply cache"
+          }
+        },
+        {
+          "id": "bunker-vent-0",
+          "modelId": "bunker-vent",
+          "name": "Filtered bunker ventilation unit",
+          "asset": {
+            "buildAssetId": "bunker-vent"
+          },
+          "position": {
+            "x": -25,
+            "y": -9.4,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Air Scrubber",
+            "dialogue": {
+              "text": "Air scrubber inspection: the guarded impeller circulates filtered air through the crew quarters. Keep its access lane clear."
+            }
+          }
+        },
+        {
+          "id": "bunker-vent-1",
+          "modelId": "bunker-vent",
+          "name": "Filtered bunker ventilation unit",
+          "asset": {
+            "buildAssetId": "bunker-vent"
+          },
+          "position": {
+            "x": 25,
+            "y": -9.4,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Air Scrubber",
+            "dialogue": {
+              "text": "Air scrubber inspection: the guarded impeller circulates filtered air through the crew quarters. Keep its access lane clear."
+            }
+          }
+        },
+        {
+          "id": "bunker-vent-2",
+          "modelId": "bunker-vent",
+          "name": "Filtered bunker ventilation unit",
+          "asset": {
+            "buildAssetId": "bunker-vent"
+          },
+          "position": {
+            "x": -25,
+            "y": -9.4,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Air Scrubber",
+            "dialogue": {
+              "text": "Air scrubber inspection: the guarded impeller circulates filtered air through the crew quarters. Keep its access lane clear."
+            }
+          }
+        },
+        {
+          "id": "bunker-vent-3",
+          "modelId": "bunker-vent",
+          "name": "Filtered bunker ventilation unit",
+          "asset": {
+            "buildAssetId": "bunker-vent"
+          },
+          "position": {
+            "x": 25,
+            "y": -9.4,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Air Scrubber",
+            "dialogue": {
+              "text": "Air scrubber inspection: the guarded impeller circulates filtered air through the crew quarters. Keep its access lane clear."
+            }
+          }
+        },
+        {
+          "id": "bunker-factory-gate",
+          "modelId": "portal-door",
+          "name": "World Item Factory · production connection",
+          "asset": {
+            "buildAssetId": "portal-door"
+          },
+          "position": {
+            "x": -24,
+            "y": -12,
+            "z": 15
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "destructible": false,
+            "damage": 0,
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 5,
+            "prompt": "World Item Factory · production connection · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "world-item-factory"
+            }
+          }
+        },
+        {
+          "id": "bunker-commons-gate",
+          "modelId": "portal-door",
+          "name": "Return to World Commons",
+          "asset": {
+            "buildAssetId": "portal-door"
+          },
+          "position": {
+            "x": 2.5,
+            "y": -12,
+            "z": 28.5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "destructible": false,
+            "damage": 0,
+            "behavior": "interact",
+            "action": "teleport",
+            "interactionDistance": 5,
+            "prompt": "Return to World Commons · E / Use",
+            "portal": {
+              "enabled": true,
+              "destinationType": "map",
+              "targetMapId": "public-commons"
+            }
+          }
+        },
+        {
+          "id": "bunker-nyx",
+          "modelId": "bunker-hacker",
+          "name": "Nyx Vale · Operations coordinator",
+          "asset": {
+            "buildAssetId": "bunker-hacker"
+          },
+          "position": {
+            "x": 12,
+            "y": -12,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Talk to Nyx Vale · E / Use",
+            "dialogue": {
+              "text": "Welcome to Null Sector. Open Quests for power recovery, archive integrity or crew evacuation. You can take the operations in any order."
+            }
+          }
+        },
+        {
+          "id": "bunker-rook",
+          "modelId": "bunker-engineer",
+          "name": "Rook Mercer · Power & fabrication engineer",
+          "asset": {
+            "buildAssetId": "bunker-engineer"
+          },
+          "position": {
+            "x": -12,
+            "y": -12,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": -1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Talk to Rook Mercer · E / Use",
+            "dialogue": {
+              "text": "The core and relay have working switches. Read the operations briefing, inspect each system and follow the active quest markers. The workshop connects to World Item Factory."
+            }
+          }
+        },
+        {
+          "id": "bunker-patch",
+          "modelId": "bunker-engineer",
+          "name": "Dr. Patch Okafor · Medic & habitat keeper",
+          "asset": {
+            "buildAssetId": "bunker-engineer"
+          },
+          "position": {
+            "x": 12,
+            "y": -12,
+            "z": 26
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Talk to Dr. Patch Okafor · E / Use",
+            "dialogue": {
+              "text": "Recover at the med station before the evacuation drill. The bunks, grow beds and supply stores keep this place alive. I also have the usual local favors."
+            }
+          }
+        },
+        {
+          "id": "bunker-echo",
+          "modelId": "bunker-hacker",
+          "name": "Echo Sato · Archive custodian",
+          "asset": {
+            "buildAssetId": "bunker-hacker"
+          },
+          "position": {
+            "x": 12,
+            "y": -12,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Talk to Echo Sato · E / Use",
+            "dialogue": {
+              "text": "Our archive integrity operation checks the fabrication bench and server archive. Use each marked console in order; reading a remote marker does not complete it."
+            }
+          }
+        },
+        {
+          "id": "bunker-surface-apron-0-68",
+          "modelId": "bunker-floor",
+          "name": "Surface arrival apron",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -0.2,
+            "z": 68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-surface-apron-0-76",
+          "modelId": "bunker-floor",
+          "name": "Surface arrival apron",
+          "asset": {
+            "buildAssetId": "bunker-floor"
+          },
+          "position": {
+            "x": 0,
+            "y": -0.2,
+            "z": 76
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1,
+            "z": 2
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Reinforced Floor"
+          }
+        },
+        {
+          "id": "bunker-access-descent",
+          "modelId": "bunker-access-stairs",
+          "name": "Armoured underground access descent",
+          "asset": {
+            "buildAssetId": "bunker-access-stairs"
+          },
+          "position": {
+            "x": 0,
+            "y": -12.2,
+            "z": 48
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Protected Descent"
+          }
+        },
+        {
+          "id": "bunker-ingress-shutter",
+          "modelId": "bunker-blast-shutter",
+          "name": "Perimeter blast shutter & airlock",
+          "asset": {
+            "buildAssetId": "bunker-blast-shutter"
+          },
+          "position": {
+            "x": 0,
+            "y": -12,
+            "z": 31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.2121212121212122,
+            "y": 0.9523809523809523,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "door",
+            "bunkerSystem": "blast-door",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Open / close perimeter blast shutter · E"
+          }
+        },
+        {
+          "id": "bunker-alert-console",
+          "modelId": "bunker-alert-console",
+          "name": "Civil-defense alert console",
+          "asset": {
+            "buildAssetId": "bunker-alert-console"
+          },
+          "position": {
+            "x": -2.5,
+            "y": -12,
+            "z": 26
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "bunkerSystem": "alerts",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Civil-defense alert console · E / Use",
+            "dialogue": {
+              "text": "NULL SECTOR // ALERT CONTROL. Read the live threat board, acknowledge the alert and follow the marked response operation. Stay below ground during impacts and fallout."
+            }
+          }
+        },
+        {
+          "id": "bunker-filtration-unit",
+          "modelId": "bunker-filtration-unit",
+          "name": "Sealed-air filtration bank",
+          "asset": {
+            "buildAssetId": "bunker-filtration-unit"
+          },
+          "position": {
+            "x": -22,
+            "y": -12,
+            "z": -16
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "switch",
+            "bunkerSystem": "filtration",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Sealed-air filtration bank · E / Use",
+            "dialogue": {
+              "text": "AIR // SEALED FILTRATION. Keep this switch and the power core on, and close the perimeter blast shutter, to maintain filtered shelter air."
+            }
+          }
+        },
+        {
+          "id": "bunker-radiation-monitor",
+          "modelId": "bunker-radiation-monitor",
+          "name": "Radiation and pressure monitor",
+          "asset": {
+            "buildAssetId": "bunker-radiation-monitor"
+          },
+          "position": {
+            "x": 2.5,
+            "y": -12,
+            "z": 23
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "bunkerSystem": "radiation",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Radiation and pressure monitor · E / Use",
+            "dialogue": {
+              "text": "EXPOSURE // SHELTER STATUS. The live threat board reports underground cover, blast shutter seal, backup power and filtration. Surface occupants remain exposed during strikes."
+            }
+          }
+        },
+        {
+          "id": "bunker-water-reserve",
+          "modelId": "bunker-water-reserve",
+          "name": "Protected potable water reserve",
+          "asset": {
+            "buildAssetId": "bunker-water-reserve"
+          },
+          "position": {
+            "x": -17,
+            "y": -12,
+            "z": 7
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "bunkerSystem": "water",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Protected potable water reserve · E / Use",
+            "dialogue": {
+              "text": "WATER // SEALED RESERVE. Check the protected water storage and distribution valves during crew readiness operations."
+            }
+          }
+        },
+        {
+          "id": "bunker-emergency-locker",
+          "modelId": "bunker-emergency-locker",
+          "name": "Sealed emergency response locker",
+          "asset": {
+            "buildAssetId": "bunker-emergency-locker"
+          },
+          "position": {
+            "x": -10,
+            "y": -12,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "talk",
+            "bunkerSystem": "supplies",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 4,
+            "cooldown": 0,
+            "prompt": "Sealed emergency response locker · E / Use",
+            "dialogue": {
+              "text": "SUPPLIES // RESPONSE STORES. Verify medical and water reserves here during an active response operation."
+            }
+          }
+        },
+        {
+          "id": "bunker-surface-warning-beacon",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Surface airstrike & nuclear warning beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "z": 68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-0",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": -2.7,
+            "y": -9.5,
+            "z": 28
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-1",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": 2.7,
+            "y": -9.5,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-2",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": -18,
+            "y": -9.5,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-3",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": 18,
+            "y": -9.5,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-4",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": -16,
+            "y": -9.5,
+            "z": 4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        },
+        {
+          "id": "bunker-alarm-beacon-5",
+          "modelId": "bunker-alarm-beacon",
+          "name": "Underground response alarm beacon",
+          "asset": {
+            "buildAssetId": "bunker-alarm-beacon"
+          },
+          "position": {
+            "x": 18,
+            "y": -9.5,
+            "z": 26
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "placementAnchor": "collider-base",
+          "functionalSettings": {
+            "behavior": "decor",
+            "bunkerSystem": "alarm",
+            "action": "none",
+            "damage": 0,
+            "destructible": false,
+            "interactionDistance": 3.5,
+            "cooldown": 0,
+            "prompt": "Inspect Vaultline Civil Defence Alarm"
+          }
+        }
+      ],
+      "streets": [],
+      "layoutMeta": {
+        "color": 1387313,
+        "bunker": {
+          "enabled": true,
+          "version": 2,
+          "crew": [
+            {
+              "id": "bunker-nyx",
+              "modelId": "bunker-hacker",
+              "name": "Nyx Vale",
+              "role": "Operations coordinator",
+              "home": {
+                "x": 12,
+                "y": -11.98,
+                "z": 4
+              },
+              "color": "#62edcc",
+              "skin": "#b98264",
+              "heading": 1.5707963267948966,
+              "task": "reviewing local system reports and coordinating bunker operations",
+              "greeting": "Welcome to Null Sector. Open Quests for power recovery, archive integrity or crew evacuation. You can take the operations in any order."
+            },
+            {
+              "id": "bunker-rook",
+              "modelId": "bunker-engineer",
+              "name": "Rook Mercer",
+              "role": "Power & fabrication engineer",
+              "home": {
+                "x": -12,
+                "y": -11.98,
+                "z": -18
+              },
+              "color": "#eab55e",
+              "skin": "#80543d",
+              "heading": -1.5707963267948966,
+              "task": "checking the power core, relay and workshop readiness",
+              "greeting": "The core and relay have working switches. Read the operations briefing, inspect each system and follow the active quest markers. The workshop connects to World Item Factory."
+            },
+            {
+              "id": "bunker-patch",
+              "modelId": "bunker-engineer",
+              "name": "Dr. Patch Okafor",
+              "role": "Medic & habitat keeper",
+              "home": {
+                "x": 12,
+                "y": -11.98,
+                "z": 26
+              },
+              "color": "#e18db6",
+              "skin": "#76503d",
+              "heading": 1.5707963267948966,
+              "task": "checking medical supplies, crew rest and habitat systems",
+              "greeting": "Recover at the med station before the evacuation drill. The bunks, grow beds and supply stores keep this place alive. I also have the usual local favors."
+            },
+            {
+              "id": "bunker-echo",
+              "modelId": "bunker-hacker",
+              "name": "Echo Sato",
+              "role": "Archive custodian",
+              "home": {
+                "x": 12,
+                "y": -11.98,
+                "z": -18
+              },
+              "color": "#9ea2fb",
+              "skin": "#d8b08e",
+              "heading": 1.5707963267948966,
+              "task": "checking the archive and preserving the crew’s records",
+              "greeting": "Our archive integrity operation checks the fabrication bench and server archive. Use each marked console in order; reading a remote marker does not complete it."
+            }
+          ],
+          "operationIds": [
+            "power",
+            "archive",
+            "evacuation",
+            "shelter",
+            "reserves",
+            "continuity"
+          ],
+          "defense": {
+            "minX": -27.5,
+            "maxX": 27.5,
+            "minY": -12.6,
+            "maxY": -8,
+            "minZ": -31.5,
+            "maxZ": 31.5,
+            "floorY": -12,
+            "ceilingY": -8,
+            "surfaceY": 0,
+            "sealDoorIds": [
+              "bunker-ingress-shutter"
+            ],
+            "powerId": "bunker-power-core",
+            "filtrationId": "bunker-filtration-unit",
+            "relayId": "bunker-power-relay",
+            "alarmConsoleId": "bunker-alert-console",
+            "medicalId": "bunker-med-station",
+            "shelterPoint": {
+              "x": 0,
+              "y": -11.98,
+              "z": 26
+            },
+            "archiveId": "bunker-archive-terminal",
+            "monitorId": "bunker-radiation-monitor",
+            "lockerId": "bunker-emergency-locker"
+          }
+        },
+        "bunkerDefense": {
+          "enabled": true,
+          "version": 1,
+          "structuralVersion": 2,
+          "undergroundLevel": -12,
+          "undergroundBounds": {
+            "minX": -27.5,
+            "maxX": 27.5,
+            "minY": -12.6,
+            "maxY": -8,
+            "minZ": -31.5,
+            "maxZ": 31.5
+          },
+          "surfaceEntry": {
+            "x": 0,
+            "y": 0.02,
+            "z": 70
+          },
+          "shelter": {
+            "x": 0,
+            "y": -11.98,
+            "z": 26
+          },
+          "stations": {
+            "alert": "bunker-alert-console",
+            "filtration": "bunker-filtration-unit",
+            "shutter": "bunker-ingress-shutter",
+            "monitor": "bunker-radiation-monitor",
+            "locker": "bunker-emergency-locker",
+            "power": "bunker-power-core",
+            "relay": "bunker-power-relay"
+          },
+          "sealDoorIds": [
+            "bunker-ingress-shutter"
+          ],
+          "initialSystems": {
+            "power": true,
+            "filtration": true,
+            "relay": true
+          }
+        },
+        "doomsday": {
+          "enabled": true,
+          "objectives": [
+            {
+              "id": "shelter",
+              "name": "Null Sector underground shelter",
+              "description": "Descend below ground and stay inside the sealed bunker during the warning and impacts.",
+              "position": {
+                "x": 0,
+                "y": -11.98,
+                "z": 26
+              },
+              "arrivalArea": {
+                "minX": -27.5,
+                "maxX": 27.5,
+                "minZ": -31.5,
+                "maxZ": 31.5
+              }
+            },
+            {
+              "id": "supplies",
+              "name": "Sealed bunker relief supplies",
+              "description": "Verify the medical and water reserves in the underground emergency locker.",
+              "position": {
+                "x": -10,
+                "y": -11.98,
+                "z": 24
+              }
+            },
+            {
+              "id": "recovery",
+              "name": "Underground emergency relay",
+              "description": "Restore communications from the protected engineering room.",
+              "position": {
+                "x": -8,
+                "y": -11.98,
+                "z": -18
+              }
+            }
+          ]
+        },
+        "locations": [
+          {
+            "id": "bunker-surface-arrival",
+            "name": "00 · Surface warning station",
+            "x": 0,
+            "y": 0.02,
+            "z": 70,
+            "width": 16,
+            "depth": 16,
+            "description": "Exposed surface arrival. Follow the enclosed descent to the underground blast shutter when the alarms sound."
+          },
+          {
+            "id": "bunker-descent",
+            "name": "Protected access descent",
+            "x": 0,
+            "y": -5.98,
+            "z": 48,
+            "width": 6,
+            "depth": 32,
+            "description": "A continuously walkable access tunnel drops twelve metres from the surface to the bunker airlock."
+          },
+          {
+            "id": "bunker-arrival",
+            "name": "01 · Underground airlock & decontamination",
+            "x": 0,
+            "y": -11.98,
+            "z": 27,
+            "width": 7,
+            "depth": 8,
+            "description": "Twelve metres below ground. Close the perimeter blast shutter, read the alert console and meet the response crew."
+          },
+          {
+            "id": "bunker-workshop",
+            "name": "02 · Fabrication & salvage workshop",
+            "x": -16,
+            "y": -11.98,
+            "z": 26,
+            "width": 20,
+            "depth": 16,
+            "description": "Inspect the fabrication workbench, salvage cache and machine tools. The factory gateway connects to the existing World Item Factory."
+          },
+          {
+            "id": "bunker-infirmary",
+            "name": "03 · Infirmary & crew quarters",
+            "x": 16,
+            "y": -11.98,
+            "z": 26,
+            "width": 20,
+            "depth": 16,
+            "description": "Recover at the med station, meet Dr. Patch, and explore the crew bunks and survival stores."
+          },
+          {
+            "id": "bunker-habitat",
+            "name": "04 · Hydroponics & life support",
+            "x": -16,
+            "y": -11.98,
+            "z": 4,
+            "width": 20,
+            "depth": 16,
+            "description": "A maintained underground habitat with grow beds, ventilation and reserve supplies."
+          },
+          {
+            "id": "bunker-operations",
+            "name": "05 · Hacker operations",
+            "x": 16,
+            "y": -11.98,
+            "z": 4,
+            "width": 20,
+            "depth": 16,
+            "description": "Meet Nyx and read the local operations terminal."
+          },
+          {
+            "id": "bunker-power",
+            "name": "06 · Power & signal engineering",
+            "x": -16,
+            "y": -11.98,
+            "z": -18,
+            "width": 20,
+            "depth": 16,
+            "description": "Toggle the contained power core and signal relay, following Rook’s recovery operation."
+          },
+          {
+            "id": "bunker-archive",
+            "name": "07 · Server archive vault",
+            "x": 16,
+            "y": -11.98,
+            "z": -18,
+            "width": 20,
+            "depth": 16,
+            "description": "Walk the rack aisles and inspect the archive terminal with Echo. Ordered quest checkpoints record your progress."
+          },
+          {
+            "id": "bunker-extraction",
+            "name": "08 · Extraction & uplink",
+            "x": 0,
+            "y": -11.98,
+            "z": -25,
+            "width": 7,
+            "depth": 8,
+            "description": "Confirm the evacuation manifest at the extraction terminal. The Commons return gateway remains available."
+          }
+        ],
+        "residents": [
+          {
+            "id": "bunker-nyx",
+            "modelId": "bunker-hacker",
+            "name": "Nyx Vale",
+            "role": "Operations coordinator",
+            "home": {
+              "x": 12,
+              "y": -11.98,
+              "z": 4
+            },
+            "color": "#62edcc",
+            "skin": "#b98264",
+            "heading": 1.5707963267948966,
+            "task": "reviewing local system reports and coordinating bunker operations",
+            "greeting": "Welcome to Null Sector. Open Quests for power recovery, archive integrity or crew evacuation. You can take the operations in any order."
+          },
+          {
+            "id": "bunker-rook",
+            "modelId": "bunker-engineer",
+            "name": "Rook Mercer",
+            "role": "Power & fabrication engineer",
+            "home": {
+              "x": -12,
+              "y": -11.98,
+              "z": -18
+            },
+            "color": "#eab55e",
+            "skin": "#80543d",
+            "heading": -1.5707963267948966,
+            "task": "checking the power core, relay and workshop readiness",
+            "greeting": "The core and relay have working switches. Read the operations briefing, inspect each system and follow the active quest markers. The workshop connects to World Item Factory."
+          },
+          {
+            "id": "bunker-patch",
+            "modelId": "bunker-engineer",
+            "name": "Dr. Patch Okafor",
+            "role": "Medic & habitat keeper",
+            "home": {
+              "x": 12,
+              "y": -11.98,
+              "z": 26
+            },
+            "color": "#e18db6",
+            "skin": "#76503d",
+            "heading": 1.5707963267948966,
+            "task": "checking medical supplies, crew rest and habitat systems",
+            "greeting": "Recover at the med station before the evacuation drill. The bunks, grow beds and supply stores keep this place alive. I also have the usual local favors."
+          },
+          {
+            "id": "bunker-echo",
+            "modelId": "bunker-hacker",
+            "name": "Echo Sato",
+            "role": "Archive custodian",
+            "home": {
+              "x": 12,
+              "y": -11.98,
+              "z": -18
+            },
+            "color": "#9ea2fb",
+            "skin": "#d8b08e",
+            "heading": 1.5707963267948966,
+            "task": "checking the archive and preserving the crew’s records",
+            "greeting": "Our archive integrity operation checks the fabrication bench and server archive. Use each marked console in order; reading a remote marker does not complete it."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false,
+        "radTox": false,
+        "bunker": {
+          "enabled": true
+        }
+      }
+    },
+    "playUrl": "model-explorer.html?environment=underground-bunker&house=underground-bunker&mode=multiplayer&autoplay=1"
   }
 ]

@@ -1,3 +1,4 @@
+import {isBunkerEnvironment} from './bunker-config.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 import {mergeGeometries} from '../vendor/three/addons/utils/BufferGeometryUtils.js';
 import {createCivilAircraft} from './civil-aircraft-models.js';
@@ -138,11 +139,13 @@ export function createDoomsdayScene({scene,performanceMode=false}={}){
   if(worldId!==environment?.id){worldId=environment?.id;eventId=null;responsePlan=null;signature=phaseKey='';clearSites();}
   const active=!!environment&&state&&!['idle','all-clear'].includes(state.phase);root.visible=active;if(!active){response.visible=false;if(signature){signature='';clearSites();}root.userData.phase=state?.phase||'idle';root.userData.effectOpacity=0;return;}
   if(eventId!==state.id){eventId=state.id;responsePlan=null;const nearbySite=[...(state.objectives||[])].sort((a,b)=>Math.hypot(a.position.x-position.x,a.position.z-position.z)-Math.hypot(b.position.x-position.x,b.position.z-position.z))[0];arrivalBeacons.position.set(position.x,nearbySite?.position.y??position.y,position.z);}
+  const underground=isBunkerEnvironment(environment)&&position.y<(environment.bunkerDefense?.surfaceY??0)-3;
   updateResponse(state,environment,time,reducedMotion);
+  skyline.visible=!underground;response.visible=response.visible&&!underground;arrivalBeacons.visible=!underground;siteBeacons.visible=!underground;
   const nextPhaseKey=state.id+':'+state.phase;if(nextPhaseKey!==phaseKey){phaseKey=nextPhaseKey;phaseAt=time;}
   const presentationTime=state.presentationTime??state.currentServerTime;
   const age=Number.isFinite(presentationTime)&&Number.isFinite(state.phaseStartedAt)?Math.max(0,(presentationTime-state.phaseStartedAt)/1000):Number.isFinite(state.phaseElapsedMs)?Math.max(0,state.phaseElapsedMs/1000):Math.max(0,time-phaseAt);
-  skyline.position.set(position.x,position.y,position.z);
+  skyline.position.set(position.x,isBunkerEnvironment(environment)?Math.max(0,position.y):position.y,position.z);
   const phase=state.phase,detonation=phase==='detonation',fallout=phase==='fallout',warning=phase==='warning',recovery=phase==='recovery',clearing=phase==='clearing';
   // Staggered impacts share one clock, so the final fireball and shockwave
   // finish naturally as fallout starts rather than being cut off at phase 7s.

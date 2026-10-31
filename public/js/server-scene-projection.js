@@ -80,6 +80,7 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
    if(switchedChanged&&actor.switched!==undefined&&material.emissive){material.userData ||= {};material.userData.serverBaseEmissive ??= material.emissiveIntensity;material.emissiveIntensity=actor.switched?Math.max(1.5,material.userData.serverBaseEmissive):material.userData.serverBaseEmissive;}
   }
  });
+ state.bunkerAlertState=actor.bunkerAlertState?{...actor.bunkerAlertState}:null;
  state.serverPaint=actor.paint;state.serverSwitched=actor.switched;state.serverCollisionDisabled=!root.visible||!!actor.open;
 }
 

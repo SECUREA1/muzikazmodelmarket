@@ -113,7 +113,7 @@ export function compactRoomSnapshot(state,request={},environment={}){
  if(state.sceneVersion&&request.sceneVersion!==state.sceneVersion)return state;
  if(request.snapshotProtocol===2)return encodeProtocol2(state,request,environment);
  const authored=new Map((environment.builderScene?.objects||environment.placementScene?.objects||[]).map(item=>[item.id,item.functionalSettings||item.gameplay||{behavior:item.behavior||'decor'}]));
- const actors=Object.fromEntries(Object.entries(state.actors||{}).filter(([id,a])=>{const config=a.definition?.gameplay||authored.get(id);return !config||config.behavior!=='decor'||a.constructionManaged||a.resident||a.trafficAI||a.active===false||a.open===true||a.switched===true||config.action&&config.action!=='none'||a.holderId||a.health!=null&&a.health!==(config.health??100);}));
+ const actors=Object.fromEntries(Object.entries(state.actors||{}).filter(([id,a])=>{const config=a.definition?.gameplay||authored.get(id);return !config||config.behavior!=='decor'||a.constructionManaged||a.resident||a.trafficAI||a.active===false||a.open===true||a.switched===true||a.bunkerAlertState||config.action&&config.action!=='none'||a.holderId||a.health!=null&&a.health!==(config.health??100);}));
  const actorIds=Object.keys(state.actors||{}),revision=membershipRevision(actorIds,environment,state);
  const result={...state,actors,actorsPartial:true,actorSetRevision:revision,...(request.actorSetRevision===revision?{}:{actorIds})};
  if(state.construction?.earthworks&&request.earthworksRevision===state.construction.earthworks.revision)result.construction={...state.construction,earthworks:null,earthworksUnchanged:true};

@@ -1,3 +1,4 @@
+import {BUNKER_MODEL_INFO,createBunkerModel,updateBunkerModel} from './bunker-models.js';
 import {DOOMSDAY_MODEL_INFO} from './doomsday-config.js';
 import {FORGE_MODEL_INFO} from './forge-items.js?v=forge-atelier-20261031';
 import {createForgeModel,updateForgeModel} from './forge-models.js?v=forge-atelier-20261031';
@@ -64,6 +65,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
   ...FORGE_MODEL_INFO,
+  ...BUNKER_MODEL_INFO,
   ...DOOMSDAY_MODEL_INFO,
   ...QUARRY_MODEL_INFO,
   ...FOREST_HARVEST_MODEL_INFO,
@@ -400,6 +402,7 @@ export function createBuilderModel(id,options={}) {
 
 function buildNativeModel(id,options={}) {
   if(FORGE_MODEL_INFO[id])return createForgeModel(id);
+  if(BUNKER_MODEL_INFO[id])return createBunkerModel(id);
   if(DOOMSDAY_MODEL_INFO[id])return createDoomsdayModel(id);
   if(QUARRY_MODEL_INFO[id])return createQuarryModel(id);
   if(FOREST_SNAKE_MODEL_INFO[id])return createForestSnakeModel(id);
@@ -491,6 +494,7 @@ function updateCraftedModel(root,elapsed,motion){
 }
 
 export function updateBuilderModels(group, elapsed, motion={}) {
+  if(updateBunkerModel(group,elapsed))return;
   if(group.userData?.forestSnakeModel){updateForestSnakeModel(group,elapsed,{talking:group.userData.forestSnakeTalking===true,reducedMotion:group.userData.forestSnakeReducedMotion===true});return;}
   motion=characterMotionFor(group,motion);
   if(updateNativePeople(group,elapsed,motion))return;
@@ -501,7 +505,7 @@ export function updateBuilderModels(group, elapsed, motion={}) {
   // Avatar projections supply their native model directly; placed scenery
   // supplies a collection. Both retain the same authored carnival animation.
   if(group.userData?.funhouseModel){updateFunhouseModel(group,elapsed,motion.reducedMotion,motion);return;}
-  group.children.forEach(root=>{const snake=root.userData.forestSnakeModel?root:root.children.find(child=>child.userData.forestSnakeModel);if(snake){updateForestSnakeModel(snake,elapsed,{talking:snake.userData.forestSnakeTalking===true,reducedMotion:snake.userData.forestSnakeReducedMotion===true});return;}if(root.userData.forestHarvestModel){updateForestHarvestModel(root,elapsed);return;}if(updateForgeModel(root,elapsed))return;const rootMotion=characterMotionFor(root,motion);if(updateNativePeople(root,elapsed,rootMotion))return;if(updateQuarryModel(root,elapsed))return;if(updateCraftedModel(root,elapsed,rootMotion))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed,rootMotion.reducedMotion,rootMotion);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed,rootMotion);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(updateBunkerModel(root,elapsed))return;const snake=root.userData.forestSnakeModel?root:root.children.find(child=>child.userData.forestSnakeModel);if(snake){updateForestSnakeModel(snake,elapsed,{talking:snake.userData.forestSnakeTalking===true,reducedMotion:snake.userData.forestSnakeReducedMotion===true});return;}if(root.userData.forestHarvestModel){updateForestHarvestModel(root,elapsed);return;}if(updateForgeModel(root,elapsed))return;const rootMotion=characterMotionFor(root,motion);if(updateNativePeople(root,elapsed,rootMotion))return;if(updateQuarryModel(root,elapsed))return;if(updateCraftedModel(root,elapsed,rootMotion))return;if(root.userData.portalModel){updatePortalModel(root,elapsed);return;}if(root.userData.commonPropModel){updateCommonPropModel(root,elapsed);return;}if(root.userData.factoryLogisticsModel){updateFactoryLogisticsModel(root,elapsed);return;}if(root.userData.testingModel){updateTestingModel(root,elapsed);return;}if(root.userData.funhouseModel){updateFunhouseModel(root,elapsed,rootMotion.reducedMotion,rootMotion);return;}if(root.userData.factoryModel){updateFactoryModel(root,elapsed);return;}if(root.userData.cargoTrailer){updateFreightVisual(root);return;}if(root.userData.residentModel){updateWorldResident(root,elapsed,rootMotion);return;}let construction=false;root.traverse(part=>{if(part.userData.constructionModel){updateConstructionModel(part,elapsed);construction=true;}});if(construction)return;if(root.userData.roadVehicle){updateRoadVehicle(root,elapsed);return;}if(root.userData.questContact){const head=root.getObjectByName('QUEST_CHARACTER_HEAD');if(head)head.rotation.x=root.userData.questSpeaking?Math.sin(elapsed*9)*.065:Math.sin(elapsed*.8)*.015;}if(root.userData.watercraft){updateHarborBoat(root,root.userData.boatState||{},elapsed);if(root.userData.patrolGun)updatePatrolBoat(root,elapsed);return;}if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 
 }

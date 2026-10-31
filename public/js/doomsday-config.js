@@ -15,7 +15,7 @@ const objectiveSpecs = [
  ['recovery','Recovery relay','Reach the marked recovery relay to restore emergency communications.','recovery',6,0]
 ];
 export function doomsdayForEnvironment(environment={}) {
- const config=environment.doomsday||{},spawn=(environment.builderScene?builderBaseSpawn(environment):null)||environment.spawn?.position||environment.spawn||{};
+ const config=environment.doomsday||environment.builderScene?.layoutMeta?.doomsday||environment.builderScene?.baseEnvironment?.doomsday||{},spawn=(environment.builderScene?builderBaseSpawn(environment):null)||environment.spawn?.position||environment.spawn||{};
  const half=Math.max(5,(Number(environment.builderScene?.mapSize||environment.playableSize)||40)/2-3);
  const proceduralBounds=!!environment.builderScene&&!builderBaseEnvironment(environment);
  const bounded=value=>proceduralBounds?Math.max(-half,Math.min(half,Number(value)||0)):Number(value)||0;

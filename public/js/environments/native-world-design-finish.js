@@ -14,7 +14,7 @@ export const NATIVE_TEMPLATE_LAYOUT_IDS=Object.freeze([
  'firing-range','movie-studio','basketball-stadium','hockey-arena','arcade-park'
 ]);
 const templates=new Set(NATIVE_TEMPLATE_LAYOUT_IDS);
-const nativeSpecialLayouts=new Set(['world-item-factory','prison','factory-proving-grounds','mountain-compound','missile-factory','fitness-centre','clown-funhouse','casino','ski-resort','tropical-island','harbor']);
+const nativeSpecialLayouts=new Set(['underground-bunker','world-item-factory','prison','factory-proving-grounds','mountain-compound','missile-factory','fitness-centre','clown-funhouse','casino','ski-resort','tropical-island','harbor']);
 const nativeSpecialIds=new Set(['world-item-factory','ironwood-prison','muzikaz-factory-proving-grounds','muzikaz-mountain-compound','muzikaz-missile-factory','palm-coast-resort']);
 export function isNativeProceduralWorld(environment={}){
  if(!environment||environment.memberPlot||environment.visibility==='private')return false;

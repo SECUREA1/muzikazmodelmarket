@@ -1,3 +1,4 @@
+import {bunkerResidentGuidance} from './server-bunker-response.mjs';
 import {RESIDENT_PLAY_CHOICES,residentPlayIntent,residentPlay,residentPlayChoices,residentPlayJoke} from './server-resident-play.mjs';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {residentIntelligence,observeResidentInteraction} from './server-resident-life.mjs';
@@ -109,9 +110,10 @@ function directionReply(environment,npc,text){
 }
 export function residentDialogue(sim,player,npc,environment,choice,text,now){
  const info=npc.resident,memory=relationship(player,npc,environment,now),message=String(text||'').trim().slice(0,180),baseIntent=residentDialogueIntent(choice,message),intent=residentPlayIntent(choice,message,baseIntent,memory,now),intelligence=residentIntelligence(info)||{},interest=activityFrom(message)||statedInterest(message),inherited=player.residentPreferences?.interest,visits=memory.visits||0,variant=visits%3;
- const playful=residentPlay(info,memory,intent,message,now);
+ const playful=residentPlay(info,memory,intent,message,now),bunkerGuidance=['activity','help','directions','rules','question','day'].includes(intent)?bunkerResidentGuidance(sim,player,npc):'';
  let reply='',offer=null;
- if(playful)reply=playful.text;
+ if(bunkerGuidance)reply=bunkerGuidance;
+ else if(playful)reply=playful.text;
  else if(intent==='preference'){
   memory.preferences.activity=interest;player.residentPreferences={...player.residentPreferences,interest};
   reply=['I will remember your interest in ','Then we have a good starting point: ','Good to know you enjoy '][variant]+describe(interest)+'. '+(info.context?.primarySkill===interest?'That connects with my work here. ':'')+'Do you enjoy learning the details or getting straight into an activity?';

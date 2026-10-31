@@ -2,6 +2,8 @@ import {localMapLocations} from './local-map-locations.js';
 import {builderBaseSpawn} from './environments/builder-base.js';
 import {harborLandPatches} from './harbor-water.js';
 import {isTropicalIslandEnvironment} from './tropical-island-config.js';
+import {bunkerCampaignOffers} from './bunker-quests.js';
+import {isBunkerEnvironment} from './bunker-config.js';
 
 const cache=new WeakMap();
 const finitePoint=point=>point&&Number.isFinite(Number(point.x))&&Number.isFinite(Number(point.z));
@@ -30,6 +32,7 @@ function harborWalkingArea(environment,origin){
 
 function mapTheme(environment){
  if(environment.game==='forge'||environment.forge?.enabled||environment.builderScene?.sourceForge?.enabled)return {tour:'Emberfall forge apprenticeship',challenge:'Smithy metallurgy station challenge',service:'Forge work order & equipment briefing'};
+ if(isBunkerEnvironment(environment))return {tour:'Ghostline bunker orientation',challenge:'Bunker emergency route drill',service:'Bunker systems briefing'};
  if(isTropicalIslandEnvironment(environment))return {tour:'Palm Coast resort discovery',challenge:'Island passport route',service:'Resort welcome and activity briefing'};
  if(environment.airport?.enabled||environment.game==='airport')return {tour:'Airport ground discovery',challenge:'Airport ground route challenge',service:'Airport ground-service briefing'};
  if(environment.game==='shipping'||environment.builderScene?.layoutMeta?.shipping)return {tour:'Cargo terminal orientation',challenge:'Dock checkpoint challenge',service:'Shipping crew briefing'};
@@ -98,7 +101,7 @@ function buildOffers(environment){
  const serviceSites=interactions.slice(0,3);
  const offers=[tour,challenge];
  if(serviceSites.length){offers.push({...common,id:prefix+'service',title:theme.service,kind:'site-job',description:'Visit '+serviceSites.map(site=>site.name).join(', ')+'. Use each marked item to read its guidance, inspect the facility, or operate its control. Confirmed interactions complete the job.',reward:300,timeLimit:900,sites:serviceSites});}
- return offers;
+ return [...bunkerCampaignOffers(environment),...offers];
 }
 
 /** Map definitions are replaced on save; revision fields also invalidate edits. */

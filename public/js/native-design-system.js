@@ -10,7 +10,7 @@ import {MOUNTAIN_DESIGN_VERSION,isCraftedMountainModel} from './mountain-design-
 import {batchNativeDesignDetails} from './native-detail-batching.js';
 
 export {NATIVE_DESIGN_VERSION};
-const craftedFlags=['portalModel','commonPropModel','equipmentPropModel','craftedLandscapeModel','craftedCharacterModel','craftedBuildingModel','craftedFurnitureModel'];
+const craftedFlags=['bunkerModel','portalModel','commonPropModel','equipmentPropModel','craftedLandscapeModel','craftedCharacterModel','craftedBuildingModel','craftedFurnitureModel'];
 export function finishNativeDesign(T,root,id){
  if(!root||root.userData.nativeDesign?.version===NATIVE_DESIGN_VERSION)return root;
  let family='world-props';
