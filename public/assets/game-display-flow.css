@@ -126,24 +126,9 @@ body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-vie
 /* An open More menu must sit above nonmodal resident invitations. */
 .house-stage>.game-display-flow-views:has(.game-view-overflow:not([hidden])){z-index:36}
 
-/* All secondary controls live in one header extension, at every width. */
-.house-stage .game-view-overflow{align-items:flex-start;align-content:flex-start;max-height:min(70dvh,var(--game-header-menu-height,calc(100dvh - 180px)));overflow:auto;overscroll-behavior:contain;box-sizing:border-box;width:min(620px,100%);max-width:100%;}
-.house-stage .game-view-overflow>.game-dock-actions{display:flex;flex-wrap:wrap;gap:6px;width:100%;height:auto;min-height:0;position:static!important;padding:0;margin:0;border:0;background:none;box-sizing:border-box}
-.house-stage .game-view-overflow .game-dock-actions>button{position:static!important;inset:auto!important;transform:none!important;display:flex;align-items:center;justify-content:center;gap:6px;flex:0 1 auto;min-width:44px;width:auto!important;max-width:100%;min-height:44px;height:auto;margin:0!important;padding:8px!important;box-sizing:border-box;white-space:normal}
-.house-stage .game-view-overflow .game-dock-actions>button span{display:inline!important;font-size:11px;line-height:1.3}
-.house-stage .game-view-overflow>.map-quest-prompts{width:100%;pointer-events:auto}
-.house-stage .game-view-overflow .map-quest-card{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%;margin:6px 0!important;max-height:55dvh;overflow:auto}
-.house-stage .game-view-overflow .map-quest-objective{position:static!important;inset:auto!important;transform:none!important;width:100%;max-width:100%;box-sizing:border-box}
-.house-stage .game-view-overflow .transport-radio-panel,.house-stage .game-view-overflow .world-resident-panel,.house-stage .game-view-overflow .live-local-map [data-body]{position:relative!important;inset:auto!important;transform:none!important;max-width:100%;margin:6px 0 0!important;box-sizing:border-box;max-height:55dvh;overflow:auto}
-.house-stage .game-view-overflow .live-local-map{width:auto!important;min-width:44px;height:auto!important}
-.house-stage .game-view-overflow .live-local-map [data-body]{width:min(175px,100%)}
-.house-stage.player-hide-action-bars .game-display-flow-views>.game-view-more:not([hidden]){display:grid!important}
-.house-stage.player-hide-action-bars .game-display-flow-views>.game-view-overflow:not([hidden]){display:flex!important}
-.house-stage.player-hide-action-bars .game-view-overflow .game-dock-actions>button:not([hidden]),.house-stage.player-hide-action-bars .game-view-overflow .sports-action-utilities:not([hidden]){display:flex!important}
-
-.house-stage.player-hide-action-bars .game-view-overflow .game-dock-actions>:is(button,#house-view-options):not([hidden]){display:flex!important;position:static!important;inset:auto!important;width:auto!important}
-.house-stage .game-view-overflow #house-view-options{position:static!important;inset:auto!important;transform:none!important;width:auto!important}
-.house-stage .game-view-overflow .game-header-emergency-link{width:100%;text-align:left;margin:0 0 8px;min-height:44px;padding:10px;background:#c9eaa4;color:#18351d;border:1px solid #d9ffc3;border-radius:8px;font-weight:750}
-
-.house-stage .game-view-overflow{width:100%}
+/* The regular toolbar and dock stay in place. Only the two emergency shortcuts
+   are added; their panels reuse the existing More area when opened. */
+.house-stage .game-view-overflow:has(.doomsday-panel:not([hidden])){align-items:flex-start;align-content:flex-start;width:min(620px,100%);max-width:100%;max-height:min(70dvh,var(--game-header-menu-height,calc(100dvh - 180px)));overflow:auto;overscroll-behavior:contain;box-sizing:border-box}
 .house-stage .game-view-more[data-emergency-active=true]{border-color:#ffe099;box-shadow:0 0 0 2px #d9a74566}
+.house-stage.player-hide-action-bars .game-display-flow-views>:is(.emergency-radio-toggle,.emergency-nuclear-toggle,.game-view-more):not([hidden]){display:grid!important}
+.house-stage.player-hide-action-bars .game-display-flow-views>.game-view-overflow:not([hidden]){display:flex!important}

@@ -67,6 +67,10 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   const section=document.createElement('section');section.id='emergency-'+key+'-panel';section.className='doomsday-subpanel';section.hidden=true;section.setAttribute('aria-label',label);const header=document.createElement('header'),heading=document.createElement('h4'),close=document.createElement('button');heading.textContent=label;close.type='button';close.dataset.closeEmergencyPanel=key;close.setAttribute('aria-label','Close '+label);close.textContent='Close';header.append(heading,close);section.append(header);sections[key]=section;
  }
  const automaticLabel=document.createElement('label');automaticLabel.className='doomsday-switch-row doomsday-automatic-panel';automaticLabel.innerHTML='<span>Auto-show event panel<small>Open the countdown for each new alert. Hiding it keeps the event running.</small></span><input type="checkbox" role="switch" aria-label="Auto-show event panel">';const automaticControl=automaticLabel.querySelector('input');automaticControl.checked=automaticPanel;navigation.append(automaticLabel);
+ const radioIcon='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 8h10v13H7zM9 8V2m2 11h3m-3 4h3M4 5a6 6 0 0 0 0 6m16-6a6 6 0 0 1 0 6"/></svg>';
+ const nuclearIcon='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="m10 9-2-4m6 4 2-4M9 13l-4 2m10-2 4 2m-8 0-2 4m4-4 2 4"/></svg>';
+ for(const [key,icon]of [['sound',radioIcon],['nuclear',nuclearIcon]]){const button=sectionButtons[key];button.className=key==='sound'?'emergency-radio-toggle':'emergency-nuclear-toggle';button.hidden=true;button.innerHTML=icon+'<small data-panel-toggle-state aria-hidden="true">Hidden</small>';button.title=sectionLabels[key];stage.append(button);}
+ let lastHeaderKey='sound';
  const flowShortcut=sectionButtons.flow;flowShortcut.dataset.headerAction='emergency-response';menu.append(navigation,panel);stage.append(menu);
  const flow=document.createElement('section');flow.className='doomsday-game-flow';flow.setAttribute('aria-label','Emergency response flow');flow.tabIndex=-1;flow.innerHTML='<h4 data-flow-title></h4><p data-flow-description></p><details><summary>View full response flow</summary><ol data-flow-steps></ol></details>';panel.querySelector('[data-scenario]').before(flow);let flowSignature='';
  const evacuation=document.createElement('section');evacuation.className='doomsday-evacuation';evacuation.hidden=true;evacuation.setAttribute('aria-label','Emergency aircraft onboarding');evacuation.innerHTML='<h4>Emergency aircraft · optional</h4><ol><li data-evac-step="board">Board an available emergency cockpit.</li><li data-evac-step="depart">Choose Emergency departure in the cockpit, or fly manually.</li><li data-evac-step="complete">Reach a safe airborne climb.</li></ol><p data-evac-status role="status" aria-live="polite"></p><div data-evac-aircraft></div><small>Flight progress is separate from the supply and relay quests. Movement and manual controls remain available.</small>';
@@ -108,9 +112,9 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   if(!nuclearAvailable())sectionOpen.nuclear=false;
   for(const key of Object.keys(sectionLabels)){
    sections[key].hidden=!available||!sectionOpen[key];
-   const expanded=available&&sectionOpen[key],button=sectionButtons[key];
+   const host=menu.closest('.game-view-overflow,.native-radio-menu'),hostOpen=host&&(host.matches('details')?host.open:!host.hidden);const expanded=available&&sectionOpen[key]&&(key==='flow'||hostOpen),button=sectionButtons[key];
    if(button.getAttribute('aria-expanded')!==String(expanded))button.setAttribute('aria-expanded',String(expanded));
-   button.disabled=key==='nuclear'&&!nuclearAvailable();
+   button.disabled=key==='nuclear'&&!nuclearAvailable();if(key!=='flow'){button.hidden=!available;button.title=sectionLabels[key]+(key==='nuclear'&&nuclearAvailable()?' · '+state.phaseLabel:'');if(key==='nuclear')button.dataset.active=String(!!state?.active);}
    const status=key==='nuclear'?(nuclearAvailable()?state.phaseLabel:'Standing by'):(expanded?'Shown':'Hidden');setText(button.querySelector('[data-panel-toggle-state]'),status);
   }
   panel.hidden=!available||!Object.values(sectionOpen).some(Boolean);
@@ -119,7 +123,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  };
  function setSection(key,value,{focus=false}={}){
   if(key==='nuclear'&&value&&!nuclearAvailable())return;
-  sectionOpen[key]=value;if(key==='nuclear'&&value)rememberEvent(eventKey());showGuide();
+  sectionOpen[key]=value;if(value&&key!=='flow')lastHeaderKey=key;if(key==='nuclear'&&value)rememberEvent(eventKey());showGuide();
   if(key==='flow'&&value)flow.querySelector('details').open=true;
   if(focus)sectionButtons[key].focus({preventScroll:true});
  }
@@ -128,7 +132,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  function hideGuide(value){
   const overflow=menu.closest('.game-view-overflow'),more=overflow?.parentElement?.querySelector('.game-view-more'),native=menu.closest('.native-radio-menu');
   if(overflow){const wasOpen=!overflow.hidden;overflow.hidden=value;more?.setAttribute('aria-expanded',String(!value));if(value&&wasOpen)more?.focus({preventScroll:true});}
-  if(native){const wasOpen=native.open;native.open=!value;if(value&&wasOpen)native.querySelector('summary')?.focus({preventScroll:true});}
+  if(native){const wasOpen=native.open;native.open=!value;if(value&&wasOpen)(sectionButtons[lastHeaderKey].disabled?sectionButtons.sound:sectionButtons[lastHeaderKey]).focus({preventScroll:true});}
   showGuide();
  }
  function currentBriefing(description=false){
@@ -146,7 +150,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  }
  const automaticChanged=()=>{automaticPanel=automaticControl.checked;try{localStorage.setItem(automaticPanelPreference,String(automaticPanel));}catch{}if(!automaticPanel&&state?.active)rememberEvent(eventKey());};automaticControl.addEventListener('change',automaticChanged);
  const fixed=[bindGameActionButton(panel.querySelector('[data-hide]'),()=>hideGuide(true))];
- for(const key of Object.keys(sectionLabels)){fixed.push(bindGameActionButton(sectionButtons[key],()=>setSection(key,!sectionOpen[key])));fixed.push(bindGameActionButton(sections[key].querySelector('[data-close-emergency-panel]'),()=>setSection(key,false,{focus:true})));}
+ for(const key of Object.keys(sectionLabels)){fixed.push(bindGameActionButton(sectionButtons[key],()=>{const host=menu.closest('.game-view-overflow,.native-radio-menu'),visible=host&&(host.matches('details')?host.open:!host.hidden),opening=!sectionOpen[key]||!visible;if(opening)hideGuide(false);setSection(key,opening);}));fixed.push(bindGameActionButton(sections[key].querySelector('[data-close-emergency-panel]'),()=>setSection(key,false,{focus:true})));}
  const soundControl=panel.querySelector('[data-siren]'),audioStatus=panel.querySelector('[data-audio-status]'),enableButton=panel.querySelector('[data-enable]'),testButton=panel.querySelector('[data-test]'),replayButton=panel.querySelector('[data-replay]'),soundState=panel.querySelector('[data-sound-state]'),followState=panel.querySelector('[data-follow-state]');
  const setText=(node,text)=>{if(node.textContent!==text)node.textContent=text;};
  function resetEvacuation(){boardingSequence++;boardingId=boardingRequestId=null;boardingMessage='';evacuationAircraftSignature=evacuationSpoken='';evacuationPending=null;for(const unbind of evacuationBindings.splice(0))unbind();evacuation.querySelector('[data-evac-aircraft]').replaceChildren();evacuation.hidden=true;}
@@ -209,7 +213,7 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   if(state?.active){const line=currentBriefing();if(line)speak((followChallenge?'Following the emergency challenge. ':'Challenge tracking off. ')+line,'follow:'+now(),{priority:followChallenge?'normal':'emergency'});}
  };
  followControl.addEventListener('change',followChanged);
- const keydown=event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();event.stopPropagation();hideGuide(true);}else if(event.target.matches('summary')&&[' ','Enter'].includes(event.key))event.stopPropagation();};menu.addEventListener('keydown',keydown);
+ const keydown=event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();event.stopPropagation();hideGuide(true);}else if(event.target.matches('summary')&&[' ','Enter'].includes(event.key))event.stopPropagation();};menu.addEventListener('keydown',keydown);sectionButtons.sound.addEventListener('keydown',keydown);sectionButtons.nuclear.addEventListener('keydown',keydown);
  function render(){
   if(!state)return;const next=followChallenge?(state.objectives.find(o=>o.id===state.currentObjectiveId)||state.objectives.find(o=>o.phase===state.phase&&!o.completed)):null;
   const nextSignature=JSON.stringify([state.id,state.revision,state.phase,followChallenge,shelterArrived,state.objectives.map(o=>o.completed)]);
@@ -223,10 +227,10 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
  }
  function tick(time=0,{reducedMotion=false}={}){
   if(disposed)return;panel.dataset.reducedMotion=String(reducedMotion);const environment=getEnvironment();
-  if(worldId!==environment?.id){hideGuide(true);resetSections();worldId=environment?.id;local={};enableSequence++;audioBusy=false;generation++;resetEvacuation();signature=spoken='';runId=null;shelterArrived=false;nextNoticeAt=0;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=menu.hidden=banner.hidden=true;}
+  if(worldId!==environment?.id){hideGuide(true);resetSections();worldId=environment?.id;local={};enableSequence++;audioBusy=false;generation++;resetEvacuation();signature=spoken='';runId=null;shelterArrived=false;nextNoticeAt=0;activeRadio=0;minimumRadio=radioSequence+1;rawState=state=null;audio.stop();effects?.reset();speaking(false);panel.hidden=menu.hidden=banner.hidden=sectionButtons.sound.hidden=sectionButtons.nuclear.hidden=true;}
   if(!environment){audio.stop();return;}
   if(isShared()){
-   const incoming=getState();if(!incoming||incoming.mapId!==worldId){panel.hidden=menu.hidden=banner.hidden=true;audio.stop();effects?.reset();return;}
+   const incoming=getState();if(!incoming||incoming.mapId!==worldId){panel.hidden=menu.hidden=banner.hidden=sectionButtons.sound.hidden=sectionButtons.nuclear.hidden=true;audio.stop();effects?.reset();return;}
    if(rawState!==incoming){rawState=incoming;receivedAt=time;}
    state={...incoming,presentationTime:(incoming.serverTime||now())+Math.max(0,time-receivedAt)*1000};
   }else{
@@ -279,5 +283,5 @@ export function mountDoomsdayUI({stage,getEnvironment,getPosition,getState=()=>n
   }
   audio.update(state,time);renderAudio();effects?.update(state,environment,getPosition(),time,{reducedMotion,showObjectives:followChallenge});
  }
- return {tick,open:()=>{hideGuide(false);setSection('flow',true);},close:()=>hideGuide(true),getState:()=>state,followingChallenge:()=>followChallenge,reset(){hideGuide(true);resetSections();enableSequence++;audioBusy=false;worldId=null;state=rawState=null;generation++;resetEvacuation();nextNoticeAt=0;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=menu.hidden=banner.hidden=true;},dispose(){if(disposed)return;disposed=true;clearPopup();automaticControl.removeEventListener('change',automaticChanged);enableSequence++;audioBusy=false;generation++;resetEvacuation();radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();menu.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);soundControl.removeEventListener('change',soundChanged);menu.remove();banner.remove();}};
+ return {tick,open:()=>{hideGuide(false);setSection('flow',true);},close:()=>hideGuide(true),getState:()=>state,followingChallenge:()=>followChallenge,reset(){hideGuide(true);resetSections();enableSequence++;audioBusy=false;worldId=null;state=rawState=null;generation++;resetEvacuation();nextNoticeAt=0;minimumRadio=++radioSequence;activeRadio=0;audio.stop();effects?.reset();speaking(false);panel.hidden=menu.hidden=banner.hidden=sectionButtons.sound.hidden=sectionButtons.nuclear.hidden=true;},dispose(){if(disposed)return;disposed=true;clearPopup();automaticControl.removeEventListener('change',automaticChanged);enableSequence++;audioBusy=false;generation++;resetEvacuation();radioSequence++;audio.dispose();effects?.dispose();for(const unbind of fixed)unbind();menu.removeEventListener('keydown',keydown);sectionButtons.sound.removeEventListener('keydown',keydown);sectionButtons.nuclear.removeEventListener('keydown',keydown);followControl.removeEventListener('change',followChanged);soundControl.removeEventListener('change',soundChanged);sectionButtons.sound.remove();sectionButtons.nuclear.remove();menu.remove();banner.remove();}};
 }

@@ -1,4 +1,4 @@
-"""Actual mobile airport: header extension owns secondary controls and live dock actions."""
+"""Actual mobile airport: regular header and controls plus two emergency buttons."""
 from pathlib import Path
 import asyncio,math,os,socket,subprocess,tempfile
 from playwright.async_api import async_playwright
@@ -24,6 +24,8 @@ async def main():
      errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
      await page.route('https://**/*',lambda route:route.abort())
      await page.add_init_script("window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0,dialogueMuted:true,mediaMuted:true};")
+     # This smoke checks regular controls; real popup timing is a separate opt-in run.
+     await page.add_init_script("localStorage.setItem('muzikaz.emergency.panel.automatic','"+('true' if os.environ.get('EXPECT_AUTO_NUCLEAR')=='1' else 'false')+"');")
      await page.goto(base+'/model-explorer.html?environment=muzikaz-airport&autoplay=1&mode=multiplayer',wait_until='domcontentloaded',timeout=90000)
      await page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().controlsReady&&MuzikazHouseExplorer.snapshot().serverReady',timeout=180000)
      print('airport: actual mobile engine ready',flush=True)
@@ -40,15 +42,19 @@ async def main():
       await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.phase==='fallout'",timeout=40000)
       assert await more.get_attribute('aria-expanded')=='false','An existing event reopened after dismissal.'
       print('airport: automatic real nuclear countdown opens once and remains dismissed through fallout',flush=True)
-     await page.wait_for_function("document.querySelector('.game-dock-actions')?.closest('.game-view-overflow')!==null")
-     assert await page.locator('.game-display-flow-views > :not(.game-view-more):not(.game-view-overflow)').count()==0
-     audit=await page.evaluate('''async()=>{const {GAME_HEADER_CONTROLS}=await import('/public/js/game-header-controls.js');const stage=document.querySelector('.house-stage');return GAME_HEADER_CONTROLS.filter(item=>['stage','dock'].includes(item.source)).flatMap(item=>[...stage.querySelectorAll(item.selector)].filter(node=>node.parentElement===stage||node.closest('.game-display-flow-views')).map(node=>({id:item.id,inside:!!node.closest('.game-view-overflow')})));}''')
-     assert audit and all(item['inside'] for item in audit),audit
-     assert any(item['id']=='emergency-response' for item in audit),audit
+     await page.wait_for_function("document.querySelector('.emergency-radio-toggle')?.parentElement.classList.contains('game-display-flow-views') && document.querySelector('.emergency-nuclear-toggle')?.parentElement.classList.contains('game-display-flow-views')")
+     assert await page.locator('.game-dock-actions').evaluate("n=>!n.closest('.game-view-overflow') && !!n.closest('.house-control-dock')")
+     assert await page.get_by_role('button',name='Radio & sound',exact=True).is_visible()
+     assert await page.get_by_role('button',name='Nuclear event',exact=True).is_visible()
+     assert await page.locator('.game-display-flow-views > .emergency-radio-toggle,.game-display-flow-views > .emergency-nuclear-toggle').count()==2
      assert await page.locator('.mobile-move-pad').is_visible()
      assert await page.locator('.doomsday-guide-chip').count()==0
      async def open_menu():
       if await more.get_attribute('aria-expanded')!='true':await more.click()
+     radio_header=page.get_by_role('button',name='Radio & sound',exact=True)
+     await radio_header.click();assert await page.locator('#emergency-sound-panel').is_visible()
+     await radio_header.click();assert await page.locator('#emergency-sound-panel').is_hidden()
+     if await more.get_attribute('aria-expanded')=='true':await more.click()
      await open_menu()
      emergency=page.get_by_role('button',name='Emergency response flow',exact=True)
      await emergency.scroll_into_view_if_needed();await emergency.click()
@@ -58,10 +64,11 @@ async def main():
      await page.wait_for_function("document.querySelector('.doomsday-game-flow details').open")
      assert await page.locator('[data-flow-step=impacts]').is_visible()
      assert await page.locator('[data-flow-step=recovery]').is_visible()
-     print('airport: complete catalog and named emergency flow entry are inside the header extension',flush=True)
+     print('airport: regular controls and dock remain, with two header buttons and accessible emergency flow',flush=True)
      # Existing handlers must still open their actual world and settings screens.
      for selector,expected in [('#house-world-button',None),('#house-view-options','Settings & Explorer options')]:
-      await open_menu();await page.locator(selector).scroll_into_view_if_needed();await page.locator(selector).click()
+      if await more.get_attribute('aria-expanded')=='true':await more.click()
+      await page.locator(selector).scroll_into_view_if_needed();await page.locator(selector).click()
       dialog=page.locator('dialog[open]').last if expected is None else page.locator('dialog[open][aria-label="'+expected+'"]')
       await dialog.wait_for(state='visible')
       await dialog.locator('.game-fullscreen-close').click()
@@ -76,7 +83,7 @@ async def main():
      assert await page.locator('.game-view-overflow').is_hidden()
      assert not errors,errors
      await page.screenshot(path='/workspace/header-controls-world-mobile.png')
-     print('airport: closed header preserves movement and hides secondary controls with no page errors',flush=True)
+     print('airport: regular header and movement remain usable with no page errors',flush=True)
      await browser.close()
    finally:server.terminate();server.wait(timeout=15)
 asyncio.run(main())

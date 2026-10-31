@@ -295,16 +295,17 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-All secondary game buttons, including the World/Backpack/Tools/Settings/Build
-dock, remain inside the header **More view controls** extension at every screen
-width. Its **Emergency response flow** button opens the complete response steps.
-A shared control catalog records labels, categories and component locations,
-including late-added controls and map-specific launchers. Existing handlers and
-availability checks stay attached; movement sticks and immediate vehicle/fire/use
-controls remain in their gameplay positions. The extension scrolls within the
-stage and leaves room for primary controls.
-
-The full-width header **More view controls** extension offers independent **Radio & sound**, **Nuclear event**, and **Emergency response flow** panel toggles. Each has its own Close button and keeps its open/closed choice when the header is closed. Radio and flow stay available during quiet intervals; the nuclear panel becomes available during an event, with its current phase shown on the toggle. Each new event automatically opens the header and nuclear countdown once. Closing it keeps it dismissed through that event, including its later phases; the next event opens it again. The **Auto-show event panel** switch enables this by default and can suppress future popups without changing the event. The header also shows a steady warning indicator. Closing panels never mutes sound or stops the response. Native games use a compact **Game flow & sound** header dropdown. The flow panel shows shelter, impacts, optional aircraft, supplies, relay and all-clear steps using actual progress. **Enable
+The regular game header, dock, movement and vehicle controls keep their original
+layout. Two compact header buttons add **Radio & sound** and **Nuclear event**.
+Radio opens its sound controls; Nuclear opens the active countdown and challenge
+panel. Both toggle their panel closed again, and each panel has its own Close
+button. Emergency response flow and aircraft onboarding remain available inside
+the companion panel without moving the ordinary game buttons into it.
+Each new event automatically opens the nuclear countdown once. Closing it keeps
+it dismissed through that event; the next event opens it again. The **Auto-show
+event panel** switch can suppress future popups without changing the response.
+Native games use the same two emergency buttons. The response flow still shows
+shelter, impacts, optional aircraft, supplies, relay and all-clear progress. **Enable
 sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
 the session; **Test sounds** plays a brief siren and explosion preview without
 starting an event. The panel reports muted, paused and ready states, and provides

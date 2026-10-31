@@ -38,8 +38,8 @@ const controls=[
  // Nested controls keep their panel-owned visibility. They are catalogued so
  // coverage checks and menu navigation can find them without extracting them.
  ['automatic-event-panel','input[aria-label="Auto-show event panel"]','Auto-show new event countdowns','emergency','nested'],
- ['radio-sound-panel','[data-emergency-panel-toggle="sound"]','Radio & sound panel','sound','nested'],
- ['nuclear-event-panel','[data-emergency-panel-toggle="nuclear"]','Nuclear event panel','emergency','nested'],
+ ['radio-sound-panel','.emergency-radio-toggle','Radio & sound panel','sound'],
+ ['nuclear-event-panel','.emergency-nuclear-toggle','Nuclear event panel','emergency'],
  ['emergency-response-link','.game-header-emergency-link','Open emergency response flow','emergency','nested'],
  ['active-quest','.map-quest-objective','Open active quest','activities','nested'],
  ['flight-instruments','button[aria-label="Flight instruments and controls"]','Flight instruments and controls','flight','nested'],

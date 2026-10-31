@@ -37,13 +37,10 @@ try:
    panel=page.locator('.basketball-hud').bounding_box()
    assert views['y']+views['height']<=panel['y']
    assert page.locator('.game-display-flow-views').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
-   more=page.get_by_role('button',name='More view controls',exact=True)
-   more.click()
-   assert page.locator('.game-camera-toggle').evaluate("n=>!!n.closest('.game-view-overflow')")
    page.locator('.game-camera-toggle').tap()
    assert page.evaluate('window.viewClicks')==1
    page.evaluate("const xr=document.createElement('button');xr.className='xr-enter-button';xr.hidden=true;xr.disabled=true;xr.textContent='VR headset unavailable';xr.style.cssText='display:block;position:fixed;top:8px;left:0;width:100%;z-index:80';document.querySelector('.house-stage').append(xr);")
-   page.wait_for_selector('.game-view-overflow > .xr-enter-button',state='attached')
+   page.wait_for_selector('.game-display-flow-views > .xr-enter-button',state='attached')
    assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block game controls'
    assert page.locator('.game-hud-toggle').count()==0, 'Maps and controls must not have a global lock/restore button'
    page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
@@ -62,7 +59,7 @@ try:
    assert page.locator('.house-stage').bounding_box()==stage_box
    assert page.evaluate('hudEvents')==[]
    assert page.evaluate('blurCount')==0, 'Layout updates must not reset held movement'
-   # Vehicle dashboard utilities share More without changing the driving panel.
+   # A vehicle retains its own compact dashboard control without affecting maps.
    page.get_by_role('button',name='Show or hide road vehicle dashboard',exact=True).click()
    assert not page.locator('.road-vehicle-details').is_visible()
    page.evaluate("road.update(roadState,'me')")
@@ -77,5 +74,5 @@ try:
    if width==390:page.screenshot(path='/tmp/separate-nearby-actions.png')
    page.close()
   browser.close()
- print('Sports/nearby actions, header map/menu access and persistent controller visibility, incoming road dashboards and local collapse passed at 320, 390, 768 and 1280px.')
+ print('Sports/nearby actions, persistent map/controller visibility, incoming road dashboards and local collapse passed at 320, 390, 768 and 1280px.')
 finally:server.shutdown()

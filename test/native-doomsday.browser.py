@@ -54,7 +54,6 @@ try:
    page.wait_for_function(f'{getter}.doomsday?.automatic && ({getter}.doomsday.phase!=="idle" || {getter}.doomsday.nextEventAt>0)')
    initial=page.evaluate(f'{getter}.doomsday')
    page.evaluate("""()=>{const overrides={masterMuted:true,effectsMuted:true,announcementsMuted:true,effectsVolume:0};window.MUZIKAZ_AUDIO_SESSION_OVERRIDES={...window.MUZIKAZ_AUDIO_SESSION_OVERRIDES,...overrides};const preferences={...window.MUZIKAZ_AUDIO_PREFERENCES,...overrides};window.MUZIKAZ_AUDIO_PREFERENCES=preferences;window.dispatchEvent(new CustomEvent('muzikaz:audio-preferences',{detail:preferences}));}""")
-   if page.locator('.doomsday-guide').is_hidden():page.locator('.native-radio-menu > summary').click()
    page.get_by_role('button',name='Radio & sound',exact=True).click()
    page.wait_for_function("document.querySelector('#doomsday-panel').dataset.audioState==='master-muted'")
    page.get_by_role('button',name='Enable sounds',exact=True).tap()
@@ -95,7 +94,6 @@ try:
    print(kind,'automatically reached fallout while guide hidden',flush=True)
    state=page.evaluate(f'{getter}.doomsday')
    assert state['phaseEndsAt'] is None and state['nextEventAt'] is None
-   page.locator('.native-radio-menu > summary').click()
    page.get_by_role('button',name='Nuclear event',exact=True).click()
    follow=page.locator('input[data-follow-challenge]')
    assert not follow.is_checked()
