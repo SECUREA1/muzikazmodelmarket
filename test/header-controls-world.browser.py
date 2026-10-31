@@ -1,4 +1,4 @@
-"""Actual mobile airport: regular header and controls plus two emergency buttons."""
+"""Actual mobile airport: Radio + More, one emergency card, and original controls."""
 from pathlib import Path
 import asyncio,math,os,socket,subprocess,tempfile
 from playwright.async_api import async_playwright
@@ -41,33 +41,45 @@ async def main():
       assert 'in ' in await page.locator('#emergency-nuclear-panel [data-countdown]').text_content()
       assert await page.locator('#emergency-nuclear-panel [data-countdown]').evaluate("n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}"),'The actual popup countdown is clipped.'
       await page.screenshot(path='/workspace/automatic-nuclear-world-popup.png')
-      await page.get_by_role('button',name='Close Nuclear event',exact=True).click()
+      await page.get_by_role('button',name='Close emergency radio',exact=True).click()
+      await page.wait_for_timeout(1000)
+      assert await page.locator('#emergency-radio-popup').is_hidden(),'A dismissed call immediately reopened itself.'
       await page.wait_for_function("MuzikazHouseExplorer.snapshot().doomsday?.phase==='fallout'",timeout=40000)
-      assert await more.get_attribute('aria-expanded')=='false','An existing event reopened after dismissal.'
-      print('airport: automatic real nuclear countdown opens once and remains dismissed through fallout',flush=True)
-     await page.wait_for_function("document.querySelector('.emergency-radio-toggle')?.parentElement.classList.contains('game-display-flow-views') && document.querySelector('.emergency-nuclear-toggle')?.parentElement.classList.contains('game-display-flow-views')")
+      assert await more.get_attribute('aria-expanded')=='false','A radio call forced open More.'
+      assert await page.locator('#emergency-radio-popup').count()==1
+      assert await page.locator('#emergency-radio-popup').is_visible(),'A new fallout announcement did not reopen the one radio card.'
+      await page.get_by_role('button',name='Close emergency radio',exact=True).click()
+      print('airport: one real countdown/radio card dismisses current calls and reopens for new announcements',flush=True)
+     await page.wait_for_function("document.querySelector('.emergency-radio-toggle')?.parentElement.classList.contains('game-display-flow-views') && !!document.querySelector('.emergency-nuclear-toggle')?.closest('.game-view-overflow')")
      assert await page.locator('.game-dock-actions').evaluate("n=>!n.closest('.game-view-overflow') && !!n.closest('.house-control-dock')")
-     assert await page.get_by_role('button',name='Radio & sound',exact=True).is_visible()
-     assert await page.get_by_role('button',name='Nuclear event',exact=True).is_visible()
-     assert await page.locator('.game-display-flow-views > .emergency-radio-toggle,.game-display-flow-views > .emergency-nuclear-toggle').count()==2
+     assert await page.get_by_role('button',name='Emergency radio',exact=True).is_visible()
+     assert await page.locator('.emergency-nuclear-toggle').count()==1
+     assert await page.locator('.game-display-flow-views > button').count()==2
+     assert await more.is_visible()
      assert await page.locator('.mobile-move-pad').is_visible()
      assert await page.locator('.doomsday-guide-chip').count()==0
      async def open_menu():
       if await more.get_attribute('aria-expanded')!='true':await more.click()
-     radio_header=page.get_by_role('button',name='Radio & sound',exact=True)
-     await radio_header.click();assert await page.locator('#emergency-sound-panel').is_visible()
-     await radio_header.click();assert await page.locator('#emergency-sound-panel').is_hidden()
+     radio_header=page.get_by_role('button',name='Emergency radio',exact=True)
+     await radio_header.click();assert await page.locator('#emergency-radio-popup').is_visible()
+     await page.locator('#emergency-radio-popup').get_by_text('Radio & sound settings',exact=True).click()
+     assert await page.locator('#emergency-sound-panel').is_visible()
+     assert await page.get_by_role('button',name='Enable sounds',exact=True).is_visible()
+     await radio_header.click();assert await page.locator('#emergency-radio-popup').is_hidden()
      if await more.get_attribute('aria-expanded')=='true':await more.click()
      await open_menu()
      emergency=page.get_by_role('button',name='Emergency response flow',exact=True)
      await emergency.scroll_into_view_if_needed();await emergency.click()
+     assert await page.locator('#emergency-radio-popup').is_visible()
+     assert await more.get_attribute('aria-expanded')=='false'
      assert await page.locator('#emergency-flow-panel').is_visible()
      if await page.locator('.doomsday-game-flow details').get_attribute('open') is None:
       await page.get_by_text('View full response flow',exact=True).click()
      await page.wait_for_function("document.querySelector('.doomsday-game-flow details').open")
      assert await page.locator('[data-flow-step=impacts]').is_visible()
      assert await page.locator('[data-flow-step=recovery]').is_visible()
-     print('airport: regular controls and dock remain, with two header buttons and accessible emergency flow',flush=True)
+     print('airport: Radio + More, one popup with sound and guidance, and original dock controls passed',flush=True)
+     await page.get_by_role('button',name='Close emergency radio',exact=True).click()
      # Existing handlers must still open their actual world and settings screens.
      for selector,expected in [('#house-world-button',None),('#house-view-options','Settings & Explorer options')]:
       if await more.get_attribute('aria-expanded')=='true':await more.click()

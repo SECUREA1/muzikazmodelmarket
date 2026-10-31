@@ -1,4 +1,4 @@
-"""Keep regular controls and add exactly two emergency header buttons."""
+"""Keep regular controls with Radio, More, and one combined emergency popup."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
@@ -31,38 +31,43 @@ try:
     window.ui=mountDoomsdayUI({stage:document.querySelector('.house-stage'),getEnvironment:()=>env,getState:()=>doomsdayView(sim,env),getPosition:()=>player.position,getPreferences:()=>({masterMuted:true,effectsMuted:true,announcementsMuted:true}),now:()=>clock});
     window.advance=at=>{clock=at;stepDoomsday(sim,env,clock,{players:[player],random:()=>0});ui.tick(clock/1000);};ui.tick(0);
    }''')
-   radio=page.get_by_role('button',name='Radio & sound',exact=True);nuclear=page.get_by_role('button',name='Nuclear event',exact=True)
-   radio.wait_for(state='visible');nuclear.wait_for(state='visible')
+   radio=page.get_by_role('button',name='Emergency radio',exact=True);more=page.get_by_role('button',name='More view controls',exact=True);nuclear=page.get_by_role('button',name='Nuclear event',exact=True,include_hidden=True)
+   radio.wait_for(state='visible');more.wait_for(state='visible')
+   popup=page.locator('#emergency-radio-popup')
    assert page.evaluate('dock.parentElement===dockParent && !dock.closest(".game-view-overflow")')
-   for control in [radio,nuclear]:
+   for control in [radio,more]:
     assert control.evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
     box=control.bounding_box();assert box['width']>=44 and box['height']>=44 and box['x']>=0 and box['x']+box['width']<=width+1,(width,box)
     assert control.evaluate("n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}")
-   assert nuclear.is_disabled()
-   assert page.locator('.game-display-flow-views > .emergency-radio-toggle,.game-display-flow-views > .emergency-nuclear-toggle').count()==2
-   if width==1280:assert page.locator('.game-camera-toggle').evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
+   assert page.locator('.game-display-flow-views > button').count()==2
+   for selector in ['.game-camera-toggle','.game-flashlight-toggle','.live-local-map','.emergency-nuclear-toggle']:
+    assert page.locator(selector).evaluate("n=>!!n.closest('.game-view-overflow')")
+   more.click();assert nuclear.is_visible() and nuclear.is_disabled();more.click()
    for label in ['World','Settings','Build']:page.get_by_role('button',name=label,exact=True).click()
    assert page.evaluate('clicks.world===1&&clicks.settings===1&&clicks.build===1')
-   radio.click();assert page.locator('#emergency-sound-panel').is_visible()
-   assert page.get_by_role('button',name='Enable sounds',exact=True).is_visible()
-   radio.click();assert page.locator('#emergency-sound-panel').is_hidden()
-   radio.click();page.get_by_role('button',name='Close Radio & sound',exact=True).click();assert page.locator('#emergency-sound-panel').is_hidden()
+   radio.click();assert popup.is_visible() and more.get_attribute('aria-expanded')=='false'
+   popup.get_by_text('Radio & sound settings',exact=True).click()
+   assert page.locator('#emergency-sound-panel').is_visible()
+   assert popup.get_by_role('button',name='Enable sounds',exact=True).is_visible()
+   radio.click();assert popup.is_hidden()
+   radio.click();page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
    page.evaluate('ui.close();advance(sim.doomsday.nextEventAt)')
-   page.wait_for_function("!document.querySelector('#emergency-nuclear-panel').hidden")
-   assert page.get_by_role('button',name='More view controls',exact=True).get_attribute('aria-expanded')=='false'
-   assert page.locator('#emergency-nuclear-panel').evaluate("n=>n.parentElement.classList.contains('emergency-popup-stack')")
+   popup.wait_for(state='visible')
+   assert more.get_attribute('aria-expanded')=='false'
+   assert page.locator('#emergency-nuclear-panel').evaluate("n=>n.parentElement.id==='emergency-radio-popup'")
    assert page.locator('#emergency-nuclear-panel').is_visible() and nuclear.is_enabled()
-   assert 'Detonations in' in page.locator('#emergency-nuclear-panel [data-countdown]').text_content()
-   nuclear.click();assert page.locator('#emergency-nuclear-panel').is_hidden()
-   nuclear.click();assert page.locator('#emergency-nuclear-panel').is_visible()
-   page.get_by_role('button',name='Close Nuclear event',exact=True).click()
+   assert 'Detonations in' in popup.locator('[data-countdown]').text_content()
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
+   more.click();nuclear.click();assert popup.is_visible() and more.get_attribute('aria-expanded')=='false'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click()
    page.evaluate('advance(sim.doomsday.detonationAt)');assert page.locator('.game-view-overflow').is_hidden()
+   assert page.locator('#emergency-radio-popup').count()==1
    page.get_by_role('button',name='Fire',exact=True).click();page.get_by_role('button',name='Move player',exact=True).click()
    assert page.evaluate('clicks.fire===1&&clicks.move===1')
    assert page.locator('.mobile-move-pad').is_visible()
    assert page.evaluate('dock.parentElement===dockParent')
    assert not errors,errors
-   print(f'{width}x{height}: regular dock/header retained, exactly two emergency header buttons, panels/countdown and movement passed',flush=True)
+   print(f'{width}x{height}: Radio + More, one live countdown/radio popup, original dock and movement passed',flush=True)
    page.close()
   browser.close()
 finally:server.shutdown()

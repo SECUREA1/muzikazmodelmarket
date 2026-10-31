@@ -1,4 +1,4 @@
-"""Top-left event and radio popups reuse one instance and preserve regular controls."""
+"""One top-left radio card carries event calls and preserves regular controls."""
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
@@ -42,9 +42,10 @@ def hit_center(locator):
 def no_duplicates(page):
  assert page.locator('.emergency-radio-toggle').count()==1
  assert page.locator('.emergency-nuclear-toggle').count()==1
- for selector in ['#emergency-nuclear-panel','#emergency-announcement-panel','.doomsday-dispatch','[data-transcript]','[data-replay]','.emergency-popup-stack']:
+ for selector in ['#emergency-nuclear-panel','#emergency-announcement-panel','.doomsday-dispatch','[data-transcript]','[data-replay]','.emergency-popup-stack','#emergency-radio-popup']:
   assert page.locator(selector).count()==1,selector
  assert page.evaluate('(()=>{const ids=[...document.querySelectorAll("[id]")].map(n=>n.id);return ids.length===new Set(ids).size;})()')
+ assert page.get_by_role('button',name='Close emergency radio',exact=True,include_hidden=True).count()==1
  assert page.evaluate('dock.parentElement===dockParent&&!dock.closest(".game-view-overflow")')
 
 try:
@@ -53,7 +54,10 @@ try:
   for width,height in [(320,568),(390,844),(844,390),(1280,800)]:
    page,errors=new_page(browser,width,height)
    more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
-   nuclear=page.get_by_role('button',name='Nuclear event',exact=True)
+   nuclear=page.get_by_role('button',name='Nuclear event',exact=True,include_hidden=True)
+   popup=page.locator('#emergency-radio-popup')
+   assert page.locator('.game-display-flow-views > button').count()==2
+   assert nuclear.evaluate('n=>!!n.closest(".game-view-overflow")')
    panel=page.locator('#emergency-nuclear-panel');announcement=page.locator('#emergency-announcement-panel')
    assert panel.is_hidden() and announcement.is_hidden()
    assert more.get_attribute('aria-expanded')=='false'
@@ -70,21 +74,24 @@ try:
    assert page.evaluate('document.activeElement===document.getElementById("move")&&!blocked()'),'Popup stole focus or blocked movement.'
    page.keyboard.press('w');assert page.evaluate('moves')==1
    no_duplicates(page)
-   page.get_by_role('button',name='Close emergency announcement',exact=True).click();assert announcement.is_hidden() and panel.is_visible()
-   page.evaluate('currentCall.onStarted?.();ui.tick(clock/1000)');assert announcement.is_hidden(),'The same announcement reopened after dismissal.'
-   page.get_by_role('button',name='Close Nuclear event',exact=True).click();assert panel.is_hidden()
-   page.evaluate('advance(clock+1000)');assert panel.is_hidden()
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden() and panel.is_hidden() and announcement.is_hidden()
+   page.evaluate('currentCall.onStarted?.();ui.tick(clock/1000)');assert popup.is_hidden(),'The same announcement reopened after dismissal.'
+   page.evaluate('advance(clock+1000)');assert popup.is_hidden()
    page.evaluate('finishVoice();advance(sim.doomsday.detonationAt)')
-   assert panel.is_hidden() and announcement.is_visible(),'A new phase should announce without reopening a dismissed nuclear panel.'
+   assert popup.is_visible() and panel.is_visible() and announcement.is_visible(),'A new phase should use the one radio card.'
+   assert panel.locator('[data-countdown]').text_content()=='Fallout in 7s'
    assert more.get_attribute('aria-expanded')=='false'
-   nuclear.click();assert panel.is_visible() and panel.locator('[data-countdown]').text_content()=='Fallout in 7s'
-   assert more.get_attribute('aria-expanded')=='false','Manual nuclear control should not open the header menu.'
-   nuclear.click();assert panel.is_hidden()
-   sound=page.get_by_role('button',name='Radio & sound',exact=True);sound.click()
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
+   more.click();nuclear.click();assert popup.is_visible() and panel.locator('[data-countdown]').text_content()=='Fallout in 7s'
+   assert more.get_attribute('aria-expanded')=='false','The nuclear action left its control list open.'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
+   sound=page.get_by_role('button',name='Emergency radio',exact=True);sound.click()
+   popup.get_by_text('Radio & sound settings',exact=True).click()
    assert page.locator('#emergency-sound-panel').is_visible()
-   assert more.get_attribute('aria-expanded')=='true'
-   page.get_by_role('button',name='Close Radio & sound',exact=True).click();page.evaluate('ui.close()')
-   page.evaluate('finishVoice();advance(sim.doomsday.falloutAt)');assert panel.is_hidden()
+   assert more.get_attribute('aria-expanded')=='false'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click()
+   page.evaluate('finishVoice();advance(sim.doomsday.falloutAt)')
+   assert popup.is_visible() and panel.is_visible()
    assert announcement.is_visible() and 'Fallout' in announcement.locator('[data-transcript]').text_content()
    page.evaluate('advance(sim.doomsday.falloutAt+5000);player.position={...sim.doomsday.objectives.find(o=>o.id==="supplies").position};advance(clock+1)')
    page.evaluate('player.position={...sim.doomsday.objectives.find(o=>o.id==="recovery").position};advance(clock+1);advance(sim.doomsday.clearAt)')
@@ -96,22 +103,28 @@ try:
    page.evaluate("window.previousCall=currentCall;ui.reset();env={id:'fresh-quiet-map',name:'Fresh map',spawn:{x:0,y:0,z:0}};sim={};advance(clock+100);")
    assert page.evaluate('sim.doomsday.phase')=='idle'
    assert panel.is_hidden() and announcement.is_hidden()
-   sound.click();assert page.locator('#emergency-sound-panel').is_visible()
+   sound.click();assert popup.is_visible()
+   popup.get_by_text('Radio & sound settings',exact=True).click()
+   assert page.locator('#emergency-sound-panel').is_visible()
    assert page.get_by_role('button',name='Latest radio announcement',exact=True).is_disabled()
    assert announcement.locator('[data-transcript]').text_content()=='Standing by for emergency dispatch.'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click()
    page.evaluate('previousCall.onStarted?.();ui.tick(clock/1000)')
-   assert announcement.is_hidden(),'A callback from the previous map reopened its announcement.'
-   assert page.get_by_role('button',name='Latest radio announcement',exact=True).is_disabled()
+   assert popup.is_hidden(),'A callback from the previous map reopened the radio.'
+   assert announcement.locator('[data-transcript]').text_content()=='Standing by for emergency dispatch.'
+   assert page.get_by_role('button',name='Latest radio announcement',exact=True,include_hidden=True).is_disabled()
    no_duplicates(page);assert not errors,errors
-   print(f'{width}x{height}: top-left countdown/announcement popups, single controls, dismissal, world-reset cleanup and regular movement passed',flush=True)
+   print(f'{width}x{height}: one top-left countdown/radio card, single controls, dismissal, world-reset cleanup and regular movement passed',flush=True)
    page.close()
   page,errors=new_page(browser,390,844)
-  more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible');more.click()
+  more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
+  page.get_by_role('button',name='Emergency radio',exact=True).click()
+  page.get_by_text('Radio & sound settings',exact=True).click()
   page.get_by_role('switch',name='Auto-show event panel',exact=True).uncheck();page.evaluate('ui.close();advance(sim.doomsday.nextEventAt)')
-  assert page.locator('#emergency-nuclear-panel').is_hidden() and page.locator('#emergency-announcement-panel').is_hidden()
+  assert page.locator('#emergency-radio-popup').is_hidden()
   assert page.evaluate('calls.some(call=>call.text.includes("Cole"))'),'Auto-show preference suppressed event radio calls.'
-  page.get_by_role('button',name='Nuclear event',exact=True).click();assert page.locator('#emergency-nuclear-panel').is_visible()
-  assert more.get_attribute('aria-expanded')=='false'
+  more.click();page.get_by_role('button',name='Nuclear event',exact=True).click();assert page.locator('#emergency-nuclear-panel').is_visible()
+  assert page.locator('#emergency-radio-popup').is_visible() and more.get_attribute('aria-expanded')=='false'
   no_duplicates(page);assert not errors,errors
   print('header: visual auto-show opt-out preserves event calls and manual nuclear access',flush=True)
   page.close()

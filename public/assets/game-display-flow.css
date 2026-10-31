@@ -126,9 +126,26 @@ body .house-explorer-shell.player-hide-action-bars .game-dock-actions>#house-vie
 /* An open More menu must sit above nonmodal resident invitations. */
 .house-stage>.game-display-flow-views:has(.game-view-overflow:not([hidden])){z-index:36}
 
-/* The regular toolbar and dock stay in place. Only the two emergency shortcuts
-   are added; their panels reuse the existing More area when opened. */
-.house-stage .game-view-overflow:has(.doomsday-panel:not([hidden])){align-items:flex-start;align-content:flex-start;width:min(620px,100%);max-width:100%;max-height:min(70dvh,var(--game-header-menu-height,calc(100dvh - 180px)));overflow:auto;overscroll-behavior:contain;box-sizing:border-box}
+/* Radio and More are the complete top row. Secondary header actions retain
+   their real buttons as readable, full-width touch targets in one short list. */
+.house-stage .game-view-overflow{left:0;right:auto;display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:4px;width:min(360px,100%);max-width:100%;max-height:min(70dvh,var(--game-header-menu-height,calc(100dvh - 180px)));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;box-sizing:border-box;padding:6px;scroll-padding:6px;box-shadow:0 10px 28px #0007}
+.house-stage .game-view-overflow>*{flex:0 0 auto;box-sizing:border-box;min-width:0;width:100%!important;max-width:100%;height:auto!important}
+.house-stage .game-view-overflow>.sports-action-utilities,.house-stage .game-view-overflow>.broadcast-controls{display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.house-stage .game-view-overflow .game-view-menu-control{position:relative!important;inset:auto!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;box-sizing:border-box;width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:44px!important;margin:0!important;padding:9px 10px!important;border:1px solid #76988b;border-radius:8px;background:#16352f;color:#effff5;font-size:0!important;line-height:1.3!important;text-align:left!important;white-space:normal!important;letter-spacing:normal!important;text-transform:none!important;touch-action:manipulation;cursor:pointer}
+.house-stage .game-view-overflow .game-view-menu-control::after{content:attr(data-game-control-label);display:block;flex:1;min-width:0;color:inherit;font:650 13px/1.35 system-ui;letter-spacing:normal;text-transform:none;white-space:normal;overflow-wrap:anywhere}
+.house-stage .game-view-overflow .game-view-menu-control>:not(svg){display:none!important}
+.house-stage .game-view-overflow .game-view-menu-control>svg{display:block;flex:0 0 24px;width:24px!important;height:24px!important;margin:0}
+.house-stage .game-view-overflow .game-view-menu-control:hover{background:#244b40}
+.house-stage .game-view-overflow .game-view-menu-control:focus-visible{outline:2px solid #d7f58e;outline-offset:-3px}
+.house-stage .game-view-overflow .game-view-menu-control[aria-pressed=true],.house-stage .game-view-overflow .game-view-menu-control[aria-expanded=true]{border-color:#d7ee9f;background:#294d3b}
+.house-stage .game-view-overflow .game-view-menu-control:disabled{opacity:.5;cursor:default}
+.house-stage .game-view-overflow .game-view-menu-control[hidden]{display:none!important}
+/* Companion panels expand in the same scrolling list. Their component-owned
+   controls and close actions remain intact instead of being clipped offscreen. */
+.house-stage .game-view-overflow .world-resident-panel,.house-stage .game-view-overflow .transport-radio-panel,.house-stage .game-view-overflow .live-local-map [data-body]{position:static!important;inset:auto!important;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%!important;height:auto;max-height:none!important;margin:6px 0 0!important;overflow:visible!important;transform:none!important}
+.house-stage .game-view-overflow>.live-local-map{width:100%!important;height:auto!important;min-width:0;max-height:none;overflow:visible;border:0;background:none;box-shadow:none}
+.house-stage .game-view-overflow .live-local-map header{display:block;padding:0}
+.house-stage .game-view-overflow .live-local-map [data-body]{overflow:hidden!important;border-radius:8px}
 .house-stage .game-view-more[data-emergency-active=true]{border-color:#ffe099;box-shadow:0 0 0 2px #d9a74566}
-.house-stage.player-hide-action-bars .game-display-flow-views>:is(.emergency-radio-toggle,.emergency-nuclear-toggle,.game-view-more):not([hidden]){display:grid!important}
+.house-stage.player-hide-action-bars .game-display-flow-views>:is(.emergency-radio-toggle,.game-view-more):not([hidden]){display:grid!important}
 .house-stage.player-hide-action-bars .game-display-flow-views>.game-view-overflow:not([hidden]){display:flex!important}

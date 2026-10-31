@@ -295,29 +295,29 @@ remain optional. Sirens respect audio settings and duck beneath his male
 walkie-talkie voice. Reduced motion softens the animation. Movement, travel, and
 vehicle controls stay available throughout.
 
-The regular game header, dock, movement and vehicle controls keep their original
-layout. Two compact header buttons add **Radio & sound** and **Nuclear event**.
-Radio opens its sound controls; Nuclear opens the active countdown and challenge
-popup at the top left of the game. Both toggle their panel closed again, and each panel has its own Close
-button. Emergency response flow and aircraft onboarding remain available inside
-the companion panel without moving the ordinary game buttons into it.
-Each new event automatically opens the top-left nuclear countdown once, without
-opening the header menu. Cole’s event announcements appear in a separate radio
-popup with the animated portrait and current transcript. The same live panels
-are reused; there are no duplicate countdowns, header buttons or radio controls.
-Closing the nuclear popup keeps it dismissed through that event; the next event opens it again. The **Auto-show
-event panel** switch can suppress future popups without changing the response.
-Native games use the same two emergency buttons and top-left popups. Radio settings
-can reopen the latest announcement after it is dismissed. Repeated mounting is
-idempotent and resizing retains the original controls and handlers. The response flow still shows
-shelter, impacts, optional aircraft, supplies, relay and all-clear progress. **Enable
-sounds** resumes mobile audio and enables sirens, blasts and emergency radio for
-the session; **Test sounds** plays a brief siren and explosion preview without
-starting an event. The panel reports muted, paused and ready states, and provides
-separate **Sirens & blasts** and **Follow challenge** switches with explicit On/Off
-labels. Larger touch targets and a scrolling panel leave mobile game controls
-reachable in portrait and landscape. Explosions include midrange detail for phone
-speakers; sirens duck only while speech is actually playing, not while it loads.
+The game header has exactly two controls: **Emergency radio** and **More**.
+More opens a compact, labeled list of the additional header actions, including
+the nuclear event and response guide. Every action keeps its original handler;
+the bottom dock, movement sticks, primary actions and vehicle controls stay in place.
+
+Emergency radio opens one nonmodal popup at the top left, combining the live
+countdown, Cole’s animated portrait, current announcement and replay. Sound
+settings, the auto-show preference, challenge tracking and evacuation guidance
+are in collapsible sections in that same popup. One Close button dismisses the
+whole card. Each new event opens it once; a new radio announcement can reopen
+the same card, while duplicate callbacks from a dismissed call cannot. **Auto-show
+event panel** suppresses automatic popups without changing the response or audio.
+Native games use the same radio and More arrangement. Repeated mounts and
+viewport changes retain the original controls without duplicate buttons or panels.
+
+The response flow shows shelter, impacts, optional aircraft, supplies, relay and
+all-clear progress. **Enable sounds** resumes mobile audio and enables sirens,
+blasts and emergency radio for the session; **Test sounds** plays a short siren
+and explosion preview without starting an event. The popup reports muted, paused
+and ready states, and provides **Sirens & blasts** and **Follow challenge** switches
+with explicit On/Off labels. Scrolling and large touch targets keep mobile
+controls reachable in portrait and landscape. Explosions include midrange detail
+for phone speakers; sirens duck while speech is playing.
 
 The airport adds the flyable **Nightfall Command** and **Daybreak Evacuation**
 aircraft, continuity shelter, siren masts, relief cache, and emergency apron.

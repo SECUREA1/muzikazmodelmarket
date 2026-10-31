@@ -33,39 +33,50 @@ try:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
   for width,height in [(320,568),(390,844),(844,390),(1280,800)]:
    if os.environ.get('AUTO_PANEL_VIEWPORT') and width!=int(os.environ['AUTO_PANEL_VIEWPORT']):continue
-   page=browser.new_page(viewport={'width':width,'height':height},has_touch=True)
+   page=browser.new_page(viewport={'width':width,'height':height},has_touch=True);page.set_default_timeout(6000)
    errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
    page.route('**/__automatic_panels',lambda route:route.fulfill(body=fixture,content_type='text/html'))
    page.goto(f'http://127.0.0.1:{server.server_port}/__automatic_panels');page.evaluate(setup,{})
    more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
-   nuclear=page.get_by_role('button',name='Nuclear event',exact=True);panel=page.locator('#emergency-nuclear-panel');banner=panel.locator('.doomsday-banner')
-   assert more.get_attribute('aria-expanded')=='false' and panel.is_hidden()
+   radio=page.get_by_role('button',name='Emergency radio',exact=True)
+   nuclear=page.get_by_role('button',name='Nuclear event',exact=True,include_hidden=True)
+   popup=page.locator('#emergency-radio-popup');panel=page.locator('#emergency-nuclear-panel');countdown=panel.locator('[data-countdown]')
+   assert more.get_attribute('aria-expanded')=='false' and popup.is_hidden()
+   assert page.locator('.game-display-flow-views > button').count()==2
+   assert nuclear.evaluate('n=>!!n.closest(".game-view-overflow")')
    assert page.evaluate('!blocked()')
+   assert page.evaluate('sim.doomsday.nextEventAt+18000-clock>=60000&&sim.doomsday.nextEventAt+18000-clock<=180000')
    page.evaluate('advance(sim.doomsday.nextEventAt)')
-   page.wait_for_function("document.querySelector('.game-view-more').getAttribute('aria-expanded')==='true'")
+   popup.wait_for(state='visible')
    assert page.evaluate('sim.doomsday.phase')=='warning' and panel.is_visible()
+   assert more.get_attribute('aria-expanded')=='false'
    assert nuclear.get_attribute('aria-expanded')=='true'
-   assert banner.locator('[data-countdown]').text_content()=='Detonations in 18s'
+   assert countdown.text_content()=='Detonations in 18s'
    assert page.evaluate("document.activeElement===document.querySelector('#move')"),'automatic popup stole keyboard focus'
    assert page.evaluate('!blocked()')
    page.keyboard.press('w');assert page.evaluate('moves')==1
-   try:
-    page.wait_for_function("(()=>{const n=document.querySelector('#emergency-nuclear-panel .doomsday-banner'),r=n.getBoundingClientRect();return r.height>0&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()",timeout=5000)
-   except Exception:
-    print('Popup bounds:',page.evaluate("""()=>[...document.querySelectorAll('.game-view-overflow,.doomsday-menu,.doomsday-panel,.doomsday-panel-content,#emergency-nuclear-panel,.doomsday-banner')].map(n=>({selector:n.className||n.id,bounds:n.getBoundingClientRect().toJSON(),scrollTop:n.scrollTop,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight,overflow:getComputedStyle(n).overflow,centerHit:(()=>{const r=n.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML.slice(0,260)})()}))"""),flush=True)
-    page.screenshot(path=f'/workspace/automatic-nuclear-panel-{width}-clipped.png');raise
-   # Other header panels remain usable while the event is presented.
-   sound=page.get_by_role('button',name='Radio & sound',exact=True);sound.click();assert page.locator('#emergency-sound-panel').is_visible() and panel.is_visible()
-   response=page.get_by_role('button',name='Emergency response flow',exact=True);response.click();assert page.locator('#emergency-flow-panel').is_visible() and panel.is_visible()
-   page.get_by_role('button',name='Close Nuclear event',exact=True).click();assert panel.is_hidden() and nuclear.get_attribute('aria-expanded')=='false'
-   # Phase ticks and new snapshots do not override this event's dismissal.
-   page.evaluate('advance(clock+1000)');assert panel.is_hidden()
-   page.evaluate('advance(sim.doomsday.detonationAt)');assert panel.is_hidden() and page.evaluate('sim.doomsday.phase')=='detonation'
-   nuclear.click();assert panel.is_visible() and banner.locator('[data-countdown]').text_content()=='Fallout in 7s'
-   page.evaluate('advance(sim.doomsday.falloutAt)');assert panel.is_visible() and banner.locator('[data-countdown]').text_content()==''
-   more.click();assert panel.is_hidden() and more.get_attribute('aria-expanded')=='false'
-   page.evaluate('advance(clock+1000)');assert more.get_attribute('aria-expanded')=='false'
-   page.evaluate('revisit()');assert more.get_attribute('aria-expanded')=='false' and panel.is_hidden(),'revisiting the same event reopened a dismissed popup'
+   assert countdown.evaluate("n=>{const r=n.getBoundingClientRect();return r.height>0&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}"),'Live countdown is clipped'
+   assert popup.locator('#emergency-announcement-panel [data-transcript]').is_visible()
+   # Sound and guidance remain in the same card; More stays a compact action list.
+   popup.get_by_text('Radio & sound settings',exact=True).click()
+   assert page.locator('#emergency-sound-panel').is_visible() and panel.is_visible()
+   popup.get_by_text('Radio & sound settings',exact=True).click()
+   more.click();page.get_by_role('button',name='Emergency response flow',exact=True).click()
+   assert page.locator('#emergency-flow-panel').is_visible() and popup.is_visible()
+   assert more.get_attribute('aria-expanded')=='false'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden() and nuclear.get_attribute('aria-expanded')=='false'
+   # Ticks do not reopen a dismissed call, but the next phase uses this same card.
+   page.evaluate('advance(clock+1000)');assert popup.is_hidden()
+   page.evaluate('advance(sim.doomsday.detonationAt)')
+   assert popup.is_visible() and page.evaluate('sim.doomsday.phase')=='detonation'
+   assert countdown.text_content()=='Fallout in 7s'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
+   more.click();nuclear.click();assert popup.is_visible() and countdown.text_content()=='Fallout in 7s'
+   assert more.get_attribute('aria-expanded')=='false'
+   page.evaluate('advance(sim.doomsday.falloutAt)');assert panel.is_visible() and countdown.text_content()==''
+   page.get_by_role('button',name='Close emergency radio',exact=True).click()
+   page.evaluate('advance(clock+1000)');assert popup.is_hidden() and more.get_attribute('aria-expanded')=='false'
+   page.evaluate('revisit()');assert more.get_attribute('aria-expanded')=='false' and popup.is_hidden(),'revisiting the same event reopened a dismissed call'
    # Complete the actual quest-led response, then a new event should present.
    page.evaluate('advance(sim.doomsday.falloutAt+5000)')
    page.evaluate("responder.position={...sim.doomsday.objectives.find(o=>o.id==='supplies').position};advance(clock+1)")
@@ -75,42 +86,46 @@ try:
    page.evaluate('advance(sim.doomsday.clearAt)');assert page.evaluate('sim.doomsday.phase')=='all-clear'
    assert more.get_attribute('aria-expanded')=='false'
    page.evaluate('advance(sim.doomsday.nextEventAt)')
-   assert page.evaluate('sim.doomsday.cycle')==2 and more.get_attribute('aria-expanded')=='true' and panel.is_visible()
-   assert banner.locator('[data-countdown]').text_content()=='Detonations in 18s'
+   assert page.evaluate('sim.doomsday.cycle')==2 and more.get_attribute('aria-expanded')=='false' and popup.is_visible()
+   assert countdown.text_content()=='Detonations in 18s'
+   assert page.locator('#emergency-radio-popup').count()==1
+   assert page.get_by_role('button',name='Close emergency radio',exact=True).count()==1
    assert page.evaluate("(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return ids.length===new Set(ids).size;})()")
    assert not errors,errors
-   print(f'{width}x{height}: first/new-event automatic countdown, per-event dismiss, independent controls, focus and movement passed',flush=True)
+   print(f'{width}x{height}: first/new-event countdown in one card, per-call dismissal, quest-led completion, focus and movement passed',flush=True)
    page.close()
-  # Opting out affects presentation only, and manual header controls still work.
+  # Opting out affects presentation only, and the original More action still works.
   page=browser.new_page(viewport={'width':390,'height':844},has_touch=True)
   page.route('**/__automatic_panels',lambda route:route.fulfill(body=fixture,content_type='text/html'))
   page.goto(f'http://127.0.0.1:{server.server_port}/__automatic_panels');page.evaluate(setup,{})
-  more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible');more.click()
+  more=page.get_by_role('button',name='More view controls',exact=True);more.wait_for(state='visible')
+  page.get_by_role('button',name='Emergency radio',exact=True).click()
+  page.get_by_text('Radio & sound settings',exact=True).click()
   automatic=page.get_by_role('switch',name='Auto-show event panel',exact=True);assert automatic.is_checked()
   due=page.evaluate('sim.doomsday.nextEventAt');automatic.uncheck()
   assert page.evaluate('sim.doomsday.nextEventAt')==due
   assert page.evaluate("localStorage.getItem('muzikaz.emergency.panel.automatic')")=='false'
-  more.click();page.evaluate('advance(sim.doomsday.nextEventAt)')
+  page.get_by_role('button',name='Close emergency radio',exact=True).click();page.evaluate('advance(sim.doomsday.nextEventAt)')
   assert page.evaluate("sim.doomsday.phase==='warning'&&sim.doomsday.active!==false")
-  assert more.get_attribute('aria-expanded')=='false' and page.locator('#emergency-nuclear-panel').is_hidden()
+  assert more.get_attribute('aria-expanded')=='false' and page.locator('#emergency-radio-popup').is_hidden()
   more.click();page.get_by_role('button',name='Nuclear event',exact=True).click()
-  assert page.locator('#emergency-nuclear-panel').is_visible()
+  assert page.locator('#emergency-radio-popup').is_visible()
   assert page.locator('#emergency-nuclear-panel [data-countdown]').text_content()=='Detonations in 18s'
-  assert page.evaluate('!blocked()')
-  print('header: Auto-show opt-out preserves event timing and manual panel access',flush=True)
+  assert more.get_attribute('aria-expanded')=='false' and page.evaluate('!blocked()')
+  print('header: Auto-show opt-out preserves event timing and manual radio access',flush=True)
   page.close()
-  # A visitor joining mid-warning sees the remaining clock, never a new18s timer.
+  # Joining mid-warning shows the shared remaining clock without opening More.
   for native in [False,True]:
    page=browser.new_page(viewport={'width':390,'height':844},has_touch=True)
    page.route('**/__automatic_panels',lambda route:route.fulfill(body=fixture,content_type='text/html'))
    page.goto(f'http://127.0.0.1:{server.server_port}/__automatic_panels');page.evaluate(setup,{'native':native,'late':True})
-   panel=page.locator('#emergency-nuclear-panel');panel.wait_for(state='visible')
-   assert panel.locator('[data-countdown]').text_content()=='Detonations in 12s'
-   if native:assert page.locator('.native-radio-menu').get_attribute('open') is not None
-   else:assert page.get_by_role('button',name='More view controls',exact=True).get_attribute('aria-expanded')=='true'
+   popup=page.locator('#emergency-radio-popup');popup.wait_for(state='visible')
+   assert popup.locator('[data-countdown]').text_content()=='Detonations in 12s'
+   if native:assert page.locator('.native-radio-menu').get_attribute('open') is None
+   else:assert page.get_by_role('button',name='More view controls',exact=True).get_attribute('aria-expanded')=='false'
    assert page.evaluate('!blocked()')
-   page.get_by_role('button',name='Close Nuclear event',exact=True).click();assert panel.is_hidden()
-   page.evaluate('advance(clock+1000)');assert panel.is_hidden()
+   page.get_by_role('button',name='Close emergency radio',exact=True).click();assert popup.is_hidden()
+   page.evaluate('advance(clock+1000)');assert popup.is_hidden()
    print(('native' if native else 'header')+': late join uses current countdown and dismissal remains respected',flush=True)
    page.close()
   browser.close()

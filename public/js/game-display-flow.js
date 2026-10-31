@@ -1,4 +1,5 @@
 import {mountGamePanelVisibility} from './game-panel-visibility.js';
+import {gameHeaderControlFor} from './game-header-controls.js';
 const mountedFlows=new WeakMap();
 // Keep runtime visibility flags intact: incoming controls inherit the preference.
 export function setGameActionBarsHidden(stage,hidden){
@@ -25,17 +26,24 @@ export function mountGameDisplayFlow(stage){
  const root=document.createElement('div');root.className='game-display-flow';
  const views=document.createElement('div');views.className='game-display-flow-views';views.setAttribute('role','toolbar');views.setAttribute('aria-label','Game view controls');stage.append(views);
  const overflow=document.createElement('div');overflow.className='game-view-overflow';overflow.hidden=true;overflow.dataset.gameplayBlocking='false';overflow.setAttribute('role','group');overflow.setAttribute('aria-label','More view controls');
- const more=document.createElement('button');more.type='button';more.className='game-view-more';more.hidden=true;more.setAttribute('aria-label','More view controls');more.setAttribute('aria-expanded','false');more.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';views.append(more,overflow);
+ const more=document.createElement('button');more.type='button';more.className='game-view-more';more.hidden=true;more.title='More controls';more.setAttribute('aria-label','More view controls');more.setAttribute('aria-expanded','false');more.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';views.append(more,overflow);
  const closeOverflow=()=>{overflow.hidden=true;more.setAttribute('aria-expanded','false');};more.onclick=()=>{const open=overflow.hidden;overflow.hidden=!open;more.setAttribute('aria-expanded',String(open));};
- const groups=[],panelVisibility=new Map();let fitting=false,frame=null,lastLayout=null,disposed=false;
+ const groups=[],panelVisibility=new Map(),menuButtons=new Map();let fitting=false,frame=null,lastLayout=null,disposed=false;
  const available=node=>!node.hidden&&getComputedStyle(node).display!=='none';
- const visible=node=>available(node)&&!node.closest('[hidden]');
- const panelControls='.world-resident-panel,.transport-radio-panel,.live-local-map [data-body]';
+ const panelControls='.world-resident-panel,.transport-radio-panel,.live-local-map [data-body],.doomsday-panel';
+ const launchers=group=>group.matches('button')?[group]:[...group.querySelectorAll('button')].filter(button=>!button.closest(panelControls));
+ function labelButton(button,group){
+  if(!menuButtons.has(button))menuButtons.set(button,{label:button.getAttribute('data-game-control-label'),decorated:button.classList.contains('game-view-menu-control'),addedAria:null});
+  const label=button.getAttribute('aria-label')||button.textContent.trim()||button.title||gameHeaderControlFor(button)?.label||gameHeaderControlFor(group)?.label||'Game control';
+  // Generated visual text must not append a second name to text-only controls.
+  if(!button.hasAttribute('aria-label')&&!button.hasAttribute('aria-labelledby')){button.setAttribute('aria-label',label);menuButtons.get(button).addedAria=label;}
+  button.dataset.gameControlLabel=label;button.classList.add('game-view-menu-control');
+ }
  function layoutState(){
   const state=[views.clientWidth,stage.clientHeight];
   for(const group of groups){
    state.push(group,group.hidden);
-   const controls=group.matches('button')?[group]:[...group.querySelectorAll('button')].filter(button=>!button.closest(panelControls));
+   const controls=launchers(group);
    for(const button of controls){
     let hidden=false;
     for(let node=button;node&&node!==views&&node!==overflow;node=node.parentElement)if(node.hidden){hidden=true;break;}
@@ -46,24 +54,18 @@ export function mountGameDisplayFlow(stage){
  }
  function fit(){
   frame=null;if(fitting)return;fitting=true;
-  // Keep original components and their handlers intact while fitting one row.
+  // The radio and More are the only top-row buttons. Every secondary header
+  // control keeps its original node, handler and runtime availability in More.
   for(let i=groups.length-1;i>=0;i--)if(!groups[i].isConnected)groups.splice(i,1);
-  const priority=node=>{const i=['game-camera-toggle','map-quest-launcher','district-map-toggle','factory-toggle','prison-toggle','factory-testing-toggle','factory-logistics-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?9:i;};groups.sort((a,b)=>priority(a)-priority(b));
+  const priority=node=>{const i=['emergency-nuclear-toggle','doomsday-menu','game-camera-toggle','map-quest-launcher','district-map-toggle','live-local-map','game-flashlight-toggle','game-viewport-toggle','factory-toggle','prison-toggle','factory-testing-toggle','factory-logistics-toggle','transport-activity','world-resident-ui'].findIndex(name=>node.classList.contains(name));return i<0?20:i;};groups.sort((a,b)=>priority(a)-priority(b));
   // Status badges and repeated snapshots do not change the toolbar footprint.
   // Reparenting an unchanged overflow group drops focus and pointer capture.
   const layout=layoutState();
   if(lastLayout&&layout.length===lastLayout.length&&layout.every((value,index)=>value===lastLayout[index])){fitting=false;return;}
   lastLayout=layout;
-  // The marker popup keeps a permanent right-hand slot beside overflow controls.
-  const pinned=groups.filter(node=>node.matches('.live-local-map,.game-flashlight-toggle,.emergency-radio-toggle,.emergency-nuclear-toggle')),menuOnly=groups.filter(node=>node.dataset.gameViewOverflow==='true'),ordinary=groups.filter(node=>!pinned.includes(node)&&!menuOnly.includes(node));
-  let anchor=more;for(let i=ordinary.length-1;i>=0;i--){const node=ordinary[i];if(node.parentElement!==views||node.nextSibling!==anchor)views.insertBefore(node,anchor);anchor=node;}
-  let pinnedAnchor=overflow;for(let i=pinned.length-1;i>=0;i--){const node=pinned[i];if(node.parentElement!==views||node.nextSibling!==pinnedAnchor)views.insertBefore(node,pinnedAnchor);pinnedAnchor=node;}
-  // Secondary venue settings stay in the existing More menu even on desktop.
-  for(const node of menuOnly)if(node.parentElement!==overflow)overflow.append(node);
-  more.hidden=true;let used=0;const gap=4,pinnedWidth=pinned.filter(visible).length*(44+gap),width=Math.max(0,views.clientWidth-pinnedWidth);
-  const items=ordinary.filter(visible).map(node=>({node,width:Math.max(44,[...node.querySelectorAll('button')].filter(button=>visible(button)&&button.getClientRects().length>0&&!button.closest('.world-resident-panel,.transport-radio-panel')).reduce((sum,button)=>sum+Math.max(44,button.getBoundingClientRect().width)+gap,0)-gap)}));
-  const total=items.reduce((sum,item)=>sum+item.width+gap,0)-gap,budget=total>width||menuOnly.some(available)?Math.max(0,width-44-gap):width;
-  for(const item of items){const needed=item.width+(used?gap:0);if(used+needed>budget){overflow.append(item.node);}else used+=needed;}
+  const pinned=groups.filter(node=>node.matches('.emergency-radio-toggle')),secondary=groups.filter(node=>!pinned.includes(node));
+  let pinnedAnchor=more;for(let i=pinned.length-1;i>=0;i--){const node=pinned[i];if(node.parentElement!==views||node.nextSibling!==pinnedAnchor)views.insertBefore(node,pinnedAnchor);pinnedAnchor=node;}
+  let menuAnchor=null;for(let i=secondary.length-1;i>=0;i--){const node=secondary[i];if(node.parentElement!==overflow||node.nextSibling!==menuAnchor)overflow.insertBefore(node,menuAnchor);menuAnchor=node;for(const button of launchers(node))labelButton(button,node);}
   more.hidden=![...overflow.children].some(available);if(more.hidden)closeOverflow();
   stage.style.setProperty('--game-view-controls-height','44px');stage.style.setProperty('--game-header-menu-height',Math.max(100,stage.clientHeight-180)+'px');fitting=false;
  }
@@ -80,8 +82,8 @@ export function mountGameDisplayFlow(stage){
  // Only new direct children need collecting. Changes inside an existing panel
  // already participate in its layout and must not rescan the whole stage.
  collect();const observer=new MutationObserver(collect);observer.observe(stage,{childList:true});
- const changes=new MutationObserver(records=>{if(records.some(({target,oldValue})=>oldValue!==target.getAttribute('hidden')&&target!==more&&target!==overflow&&!target.closest(panelControls)))schedule();});changes.observe(views,{subtree:true,attributes:true,attributeFilter:['hidden'],attributeOldValue:true});
+ const changes=new MutationObserver(records=>{let refit=false;for(const {type,target,attributeName,oldValue}of records){if(type==='childList'){if(!target.closest(panelControls))refit=true;}else if(attributeName==='hidden'){if(oldValue!==target.getAttribute('hidden')&&target!==more&&target!==overflow&&!target.closest(panelControls))refit=true;if(!target.hidden&&target.matches(panelControls))requestAnimationFrame(()=>{if(!disposed&&!overflow.hidden&&!target.hidden&&overflow.contains(target))overflow.scrollTop+=target.getBoundingClientRect().top-overflow.getBoundingClientRect().top-6;});}else if(menuButtons.has(target)){const group=groups.find(group=>group===target||group.contains(target));if(group)labelButton(target,group);}}if(refit)schedule();});changes.observe(views,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','aria-label','title'],attributeOldValue:true});
  const resize=typeof ResizeObserver==='undefined'?null:new ResizeObserver(schedule);resize?.observe(views);resize?.observe(stage);
- const api={root,views,dispose(){if(disposed)return;disposed=true;mountedFlows.delete(stage);for(const visibility of panelVisibility.values())visibility.dispose();panelVisibility.clear();observer.disconnect();changes.disconnect();resize?.disconnect();if(frame!==null)cancelAnimationFrame(frame);stage.removeEventListener('muzikaz:action-bars-visibility',refit);stage.ownerDocument.removeEventListener('pointerdown',outside,true);for(const child of [...root.children]){if(child===actions||child===views)stage.append(...child.children);else stage.append(child);}for(const child of groups)if(child.isConnected)stage.append(child);views.remove();root.remove();stylesheet.remove();stage.style.removeProperty('--game-view-controls-height');stage.style.removeProperty('--game-header-menu-height');}};
+ const api={root,views,dispose(){if(disposed)return;disposed=true;mountedFlows.delete(stage);for(const visibility of panelVisibility.values())visibility.dispose();panelVisibility.clear();observer.disconnect();changes.disconnect();resize?.disconnect();if(frame!==null)cancelAnimationFrame(frame);stage.removeEventListener('muzikaz:action-bars-visibility',refit);stage.ownerDocument.removeEventListener('pointerdown',outside,true);for(const [button,original]of menuButtons){if(original.label===null)button.removeAttribute('data-game-control-label');else button.setAttribute('data-game-control-label',original.label);if(!original.decorated)button.classList.remove('game-view-menu-control');if(original.addedAria!==null&&button.getAttribute('aria-label')===original.addedAria)button.removeAttribute('aria-label');}menuButtons.clear();for(const child of [...root.children]){if(child===actions||child===views)stage.append(...child.children);else stage.append(child);}for(const child of groups)if(child.isConnected)stage.append(child);views.remove();root.remove();stylesheet.remove();stage.style.removeProperty('--game-view-controls-height');stage.style.removeProperty('--game-header-menu-height');}};
  mountedFlows.set(stage,api);return api;
 }

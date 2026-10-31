@@ -31,16 +31,20 @@ try:
    item.tap();assert page.get_by_role('dialog',name='Interactive device',exact=True).is_visible()
    page.locator('[data-device-close]').click();portal.tap();assert page.evaluate('window.commands')==[{'entityId':'arcade'},{'entityId':'portal'}]
    page.evaluate('window.pair.renderPortal(null)');assert item.is_visible() and not portal.is_visible()
-   page.evaluate('''()=>{const stage=document.querySelector('.house-stage');for(const name of ['game-camera-toggle','broadcast-controls']){const el=document.createElement(name==='game-camera-toggle'?'button':'div');el.className=name;if(name==='game-camera-toggle'){el.textContent='View';el.onclick=()=>window.viewClicks=(window.viewClicks||0)+1;}else for(let i=0;i<5;i++){const b=document.createElement('button');b.textContent='Camera '+i;el.append(b);}stage.append(el);}}''')
-   page.wait_for_selector('.game-display-flow-views .game-camera-toggle')
+   page.evaluate('''()=>{const stage=document.querySelector('.house-stage');for(const name of ['emergency-radio-toggle','game-camera-toggle','broadcast-controls']){const el=document.createElement(name==='broadcast-controls'?'div':'button');el.className=name;if(name!=='broadcast-controls'){el.textContent=name==='game-camera-toggle'?'View':'Emergency radio';if(name==='game-camera-toggle')el.onclick=()=>window.viewClicks=(window.viewClicks||0)+1;}else for(let i=0;i<5;i++){const b=document.createElement('button');b.textContent='Camera '+i;el.append(b);}stage.append(el);}}''')
+   page.wait_for_selector('.game-view-overflow .game-camera-toggle',state='attached')
+   assert page.locator('.game-display-flow-views > button').count()==2
+   assert page.locator('.emergency-radio-toggle').evaluate("n=>n.parentElement.classList.contains('game-display-flow-views')")
    views=page.locator('.game-display-flow-views').bounding_box()
    panel=page.locator('.basketball-hud').bounding_box()
    assert views['y']+views['height']<=panel['y']
    assert page.locator('.game-display-flow-views').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+   page.get_by_role('button',name='More view controls',exact=True).tap()
    page.locator('.game-camera-toggle').tap()
    assert page.evaluate('window.viewClicks')==1
+   page.get_by_role('button',name='More view controls',exact=True).tap()
    page.evaluate("const xr=document.createElement('button');xr.className='xr-enter-button';xr.hidden=true;xr.disabled=true;xr.textContent='VR headset unavailable';xr.style.cssText='display:block;position:fixed;top:8px;left:0;width:100%;z-index:80';document.querySelector('.house-stage').append(xr);")
-   page.wait_for_selector('.game-display-flow-views > .xr-enter-button',state='attached')
+   page.wait_for_selector('.game-view-overflow > .xr-enter-button',state='attached')
    assert not page.locator('.xr-enter-button').is_visible(), 'Unsupported VR cannot block game controls'
    assert page.locator('.game-hud-toggle').count()==0, 'Maps and controls must not have a global lock/restore button'
    page.evaluate("for(const name of ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']){const control=document.createElement('button');control.className=name;control.textContent=name;document.querySelector('.house-stage').append(control);}")
@@ -52,7 +56,8 @@ try:
    page.evaluate("""async()=>{const stage=document.querySelector('.house-stage'),{mountRoadVehicleUI}=await import('/public/js/road-vehicle-ui.js'),{ROAD_VEHICLES}=await import('/public/js/road-vehicles.js');const modelId=Object.keys(ROAD_VEHICLES).find(id=>!ROAD_VEHICLES[id].siteOnly);window.roadState={serverTime:1000,players:{me:{vehicleId:'car'}},actors:{car:{id:'car',modelId,active:true,position:{x:0,y:0,z:0},driving:{speed:0}}}};window.road=mountRoadVehicleUI(stage,async()=>({result:{message:'Confirmed'}}));road.update(roadState,'me');road.update(roadState,'me');}""")
    page.wait_for_function("document.querySelector('.game-display-flow > .road-vehicle-controls')!==null")
    assert page.locator('.road-vehicle-controls').is_visible()
-   assert page.locator('.game-display-flow-views .sports-action-utilities').is_visible()
+   page.get_by_role('button',name='More view controls',exact=True).tap()
+   assert page.locator('.game-view-overflow .sports-action-utilities').is_visible()
    assert page.locator('.house-control-dock').is_visible()
    assert page.locator('.game-camera-toggle').is_visible()
    for name in ['rad-tox-hud','basketball-controls','range-ops-button','live-local-map']:assert page.locator('.'+name).is_visible()
@@ -66,6 +71,7 @@ try:
    assert not page.locator('.road-vehicle-details').is_visible()
    assert page.locator('.live-local-map').is_visible()
    assert page.locator('.house-control-dock').is_visible()
+   page.get_by_role('button',name='More view controls',exact=True).tap()
    page.evaluate("document.querySelector('.house-stage').removeAttribute('data-hud-hidden')")
    page.evaluate('road.dispose();flow.dispose()')
    assert page.locator('.house-stage').get_attribute('data-hud-hidden') is None

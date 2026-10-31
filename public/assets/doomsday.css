@@ -206,3 +206,38 @@
 @media(prefers-reduced-motion:reduce){.emergency-popup-stack .radio-mouth,.emergency-popup-stack .radio-led,.emergency-popup-stack .doomsday-wave i{animation:none!important}}
 
 .emergency-popup-stack[data-reduced-motion=true] .radio-mouth,.emergency-popup-stack[data-reduced-motion=true] .radio-led,.emergency-popup-stack[data-reduced-motion=true] .doomsday-wave i{animation:none!important}
+
+/* A single nonmodal radio card holds the event, calls, and collapsible settings. */
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup{display:block;overflow:auto;overscroll-behavior:contain;pointer-events:auto;border:1px solid #a0c782;border-radius:12px;background:#10251ffa;color:#f0ffe8;font:12px/1.4 system-ui;box-shadow:0 6px 22px #0007;touch-action:pan-y;text-transform:none;letter-spacing:normal;overflow-wrap:anywhere}
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup>.emergency-radio-heading{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;min-height:52px;padding:6px 8px;background:#173329;border-bottom:1px solid #719365;box-sizing:border-box}
+.emergency-radio-heading>div:not(.doomsday-portrait){flex:1;min-width:0}
+.emergency-radio-heading h3{margin:0;font:750 14px/1.25 system-ui;color:#f3ffe5}
+.emergency-radio-heading small{display:block;font:11px/1.3 system-ui;color:#ddffb1}
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup>.doomsday-subpanel,:is(.house-stage,.native-doomsday,main) .emergency-radio-popup .emergency-radio-details>.doomsday-subpanel{display:block;min-height:0;margin:0;padding:8px;border:0;border-radius:0;overflow:visible;background:none;box-shadow:none;font:inherit}
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup>.doomsday-subpanel>header{position:static;min-height:0;margin:0 0 6px;padding:0;border:0;background:none}
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup>.doomsday-subpanel>header>div{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+:is(.house-stage,.native-doomsday,main) .emergency-radio-popup button{box-sizing:border-box;min-height:44px;max-width:100%;padding:8px;border:1px solid #88a985;border-radius:7px;background:#274231;color:#f0ffe8;font:700 12px/1.3 system-ui;cursor:pointer;touch-action:manipulation;text-transform:none;letter-spacing:normal}
+.emergency-radio-popup button:disabled{opacity:.55;cursor:default}
+.emergency-radio-popup button:focus-visible,.emergency-radio-popup summary:focus-visible{outline:3px solid #efffa7;outline-offset:-3px}
+.emergency-radio-details{border-top:1px solid #52735b}
+.emergency-radio-details>summary{box-sizing:border-box;min-height:44px;padding:12px 8px;font:700 12px/1.4 system-ui;cursor:pointer;touch-action:manipulation}
+.emergency-radio-popup .doomsday-audio-help,.emergency-radio-popup .doomsday-device-hint{font-size:11px;line-height:1.4}
+.emergency-radio-popup .doomsday-replay{width:100%;margin:0}
+.emergency-radio-popup[data-speaking=true] .radio-mouth{transform-box:fill-box;transform-origin:center;animation:radio-mouth .2s ease-in-out infinite alternate}
+.emergency-radio-popup[data-speaking=true] .radio-led{animation:radio-led .55s ease-in-out infinite alternate}
+@media(max-height:480px){
+ :is(.house-stage,.native-doomsday,main) .emergency-radio-popup{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(0,1.2fr);gap:0;width:min(620px,calc(100% - 88px))}
+ .emergency-radio-popup>.emergency-radio-heading,.emergency-radio-popup>.emergency-radio-details{grid-column:1/-1}
+ :is(.house-stage,.native-doomsday,main) .emergency-radio-popup .doomsday-transmission p{font-size:11px;line-height:1.35}
+}
+/* Native maps use the same radio and More arrangement without replacing their controls. */
+.native-radio-menu,.native-radio-menu[open],.native-radio-menu:not([open]){display:block;top:8px;right:8px;width:44px;max-height:none;padding:0;overflow:visible;background:none}
+.native-radio-menu>summary{display:grid;place-items:center;box-sizing:border-box;width:44px;height:44px;padding:8px;border:1px solid #90b3a4;border-radius:9px;background:#112c30ed;color:#effff5;font:800 18px system-ui;list-style:none}
+.native-radio-menu>summary::-webkit-details-marker{display:none}
+.native-emergency-controls{position:absolute;right:0;top:52px;box-sizing:border-box;width:min(300px,calc(100vw - 16px));max-height:calc(100dvh - 240px);padding:8px;overflow:auto;overscroll-behavior:contain;border:1px solid #90b3a4;border-radius:10px;background:#142c29}
+.native-emergency-controls>.emergency-nuclear-toggle{position:static;display:flex;align-items:center;gap:10px;width:100%;height:auto;min-height:44px;margin-bottom:8px;text-align:left;font:700 12px system-ui}
+.native-emergency-controls>.emergency-nuclear-toggle::after{content:'Nuclear event'}
+.native-emergency-controls .doomsday-panel-navigation{margin:0}
+.native-emergency-controls .doomsday-section-toggle small{display:none}
+.native-doomsday .emergency-radio-popup{max-height:max(96px,calc(100dvh - 250px))}
+.house-stage:fullscreen .emergency-radio-popup,.house-stage:-webkit-full-screen .emergency-radio-popup{max-height:max(96px,calc(100% - 250px))}

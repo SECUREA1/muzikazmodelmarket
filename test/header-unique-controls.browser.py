@@ -26,11 +26,13 @@ try:
     window.idsUnique=()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return new Set(ids).size===ids.length;};
     window.refit=()=>stage.dispatchEvent(new CustomEvent('muzikaz:action-bars-visibility'));
    }''')
-   radio=page.get_by_role('button',name='Radio & sound',exact=True);radio.wait_for(state='visible')
+   radio=page.get_by_role('button',name='Emergency radio',exact=True);radio.wait_for(state='visible')
    assert page.evaluate('sameDisplay&&sameUI'),'repeated mount manufactured another instance'
    assert page.locator('.game-display-flow-views').count()==1 and page.locator('.game-view-more').count()==1
    assert page.locator('.emergency-radio-toggle').count()==1 and page.locator('.emergency-nuclear-toggle').count()==1
    assert page.evaluate('idsUnique()')
+   assert page.locator('.game-display-flow-views > button').count()==2
+   assert page.locator('.emergency-nuclear-toggle').evaluate("n=>!!n.closest('.game-view-overflow')")
    radio.focus();page.evaluate('''async()=>{for(let i=0;i<8;i++){refit();ui.tick(i/60);await new Promise(requestAnimationFrame);}}''')
    assert radio.evaluate('n=>document.activeElement===n'),'unchanged pinned refit dropped focus'
    page.evaluate('''()=>{window.presses=window.lostCapture=window.activations=0;const button=document.querySelector('.emergency-radio-toggle');button.addEventListener('pointerdown',event=>{presses++;button.setPointerCapture(event.pointerId);});button.addEventListener('lostpointercapture',()=>lostCapture++);button.addEventListener('click',()=>activations++);}''')
@@ -38,8 +40,8 @@ try:
    page.evaluate('''async()=>{for(let i=0;i<5;i++){refit();await new Promise(requestAnimationFrame);}}''')
    assert page.evaluate('presses===1&&lostCapture===0'),'refit reparented an unchanged held button'
    page.mouse.up();assert page.evaluate('activations')==1
-   assert page.locator('#emergency-sound-panel').is_visible(),'one click toggled twice through duplicate handlers'
-   page.get_by_role('button',name='Close Radio & sound',exact=True).click()
+   assert page.locator('#emergency-radio-popup').is_visible(),'one click toggled twice through duplicate handlers'
+   page.get_by_role('button',name='Close emergency radio',exact=True).click()
    page.get_by_role('button',name='World',exact=True).click();assert page.evaluate('worldCount')==1
    page.evaluate('''async()=>{for(let i=0;i<12;i++){if(mountFlow()!==display||mountUI()!==ui)throw Error('duplicate remount');ui.tick(i/60);refit();await new Promise(requestAnimationFrame);}}''')
    assert page.locator('.game-view-more').count()==1 and page.locator('.emergency-radio-toggle,.emergency-nuclear-toggle').count()==2
@@ -48,6 +50,8 @@ try:
    page.locator('.emergency-radio-toggle').wait_for(state='visible')
    assert page.locator('.game-display-flow-views').count()==1 and page.locator('.emergency-radio-toggle,.emergency-nuclear-toggle').count()==2
    assert page.evaluate('idsUnique() && document.querySelector("#world")===world')
+   assert page.locator('#emergency-radio-popup').count()==1
+   assert page.locator('.game-display-flow-views > button').count()==2
    assert not errors,errors
    print(f'{width}x{height}: one header/control instance, original handlers, unique IDs and held focus/capture survive refits',flush=True)
    page.close()

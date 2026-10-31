@@ -39,7 +39,7 @@ const controls=[
  // coverage checks and menu navigation can find them without extracting them.
  ['latest-radio-announcement','[data-latest-announcement]','Show the latest radio announcement','sound','nested'],
  ['automatic-event-panel','input[aria-label="Auto-show event panel"]','Auto-show new event countdowns','emergency','nested'],
- ['radio-sound-panel','.emergency-radio-toggle','Radio & sound panel','sound'],
+ ['radio-sound-panel','.emergency-radio-toggle','Emergency radio','sound'],
  ['nuclear-event-panel','.emergency-nuclear-toggle','Nuclear event panel','emergency'],
  ['emergency-response-link','.game-header-emergency-link','Open emergency response flow','emergency','nested'],
  ['active-quest','.map-quest-objective','Open active quest','activities','nested'],
